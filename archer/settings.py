@@ -78,10 +78,10 @@ WSGI_APPLICATION = 'archer.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cmdb',
-        'USER': 'cmdb_rw',
-        'PASSWORD': 'jhlYhblSqt123',
-        'HOST': 'rds518y58f6qah0994h3.mysql.rds.aliyuncs.com',
+        'NAME': 'archer',
+        'USER': 'archer_rw',
+        'PASSWORD': 'XXXX',
+        'HOST': '192.168.1.12',
         'PORT': '3306'
     }
 }
