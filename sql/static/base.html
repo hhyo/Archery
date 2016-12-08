@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head> 
-	<title>bootstrap基本模板</title>
+	<title>数据库SQL操作平台</title>
     {% load staticfiles %}
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
       <!-- 引入 Bootstrap -->
@@ -21,42 +21,10 @@
 		<div class="col-md-12 column">
 			<nav class="navbar navbar-default" role="navigation">
 				<div class="navbar-header">
-					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#"><strong>自动化管理系统</strong></a>
+					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#"><strong>数据库SQL操作平台</strong></a>
 				</div>
 				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-					<ul class="nav navbar-nav">
-						<li class="active">
-							 <a href="#">编辑</a>
-						</li>
-						<li>
-							 <a href="#">系统设置</a>
-						</li>
-						<li class="dropdown">
-							 <a href="#" class="dropdown-toggle" data-toggle="dropdown">权限系统<strong class="caret"></strong></a>
-							<ul class="dropdown-menu">
-								<li>
-									 <a href="#">Action</a>
-								</li>
-								<li>
-									 <a href="#">Another action</a>
-								</li>
-								<li>
-									 <a href="#">Something else here</a>
-								</li>
-								<li class="divider">
-								</li>
-								<li>
-									 <a href="#">Separated link</a>
-								</li>
-								<li class="divider">
-								</li>
-								<li>
-									 <a href="#">One more separated link</a>
-								</li>
-							</ul>
-						</li>
-					</ul>
-					<form class="navbar-form navbar-left" role="search">
+					<form class="navbar-form navbar-right" role="search">
 						<div class="form-group">
 							<input type="text" class="form-control" />
 						</div> <button type="submit" class="btn btn-default">搜索</button>
@@ -92,11 +60,11 @@
 	<div class="row clearfix">
 		<div class="col-md-2 column">
 			<div class="list-group">
-					<a href="#" class="list-group-item active"><span class="glyphicon glyphicon-home">&nbsp;功能模块1</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon-asterisk">&nbsp;功能模块2</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-user">&nbsp;功能模块3</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-th-large">&nbsp;功能模块4</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-cog">&nbsp;功能模块5</span></a>
+					<a href="#" class="list-group-item active"><span class="glyphicon glyphicon-home">&nbsp;查看历史工单</span></a>
+					<a href="#" class="list-group-item"><span class="glyphicon glyphicon-asterisk">&nbsp;发起SQL上线</span></a>
+					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-user">&nbsp;主库地址配置</span></a>
+					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-th-large">&nbsp;工程师权限</span></a>
+					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-cog">&nbsp;审批人权限</span></a>
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-file">&nbsp;功能模块6</span></a>
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-list-alt">&nbsp;功能模块7</span></a>
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-align-right">&nbsp;功能模块8</span></a>
@@ -284,7 +252,7 @@
 	</div>
 	
 	<div class="row clearfix user-bottom-div">
-		<p><strong>自动化管理系统.</strong>&nbsp; Developed by OP.</p>
+		<p><strong>数据库SQL操作平台.</strong>&nbsp; Developed by OP.</p>
 	</div>
 </div>
 	<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
