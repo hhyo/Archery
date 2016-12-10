@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row clearfix">
+		<div class="col-md-8 column">
+			<textarea name="sql_content" class="form-control" placeholder="请在此提交SQL..." rows=20></textarea>
+		</div>
+		<div class="col-md-4 column">
+			<form class="form-horizontal" role="form">
+				<div class="form-group">
+					<input id="workflow_name" type="text" name="workflow_name" class="form-control" data-name="上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表" required>
+				</div>
+				<div class="form-group">
+					<select id="cluster_name" name="cluster_name" class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的集群" data-placeholder="请选择要上线的集群:" required>
+          				<option disabled="" selected="selected">请选择要上线的集群:</option>
+						<option value="prod">prod集群 (包含db:  activity,ad,card,cdb,cdb_ext,cms,comment,db_bbs,db_bbs_dede,db_external,db_sem,db_statistics,jifen,marketing,pay,storage,wenda,yunying)</option>
+						<option value="hermes">hermes集群 (包含db:  api,forum,hermes,news_db,tts,zhixue_db)</option>
+						<option value="statistics">statistics集群 (包含db:  baijiatools,data_cms,db_galaxy,media,pycron,zhanqun,zhixue_spider)</option>
+						<option value="finance">finance集群 (包含db:  accounting,fenqi,shoukuan,zhifu)</option>
+						<option value="baijiabao">baijiabao集群 (包含db:  baijiacloud,super_class,super_wish,wesambo,wesambo_new,xxtt,yiqixiu)</option>
+						<option value="tianxiao">tianxiao集群 (包含db:  business_school,libra,parallel,tx_bbs,tx_connect,virgo)</option>
+						<option value="service">service集群 (包含db:  azkaban,cas,jigou,service,yunying,yunying_statistics)</option>
+						<option value="chuizhichanpin">chuizhichanpin集群 (包含db:  jinyou)</option>        		
+					</select>					
+				</div>
+				<div class="form-group">
+					<select id="basic" name="is_backup" class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份" data-placeholder="请选择是否要备份:" required>
+          				<option disabled="" selected="selected">请选择是否要备份:</option>
+          				<option value="1">是</option>
+          				<option value="0">否</option>
+        			</select>	
+				</div>
+				<div class="form-group">
+					<select id="basic" name="review_man" class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人" data-placeholder="请选择RD审核人:" required>
+          			<option disabled="" selected="selected">请选择审核人:</option>
+					<option value="zhouwei">周伟(总部-基础平台部)(zhouwei)</option><option value="zouyang">邹洋(zouyang)</option><option value="caiyili">蔡宜利(caiyili)</option><option value="changming">常明(changming)</option><option value="lichangchun">黎长春(lichangchun)</option><option value="minyifei">闵益飞(minyifei)</option><option value="gaoyanpeng">高延鹏(gaoyanpeng)</option>
+					</select>
+				</div>
+				<div class="form-group">
+						 <button type="submit" class="btn btn-primary">提交SQL</button>
+						 <button type="reset" class="btn btn-default">清空重填</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>	
+{% endblock content %}

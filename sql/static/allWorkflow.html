@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+			<ul class="nav nav-tabs">
+				<li class="active">
+					 <a href="#">首页</a>
+				</li>
+				<li>
+					 <a href="#">简介</a>
+				</li>
+				<li class="disabled">
+					 <a href="#">信息</a>
+				</li>
+				<li class="dropdown pull-right">
+					 <a href="#" data-toggle="dropdown" class="dropdown-toggle">下拉<strong class="caret"></strong></a>
+					<ul class="dropdown-menu">
+						<li>
+							 <a href="#">操作</a>
+						</li>
+						<li>
+							 <a href="#">设置栏目</a>
+						</li>
+						<li>
+							 <a href="#">更多设置</a>
+						</li>
+						<li class="divider">
+						</li>
+						<li>
+							 <a href="#">分割线</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>
+							编号
+						</th>
+						<th>
+							产品
+						</th>
+						<th>
+							交付时间
+						</th>
+						<th>
+							状态
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							1
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							01/04/2012
+						</td>
+						<td>
+							Default
+						</td>
+					</tr>
+					<!--<tr class="success">-->
+					<tr>
+						<td>
+							1
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							01/04/2012
+						</td>
+						<td>
+							Approved
+						</td>
+					</tr>
+					<!--<tr class="error">-->
+					<tr>
+						<td>
+							2
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							02/04/2012
+						</td>
+						<td>
+							Declined
+						</td>
+					</tr>
+					<tr>
+						<td>
+							3
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							03/04/2012
+						</td>
+						<td>
+							Pending
+						</td>
+					</tr>
+					<tr>
+						<td>
+							4
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							04/04/2012
+						</td>
+						<td>
+							Call in to confirm
+						</td>
+					</tr>
+					<tr>
+						<td>
+							4
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							04/04/2012
+						</td>
+						<td>
+							Call in to confirm
+						</td>
+					</tr>
+					<tr>
+						<td>
+							4
+						</td>
+						<td>
+							TB - Monthly
+						</td>
+						<td>
+							04/04/2012
+						</td>
+						<td>
+							Call in to confirm
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<div style="text-align:center;">
+			<ul class="pagination" style="display:inline-block;">
+				<li>
+					 <a href="#">前一页</a>
+				</li>
+				<li>
+					 <a href="#">1</a>
+				</li>
+				<li>
+					 <a href="#">2</a>
+				</li>
+				<li>
+					 <a href="#">3</a>
+				</li>
+				<li>
+					 <a href="#">4</a>
+				</li>
+				<li>
+					 <a href="#">5</a>
+				</li>
+				<li>
+					 <a href="#">后一页</a>
+				</li>
+			</ul>
+			<button id="btnExecute" type="button" class="btn btn-primary btn-default" style="float:right;" data-loading-text="Loading...">执行操作</button>
+			</div>
+{% endblock content%}
