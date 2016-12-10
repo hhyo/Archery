@@ -4,11 +4,17 @@ import json
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 from .models import users, master_config, workflow
 
 # Create your views here.
 def login(request):
+    return render(request, 'login.html')
+
+def logout(request):
+    if request.session.get('login_username', False):
+        del request.session['login_username']
     return render(request, 'login.html')
 
 #ajax接口，登录页面调用，用来验证用户名密码
@@ -30,6 +36,7 @@ def authenticate(request):
     login_user = users.objects.filter(username=strUsername, password=strPassword)
     if len(login_user) == 1:
         #return HttpResponseRedirect('/allworkflow/')
+        request.session['login_username'] = strUsername
         result = {'status':0, 'msg':'ok', 'data':''}
     else:
         result = {'status':1, 'msg':'用户名或密码错误，请重新输入！', 'data':''}
@@ -42,5 +49,4 @@ def allworkflow(request):
 def submitSql(request):
     context = {'currentMenu':'submitsql'}
     return render(request, 'submitSql.html', context)
-
 

@@ -49,6 +49,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'sql.check_login_middleware.CheckLoginMiddleware',
 )
 
 ROOT_URLCONF = 'archer.urls'
