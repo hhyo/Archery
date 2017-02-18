@@ -1,15 +1,20 @@
 # coding = utf-8
+import re
 import json
+import time
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
 from .models import users, master_config, workflow
 from .dao import Dao
+from .inception import InceptionDao
+from .const import Const
 
 dao = Dao()
+inceptionDao = InceptionDao()
 
 # Create your views here.
 def login(request):
@@ -38,7 +43,6 @@ def authenticate(request):
 
     login_user = users.objects.filter(username=strUsername, password=strPassword)
     if len(login_user) == 1:
-        #return HttpResponseRedirect('/allworkflow/')
         request.session['login_username'] = strUsername
         result = {'status':0, 'msg':'ok', 'data':''}
     else:
@@ -88,13 +92,143 @@ def submitSql(request):
 
 #提交SQL给inception进行解析
 def autoreview(request):
-    return HttpResponse("aaa")
+    sqlContent = request.POST['sql_content']
+    workflowName = request.POST['workflow_name']
+    clusterName = request.POST['cluster_name']
+    isBackup = request.POST['is_backup']
+    reviewMan = request.POST['review_man']
+   
+    #服务器端参数验证
+    if sqlContent is None or workflowName is None or clusterName is None or isBackup is None or reviewMan is None:
+        context = {'errMsg': '页面提交参数可能为空'}
+        return render(request, 'error.html', context)
+ 
+    #交给inception进行自动审核
+    result = inceptionDao.sqlautoReview(sqlContent, clusterName, isBackup)
+    if result is None or len(result) == 0:
+        context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
+        return render(request, 'error.html', context)
+    #要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+    jsonResult = json.dumps(result)
+
+    #遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
+    workflowStatus = Const.workflowStatus['manreviewing']
+    for row in result:
+        if row[2] == 2:
+            #状态为2表示严重错误，必须修改
+            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            break
+        elif re.match(r"\w*comments\w*", row[4]):
+            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            break
+
+    #存进数据库里
+    newWorkflow = workflow()
+    newWorkflow.workflow_name = workflowName
+    newWorkflow.engineer = request.session.get('login_username', False)
+    newWorkflow.review_man = reviewMan
+    newWorkflow.create_time = getNow()
+    newWorkflow.status = workflowStatus
+    newWorkflow.is_backup = isBackup
+    newWorkflow.review_content = jsonResult
+    newWorkflow.cluster_name = clusterName
+    newWorkflow.sql_content = sqlContent
+    newWorkflow.save()
+    workflowId = newWorkflow.id
+    
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
 
 #展示SQL工单详细内容，以及可以人工审核，审核通过即可执行
-def detail(request):
-    return HttpResponse("bbb")
+def detail(request, workflowId):
+    workflowDetail = get_object_or_404(workflow, pk=workflowId)
+    listContent = None
+    if workflowDetail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']):
+        listContent = json.loads(workflowDetail.execute_result)
+    else:
+        listContent = json.loads(workflowDetail.review_content)
+    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'listContent':listContent}
+    return render(request, 'detail.html', context)
+
+#人工审核也通过，执行SQL
+def execute(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+    
+    workflowId = int(workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    clusterName = workflowDetail.cluster_name
+
+    #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
+    loginUser = request.session.get('login_username', False)
+    if loginUser is None or loginUser != workflowDetail.review_man:
+        context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
+        return render(request, 'error.html', context)
+
+    dictConn = getMasterConnStr(clusterName)
+   
+    #将流程状态修改为执行中，并更新reviewok_time字段
+    workflowDetail.status = Const.workflowStatus['executing']
+    workflowDetail.reviewok_time = getNow()
+    workflowDetail.save()
+
+    #交给inception先split，再执行
+    (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
+
+    #封装成JSON格式存进数据库字段里
+    strJsonResult = json.dumps(finalList)
+    workflowDetail.execute_result = strJsonResult
+    workflowDetail.finish_time = getNow()
+    workflowDetail.status = finalStatus
+    workflowDetail.save() 
+
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
+
+#终止流程
+def cancel(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+
+    workflowId = int(workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
+
+    #服务器端二次验证，如果正在执行终止动作的当前登录用户，不是发起人也不是审核人，则异常.
+    loginUser = request.session.get('login_username', False)
+    if loginUser is None or loginUser != workflowDetail.review_man or loginUser != workflowDetail.engineer:
+        context = {'errMsg': '当前登录用户不是审核人也不是发起人，请重新登录.'}
+        return render(request, 'error.html', context)
+
+    workflowDetail.status = Const.workflowStatus['abort']
+    workflowDetail.save()
+
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
 
 #展示回滚的SQL
 def rollback(request):
-    return HttpResponse("rollback")
+    workflowId = request.GET['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+    workflowId = int(workflowId)
+    listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
+   
+    context = {'listBackupSql':listBackupSql}
+    return render(request, 'rollback.html', context)
 
+#根据集群名获取主库连接字符串，并封装成一个dict
+def getMasterConnStr(clusterName):
+    listMasters = master_config.objects.filter(cluster_name=clusterName)
+    
+    masterHost = listMasters[0].master_host
+    masterPort = listMasters[0].master_port
+    masterUser = listMasters[0].master_user
+    masterPassword = listMasters[0].master_password
+    dictConn = {'masterHost':masterHost, 'masterPort':masterPort, 'masterUser':masterUser, 'masterPassword':masterPassword}
+    return dictConn
+
+#获取当前时间
+def getNow():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

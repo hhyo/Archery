@@ -7,7 +7,7 @@
 	<form action="/autoreview/" method="post" class="form-horizontal" role="form">
 		{% csrf_token %}
 		<div class="col-md-8 column">
-			<textarea name="sql_content" class="form-control" placeholder="请在此提交SQL..." rows=20 required></textarea>
+			<textarea name="sql_content" class="form-control" placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20 required></textarea>
 		</div>
 
 		<div class="col-md-4 column">
@@ -31,8 +31,8 @@
 				<div class="form-group">
 					<select id="basic" name="is_backup" class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份" data-placeholder="请选择是否要备份:" required>
           				<option disabled="" selected="selected">请选择是否要备份:</option>
-          				<option value="1">是</option>
-          				<option value="0">否</option>
+          				<option value="是">是</option>
+          				<option value="否">否</option>
         			</select>	
 				</div>
 				<div class="form-group">

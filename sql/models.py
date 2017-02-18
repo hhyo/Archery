@@ -1,4 +1,4 @@
-# coding = utf-8
+# -*- coding: UTF-8 -*- 
 from django.db import models
 
 # Create your models here.
@@ -34,14 +34,15 @@ class workflow(models.Model):
     engineer = models.CharField('发起人', max_length=50)
     review_man = models.CharField('审核人', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    finish_time = models.DateTimeField()
-    status = models.CharField(max_length=50, choices=(('已正常结束','已正常结束'),('人工终止流程','人工终止流程'),('等待审核人审核','等待审核人审核'),('执行中','执行中'),('自动审核不通过','自动审核不通过'),('执行有异常','执行有异常')))
-    is_backup = models.IntegerField(choices=((0,0),(1,1)))
-    review_content = models.TextField()
-    cluster_name = models.CharField(max_length=50)  #master_config表的cluster_name列的外键
-    reviewok_time = models.DateTimeField()
-    sql_content = models.TextField()
-    execute_result = models.TextField()
+    finish_time = models.DateTimeField('结束时间', null=True, blank=True)
+    status = models.CharField(max_length=50, choices=(('已正常结束','已正常结束'),('人工终止流程','人工终止流程'),('自动审核中','自动审核中'),('等待审核人审核','等待审核人审核'),('执行中','执行中'),('自动审核不通过','自动审核不通过'),('执行有异常','执行有异常')))
+    #is_backup = models.IntegerField('是否备份，0为否，1为是', choices=((0,0),(1,1)))
+    is_backup = models.CharField('是否备份', choices=(('否','否'),('是','是')), max_length=20)
+    review_content = models.TextField('自动审核内容的JSON格式')
+    cluster_name = models.CharField('集群名称', max_length=50)     #master_config表的cluster_name列的外键
+    reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
+    sql_content = models.TextField('具体sql内容')
+    execute_result = models.TextField('执行结果的JSON格式')
 
     def __str__(self):
         return self.workflow_name

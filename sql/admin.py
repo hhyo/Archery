@@ -5,7 +5,7 @@ from django.contrib import admin
 from .models import users, master_config, workflow
 
 class usersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'display', 'role')
+    list_display = ('id', 'username', 'display', 'role', 'password')
     search_fields = ['id', 'username', 'display', 'role']
 
 class master_configAdmin(admin.ModelAdmin):

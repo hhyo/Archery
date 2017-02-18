@@ -12,6 +12,8 @@ urlpatterns = [
     url(r'^allworkflow/$', views.allworkflow, name='allworkflow'),
     
     url(r'^autoreview/$', views.autoreview, name='autoreview'),
-    url(r'^detail/$', views.detail, name='detail'),
+    url(r'^detail/(?P<workflowId>[0-9]+)/$', views.detail, name='detail'),
+    url(r'^execute/$', views.execute, name='execute'),
+    url(r'^cancel/$', views.cancel, name='cancel'),
     url(r'^rollback/$', views.rollback, name='rollback'),
 ]

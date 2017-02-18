@@ -1,0 +1,100 @@
+#-*-coding: utf-8-*-
+
+import json
+import MySQLdb
+from django.conf import settings
+
+from .models import master_config, workflow
+
+class InceptionDao(object):
+    def __init__(self):
+        try:
+            self.inception_host = getattr(settings, 'INCEPTION_HOST')
+            self.inception_port = int(getattr(settings, 'INCEPTION_PORT'))
+        except AttributeError as a:
+            print("Error: %s" % a)
+        except ValueError as v:
+            print("Error: %s" % v)
+        
+    def sqlautoReview(self, sqlContent, clusterName, isBackup):
+        '''
+        将sql交给inception进行自动审核，并返回审核结果。
+        '''
+        listMasters = master_config.objects.filter(cluster_name=clusterName)
+        if len(listMasters) != 1:
+            print("Error: 主库配置返回为0")
+        masterHost = listMasters[0].master_host
+        masterPort = listMasters[0].master_port
+        masterUser = listMasters[0].master_user
+        masterPassword = listMasters[0].master_password
+
+        #判断字符串结尾是否有分号，如果没有则加上
+        #TODO: 如果结尾是以;   结尾，则会报错
+        if sqlContent[-1] != ";":
+            sqlContent = sqlContent + ";"
+
+        sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
+          inception_magic_start;\
+          %s\
+          inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+        result = self._fetchall(sql)
+        return result
+        
+    def executeFinal(self, workflowDetail, dictConn):
+        '''
+        将sql交给inception进行最终执行，并返回执行结果。
+        '''
+        strBackup = ""
+        if workflowDetail.is_backup == '是':
+            strBackup = "--enable-remote-backup;"
+        else:
+            strBackup = "--disable-remote-backup;"
+
+        #根据inception的要求，执行之前最好先split一下
+        sqlSplit = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%s; --enable-ignore-warnings;--enable-split;*/\
+             inception_magic_start;\
+             %s\
+             inception_magic_commit;" % (dictConn['masterUser'], dictConn['masterPassword'], dictConn['masterHost'], str(dictConn['masterPort']), workflowDetail.sql_content)
+        splitResult = self._fetchall(sqlSplit)
+
+        finalList = []
+        #对于split好的结果，再次交给inception执行. 
+        try:
+            conn=MySQLdb.connect(host=self.inception_host, user='', passwd='', db='', port=self.inception_port)
+            cur=conn.cursor()
+            
+            for splitRow in splitResult:
+                sqlTmp = splitRow[1]
+                sqlExecute = "/*--user=%s;--password=%s;--host=%s;--enable-execute;--port=%s; --enable-ignore-warnings;%s*/\
+                    inception_magic_start;\
+                    %s\
+                    inception_magic_commit;" % (dictConn['masterUser'], dictConn['masterPassword'], dictConn['masterHost'], str(dictConn['masterPort']), strBackup, sqlTmp)
+                ret = cur.execute(sqlExecute)
+                executeResult = cur.fetchall()
+                    
+                finalList.append(executeResult)
+        except MySQLdb.Error as e:
+            print("Mysql Error %d: %s" % (e.args[0], e.args[1]))
+        finally:
+            cur.close()
+            conn.close()
+        
+        return finalList
+
+    def _fetchall(self, sql):
+        '''
+        封装mysql连接和获取结果集方法
+        '''
+        result = None
+        try:
+            conn=MySQLdb.connect(host=self.inception_host, user='', passwd='', db='', port=self.inception_port)
+            cur=conn.cursor()
+            ret=cur.execute(sql)
+            result=cur.fetchall()
+        except MySQLdb.Error as e:
+            print("Mysql Error %d: %s" % (e.args[0], e.args[1]))
+        finally:
+            cur.close()
+            conn.close()
+        return result
+

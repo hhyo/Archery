@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+			<h4>单子名称：{{workflowDetail.workflow_name}}</h4>
+			<hr>	
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>
+							上线发起人
+						</th>
+						<th>
+							审核人
+						</th>
+						<th>
+							上线集群
+						</th>
+						<th>
+							发起时间
+						</th>
+						<th>
+							结束时间
+						</th>
+						<th>
+							是否备份
+						</th>
+						<th>
+							当前状态
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="success">
+						<td>
+							{{workflowDetail.engineer}}
+						</td>
+						<td>
+							{{workflowDetail.review_man}}
+						</td>
+						<td>
+							{{workflowDetail.cluster_name}}
+						</td>
+						<td>
+							{{workflowDetail.create_time}}
+						</td>
+						<td>
+							{{workflowDetail.finish_time}}
+						</td>
+						<td>
+							{{workflowDetail.is_backup}}
+						</td>
+						<td>
+							{{workflowDetail.status}}
+						</td>
+					</tr>
+					
+				</tbody>
+			</table>
+
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>
+							ID
+						</th>
+						<th>
+							SQL内容
+						</th>
+						<th>
+							自动审核结果
+						</th>
+						<th>
+							扫描/影响行数
+						</th>
+						<th>
+							执行耗时
+						</th>
+						<th>
+							执行状态
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in listContent %}
+					<tr>
+						<td>
+							{{forloop.counter}}
+						</td>
+						<td>
+							{{row.5}}
+						</td>
+						<td>
+							{{row.4}}
+						</td>
+						<td>
+							{{row.6}}
+						</td>
+						<td>
+							{{row.9}}
+						</td>
+						<td>
+							{{row.3}}
+						</td>
+					</tr>
+					{% endfor %}
+					
+				</tbody>
+			</table>
+			{% if workflowDetail.status == '等待审核人审核' %}
+			{% if workflowDetail.review_man == loginUser %}
+			<form action="/execute/" method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+				<input type="submit" id="btnExecute" type="button" class="btn btn-primary btn-default" data-loading-text="Loading..." value="审核通过，执行" />
+			</form>
+			{% endif %}
+
+			<form action="/cancel/" method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+				<input type="submit" id="btnCancel" type="button" class="btn btn-default" data-loading-text="Loading..." value="终止流程" />
+			</form>
+			</div>
+			{% elif workflowDetail.status == '已正常结束' and workflowDetail.is_backup == '是' %}
+			<form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+                <input type="submit" id="btnRollback" type="button" class="btn btn-default" data-loading-text="Loading..." value="查看回滚SQL" />
+            </form>
+			{% endif %}
+{% endblock content%}
