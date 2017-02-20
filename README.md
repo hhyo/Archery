@@ -18,9 +18,13 @@ tar -xzvf Python-3.4.1.tar.gz && cd Python-3.4.1 && ./configure --prefix=/path/t
 tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install
 3. 安装gunicorn：
 pip install gunicorn
-4. 创建系统root用户（该用户可以使用django admin）：
+4. 创建系统root用户（该用户可以使用django admin来管理model）：
 cd archer && python3 manage.py createsuperuser
-
+5. 给python3安装MySQLdb模块
+pip install pymysql
+记得确保settings.py里有如下两行：
+import pymysql
+pymysql.install_as_MySQLdb()
 
 10. 启动服务：
 cd archer && bash startup.sh
