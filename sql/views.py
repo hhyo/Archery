@@ -49,9 +49,58 @@ def authenticate(request):
         result = {'status':1, 'msg':'用户名或密码错误，请重新输入！', 'data':''}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
-#首页，也是查看所有SQL工单页面
+#首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
-    context = {'currentMenu':'allworkflow'}
+    #一个页面展示
+    PAGE_LIMIT = 12
+
+    pageNo = 0
+    navStatus = ''
+    listAllWorkflow = []
+
+    #参数检查
+    if 'pageNo' in request.GET:
+        pageNo = request.GET['pageNo']
+    else:
+        pageNo = '0'
+    
+    if 'navStatus' in request.GET:
+        navStatus = request.GET['navStatus']
+    else:
+        navStatus = 'all'
+    if not isinstance(pageNo, str) or not isinstance(navStatus, str):
+        raise TypeError('pageNo或navStatus页面传入参数不对')
+    else:
+        try:
+            pageNo = int(pageNo)
+            if pageNo < 0:
+                pageNo = 0
+        except ValueError as ve:
+            context = {'errMsg': 'pageNo参数不是int.'}
+            return render(request, 'error.html', context)
+
+    loginUser = request.session.get('login_username', False)
+    #查询workflow model，根据pageNo和navStatus获取对应的内容
+    offset = pageNo * PAGE_LIMIT
+    limit = offset + PAGE_LIMIT
+    
+    listWorkflow = []
+    #查询全部流程
+    if navStatus == 'all':
+        #这句话等同于select * from sql_workflow order by create_time desc limit {offset, limit};
+        listWorkflow = workflow.objects.exclude(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]      
+    elif navStatus == 'waitingforme': 
+        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['manreviewing'], review_man=loginUser).order_by('-create_time')[offset:limit]
+    elif navStatus == 'finish':
+        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish']).order_by('-create_time')[offset:limit]
+    elif navStatus == 'autoreviewwrong':
+        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]
+    else:
+        context = {'errMsg': '传入的navStatus参数有误！'}
+        return render(request, 'error.html', context)
+
+
+    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus}
     return render(request, 'allWorkflow.html', context)
 
 #提交SQL的页面

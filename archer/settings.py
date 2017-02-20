@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*- 
+
 """
 Django settings for archer project.
 
@@ -23,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -77,6 +79,7 @@ WSGI_APPLICATION = 'archer.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+#该项目本身的mysql数据库地址
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -108,9 +111,11 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
+#inception组件所在的地址
 INCEPTION_HOST = '172.16.5.7'
 INCEPTION_PORT = '6100'
 
+#inception要备份数据到该远端mysql地址
 INCEPTION_REMOTE_BACKUP_HOST='172.16.5.10'
 INCEPTION_REMOTE_BACKUP_PORT=5621
 INCEPTION_REMOTE_BACKUP_USER='inception'
