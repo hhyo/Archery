@@ -1,27 +1,33 @@
 # archer
 基于inception的自动化SQL操作平台
 
+### 开发语言
+python：3.4
+django：1.8
+
 ### 主要功能
 * 发起inception SQL上线，工单提交
 * 工单DBA人工审核、sql执行
 * 历史工单展示
 * 回滚数据展示
 * 主库集群配置
-* 用户权限配置，工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL
+* 用户权限配置<br/>
+  工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL
 * 历史工单管理
+* 可通过django admin进行匹配SQL关键字的工单搜索
 
 ### 安装步骤：
-1. 安装python3：
+1. 安装python3：<br/>
 tar -xzvf Python-3.4.1.tar.gz && cd Python-3.4.1 && ./configure --prefix=/path/to/python3 && make && make install
 或者rpm、yum、binary等其他安装方式
-2. 安装django：
+2. 安装django：<br/>
 tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install
-3. 给python3安装MySQLdb模块
+3. 给python3安装MySQLdb模块<br/>
 pip install pymysql
 记得确保settings.py里有如下两行：
 import pymysql
 pymysql.install_as_MySQLdb()
-
+<br/>
 由于python3使用的pymysql模块里并未兼容inception返回的server信息，因此需要编辑/path/to/python3/lib/python3.4/site-packages/pymysql/connections.py：
 在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行前面加上下面一句并保存：
 self.server_version = '5.6.24-72.2-log'
@@ -35,4 +41,8 @@ python3 manage.py migrate
 cd archer && python3 manage.py createsuperuser
 7. 用django内置runserver启动服务：
 cd archer && bash debug.sh
-如果要用gunicorn启动服务的话，需要配合nginx处理静态资源.
+
+如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
+
+### 联系方式：
+164473279@qq.com
