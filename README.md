@@ -18,8 +18,13 @@ django：1.8
 
 ### 安装步骤：
 1. 安装python3：<br/>
+<<<<<<< HEAD
 tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
+=======
+tar -xzvf Python-3.4.1.tar.gz
+cd Python-3.4.1
+>>>>>>> 05e317eecd6db31315e0fbb2ffe064e48c1f9b1c
 ./configure --prefix=/path/to/python3 && make && make install
 或者rpm、yum、binary等其他安装方式
 2. 安装django：<br/>
