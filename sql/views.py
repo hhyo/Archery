@@ -249,7 +249,8 @@ def cancel(request):
 
     #服务器端二次验证，如果正在执行终止动作的当前登录用户，不是发起人也不是审核人，则异常.
     loginUser = request.session.get('login_username', False)
-    if loginUser is None or loginUser != workflowDetail.review_man or loginUser != workflowDetail.engineer:
+    print(loginUser+workflowDetail.review_man+workflowDetail.engineer)
+    if loginUser is None or (loginUser != workflowDetail.review_man and loginUser != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人也不是发起人，请重新登录.'}
         return render(request, 'error.html', context)
 
