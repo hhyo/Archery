@@ -46,5 +46,13 @@ cd archer && bash debug.sh<br/>
 <br/>
 如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
 
+### 系统展示截图：
+1. 工单展示页：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/allworkflow.png)
+<br/>
+2. 用户登录页：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)
+<br/>
+
 ### 联系方式：
 164473279@qq.com
