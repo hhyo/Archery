@@ -50,7 +50,13 @@ cd archer && bash debug.sh<br/>
 1. 工单展示页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/allworkflow.png)
 <br/>
-2. 用户登录页：<br/>
+2. 提交SQL工单：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/submitsql.png)
+<br/>
+3. SQL自动审核、人工审核、执行结果详情页：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/waitingforme.png)
+<br/>
+4. 用户登录页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)
 <br/>
 
