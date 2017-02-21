@@ -125,7 +125,9 @@ class InceptionDao(object):
         except MySQLdb.Error as e:
             print("Mysql Error %d: %s" % (e.args[0], e.args[1]))
         finally:
-            cur.close()
-            conn.close()
+            if cur is not None:
+                cur.close()
+            if conn is not None:
+                conn.close()
         return result
 

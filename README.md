@@ -25,6 +25,10 @@ pip install pymysql
 记得确保settings.py里有如下两行：
 import pymysql
 pymysql.install_as_MySQLdb()
+
+由于python3使用的pymysql模块里并未兼容inception返回的server信息，因此需要编辑/path/to/python3/lib/python3.4/site-packages/pymysql/connections.py：
+在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行前面加上下面一句并保存：
+self.server_version = '5.6.24-72.2-log'
 6. 记得登录到settings.py里配置的各个mysql里给用户授权
 grant ...
 7. 通过model创建数据库表
