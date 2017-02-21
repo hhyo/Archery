@@ -59,6 +59,8 @@ cd archer && bash debug.sh<br/>
 4. 用户登录页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)
 <br/>
-
+4. 用户、集群、工单管理：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)
+<br/>
 ### 联系方式：
 164473279@qq.com
