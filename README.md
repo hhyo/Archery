@@ -25,6 +25,10 @@ pip install pymysql
 记得确保settings.py里有如下两行：
 import pymysql
 pymysql.install_as_MySQLdb()
-
+6. 记得登录到settings.py里配置的各个mysql里给用户授权
+grant ...
+7. 通过model创建数据库表
+python3 manage.py makemigrations
+python3 manage.py migrate
 10. 启动服务：
 cd archer && bash startup.sh
