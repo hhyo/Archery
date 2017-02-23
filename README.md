@@ -2,7 +2,7 @@
 基于inception的自动化SQL操作平台
 
 ### 开发语言
-python：3.4
+python：3.4<br/>
 django：1.8
 
 ### 主要功能
@@ -17,6 +17,7 @@ django：1.8
 * 可通过django admin进行匹配SQL关键字的工单搜索
 
 ### 安装步骤：
+0. 克隆代码
 1. 安装python3：<br/>
 tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
@@ -39,9 +40,13 @@ python3 manage.py migrate<br/>
 5. 记得登录到settings.py里配置的各个mysql里给用户授权<br/>
 (1)archer数据库授权<br/>
 (2)远程备份库授权<br/>
-6. 创建系统root用户（该用户可以使用django admin来管理model）：<br/>
+6. 创建admin系统root用户（该用户可以登录django admin来管理model）：<br/>
 cd archer && python3 manage.py createsuperuser<br/>
-7. 用django内置runserver启动服务：<br/>
+7. 创建archer系统登录用户（用户名密码自定义，至少创建一个工程师和一个审核人，后续新的用户请用LDAP导入或django admin增加）：<br/>
+登录archer数据库，执行：<br/>
+use archer; insert into sql_users(username, password, display, role) values('user1', 'pass1', '张三', '工程师');<br/>
+use archer; insert into sql_users(username, password, display, role) values('user2', 'pass2', '李四', '审核人');<br/>
+8. 用django内置runserver启动服务：<br/>
 cd archer && bash debug.sh<br/>
 <br/>
 如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
@@ -62,5 +67,6 @@ cd archer && bash debug.sh<br/>
 4. 用户、集群、工单管理：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)
 <br/>
+
 ### 联系方式：
 164473279@qq.com

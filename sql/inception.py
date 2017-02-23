@@ -118,7 +118,7 @@ class InceptionDao(object):
         conn = None
         cur = None
         try:
-            conn=MySQLdb.connect(host=paramHost, user=paramUser, passwd=paramPasswd, db=paramDb, port=paramPort)
+            conn=MySQLdb.connect(host=paramHost, user=paramUser, passwd=paramPasswd, db=paramDb, port=paramPort, charset='utf8mb4')
             cur=conn.cursor()
             ret=cur.execute(sql)
             result=cur.fetchall()
