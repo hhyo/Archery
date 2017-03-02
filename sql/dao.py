@@ -6,6 +6,9 @@ class Dao(object):
     #连进指定的mysql实例里，读取所有databases并返回
     def getAlldbByCluster(self, masterHost, masterPort, masterUser, masterPassword):
         listDb = []
+        conn = None
+        cursor = None
+        
         try:
             conn=MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword)
             cursor = conn.cursor()
@@ -18,7 +21,9 @@ class Dao(object):
         except MySQLdb.Error as e:
             print(str(e))
         finally:
-            cursor.close()
-            conn.commit()
-            conn.close()
+            if cursor is not None:
+                cursor.close()
+            if conn is not None:
+                conn.commit()
+                conn.close()
         return listDb

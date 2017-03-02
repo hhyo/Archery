@@ -66,16 +66,16 @@
 						<th>
 							SQL内容
 						</th>
-						<th>
+						<th width="110px">
 							自动审核结果
 						</th>
-						<th>
+						<th width="110px">
 							扫描/影响行数
 						</th>
-						<th>
+						<th width="100px">
 							执行耗时
 						</th>
-						<th>
+						<th width="100px">
 							执行状态
 						</th>
 					</tr>
@@ -120,12 +120,13 @@
 				<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
 				<input type="submit" id="btnCancel" type="button" class="btn btn-default" data-loading-text="Loading..." value="终止流程" />
 			</form>
-			</div>
 			{% elif workflowDetail.status == '已正常结束' and workflowDetail.is_backup == '是' %}
 			<form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
                 <input type="submit" id="btnRollback" type="button" class="btn btn-default" data-loading-text="Loading..." value="查看回滚SQL" />
             </form>
+			{% elif workflowDetail.status == '自动审核不通过' %}
+				<input type='button' class='btn btn-default' value='点此重新修改(其实是浏览器后退..)' onclick="history.back();" />
 			{% endif %}
 {% endblock content%}

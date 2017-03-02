@@ -218,6 +218,11 @@ def execute(request):
         context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
         return render(request, 'error.html', context)
 
+    #服务器端二次验证，当前工单状态必须为等待人工审核
+    if workflowDetail.status != Const.workflowStatus['manreviewing']:
+        context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
+        return render(request, 'error.html', context)
+
     dictConn = getMasterConnStr(clusterName)
    
     #将流程状态修改为执行中，并更新reviewok_time字段
@@ -249,10 +254,13 @@ def cancel(request):
 
     #服务器端二次验证，如果正在执行终止动作的当前登录用户，不是发起人也不是审核人，则异常.
     loginUser = request.session.get('login_username', False)
-    print(loginUser+workflowDetail.review_man+workflowDetail.engineer)
     if loginUser is None or (loginUser != workflowDetail.review_man and loginUser != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人也不是发起人，请重新登录.'}
         return render(request, 'error.html', context)
+
+    #服务器端二次验证，如果当前单子状态是结束状态，则不能发起终止
+    if workflowDetail.status in (Const.workflowStatus['abort'], Const.workflowStatus['finish'], Const.workflowStatus['autoreviewwrong'], Const.workflowStatus['exception']):
+        return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
 
     workflowDetail.status = Const.workflowStatus['abort']
     workflowDetail.save()
