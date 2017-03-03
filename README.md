@@ -24,7 +24,9 @@ linux : 64位linux操作系统均可
 * 可通过django admin进行匹配SQL关键字的工单搜索
 
 ### 安装步骤：
-1. 克隆代码到本地: git clone https://github.com/jly8866/archer.git或下载zip包
+1. 克隆代码到本地: git clone https://github.com/jly8866/archer.git或下载zip包<br/>
+安装mysql 5.6实例<br/>
+安装inception<br/>
 2. 安装python3：<br/>
 tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
@@ -41,10 +43,12 @@ pymysql.install_as_MySQLdb()<br/>
 由于python3使用的pymysql模块里并未兼容inception返回的server信息，因此需要编辑/path/to/python3/lib/python3.4/site-packages/pymysql/connections.py：<br/>
 在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行前面加上下面一句并保存：<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
-5. 通过model创建数据库表<br/>
+5. 创建archer本身的数据库表：<br/>
+(1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
+(2)通过model创建archer本身的数据库表<br/>
 python3 manage.py makemigrations<br/>
 python3 manage.py migrate<br/>
-6. 记得登录到settings.py里配置的各个mysql里给用户授权<br/>
+6. 记得登录到archer/archer/settings.py里配置的各个mysql里给用户授权<br/>
 (1)archer数据库授权<br/>
 (2)远程备份库授权<br/>
 7. 创建admin系统root用户（该用户可以登录django admin来管理model）：<br/>
