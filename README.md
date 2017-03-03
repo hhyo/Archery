@@ -24,7 +24,7 @@ linux : 64位linux操作系统均可
 * 可通过django admin进行匹配SQL关键字的工单搜索
 
 ### 安装步骤：
-1. 克隆代码到本地: git clone https://github.com/jly8866/archer.git或下载zip包<br/>
+1. 克隆代码到本地: git clone https://github.com/jly8866/archer.git  或  下载zip包<br/>
 安装mysql 5.6实例<br/>
 安装inception<br/>
 2. 安装python3：<br/>
@@ -45,26 +45,26 @@ pymysql.install_as_MySQLdb()<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
 5. 创建archer本身的数据库表：<br/>
 (1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
-(2)通过model创建archer本身的数据库表<br/>
-python3 manage.py makemigrations<br/>
+(2)通过model创建archer本身的数据库表, 记得先去archer数据库里CREATE DATABASE<br/>
+python3 manage.py makemigrations sql<br/>
 python3 manage.py migrate<br/>
 6. 记得登录到archer/archer/settings.py里配置的各个mysql里给用户授权<br/>
 (1)archer数据库授权<br/>
 (2)远程备份库授权<br/>
 7. 创建admin系统root用户（该用户可以登录django admin来管理model）：<br/>
 cd archer && python3 manage.py createsuperuser<br/>
-8. 创建archer系统登录用户（用户名密码自定义，至少创建一个工程师和一个审核人，后续新的用户请用LDAP导入或django admin增加）：<br/>
-登录archer数据库，执行：<br/>
-use archer; insert into sql_users(username, password, display, role) values('user1', 'pass1', '张三', '工程师');<br/>
-use archer; insert into sql_users(username, password, display, role) values('user2', 'pass2', '李四', '审核人');<br/>
-9. 启动：用django内置runserver启动服务<br/>
+8. 启动：用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
 cd archer && bash debug.sh<br/>
 <br/>
 如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
-10. 访问页面：使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/<br/>
+9. 创建archer系统登录用户：<br/>
+使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
+点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人，后续新的用户请用LDAP导入或django admin增加<br/>
 如果没有登陆的话，会首先来到登录页面，请输入步骤8创建的archer系统登录用户进行登录。
-11. 配置主库地址：<br/>
-点击首页里的主库地址配置，可能会需要用步骤7创建的root用户登录admin界面进行创建.
+10. 配置主库地址：<br/>
+使用浏览器访问http://X.X.X.X:port/admin/sql/master_config/ ，点击右侧Add master_config<br/>
+这一步是为了告诉archer你要用inception去哪些mysql主库里执行SQL，所用到的用户名密码、端口等。<br/>
+11. 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, http://X.X.X.X:port/<br/>
 
 ### 系统展示截图：
 1. 工单展示页：<br/>
