@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: UTF-8 -*- 
 
 leftMenuBtns = (
                    {'key':'allworkflow',        'name':'查看历史工单',     'url':'/allworkflow/',              'class':'glyphicon glyphicon-home'},

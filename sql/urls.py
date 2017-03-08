@@ -1,4 +1,5 @@
-#coding=utf-8
+# -*- coding: UTF-8 -*- 
+
 from django.conf.urls import url,include
 from . import views
 

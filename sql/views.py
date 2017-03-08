@@ -1,4 +1,5 @@
-# coding = utf-8
+# -*- coding: UTF-8 -*- 
+
 import re
 import json
 import time
@@ -129,8 +130,9 @@ def submitSql(request):
         listDb = dao.getAlldbByCluster(masterHost, masterPort, masterUser, masterPassword)
         dictAllClusterDb[clusterName] = listDb
 
-    #获取所有审核人
-    reviewMen = users.objects.filter(role='审核人')
+    #获取所有审核人，当前登录用户不可以审核
+    loginUser = request.session.get('login_username', False)
+    reviewMen = users.objects.filter(role='审核人').exclude(username=loginUser)
     if len(reviewMen) == 0:
        context = {'errMsg': '审核人为0，请配置审核人'}
        return render(request, 'error.html', context) 

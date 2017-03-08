@@ -1,4 +1,4 @@
-# coding = utf-8
+# -*- coding: UTF-8 -*- 
 
 import MySQLdb
 
@@ -10,7 +10,7 @@ class Dao(object):
         cursor = None
         
         try:
-            conn=MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword)
+            conn=MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, charset='utf8mb4')
             cursor = conn.cursor()
             sql = "show databases"
             n = cursor.execute(sql)
