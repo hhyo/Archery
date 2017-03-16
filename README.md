@@ -59,7 +59,6 @@ cd archer && python3 manage.py createsuperuser<br/>
 8. 启动：<br/>
 用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
 cd archer && bash debug.sh<br/>
-<br/>
 如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
@@ -72,20 +71,15 @@ cd archer && bash debug.sh<br/>
 
 ### 系统展示截图：
 1. 工单展示页：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/allworkflow.png)
-<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/allworkflow.png)<br/>
 2. 提交SQL工单：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/submitsql.png)
-<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/submitsql.png)<br/>
 3. SQL自动审核、人工审核、执行结果详情页：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/waitingforme.png)
-<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/waitingforme.png)<br/>
 4. 用户登录页：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)
-<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)<br/>
 4. 用户、集群、工单管理：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)
-<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)<br/>
 
 ### 联系方式：
 164473279@qq.com
