@@ -40,7 +40,6 @@ pip install pymysql<br/>
 记得确保settings.py里有如下两行：<br/>
 import pymysql<br/>
 pymysql.install_as_MySQLdb()<br/>
-<br/>
 由于python3使用的pymysql模块里并未兼容inception返回的server信息，因此需要编辑/path/to/python3/lib/python3.4/site-packages/pymysql/connections.py：<br/>
 在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行之前加上以下这一句并保存：<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
