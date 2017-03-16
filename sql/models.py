@@ -1,19 +1,22 @@
 # -*- coding: UTF-8 -*- 
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
 #角色分两种：
 #1.工程师：可以提交SQL上线单的工程师们，username字段为登录用户名，display字段为展示的中文名。
 #2.审核人：可以审核并执行SQL上线单的管理者、高级工程师、系统管理员们。
-class users(models.Model):
-    username = models.CharField('用户名', max_length=50)
-    password = models.CharField('密码', max_length=50)
+class users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50)
     role = models.CharField('角色', max_length=20, choices=(('工程师','工程师'),('审核人','审核人')), default='工程师')
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        verbose_name = u'用户配置'
+        verbose_name_plural = u'用户配置'
 
 #各个线上主库地址。
 class master_config(models.Model):
@@ -27,6 +30,9 @@ class master_config(models.Model):
 
     def __str__(self):
         return self.cluster_name
+    class Meta:
+        verbose_name = u'主库地址'
+        verbose_name_plural = u'主库地址'
 
 #存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class workflow(models.Model):
@@ -46,3 +52,6 @@ class workflow(models.Model):
 
     def __str__(self):
         return self.workflow_name
+    class Meta:
+        verbose_name = u'工单管理'
+        verbose_name_plural = u'工单管理'

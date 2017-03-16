@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import check_password
 
 from .models import users, master_config, workflow
 from .dao import Dao
@@ -29,7 +30,7 @@ def logout(request):
 #ajax接口，登录页面调用，用来验证用户名密码
 @csrf_exempt
 def authenticate(request):
-    """认证机制做的非常简单，密码没有加密，各位看官自行实现，建议类似md5单向加密即可。"""
+    """认证机制做的非常简单"""
     if request.is_ajax():
         strUsername = request.POST.get('username')
         strPassword = request.POST.get('password')
@@ -42,8 +43,9 @@ def authenticate(request):
     if strUsername == "" or strPassword == "" or strUsername is None or strPassword is None:
         result = {'status':2, 'msg':'登录用户名或密码为空，请重新输入!', 'data':''}
 
-    login_user = users.objects.filter(username=strUsername, password=strPassword)
-    if len(login_user) == 1:
+    correct_users = users.objects.filter(username=strUsername)
+    if len(correct_users) == 1 and check_password(strPassword, correct_users[0].password) == True:
+        #调用了django内置函数check_password函数检测输入的密码是否与django默认的PBKDF2算法相匹配
         request.session['login_username'] = strUsername
         result = {'status':0, 'msg':'ok', 'data':''}
     else:
