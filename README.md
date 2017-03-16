@@ -45,7 +45,7 @@ pymysql.install_as_MySQLdb()<br/>
 在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行之前加上以下这一句并保存：<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
 最后看起来像这样：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/pymysql.png)
+![image](https://github.com/jly8866/archer/raw/master/screenshots/pymysql.png)<br/>
 5. 创建archer本身的数据库表：<br/>
 (1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
 (2)通过model创建archer本身的数据库表, 记得先去archer数据库里CREATE DATABASE<br/>
