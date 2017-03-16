@@ -4,4 +4,3 @@
 *.log
 .idea/
 .DS_Store
-sql/migrations/
