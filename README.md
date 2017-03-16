@@ -64,7 +64,7 @@ cd archer && bash debug.sh<br/>
 如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
-点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人(步骤7创建的用户也可以登录)后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
+点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
 10. 配置主库地址：<br/>
 使用浏览器访问http://X.X.X.X:port/admin/sql/master_config/ ，点击右侧Add master_config<br/>
 这一步是为了告诉archer你要用inception去哪些mysql主库里执行SQL，所用到的用户名密码、端口等。<br/>
