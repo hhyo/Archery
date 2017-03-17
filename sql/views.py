@@ -17,10 +17,12 @@ from .const import Const
 from .sendmail import MailSender
 from .inception import InceptionDao
 from .models import users, master_config, workflow
+from .aes_decryptor import Prpcrypt
 
 dao = Dao()
 inceptionDao = InceptionDao()
 mailSender = MailSender()
+prpCryptor = Prpcrypt()
 
 # Create your views here.
 def login(request):
@@ -131,7 +133,7 @@ def submitSql(request):
         masterHost = listMasters[0].master_host
         masterPort = listMasters[0].master_port
         masterUser = listMasters[0].master_user
-        masterPassword = listMasters[0].master_password
+        masterPassword = prpCryptor.decrypt(listMasters[0].master_password)
 
         listDb = dao.getAlldbByCluster(masterHost, masterPort, masterUser, masterPassword)
         dictAllClusterDb[clusterName] = listDb
@@ -326,7 +328,7 @@ def getMasterConnStr(clusterName):
     masterHost = listMasters[0].master_host
     masterPort = listMasters[0].master_port
     masterUser = listMasters[0].master_user
-    masterPassword = listMasters[0].master_password
+    masterPassword = prpCryptor.decrypt(listMasters[0].master_password)
     dictConn = {'masterHost':masterHost, 'masterPort':masterPort, 'masterUser':masterUser, 'masterPassword':masterPassword}
     return dictConn
 

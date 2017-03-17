@@ -121,7 +121,8 @@ DATABASES = {
 INCEPTION_HOST = '192.168.1.11'
 INCEPTION_PORT = '6100'
 
-#inception要备份数据到该远端mysql地址
+#查看回滚SQL时候会用到，这里要告诉archer去哪个mysql里读取inception备份的回滚信息和SQL.
+#注意这里要和inception组件的inception.conf里的inception_remote_XX部分保持一致.
 INCEPTION_REMOTE_BACKUP_HOST='192.168.1.12'
 INCEPTION_REMOTE_BACKUP_PORT=5621
 INCEPTION_REMOTE_BACKUP_USER='inception'

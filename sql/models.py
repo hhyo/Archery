@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*- 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from .aes_decryptor import Prpcrypt
 
 # Create your models here.
 
@@ -33,6 +34,12 @@ class master_config(models.Model):
     class Meta:
         verbose_name = u'主库地址'
         verbose_name_plural = u'主库地址'
+
+    def save(self, *args, **kwargs):
+        pc = Prpcrypt() #初始化
+        self.master_password = pc.encrypt(self.master_password)
+        super(master_config, self).save(*args, **kwargs)
+
 
 #存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class workflow(models.Model):

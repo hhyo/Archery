@@ -19,7 +19,8 @@ linux : 64位linux操作系统均可
 * 回滚数据展示
 * 主库集群配置
 * 用户权限配置<br/>
-  工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL
+  工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL.<br/>
+  还有一个特殊的超级管理员即可以上线、审核，又可以登录admin界面进行管理.
 * 历史工单管理
 * 可通过django admin进行匹配SQL关键字的工单搜索
 * 发起SQL上线，可配置的邮件提醒审核人进行审核
@@ -45,7 +46,7 @@ pip install pymysql<br/>
 import pymysql<br/>
 pymysql.install_as_MySQLdb()<br/>
 由于python3使用的pymysql模块里并未兼容inception返回的server信息，因此需要编辑/path/to/python3/lib/python3.4/site-packages/pymysql/connections.py：<br/>
-在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行之前加上以下这一句并保存：<br/>
+在if int(self.server_version.split('.', 1)[0]) >= 5: 这一行之前加上以下这一句并保存，记得别用tab键用4个空格缩进：<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
 最后看起来像这样：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/pymysql.png)<br/>
