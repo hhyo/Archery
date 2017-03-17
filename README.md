@@ -38,11 +38,12 @@ tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
 ./configure --prefix=/path/to/python3 && make && make install
 或者rpm、yum、binary等其他安装方式
-3. 安装所需相关模块：
+3. 安装所需相关模块：<br/>
 (1)django：<br/>
-tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install
+tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install<br/>
 (2)Crypto:<br/>
-pip3 install Crypto
+pip3 install Crypto<br/>
+pip3 install pycrypto
 4. 给python3安装MySQLdb模块:<br/>
 pip3 install pymysql<br/>
 记得确保settings.py里有如下两行：<br/>
