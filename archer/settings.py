@@ -77,23 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'archer.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-#该项目本身的mysql数据库地址
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'archer',
-        'USER': 'archer_rw',
-        'PASSWORD': 'archer_rw',
-        'HOST': '172.21.139.1',
-        'PORT': '5000'
-    }
-}
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
@@ -114,14 +97,41 @@ USE_TZ = False
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+#扩展django admin里users字段用到，指定了sql/models.py里的class users
+AUTH_USER_MODEL="sql.users"
+
+###############以下部分需要用户根据自己环境自行修改###################
+
+# Database
+# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
+
+#该项目本身的mysql数据库地址
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'archer',
+        'USER': 'archer_rw',
+        'PASSWORD': 'archer_rw',
+        'HOST': '127.0.0.1',
+        'PORT': '5000'
+    }
+}
+
 #inception组件所在的地址
-INCEPTION_HOST = '172.16.5.7'
+INCEPTION_HOST = '192.168.1.11'
 INCEPTION_PORT = '6100'
 
 #inception要备份数据到该远端mysql地址
-INCEPTION_REMOTE_BACKUP_HOST='172.16.5.10'
+INCEPTION_REMOTE_BACKUP_HOST='192.168.1.12'
 INCEPTION_REMOTE_BACKUP_PORT=5621
 INCEPTION_REMOTE_BACKUP_USER='inception'
 INCEPTION_REMOTE_BACKUP_PASSWORD='inception'
 
-AUTH_USER_MODEL="sql.users"
+#是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA. on是开，off是关，配置为其他值均会被archer认为不开启邮件功能
+MAIL_ON_OFF='on'
+
+MAIL_REVIEW_SMTP_SERVER='mail.xxx.com'
+MAIL_REVIEW_SMTP_PORT=25
+MAIL_REVIEW_FROM_ADDR='archer@xxx.com'                                               #发件人，也是登录SMTP server需要提供的用户名
+MAIL_REVIEW_FROM_PASSWORD=''                                                         #发件人邮箱密码，如果为空则不需要login SMTP server
+MAIL_REVIEW_DBA_ADDR=['zhangsan@abc.com', 'lisi01@abc.com']        #DBA地址，执行完毕会发邮件给DBA，以list形式保存

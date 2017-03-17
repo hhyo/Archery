@@ -19,6 +19,7 @@ class workflowAdmin(admin.ModelAdmin):
 class usersCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super(usersCreationForm, self).__init__(*args, **kwargs)
+        self.fields['email'].required = True
         self.fields['display'].required = True
         self.fields['role'].required = True
 
@@ -26,14 +27,15 @@ class usersCreationForm(UserCreationForm):
 class usersChangeForm(UserChangeForm): 
     def __init__(self, *args, **kwargs):
         super(usersChangeForm, self).__init__(*args, **kwargs)
+        self.fields['email'].required = True
         self.fields['display'].required = True        
         self.fields['role'].required = True        
 
 class usersAdmin(UserAdmin):
     def __init__(self, *args, **kwargs):
         super(usersAdmin, self).__init__(*args, **kwargs)
-        self.list_display = ('id', 'username', 'display', 'role', 'password', 'is_superuser', 'is_staff')
-        self.search_fields = ('id', 'username', 'display', 'role')
+        self.list_display = ('id', 'username', 'display', 'role', 'email', 'password', 'is_superuser', 'is_staff')
+        self.search_fields = ('id', 'username', 'display', 'role', 'email')
         self.form = usersChangeForm
         self.add_form = usersCreationForm
         #以上的属性都可以在django源码的UserAdmin类中找到，我们做以覆盖
@@ -44,13 +46,13 @@ class usersAdmin(UserAdmin):
             #此字段定义UserChangeForm表单中的具体显示内容，并可以分类显示
             self.fieldsets = (
                               (('认证信息'), {'fields': ('username', 'password')}),
-                              (('个人信息'), {'fields': ('display', 'role')}),
+                              (('个人信息'), {'fields': ('display', 'role', 'email')}),
                               (('权限信息'), {'fields': ('is_active', 'is_staff')}),
                               #(('Important dates'), {'fields': ('last_login', 'date_joined')}),
                               )
             #此字段定义UserCreationForm表单中的具体显示内容
             self.add_fieldsets = ((None, {'classes': ('wide',),
-                                          'fields': ('username', 'display', 'role', 'password1', 'password2'),
+                                          'fields': ('username', 'display', 'role', 'email', 'password1', 'password2'),
                                           }),
                                   )
         return super(usersAdmin, self).changelist_view(request, extra_context)

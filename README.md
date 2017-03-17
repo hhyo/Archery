@@ -7,7 +7,7 @@ django：1.8<br/>
 mysql : 5.6及以上<br/>
 linux : 64位linux操作系统均可
 
-### 主要功能
+### 主要功能：
 * 自动审核：<br/>
   发起SQL上线，工单提交，由inception自动审核，审核通过后需要由审核人进行人工审核
 * 人工审核：<br/>
@@ -22,6 +22,10 @@ linux : 64位linux操作系统均可
   工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL
 * 历史工单管理
 * 可通过django admin进行匹配SQL关键字的工单搜索
+* 发起SQL上线，可配置的邮件提醒审核人进行审核
+
+### 主要配置文件：
+* archer/archer/settings.py
 
 ### 安装步骤：
 1. 环境准备：<br/>

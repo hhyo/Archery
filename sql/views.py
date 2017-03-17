@@ -3,20 +3,24 @@
 import re
 import json
 import time
+import multiprocessing
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
+from django.conf import settings
 
-from .models import users, master_config, workflow
 from .dao import Dao
-from .inception import InceptionDao
 from .const import Const
+from .sendmail import MailSender
+from .inception import InceptionDao
+from .models import users, master_config, workflow
 
 dao = Dao()
 inceptionDao = InceptionDao()
+mailSender = MailSender()
 
 # Create your views here.
 def login(request):
@@ -179,9 +183,10 @@ def autoreview(request):
             break
 
     #存进数据库里
+    engineer = request.session.get('login_username', False)
     newWorkflow = workflow()
     newWorkflow.workflow_name = workflowName
-    newWorkflow.engineer = request.session.get('login_username', False)
+    newWorkflow.engineer = engineer
     newWorkflow.review_man = reviewMan
     newWorkflow.create_time = getNow()
     newWorkflow.status = workflowStatus
@@ -191,6 +196,21 @@ def autoreview(request):
     newWorkflow.sql_content = sqlContent
     newWorkflow.save()
     workflowId = newWorkflow.id
+
+    #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人和发起人发一封邮件提醒.
+    if hasattr(settings, 'MAIL_ON_OFF') == True:
+        if getattr(settings, 'MAIL_ON_OFF') == "on":
+            url = _getDetailUrl(request) + str(workflowId) + '/'
+
+            #发一封邮件
+            strTitle = "新的SQL上线工单提醒"
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
+            objEngineer = users.objects.get(username=engineer)
+            objReviewMan = users.objects.get(username=reviewMan)
+            mailSender.sendEmail(strTitle, strContent, [objEngineer.email, objReviewMan.email])
+        else:
+            #不发邮件
+            pass
     
     return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
 
@@ -242,7 +262,23 @@ def execute(request):
     workflowDetail.execute_result = strJsonResult
     workflowDetail.finish_time = getNow()
     workflowDetail.status = finalStatus
-    workflowDetail.save() 
+    workflowDetail.save()
+
+    #如果执行完毕了，则根据settings.py里的配置决定是否给DBA一封邮件提醒.
+    if hasattr(settings, 'MAIL_ON_OFF') == True:
+        if getattr(settings, 'MAIL_ON_OFF') == "on":
+            url = _getDetailUrl(request) + str(workflowId) + '/'
+
+            #发一封邮件
+            engineer = workflowDetail.engineer
+            reviewMan = workflowDetail.review_man
+            strTitle = "SQL上线工单执行完毕"
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
+
+            mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+        else:
+            #不发邮件
+            pass
 
     return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
 
@@ -297,3 +333,9 @@ def getMasterConnStr(clusterName):
 #获取当前时间
 def getNow():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+#获取当前请求url
+def _getDetailUrl(request):
+    scheme = request.scheme
+    host = request.META['HTTP_HOST']
+    return "%s://%s/detail/" % (scheme, host)
