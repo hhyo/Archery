@@ -38,10 +38,13 @@ tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
 ./configure --prefix=/path/to/python3 && make && make install
 或者rpm、yum、binary等其他安装方式
-3. 安装django：<br/>
+3. 安装所需相关模块：
+(1)django：<br/>
 tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install
+(2)Crypto:<br/>
+pip3 install Crypto
 4. 给python3安装MySQLdb模块:<br/>
-pip install pymysql<br/>
+pip3 install pymysql<br/>
 记得确保settings.py里有如下两行：<br/>
 import pymysql<br/>
 pymysql.install_as_MySQLdb()<br/>
@@ -64,7 +67,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 8. 启动：<br/>
 用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
 cd archer && bash debug.sh<br/>
-如果要用gunicorn启动服务的话，可以使用pip install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
+如果要用gunicorn启动服务的话，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
