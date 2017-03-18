@@ -161,7 +161,8 @@ def autoreview(request):
     if sqlContent is None or workflowName is None or clusterName is None or isBackup is None or reviewMan is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
-    elif sqlContent[-1] != ";":
+    sqlContent = sqlContent.rstrip()
+    if sqlContent[-1] != ";":
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
         return render(request, 'error.html', context)
  

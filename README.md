@@ -57,7 +57,7 @@ self.server_version = '5.6.24-72.2-log'<br/>
 5. 创建archer本身的数据库表：<br/>
 (1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
 (2)通过model创建archer本身的数据库表, 记得先去archer数据库里CREATE DATABASE<br/>
-python3 manage.py makemigrations sql<br/>
+python3 manage.py makemigrations或python3 manage.py makemigrations sql<br/>
 python3 manage.py migrate<br/>
 6. mysql授权:<br/>
 记得登录到archer/archer/settings.py里配置的各个mysql里给用户授权<br/>
