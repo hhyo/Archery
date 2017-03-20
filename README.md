@@ -25,6 +25,11 @@ linux : 64位linux操作系统均可
 * 可通过django admin进行匹配SQL关键字的工单搜索
 * 发起SQL上线，可配置的邮件提醒审核人进行审核
 
+### 设计规范：
+合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。<br/>
+互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。<br/>
+下载链接：  https://github.com/jly8866/archer/raw/master/docs/mysql_db_design_guide.docx
+
 ### 主要配置文件：
 * archer/archer/settings.py
 
