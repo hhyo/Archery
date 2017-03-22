@@ -200,20 +200,22 @@ def autoreview(request):
     newWorkflow.save()
     workflowId = newWorkflow.id
 
-    #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人和发起人发一封邮件提醒.
-    if hasattr(settings, 'MAIL_ON_OFF') == True:
-        if getattr(settings, 'MAIL_ON_OFF') == "on":
-            url = _getDetailUrl(request) + str(workflowId) + '/'
+    #自动审核通过了，才发邮件
+    if workflowStatus == Const.workflowStatus['manreviewing']:
+        #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人和发起人发一封邮件提醒.
+        if hasattr(settings, 'MAIL_ON_OFF') == True:
+            if getattr(settings, 'MAIL_ON_OFF') == "on":
+                url = _getDetailUrl(request) + str(workflowId) + '/'
 
-            #发一封邮件
-            strTitle = "新的SQL上线工单提醒"
-            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
-            objEngineer = users.objects.get(username=engineer)
-            objReviewMan = users.objects.get(username=reviewMan)
-            mailSender.sendEmail(strTitle, strContent, [objEngineer.email, objReviewMan.email])
-        else:
-            #不发邮件
-            pass
+                #发一封邮件
+                strTitle = "新的SQL上线工单提醒"
+                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
+                objEngineer = users.objects.get(username=engineer)
+                objReviewMan = users.objects.get(username=reviewMan)
+                mailSender.sendEmail(strTitle, strContent, [objEngineer.email, objReviewMan.email])
+            else:
+                #不发邮件
+                pass
     
     return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
 
@@ -321,6 +323,11 @@ def rollback(request):
    
     context = {'listBackupSql':listBackupSql}
     return render(request, 'rollback.html', context)
+
+#SQL审核必读
+def dbaprinciples(request):
+    context = {'currentMenu':'dbaprinciples'}
+    return render(request, 'dbaprinciples.html', context)
 
 #根据集群名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):

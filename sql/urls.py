@@ -17,4 +17,5 @@ urlpatterns = [
     url(r'^execute/$', views.execute, name='execute'),
     url(r'^cancel/$', views.cancel, name='cancel'),
     url(r'^rollback/$', views.rollback, name='rollback'),
+    url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
 ]
