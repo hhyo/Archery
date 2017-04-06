@@ -36,7 +36,8 @@ class MailSender(object):
         # 收件人地址:
 
         msg['From'] = self._format_addr(self.MAIL_REVIEW_FROM_ADDR)
-        msg['To'] = self._format_addr(listToAddr)
+        #msg['To'] = self._format_addr(listToAddr)
+        msg['To'] = ','.join(listToAddr)
         msg['Subject'] = Header(strTitle, "utf-8").encode()
 
         server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
