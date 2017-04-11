@@ -96,4 +96,4 @@ cd archer && bash debug.sh<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)<br/>
 
 ### 联系方式：
-164473279@qq.com
+QQ群：524233225
