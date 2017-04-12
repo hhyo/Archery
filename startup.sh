@@ -1,3 +1,7 @@
 #!/bin/bash
 
-gunicorn -w 2 --env DJANGO_SETTINGS_MODULE=archer.settings --error-logfile=/tmp/archer.err -b 192.168.1.12:8888 archer.wsgi:application
+settings=${1:-"archer.settings"}
+ip=${2:-"192.168.1.12"}
+port=${3:-8888}
+
+gunicorn -w 2 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application
