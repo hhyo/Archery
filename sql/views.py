@@ -18,6 +18,7 @@ from .sendmail import MailSender
 from .inception import InceptionDao
 from .models import users, master_config, workflow
 from .aes_decryptor import Prpcrypt
+from django.db.models import Q
 
 dao = Dao()
 inceptionDao = InceptionDao()
@@ -92,18 +93,26 @@ def allworkflow(request):
     #查询workflow model，根据pageNo和navStatus获取对应的内容
     offset = pageNo * PAGE_LIMIT
     limit = offset + PAGE_LIMIT
-    
+
+    #修改全部工单、审核不通过、已执行完毕界面工程师只能看到自己发起的工单，审核人可以看到全部
     listWorkflow = []
     #查询全部流程
-    if navStatus == 'all':
+    loginUserOb = users.objects.get(username=loginUser)
+    if navStatus == 'all' and loginUserOb.role == '审核人':
         #这句话等同于select * from sql_workflow order by create_time desc limit {offset, limit};
         listWorkflow = workflow.objects.exclude(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]      
-    elif navStatus == 'waitingforme': 
+    elif navStatus == 'all' and loginUserOb.role == '工程师':
+        listWorkflow = workflow.objects.filter(Q(engineer=loginUser) | Q(status=Const.workflowStatus['autoreviewwrong']), engineer=loginUser).order_by('-create_time')[offset:limit]
+    elif navStatus == 'waitingforme':
         listWorkflow = workflow.objects.filter(status=Const.workflowStatus['manreviewing'], review_man=loginUser).order_by('-create_time')[offset:limit]
-    elif navStatus == 'finish':
+    elif navStatus == 'finish' and loginUserOb.role == '审核人':
         listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'autoreviewwrong':
+    elif navStatus == 'finish' and loginUserOb.role == '工程师':
+        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish'], engineer=loginUser).order_by('-create_time')[offset:limit]
+    elif navStatus == 'autoreviewwrong' and loginUserOb.role == '审核人':
         listWorkflow = workflow.objects.filter(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]
+    elif navStatus == 'autoreviewwrong' and loginUserOb.role == '工程师':
+        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['autoreviewwrong'], engineer=loginUser).order_by('-create_time')[offset:limit]
     else:
         context = {'errMsg': '传入的navStatus参数有误！'}
         return render(request, 'error.html', context)
