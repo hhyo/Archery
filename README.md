@@ -3,7 +3,7 @@
 
 ### 开发语言和推荐环境：
 python：3.4<br/>
-django：1.8<br/>
+django：1.8.17<br/>
 mysql : 5.6及以上<br/>
 linux : 64位linux操作系统均可
 
@@ -45,6 +45,7 @@ cd Python-3.4.1 <br/>
 3. 安装所需相关模块：<br/>
 (1)django：<br/>
 tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install<br/>
+或者pip3 install Django==1.8.17
 (2)Crypto:<br/>
 pip3 install Crypto<br/>
 pip3 install pycrypto
