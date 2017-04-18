@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*- 
 
+
 import re
 import json
 import time
@@ -211,17 +212,17 @@ def autoreview(request):
 
     #自动审核通过了，才发邮件
     if workflowStatus == Const.workflowStatus['manreviewing']:
-        #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人和发起人发一封邮件提醒.
+        #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人发一封邮件提醒.
         if hasattr(settings, 'MAIL_ON_OFF') == True:
             if getattr(settings, 'MAIL_ON_OFF') == "on":
                 url = _getDetailUrl(request) + str(workflowId) + '/'
 
                 #发一封邮件
                 strTitle = "新的SQL上线工单提醒"
-                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
+                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
                 objEngineer = users.objects.get(username=engineer)
                 objReviewMan = users.objects.get(username=reviewMan)
-                mailSender.sendEmail(strTitle, strContent, [objEngineer.email, objReviewMan.email])
+                mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
             else:
                 #不发邮件
                 pass
@@ -278,7 +279,7 @@ def execute(request):
     workflowDetail.status = finalStatus
     workflowDetail.save()
 
-    #如果执行完毕了，则根据settings.py里的配置决定是否给DBA一封邮件提醒.
+  #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
     if hasattr(settings, 'MAIL_ON_OFF') == True:
         if getattr(settings, 'MAIL_ON_OFF') == "on":
             url = _getDetailUrl(request) + str(workflowId) + '/'
@@ -286,9 +287,13 @@ def execute(request):
             #发一封邮件
             engineer = workflowDetail.engineer
             reviewMan = workflowDetail.review_man
+            workflowStatus = workflowDetail.status
+            workflowName = workflowDetail.workflow_name
+            objEngineer = users.objects.get(username=engineer)
+            objReviewMan = users.objects.get(username=reviewMan)
             strTitle = "SQL上线工单执行完毕"
-            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url
-
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
+            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
             mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
         else:
             #不发邮件
@@ -318,6 +323,25 @@ def cancel(request):
 
     workflowDetail.status = Const.workflowStatus['abort']
     workflowDetail.save()
+	
+    #如果人工终止了，则根据settings.py里的配置决定是否给提交者一封邮件提醒，并附带说明此单子被拒绝掉了，需要重新修改.
+    if hasattr(settings, 'MAIL_ON_OFF') == True:
+        if getattr(settings, 'MAIL_ON_OFF') == "on" and loginUser != workflowDetail.engineer:  #判断setting内容和当前登陆用户，如果为提交者自己终止的时候是不需要发邮件的
+            url = _getDetailUrl(request) + str(workflowId) + '/'
+
+            #发一封邮件
+            engineer = workflowDetail.engineer
+            reviewMan = workflowDetail.review_man
+            workflowStatus = workflowDetail.status
+            workflowName = workflowDetail.workflow_name
+            objEngineer = users.objects.get(username=engineer)
+            objReviewMan = users.objects.get(username=reviewMan)
+            strTitle = "SQL上线工单被拒绝执行"
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交"
+            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+        else:
+            #不发邮件
+            pass
 
     return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
 
