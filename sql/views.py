@@ -218,7 +218,7 @@ def autoreview(request):
                 url = _getDetailUrl(request) + str(workflowId) + '/'
 
                 #发一封邮件
-                strTitle = "新的SQL上线工单提醒"
+                strTitle = "新的SQL上线工单提醒 # " + str(workflowId)
                 strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
                 objEngineer = users.objects.get(username=engineer)
                 objReviewMan = users.objects.get(username=reviewMan)
@@ -291,7 +291,7 @@ def execute(request):
             workflowName = workflowDetail.workflow_name
             objEngineer = users.objects.get(username=engineer)
             objReviewMan = users.objects.get(username=reviewMan)
-            strTitle = "SQL上线工单执行完毕"
+            strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
             strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
             mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
             mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
@@ -337,7 +337,7 @@ def cancel(request):
             workflowName = workflowDetail.workflow_name
             objEngineer = users.objects.get(username=engineer)
             objReviewMan = users.objects.get(username=reviewMan)
-            strTitle = "SQL上线工单被拒绝执行"
+            strTitle = "SQL上线工单被拒绝执行 # " + str(workflowId)
             strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交"
             mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
         else:
