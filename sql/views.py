@@ -62,7 +62,7 @@ def authenticate(request):
 #首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
     #一个页面展示
-    PAGE_LIMIT = 12
+    PAGE_LIMIT = 2
 
     pageNo = 0
     navStatus = ''
@@ -118,7 +118,7 @@ def allworkflow(request):
         return render(request, 'error.html', context)
 
 
-    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus}
+    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus, 'PAGE_LIMIT':PAGE_LIMIT}
     return render(request, 'allWorkflow.html', context)
 
 #提交SQL的页面
