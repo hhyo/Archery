@@ -118,7 +118,7 @@ def allworkflow(request):
         return render(request, 'error.html', context)
 
 
-    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus}
+    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus, 'PAGE_LIMIT':PAGE_LIMIT}
     return render(request, 'allWorkflow.html', context)
 
 #提交SQL的页面
@@ -329,7 +329,7 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
     listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
-   
+
     context = {'listBackupSql':listBackupSql}
     return render(request, 'rollback.html', context)
 

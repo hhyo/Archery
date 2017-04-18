@@ -102,6 +102,7 @@
 				<li class="active">
 					 <a href="/allworkflow/?pageNo={{pageNo|add:"0"}}&navStatus={{navStatus}}">{{pageNo|add:"1"}}</a>
 				</li>
+				{% if listWorkflow|length >= PAGE_LIMIT %}
 				<li>
 					 <a href="/allworkflow/?pageNo={{pageNo|add:"1"}}&navStatus={{navStatus}}">{{pageNo|add:"2"}}</a>
 				</li>
@@ -117,6 +118,7 @@
 				<li>
 					 <a href="/allworkflow/?pageNo={{pageNo|add:"1"}}&navStatus={{navStatus}}">后一页</a>
 				</li>
+				{% endif %}
 			</ul>
 			</div>
 {% endblock content%}
