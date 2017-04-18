@@ -108,7 +108,8 @@ class InceptionDao(object):
             sqlBack = "select rollback_statement from %s.%s where opid_time='%s'" % (backupDbName, tableName, opidTime)
             listBackup = self._fetchall(sqlBack, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
             if listBackup is not None and len(listBackup) !=0:
-                listBackupSql.append(listBackup[0][0])
+                for rownum in range(len(listBackup)):
+                    listBackupSql.append(listBackup[rownum][0])
         return listBackupSql
             
 

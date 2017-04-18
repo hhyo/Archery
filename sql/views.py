@@ -329,7 +329,7 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
     listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
-   
+
     context = {'listBackupSql':listBackupSql}
     return render(request, 'rollback.html', context)
 
