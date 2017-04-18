@@ -279,7 +279,7 @@ def execute(request):
     workflowDetail.status = finalStatus
     workflowDetail.save()
 
-  #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
+    #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
     if hasattr(settings, 'MAIL_ON_OFF') == True:
         if getattr(settings, 'MAIL_ON_OFF') == "on":
             url = _getDetailUrl(request) + str(workflowId) + '/'
@@ -326,7 +326,8 @@ def cancel(request):
 	
     #如果人工终止了，则根据settings.py里的配置决定是否给提交者一封邮件提醒，并附带说明此单子被拒绝掉了，需要重新修改.
     if hasattr(settings, 'MAIL_ON_OFF') == True:
-        if getattr(settings, 'MAIL_ON_OFF') == "on" and loginUser != workflowDetail.engineer:  #判断setting内容和当前登陆用户，如果为提交者自己终止的时候是不需要发邮件的
+	    #判断setting内容和当前登陆用户，如果为提交者自己终止的时候是不需要发邮件的
+        if getattr(settings, 'MAIL_ON_OFF') == "on" and loginUser != workflowDetail.engineer:  
             url = _getDetailUrl(request) + str(workflowId) + '/'
 
             #发一封邮件
