@@ -62,7 +62,7 @@ def authenticate(request):
 #首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
     #一个页面展示
-    PAGE_LIMIT = 2
+    PAGE_LIMIT = 12
 
     pageNo = 0
     navStatus = ''
