@@ -7,7 +7,7 @@
 	<form action="/autoreview/" method="post" class="form-horizontal" role="form">
 		{% csrf_token %}
 		<div class="col-md-8 column">
-			<textarea name="sql_content" class="form-control" placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20 required></textarea>
+			<textarea id="sql_content" name="sql_content" class="form-control" placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20 required></textarea>
 		</div>
 
 		<div class="col-md-4 column">
@@ -29,14 +29,14 @@
 					</select>					
 				</div>
 				<div class="form-group">
-					<select id="basic" name="is_backup" class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份" data-placeholder="请选择是否要备份:" required>
+					<select id="is_backup" name="is_backup" class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份" data-placeholder="请选择是否要备份:" required>
           				<option disabled="" selected="selected">请选择是否要备份:</option>
           				<option value="是">是</option>
           				<option value="否">否</option>
         			</select>	
 				</div>
 				<div class="form-group">
-					<select id="basic" name="review_man" class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人" data-placeholder="请选择RD审核人:" required>
+					<select id="review_man" name="review_man" class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人" data-placeholder="请选择RD审核人:" required>
           			<option disabled="" selected="selected">请选择审核人:</option>
 					{% for man in reviewMen %}
 					<option value="{{man}}">{{man}}</option>
@@ -44,11 +44,53 @@
 					</select>
 				</div>
 				<div class="form-group">
-						 <button type="submit" class="btn btn-primary">提交SQL</button>
-						 <button type="reset" class="btn btn-default">清空重填</button>
+						<button type="submit" class="btn btn-primary">提交SQL</button>
+						<input type="button" id="btn-autoreview" class="btn btn-info" value="帮我检查" />
+						<button type="reset" class="btn btn-default">清空重填</button>
 				</div>
 	</form>
 		</div>
 	</div>
+
+	<div id="inception-result" style="display:none;" class="row clearfix">
+		<br/>
+		<div id="inception-result-col" class="col-md-12">
+			<div class="alert alert-success alert-dismissable">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+					×
+				</button>
+				<table class="">
+					<tr>
+						<td width="800px">CREATE TABLE `dba_z120` ( `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键', `cc_video_id` varchar(120) NOT NULL DEFAULT '0' COMMENT '视频id', `user_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '用户id', `v_status` tinyint(1) unsigned NOT NULL DEFAULT '1' COMMENT '状态值，1为正常，0为删除', `duration` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '片长', `cover` varchar(255) NOT NULL DEFAULT '' COMMENT '封面', `status` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '创建时间', PRIMARY KEY (`id`), KEY `idx_user_id` (`user_id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户视频表'</td>
+						<td><strong>自动审核结果：</strong><span id="result1">incetipinf ffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span></td>
+					</tr>
+				</table>
+			</div>
+			<div class="alert alert-dismissable alert-danger">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+					×
+				</button>
+				<table class="">
+					<tr>
+						<td width="800px">create table t222(id int)engine=innodb	</td>
+						<td><strong>自动审核结果：</strong>incetipinf ffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</td>
+					</tr>
+				</table>
+			</div>
+			<!--<div class="alert alert-dismissable alert-danger">
+				<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+					×
+				</button>
+				<table class="">
+					<tr>
+						<td width="800px">create table t222(id int)engine=innodb	</td>
+						<td>自动审核结果：incetipinf ffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</td>
+					</tr>
+				</table>
+			</div>  -->
+
+		</div>
+	</div>
+</div>
 </div>	
 {% endblock content %}
