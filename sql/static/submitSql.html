@@ -4,10 +4,10 @@
 <div class="container-fluid">
 	<div class="row clearfix">
 
-	<form action="/autoreview/" method="post" class="form-horizontal" role="form">
+	<form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
 		{% csrf_token %}
 		<div class="col-md-8 column">
-			<textarea id="sql_content" name="sql_content" class="form-control" placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20 required></textarea>
+			<textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容" placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20 required></textarea>
 		</div>
 
 		<div class="col-md-4 column">
@@ -16,7 +16,7 @@
 				</div>
 				<div class="form-group">
 					<select id="cluster_name" name="cluster_name" class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的集群" data-placeholder="请选择要上线的集群:" required>
-          				<option disabled="" selected="selected">请选择要上线的集群:</option>
+          				<option value="is-empty" disabled="" selected="selected">请选择要上线的集群:</option>
 						{% for cluster_name,dbs in dictAllClusterDb.items %}
 							<option value="{{cluster_name}}">{{cluster_name}}集群 (包含db：
 							{% for db in dbs %}
@@ -30,23 +30,24 @@
 				</div>
 				<div class="form-group">
 					<select id="is_backup" name="is_backup" class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份" data-placeholder="请选择是否要备份:" required>
-          				<option disabled="" selected="selected">请选择是否要备份:</option>
+          				<option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
           				<option value="是">是</option>
           				<option value="否">否</option>
         			</select>	
 				</div>
 				<div class="form-group">
 					<select id="review_man" name="review_man" class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人" data-placeholder="请选择RD审核人:" required>
-          			<option disabled="" selected="selected">请选择审核人:</option>
+          			<option value="is-empty" disabled="" selected="selected">请选择审核人:</option>
 					{% for man in reviewMen %}
 					<option value="{{man}}">{{man}}</option>
 					{% endfor %}
 					</select>
 				</div>
 				<div class="form-group">
-                                                <input type="button" id="btn-autoreview" class="btn btn-info btn-lg" value="SQL检测" />
-                                                <button type="reset" class="btn btn-warning">清空选项</button>
-                                                <button type="submit" class="btn btn-primary">SQL提交</button>
+                    <input type="button" id="btn-autoreview" class="btn btn-info btn-lg" value="SQL检测" />
+                    <button type="reset" class="btn btn-warning">清空选项</button>
+                    <!-- <button type="submit" class="btn btn-primary">SQL提交</button> -->
+                    <input id="btn-submitsql" type="button" class="btn btn-primary" value="SQL提交" />
 				</div>
 	</form>
 		</div>

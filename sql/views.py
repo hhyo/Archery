@@ -336,6 +336,11 @@ def dbaprinciples(request):
     context = {'currentMenu':'dbaprinciples'}
     return render(request, 'dbaprinciples.html', context)
 
+#图表展示
+def charts(request):
+    context = {'currentMenu':'charts'}
+    return render(request, 'charts.html', context)
+
 #根据集群名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):
     listMasters = master_config.objects.filter(cluster_name=clusterName)

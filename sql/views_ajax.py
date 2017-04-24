@@ -82,3 +82,14 @@ def simplecheck(request):
     finalResult['data'] = result
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
+
+#请求图表数据
+@csrf_exempt
+def getMonthCharts(request):
+    result = dao.getWorkChartsByMonth()
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+@csrf_exempt
+def getPersonCharts(request):
+    result = dao.getWorkChartsByPerson()
+    return HttpResponse(json.dumps(result), content_type='application/json')

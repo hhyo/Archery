@@ -11,6 +11,7 @@ leftMenuBtnsSuper = (
 )
 leftMenuBtnsDoc = (
                    {'key':'dbaprinciples',     'name':'SQL审核必读',       'url':'/dbaprinciples/',        'class':'glyphicon glyphicon-book'},
+                   {'key':'charts',     'name':'统计图表展示',       'url':'/charts/',        'class':'glyphicon glyphicon-file'},
 )
 
 def global_info(request):

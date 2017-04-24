@@ -15,22 +15,22 @@ linux : 64位linux操作系统均可
   为什么要有人工审核？<br/>
   这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关.<br/>
   很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念.
-* 历史工单展示
 * 回滚数据展示
 * 主库集群配置
 * 用户权限配置<br/>
   工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL.<br/>
   还有一个特殊的超级管理员即可以上线、审核，又可以登录admin界面进行管理.
-* 历史工单管理
+* 历史工单管理，查看、修改、删除
 * 可通过django admin进行匹配SQL关键字的工单搜索
 * 发起SQL上线，可配置的邮件提醒审核人进行审核
+* 在发起SQL上线前，自助SQL审核，给出建议
 
 ### 设计规范：
 * 合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。<br/>
 下载链接：  https://github.com/jly8866/archer/raw/master/docs/mysql_db_design_guide.docx
 
 ### 主要配置文件：
-* archer/archer/settings.py
+* archer/archer/settings.py<br/>
 
 ### 安装步骤：
 1. 环境准备：<br/>
@@ -87,14 +87,18 @@ cd archer && bash debug.sh<br/>
 ### 系统展示截图：
 1. 工单展示页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/allworkflow.png)<br/>
-2. 提交SQL工单：<br/>
+2. 自助审核SQL：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/autoreview.png)<br/>
+3. 提交SQL工单：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/submitsql.png)<br/>
-3. SQL自动审核、人工审核、执行结果详情页：<br/>
+4. SQL自动审核、人工审核、执行结果详情页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/waitingforme.png)<br/>
-4. 用户登录页：<br/>
+5. 用户登录页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)<br/>
-4. 用户、集群、工单管理：<br/>
+6. 用户、集群、工单管理：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)<br/>
+7. 工单统计图表：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/charts.png)<br/>
 
 ### 联系方式：
 QQ群：524233225

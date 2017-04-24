@@ -1,35 +1,24 @@
-$("#btn-autoreview").click(function(){
-	autoreview();
-});
+function validate() {
+	var result = true;
+	var sqlContent = $("#sql_content").val();
+	var clusterName = $("#cluster_name").val();
+	if (sqlContent === null || sqlContent.trim() === "" || sqlContent == $("#sql_content").attr("placeholder")) {
+		alert("SQL内容不能为空！");
+		return result = false;
+	} else if (clusterName === null || clusterName == $("#cluster_name").attr("data-placeholder")) {
+		alert("请选择要上线的集群！");
+		return result = false;
+	}
+	return result;
+}
 
-function authenticateUser111() {
-	var inputUsername = $('#inputUsername');
-	var inputPassword = $('#inputPassword');
-    $.ajax({
-        type: "post",
-        url: "/authenticate/",
-        dataType: "json",
-        data: {
-			username: inputUsername.val(),
-            password: inputPassword.val()
-        },
-        complete: function () {
-        },
-        success: function (data) {
-			if (data.status == 0) {
-				$(location).attr('href','/allworkflow/');
-			} else {
-				$('#wrongpwd-modal-body').html(data.msg);
-				$('#wrongpwd-modal').modal({
-        			keyboard: true
-    			});
-			}
-		},
-		error: function (XMLHttpRequest, textStatus, errorThrown) {
-			alert(errorThrown);
-        }
-    });
-};
+
+$("#btn-autoreview").click(function(){
+	//先做表单验证，成功了提交ajax给后端
+	if (validate()) {
+		autoreview();
+	}
+});
 
 function autoreview() {
 	var sqlContent = $("#sql_content");
