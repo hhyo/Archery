@@ -1,32 +1,30 @@
 # -*- coding: UTF-8 -*- 
 
-
 import re
 import json
 import time
 import multiprocessing
 
+from django.db.models import Q
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
-from django.conf import settings
 
 from .dao import Dao
 from .const import Const
 from .sendmail import MailSender
 from .inception import InceptionDao
-from .models import users, master_config, workflow
 from .aes_decryptor import Prpcrypt
-from django.db.models import Q
+from .models import users, master_config, workflow
 
 dao = Dao()
 inceptionDao = InceptionDao()
 mailSender = MailSender()
 prpCryptor = Prpcrypt()
 
-# Create your views here.
 def login(request):
     return render(request, 'login.html')
 
@@ -34,31 +32,6 @@ def logout(request):
     if request.session.get('login_username', False):
         del request.session['login_username']
     return render(request, 'login.html')
-
-#ajax接口，登录页面调用，用来验证用户名密码
-@csrf_exempt
-def authenticate(request):
-    """认证机制做的非常简单"""
-    if request.is_ajax():
-        strUsername = request.POST.get('username')
-        strPassword = request.POST.get('password')
-    else:
-        strUsername = request.POST['username']
-        strPassword = request.POST['password']
-    
-    result = {}
-    #服务端二次验证参数
-    if strUsername == "" or strPassword == "" or strUsername is None or strPassword is None:
-        result = {'status':2, 'msg':'登录用户名或密码为空，请重新输入!', 'data':''}
-
-    correct_users = users.objects.filter(username=strUsername)
-    if len(correct_users) == 1 and check_password(strPassword, correct_users[0].password) == True:
-        #调用了django内置函数check_password函数检测输入的密码是否与django默认的PBKDF2算法相匹配
-        request.session['login_username'] = strUsername
-        result = {'status':0, 'msg':'ok', 'data':''}
-    else:
-        result = {'status':1, 'msg':'用户名或密码错误，请重新输入！', 'data':''}
-    return HttpResponse(json.dumps(result), content_type='application/json')
 
 #首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
@@ -362,6 +335,11 @@ def rollback(request):
 def dbaprinciples(request):
     context = {'currentMenu':'dbaprinciples'}
     return render(request, 'dbaprinciples.html', context)
+
+#图表展示
+def charts(request):
+    context = {'currentMenu':'charts'}
+    return render(request, 'charts.html', context)
 
 #根据集群名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):

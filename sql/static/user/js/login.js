@@ -1,3 +1,13 @@
+//回车键提交表单登录
+$(document).ready(function() {
+	$(document).keydown(function(event) {
+		//keycode==13为回车键
+		if (event.keyCode == 13) {
+			authenticateUser();
+		}
+	});
+});
+
 $('#btnLogin').click(function(){
 	authenticateUser();
 });

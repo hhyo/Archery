@@ -24,7 +24,7 @@ class InceptionDao(object):
         except ValueError as v:
             print("Error: %s" % v)
         
-    def sqlautoReview(self, sqlContent, clusterName, isBackup):
+    def sqlautoReview(self, sqlContent, clusterName, isBackup='否'):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''

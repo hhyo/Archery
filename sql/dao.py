@@ -2,7 +2,11 @@
 
 import MySQLdb
 
+from django.db import connection
+
 class Dao(object):
+    _CHART_DAYS = 90
+
     #连进指定的mysql实例里，读取所有databases并返回
     def getAlldbByCluster(self, masterHost, masterPort, masterUser, masterPassword):
         listDb = []
@@ -27,3 +31,17 @@ class Dao(object):
                 conn.commit()
                 conn.close()
         return listDb
+
+    def getWorkChartsByMonth(self):
+        cursor = connection.cursor()
+        sql = "select concat(month(date(create_time)),'-',day(create_time)),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by day(create_time) order by create_time asc;" % (Dao._CHART_DAYS)
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result
+
+    def getWorkChartsByPerson(self):
+        cursor = connection.cursor()
+        sql = "select engineer, count(*) as cnt from sql_workflow where create_time>=date_add(now(),interval -%s day) group by engineer order by cnt desc limit 50;" % (Dao._CHART_DAYS)
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result
