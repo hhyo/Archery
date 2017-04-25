@@ -34,7 +34,7 @@ class Dao(object):
 
     def getWorkChartsByMonth(self):
         cursor = connection.cursor()
-        sql = "select concat(month(date(create_time)),'-',day(create_time)),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by day(create_time) order by create_time asc;" % (Dao._CHART_DAYS)
+        sql = "select date_format(create_time, '%%m-%%d'),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by date_format(create_time, '%%m-%%d') order by 1 asc;" % (Dao._CHART_DAYS)
         cursor.execute(sql)
         result = cursor.fetchall()
         return result
