@@ -120,6 +120,7 @@ class InceptionDao(object):
         result = None
         conn = None
         cur = None
+
         try:
             conn=MySQLdb.connect(host=paramHost, user=paramUser, passwd=paramPasswd, db=paramDb, port=paramPort, charset='utf8mb4')
             cur=conn.cursor()

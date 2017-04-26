@@ -37,7 +37,7 @@ linux : 64位linux操作系统均可
 (1)克隆代码到本地: git clone https://github.com/jly8866/archer.git  或  下载zip包<br/>
 (2)安装mysql 5.6实例，请注意保证mysql数据库默认字符集为utf8或utf8mb4<br/>
 (3)安装inception<br/>
-2. 安装python3：<br/>
+2. 安装python3：(强烈建议使用virtualenv或venv等单独隔离环境！)<br/>
 tar -xzvf Python-3.4.1.tar.gz <br/>
 cd Python-3.4.1 <br/>
 ./configure --prefix=/path/to/python3 && make && make install
@@ -102,3 +102,11 @@ cd archer && bash debug.sh<br/>
 
 ### 联系方式：
 QQ群：524233225
+
+### 部分小问题解决办法：
+1. 报错：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug1.png)&nbsp;
+![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug2.png)<br/>
+原因：python3的pymysql模块会向inception发送SHOW WARNINGS语句，导致inception返回一个"Must start as begin statement"错误被archer捕捉到报在日志里.<br/>
+解决：如果实在忍受不了，请修改/path/to/python3/lib/python3.4/site-packages/pymysql/cursors.py:338行，将self._show_warnings()这一句注释掉，换成pass，如下：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug3.png)

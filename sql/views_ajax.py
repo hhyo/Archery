@@ -58,7 +58,7 @@ def simplecheck(request):
     else:
         sqlContent = request.POST['sql_content']
         clusterName = request.POST['cluster_name']
-  
+     
     finalResult = {'status':0, 'msg':'ok', 'data':[]}
     #服务器端参数验证
     if sqlContent is None or clusterName is None:
@@ -71,7 +71,6 @@ def simplecheck(request):
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
     #交给inception进行自动审核
     result = inceptionDao.sqlautoReview(sqlContent, clusterName)
     if result is None or len(result) == 0:
