@@ -24,6 +24,16 @@ class InceptionDao(object):
         except ValueError as v:
             print("Error: %s" % v)
         
+    def criticalDDL(self, sqlContent):
+        '''
+        识别DROP DATABASE, DROP TABLE, TRUNCATE PARTITION, TRUNCATE TABLE等高危DDL操作，因为对于这些操作，inception在备份时只能备份METADATA，而不会备份数据！
+        如果识别到包含高危操作，则返回“审核不通过”
+        '''
+        if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", sqlContent.lower()):
+            return (('', '', 2, '', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', '', '', '', '', ''),)
+        else:
+            return None
+
     def sqlautoReview(self, sqlContent, clusterName, isBackup='否'):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
@@ -40,11 +50,20 @@ class InceptionDao(object):
         #if sqlContent[-1] != ";":
             #sqlContent = sqlContent + ";"
 
-        sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
-          inception_magic_start;\
-          %s\
-          inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
-        result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+        if hasattr(settings, 'CRITICAL_DDL_ON_OFF') == True:
+            if getattr(settings, 'CRITICAL_DDL_ON_OFF') == "on":
+                criticalDDL_check = self.criticalDDL(sqlContent)
+            else:
+                criticalDDL_check = None
+
+            if criticalDDL_check is not None:
+                result = criticalDDL_check
+            else:
+                sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
+                  inception_magic_start;\
+                  %s\
+                  inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+                result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
         
     def executeFinal(self, workflowDetail, dictConn):
