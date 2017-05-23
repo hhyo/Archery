@@ -4,6 +4,7 @@ import re
 import json
 import time
 import multiprocessing
+from collections import OrderedDict
 
 from django.db.models import Q
 from django.conf import settings
@@ -97,7 +98,7 @@ def allworkflow(request):
 
 #提交SQL的页面
 def submitSql(request):
-    masters = master_config.objects.all()
+    masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
        context = {'errMsg': '集群数为0，可能后端数据没有配置集群'}
        return render(request, 'error.html', context) 
@@ -105,7 +106,7 @@ def submitSql(request):
     #获取所有集群名称
     listAllClusterName = [master.cluster_name for master in masters]
 
-    dictAllClusterDb = {}
+    dictAllClusterDb = OrderedDict()
     #每一个都首先获取主库地址在哪里
     for clusterName in listAllClusterName:
         listMasters = master_config.objects.filter(cluster_name=clusterName)
