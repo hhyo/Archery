@@ -41,16 +41,21 @@
 							{{workflowDetail.cluster_name}}
 						</td>
 						<td>
-							{{workflowDetail.create_time}}
+							{{workflowDetail.create_time|date:"Y-m-d H:i:s"}}
 						</td>
 						<td>
-							{{workflowDetail.finish_time}}
+							{{workflowDetail.finish_time|date:"Y-m-d H:i:s"}}
 						</td>
 						<td>
 							{{workflowDetail.is_backup}}
 						</td>
 						<td>
-							<font color="red"><B>{{workflowDetail.status}}</B></font>
+							{% if workflowDetail.status == "已正常结束" %}
+								<font color="green">
+							{% else %}
+								<font color="red">
+							{% endif %}
+								<B>{{workflowDetail.status}}</B></font>
 						</td>
 					</tr>
 					
