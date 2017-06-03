@@ -10,6 +10,7 @@
 					 <a href="/allworkflow/?pageNo=0&navStatus=all">全部工单</a>
 				</li>
 
+				{% if role == '审核人' %}
 				{% if navStatus == 'waitingforme' %}
 				<li class="active">
                 {% else %}
@@ -17,6 +18,7 @@
                 {% endif %}
 					 <a href="/allworkflow/?pageNo=0&navStatus=waitingforme">待我审核的</a>
 				</li>
+				{% endif %}
 
 				{% if navStatus == 'finish' %}
 				<li class="active">
@@ -24,6 +26,22 @@
                 <li>
                 {% endif %}
 					 <a href="/allworkflow/?pageNo=0&navStatus=finish">已执行完毕</a>
+				</li>
+
+				{% if navStatus == 'executing' %}
+				<li class="active">
+                {% else %}
+                <li>
+                {% endif %}
+					 <a href="/allworkflow/?pageNo=0&navStatus=executing">执行中</a>
+				</li>
+
+				{% if navStatus == 'abort' %}
+				<li class="active">
+                {% else %}
+                <li>
+                {% endif %}
+					 <a href="/allworkflow/?pageNo=0&navStatus=abort">人工终止流程</a>
 				</li>
 
 				{% if navStatus == 'autoreviewwrong' %}
@@ -74,7 +92,7 @@
 							{{workflow.status}}
 						</td>
 						<td>
-							{{workflow.create_time}}
+							{{workflow.create_time|date:"Y-m-d H:i:s"}}
 						</td>
 						<td>
 							{{workflow.cluster_name}}
