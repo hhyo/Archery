@@ -2,59 +2,60 @@ var monthChart = null; 		// 定义全局变量,月工单数量
 var personChart = null; 	// 定义全局变量,个人工单数量
 
 $(document).ready(function() {
-  monthChart = new Highcharts.Chart({
-    chart: {
-      renderTo: 'container-month',
-      type: 'spline',
-      events: {
-        load: getMonthWork // 图表加载完毕后执行的回调函数
-      }
-    },
-    title: {
-      text: '近三个月内工单数量'
-    },
-    xAxis: {
-    },
-    yAxis: {
-      minPadding: 0.2,
-      maxPadding: 0.2,
+  var isCharts = window.location.pathname.indexOf("charts");
+  if (isCharts != -1) {
+    monthChart = new Highcharts.Chart({
+      chart: {
+        renderTo: 'container-month',
+        type: 'spline',
+        events: {
+          load: getMonthWork // 图表加载完毕后执行的回调函数
+        }
+      },
       title: {
-        text: '工单数量',
-        margin: 80
-      }
-    },
-    series: [{
-	  name: '日期（当日无工单则不显示）',
-      data: []
-    }]
-  });
+        text: '近三个月内工单数量'
+      },
+      xAxis: {},
+      yAxis: {
+        minPadding: 0.2,
+        maxPadding: 0.2,
+        title: {
+          text: '工单数量',
+          margin: 80
+        }
+      },
+      series: [{
+        name: '日期（当日无工单则不显示）',
+        data: []
+      }]
+    });
 
-  personChart = new Highcharts.Chart({
-    chart: {
-      renderTo: 'container-engineer',
-      type: 'column',
-      events: {
-        load: getPersonWork // 图表加载完毕后执行的回调函数
-      }
-    },
-    title: {
-      text: '近三个月内个人工单数量龙虎榜TOP 50'
-    },
-    xAxis: {
-    },
-    yAxis: {
-      minPadding: 0.2,
-      maxPadding: 0.2,
+    personChart = new Highcharts.Chart({
+      chart: {
+        renderTo: 'container-engineer',
+        type: 'column',
+        events: {
+          load: getPersonWork // 图表加载完毕后执行的回调函数
+        }
+      },
       title: {
-        text: '工单数量',
-        margin: 80
-      }
-    },
-    series: [{
-	  name: '工程师',
-      data: []
-    }]
-  });
+        text: '近三个月内个人工单数量龙虎榜TOP 50'
+      },
+      xAxis: {},
+      yAxis: {
+        minPadding: 0.2,
+        maxPadding: 0.2,
+        title: {
+          text: '工单数量',
+          margin: 80
+        }
+      },
+      series: [{
+        name: '工程师',
+        data: []
+      }]
+    });
+  }
 });
 
 function getMonthWork() {
