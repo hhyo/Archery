@@ -19,8 +19,10 @@ urlpatterns = [
     url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
     url(r'^charts/$', views.charts, name='charts'),
 
-    url(r'^authenticate/$', views_ajax.authenticate, name='authenticate'),
+    url(r'^authenticate/$', views_ajax.authenticateEntry, name='authenticate'),
     url(r'^simplecheck/$', views_ajax.simplecheck, name='simplecheck'),
     url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),
     url(r'^getPersonCharts/$', views_ajax.getPersonCharts, name='getPersonCharts'),
+    url(r'^getOscPercent/$', views_ajax.getOscPercent, name='getOscPercent'),
+    url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
 ]

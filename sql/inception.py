@@ -154,3 +154,24 @@ class InceptionDao(object):
                 conn.close()
         return result
 
+    def getOscPercent(self, sqlSHA1):
+        """已知SHA1值，去inception里查看OSC进度"""
+        sqlStr = "inception get osc_percent '%s'" % sqlSHA1
+        result = self._fetchall(sqlStr, self.inception_host, self.inception_port, '', '', '')
+        if len(result) > 0:
+            percent = result[0][3]
+            timeRemained = result[0][4]
+            pctResult = {"status":0, "msg":"ok", "data":{"percent":percent, "timeRemained":timeRemained}}
+        else:
+            pctResult = {"status":1, "msg":"没找到该SQL的进度信息，是否已经执行完毕？", "data":{"percent":-100, "timeRemained":-100}}
+        return pctResult
+
+    def stopOscProgress(self, sqlSHA1):
+        """已知SHA1值，调用inception命令停止OSC进程，涉及的Inception命令和注意事项，请参考http://mysql-inception.github.io/inception-document/osc/"""
+        sqlStr = "inception stop alter '%s'" % sqlSHA1
+        result = self._fetchall(sqlStr, self.inception_host, self.inception_port, '', '', '')
+        if result is not None:
+            optResult = {"status":0, "msg":"已成功停止OSC进程，请注意清理触发器和临时表", "data":""}
+        else:
+            optResult = {"status":1, "msg":"ERROR 2624 (HY000): Can not find OSC executing task", "data":""}
+        return optResult

@@ -22,23 +22,19 @@ from .models import users, master_config, workflow
 dao = Dao()
 inceptionDao = InceptionDao()
 prpCryptor = Prpcrypt()
-login_failure_counter = {}
+login_failure_counter = {} #登录失败锁定计数器，给loginAuthenticate用的
+sqlSHA1_cache = {} #存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 
 #ajax接口，登录页面调用，用来验证用户名密码
 @csrf_exempt
-def authenticate(request):
+def loginAuthenticate(username, password):
     """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
     lockCntThreshold = 5
     lockTimeThreshold = 300
 
-    if request.is_ajax():
-        strUsername = request.POST.get('username')
-        strPassword = request.POST.get('password')
-    else:
-        strUsername = request.POST['username']
-        strPassword = request.POST['password']
-
     #服务端二次验证参数
+    strUsername = username
+    strPassword = password
     if strUsername == "" or strPassword == "" or strUsername is None or strPassword is None:
         result = {'status':2, 'msg':'登录用户名或密码为空，请重新输入!', 'data':''}
     elif strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (datetime.datetime.now() - login_failure_counter[strUsername]["last_failure_time"]).seconds <= lockTimeThreshold:
@@ -52,7 +48,6 @@ def authenticate(request):
             if strUsername in login_failure_counter:
                 #如果登录失败计数器中存在该用户名，则清除之
                 login_failure_counter.pop(strUsername)
-            request.session['login_username'] = strUsername
             result = {'status':0, 'msg':'ok', 'data':''}
         else:
             if strUsername not in login_failure_counter:
@@ -66,6 +61,20 @@ def authenticate(request):
                     login_failure_counter[strUsername]["cnt"] = 1
                 login_failure_counter[strUsername]["last_failure_time"] = datetime.datetime.now()
             result = {'status':1, 'msg':'用户名或密码错误，请重新输入！', 'data':''}
+    return result
+
+#ajax接口，登录页面调用，用来验证用户名密码
+@csrf_exempt
+def authenticateEntry(request):
+    """接收http请求，然后把请求中的用户名密码传给loginAuthenticate去验证"""
+    if request.is_ajax():
+        strUsername = request.POST.get('username')
+        strPassword = request.POST.get('password')
+    else:
+        strUsername = request.POST['username']
+        strPassword = request.POST['password']
+    result = loginAuthenticate(strUsername, strPassword)
+    request.session['login_username'] = strUsername
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -112,3 +121,77 @@ def getMonthCharts(request):
 def getPersonCharts(request):
     result = dao.getWorkChartsByPerson()
     return HttpResponse(json.dumps(result), content_type='application/json')
+
+def getSqlSHA1(workflowId):
+    """调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值"""
+    workflowDetail = get_object_or_404(workflow, pk=workflowId)
+    dictSHA1 = {}
+    # 使用json.loads方法，把review_content从str转成list,
+    # 格式：[[1, "CHECKED", 0, "Audit completed", "None", "use bksnap", 0, "'0_0_0'", "None", "0", ""], [2, "CHECKED", 0, "Audit completed", "None", "ALTER TABLE `ts_bb_score_3`\r\n\tCOMMENT='1'", 599668, "'0_0_1'", "192_168_100_42_3306_bksnap", "0", "*43AE56C14F84EAAD2424FCBFF85ABF83C51C8CE8"]]
+    listContent = json.loads(workflowDetail.review_content)
+    for rownum in range(len(listContent)):
+        id = listContent[rownum][0]
+        sqlSHA1 = listContent[rownum][10]
+        if sqlSHA1 != '':
+            dictSHA1[id] = sqlSHA1
+    if dictSHA1 != {}:
+        # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。因为工单一旦提交，就被自动审核一次，且只会审核一次，
+        # 而且使用OSC执行的工单更是少数，所以不设置缓存过期时间
+        sqlSHA1_cache[workflowId] = dictSHA1
+    return dictSHA1
+
+@csrf_exempt
+def getOscPercent(request):
+    """获取该SQL的pt-OSC执行进度和剩余时间"""
+    workflowId = request.POST['workflowid']
+    sqlID = request.POST['sqlID']
+    if workflowId == '' or workflowId is None or sqlID == '' or sqlID is None:
+        context = {"status":-1 ,'msg': 'workflowId或sqlID参数为空.', "data":""}
+        return HttpResponse(json.dumps(context), content_type='application/json')
+
+    workflowId = int(workflowId)
+    sqlID = int(sqlID)
+    if workflowId in sqlSHA1_cache:
+        dictSHA1 = sqlSHA1_cache[workflowId]
+        # cachehit = "已命中"
+    else:
+        dictSHA1 = getSqlSHA1(workflowId)
+        # cachehit = "未命中"
+    if dictSHA1 != {} and sqlID in dictSHA1:
+        sqlSHA1 = dictSHA1[sqlID]
+        pctResult = inceptionDao.getOscPercent(sqlSHA1)  #成功获取到SHA1值，去inception里面查询进度
+    else:
+        pctResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
+    return HttpResponse(json.dumps(pctResult), content_type='application/json')
+
+@csrf_exempt
+def stopOscProgress(request):
+    """中止该SQL的pt-OSC进程"""
+    workflowId = request.POST['workflowid']
+    sqlID = request.POST['sqlID']
+    if workflowId == '' or workflowId is None or sqlID == '' or sqlID is None:
+        context = {"status":-1 ,'msg': 'workflowId或sqlID参数为空.', "data":""}
+        return HttpResponse(json.dumps(context), content_type='application/json')
+
+    loginUser = request.session.get('login_username', False)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    #服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
+    if workflowDetail.status != Const.workflowStatus['executing']:
+        context = {"status":-1, "msg":'当前工单状态不是"执行中"，请刷新当前页面！', "data":""}
+        return HttpResponse(json.dumps(context), content_type='application/json')
+    if loginUser is None or loginUser != workflowDetail.review_man:
+        context = {"status":-1 ,'msg': '当前登录用户不是审核人，请重新登录.', "data":""}
+        return HttpResponse(json.dumps(context), content_type='application/json')
+
+    workflowId = int(workflowId)
+    sqlID = int(sqlID)
+    if workflowId in sqlSHA1_cache:
+        dictSHA1 = sqlSHA1_cache[workflowId]
+    else:
+        dictSHA1 = getSqlSHA1(workflowId)
+    if dictSHA1 != {} and sqlID in dictSHA1:
+        sqlSHA1 = dictSHA1[sqlID]
+        optResult = inceptionDao.stopOscProgress(sqlSHA1)
+    else:
+            optResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
+    return HttpResponse(json.dumps(optResult), content_type='application/json')
