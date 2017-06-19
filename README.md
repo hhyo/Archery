@@ -45,7 +45,7 @@ cd Python-3.4.1 <br/>
 3. 安装所需相关模块：<br/>
 (1)django：<br/>
 tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install<br/>
-或者pip3 install Django==1.8.17
+或者pip3 install Django==1.8.17<br/>
 (2)Crypto:<br/>
 pip3 install Crypto<br/>
 pip3 install pycrypto
@@ -71,10 +71,10 @@ python3 manage.py migrate<br/>
 (2)远程备份库授权<br/>
 7. 创建admin系统root用户（该用户可以登录django admin来管理model）：<br/>
 cd archer && python3 manage.py createsuperuser<br/>
-8. 启动：<br/>
-用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
+8. 启动，有两种方式：<br/>
+(1)用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
 cd archer && bash debug.sh<br/>
-如果要用gunicorn启动服务的话，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.<br/>
+(2)用gunicorn启动服务，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源. (nginx安装这里不做示范)<br/>
   8.1 gunicorn的安装配置示例：<br/>
   pip3 install gunicorn<br/>
   cat startup.sh  #gunicorn启动脚本<br/>
@@ -82,14 +82,14 @@ cd archer && bash debug.sh<br/>
   settings=${1:-"archer.settings"}<br/>
   ip=${2:-"192.168.1.21"}<br/>
   port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口<br/>
-  gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行操作，这个值要适当加大<br/>
+  gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行DDL操作，这个值要适当加大<br/>
   <br/>
   8.2 nginx配置示例<br/>
   cat nginx.conf <br/>
-   #部分省略<br/>
+   #http部分省略<br/>
   server {  <br/>
-     listen 9123;  #监听端口<br/>
-     server_name archer;     <br/>
+     listen 9123;  #监听端口<br/>
+     server_name archer;<br/>
      client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致 <br/>
      client_body_timeout 1200;<br/>
      proxy_read_timeout 1200;<br/>
@@ -104,7 +104,6 @@ cd archer && bash debug.sh<br/>
     }   <br/>
 }  <br/>
   #部分省略  <br/>
-  <br/>
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
@@ -141,4 +140,5 @@ QQ群：524233225
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug2.png)<br/>
 原因：python3的pymysql模块会向inception发送SHOW WARNINGS语句，导致inception返回一个"Must start as begin statement"错误被archer捕捉到报在日志里.<br/>
 解决：如果实在忍受不了，请修改/path/to/python3/lib/python3.4/site-packages/pymysql/cursors.py:338行，将self._show_warnings()这一句注释掉，换成pass，如下：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug3.png)
+![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug3.png)<br/>
+但是此方法有副作用，会导致所有调用该pymysql模块的程序不能show warnings，因此强烈推荐使用virtualenv或venv环境！
