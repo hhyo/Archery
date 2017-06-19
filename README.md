@@ -24,6 +24,7 @@ linux : 64位linux操作系统均可
 * 可通过django admin进行匹配SQL关键字的工单搜索
 * 发起SQL上线，可配置的邮件提醒审核人进行审核
 * 在发起SQL上线前，自助SQL审核，给出建议
+* 审核通过正在执行中的工单，如果是由pt-OSC执行的SQL会显示执行进度，并且可以点击中止pt-OSC进程<br/>
 
 ### 设计规范：
 * 合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。<br/>
@@ -83,7 +84,6 @@ cd archer && bash debug.sh<br/>
   ip=${2:-"192.168.1.21"}<br/>
   port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口<br/>
   gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行DDL操作，这个值要适当加大<br/>
-  <br/>
   8.2 nginx配置示例<br/>
   cat nginx.conf <br/>
    #http部分省略<br/>
