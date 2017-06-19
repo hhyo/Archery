@@ -36,7 +36,7 @@
 							{{workflowDetail.engineer}}
 						</td>
 						<td>
-							{{workflowDetail.review_man}}
+                            {{listAllReviewMen.0}} {{listAllReviewMen.1}}
 						</td>
 						<td>
 							{{workflowDetail.cluster_name}}
@@ -139,7 +139,7 @@
 				</tbody>
 			</table>
 			{% if workflowDetail.status == '等待审核人审核' %}
-			{% if workflowDetail.review_man == loginUser %}
+            {% if loginUser in listAllReviewMen %}
 			<form action="/execute/" method="post" style="display:inline-block;">
 				{% csrf_token %}
 				<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
