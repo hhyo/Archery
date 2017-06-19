@@ -77,25 +77,25 @@ cd archer && bash debug.sh<br/>
 如果要用gunicorn启动服务的话，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源.<br/>
   8.1 gunicorn的安装配置示例：<br/>
   pip3 install gunicorn<br/>
-  cat startup.sh  #gunicorn启动脚本<br/>
-  #!/bin/bash<br/>
+  cat startup.sh  #gunicorn启动脚本<br/>
+  #!/bin/bash<br/>
   settings=${1:-"archer.settings"}<br/>
   ip=${2:-"192.168.1.21"}<br/>
-  port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口<br/>
-  gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行操作，这个值要适当加大<br/>
+  port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口<br/>
+  gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行操作，这个值要适当加大<br/>
   <br/>
   8.2 nginx配置示例<br/>
-  cat nginx.conf <br/>
-   #部分省略<br/>
+  cat nginx.conf <br/>
+   #部分省略<br/>
   server {  <br/>
-     listen 9123;  #监听端口<br/>
+     listen 9123;  #监听端口<br/>
      server_name archer;     <br/>
-     client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致 <br/>
-     client_body_timeout 1200;<br/>
+     client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致 <br/>
+     client_body_timeout 1200;<br/>
      proxy_read_timeout 1200;<br/>
      location / {   <br/>
-         proxy_set_header Host $http_host;   #proxy_set_header 这3条配置必填 <br/>
-         proxy_set_header X-Real-IP $remote_addr; <br/>
+         proxy_set_header Host $http_host;   #proxy_set_header 这3条配置必填 <br/>
+         proxy_set_header X-Real-IP $remote_addr; <br/>
          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; <br/>
          proxy_pass http://192.168.1.21:9124;  <br/>
      }  <br/>
@@ -141,5 +141,4 @@ QQ群：524233225
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug2.png)<br/>
 原因：python3的pymysql模块会向inception发送SHOW WARNINGS语句，导致inception返回一个"Must start as begin statement"错误被archer捕捉到报在日志里.<br/>
 解决：如果实在忍受不了，请修改/path/to/python3/lib/python3.4/site-packages/pymysql/cursors.py:338行，将self._show_warnings()这一句注释掉，换成pass，如下：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug3.png)<br/>
-但是此方法有副作用，会导致所有调用该pymysql模块的程序不能show warnings，因此强烈推荐使用virtualenv或venv环境！
+![image](https://github.com/jly8866/archer/raw/master/screenshots/bugs/bug3.png)

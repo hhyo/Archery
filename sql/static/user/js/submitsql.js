@@ -26,3 +26,8 @@ $("#btn-submitsql").click(function (){
 		formSubmit.submit();
 	}
 });
+
+$("#review_man").change(function review_man(){
+    var review_man = $(this).val();
+    $("div#" + review_man).hide();
+});

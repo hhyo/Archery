@@ -149,6 +149,8 @@ def autoreview(request):
     clusterName = request.POST['cluster_name']
     isBackup = request.POST['is_backup']
     reviewMan = request.POST['review_man']
+    subReviewMen = request.POST.get('sub_review_man', '')
+    listAllReviewMen = (reviewMan, subReviewMen)
    
     #服务器端参数验证
     if sqlContent is None or workflowName is None or clusterName is None or isBackup is None or reviewMan is None:
@@ -183,7 +185,7 @@ def autoreview(request):
     newWorkflow = workflow()
     newWorkflow.workflow_name = workflowName
     newWorkflow.engineer = engineer
-    newWorkflow.review_man = reviewMan
+    newWorkflow.review_man = json.dumps(listAllReviewMen)
     newWorkflow.create_time = getNow()
     newWorkflow.status = workflowStatus
     newWorkflow.is_backup = isBackup
@@ -202,10 +204,13 @@ def autoreview(request):
 
                 #发一封邮件
                 strTitle = "新的SQL上线工单提醒 # " + str(workflowId)
-                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
                 objEngineer = users.objects.get(username=engineer)
-                objReviewMan = users.objects.get(username=reviewMan)
-                mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+                for reviewMan in listAllReviewMen:
+                    if reviewMan == "":
+                        continue
+                    strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
+                    objReviewMan = users.objects.get(username=reviewMan)
+                    mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
             else:
                 #不发邮件
                 pass
@@ -220,7 +225,11 @@ def detail(request, workflowId):
         listContent = json.loads(workflowDetail.execute_result)
     else:
         listContent = json.loads(workflowDetail.review_content)
-    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'listContent':listContent}
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+    except ValueError:
+        listAllReviewMen = (workflowDetail.review_man, )
+    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail,'listContent':listContent, 'listContent':listContent,'listAllReviewMen':listAllReviewMen}
     return render(request, 'detail.html', context)
 
 #人工审核也通过，执行SQL
@@ -233,10 +242,14 @@ def execute(request):
     workflowId = int(workflowId)
     workflowDetail = workflow.objects.get(id=workflowId)
     clusterName = workflowDetail.cluster_name
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+    except ValueError:
+        listAllReviewMen = (workflowDetail.review_man, )
 
     #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     loginUser = request.session.get('login_username', False)
-    if loginUser is None or loginUser != workflowDetail.review_man:
+    if loginUser is None or loginUser not in listAllReviewMen:
         context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
         return render(request, 'error.html', context)
 
@@ -293,10 +306,14 @@ def cancel(request):
 
     workflowId = int(workflowId)
     workflowDetail = workflow.objects.get(id=workflowId)
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+    except ValueError:
+        listAllReviewMen = (workflowDetail.review_man, )
 
     #服务器端二次验证，如果正在执行终止动作的当前登录用户，不是发起人也不是审核人，则异常.
     loginUser = request.session.get('login_username', False)
-    if loginUser is None or (loginUser != workflowDetail.review_man and loginUser != workflowDetail.engineer):
+    if loginUser is None or (loginUser not in listAllReviewMen and loginUser != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人也不是发起人，请重新登录.'}
         return render(request, 'error.html', context)
 
