@@ -74,22 +74,22 @@ python3 manage.py migrate<br/>
 cd archer && python3 manage.py createsuperuser<br/>
 8. 启动，有两种方式：<br/>
 (1)用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
-    * cd archer && bash debug.sh
+    cd archer && bash debug.sh<br/>
 (2)用gunicorn启动服务，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源. (nginx安装这里不做示范)<br/>
     * gunicorn的安装配置示例:
         * pip3 install gunicorn
-        * cat startup.sh  #gunicorn启动脚本
-        ```javascript
-        settings=${1:-"archer.settings"}
-        ip=${2:-"192.168.1.21"}
-        port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口
-        gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行DDL操作，这个值要适当加大
+	* cat startup.sh
+        ```
+            settings=${1:-"archer.settings"}
+            ip=${2:-"192.168.1.21"}
+            port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口
+            gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行DDL操作，这个值要适当加大
         ```
-    * nginx配置示例
-        * cat nginx.conf
-        ```javascript
-        #http部分省略
-        server {
+    * nginx配置示例：
+        * cat nginx.conf
+        ```
+            #http部分省略
+            server {
             listen 9123;  #监听端口
             server_name archer;
             client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致
@@ -104,9 +104,9 @@ cd archer && python3 manage.py createsuperuser<br/>
 	        location /static {
                 alias  /app/archer/archer/sql/static;  #此处指向static目录的绝对路径，以便nginx收集静态资源
             }
-        }
-        #部分省略
-        ```
+            }
+            #部分省略
+        ``` <br/>
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
@@ -119,7 +119,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 ### 已经制作好的docker镜像：
 * 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
     1. docker run -p 80:80 -d docker.gaoxiaobang.com/prod/archer    (需要确保docker宿主机80端口能够使用)
-    2. 浏览器直接访问http://宿主机ip:80/即可
+    2. 浏览器直接访问http://宿主机ip:80/ 即可
 * docker镜像制作感谢@浩气冲天 协助
 
 ### 系统展示截图：
