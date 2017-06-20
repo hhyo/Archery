@@ -74,12 +74,12 @@ python3 manage.py migrate<br/>
 cd archer && python3 manage.py createsuperuser<br/>
 8. 启动，有两种方式：<br/>
 (1)用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
-cd archer && bash debug.sh<br/>
+    * cd archer && bash debug.sh
 (2)用gunicorn启动服务，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源. (nginx安装这里不做示范)<br/>
     * gunicorn的安装配置示例:
         * pip3 install gunicorn
         * cat startup.sh  #gunicorn启动脚本
-        ```java
+        ```javascript
         settings=${1:-"archer.settings"}
         ip=${2:-"192.168.1.21"}
         port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口
@@ -87,7 +87,7 @@ cd archer && bash debug.sh<br/>
         ```
     * nginx配置示例
         * cat nginx.conf
-        ```java
+        ```javascript
         #http部分省略
         server {
             listen 9123;  #监听端口
