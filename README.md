@@ -78,35 +78,11 @@ cd archer && python3 manage.py createsuperuser<br/>
 (2)用gunicorn启动服务，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源. (nginx安装这里不做示范)<br/>
     * gunicorn的安装配置示例:
         * pip3 install gunicorn
-	* cat startup.sh
-        ```
-            settings=${1:-"archer.settings"}
-            ip=${2:-"192.168.1.21"}
-            port=${3:-9124} #记住这个端口，配置nginx或apache代理时，指向的是这个端口
-            gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archer.err -b ${ip}:${port} archer.wsgi:application  --timeout 1200 -D #timeout要根据实际情况来设置，单位为秒，如果要对大表进行DDL操作，这个值要适当加大
-        ```
-    * nginx配置示例：
+	    * cat startup.sh
+            * ![image](https://github.com/jly8866/archer/raw/master/screenshots/startup.png)<br/>
+    * nginx配置示例：
         * cat nginx.conf
-        ```
-            #http部分省略
-            server {
-            listen 9123;  #监听端口
-            server_name archer;
-            client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致
-            client_body_timeout 1200;
-            proxy_read_timeout 1200;
-            location / {
-                proxy_set_header Host $http_host;   #proxy_set_header 这3条配置必填
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_pass http://192.168.1.21:9124;
-            }
-	        location /static {
-                alias  /app/archer/archer/sql/static;  #此处指向static目录的绝对路径，以便nginx收集静态资源
-            }
-            }
-            #部分省略
-        ``` <br/>
+            * ![image](https://github.com/jly8866/archer/raw/master/screenshots/nginx.png)<br/>
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
@@ -137,7 +113,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)<br/>
 7. 工单统计图表：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/charts.png)<br/><br/>
-8.pt-OSC进度条，以及中止pt-OSC进程按钮：<br/>
+8.pt-osc进度条，以及中止pt-osc进程按钮：<br/>
 ![image](https://raw.githubusercontent.com/johnliu2008/archer/master/screenshots/osc_progress.png)<br/>
 
 ### 联系方式：
