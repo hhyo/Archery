@@ -144,3 +144,15 @@ function execute(){
             window.location.reload(true);
         },1000)
     }
+
+$(document).ready(function () {
+    $("#btnEditSql").click(function () {
+       var editWorkflowDetailId = $("#workflowDetail_id").val();
+       var editWorkflowNname = $("#editWorkflowNname").text();
+       var editSqlContent = $("#editSqlContent").val();
+       sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
+       sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+       sessionStorage.setItem('editSqlContent', editSqlContent);
+    });
+
+});
