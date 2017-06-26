@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-			<h4>单子名称：{{workflowDetail.workflow_name}}</h4>
+			<h4>单子名称：<span id="editWorkflowNname">{{workflowDetail.workflow_name}}</span></h4>
             <input type="hidden" id="workflowDetail_id" name="workflowid" value="{{workflowDetail.id}}">
+            <input type="hidden" id="editSqlContent" value="{{workflowDetail.sql_content}}"/>
 			<hr>	
 			<table class="table table-striped table-hover">
 				<thead>
@@ -158,7 +159,7 @@
                 <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
                 <input type="submit" id="btnRollback" type="button" class="btn btn-default" data-loading-text="Loading..." value="查看回滚SQL" />
             </form>
-			{% elif workflowDetail.status == '自动审核不通过' %}
-				<input type='button' class='btn btn-default' value='点此重新修改(其实是浏览器后退..)' onclick="history.back();" />
+			{% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行中' or workflowDetail.status == '执行有异常' %}
+                <a type='button' id="btnEditSql" class='btn btn-warning' href="/editsql/">重新修改</a>
 			{% endif %}
 {% endblock content%}

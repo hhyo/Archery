@@ -144,6 +144,7 @@ def submitSql(request):
 
 #提交SQL给inception进行解析
 def autoreview(request):
+    workflowid = request.POST.get('workflowid')
     sqlContent = request.POST['sql_content']
     workflowName = request.POST['workflow_name']
     clusterName = request.POST['cluster_name']
@@ -182,18 +183,21 @@ def autoreview(request):
 
     #存进数据库里
     engineer = request.session.get('login_username', False)
-    newWorkflow = workflow()
-    newWorkflow.workflow_name = workflowName
-    newWorkflow.engineer = engineer
-    newWorkflow.review_man = json.dumps(listAllReviewMen)
-    newWorkflow.create_time = getNow()
-    newWorkflow.status = workflowStatus
-    newWorkflow.is_backup = isBackup
-    newWorkflow.review_content = jsonResult
-    newWorkflow.cluster_name = clusterName
-    newWorkflow.sql_content = sqlContent
-    newWorkflow.save()
-    workflowId = newWorkflow.id
+    if not workflowid:
+        Workflow = workflow()
+        Workflow.create_time = getNow()
+    else:
+        Workflow = workflow.objects.get(id=int(workflowid))
+    Workflow.workflow_name = workflowName
+    Workflow.engineer = engineer
+    Workflow.review_man = json.dumps(listAllReviewMen)
+    Workflow.status = workflowStatus
+    Workflow.is_backup = isBackup
+    Workflow.review_content = jsonResult
+    Workflow.cluster_name = clusterName
+    Workflow.sql_content = sqlContent
+    Workflow.save()
+    workflowId = Workflow.id
 
     #自动审核通过了，才发邮件
     if workflowStatus == Const.workflowStatus['manreviewing']:

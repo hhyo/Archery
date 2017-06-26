@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^login/$', views.login, name='login'),
     url(r'^logout/$', views.logout, name='logout'),
     url(r'^submitsql/$', views.submitSql, name='submitSql'),
+    url(r'editsql/$', views.submitSql, name='editsql'),
     url(r'^allworkflow/$', views.allworkflow, name='allworkflow'),
     
     url(r'^autoreview/$', views.autoreview, name='autoreview'),
