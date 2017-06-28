@@ -95,7 +95,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 ### 已经制作好的docker镜像：
 * 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
     1. docker run -p 80:80 -d docker.gaoxiaobang.com/prod/archer    (需要确保docker宿主机80端口能够使用)
-    2. 浏览器直接访问http://宿主机ip:80/ 即可
+    2. 浏览器直接访问http://宿主机ip:80/ 即可, 初始用户名密码为root/root
 * docker镜像制作感谢@浩气冲天 协助
 
 ### 系统展示截图：
