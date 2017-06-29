@@ -233,6 +233,11 @@ def detail(request, workflowId):
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
         listAllReviewMen = (workflowDetail.review_man, )
+
+    # 格式化detail界面sql语句和审核/执行结果 by 搬砖工
+    for Content in listContent:
+        Content[4] = Content[4].split('\n')     # 审核/执行结果
+        Content[5] = Content[5].split('\r\n')   # sql语句
     context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail,'listContent':listContent, 'listContent':listContent,'listAllReviewMen':listAllReviewMen}
     return render(request, 'detail.html', context)
 

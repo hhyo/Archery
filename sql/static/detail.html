@@ -96,12 +96,16 @@
 						{% endif %}
 							{{forloop.counter}}
 						</td>
-						<td>
-							{{row.5}}
-						</td>
-						<td>
-							{{row.4}}
-						</td>
+                        <td>
+                            {% for sql in row.5 %}
+                                {{ sql }}{% if not forloop.last %}<br/>{% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for statement in row.4 %}
+                                {{ statement }}{% if not forloop.last %}<br/>{% endif %}
+                            {% endfor %}
+                        </td>
 						<td>
 							{{row.6}}
 						</td>
