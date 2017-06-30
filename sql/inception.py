@@ -29,8 +29,17 @@ class InceptionDao(object):
         识别DROP DATABASE, DROP TABLE, TRUNCATE PARTITION, TRUNCATE TABLE等高危DDL操作，因为对于这些操作，inception在备份时只能备份METADATA，而不会备份数据！
         如果识别到包含高危操作，则返回“审核不通过”
         '''
-        if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", sqlContent.lower()):
-            return (('', '', 2, '', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', '', '', '', '', ''),)
+        resultList = []
+        criticalSqlFound = 0
+        for row in sqlContent.rstrip(';').split(';'):
+            if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", row.lower()):
+                result = ('', '', 2, '驳回高危SQL', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', row, '', '', '', '')
+                criticalSqlFound = 1
+            else:
+                result = ('', '', 0, '', 'None', row, '', '', '', '')
+            resultList.append(result)
+        if criticalSqlFound == 1:
+            return resultList
         else:
             return None
 
