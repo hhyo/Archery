@@ -80,7 +80,7 @@ def allworkflow(request):
     elif navStatus == 'all' and role == '工程师':
         listWorkflow = workflow.objects.filter(Q(engineer=loginUser) | Q(status=Const.workflowStatus['autoreviewwrong']), engineer=loginUser).order_by('-create_time')[offset:limit]
     elif navStatus == 'waitingforme':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['manreviewing'], review_man=loginUser).order_by('-create_time')[offset:limit]
+        listWorkflow = workflow.objects.filter(Q(status=Const.workflowStatus['manreviewing'], review_man=loginUser) | Q(status=Const.workflowStatus['manreviewing'], review_man__contains='"' + loginUser + '"')).order_by('-create_time')[offset:limit]
     elif navStatus == 'finish' and role == '审核人':
         listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish']).order_by('-create_time')[offset:limit]
     elif navStatus == 'finish' and role == '工程师':
@@ -190,7 +190,7 @@ def autoreview(request):
         Workflow = workflow.objects.get(id=int(workflowid))
     Workflow.workflow_name = workflowName
     Workflow.engineer = engineer
-    Workflow.review_man = json.dumps(listAllReviewMen)
+    Workflow.review_man = json.dumps(listAllReviewMen, ensure_ascii=False)
     Workflow.status = workflowStatus
     Workflow.is_backup = isBackup
     Workflow.review_content = jsonResult
@@ -233,7 +233,7 @@ def detail(request, workflowId):
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
         listAllReviewMen = (workflowDetail.review_man, )
-    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail,'listContent':listContent, 'listContent':listContent,'listAllReviewMen':listAllReviewMen}
+    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'listContent':listContent,'listAllReviewMen':listAllReviewMen}
     return render(request, 'detail.html', context)
 
 #人工审核也通过，执行SQL
@@ -284,17 +284,21 @@ def execute(request):
         if getattr(settings, 'MAIL_ON_OFF') == "on":
             url = _getDetailUrl(request) + str(workflowId) + '/'
 
-            #发一封邮件
+            #给主、副审核人，申请人，DBA各发一封邮件
             engineer = workflowDetail.engineer
-            reviewMan = workflowDetail.review_man
+            reviewMen = workflowDetail.review_man
             workflowStatus = workflowDetail.status
             workflowName = workflowDetail.workflow_name
             objEngineer = users.objects.get(username=engineer)
-            objReviewMan = users.objects.get(username=reviewMan)
             strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
-            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
             mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
             mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+            for reviewMan in listAllReviewMen:
+                if reviewMan == "":
+                    continue
+                objReviewMan = users.objects.get(username=reviewMan)
+                mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
         else:
             #不发邮件
             pass
@@ -310,10 +314,11 @@ def cancel(request):
 
     workflowId = int(workflowId)
     workflowDetail = workflow.objects.get(id=workflowId)
+    reviewMan = workflowDetail.review_man
     try:
-        listAllReviewMen = json.loads(workflowDetail.review_man)
+        listAllReviewMen = json.loads(reviewMan)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man, )
+        listAllReviewMen = (reviewMan, )
 
     #服务器端二次验证，如果正在执行终止动作的当前登录用户，不是发起人也不是审核人，则异常.
     loginUser = request.session.get('login_username', False)
@@ -328,22 +333,27 @@ def cancel(request):
     workflowDetail.status = Const.workflowStatus['abort']
     workflowDetail.save()
 	
-    #如果人工终止了，则根据settings.py里的配置决定是否给提交者一封邮件提醒，并附带说明此单子被拒绝掉了，需要重新修改.
+    #如果人工终止了，则根据settings.py里的配置决定是否给提交者和审核人发邮件提醒。如果是发起人终止流程，则给主、副审核人各发一封；如果是审核人终止流程，则给发起人发一封邮件，并附带说明此单子被拒绝掉了，需要重新修改.
     if hasattr(settings, 'MAIL_ON_OFF') == True:
-	    #判断setting内容和当前登陆用户，如果为提交者自己终止的时候是不需要发邮件的
-        if getattr(settings, 'MAIL_ON_OFF') == "on" and loginUser != workflowDetail.engineer:  
+        if getattr(settings, 'MAIL_ON_OFF') == "on":
             url = _getDetailUrl(request) + str(workflowId) + '/'
 
-            #发一封邮件
             engineer = workflowDetail.engineer
-            reviewMan = workflowDetail.review_man
             workflowStatus = workflowDetail.status
             workflowName = workflowDetail.workflow_name
-            objEngineer = users.objects.get(username=engineer)
-            objReviewMan = users.objects.get(username=reviewMan)
-            strTitle = "SQL上线工单被拒绝执行 # " + str(workflowId)
-            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交"
-            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+            if loginUser == engineer:
+                strTitle = "发起人主动终止SQL上线工单流程 # " + str(workflowId)
+                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：发起人主动终止流程"
+                for reviewMan in listAllReviewMen:
+                    if reviewMan == "":
+                        continue
+                    objReviewMan = users.objects.get(username=reviewMan)
+                    mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+            else:
+                objEngineer = users.objects.get(username=engineer)
+                strTitle = "SQL上线工单被拒绝执行 # " + str(workflowId)
+                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交或修改工单"
+                mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
         else:
             #不发邮件
             pass
