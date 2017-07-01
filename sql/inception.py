@@ -29,12 +29,21 @@ class InceptionDao(object):
         识别DROP DATABASE, DROP TABLE, TRUNCATE PARTITION, TRUNCATE TABLE等高危DDL操作，因为对于这些操作，inception在备份时只能备份METADATA，而不会备份数据！
         如果识别到包含高危操作，则返回“审核不通过”
         '''
-        if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", sqlContent.lower()):
-            return (('', '', 2, '', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', '', '', '', '', ''),)
+        resultList = []
+        criticalSqlFound = 0
+        for row in sqlContent.rstrip(';').split(';'):
+            if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", row.lower()):
+                result = ('', '', 2, '驳回高危SQL', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', row, '', '', '', '')
+                criticalSqlFound = 1
+            else:
+                result = ('', '', 0, '', 'None', row, '', '', '', '')
+            resultList.append(result)
+        if criticalSqlFound == 1:
+            return resultList
         else:
             return None
 
-    def sqlautoReview(self, sqlContent, clusterName, isBackup='否'):
+    def sqlautoReview(self, sqlContent, clusterName, isSplit="no"):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''
@@ -59,11 +68,33 @@ class InceptionDao(object):
             if criticalDDL_check is not None:
                 result = criticalDDL_check
             else:
-                sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
-                  inception_magic_start;\
-                  %s\
-                  inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
-                result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+                if isSplit == "yes":
+                    # 这种场景只给osc进度功能使用
+                    # 如果一个工单中同时包含DML和DDL，那么执行时被split后的SQL与提交的SQL会不一样（会在每条语句前面加use database;)，导致osc进度更新取不到正确的SHA1值。
+                    # 请参考inception文档中--enable-split参数的说明
+                    sqlSplit = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%s; --enable-ignore-warnings;--enable-split;*/\
+                         inception_magic_start;\
+                         %s\
+                         inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+                    splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
+                    tmpList = []
+                    for splitRow in splitResult:
+                        sqlTmp = splitRow[1]
+                        sql = "/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s; --enable-ignore-warnings;*/\
+                                inception_magic_start;\
+                                %s\
+                                inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlTmp)
+                        reviewResult = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+                        for row in reviewResult:
+                            tmpList.append(list(row))
+                    result = tmpList
+                else:
+                    # 工单审核使用
+                    sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
+                      inception_magic_start;\
+                      %s\
+                      inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+                    result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
         
     def executeFinal(self, workflowDetail, dictConn):

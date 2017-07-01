@@ -96,16 +96,16 @@
 						{% endif %}
 							{{forloop.counter}}
 						</td>
-                        <td>
-                            {% for sql in row.5 %}
-                                {{ sql }}{% if not forloop.last %}<br/>{% endif %}
-                            {% endfor %}
-                        </td>
-                        <td>
-                            {% for statement in row.4 %}
-                                {{ statement }}{% if not forloop.last %}<br/>{% endif %}
-                            {% endfor %}
-                        </td>
+					   <td>
+	 						{% for sql in row.5 %}
+ 								{{ sql }}{% if not forloop.last %}<br/>{% endif %}
+							{% endfor %}
+	 					</td>
+ 						<td>
+							{% for statement in row.4 %}
+								{{ statement }}{% if not forloop.last %}<br/>{% endif %}
+							{% endfor %}
+						</td>
 						<td>
 							{{row.6}}
 						</td>
@@ -163,7 +163,11 @@
                 <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
                 <input type="submit" id="btnRollback" type="button" class="btn btn-default" data-loading-text="Loading..." value="查看回滚SQL" />
             </form>
-			{% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行中' or workflowDetail.status == '执行有异常' %}
-                <a type='button' id="btnEditSql" class='btn btn-warning' href="/editsql/">重新修改</a>
+			{% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行有异常' %}
+				{% if workflowDetail.engineer == loginUser %}
+				<!--只允许发起人修改工单-->
+					{% csrf_token %}
+                	<a type='button' id="btnEditSql" class='btn btn-warning' href="/editsql/">重新修改</a>
+				{% endif %}
 			{% endif %}
 {% endblock content%}

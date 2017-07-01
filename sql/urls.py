@@ -25,5 +25,6 @@ urlpatterns = [
     url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),
     url(r'^getPersonCharts/$', views_ajax.getPersonCharts, name='getPersonCharts'),
     url(r'^getOscPercent/$', views_ajax.getOscPercent, name='getOscPercent'),
+    url(r'^getWorkflowStatus/$', views_ajax.getWorkflowStatus, name='getWorkflowStatus'),
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
 ]
