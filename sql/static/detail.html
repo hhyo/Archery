@@ -64,7 +64,7 @@
 				</tbody>
 			</table>
 
-			<table class="table table-striped table-hover">
+			<table class="table table-striped table-hover" width='100%' style='table-layout:fixed;'>
 				<thead>
 					<tr>
 						<th width="40px">
@@ -73,7 +73,7 @@
 						<th>
 							SQL内容
 						</th>
-						<th width="110px">
+						<th>
 							自动审核结果
 						</th>
 						<th width="110px">
@@ -96,12 +96,12 @@
 						{% endif %}
 							{{forloop.counter}}
 						</td>
-					   <td>
+					   <td style='word-wrap:break-word;'>
 	 						{% for sql in row.5 %}
  								{{ sql }}{% if not forloop.last %}<br/>{% endif %}
 							{% endfor %}
 	 					</td>
- 						<td>
+ 						<td style='word-wrap:break-word;'>
 							{% for statement in row.4 %}
 								{{ statement }}{% if not forloop.last %}<br/>{% endif %}
 							{% endfor %}

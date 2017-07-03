@@ -49,7 +49,7 @@ function autoreview() {
 					if (result[i][4] != "None") {
 						alertStyle = "alert-danger";
 					}
-					finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> <button type='button' class='close' data-dismiss='alert' aria-hidden='true'>x</button> <table class=''> <tr> <td width='800px'>" + sql + "</td> <td><strong>自动审核结果：</strong>" + suggest + "</td> </tr> </table> </div>";
+					finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> <button type='button' class='close' data-dismiss='alert' aria-hidden='true'>x</button> <table class='' width='100%' style='table-layout:fixed;'> <tr> <td width='80%' style='word-wrap:break-word;'>" + sql + "</td> <td><strong>自动审核结果：</strong>" + suggest + "</td> </tr> </table> </div>";
 				}
 
 				$("#inception-result-col").html(finalHtml);
