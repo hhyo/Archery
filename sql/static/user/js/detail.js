@@ -91,7 +91,6 @@ function get_pct(wid, sqlNum){
                          //第1种情况,这里进行5次重试，每次间隔1秒
                          if (retryCnt <= 5) {
                              clearTimeout(key);
-                             //document.getElementById("span_" + sqlNum).style.color = "#F00";
                              document.getElementById("div_" + sqlNum).className = "progress";
                              document.getElementById("div_" + sqlNum).style.width = "100%";
                              document.getElementById("span_" + sqlNum).innerHTML = "查询中...";
@@ -102,13 +101,12 @@ function get_pct(wid, sqlNum){
                              retryCnt++;
                          } else {
                              retryCnt = 1;
-                             document.getElementById("div_" + sqlNum).className = "progress-bar";
                              itemIndex++;
                              executing = 0;
                              // console.log('===>' + itemIndex);
                              pct = 100;
-                             document.getElementById("div_" + sqlNum).style.width = pct + "%";
                              document.getElementById("span_" + sqlNum).innerHTML = pct + "%";
+                             document.getElementById("div_" + sqlNum).className = "progress-bar";
                              get_pct(wid, itemIndex);
                              // console.log('per:' + pct);
                          }
