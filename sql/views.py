@@ -373,8 +373,13 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
     listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowName = workflowDetail.workflow_name
+    rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
+    cluster_name = workflowDetail.cluster_name
+    review_man = workflowDetail.review_man
 
-    context = {'listBackupSql':listBackupSql}
+    context = {'listBackupSql':listBackupSql, 'rollbackWorkflowName':rollbackWorkflowName, 'cluster_name':cluster_name, 'review_man':review_man}
     return render(request, 'rollback.html', context)
 
 #SQL审核必读
