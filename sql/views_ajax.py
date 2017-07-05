@@ -129,7 +129,8 @@ def getSqlSHA1(workflowId):
     # 使用json.loads方法，把review_content从str转成list,
     # 格式：[[1, "CHECKED", 0, "Audit completed", "None", "use bksnap", 0, "'0_0_0'", "None", "0", ""], [2, "CHECKED", 0, "Audit completed", "None", "ALTER TABLE `ts_bb_score_3`\r\n\tCOMMENT='1'", 599668, "'0_0_1'", "192_168_100_42_3306_bksnap", "0", "*43AE56C14F84EAAD2424FCBFF85ABF83C51C8CE8"]]
     listReviewContent = json.loads(workflowDetail.review_content)
-    listSplitedReviewContent = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, isSplit="yes")
+    listSplitedReviewContent = listReviewContent
+    # 先屏蔽BUG，listSplitedReviewContent = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, isSplit="yes")
     if listReviewContent == listSplitedReviewContent:
         # 拿创建工单时自动审核的结果，与split之后的审核结果对比，如果一致，说明sqlContent中不存在DML和DDL混用的情况；反之则有2种情况：1.两次审核的受影响行数等存在差别，保险起见，用第二次的审核结果；2.存在混用，需要从split之后的审核结果中取SHA1值
         for row in listReviewContent:
