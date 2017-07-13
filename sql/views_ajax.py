@@ -127,43 +127,17 @@ def getSqlSHA1(workflowId):
     workflowDetail = get_object_or_404(workflow, pk=workflowId)
     dictSHA1 = {}
     # 使用json.loads方法，把review_content从str转成list,
-    # 格式：[[1, "CHECKED", 0, "Audit completed", "None", "use bksnap", 0, "'0_0_0'", "None", "0", ""], [2, "CHECKED", 0, "Audit completed", "None", "ALTER TABLE `ts_bb_score_3`\r\n\tCOMMENT='1'", 599668, "'0_0_1'", "192_168_100_42_3306_bksnap", "0", "*43AE56C14F84EAAD2424FCBFF85ABF83C51C8CE8"]]
-    listReviewContent = json.loads(workflowDetail.review_content)
-    listSplitedReviewContent = listReviewContent
-    # 先屏蔽BUG，listSplitedReviewContent = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, isSplit="yes")
-    if listReviewContent == listSplitedReviewContent:
-        # 拿创建工单时自动审核的结果，与split之后的审核结果对比，如果一致，说明sqlContent中不存在DML和DDL混用的情况；反之则有2种情况：1.两次审核的受影响行数等存在差别，保险起见，用第二次的审核结果；2.存在混用，需要从split之后的审核结果中取SHA1值
-        for row in listReviewContent:
-            id = row[0]
-            sqlSHA1 = row[10]
-            if sqlSHA1 != '':
-                dictSHA1[id] = sqlSHA1
-    else:
-        for reviewContent in listReviewContent:
-            id = reviewContent[0]
-            sqlContent = reviewContent[5]
-            backup_dbname = reviewContent[8]
-            sqlSHA1 = reviewContent[10]
-            if sqlSHA1 == '':
-                pass
-            else:
-                for splitedReviewContent in listSplitedReviewContent[id-1:]:
-                    # 从第[id-1]个元素开始，顺序扫描listSplitedReviewContent，一行行比对sqlContent和backup_dbname,如果相同，说明是同一条SQL，取其SHA1值存入dictSHA1[id]，break跳出;否则，继续比对下一行。
-                    if splitedReviewContent[10] == '':
-                        #没有SHA1值的行，可以忽略
-                        pass
-                    else:
-                        if sqlContent == splitedReviewContent[5] and backup_dbname == splitedReviewContent[8]:
-                            dictSHA1[id] = splitedReviewContent[10]
-                            # print("sqlContent:  " + sqlContent + "sqlSHA1:  " + sqlSHA1)
-                            # print("sqlContent2:  " + splitedReviewContent[5] + "，  sqlSHA1_2:  " + splitedReviewContent[10])
-                            break
-                        else:
-                            pass
+    listReCheckResult = json.loads(workflowDetail.review_content)
+
+    for rownum in range(len(listReCheckResult)):
+        id = rownum + 1
+        sqlSHA1 = listReCheckResult[rownum][10]
+        if sqlSHA1 != '':
+            dictSHA1[id] = sqlSHA1
 
     if dictSHA1 != {}:
-        # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。因为工单一旦提交，就被自动审核一次，且只会审核一次，
-        # 而且使用OSC执行的工单更是少数，所以不设置缓存过期时间
+        # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。
+        # 因为使用OSC执行的SQL占较少数，所以不设置缓存过期时间
         sqlSHA1_cache[workflowId] = dictSHA1
     return dictSHA1
 
@@ -178,17 +152,37 @@ def getOscPercent(request):
 
     workflowId = int(workflowId)
     sqlID = int(sqlID)
+    dictSHA1 = {}
     if workflowId in sqlSHA1_cache:
         dictSHA1 = sqlSHA1_cache[workflowId]
         # cachehit = "已命中"
     else:
         dictSHA1 = getSqlSHA1(workflowId)
-        # cachehit = "未命中"
+
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
-        pctResult = inceptionDao.getOscPercent(sqlSHA1)  #成功获取到SHA1值，去inception里面查询进度
+        result = inceptionDao.getOscPercent(sqlSHA1)  #成功获取到SHA1值，去inception里面查询进度
+        if result["status"] == 0:
+            # 获取到进度值
+            pctResult = result
+        else:
+            # result["status"] == 1, 未获取到进度值,需要与workflow.execute_result对比，来判断是已经执行过了，还是还未执行
+            execute_result = workflow.objects.get(id=workflowId).execute_result
+            try:
+                listExecResult = json.loads(execute_result)
+            except ValueError:
+                listExecResult = execute_result
+            if type(listExecResult) == list and len(listExecResult) >= sqlID-1:
+                if dictSHA1[sqlID] in listExecResult[sqlID-1][10]:
+                    # 已经执行完毕，进度值置为100
+                    pctResult = {"status":0, "msg":"ok", "data":{"percent":100, "timeRemained":""}}
+            else:
+                # 可能因为前一条SQL是DML，正在执行中；或者还没执行到这一行。但是status返回的是4，而当前SQL实际上还未开始执行。这里建议前端进行重试
+                pctResult = {"status":-3, "msg":"进度未知", "data":{"percent":-100, "timeRemained":""}}
+    elif dictSHA1 != {} and sqlID not in dictSHA1:
+        pctResult = {"status":4, "msg":"该行SQL不是由pt-OSC执行的", "data":""}
     else:
-        pctResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
+        pctResult = {"status":-2, "msg":"整个工单不由pt-OSC执行", "data":""}
     return HttpResponse(json.dumps(pctResult), content_type='application/json')
 
 @csrf_exempt
@@ -238,5 +232,5 @@ def stopOscProgress(request):
         sqlSHA1 = dictSHA1[sqlID]
         optResult = inceptionDao.stopOscProgress(sqlSHA1)
     else:
-            optResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
+        optResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
     return HttpResponse(json.dumps(optResult), content_type='application/json')

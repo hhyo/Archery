@@ -163,7 +163,7 @@ def autoreview(request):
         return render(request, 'error.html', context)
  
     #交给inception进行自动审核
-    result = inceptionDao.sqlautoReview(sqlContent, clusterName, isBackup)
+    result = inceptionDao.sqlautoReview(sqlContent, clusterName)
     if result is None or len(result) == 0:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
@@ -196,6 +196,7 @@ def autoreview(request):
     Workflow.review_content = jsonResult
     Workflow.cluster_name = clusterName
     Workflow.sql_content = sqlContent
+    Workflow.execute_result = ''
     Workflow.save()
     workflowId = Workflow.id
 
@@ -224,7 +225,6 @@ def autoreview(request):
 #展示SQL工单详细内容，以及可以人工审核，审核通过即可执行
 def detail(request, workflowId):
     workflowDetail = get_object_or_404(workflow, pk=workflowId)
-    listContent = None
     if workflowDetail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']):
         listContent = json.loads(workflowDetail.execute_result)
     else:
@@ -268,10 +268,13 @@ def execute(request):
         return render(request, 'error.html', context)
 
     dictConn = getMasterConnStr(clusterName)
-   
+
     #将流程状态修改为执行中，并更新reviewok_time字段
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = getNow()
+    #执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, isSplit='yes')
+    workflowDetail.review_content = json.dumps(splitReviewResult)
     workflowDetail.save()
 
     #交给inception先split，再执行
