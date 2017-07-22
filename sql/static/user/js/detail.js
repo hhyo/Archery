@@ -135,7 +135,7 @@ function get_pct(wid, sqlNum){
 }
 
 function stopOsc(wid, sqlNum){
-    if (wid > 0 && sqlNum > 1 && sqlNum <= sqlMaxRowNumber) {
+    if (wid > 0 && sqlNum >= 1 && sqlNum <= sqlMaxRowNumber) {
          //console.log('stoping osc...'+ sqlNum);
         $.ajax({
             type: "post",
