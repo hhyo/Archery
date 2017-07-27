@@ -28,10 +28,7 @@ function get_pct(wid, sqlNum){
          getWorkflowStatus(wid);  //最后一条SQL的进度刷新完后，请求后端接口获取整个工单的状态，如果不为“执行中”状态，则提示刷新当前页面；如果是“执行中”，则每隔1秒查询工单的状态，共重试120次
         // console.log('finish1');
          if (wfStatus != -1 && wfStatus != "执行中") {
-             var returned = confirm("执行完毕，请确认是否刷新当前页面？");
-                if (returned) {
-                    window.location.reload(true);
-                }
+                window.location.reload(true);
             }
          else {
                 document.getElementById("workflowDetail_status").innerHTML = "确认中...";
