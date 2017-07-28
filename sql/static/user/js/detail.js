@@ -198,9 +198,17 @@ $(document).ready(function () {
        var editWorkflowDetailId = $("#workflowDetail_id").val();
        var editWorkflowNname = $("#editWorkflowNname").text();
        var editSqlContent = $("#editSqlContent").val();
+       var editClustername = $("#editClustername").val();
+       var editIsbackup = $("#editIsbackup").val();
+       var editReviewman = $("#editReviewman").val();
+       var editSubReviewman = $("#editSubReviewman").val();
        sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
        sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
        sessionStorage.setItem('editSqlContent', editSqlContent);
+       sessionStorage.setItem('editClustername', editClustername);
+       sessionStorage.setItem('editIsbackup', editIsbackup);
+       sessionStorage.setItem('editReviewman', editReviewman);
+       sessionStorage.setItem('editSubReviewman', editSubReviewman);
     });
 
     $("#btnExecute").click(function(){

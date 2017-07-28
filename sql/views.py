@@ -380,9 +380,15 @@ def rollback(request):
     workflowName = workflowDetail.workflow_name
     rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
     cluster_name = workflowDetail.cluster_name
-    review_man = workflowDetail.review_man
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+        review_man = listAllReviewMen[0]
+        sub_review_man = listAllReviewMen[1]
+    except ValueError:
+        review_man = workflowDetail.review_man
+        sub_review_man = ''
 
-    context = {'listBackupSql':listBackupSql, 'rollbackWorkflowName':rollbackWorkflowName, 'cluster_name':cluster_name, 'review_man':review_man}
+    context = {'listBackupSql':listBackupSql, 'rollbackWorkflowName':rollbackWorkflowName, 'cluster_name':cluster_name, 'review_man':review_man, 'sub_review_man':sub_review_man}
     return render(request, 'rollback.html', context)
 
 #SQL审核必读

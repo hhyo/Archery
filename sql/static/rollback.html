@@ -3,19 +3,16 @@
 {% block content %}
 			<div>
 				<div style="width: 20%; float: left"><h4>回滚SQL语句：</h4></div>
-            {% if loginUser in review_man %}
 				<div style="width: 80%; float: right">
-                    <form method="post" action="/autoreview/" role="form">
                         {% csrf_token %}
-                        <input type="hidden" name="sql_content" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
-                        <input type="hidden" name="workflow_name" value="{{ rollbackWorkflowName }}">
-                        <input type="hidden" name="cluster_name" value="{{ cluster_name }}">
-                        <input type="hidden" name="is_backup" value="是">
-                        <input type="hidden" name="review_man" value="{{ loginUser }}"> {# 因为只有这个工单的审核人才能看到这个按钮，所以回滚请求直接提给自己 #}
-                        <input id="btn-submitsql" type="submit" class="btn btn-warning" value="提交回滚请求" />
-                    </form>
+                        <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
+                        <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
+                        <input type="hidden" id="editClustername" value="{{ cluster_name }}">
+                        <input type="hidden" id="editIsbackup" value="是">
+                        <input type="hidden" id="editReviewman" value="{{ review_man }}">
+                        <input type="hidden" id="editSubReviewman" value="{{ sub_review_man }}">
+                        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
 				</div>
-            {% endif %}
             <br><br>
 			</div>
 			<table class="table table-striped table-hover">				

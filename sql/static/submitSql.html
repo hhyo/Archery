@@ -82,8 +82,8 @@
                     <!-- <button type="submit" class="btn btn-primary">SQL提交</button> -->
                     <input id="btn-submitsql" type="button" class="btn btn-primary" value="SQL提交" />
 				</div>
+			</div>
 	</form>
-		</div>
 	</div>
 
 	<div id="inception-result" style="display:none;" class="row clearfix">
@@ -93,13 +93,4 @@
 		</div>
 	</div>
 </div>
-</div>
-<script type="text/javascript">
-    var pathname = window.location.pathname;
-    if (pathname == "/editsql/") {
-        document.getElementById('workflowid').value = sessionStorage.getItem('editWorkflowDetailId');
-        document.getElementById('workflow_name').value = sessionStorage.getItem('editWorkflowNname');
-        document.getElementById('sql_content').value = sessionStorage.getItem('editSqlContent');
-    }
-</script>
 {% endblock content %}
