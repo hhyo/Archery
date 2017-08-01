@@ -31,3 +31,17 @@ $("#review_man").change(function review_man(){
     var review_man = $(this).val();
     $("div#" + review_man).hide();
 });
+
+$(document).ready(function () {
+	var pathname = window.location.pathname;
+	if (pathname == "/editsql/") {
+		document.getElementById('workflowid').value = sessionStorage.getItem('editWorkflowDetailId');
+		document.getElementById('workflow_name').value = sessionStorage.getItem('editWorkflowNname');
+		document.getElementById('sql_content').value = sessionStorage.getItem('editSqlContent');
+		document.getElementById('cluster_name').value = sessionStorage.getItem('editClustername');
+		document.getElementById('is_backup').value = sessionStorage.getItem('editIsbackup');
+		document.getElementById('review_man').value = sessionStorage.getItem('editReviewman');
+		var sub_review_name = sessionStorage.getItem('editSubReviewman');
+		$("input[name='sub_review_man'][value=\'"+sub_review_name+"\']").attr("checked", true);
+	}
+});

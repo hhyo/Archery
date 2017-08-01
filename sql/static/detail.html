@@ -4,7 +4,11 @@
 			<h4>单子名称：<span id="editWorkflowNname">{{workflowDetail.workflow_name}}</span></h4>
             <input type="hidden" id="workflowDetail_id" name="workflowid" value="{{workflowDetail.id}}">
             <input type="hidden" id="editSqlContent" value="{{workflowDetail.sql_content}}"/>
-			<hr>	
+            <input type="hidden" id="editClustername" value="{{workflowDetail.cluster_name}}"/>
+            <input type="hidden" id="editIsbackup" value="{{workflowDetail.is_backup}}"/>
+            <input type="hidden" id="editReviewman" value="{{listAllReviewMen.0}}"/>
+            <input type="hidden" id="editSubReviewman" value="{{listAllReviewMen.1}}"/>
+			<hr>
 			<table class="table table-striped table-hover">
 				<thead>
 					<tr>
@@ -92,7 +96,7 @@
 					<tr>
 						<td>
 						{% if forloop.last %}
-							<input type="hidden" id="sqlMaxRowNumber" value="{{row.0}}">
+							<input type="hidden" id="sqlMaxRowNumber" value="{{forloop.counter}}">
 						{% endif %}
 							{{forloop.counter}}
 						</td>
@@ -127,7 +131,7 @@
 										{% csrf_token %}
 										<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
 										<!--<input type="hidden" id="sqlID_{{row.0}}" value="{{row.0}}">-->
-										<button id="btnstop_{{row.0}}" value="{{row.0}}" type="button" class="close" style="display: none" title="停止pt-OSC进程">
+										<button id="btnstop_{{forloop.counter}}" value="{{forloop.counter}}" type="button" class="close" style="display: none" title="停止pt-OSC进程">
 										 <span aria-hidden="true">&times;</span>
 										 <span class="sr-only"></span>
 										</button>
