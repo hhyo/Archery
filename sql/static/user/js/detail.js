@@ -69,6 +69,9 @@ function get_pct(wid, sqlNum){
                 if (sqlNum <= sqlMaxRowNumber) {
                     if (data.status == -2) {
                         // 整个工单不由pt-OSC执行
+                        document.getElementById("td_" + sqlNum).innerHTML = "不由pt-OSC执行";
+                        itemIndex++;
+                        get_pct(wid, itemIndex);
                         return
                     }
                     else if (data.status == 4) {
