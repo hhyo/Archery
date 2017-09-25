@@ -213,7 +213,7 @@ def autoreview(request):
                 for reviewMan in listAllReviewMen:
                     if reviewMan == "":
                         continue
-                    strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
+                    strContent = "发起人：" + engineer + "\n审核人：" + str(listAllReviewMen)  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
                     objReviewMan = users.objects.get(username=reviewMan)
                     mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
             else:
