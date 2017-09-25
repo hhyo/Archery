@@ -74,7 +74,8 @@ def authenticateEntry(request):
         strUsername = request.POST['username']
         strPassword = request.POST['password']
     result = loginAuthenticate(strUsername, strPassword)
-    request.session['login_username'] = strUsername
+    if result['status'] == 0:
+        request.session['login_username'] = strUsername
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
