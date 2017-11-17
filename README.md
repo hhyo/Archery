@@ -91,6 +91,8 @@ cd archer && python3 manage.py createsuperuser<br/>
 这一步是为了告诉archer你要用inception去哪些mysql主库里执行SQL，所用到的用户名密码、端口等。<br/>
 11. 正式访问：<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
+<br/>
+如果觉得以上安装步骤还是看不懂，可以看这一篇安装步骤，感谢网友@一条大河 的贡献：https://riverdba.github.io/2017/04/15/archer-install/ <br/>
 
 ### 已经制作好的docker镜像：
 * 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
