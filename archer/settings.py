@@ -14,6 +14,9 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import ldap
+# from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
 import pymysql
 pymysql.install_as_MySQLdb()
 
@@ -127,6 +130,71 @@ INCEPTION_REMOTE_BACKUP_HOST='192.168.1.12'
 INCEPTION_REMOTE_BACKUP_PORT=5621
 INCEPTION_REMOTE_BACKUP_USER='inception'
 INCEPTION_REMOTE_BACKUP_PASSWORD='inception'
+
+# LDAP
+ENABLE_LDAP = False
+# if use self signed certificate, Remove AUTH_LDAP_GLOBAL_OPTIONS annotations
+#AUTH_LDAP_GLOBAL_OPTIONS={
+#    ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER
+#}
+AUTH_LDAP_BIND_DN = "cn=ro,dc=xxx,dc=cn"
+AUTH_LDAP_BIND_PASSWORD = "xxxxxx"
+AUTH_LDAP_SERVER_URI = "ldap://auth.xxx.com"
+AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=users,dc=xxx,dc=cn"
+AUTH_LDAP_GROUP_SEARCH = LDAPSearch("ou=groups,dc=xxx,dc=cn",
+    ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)"
+)
+AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType()
+AUTH_LDAP_USER_ATTR_MAP = {
+    "username": "cn",
+    "display": "sn",
+    "email": "mail"
+}
+
+# AUTH_LDAP_MIRROR_GROUPS = True  # 直接把ldap的组复制到django一份，和AUTH_LDAP_FIND_GROUP_PERMS互斥.用户每次登录会根据ldap来更新数据库的组关系
+# AUTH_LDAP_FIND_GROUP_PERMS = True  # django从ldap的组权限中获取权限,这种方式，django自身不创建组，每次请求都调用ldap
+# AUTH_LDAP_CACHE_GROUPS = True  # 如打开FIND_GROUP_PERMS后，此配置生效，对组关系进行缓存，不用每次请求都调用ldap
+# AUTH_LDAP_GROUP_CACHE_TIMEOUT = 600  # 缓存时间
+
+#开启以下配置注释，可以帮助调试ldap集成
+#LDAP_LOGS = '/tmp/ldap.log'
+#stamdard_format = '[%(asctime)s][%(threadName)s:%(thread)d]' + \
+#                  '[task_id:%(name)s][%(filename)s:%(lineno)d] ' + \
+#                  '[%(levelname)s]- %(message)s'
+#LOGGING = {
+#    'version': 1,
+#    'disable_existing_loggers': False,
+#    'formatters': {
+#        'standard': {  # 详细
+#            'format': stamdard_format
+#        },
+#    },
+#    'handlers': {
+#        'default': {
+#            'level': 'DEBUG',
+#            'class': 'logging.handlers.RotatingFileHandler',
+#            'filename': LDAP_LOGS,
+#            'maxBytes': 1024 * 1024 * 100,  # 5 MB
+#            'backupCount': 5,
+#            'formatter': 'standard',
+#        },
+#        'console': {
+#            'level': 'DEBUG',
+#            'class': 'logging.StreamHandler',
+#        }
+#    },
+#    'loggers': {
+#        '': {  # default日志，存放于log中
+#            'handlers': ['default'],
+#            'level': 'DEBUG',
+#        },
+#        'django_auth_ldap': {  # django_auth_ldap模块相关日志打印到console
+#            'handlers': ['default'],
+#            'level': 'DEBUG',
+#            'propagate': True,  # 选择关闭继承，不然这个logger继承自默认，日志就会被记录2次了(''一次，自己一次)
+#        }
+#    }
+#}
 
 #是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA. on是开，off是关，配置为其他值均会被archer认为不开启邮件功能
 MAIL_ON_OFF='on'

@@ -94,6 +94,12 @@ cd archer && python3 manage.py createsuperuser<br/>
 <br/>
 如果觉得以上安装步骤还是看不懂，可以看这一篇安装步骤，感谢网友@一条大河 的贡献：https://riverdba.github.io/2017/04/15/archer-install/ <br/>
 
+### 集成ldap
+1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆<br/>
+2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
+3. centos需要执行yum install openldap-devel<br/>
+4. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
+
 ### 已经制作好的docker镜像：
 * 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
     1. docker run -p 80:80 -d docker.gaoxiaobang.com/prod/archer    (需要确保docker宿主机80端口能够使用)
