@@ -12,6 +12,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
+from django_auth_ldap.backend import LDAPBackend
 
 from .dao import Dao
 from .const import Const
@@ -43,6 +44,8 @@ def loginAuthenticate(username, password):
         correct_users = users.objects.filter(username=strUsername)
         if len(correct_users) == 0:
             result = {'status':4, 'msg':'该用户不存在!', 'data':''}
+        elif not correct_users[0].is_active:
+            result = {'status': 5, 'msg': 'user is not active', 'data': ''}
         elif len(correct_users) == 1 and check_password(strPassword, correct_users[0].password) == True:
             #调用了django内置函数check_password函数检测输入的密码是否与django默认的PBKDF2算法相匹配
             if strUsername in login_failure_counter:
@@ -73,6 +76,18 @@ def authenticateEntry(request):
     else:
         strUsername = request.POST['username']
         strPassword = request.POST['password']
+
+    if settings.ENABLE_LDAP:
+        ldap = LDAPBackend()
+        user = ldap.authenticate(username=strUsername, password=strPassword)
+        if user:
+            if user.is_active:
+                request.session['login_username'] = strUsername
+                result = {'status': 0, 'msg': 'ok', 'data': ''}
+            else:
+                result = {'status': 5, 'msg': 'user is not active', 'data': ''}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
     result = loginAuthenticate(strUsername, strPassword)
     if result['status'] == 0:
         request.session['login_username'] = strUsername

@@ -18,6 +18,7 @@ class users(AbstractUser):
     class Meta:
         verbose_name = u'用户配置'
         verbose_name_plural = u'用户配置'
+users._meta.get_field('is_active').default = False # ldap default can't login, need admin to control
 
 #各个线上主库地址。
 class master_config(models.Model):
