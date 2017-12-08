@@ -151,7 +151,6 @@ def syncldapuser(request):
             username = user_attr[username_field][0]
             display = user_attr[display_field][0]
             email = user_attr[email_field][0]
-            print(username)
             already_user = users.objects.filter(username=username.decode()).filter(is_ldapuser=True)
             if len(already_user) == 0:
                 u = users(username=username.decode(), display=display.decode(), email=email.decode(), is_ldapuser=True)
