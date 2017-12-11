@@ -391,6 +391,11 @@ def rollback(request):
     context = {'listBackupSql':listBackupSql, 'rollbackWorkflowName':rollbackWorkflowName, 'cluster_name':cluster_name, 'review_man':review_man, 'sub_review_man':sub_review_man}
     return render(request, 'rollback.html', context)
 
+#ldap用户同步
+def ldapsync(request):
+    context = {'currentMenu':'ldapsync'}
+    return render(request, 'ldapsync.html', context)
+
 #SQL审核必读
 def dbaprinciples(request):
     context = {'currentMenu':'dbaprinciples'}

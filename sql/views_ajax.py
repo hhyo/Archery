@@ -127,6 +127,38 @@ def simplecheck(request):
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
 
+#同步ldap用户到数据库
+@csrf_exempt
+def syncldapuser(request):
+    ldapback = LDAPBackend()
+    ldap = ldapback.ldap
+    ldapconn = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
+    tls = getattr(settings, 'AUTH_LDAP_START_TLS', None)
+    if tls:
+        ldapconn.start_tls_s()
+    binddn = settings.AUTH_LDAP_BIND_DN
+    bind_password = settings.AUTH_LDAP_BIND_PASSWORD
+    basedn = settings.AUTH_LDAP_BASEDN
+    ldapconn.simple_bind_s(binddn, bind_password)
+    ldapusers = ldapconn.search_s(basedn, ldap.SCOPE_SUBTREE, 'objectclass=*', attrlist=settings.AUTH_LDAP_USER_ATTRLIST)
+    username_field = settings.AUTH_LDAP_USER_ATTR_MAP['username']
+    display_field = settings.AUTH_LDAP_USER_ATTR_MAP['display']
+    email_field = settings.AUTH_LDAP_USER_ATTR_MAP['email']
+    count = 0
+    for user in ldapusers:
+        user_attr = user[1]
+        if user_attr:
+            username = user_attr[username_field][0]
+            display = user_attr[display_field][0]
+            email = user_attr[email_field][0]
+            already_user = users.objects.filter(username=username.decode()).filter(is_ldapuser=True)
+            if len(already_user) == 0:
+                u = users(username=username.decode(), display=display.decode(), email=email.decode(), is_ldapuser=True)
+                u.save()
+                count += 1
+    result = {'msg': '同步{}个用户。'.format(count)}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
 #请求图表数据
 @csrf_exempt
 def getMonthCharts(request):

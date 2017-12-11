@@ -140,11 +140,13 @@ ENABLE_LDAP = False
 AUTH_LDAP_BIND_DN = "cn=ro,dc=xxx,dc=cn"
 AUTH_LDAP_BIND_PASSWORD = "xxxxxx"
 AUTH_LDAP_SERVER_URI = "ldap://auth.xxx.com"
+AUTH_LDAP_BASEDN = "ou=users,dc=xxx,dc=cn"
 AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=users,dc=xxx,dc=cn"
 AUTH_LDAP_GROUP_SEARCH = LDAPSearch("ou=groups,dc=xxx,dc=cn",
     ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)"
 )
 AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType()
+AUTH_LDAP_USER_ATTRLIST = ["cn", "sn", "mail"]
 AUTH_LDAP_USER_ATTR_MAP = {
     "username": "cn",
     "display": "sn",

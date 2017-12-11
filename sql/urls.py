@@ -17,10 +17,12 @@ urlpatterns = [
     url(r'^execute/$', views.execute, name='execute'),
     url(r'^cancel/$', views.cancel, name='cancel'),
     url(r'^rollback/$', views.rollback, name='rollback'),
+    url(r'^ldapsync/$', views.ldapsync, name='ldapsync'),
     url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
     url(r'^charts/$', views.charts, name='charts'),
 
     url(r'^authenticate/$', views_ajax.authenticateEntry, name='authenticate'),
+    url(r'^syncldapuser/$', views_ajax.syncldapuser, name='syncldapuser'),
     url(r'^simplecheck/$', views_ajax.simplecheck, name='simplecheck'),
     url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),
     url(r'^getPersonCharts/$', views_ajax.getPersonCharts, name='getPersonCharts'),
