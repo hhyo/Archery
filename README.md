@@ -93,10 +93,11 @@ cd archer && python3 manage.py createsuperuser<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
 
 ### 集成ldap
-1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆<br/>
-2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
-3. centos需要执行yum install openldap-devel<br/>
-4. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
+1  python3.5 及以上版本<br/>
+2. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆<br/>
+3. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
+4. centos需要执行yum install openldap-devel<br/>
+5. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
 
 ### 已经制作好的docker镜像：
 * 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
