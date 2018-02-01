@@ -1,5 +1,5 @@
 --- views.py	2018-01-23 11:53:00.179201491 +0800
-+++ /usr/local/lib/python3.5/site-packages/django/contrib/auth/views.py	2018-01-23 11:58:10.668286140 +0800
++++ python/site-packages/django/contrib/auth/views.py	2018-01-23 11:58:10.668286140 +0800
 @@ -24,7 +24,14 @@
  from django.views.decorators.cache import never_cache
  from django.views.decorators.csrf import csrf_protect
