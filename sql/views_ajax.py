@@ -34,7 +34,7 @@ sqlSHA1_cache = {} #存储SQL文本与SHA1值的对应关系，尽量减少与�
 def log_mail_record(login_failed_message):
     mail_title = 'login inception'
     logger.warning(login_failed_message)
-    mailSender.sendEmail(mail_title, login_failed_message, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+    mailSender.sendEmail(mail_title, login_failed_message, getattr(settings, 'MAIL_REVIEW_SECURE_ADDR'))
 
 #ajax接口，登录页面调用，用来验证用户名密码
 @csrf_exempt
