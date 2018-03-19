@@ -438,10 +438,9 @@ def query(request):
         if table_ref_result['status'] == 0:
             table_ref = table_ref_result['data']
             # 获取表信息,校验是否拥有全部表查询权限
-            QueryPrivilegesOb = QueryPrivileges.objects.all()
+            QueryPrivilegesOb = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name)
             for table in table_ref:
-                privileges = QueryPrivilegesOb.filter(user_name=loginUser, cluster_name=cluster_name,
-                                                      db_name=table['db'], table_name=table['table'],
+                privileges = QueryPrivilegesOb.filter(db_name=table['db'], table_name=table['table'],
                                                       valid_date__gte=datetime.datetime.now(), is_deleted=0)
                 if len(privileges) == 0:
                     finalResult['status'] = 1
@@ -463,7 +462,8 @@ def query(request):
         elif table_ref:
             db_list = [table_info['db'] for table_info in table_ref]
             table_list = [table_info['table'] for table_info in table_ref]
-            user_limit_num = QueryPrivileges.objects.filter(cluster_name=cluster_name,
+            user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
+                                                            cluster_name=cluster_name,
                                                             db_name__in=db_list,
                                                             table_name__in=table_list,
                                                             valid_date__gte=datetime.datetime.now(),
@@ -471,7 +471,8 @@ def query(request):
             limit_num = min(int(limit_num), int(user_limit_num['limit_num__min']))
         else:
             # 如果表没获取到则获取涉及库的最小limit限制
-            user_limit_num = QueryPrivileges.objects.filter(cluster_name=cluster_name,
+            user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
+                                                            cluster_name=cluster_name,
                                                             db_name=dbName,
                                                             valid_date__gte=datetime.datetime.now(),
                                                             is_deleted=0).aggregate(Min('limit_num'))
