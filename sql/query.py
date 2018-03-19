@@ -415,8 +415,8 @@ def query(request):
     # 查看表结构和执行计划，inception会报错，故单独处理
     elif re.match(r"^show.*create|^explain", sqlContent.lower()) and tb_name:
         try:
-            QueryPrivileges.objects.get(cluster_name=cluster_name, db_name=dbName, table_name=tb_name,
-                                        valid_date__gte=datetime.datetime.now(), is_deleted=0)
+            QueryPrivileges.objects.get(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
+                                        table_name=tb_name, valid_date__gte=datetime.datetime.now(), is_deleted=0)
         except Exception:
             finalResult['status'] = 1
             finalResult['msg'] = '你无' + dbName + '.' + tb_name + '表的查询权限！请先到查询权限管理进行申请'
@@ -424,7 +424,7 @@ def query(request):
     # sql查询
     else:
         # 先检查是否有该库的权限，防止inception的语法树打印错误时连库权限也未做校验
-        privileges = QueryPrivileges.objects.filter(cluster_name=cluster_name, db_name=dbName,
+        privileges = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0)
         if len(privileges) == 0:
             finalResult['status'] = 1
@@ -440,8 +440,8 @@ def query(request):
             # 获取表信息,校验是否拥有全部表查询权限
             QueryPrivilegesOb = QueryPrivileges.objects.all()
             for table in table_ref:
-                privileges = QueryPrivilegesOb.filter(cluster_name=cluster_name, db_name=table['db'],
-                                                      table_name=table['table'],
+                privileges = QueryPrivilegesOb.filter(user_name=loginUser, cluster_name=cluster_name,
+                                                      db_name=table['db'], table_name=table['table'],
                                                       valid_date__gte=datetime.datetime.now(), is_deleted=0)
                 if len(privileges) == 0:
                     finalResult['status'] = 1
