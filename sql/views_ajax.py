@@ -12,38 +12,49 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
+if settings.ENABLE_LDAP:
+    from django_auth_ldap.backend import LDAPBackend
 
 from .dao import Dao
 from .const import Const
 from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
 from .models import users, master_config, workflow
+from sql.sendmail import MailSender
+import logging
 
+logger = logging.getLogger('default')
+mailSender = MailSender()
 dao = Dao()
 inceptionDao = InceptionDao()
 prpCryptor = Prpcrypt()
 login_failure_counter = {} #登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {} #存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 
+def log_mail_record(login_failed_message):
+    mail_title = 'login inception'
+    logger.warning(login_failed_message)
+    mailSender.sendEmail(mail_title, login_failed_message, getattr(settings, 'MAIL_REVIEW_SECURE_ADDR'))
+
 #ajax接口，登录页面调用，用来验证用户名密码
 @csrf_exempt
 def loginAuthenticate(username, password):
     """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
-    lockCntThreshold = 5
-    lockTimeThreshold = 300
+    lockCntThreshold = settings.LOCK_CNT_THRESHOLD
+    lockTimeThreshold = settings.LOCK_TIME_THRESHOLD
 
     #服务端二次验证参数
     strUsername = username
     strPassword = password
+
     if strUsername == "" or strPassword == "" or strUsername is None or strPassword is None:
         result = {'status':2, 'msg':'登录用户名或密码为空，请重新输入!', 'data':''}
     elif strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (datetime.datetime.now() - login_failure_counter[strUsername]["last_failure_time"]).seconds <= lockTimeThreshold:
+        log_mail_record('user:{},login failed, account locking...'.format(strUsername))
         result = {'status':3, 'msg':'登录失败超过5次，该账号已被锁定5分钟!', 'data':''}
     else:
         correct_users = users.objects.filter(username=strUsername)
-        if len(correct_users) == 0:
-            result = {'status':4, 'msg':'该用户不存在!', 'data':''}
-        elif len(correct_users) == 1 and check_password(strPassword, correct_users[0].password) == True:
+        if len(correct_users) == 1 and correct_users[0].is_active and check_password(strPassword, correct_users[0].password) == True:
             #调用了django内置函数check_password函数检测输入的密码是否与django默认的PBKDF2算法相匹配
             if strUsername in login_failure_counter:
                 #如果登录失败计数器中存在该用户名，则清除之
@@ -60,6 +71,7 @@ def loginAuthenticate(username, password):
                     #上一次登录失败时间早于5分钟前，则重新计数。以达到超过5分钟自动解锁的目的。
                     login_failure_counter[strUsername]["cnt"] = 1
                 login_failure_counter[strUsername]["last_failure_time"] = datetime.datetime.now()
+            log_mail_record('user:{},login failed, fail count:{}'.format(strUsername,login_failure_counter[strUsername]["cnt"]))
             result = {'status':1, 'msg':'用户名或密码错误，请重新输入！', 'data':''}
     return result
 
@@ -73,8 +85,27 @@ def authenticateEntry(request):
     else:
         strUsername = request.POST['username']
         strPassword = request.POST['password']
+
+    lockCntThreshold = settings.LOCK_CNT_THRESHOLD
+    lockTimeThreshold = settings.LOCK_TIME_THRESHOLD
+
+    if settings.ENABLE_LDAP:
+        ldap = LDAPBackend()
+        user = ldap.authenticate(username=strUsername, password=strPassword)
+        if strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (
+            datetime.datetime.now() - login_failure_counter[strUsername][
+            "last_failure_time"]).seconds <= lockTimeThreshold:
+            log_mail_record('user:{},login failed, account locking...'.format(strUsername))
+            result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+        if user and user.is_active:
+            request.session['login_username'] = strUsername
+            result = {'status': 0, 'msg': 'ok', 'data': ''}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
     result = loginAuthenticate(strUsername, strPassword)
-    request.session['login_username'] = strUsername
+    if result['status'] == 0:
+        request.session['login_username'] = strUsername
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -110,6 +141,38 @@ def simplecheck(request):
     finalResult['data'] = result
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
+
+#同步ldap用户到数据库
+@csrf_exempt
+def syncldapuser(request):
+    ldapback = LDAPBackend()
+    ldap = ldapback.ldap
+    ldapconn = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
+    tls = getattr(settings, 'AUTH_LDAP_START_TLS', None)
+    if tls:
+        ldapconn.start_tls_s()
+    binddn = settings.AUTH_LDAP_BIND_DN
+    bind_password = settings.AUTH_LDAP_BIND_PASSWORD
+    basedn = settings.AUTH_LDAP_BASEDN
+    ldapconn.simple_bind_s(binddn, bind_password)
+    ldapusers = ldapconn.search_s(basedn, ldap.SCOPE_SUBTREE, 'objectclass=*', attrlist=settings.AUTH_LDAP_USER_ATTRLIST)
+    username_field = settings.AUTH_LDAP_USER_ATTR_MAP['username']
+    display_field = settings.AUTH_LDAP_USER_ATTR_MAP['display']
+    email_field = settings.AUTH_LDAP_USER_ATTR_MAP['email']
+    count = 0
+    for user in ldapusers:
+        user_attr = user[1]
+        if user_attr:
+            username = user_attr[username_field][0]
+            display = user_attr[display_field][0]
+            email = user_attr[email_field][0]
+            already_user = users.objects.filter(username=username.decode()).filter(is_ldapuser=True)
+            if len(already_user) == 0:
+                u = users(username=username.decode(), display=display.decode(), email=email.decode(), is_ldapuser=True)
+                u.save()
+                count += 1
+    result = {'msg': '同步{}个用户。'.format(count)}
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 #请求图表数据
 @csrf_exempt

@@ -128,6 +128,91 @@ INCEPTION_REMOTE_BACKUP_PORT=5621
 INCEPTION_REMOTE_BACKUP_USER='inception'
 INCEPTION_REMOTE_BACKUP_PASSWORD='inception'
 
+# 账户登录失败锁定时间(秒)
+LOCK_TIME_THRESHOLD = 300
+# 账户登录失败 几次 锁账户
+LOCK_CNT_THRESHOLD = 5
+
+# LDAP
+ENABLE_LDAP = False
+if ENABLE_LDAP:
+    import ldap
+    # from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+    from django_auth_ldap.config import LDAPSearch, GroupOfUniqueNamesType
+    # if use self signed certificate, Remove AUTH_LDAP_GLOBAL_OPTIONS annotations
+    #AUTH_LDAP_GLOBAL_OPTIONS={
+    #    ldap.OPT_X_TLS_REQUIRE_CERT: ldap.OPT_X_TLS_NEVER
+    #}
+    AUTH_LDAP_BIND_DN = "cn=ro,dc=xxx,dc=cn"
+    AUTH_LDAP_BIND_PASSWORD = "xxxxxx"
+    AUTH_LDAP_SERVER_URI = "ldap://auth.xxx.com"
+    AUTH_LDAP_BASEDN = "ou=users,dc=xxx,dc=cn"
+    AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=users,dc=xxx,dc=cn"
+    AUTH_LDAP_GROUP_SEARCH = LDAPSearch("ou=groups,dc=xxx,dc=cn",
+        ldap.SCOPE_SUBTREE, "(objectClass=groupOfUniqueNames)"
+    )
+    AUTH_LDAP_GROUP_TYPE = GroupOfUniqueNamesType()
+    AUTH_LDAP_USER_ATTRLIST = ["cn", "sn", "mail"]
+    AUTH_LDAP_USER_ATTR_MAP = {
+        "username": "cn",
+        "display": "sn",
+        "email": "mail"
+    }
+
+    # AUTH_LDAP_MIRROR_GROUPS = True  # 直接把ldap的组复制到django一份，和AUTH_LDAP_FIND_GROUP_PERMS互斥.用户每次登录会根据ldap来更新数据库的组关系
+    # AUTH_LDAP_FIND_GROUP_PERMS = True  # django从ldap的组权限中获取权限,这种方式，django自身不创建组，每次请求都调用ldap
+    # AUTH_LDAP_CACHE_GROUPS = True  # 如打开FIND_GROUP_PERMS后，此配置生效，对组关系进行缓存，不用每次请求都调用ldap
+    # AUTH_LDAP_GROUP_CACHE_TIMEOUT = 600  # 缓存时间
+
+#开启以下配置注释，可以帮助调试ldap集成
+LDAP_LOGS = '/tmp/ldap.log'
+DEFAULT_LOGS = '/tmp/default.log'
+stamdard_format = '[%(asctime)s][%(threadName)s:%(thread)d]' + \
+                  '[task_id:%(name)s][%(filename)s:%(lineno)d] ' + \
+                  '[%(levelname)s]- %(message)s'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {  # 详细
+            'format': stamdard_format
+        },
+    },
+    'handlers': {
+        'default': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': DEFAULT_LOGS,
+            'maxBytes': 1024 * 1024 * 100,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+        'ldap': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LDAP_LOGS,
+            'maxBytes': 1024 * 1024 * 100,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        'default': {  # default日志，存放于log中
+            'handlers': ['default'],
+            'level': 'DEBUG',
+        },
+        'django_auth_ldap': {  # django_auth_ldap模块相关日志打印到console
+            'handlers': ['ldap'],
+            'level': 'DEBUG',
+            'propagate': True,  # 选择关闭继承，不然这个logger继承自默认，日志就会被记录2次了(''一次，自己一次)
+        }
+    }
+}
+
 #是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA. on是开，off是关，配置为其他值均会被archer认为不开启邮件功能
 MAIL_ON_OFF='on'
 
@@ -136,6 +221,7 @@ MAIL_REVIEW_SMTP_PORT=25
 MAIL_REVIEW_FROM_ADDR='archer@xxx.com'                                               #发件人，也是登录SMTP server需要提供的用户名
 MAIL_REVIEW_FROM_PASSWORD=''                                                         #发件人邮箱密码，如果为空则不需要login SMTP server
 MAIL_REVIEW_DBA_ADDR=['zhangsan@abc.com', 'lisi01@abc.com']        #DBA地址，执行完毕会发邮件给DBA，以list形式保存
+MAIL_REVIEW_SECURE_ADDR=['zhangsan@abc.com', 'lisi01@abc.com']     #登录失败，等安全相关发送地址
 #是否过滤【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】等高危DDL操作：
 #on是开，会首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；off是关，直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
 CRITICAL_DDL_ON_OFF='off'

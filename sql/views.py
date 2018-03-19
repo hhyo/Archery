@@ -213,7 +213,7 @@ def autoreview(request):
                 for reviewMan in listAllReviewMen:
                     if reviewMan == "":
                         continue
-                    strContent = "发起人：" + engineer + "\n审核人：" + reviewMan  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
+                    strContent = "发起人：" + engineer + "\n审核人：" + str(listAllReviewMen)  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
                     objReviewMan = users.objects.get(username=reviewMan)
                     mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
             else:
@@ -390,6 +390,11 @@ def rollback(request):
 
     context = {'listBackupSql':listBackupSql, 'rollbackWorkflowName':rollbackWorkflowName, 'cluster_name':cluster_name, 'review_man':review_man, 'sub_review_man':sub_review_man}
     return render(request, 'rollback.html', context)
+
+#ldap用户同步
+def ldapsync(request):
+    context = {'currentMenu':'ldapsync'}
+    return render(request, 'ldapsync.html', context)
 
 #SQL审核必读
 def dbaprinciples(request):

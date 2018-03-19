@@ -21,6 +21,7 @@ class MailSender(object):
             self.MAIL_REVIEW_FROM_ADDR = getattr(settings, 'MAIL_REVIEW_FROM_ADDR')
             self.MAIL_REVIEW_FROM_PASSWORD = getattr(settings, 'MAIL_REVIEW_FROM_PASSWORD')
             self.MAIL_REVIEW_DBA_ADDR = getattr(settings, 'MAIL_REVIEW_DBA_ADDR')
+            self.MAIL_REVIEW_SECURE_ADDR = getattr(settings, 'MAIL_REVIEW_SECURE_ADDR')
 
         except AttributeError as a:
             print("Error: %s" % a)

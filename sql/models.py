@@ -11,6 +11,7 @@ from .aes_decryptor import Prpcrypt
 class users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50)
     role = models.CharField('角色', max_length=20, choices=(('工程师','工程师'),('审核人','审核人')), default='工程师')
+    is_ldapuser = models.BooleanField('ldap用戶', default=False)
 
     def __str__(self):
         return self.username
@@ -18,6 +19,7 @@ class users(AbstractUser):
     class Meta:
         verbose_name = u'用户配置'
         verbose_name_plural = u'用户配置'
+users._meta.get_field('is_active').default = False # ldap default can't login, need admin to control
 
 #各个线上主库地址。
 class master_config(models.Model):
