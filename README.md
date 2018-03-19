@@ -15,7 +15,13 @@ linux : 64位linux操作系统均可
   为什么要有人工审核？<br/>
   这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关.<br/>
   很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念.
-* 回滚数据展示
+* 回滚数据展示<br/>
+* 在线查询<br/>
+  查询权限控制，基于inception解析查询语句，查询权限限制到表级
+  查询权限申请、审核和管理，支持审核流程配置<br/>
+  查询结果集限制、查询结果导出、表结构展示、多结果级展示<br/>
+* 动态脱敏<br/> 
+  基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现动态脱敏<br/>
 * 主库集群配置
 * 用户权限配置<br/>
   工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL.<br/>
@@ -49,7 +55,9 @@ tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install<br/>
 或者pip3 install Django==1.8.17<br/>
 (2)Crypto:<br/>
 pip3 install Crypto<br/>
-pip3 install pycrypto
+pip3 install pycrypto<br/>
+(3)其他模块:<br/>
+pip3 install -r requirements.txt<br/>
 4. 给python3安装MySQLdb模块:<br/>
 pip3 install pymysql<br/>
 记得确保settings.py里有如下两行：<br/>
@@ -87,9 +95,16 @@ cd archer && python3 manage.py createsuperuser<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
 10. 配置主库地址：<br/>
-使用浏览器访问http://X.X.X.X:port/admin/sql/master_config/ ，点击右侧Add master_config<br/>
+使用浏览器访问http://X.X.X.X:port/admin/sql/master_config/ ，点击右侧Add 主库地址<br/>
 这一步是为了告诉archer你要用inception去哪些mysql主库里执行SQL，所用到的用户名密码、端口等。<br/>
-11. 正式访问：<br/>
+11. 配置从库地址：<br/>
+使用浏览器访问http://X.X.X.X:port/admin/sql/slave_config/ ，点击右侧Add 从库地址<br/>
+这一步是为了进行sql在线查询，所用到的用户名密码、端口等，建议账号仅开放SELECT权限。<br/>
+12. 配置查询权限审核人：<br/>
+使用浏览器访问http://X.X.X.X:port/admin/sql/workflowauditsetting/ ，点击右侧Add 工作流配置<br/>
+这一步是为了添加查询权限审核人，单人审核格式为：user1，多人审核格式为：user1,user2，请正确配置。<br/>
+
+13. 正式访问：<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
 <br/>
 如果觉得以上安装步骤还是看不懂，可以看这一篇安装步骤，感谢网友@一条大河 的贡献：https://riverdba.github.io/2017/04/15/archer-install/ <br/>

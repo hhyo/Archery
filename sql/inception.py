@@ -5,7 +5,7 @@ import json
 import MySQLdb
 from django.conf import settings
 
-from .models import master_config, workflow
+from .models import master_config, slave_config, workflow
 from .aes_decryptor import Prpcrypt
 
 class InceptionDao(object):
@@ -13,7 +13,7 @@ class InceptionDao(object):
         try:
             self.inception_host = getattr(settings, 'INCEPTION_HOST')
             self.inception_port = int(getattr(settings, 'INCEPTION_PORT'))
-            
+
             self.inception_remote_backup_host = getattr(settings, 'INCEPTION_REMOTE_BACKUP_HOST')
             self.inception_remote_backup_port = int(getattr(settings, 'INCEPTION_REMOTE_BACKUP_PORT'))
             self.inception_remote_backup_user = getattr(settings, 'INCEPTION_REMOTE_BACKUP_USER')
@@ -23,7 +23,7 @@ class InceptionDao(object):
             print("Error: %s" % a)
         except ValueError as v:
             print("Error: %s" % v)
-        
+
     def criticalDDL(self, sqlContent):
         '''
         识别DROP DATABASE, DROP TABLE, TRUNCATE PARTITION, TRUNCATE TABLE等高危DDL操作，因为对于这些操作，inception在备份时只能备份METADATA，而不会备份数据！
@@ -124,7 +124,7 @@ class InceptionDao(object):
                           inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
                         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
-        
+
     def executeFinal(self, workflowDetail, dictConn):
         '''
         将sql交给inception进行最终执行，并返回执行结果。
@@ -143,14 +143,14 @@ class InceptionDao(object):
         splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
 
         tmpList = []
-        #对于split好的结果，再次交给inception执行.这里无需保持在长连接里执行，短连接即可. 
+        #对于split好的结果，再次交给inception执行.这里无需保持在长连接里执行，短连接即可.
         for splitRow in splitResult:
             sqlTmp = splitRow[1]
             sqlExecute = "/*--user=%s;--password=%s;--host=%s;--enable-execute;--port=%s; --enable-ignore-warnings;%s*/\
                     inception_magic_start;\
                     %s\
                     inception_magic_commit;" % (dictConn['masterUser'], dictConn['masterPassword'], dictConn['masterHost'], str(dictConn['masterPort']), strBackup, sqlTmp)
-                    
+
             executeResult = self._fetchall(sqlExecute, self.inception_host, self.inception_port, '', '', '')
             for sqlRow in executeResult:
                 tmpList.append(sqlRow)
@@ -166,7 +166,7 @@ class InceptionDao(object):
             if (sqlRow[2] == 1 or sqlRow[2] == 2) and re.match(r"\w*Execute Successfully\w*", sqlRow[3]) is None:
                 finalStatus = "执行有异常"
             finalList.append(list(sqlRow))
-        
+
         return (finalStatus, finalList)
 
     def getRollbackSqlList(self, workflowId):
@@ -184,7 +184,7 @@ class InceptionDao(object):
             listTables = self._fetchall(sqlTable, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
             if listTables is None or len(listTables) != 1:
                 print("Error: returned listTables more than 1.")
-            
+
             tableName = listTables[0][0]
             sqlBack = "select rollback_statement from %s.%s where opid_time='%s'" % (backupDbName, tableName, opidTime)
             listBackup = self._fetchall(sqlBack, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
@@ -192,7 +192,7 @@ class InceptionDao(object):
                 for rownum in range(len(listBackup)):
                     listBackupSql.append(listBackup[rownum][0])
         return listBackupSql
-            
+
 
     def _fetchall(self, sql, paramHost, paramPort, paramUser, paramPasswd, paramDb):
         '''
@@ -237,3 +237,24 @@ class InceptionDao(object):
         else:
             optResult = {"status":1, "msg":"ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data":""}
         return optResult
+
+    def query_print(self, sqlContent, clusterName, dbName):
+        '''
+        将sql交给inception打印语法树。
+        '''
+        listSlaves = slave_config.objects.get(cluster_name=clusterName)
+        masterHost = listSlaves.slave_host
+        masterPort = listSlaves.slave_port
+        masterUser = listSlaves.slave_user
+        masterPassword = self.prpCryptor.decrypt(listSlaves.slave_password)
+
+        # 工单审核使用
+        sql = "/*--user=%s;--password=%s;--host=%s;--port=%s;--enable-query-print;*/\
+                          inception_magic_start;\
+                          use %s;\
+                          %s\
+                          inception_magic_commit;" % (
+            masterUser, masterPassword, masterHost, str(masterPort), dbName, sqlContent)
+        result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+
+        return result

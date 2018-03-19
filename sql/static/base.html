@@ -9,6 +9,8 @@
       <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
 	  <link href="{% static 'user/css/user1.css' %}" rel="stylesheet">
 	  <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
+      <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet" type="text/css">
+
       <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
       <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
       <!--[if lt IE 9]>
@@ -113,6 +115,8 @@
 	<!-- 包括所有已编译的插件 -->
 	<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
 	<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
 	<script src="{% static 'user/js/detail.js' %}"></script>
 	<script src="{% static 'user/js/rollback.js' %}"></script>
 	<script src="{% static 'user/js/autoreview.js' %}"></script>
@@ -120,6 +124,8 @@
 	<script src="{% static 'highcharts/highcharts.js' %}"></script>
 	<script src="{% static 'user/js/charts.js' %}"></script>
 	<script src="{% static 'user/js/ldapsync.js' %}"></script>
+	<script src="{% static 'user/js/formatter.js' %}"></script>
 </body>
-
+{% block js %}
+{% endblock %}
 </html>

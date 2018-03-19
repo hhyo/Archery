@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="btn-group">
+        <a type="button" class="btn btn-default" href="/queryuserprivileges/">
+            <span aria-hidden="true"></span>权限管理</a>
+        <button id="btn_add" type="button" class="btn btn-default"
+                data-toggle="modal" data-target="#apply">
+            <span aria-hidden="true"></span>申请权限
+        </button>
+    </div>
+    <!-- 申请列表的表格-->
+    <div class="table-responsive">
+        <table id="dbauthapply-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+    <!-- 申请权限的模态框-->
+    <div class="modal fade" id="apply" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">申请数据库查询权限</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><span class="text-danger">*</span>工单名称</label>
+                        <input type="text" class="form-control" id="title" placeholder="简单说明权限用途">
+                    </div>
+                    <div class="form-group">
+                        <select id="cluster_name" name="cluster_name"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                data-placeholder="请选择集群:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择集群:</option>
+                            {% for cluster_name in listAllClusterName %}
+                                <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="db_name" name="db_name" data-live-search="true"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="table_name" name="table_name"
+                                class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
+                                multiple='multiple' data-max-options="999" data-name="请选择表" data-placeholder="请选择表:"
+                                required>
+                            <option value="is-empty" disabled="" selected="selected">请选择表:</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="text-danger">*</span> 授权时间</label>
+                        <select id="valid_date" name="valid_date"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="day">一天</option>
+                            <option value="week">一周</option>
+                            <option value="year">长期(一年)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="text-danger">*</span> 请选择查询限制行数</label>
+                        <select id="limit_num" name="limit_num"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value=50 selected="selected">50</option>
+                            <option value=100>100</option>
+                            <option value=1000>1000</option>
+                        </select>
+                    </div>
+                    <p class="text-info">提示：权限审核通过后即可进行在线查询，请耐心等待。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="applyforprivileges()">提交申请</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+    <script>
+        //选择表控件初始化
+        $("#table_name").selectpicker({
+            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+            countSelectedText: "已选中{0}项",
+            selectedTextFormat: "count > 5"
+        });
+
+        //获取申请列表
+        function queryapplylist() {
+            //采取异步请求
+            //初始化table
+            $('#dbauthapply-list').bootstrapTable('destroy').bootstrapTable({
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/getqueryapplylist/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            workflow_id:{{ workflow_id  }},
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search
+                        }
+                    },
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'table_list') {
+                            var sql = value;
+                            //替换间隔符为换行符
+                            sql = sql.replace(/,/g, "<br>");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                columns: [{
+                    title: '工单名称',
+                    field: 'title',
+                }, {
+                    title: '集群',
+                    field: 'cluster_name'
+                }, {
+                    title: '数据库',
+                    field: 'db_name'
+                }, {
+                    title: '表清单',
+                    field: 'table_list',
+                    formatter: function (value, row, index) {
+                        if (value.length > 30) {
+                            var table_list = value.substr(0, 30) + '...';
+                            return table_list;
+                        }
+                        else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '结果集',
+                    field: 'limit_num'
+                }, {
+                    title: '有效时间',
+                    field: 'valid_date'
+                }, {
+                    title: '申请人',
+                    field: 'user_name'
+                }, {
+                    title: '工单状态',
+                    field: 'status',
+                    formatter: function (value, row, index) {
+                        return workflow_status_formatter(value)
+                    }
+                }, {
+                    title: '申请时间',
+                    field: 'create_time'
+                }],
+                onLoadSuccess: function () {
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                },
+                responseHandler: function (res) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return res;
+                }
+            });
+
+        }
+
+        //集群变更获取数据库列表
+        $("#cluster_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/getdbNameList/",
+                dataType: "json",
+                data: {
+                    cluster_name: $("#cluster_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $('#db_name').append("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>\n");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        //数据库变更获取表名称
+        $("#db_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/getTableNameList/",
+                dataType: "json",
+                data: {
+                    cluster_name: $("#cluster_name").val(),
+                    db_name: $("#db_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#table_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option>" + result[i] + "</option>";
+                            $("#table_name").append(name);
+                        }
+                        $('#table_name').selectpicker('render');
+                        $('#table_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        //时间计算
+        function addDate(date, days) {
+            var d = new Date(date);
+            d.setDate(d.getDate() + days);
+            var m = d.getMonth() + 1;
+            return d.getFullYear() + '-' + m + '-' + d.getDate();
+        }
+
+        //提交权限申请
+        function applyforprivileges() {
+            var title = $("#title").val();
+            var cluster_name = $("#cluster_name").val();
+            var db_name = $("#db_name").val();
+            var valid_date = $("#valid_date").val();
+            var date = new Date();
+            if (valid_date === 'day') {
+                valid_date = addDate(date, 1);
+
+            }
+            else if (valid_date === 'week') {
+                valid_date = addDate(date, 7);
+            }
+            else if (valid_date === 'year') {
+                valid_date = addDate(date, 365);
+            }
+            else {
+                valid_date = addDate(date, 1);
+            }
+            var limit_num = $("#limit_num").val();
+            var o = document.getElementById("table_name");
+            var str = "";
+            for (i = 0; i < o.length; i++) {
+                if (o.options[i].selected) {
+                    str += o.options[i].value + ",";
+                }
+            }
+            var table_list = str.substr(0, str.length - 1);
+            var apply_remark = $("#apply_remark").val();
+            if (title && db_name && table_list && valid_date) {
+                $('button[type=button]').addClass('disabled');
+                $('button[type=button]').prop('disabled', true);
+                $.ajax({
+                    type: "post",
+                    url: "/applyforprivileges/",
+                    dataType: "json",
+                    data: {
+                        title: title,
+                        cluster_name: cluster_name,
+                        db_name: db_name,
+                        table_list: table_list,
+                        valid_date: valid_date,
+                        limit_num: limit_num,
+                        apply_remark: apply_remark
+                    },
+                    complete: function () {
+                        $('button[type=button]').removeClass('disabled');
+                        $('button[type=button]').addClass('btn');
+                        $('button[type=button]').prop('disabled', false);
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#apply').modal('hide');
+                            location.href = '/queryapplylist/'
+                        }
+                        else {
+                            alert(data.msg)
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                })
+            }
+            else {
+                alert("请填写完整")
+            }
+        }
+
+        //初始化数据
+        $(document).ready(function () {
+            queryapplylist();
+        });
+
+    </script>
+{% endblock %}

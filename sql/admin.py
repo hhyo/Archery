@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
-from .models import users, master_config, workflow
+from .models import users, master_config, slave_config, workflow, WorkflowAudit, WorkflowAuditSetting, DataMaskingColumns, DataMaskingRules
 
 
 class master_configAdmin(admin.ModelAdmin):
@@ -61,3 +61,34 @@ class usersAdmin(UserAdmin):
 admin.site.register(users, usersAdmin)
 admin.site.register(master_config, master_configAdmin)
 admin.site.register(workflow, workflowAdmin)
+
+# 查询从库配置
+@admin.register(slave_config)
+class WorkflowAuditAdmin(admin.ModelAdmin):
+    list_display = (
+    'cluster_id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
+    search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
+
+# 工作流列表
+@admin.register(WorkflowAudit)
+class WorkflowAuditAdmin(admin.ModelAdmin):
+    list_display = (
+        'audit_id', 'workflow_id', 'workflow_type', 'workflow_title', 'current_status', 'create_user', 'create_time',)
+    search_fields = ['audit_id', 'workflow_id', 'workflow_title', 'create_user']
+
+# 工作流审核配置
+@admin.register(WorkflowAuditSetting)
+class WorkflowAuditSettingAdmin(admin.ModelAdmin):
+    list_display = ('audit_setting_id', 'workflow_type', 'audit_users',)
+
+# 脱敏字段页面定义
+@admin.register(DataMaskingColumns)
+class DataMaskingColumnsAdmin(admin.ModelAdmin):
+    list_display = (
+        'column_id', 'rule_type', 'active', 'cluster_id', 'cluster_name', 'table_schema', 'table_name', 'column_name', 'create_time',)
+
+# 脱敏规则页面定义
+@admin.register(DataMaskingRules)
+class DataMaskingRulesAdmin(admin.ModelAdmin):
+    list_display = (
+        'rule_type', 'rule_regex', 'rule_desc', 'sys_time',)

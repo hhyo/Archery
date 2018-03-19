@@ -64,3 +64,191 @@ class workflow(models.Model):
     class Meta:
         verbose_name = u'工单管理'
         verbose_name_plural = u'工单管理'
+
+
+# 各个线上从库地址
+class slave_config(models.Model):
+    cluster_id = models.IntegerField('集群id')
+    cluster_name = models.CharField('集群名称', max_length=50)
+    slave_host = models.CharField('从库地址', max_length=200)
+    slave_port = models.IntegerField('从库端口', default=3306)
+    slave_user = models.CharField('登录从库的用户名', max_length=100)
+    slave_password = models.CharField('登录从库的密码', max_length=300)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.cluster_name
+
+    class Meta:
+        verbose_name = u'从库地址'
+        verbose_name_plural = u'从库地址'
+
+    def save(self, *args, **kwargs):
+        pc = Prpcrypt()  # 初始化
+        self.slave_password = pc.encrypt(self.slave_password)
+        super(slave_config, self).save(*args, **kwargs)
+
+
+# 工作流审核主表
+class WorkflowAudit(models.Model):
+    audit_id = models.AutoField(primary_key=True)
+    workflow_id = models.BigIntegerField('关联业务id')
+    workflow_type = models.IntegerField('申请类型',
+                                        choices=((1, '查询权限申请'),))
+    workflow_title = models.CharField('申请标题', max_length=50)
+    workflow_remark = models.CharField('申请备注', default='', max_length=140)
+    audit_users = models.CharField('审核人列表', max_length=255)
+    current_audit_user = models.CharField('当前审核人', max_length=20)
+    next_audit_user = models.CharField('下级审核人', max_length=20)
+    current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
+    create_user = models.CharField('申请人', max_length=20)
+    create_time = models.DateTimeField('申请时间', auto_now_add=True)
+    sys_time = models.DateTimeField('系统时间', auto_now=True)
+
+    def __int__(self):
+        return self.audit_id
+
+    class Meta:
+        db_table = 'workflow_audit'
+        verbose_name = u'工作流列表'
+        verbose_name_plural = u'工作流列表'
+
+
+# 审批明细表
+class WorkflowAuditDetail(models.Model):
+    audit_detail_id = models.AutoField(primary_key=True)
+    audit_id = models.IntegerField('审核主表id')
+    audit_user = models.CharField('审核人', max_length=20)
+    audit_time = models.DateTimeField('审核时间')
+    audit_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
+    remark = models.CharField('审核备注', default='', max_length=140)
+    sys_time = models.DateTimeField('系统时间', auto_now=True)
+
+    def __int__(self):
+        return self.audit_detail_id
+
+    class Meta:
+        db_table = 'workflow_audit_detail'
+        verbose_name = u'审批明细表'
+        verbose_name_plural = u'审批明细表'
+
+
+# 审批配置表
+class WorkflowAuditSetting(models.Model):
+    audit_setting_id = models.AutoField(primary_key=True)
+    workflow_type = models.IntegerField('申请类型,',
+                                        choices=((1, '查询权限申请'),))
+    audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __int__(self):
+        return self.audit_setting_id
+
+    class Meta:
+        db_table = 'workflow_audit_setting'
+        verbose_name = u'工作流配置'
+        verbose_name_plural = u'工作流配置'
+
+
+# 查询权限申请记录表
+class QueryPrivilegesApply(models.Model):
+    apply_id = models.AutoField(primary_key=True)
+    title = models.CharField('申请标题', max_length=50)
+    user_name = models.CharField('申请人', max_length=30)
+    cluster_id = models.IntegerField('集群id')
+    cluster_name = models.CharField('集群名称', max_length=50)
+    db_name = models.CharField('数据库', max_length=200)
+    table_list = models.TextField('表')
+    valid_date = models.CharField('有效时间', max_length=30)
+    limit_num = models.IntegerField('行数限制', default=100)
+    status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __int__(self):
+        return self.apply_id
+
+    class Meta:
+        db_table = 'query_privileges_apply'
+        verbose_name = u'查询权限申请记录表'
+        verbose_name_plural = u'查询权限申请记录表'
+
+
+# 用户权限关系表
+class QueryPrivileges(models.Model):
+    privilege_id = models.AutoField(primary_key=True)
+    user_name = models.CharField('用户名', max_length=30)
+    cluster_id = models.IntegerField('集群id')
+    cluster_name = models.CharField('集群名称', max_length=50)
+    db_name = models.CharField('数据库', max_length=200)
+    table_name = models.CharField('表', max_length=200)
+    valid_date = models.CharField('有效时间', max_length=30)
+    limit_num = models.IntegerField('行数限制', default=100)
+    is_deleted = models.IntegerField('是否删除', default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __int__(self):
+        return self.privilege_id
+
+    class Meta:
+        db_table = 'query_privileges'
+        verbose_name = u'查询权限记录表'
+        verbose_name_plural = u'查询权限记录表'
+
+
+# 记录在线查询sql的日志
+class QueryLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    cluster_id = models.IntegerField('集群id')
+    cluster_name = models.CharField('集群名称', max_length=50)
+    db_name = models.CharField('数据库名称', max_length=30)
+    sqllog = models.TextField('执行的sql查询')
+    effect_row = models.BigIntegerField('返回行数')
+    cost_time = models.CharField('执行耗时', max_length=10, default='')
+    username = models.CharField('操作人', max_length=30)
+    create_time = models.DateTimeField('操作时间', auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __int__(self):
+        return self.id
+
+    class Meta:
+        db_table = 'query_log'
+        verbose_name = u'sql查询日志'
+        verbose_name_plural = u'sql查询日志'
+
+
+class DataMaskingColumns(models.Model):
+    column_id = models.AutoField('字段id', primary_key=True)
+    rule_type = models.IntegerField('规则类型',
+                                    choices=((1, '手机号'), (2, '姓名'), (3, '证件号码'), (4, '银行卡'), (5, '邮箱')))
+    active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
+    cluster_id = models.IntegerField('字段所在集群id')
+    cluster_name = models.CharField('字段所在集群名称', max_length=50)
+    table_schema = models.CharField('字段所在库名', max_length=64)
+    table_name = models.CharField('字段所在表名', max_length=64)
+    column_name = models.CharField('字段名', max_length=64)
+    column_comment = models.CharField('字段描述', max_length=1024)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'data_masking_columns'
+        verbose_name = u'脱敏字段'
+        verbose_name_plural = u'脱敏字段'
+
+
+class DataMaskingRules(models.Model):
+    rule_type = models.IntegerField('规则类型',
+                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')))
+    rule_regex = models.CharField('规则脱敏所用的正则表达式，表达式必须分组，脱敏后只显示第一组匹配的信息，后面的信息会用****代替', max_length=255)
+    rule_desc = models.CharField('规则描述', max_length=100)
+    sys_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'data_masking_rules'
+        verbose_name = u'脱敏规则'
+        verbose_name_plural = u'脱敏规则'

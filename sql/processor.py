@@ -5,11 +5,12 @@ from django.conf import settings
 leftMenuBtnsCommon = (
                    {'key':'allworkflow',        'name':'查看历史工单',     'url':'/allworkflow/',              'class':'glyphicon glyphicon-home'},
                    {'key':'submitsql',          'name':'发起SQL上线',       'url':'/submitsql/',               'class':'glyphicon glyphicon-asterisk'},
-               )
+                   {'key': 'sqlquery',          'name': 'SQL在线查询',      'url': '/sqlquery/',                'class': 'glyphicon glyphicon-search'},
+                   {'key': 'queryapply',        'name':'查询权限管理',      'url': '/queryapplylist/',         'class': 'glyphicon glyphicon-eye-open'},
+)
 leftMenuBtnsSuper = (
-                   {'key':'masterconfig',       'name':'主库地址配置',      'url':'/admin/sql/master_config/',      'class':'glyphicon glyphicon-user'},
-                   {'key':'userconfig',         'name':'用户权限配置',       'url':'/admin/sql/users/',        'class':'glyphicon glyphicon-th-large'},
-                   {'key':'workflowconfig',     'name':'所有工单管理',       'url':'/admin/sql/workflow/',        'class':'glyphicon glyphicon-list-alt'},
+                   {'key': 'workflow', 'name': '查询权限审核', 'url': '/workflow/', 'class': 'glyphicon glyphicon-shopping-cart'},
+                   {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list'},
 )
 leftMenuBtnsDoc = (
                    {'key':'dbaprinciples',     'name':'SQL审核必读',       'url':'/dbaprinciples/',        'class':'glyphicon glyphicon-book'},
