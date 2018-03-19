@@ -19,9 +19,8 @@ class Workflow(object):
         workflowInfo = WorkflowAudit.objects.filter(workflow_type=workflow_type, workflow_id=workflow_id,
                                                     current_status=DirectionsOb.workflow_status['audit_wait'])
         if len(workflowInfo) >= 1:
-            result['status'] = 1
             result['msg'] = '该工单当前状态为待审核，请勿重复提交'
-            return result
+            raise Exception(result['msg'])
 
         # 获取审核配置
         try:
@@ -49,9 +48,9 @@ class Workflow(object):
             result['msg'] = '无审核配置，直接审核通过'
             return result
         elif audit_users_list[-1] == '':
-            result['status'] = 1
             result['msg'] = '审核角色配置错误，请重新配置，格式为a,b,c或者a'
-            return result
+            raise Exception(result['msg'])
+
         else:
             # 向审核主表插入待审核数据
             auditInfo = WorkflowAudit()
@@ -97,15 +96,13 @@ class Workflow(object):
         # 判断当前工单是否为待审核状态
         auditInfo = WorkflowAudit.objects.get(audit_id=audit_id)
         if auditInfo.current_status != DirectionsOb.workflow_status['audit_wait']:
-            result['status'] = 1
             result['msg'] = '工单不是待审核状态，请返回刷新'
-            return result
+            raise Exception(result['msg'])
 
         # 判断当前审核人是否有审核权限
         if auditInfo.current_audit_user != audit_user:
-            result['status'] = 1
             result['msg'] = '你无权操作,请联系管理员'
-            return result
+            raise Exception(result['msg'])
 
         # 不同审核状态
         if audit_status == 1:
@@ -166,8 +163,8 @@ class Workflow(object):
             # 返回审核结果
             result['data'] = {'workflow_status': auditresult.current_status}
         else:
-            result['status'] = 1
             result['msg'] = '审核异常'
+            raise Exception(result['msg'])
         return result
 
     # 获取审核列表
@@ -207,6 +204,10 @@ class Workflow(object):
         result['data'] = {'auditlist': auditlist, 'auditlistCount': auditlistCount}
         return result
 
-    # 获取审核信息
+    # 通过审核id获取审核信息
     def auditinfo(self, audit_id):
         return WorkflowAudit.objects.get(audit_id=audit_id)
+
+    # 通过业务id获取审核信息
+    def auditinfobyworkflow_id(self, workflow_id, workflow_type):
+        return WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
