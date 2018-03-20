@@ -192,8 +192,8 @@ def getqueryapplylist(request):
             applylist = QueryPrivilegesApply.objects.filter(apply_id=workflow_id)
             applylistCount = QueryPrivilegesApply.objects.filter(apply_id=workflow_id).count()
         else:
-            result = {"total": 0, "rows": []}
-            return HttpResponse(json.dumps(result), content_type='application/json')
+            applylist = QueryPrivilegesApply.objects.filter(apply_id=workflow_id, user_name=loginUser)
+            applylistCount = QueryPrivilegesApply.objects.filter(apply_id=workflow_id, user_name=loginUser).count()
     elif loginUserOb.is_superuser:
         applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
                     offset:limit]
@@ -411,9 +411,14 @@ def query(request):
 
     # 检查用户是否有该数据库/表的查询权限
     if loginUserOb.is_superuser:
+        user_limit_num = 10000
+        if int(limit_num) == 0:
+            limit_num = user_limit_num
+        else:
+            limit_num = min(int(limit_num), user_limit_num)
         pass
     # 查看表结构和执行计划，inception会报错，故单独处理
-    elif re.match(r"^show.*create|^explain", sqlContent.lower()) and tb_name:
+    elif re.match(r"^select", sqlContent.lower()) is None and tb_name:
         try:
             QueryPrivileges.objects.get(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
                                         table_name=tb_name, valid_date__gte=datetime.datetime.now(), is_deleted=0)
@@ -458,7 +463,6 @@ def query(request):
         # 获取查询涉及表的最小limit限制
         if loginUserOb.is_superuser:
             user_limit_num = 10000
-            limit_num = min(int(limit_num), user_limit_num)
         elif table_ref:
             db_list = [table_info['db'] for table_info in table_ref]
             table_list = [table_info['table'] for table_info in table_ref]
@@ -467,21 +471,23 @@ def query(request):
                                                             db_name__in=db_list,
                                                             table_name__in=table_list,
                                                             valid_date__gte=datetime.datetime.now(),
-                                                            is_deleted=0).aggregate(Min('limit_num'))
-            limit_num = min(int(limit_num), int(user_limit_num['limit_num__min']))
+                                                            is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
         else:
             # 如果表没获取到则获取涉及库的最小limit限制
             user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
                                                             cluster_name=cluster_name,
                                                             db_name=dbName,
                                                             valid_date__gte=datetime.datetime.now(),
-                                                            is_deleted=0).aggregate(Min('limit_num'))
-            limit_num = min(int(limit_num), int(user_limit_num['limit_num__min']))
+                                                            is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
+        if int(limit_num) == 0:
+            limit_num = user_limit_num
+        else:
+            limit_num = min(int(limit_num), user_limit_num)
 
-    # 增加对sql增加limit限制
+    # 对查询sql增加limit限制
     if re.search(r"limit[\f\n\r\t\v\s]+(\d+)$", sqlContent.lower()) is None:
         if re.search(r"limit[\f\n\r\t\v\s]+\d+[\f\n\r\t\v\s]*,[\f\n\r\t\v\s]*(\d+)$", sqlContent.lower()) is None:
-            if re.match(r"^show", sqlContent.lower()) is None:
+            if re.match(r"^select", sqlContent.lower()):
                 sqlContent = sqlContent + ' limit ' + str(limit_num)
 
     sqlContent = sqlContent + ';'
@@ -524,7 +530,7 @@ def query(request):
         query_log.cluster_id = cluster_info.cluster_id
         query_log.cluster_name = cluster_info.cluster_name
         query_log.sqllog = sqlContent
-        query_log.effect_row = limit_num
+        query_log.effect_row = min(limit_num, sql_result['effect_row'])
         query_log.cost_time = cost_time
         query_log.save()
 

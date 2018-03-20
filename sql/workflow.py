@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 from .sendmail import MailSender
@@ -179,11 +180,11 @@ class Workflow(object):
                 auditlistCount = WorkflowAudit.objects.all().filter(workflow_title__contains=search).order_by(
                     '-audit_id').count()
             else:
-                auditlist = WorkflowAudit.objects.filter(audit_users__contains=loginUserOb.username,
-                                                         workflow_title__contains=search).order_by('-audit_id')[
-                            offset:limit]
-                auditlistCount = WorkflowAudit.objects.filter(audit_users__contains=loginUserOb.username,
-                                                              workflow_title__contains=search).count()
+                auditlist = WorkflowAudit.objects.filter(workflow_title__contains=search).filter(
+                    Q(audit_users__contains=loginUserOb.username) | Q(create_user=loginUserOb.username)).order_by(
+                    '-audit_id')[offset:limit]
+                auditlistCount = WorkflowAudit.objects.filter(workflow_title__contains=search).filter(
+                    Q(audit_users__contains=loginUserOb.username) | Q(create_user=loginUserOb.username)).count()
         else:
             if loginUserOb.is_superuser:
                 auditlist = WorkflowAudit.objects.all().filter(workflow_type=workflow_type,
@@ -194,12 +195,12 @@ class Workflow(object):
                     '-audit_id').count()
             else:
                 auditlist = WorkflowAudit.objects.filter(workflow_type=workflow_type,
-                                                         audit_users__contains=loginUserOb.username,
-                                                         workflow_title__contains=search).order_by('-audit_id')[
-                            offset:limit]
+                                                         workflow_title__contains=search).filter(
+                    Q(audit_users__contains=loginUserOb.username) | Q(create_user=loginUserOb.username)).order_by(
+                    '-audit_id')[offset:limit]
                 auditlistCount = WorkflowAudit.objects.filter(workflow_type=workflow_type,
-                                                              audit_users__contains=loginUserOb.username,
-                                                              workflow_title__contains=search).count()
+                                                              workflow_title__contains=search).filter(
+                    Q(audit_users__contains=loginUserOb.username) | Q(create_user=loginUserOb.username)).count()
 
         result['data'] = {'auditlist': auditlist, 'auditlistCount': auditlistCount}
         return result

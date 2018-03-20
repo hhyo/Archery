@@ -5,7 +5,7 @@
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
             <option value="0" selected="selected">全部</option>
-            <option value="2">查询权限申请</option>
+            <option value="1">查询权限申请</option>
         </select>
     </div>
     <!-- 审核列表的表格-->
@@ -108,6 +108,9 @@
                     formatter: function (value, row, index) {
                         return workflow_status_formatter(value)
                     }
+                }, {
+                    title: '审核人列表',
+                    field: 'audit_users'
                 }, {
                     title: '当前审核人',
                     field: 'current_audit_user',
