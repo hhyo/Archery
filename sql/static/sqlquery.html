@@ -332,7 +332,7 @@
             }
             //校验SQL
             sqlContent = $.trim(sqlContent);
-            if (sqlContent.match(/^select/) || sqlContent.match(/^show.*create/) || sqlContent.match(/^explain/)) {
+            if (sqlContent.toLowerCase().match(/^select/) || sqlContent.toLowerCase().match(/^show.*create/) || sqlContent.toLowerCase().match(/^explain/)) {
                 $.ajax({
                     type: "post",
                     url: "/query/",

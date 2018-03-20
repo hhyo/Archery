@@ -504,15 +504,20 @@ def query(request):
 
     # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
     t_start = time.time()
-    if hasattr(settings, 'CRITICAL_DATA_MASKING_ON_OFF') == True:
-        if getattr(settings, 'CRITICAL_DATA_MASKING_ON_OFF') == "on":
-            # 仅对查询语句进行脱敏
-            if re.match(r"^select", sqlContent.lower()):
+    if getattr(settings, 'CRITICAL_DATA_MASKING_ON_OFF') == "on":
+        # 仅对查询语句进行脱敏
+        if re.match(r"^select", sqlContent.lower()):
+            try:
                 masking_result = datamasking.data_masking(cluster_name, dbName, sqlContent, sql_result)
-                if masking_result is not None:
-                    if hasattr(settings, 'CRITICAL_QUERY_ON_OFF') == True:
-                        if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
-                            return HttpResponse(json.dumps(masking_result), content_type='application/json')
+            except Exception:
+                if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
+                    finalResult['status'] = 1
+                    finalResult['msg'] = '脱敏数据报错,请联系管理员'
+                    return HttpResponse(json.dumps(finalResult), content_type='application/json')
+            else:
+                if masking_result['status'] != 0:
+                    if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
+                        return HttpResponse(json.dumps(masking_result), content_type='application/json')
 
     t_end = time.time()
     masking_cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
