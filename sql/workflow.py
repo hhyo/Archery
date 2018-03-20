@@ -48,11 +48,12 @@ class Workflow(object):
             result['data'] = {'workflow_status': DirectionsOb.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
             return result
-        elif audit_users_list[-1] == '':
-            result['msg'] = '审核角色配置错误，请重新配置，格式为a,b,c或者a'
-            raise Exception(result['msg'])
-
         else:
+            user_list = [user[0] for user in users.objects.all().values_list('username')]
+            for audit_user in audit_users_list:
+                if audit_user not in user_list:
+                    result['msg'] = '审核角色配置错误，审核人不存在，请重新配置，格式为a,b,c或者a'
+                    raise Exception(result['msg'])
             # 向审核主表插入待审核数据
             auditInfo = WorkflowAudit()
             auditInfo.workflow_id = workflow_id

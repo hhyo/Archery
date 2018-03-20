@@ -52,7 +52,7 @@
                 </div>
                 <div class="text-info">
                     <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                    <li>查询结果行数限制见权限管理，会选择查询涉及表的最limit小值</li>
+                    <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                 </div>
             </form>
         </div>
@@ -330,139 +330,149 @@
                 var table_name = $("#table_name").val();
                 sqlContent = "show create table " + table_name + ";"
             }
+            //校验SQL
+            sqlContent = $.trim(sqlContent);
+            if (sqlContent.match(/^select/) || sqlContent.match(/^show.*create/) || sqlContent.match(/^explain/)) {
+                $.ajax({
+                    type: "post",
+                    url: "/query/",
+                    dataType: "json",
+                    data: {
+                        cluster_name: $("#cluster_name").val(),
+                        db_name: $("#db_name").val(),
+                        tb_name: $("#table_name").val(),
+                        sql_content: sqlContent,
+                        limit_num: $("#limit_num").val()
+                    },
+                    complete: function () {
+                        $('input[type=button]').removeClass('disabled');
+                        $('input[type=button]').addClass('btn');
+                        $('input[type=button]').prop('disabled', false);
+                    },
+                    success: function (data) {
+                        if (data.status === 0 || data.status === 2) {
+                            //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
+                            var active_li_id = sessionStorage.getItem('active_li_id');
 
-            $.ajax({
-                type: "post",
-                url: "/query/",
-                dataType: "json",
-                data: {
-                    cluster_name: $("#cluster_name").val(),
-                    db_name: $("#db_name").val(),
-                    tb_name: $("#table_name").val(),
-                    sql_content: sqlContent,
-                    limit_num: $("#limit_num").val()
-                },
-                complete: function () {
-                    $('input[type=button]').removeClass('disabled');
-                    $('input[type=button]').addClass('btn');
-                    $('input[type=button]').prop('disabled', false);
-                },
-                success: function (data) {
-                    if (data.status === 0 || data.status === 2) {
-                        //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
-                        var active_li_id = sessionStorage.getItem('active_li_id');
-
-                        if (active_li_id.match(/^execute_result_tab*/)) {
-                            //查看表结构默认打开新窗口
-                            if (sql === 'show create table') {
+                            if (active_li_id.match(/^execute_result_tab*/)) {
+                                //查看表结构默认打开新窗口
+                                if (sql === 'show create table') {
+                                    tab_add();
+                                    n = sessionStorage.getItem('tab_num');
+                                }
+                                else {
+                                    var n = active_li_id.split("execute_result_tab")[1];
+                                }
+                            }
+                            else {
                                 tab_add();
                                 n = sessionStorage.getItem('tab_num');
                             }
-                            else {
-                                var n = active_li_id.split("execute_result_tab")[1];
-                            }
-                        }
-                        else {
-                            tab_add();
-                            n = sessionStorage.getItem('tab_num');
-                        }
 
-                        var result = data.data;
-                        //查询报错失败
-                        if (result['Error']) {
-                            alertStyle = "alert-danger";
-                            $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                                columns: [{
-                                    field: 'error',
-                                    title: 'Error'
-                                }],
-                                data: [{
-                                    error: 'mysql返回异常：' + result['Error']
-                                }]
-                            })
-                        }
-                        //inception检测报错
-                        else if (data.status === 2) {
-                            alertStyle = "alert-danger";
-                            $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                                columns: [{
-                                    field: 'error',
-                                    title: 'Error'
-                                }],
-                                data: [{
-                                    error: data.msg
-                                }]
-                            })
-                        }
-                        else if (result['column_list']) {
-                            //异步获取要动态生成的列
-                            $.each(result['column_list'], function (i, column) {
-                                columns.push({"field": i, "title": column, "sortable": true});
-                            });
-                            /*//插入选择框
-                            columns.unshift({
-                                title: '',
-                                field: 'checkbox',
-                                checkbox: true
-                            });*/
-                            if (sql === 'show create table') {
-                                //初始化表结构显示
-                                $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
-                                        data: result['rows'],
-                                        columns: [{
-                                            title: 'Create Table',
-                                            field: 1,
-                                            formatter: function (value, row, index) {
-                                                var sql = value;
-                                                //替换所有的换行符
-                                                sql = sql.replace(/\r\n/g, "<br>");
-                                                sql = sql.replace(/\n/g, "<br>");
-                                                //替换所有的空格
-                                                sql = sql.replace(/\s/g, "&nbsp;");
-                                                return sql;
-
-                                            }
-                                        }
-                                        ],
-                                        locale: 'zh-CN'
-                                    }
-                                );
-                            }
-                            else {
-                                //初始化查询结果
+                            var result = data.data;
+                            //查询报错失败
+                            if (result['Error']) {
+                                alertStyle = "alert-danger";
                                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                                    data: result['rows'],
-                                    columns: columns,
-                                    showExport: true,
-                                    exportDataType: "all",
-                                    //exportTypes: ['sql'],
-                                    exportOptions: {
-                                        //ignoreColumn: [0],  //忽略某些列的索引数组
-                                        fileName: 'export_result'  //文件名称设置
-                                    },
-                                    showColumns: true,
-                                    showToggle: true,
-                                    clickToSelect: true,
-                                    striped: true,
-                                    pagination: true,
-                                    pageSize: 30,
-                                    pageList: [30, 50, 100, 500, 1000],
-                                    locale: 'zh-CN'
-                                });
+                                    columns: [{
+                                        field: 'error',
+                                        title: 'Error'
+                                    }],
+                                    data: [{
+                                        error: 'mysql返回异常：' + result['Error']
+                                    }]
+                                })
                             }
-                            //执行时间和脱敏时间赋值
-                            $("#" + ('time') + n).text(result['cost_time'] + ' sec');
-                            $("#" + ('masking_time') + n).text(result['masking_cost_time'] + ' sec');
+                            //inception检测报错
+                            else if (data.status === 2) {
+                                alertStyle = "alert-danger";
+                                $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                                    columns: [{
+                                        field: 'error',
+                                        title: 'Error'
+                                    }],
+                                    data: [{
+                                        error: data.msg
+                                    }]
+                                })
+                            }
+                            else if (result['column_list']) {
+                                //异步获取要动态生成的列
+                                $.each(result['column_list'], function (i, column) {
+                                    columns.push({"field": i, "title": column, "sortable": true});
+                                });
+                                /*//插入选择框
+                                columns.unshift({
+                                    title: '',
+                                    field: 'checkbox',
+                                    checkbox: true
+                                });*/
+                                if (sqlContent.match(/^show.*create/)) {
+                                    //初始化表结构显示
+                                    $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                                            data: result['rows'],
+                                            columns: [{
+                                                title: 'Create Table',
+                                                field: 1,
+                                                formatter: function (value, row, index) {
+                                                    var sql = value;
+                                                    //替换所有的换行符
+                                                    sql = sql.replace(/\r\n/g, "<br>");
+                                                    sql = sql.replace(/\n/g, "<br>");
+                                                    //替换所有的空格
+                                                    sql = sql.replace(/\s/g, "&nbsp;");
+                                                    return sql;
+
+                                                }
+                                            }
+                                            ],
+                                            locale: 'zh-CN'
+                                        }
+                                    );
+                                }
+                                else {
+                                    //初始化查询结果
+                                    $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                                        data: result['rows'],
+                                        columns: columns,
+                                        showExport: true,
+                                        exportDataType: "all",
+                                        //exportTypes: ['sql'],
+                                        exportOptions: {
+                                            //ignoreColumn: [0],  //忽略某些列的索引数组
+                                            fileName: 'export_result'  //文件名称设置
+                                        },
+                                        showColumns: true,
+                                        showToggle: true,
+                                        clickToSelect: true,
+                                        striped: true,
+                                        pagination: true,
+                                        pageSize: 30,
+                                        pageList: [30, 50, 100, 500, 1000],
+                                        locale: 'zh-CN'
+                                    });
+                                }
+                                //执行时间和脱敏时间赋值
+                                $("#" + ('time') + n).text(result['cost_time'] + ' sec');
+                                $("#" + ('masking_time') + n).text(result['masking_cost_time'] + ' sec');
+                            }
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg);
                         }
-                    } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            })
-            ;
+                })
+                ;
+            }
+            else {
+                alert('仅支持^select|^show.*create|^explain语法，请联系管理员！');
+                $('input[type=button]').removeClass('disabled');
+                $('input[type=button]').addClass('btn');
+                $('input[type=button]').prop('disabled', false);
+            }
+
         }
     </script>
     <!-- common -->

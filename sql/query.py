@@ -402,7 +402,7 @@ def query(request):
             break
         else:
             finalResult['status'] = 1
-            finalResult['msg'] = '语法不支持，请联系管理员！'
+            finalResult['msg'] = '仅支持^select|^show.*create|^explain语法，请联系管理员！'
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该集群的连接方式,查询只读账号,按照分号截取第一条有效sql执行
@@ -417,8 +417,10 @@ def query(request):
         else:
             limit_num = min(int(limit_num), user_limit_num)
         pass
-    # 查看表结构和执行计划，inception会报错，故单独处理
-    elif re.match(r"^select", sqlContent.lower()) is None and tb_name:
+    # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过
+    elif re.match(r"^show.*create", sqlContent.lower()):
+        if re.match(r"^show.*create", sqlContent.lower()):
+            tb_name = re.sub('^show.*create.*table', '', sqlContent, count=1, flags=0).strip()
         try:
             QueryPrivileges.objects.get(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
                                         table_name=tb_name, valid_date__gte=datetime.datetime.now(), is_deleted=0)
@@ -484,10 +486,9 @@ def query(request):
         else:
             limit_num = min(int(limit_num), user_limit_num)
 
-    # 对查询sql增加limit限制
-    if re.search(r"limit[\f\n\r\t\v\s]+(\d+)$", sqlContent.lower()) is None:
-        if re.search(r"limit[\f\n\r\t\v\s]+\d+[\f\n\r\t\v\s]*,[\f\n\r\t\v\s]*(\d+)$", sqlContent.lower()) is None:
-            if re.match(r"^select", sqlContent.lower()):
+        # 对查询sql增加limit限制
+        if re.search(r"limit[\f\n\r\t\v\s]+(\d+)$", sqlContent.lower()) is None:
+            if re.search(r"limit[\f\n\r\t\v\s]+\d+[\f\n\r\t\v\s]*,[\f\n\r\t\v\s]*(\d+)$", sqlContent.lower()) is None:
                 sqlContent = sqlContent + ' limit ' + str(limit_num)
 
     sqlContent = sqlContent + ';'
