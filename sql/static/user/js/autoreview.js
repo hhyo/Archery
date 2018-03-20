@@ -16,14 +16,21 @@ function validate() {
 $("#btn-autoreview").click(function(){
 	//先做表单验证，成功了提交ajax给后端
 	if (validate()) {
+	    $('input[type=button]').addClass('disabled');
+	    $('input[type=button]').prop('disabled', true);
 		autoreview();
 	}
+	else {
+	    $('input[type=button]').removeClass('disabled');
+	    $('input[type=button]').addClass('btn');
+	    $('input[type=button]').prop('disabled', false);
+    }
 });
 
 function autoreview() {
 	var sqlContent = $("#sql_content");
 	var clusterName = $("#cluster_name");
-	
+
 	//将数据通过ajax提交给后端进行检查
 	$.ajax({
 		type: "post",
@@ -34,7 +41,9 @@ function autoreview() {
 			cluster_name: clusterName.val()
 		},
 		complete: function() {
-
+		    $('input[type=button]').removeClass('disabled');
+		    $('input[type=button]').addClass('btn');
+		    $('input[type=button]').prop('disabled', false);
 		},
 		success: function (data) {
 			if (data.status == 0) {
@@ -62,6 +71,6 @@ function autoreview() {
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
 			alert(errorThrown);
 		}
-	});	
+	});
 
 }

@@ -7,45 +7,45 @@ var isStoped = 0;
 var retryCnt = 1;
 
 $(document).ready(function (){
-  var status = $("#workflowDetail_status").text();
-  var isDetail = window.location.pathname.indexOf("detail");
+    var status = $("#workflowDetail_status").text();
+    var isDetail = window.location.pathname.indexOf("detail");
   if (isDetail != -1 && status == "执行中"){
       get_pct(workflowid,itemIndex);
 
       $("button").click(function (){
-        var isContinue = confirm("请确认是否中止pt-OSC进程？");
-        if (isContinue) {
-            var element = $(this);
-            var sqlNum = element.val();
-            stopOsc(workflowid, sqlNum);
-        }
+            var isContinue = confirm("请确认是否中止pt-OSC进程？");
+            if (isContinue) {
+                var element = $(this);
+                var sqlNum = element.val();
+                stopOsc(workflowid, sqlNum);
+            }
         });
   };
 });
 
 function get_pct(wid, sqlNum){
     if(sqlNum > sqlMaxRowNumber){
-         getWorkflowStatus(wid);  //最后一条SQL的进度刷新完后，请求后端接口获取整个工单的状态，如果不为“执行中”状态，则提示刷新当前页面；如果是“执行中”，则每隔1秒查询工单的状态，共重试120次
+        getWorkflowStatus(wid);  //最后一条SQL的进度刷新完后，请求后端接口获取整个工单的状态，如果不为“执行中”状态，则提示刷新当前页面；如果是“执行中”，则每隔1秒查询工单的状态，共重试120次
         // console.log('finish1');
-         if (wfStatus != -1 && wfStatus != "执行中") {
-                window.location.reload(true);
-            }
-         else {
-                document.getElementById("workflowDetail_status").innerHTML = "确认中...";
+        if (wfStatus != -1 && wfStatus != "执行中") {
+            window.location.reload(true);
+        }
+        else {
+            document.getElementById("workflowDetail_status").innerHTML = "确认中...";
                 if (retryCnt <= 120){
-                     clearTimeout(key);
-                     key = setTimeout(function () {
+                clearTimeout(key);
+                key = setTimeout(function () {
                          get_pct(wid,itemIndex);
-                     }, 1000);
-                     retryCnt++;
-                     }
-                else {
-                     retryCnt = 1;
-                     alert("该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面");
-                     }
-
+                }, 1000);
+                retryCnt++;
             }
-     }
+            else {
+                retryCnt = 1;
+                alert("该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面");
+            }
+
+        }
+    }
     else {
         if (isStoped == 1) {
             document.getElementById("btnstop_" + sqlNum).style.display = "none";
@@ -136,7 +136,7 @@ function get_pct(wid, sqlNum){
 
 function stopOsc(wid, sqlNum){
     if (wid > 0 && sqlNum >= 1 && sqlNum <= sqlMaxRowNumber) {
-         //console.log('stoping osc...'+ sqlNum);
+        //console.log('stoping osc...'+ sqlNum);
         $.ajax({
             type: "post",
             async: false,
@@ -149,7 +149,7 @@ function stopOsc(wid, sqlNum){
             complete: function () {
             },
             success: function (data) {
-                 //console.log(data);
+                //console.log(data);
                 if (data.status == 0) {
                     //改变全局变量isStoped的值，以便停止进度条更新
                     isStoped = 1;
@@ -191,33 +191,35 @@ function getWorkflowStatus(wid){
 
 function execute(){
     //点击执行之后，刷新当前页面，以显示执行进度
-    setTimeout(function(){
+    $('input[type=button]').addClass('disabled');
+    $('input[type=button]').prop('disabled', true);
+    setTimeout(function () {
         window.location.reload(true);
     },2500)
-    }
+}
 
 $(document).ready(function () {
     $("#btnEditSql").click(function () {
-       var editWorkflowDetailId = $("#workflowDetail_id").val();
-       var editWorkflowNname = $("#editWorkflowNname").text();
-       var editSqlContent = $("#editSqlContent").val();
-       var editClustername = $("#editClustername").val();
-       var editIsbackup = $("#editIsbackup").val();
-       var editReviewman = $("#editReviewman").val();
-       var editSubReviewman = $("#editSubReviewman").val();
-       sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
-       sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
-       sessionStorage.setItem('editSqlContent', editSqlContent);
-       sessionStorage.setItem('editClustername', editClustername);
-       sessionStorage.setItem('editIsbackup', editIsbackup);
-       sessionStorage.setItem('editReviewman', editReviewman);
-       sessionStorage.setItem('editSubReviewman', editSubReviewman);
+        var editWorkflowDetailId = $("#workflowDetail_id").val();
+        var editWorkflowNname = $("#editWorkflowNname").text();
+        var editSqlContent = $("#editSqlContent").val();
+        var editClustername = $("#editClustername").val();
+        var editIsbackup = $("#editIsbackup").val();
+        var editReviewman = $("#editReviewman").val();
+        var editSubReviewman = $("#editSubReviewman").val();
+        sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
+        sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+        sessionStorage.setItem('editSqlContent', editSqlContent);
+        sessionStorage.setItem('editClustername', editClustername);
+        sessionStorage.setItem('editIsbackup', editIsbackup);
+        sessionStorage.setItem('editReviewman', editReviewman);
+        sessionStorage.setItem('editSubReviewman', editSubReviewman);
     });
 
     $("#btnExecute").click(function(){
 	$(this).button('loading').delay(2500).queue(function() {
-		$(this).button('reset');
-		$(this).dequeue();
-	});
-});
+            $(this).button('reset');
+            $(this).dequeue();
+        });
+    });
 });

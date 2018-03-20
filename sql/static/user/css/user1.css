@@ -24,6 +24,19 @@
 	background-color: #f6f7f8;
 }
 
+.lsb-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+}
+
+.mypanalbox {
+    background-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 3px 3px 3px;
+}
+
 .login-form {
 	margin: 20px;
 }

@@ -385,6 +385,12 @@
                             }
                             //inception检测报错
                             else if (data.status === 2) {
+                                var errer_info = data.msg;
+                                //替换所有的换行符
+                                errer_info = errer_info.replace(/\r\n/g, "<br>");
+                                errer_info = errer_info.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                errer_info = errer_info.replace(/\s/g, "&nbsp;");
                                 alertStyle = "alert-danger";
                                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                                     columns: [{
@@ -392,7 +398,7 @@
                                         title: 'Error'
                                     }],
                                     data: [{
-                                        error: data.msg
+                                        error: errer_info
                                     }]
                                 })
                             }

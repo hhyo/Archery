@@ -27,6 +27,13 @@ $("#btn-submitsql").click(function (){
 	}
 });
 
+$("#btn-reset").click(function (){
+	//重置选择器
+	$(".selectpicker").selectpicker('val', '');
+	$(".selectpicker").selectpicker('render');
+	$(".selectpicker").selectpicker('refresh');
+});
+
 $("#review_man").change(function review_man(){
     var review_man = $(this).val();
     $("div#" + review_man).hide();
