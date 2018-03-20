@@ -378,7 +378,7 @@ def query(request):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
 
     # 服务器端参数验证
-    if sqlContent is None or dbName is None:
+    if sqlContent is None or dbName is None or cluster_name is None or limit_num is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -398,11 +398,11 @@ def query(request):
     for sql in sql_list:
         if re.match(r"^(\--|#)", sql):
             pass
-        elif re.match(r"^select|^show.*create|^explain", sql.lower()):
+        elif re.match(r"^select|^show.*create.*table|^explain", sql.lower()):
             break
         else:
             finalResult['status'] = 1
-            finalResult['msg'] = '仅支持^select|^show.*create|^explain语法，请联系管理员！'
+            finalResult['msg'] = '仅支持^select|^show.*create.*table|^explain语法，请联系管理员！'
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该集群的连接方式,查询只读账号,按照分号截取第一条有效sql执行
@@ -411,16 +411,15 @@ def query(request):
 
     # 检查用户是否有该数据库/表的查询权限
     if loginUserOb.is_superuser:
-        user_limit_num = 10000
+        user_limit_num =  getattr(settings, 'ADMIN_QUERY_LIMIT')
         if int(limit_num) == 0:
-            limit_num = user_limit_num
+            limit_num = int(user_limit_num)
         else:
-            limit_num = min(int(limit_num), user_limit_num)
+            limit_num = min(int(limit_num), int(user_limit_num))
         pass
     # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过
-    elif re.match(r"^show.*create", sqlContent.lower()):
-        if re.match(r"^show.*create", sqlContent.lower()):
-            tb_name = re.sub('^show.*create.*table', '', sqlContent, count=1, flags=0).strip()
+    elif re.match(r"^show.*create.*table", sqlContent.lower()):
+        tb_name = re.sub('^show.*create.*table', '', sqlContent, count=1, flags=0).strip()
         try:
             QueryPrivileges.objects.get(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
                                         table_name=tb_name, valid_date__gte=datetime.datetime.now(), is_deleted=0)
@@ -456,16 +455,13 @@ def query(request):
         # 获取表数据报错，检查配置文件是否允许继续执行
         else:
             table_ref = None
-            if hasattr(settings, 'CRITICAL_QUERY_ON_OFF') == True:
-                if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
-                    return HttpResponse(json.dumps(table_ref_result), content_type='application/json')
-                else:
-                    pass
+            if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
+                return HttpResponse(json.dumps(table_ref_result), content_type='application/json')
+            else:
+                pass
 
         # 获取查询涉及表的最小limit限制
-        if loginUserOb.is_superuser:
-            user_limit_num = 10000
-        elif table_ref:
+        if table_ref:
             db_list = [table_info['db'] for table_info in table_ref]
             table_list = [table_info['table'] for table_info in table_ref]
             user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
@@ -486,7 +482,8 @@ def query(request):
         else:
             limit_num = min(int(limit_num), user_limit_num)
 
-        # 对查询sql增加limit限制
+    # 对查询sql增加limit限制
+    if re.match(r"^select", sqlContent.lower()):
         if re.search(r"limit[\f\n\r\t\v\s]+(\d+)$", sqlContent.lower()) is None:
             if re.search(r"limit[\f\n\r\t\v\s]+\d+[\f\n\r\t\v\s]*,[\f\n\r\t\v\s]*(\d+)$", sqlContent.lower()) is None:
                 sqlContent = sqlContent + ' limit ' + str(limit_num)
@@ -504,19 +501,19 @@ def query(request):
 
     # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
     t_start = time.time()
-    if getattr(settings, 'CRITICAL_DATA_MASKING_ON_OFF') == "on":
+    if getattr(settings, 'DATA_MASKING_ON_OFF') == "on":
         # 仅对查询语句进行脱敏
         if re.match(r"^select", sqlContent.lower()):
             try:
                 masking_result = datamasking.data_masking(cluster_name, dbName, sqlContent, sql_result)
             except Exception:
-                if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
+                if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
                     finalResult['status'] = 1
                     finalResult['msg'] = '脱敏数据报错,请联系管理员'
                     return HttpResponse(json.dumps(finalResult), content_type='application/json')
             else:
                 if masking_result['status'] != 0:
-                    if getattr(settings, 'CRITICAL_QUERY_ON_OFF') == "off":
+                    if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
                         return HttpResponse(json.dumps(masking_result), content_type='application/json')
 
     t_end = time.time()
