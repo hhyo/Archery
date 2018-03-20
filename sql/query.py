@@ -530,7 +530,11 @@ def query(request):
         query_log.cluster_id = cluster_info.cluster_id
         query_log.cluster_name = cluster_info.cluster_name
         query_log.sqllog = sqlContent
-        query_log.effect_row = min(limit_num, sql_result['effect_row'])
+        if int(limit_num) == 0:
+            limit_num = int(sql_result['effect_row'])
+        else:
+            limit_num = min(int(limit_num), int(sql_result['effect_row']))
+        query_log.effect_row = limit_num
         query_log.cost_time = cost_time
         query_log.save()
 
