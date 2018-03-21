@@ -216,6 +216,19 @@ $(document).ready(function () {
         sessionStorage.setItem('editSubReviewman', editSubReviewman);
     });
 
+    $("#btnSubmitOtherCluster").click(function () {
+        var editWorkflowNname = $("#editWorkflowNname").text();
+        var editSqlContent = $("#editSqlContent").val();
+        var editIsbackup = $("#editIsbackup").val();
+        var editReviewman = $("#editReviewman").val();
+        var editSubReviewman = $("#editSubReviewman").val();
+        sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+        sessionStorage.setItem('editSqlContent', editSqlContent);
+        sessionStorage.setItem('editIsbackup', editIsbackup);
+        sessionStorage.setItem('editReviewman', editReviewman);
+        sessionStorage.setItem('editSubReviewman', editSubReviewman);
+    });
+
     $("#btnExecute").click(function(){
 	$(this).button('loading').delay(2500).queue(function() {
             $(this).button('reset');

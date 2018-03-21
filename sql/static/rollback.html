@@ -2,8 +2,7 @@
 
 {% block content %}
 			<div>
-				<div style="width: 20%; float: left"><h4>回滚SQL语句：</h4></div>
-				<div style="width: 80%; float: right">
+				<div style="width: 80%; float: left">
                         {% csrf_token %}
                         <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
                         <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
@@ -13,9 +12,15 @@
                         <input type="hidden" id="editSubReviewman" value="{{ sub_review_man }}">
                         <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
 				</div>
-            <br><br>
 			</div>
-			<table class="table table-striped table-hover">				
+            <br>
+            <br>
+			<table data-toggle="table" class="table table-striped table-hover">
+                <thead class="btn-default">
+                <tr>
+                    <th>回滚语句</th>
+                </tr>
+                </thead>
 				<tbody>
                     {% for sql in listBackupSql %}
 					<tr>

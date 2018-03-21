@@ -18,7 +18,7 @@ from .sendmail import MailSender
 from .dao import Dao
 from .const import WorkflowDict
 from .inception import InceptionDao
-from .models import users, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog
+from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog
 from .data_masking import Masking
 from .workflow import Workflow
 
@@ -121,12 +121,19 @@ def getClusterList(request):
 @csrf_exempt
 def getdbNameList(request):
     clusterName = request.POST.get('cluster_name')
+    is_master = request.POST.get('is_master')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    slave_info = slave_config.objects.get(cluster_name=clusterName)
-    # 取出该集群的连接方式，为了后面连进去获取所有databases
-    listDb = dao.getAlldbByCluster(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                   prpCryptor.decrypt(slave_info.slave_password))
+    if is_master:
+        master_info = master_config.objects.get(cluster_name=clusterName)
+        # 取出该集群的连接方式，为了后面连进去获取所有databases
+        listDb = dao.getAlldbByCluster(master_info.master_host, master_info.master_port, master_info.master_user,
+                                       prpCryptor.decrypt(master_info.master_password))
+    else:
+        slave_info = slave_config.objects.get(cluster_name=clusterName)
+        # 取出该集群的连接方式，为了后面连进去获取所有databases
+        listDb = dao.getAlldbByCluster(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
+                                       prpCryptor.decrypt(slave_info.slave_password))
 
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
     result['data'] = listDb
@@ -411,7 +418,7 @@ def query(request):
 
     # 检查用户是否有该数据库/表的查询权限
     if loginUserOb.is_superuser:
-        user_limit_num =  getattr(settings, 'ADMIN_QUERY_LIMIT')
+        user_limit_num = getattr(settings, 'ADMIN_QUERY_LIMIT')
         if int(limit_num) == 0:
             limit_num = int(user_limit_num)
         else:

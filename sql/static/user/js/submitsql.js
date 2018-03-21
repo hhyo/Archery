@@ -21,6 +21,8 @@ function validateForm(element) {
 $("#btn-submitsql").click(function (){
 	//获取form对象，判断输入，通过则提交
 	var formSubmit = $("#form-submitsql");
+	var sqlContent = editor.getValue();
+	$("#sql_content").val(sqlContent);
 
 	if (validateForm(formSubmit)) {
 		formSubmit.submit();
@@ -28,6 +30,7 @@ $("#btn-submitsql").click(function (){
 });
 
 $("#btn-reset").click(function (){
+	editor.setValue("");
 	//重置选择器
 	$(".selectpicker").selectpicker('val', '');
 	$(".selectpicker").selectpicker('render');
@@ -42,13 +45,40 @@ $("#review_man").change(function review_man(){
 $(document).ready(function () {
 	var pathname = window.location.pathname;
 	if (pathname == "/editsql/") {
+		editor.setValue("请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;");
+		editor.clearSelection();
+		// 禁用提交按钮，点击检测后才激活
+		$("#btn-submitsql").addClass('disabled');
+		$("#btn-submitsql").prop('disabled', true);
 		document.getElementById('workflowid').value = sessionStorage.getItem('editWorkflowDetailId');
 		document.getElementById('workflow_name').value = sessionStorage.getItem('editWorkflowNname');
-		document.getElementById('sql_content').value = sessionStorage.getItem('editSqlContent');
+		editor.setValue(sessionStorage.getItem('editSqlContent'));
+		editor.clearSelection();
 		document.getElementById('cluster_name').value = sessionStorage.getItem('editClustername');
 		document.getElementById('is_backup').value = sessionStorage.getItem('editIsbackup');
 		document.getElementById('review_man').value = sessionStorage.getItem('editReviewman');
 		var sub_review_name = sessionStorage.getItem('editSubReviewman');
 		$("input[name='sub_review_man'][value=\'"+sub_review_name+"\']").attr("checked", true);
+	}
+	else if (pathname === "/submitothercluster/") {
+		editor.setValue("请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;");
+		editor.clearSelection();
+		// 禁用提交按钮，点击检测后才激活
+		$("#btn-submitsql").addClass('disabled');
+		$("#btn-submitsql").prop('disabled', true);
+		$("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+		$("#group").val(sessionStorage.getItem('editGroup'));
+		editor.setValue(sessionStorage.getItem('editSqlContent'));
+		editor.clearSelection();
+		$("#is_backup").val(sessionStorage.getItem('editIsbackup'));
+		$("#review_man").val(sessionStorage.getItem('editReviewman'));
+		$("#sub_review_name").val(sessionStorage.getItem('editSubReviewman'));
+	}
+	else if (pathname === "/submitsql/"){
+		editor.setValue("请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;");
+		editor.clearSelection();
+		// 禁用提交按钮，点击检测后才激活
+		$("#btn-submitsql").addClass('disabled');
+		$("#btn-submitsql").prop('disabled', true);
 	}
 });
