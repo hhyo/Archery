@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*- 
 
 import re
-import itertools
 import json
 import datetime
 import multiprocessing
@@ -134,29 +133,16 @@ def sqlworkflow(request):
 
     # 全部工单里面包含搜索条件,待审核前置
     if navStatus == 'all':
-        if loginUserOb.is_superuser == 1:
-            listWorkflow_other = workflow.objects.filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).exclude(
-                status=Const.workflowStatus['manreviewing']).order_by('-create_time')[
+        if loginUserOb.is_superuser == 1 :
+            listWorkflow = workflow.objects.filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')[
                                  offset:limit]
-            listWorkflow_manreviewing = workflow.objects.filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).filter(
-                status=Const.workflowStatus['manreviewing']
-            ).order_by('-create_time')
-            listWorkflow = itertools.chain(listWorkflow_manreviewing, listWorkflow_other)
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
         else:
-            listWorkflow_other = workflow.objects.filter(
+            listWorkflow = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).exclude(
-                status=Const.workflowStatus['manreviewing']).order_by('-create_time')[
-                                 offset:limit]
-            listWorkflow_manreviewing = workflow.objects.filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).filter(
-                status=Const.workflowStatus['manreviewing']).order_by('-create_time')
-            listWorkflow = itertools.chain(listWorkflow_manreviewing, listWorkflow_other)
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')[offset:limit]
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
