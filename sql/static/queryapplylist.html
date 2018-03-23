@@ -27,8 +27,15 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="text-danger">*</span>工单名称</label>
                         <input type="text" class="form-control" id="title" placeholder="简单说明权限用途">
+                    </div>
+                    <div class="form-group">
+                        <select id="priv_type" name="db_name" data-live-search="true"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="is-empty" disabled="" selected="selected">权限级别:</option>
+                            <option value="2">TABLE</option>
+                            <option value="1">DATABASE</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
@@ -40,13 +47,20 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div id="db_name_div" class="form-group">
                         <select id="db_name" name="db_name" data-live-search="true"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                             <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div id="db_name_multiple_div" class="form-group" style="display: none">
+                        <select id="db_name_multiple" name="db_name" data-live-search="true" multiple="multiple"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                        </select>
+                    </div>
+
+                    <div id="table_div" class="form-group">
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
                                 multiple='multiple' data-max-options="999" data-name="请选择表" data-placeholder="请选择表:"
@@ -55,19 +69,19 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 授权时间</label>
                         <select id="valid_date" name="valid_date"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="is-empty" disabled="" selected="selected">请选择授权时间:</option>
                             <option value="day">一天</option>
                             <option value="week">一周</option>
                             <option value="year">长期(一年)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label><span class="text-danger">*</span> 请选择查询限制行数</label>
                         <select id="limit_num" name="limit_num"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value=50 selected="selected">50</option>
+                            <option value="is-empty" disabled="" selected="selected">请选择查询限制行数:</option>
+                            <option value=50>50</option>
                             <option value=100>100</option>
                             <option value=1000>1000</option>
                         </select>
@@ -85,8 +99,13 @@
 
 {% block js %}
     <script>
-        //选择表控件初始化
+        //选择控件初始化
         $("#table_name").selectpicker({
+            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+            countSelectedText: "已选中{0}项",
+            selectedTextFormat: "count > 5"
+        });
+        $("#db_name_multiple").selectpicker({
             actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
             countSelectedText: "已选中{0}项",
             selectedTextFormat: "count > 5"
@@ -135,25 +154,58 @@
                 //格式化详情
                 detailFormatter: function (index, row) {
                     var html = [];
-                    $.each(row, function (key, value) {
-                        if (key === 'table_list') {
-                            var sql = value;
-                            //替换间隔符为换行符
-                            sql = sql.replace(/,/g, "<br>");
-                            html.push('<span>' + sql + '</span>');
-                        }
-                    });
-                    return html.join('');
+                    if (row.priv_type === 2) {
+                        $.each(row, function (key, value) {
+                            if (key === 'table_list') {
+                                var sql = '表清单：<br>' + value;
+                                //替换间隔符为换行符
+                                sql = sql.replace(/,/g, "<br>");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    }
+                    else {
+                        $.each(row, function (key, value) {
+                            if (key === 'db_list') {
+                                var sql = '数据库清单：<br>' + value;
+                                //替换间隔符为换行符
+                                sql = sql.replace(/,/g, "<br>");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    }
                 },
                 columns: [{
                     title: '工单名称',
-                    field: 'title',
+                    field: 'title'
                 }, {
                     title: '集群',
                     field: 'cluster_name'
                 }, {
                     title: '数据库',
-                    field: 'db_name'
+                    field: 'db_list',
+                    formatter: function (value, row, index) {
+                        if (value.length > 30) {
+                            var db_list = value.substr(0, 30) + '...';
+                            return db_list;
+                        }
+                        else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '权限级别',
+                    field: 'priv_type',
+                    formatter: function (value, row, index) {
+                        if (value === 1) {
+                            return 'DATABASE';
+                        }
+                        else {
+                            return 'TABLE';
+                        }
+                    }
                 }, {
                     title: '表清单',
                     field: 'table_list',
@@ -217,13 +269,17 @@
                     if (data.status === 0) {
                         var result = data.data;
                         $("#db_name").empty();
+                        $("#db_name_multiple").empty();
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
+                            $("#db_name_multiple").append(name);
                         }
                         $('#db_name').append("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>\n");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
+                        $('#db_name_multiple').selectpicker('render');
+                        $('#db_name_multiple').selectpicker('refresh');
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -266,6 +322,22 @@
             });
         });
 
+        //判断页面显示
+        $("#priv_type").change(function () {
+            //库权限
+            if ($("#priv_type").val() === '1') {
+                $("#table_div").hide();
+                $("#db_name_div").hide();
+                $("#db_name_multiple_div").show();
+
+            }
+            //表权限
+            else if ($("#priv_type").val() === '2') {
+                $("#table_div").show();
+                $("#db_name_div").show();
+            }
+        });
+
         //时间计算
         function addDate(date, days) {
             var d = new Date(date);
@@ -274,39 +346,98 @@
             return d.getFullYear() + '-' + m + '-' + d.getDate();
         }
 
+        //提交参数校验
+        function applyvalidate() {
+            var title = $("#title").val();
+            var priv_type = $("#priv_type").val();
+            var cluster_name = $("#cluster_name").val();
+            var db_name = $("#db_name").val();
+            var db_name_multiple = $("#db_name_multiple").val();
+            var table_name = $("#table_name").val();
+            var valid_date = $("#valid_date").val();
+            var limit_num = $("#limit_num").val();
+            var apply_remark = $("#apply_remark").val();
+
+            // 参数校验
+            if (priv_type == null) {
+                alert("请填写完整");
+                return false
+            }
+            else if (priv_type) {
+                if (priv_type === '1') {
+                    if (title && cluster_name && db_name_multiple && valid_date && limit_num) {
+                        return true
+                    }
+                    else {
+                        alert("请填写完整");
+                        return false
+                    }
+                }
+                else if (priv_type === '2') {
+                    if (title && cluster_name && db_name && table_name && valid_date && limit_num) {
+                        return true
+                    }
+                    else {
+                        alert("请填写完整");
+                        return false
+                    }
+                }
+            }
+        }
+
         //提交权限申请
         function applyforprivileges() {
             var title = $("#title").val();
+            var priv_type = $("#priv_type").val();
             var cluster_name = $("#cluster_name").val();
             var db_name = $("#db_name").val();
+            var db_name_multiple = $("#db_name_multiple").val();
+            var table_name = $("#table_name").val();
             var valid_date = $("#valid_date").val();
-            var date = new Date();
-            if (valid_date === 'day') {
-                valid_date = addDate(date, 1);
-
-            }
-            else if (valid_date === 'week') {
-                valid_date = addDate(date, 7);
-            }
-            else if (valid_date === 'year') {
-                valid_date = addDate(date, 365);
-            }
-            else {
-                valid_date = addDate(date, 1);
-            }
             var limit_num = $("#limit_num").val();
-            var o = document.getElementById("table_name");
-            var str = "";
-            for (i = 0; i < o.length; i++) {
-                if (o.options[i].selected) {
-                    str += o.options[i].value + ",";
-                }
-            }
-            var table_list = str.substr(0, str.length - 1);
             var apply_remark = $("#apply_remark").val();
-            if (title && db_name && table_list && valid_date) {
+
+            // 参数校验
+            if (applyvalidate()) {
+                //时间格式化
+                var date = new Date();
+                if (valid_date === 'day') {
+                    valid_date = addDate(date, 1);
+
+                }
+                else if (valid_date === 'week') {
+                    valid_date = addDate(date, 7);
+                }
+                else if (valid_date === 'year') {
+                    valid_date = addDate(date, 365);
+                }
+                else {
+                    valid_date = addDate(date, 1);
+                }
+
+                // db_list和table_list
+                if (priv_type === '1') {
+                    if (db_name_multiple.length > 1) {
+                        var db_list = db_name_multiple.join(",");
+                    }
+                    else {
+                        var db_list = db_name_multiple.toString()
+                    }
+                }
+                else if (priv_type === '2') {
+                    if (table_name.length > 1) {
+                        var table_list = table_name.join(",");
+                    }
+                    else {
+                        var table_list = table_name.toString()
+                    }
+                }
+
+
+                //禁用按钮
                 $('button[type=button]').addClass('disabled');
                 $('button[type=button]').prop('disabled', true);
+                //提交请求
                 $.ajax({
                     type: "post",
                     url: "/applyforprivileges/",
@@ -314,6 +445,8 @@
                     data: {
                         title: title,
                         cluster_name: cluster_name,
+                        priv_type: priv_type,
+                        db_list: db_list,
                         db_name: db_name,
                         table_list: table_list,
                         valid_date: valid_date,
@@ -337,10 +470,7 @@
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
                         alert(errorThrown);
                     }
-                })
-            }
-            else {
-                alert("请填写完整")
+                });
             }
         }
 

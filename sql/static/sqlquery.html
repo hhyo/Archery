@@ -432,7 +432,7 @@
                                     field: 'checkbox',
                                     checkbox: true
                                 });*/
-                                if (sqlContent.match(/^show.*create/)) {
+                                if (sqlContent.match(/^show.*create.*table/)) {
                                     //初始化表结构显示
                                     $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
                                             data: result['rows'],
@@ -492,7 +492,7 @@
                 ;
             }
             else {
-                alert('仅支持^select|^show.*create|^explain语法，请联系管理员！');
+                alert('仅支持^select|^show.*create.*table|^explain语法，请联系管理员！');
                 $('input[type=button]').removeClass('disabled');
                 $('input[type=button]').addClass('btn');
                 $('input[type=button]').prop('disabled', false);
