@@ -39,73 +39,15 @@ def logout(request):
 
 #首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
-    #一个页面展示
-    PAGE_LIMIT = 12
-
-    pageNo = 0
-    navStatus = ''
-    listAllWorkflow = []
-
     #参数检查
-    if 'pageNo' in request.GET:
-        pageNo = request.GET['pageNo']
-    else:
-        pageNo = '0'
-
     if 'navStatus' in request.GET:
         navStatus = request.GET['navStatus']
     else:
         navStatus = 'all'
-    if not isinstance(pageNo, str) or not isinstance(navStatus, str):
+    if not isinstance(navStatus, str):
         raise TypeError('pageNo或navStatus页面传入参数不对')
-    else:
-        try:
-            pageNo = int(pageNo)
-            if pageNo < 0:
-                pageNo = 0
-        except ValueError as ve:
-            context = {'errMsg': 'pageNo参数不是int.'}
-            return render(request, 'error.html', context)
 
-    loginUser = request.session.get('login_username', False)
-    #查询workflow model，根据pageNo和navStatus获取对应的内容
-    offset = pageNo * PAGE_LIMIT
-    limit = offset + PAGE_LIMIT
-
-    #修改全部工单、审核不通过、已执行完毕界面工程师只能看到自己发起的工单，审核人可以看到全部
-    listWorkflow = []
-    #查询全部流程
-    loginUserOb = users.objects.get(username=loginUser)
-    role = loginUserOb.role
-    if navStatus == 'all' and role == '审核人':
-        #这句话等同于select * from sql_workflow order by create_time desc limit {offset, limit};
-        listWorkflow = workflow.objects.exclude(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'all' and role == '工程师':
-        listWorkflow = workflow.objects.filter(Q(engineer=loginUser) | Q(status=Const.workflowStatus['autoreviewwrong']), engineer=loginUser).order_by('-create_time')[offset:limit]
-    elif navStatus == 'waitingforme':
-        listWorkflow = workflow.objects.filter(Q(status=Const.workflowStatus['manreviewing'], review_man=loginUser) | Q(status=Const.workflowStatus['manreviewing'], review_man__contains='"' + loginUser + '"')).order_by('-create_time')[offset:limit]
-    elif navStatus == 'finish' and role == '审核人':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'finish' and role == '工程师':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['finish'], engineer=loginUser).order_by('-create_time')[offset:limit]
-    elif navStatus == 'executing' and role == '审核人':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['executing']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'executing' and role == '工程师':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['executing'], engineer=loginUser).order_by('-create_time')[offset:limit]
-    elif navStatus == 'abort' and role == '审核人':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['abort']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'abort' and role == '工程师':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['abort'], engineer=loginUser).order_by('-create_time')[offset:limit]
-    elif navStatus == 'autoreviewwrong' and role == '审核人':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['autoreviewwrong']).order_by('-create_time')[offset:limit]
-    elif navStatus == 'autoreviewwrong' and role == '工程师':
-        listWorkflow = workflow.objects.filter(status=Const.workflowStatus['autoreviewwrong'], engineer=loginUser).order_by('-create_time')[offset:limit]
-    else:
-        context = {'errMsg': '传入的navStatus参数有误！'}
-        return render(request, 'error.html', context)
-
-
-    context = {'currentMenu':'allworkflow', 'listWorkflow':listWorkflow, 'pageNo':pageNo, 'navStatus':navStatus, 'PAGE_LIMIT':PAGE_LIMIT, 'role':role}
+    context = {'currentMenu':'allworkflow','navStatus':navStatus}
     return render(request, 'allWorkflow.html', context)
 
 #提交SQL的页面

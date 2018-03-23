@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 import re
+import itertools
 import json
 import datetime
 import multiprocessing
@@ -15,6 +16,7 @@ from django.contrib.auth.hashers import check_password
 if settings.ENABLE_LDAP:
     from django_auth_ldap.backend import LDAPBackend
 
+from django.core import serializers
 from .dao import Dao
 from .const import Const
 from .inception import InceptionDao
@@ -108,6 +110,86 @@ def authenticateEntry(request):
         request.session['login_username'] = strUsername
     return HttpResponse(json.dumps(result), content_type='application/json')
 
+
+# 获取审核列表
+@csrf_exempt
+def sqlworkflow(request):
+    # 获取用户信息
+    loginUser = request.session.get('login_username', False)
+
+    limit = int(request.POST.get('limit'))
+    offset = int(request.POST.get('offset'))
+    limit = offset + limit
+
+    # 获取搜索参数
+    search = request.POST.get('search')
+    if search is None:
+        search = ''
+
+    # 获取筛选参数
+    navStatus = request.POST.get('navStatus')
+
+    # 管理员可以看到全部工单，其他人能看到自己提交和审核的工单
+    loginUserOb = users.objects.get(username=loginUser)
+
+    # 全部工单里面包含搜索条件,待审核前置
+    if navStatus == 'all':
+        if loginUserOb.is_superuser == 1:
+            listWorkflow_other = workflow.objects.filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).exclude(
+                status=Const.workflowStatus['manreviewing']).order_by('-create_time')[
+                                 offset:limit]
+            listWorkflow_manreviewing = workflow.objects.filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).filter(
+                status=Const.workflowStatus['manreviewing']
+            ).order_by('-create_time')
+            listWorkflow = itertools.chain(listWorkflow_manreviewing, listWorkflow_other)
+            listWorkflowCount = workflow.objects.filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
+        else:
+            listWorkflow_other = workflow.objects.filter(
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).exclude(
+                status=Const.workflowStatus['manreviewing']).order_by('-create_time')[
+                                 offset:limit]
+            listWorkflow_manreviewing = workflow.objects.filter(
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).filter(
+                status=Const.workflowStatus['manreviewing']).order_by('-create_time')
+            listWorkflow = itertools.chain(listWorkflow_manreviewing, listWorkflow_other)
+            listWorkflowCount = workflow.objects.filter(
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
+    elif navStatus in Const.workflowStatus.keys():
+        if loginUserOb.is_superuser == 1:
+            listWorkflow = workflow.objects.filter(status=Const.workflowStatus[navStatus]).order_by('-create_time')[
+                           offset:limit]
+            listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
+        else:
+            listWorkflow = workflow.objects.filter(status=Const.workflowStatus[navStatus]).filter(
+                Q(engineer=loginUser) | Q(
+                    review_man__contains=loginUser)).order_by('-create_time')[
+                           offset:limit]
+            listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).filter(
+                Q(engineer=loginUser) | Q(
+                    review_man__contains=loginUser)).count()
+    else:
+        context = {'errMsg': '传入的navStatus参数有误！'}
+        return render(request, 'error.html', context)
+
+    # QuerySet 序列化
+    listWorkflow = serializers.serialize("json", listWorkflow, fields=("id", "workflow_name", "engineer", "status",
+                                                                       "is_backup", "create_time", "cluster_name",
+                                                                       "group_name"))
+    listWorkflow = json.loads(listWorkflow)
+    list = []
+    for i in range(len(listWorkflow)):
+        listWorkflow[i]['fields']['id'] = listWorkflow[i]['pk']
+        list.append(listWorkflow[i]['fields'])
+
+    result = {"total": listWorkflowCount, "rows": list}
+    # 返回查询结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 #提交SQL给inception进行自动审核
 @csrf_exempt

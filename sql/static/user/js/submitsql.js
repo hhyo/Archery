@@ -50,13 +50,13 @@ $(document).ready(function () {
 		// 禁用提交按钮，点击检测后才激活
 		$("#btn-submitsql").addClass('disabled');
 		$("#btn-submitsql").prop('disabled', true);
-		document.getElementById('workflowid').value = sessionStorage.getItem('editWorkflowDetailId');
-		document.getElementById('workflow_name').value = sessionStorage.getItem('editWorkflowNname');
+		$("#workflowid").val(sessionStorage.getItem('editWorkflowDetailId'));
+		$("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
 		editor.setValue(sessionStorage.getItem('editSqlContent'));
 		editor.clearSelection();
-		document.getElementById('cluster_name').value = sessionStorage.getItem('editClustername');
-		document.getElementById('is_backup').value = sessionStorage.getItem('editIsbackup');
-		document.getElementById('review_man').value = sessionStorage.getItem('editReviewman');
+		$("#cluster_name").val(sessionStorage.getItem('editClustername'));
+		$("#is_backup").val(sessionStorage.getItem('editIsbackup'));
+		$("#review_man").val(sessionStorage.getItem('editReviewman'));
 		var sub_review_name = sessionStorage.getItem('editSubReviewman');
 		$("input[name='sub_review_man'][value=\'"+sub_review_name+"\']").attr("checked", true);
 	}
@@ -67,12 +67,12 @@ $(document).ready(function () {
 		$("#btn-submitsql").addClass('disabled');
 		$("#btn-submitsql").prop('disabled', true);
 		$("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
-		$("#group").val(sessionStorage.getItem('editGroup'));
 		editor.setValue(sessionStorage.getItem('editSqlContent'));
 		editor.clearSelection();
 		$("#is_backup").val(sessionStorage.getItem('editIsbackup'));
 		$("#review_man").val(sessionStorage.getItem('editReviewman'));
-		$("#sub_review_name").val(sessionStorage.getItem('editSubReviewman'));
+		var sub_review_name = sessionStorage.getItem('editSubReviewman');
+		$("input[name='sub_review_man'][value=\'"+sub_review_name+"\']").attr("checked", true);
 	}
 	else if (pathname === "/submitsql/"){
 		editor.setValue("请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;");

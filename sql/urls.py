@@ -28,6 +28,7 @@ urlpatterns = [
     url(r'^charts/$', views.charts, name='charts'),
 
     url(r'^authenticate/$', views_ajax.authenticateEntry, name='authenticate'),
+    url(r'^sqlworkflow/$', views_ajax.sqlworkflow, name='sqlworkflow'),
     url(r'^syncldapuser/$', views_ajax.syncldapuser, name='syncldapuser'),
     url(r'^simplecheck/$', views_ajax.simplecheck, name='simplecheck'),
     url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),

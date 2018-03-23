@@ -6,7 +6,7 @@
             <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
                 {% csrf_token %}
                 <div class="col-md-9 column">
-                    <pre id="sql_content_editor" class="ace_editor " style="min-height:300px"></pre>
+                    <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
                 </div>
                 <div class="col-md-3 column">
                     <div class="form-group">
@@ -46,7 +46,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <input id="btn-explain" type="button" class="btn btn-warning" value="查看执行计划"/>
+                        <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                        <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
                         <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
                     </div>
                 </div>
@@ -88,6 +89,7 @@
     <script src="{% static 'ace/ace_init.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <!-- 查询历史  -->
     <script>
         //获取查询列表
@@ -139,7 +141,7 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            var sql = value;
+                            var sql = window.sqlFormatter.format(value);
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
@@ -268,12 +270,13 @@
             var result = true;
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
-                sqlContent = select_sqlContent
+                var sqlContent = select_sqlContent
             }
             else {
                 var sqlContent = editor.getValue();
 
             }
+
             var cluster_name = $("#cluster_name").val();
             var db_name = $("#db_name").val();
 
@@ -307,6 +310,22 @@
                     $('input[type=button]').prop('disabled', true);
                     sqlquery('explain')
                 }
+            }
+        );
+
+        //先做表单验证，验证成功再成功提交格式化sql
+        $("#btn-format").click(function () {
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    var sqlContent = select_sqlContent
+                }
+                else {
+                    var sqlContent = editor.getValue();
+
+                }
+                var sqlContent = window.sqlFormatter.format(sqlContent);
+                editor.setValue(sqlContent);
+                editor.clearSelection();
             }
         );
 
