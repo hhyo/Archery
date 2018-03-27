@@ -26,6 +26,8 @@ $("#btn-submitsql").click(function (){
 
 	if (validateForm(formSubmit)) {
 		formSubmit.submit();
+		$('input[type=button]').addClass('disabled');
+		$('input[type=button]').prop('disabled', true);
 	}
 });
 

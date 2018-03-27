@@ -89,6 +89,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 	    * cat startup.sh
             * ![image](https://github.com/jly8866/archer/raw/master/screenshots/startup.png)<br/>
     * nginx配置示例：
+        * startup.sh里面收集静态资源的命令：python3 manage.py collectstatic -v0 --noinput会将所有install app的静态资源收集到STATIC_ROOT目录下，nginx的配置请指定该目录
         * cat nginx.conf
             * ![image](https://github.com/jly8866/archer/raw/master/screenshots/nginx.png)<br/>
 9. 创建archer系统登录用户：<br/>
