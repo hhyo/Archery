@@ -115,7 +115,7 @@ class Workflow(object):
                 auditresult.audit_id = audit_id
                 auditresult.current_audit_user = '-1'
                 auditresult.current_status = DirectionsOb.workflow_status['audit_success']
-                auditresult.save(update_fields=['current_audit_user', 'current_status', 'current_status'])
+                auditresult.save(update_fields=['current_audit_user', 'current_status'])
             else:
                 # 更新主表审核下级审核人和当前审核人
                 auditresult = WorkflowAudit()

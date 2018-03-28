@@ -39,15 +39,7 @@ def logout(request):
 
 #首页，也是查看所有SQL工单页面，具备翻页功能
 def allworkflow(request):
-    #参数检查
-    if 'navStatus' in request.GET:
-        navStatus = request.GET['navStatus']
-    else:
-        navStatus = 'all'
-    if not isinstance(navStatus, str):
-        raise TypeError('pageNo或navStatus页面传入参数不对')
-
-    context = {'currentMenu':'allworkflow','navStatus':navStatus}
+    context = {'currentMenu':'allworkflow'}
     return render(request, 'allWorkflow.html', context)
 
 #提交SQL的页面
@@ -185,6 +177,133 @@ def detail(request, workflowId):
         Content[5] = Content[5].split('\r\n')   # sql语句
     context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'listContent':listContent,'listAllReviewMen':listAllReviewMen}
     return render(request, 'detail.html', context)
+
+#审核通过，不执行
+def passonly(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+    workflowId = int(workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    clusterName = workflowDetail.cluster_name
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+    except ValueError:
+        listAllReviewMen = (workflowDetail.review_man, )
+
+    #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
+    loginUser = request.session.get('login_username', False)
+    if loginUser is None or loginUser not in listAllReviewMen:
+        context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
+        return render(request, 'error.html', context)
+
+    #服务器端二次验证，当前工单状态必须为等待人工审核
+    if workflowDetail.status != Const.workflowStatus['manreviewing']:
+        context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
+        return render(request, 'error.html', context)
+
+    #将流程状态修改为审核通过，并更新reviewok_time字段
+    workflowDetail.status = Const.workflowStatus['pass']
+    workflowDetail.reviewok_time = getNow()
+    workflowDetail.save()
+
+    #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
+    if getattr(settings, 'MAIL_ON_OFF') == "on":
+        url = _getDetailUrl(request) + str(workflowId) + '/'
+
+        #给主、副审核人，申请人，DBA各发一封邮件
+        engineer = workflowDetail.engineer
+        reviewMen = workflowDetail.review_man
+        workflowStatus = workflowDetail.status
+        workflowName = workflowDetail.workflow_name
+        objEngineer = users.objects.get(username=engineer)
+        strTitle = "SQL上线工单审核通过 # " + str(workflowId)
+        strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n审核结果：" + workflowStatus
+        mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+        mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+        for reviewMan in listAllReviewMen:
+            if reviewMan == "":
+                continue
+            objReviewMan = users.objects.get(username=reviewMan)
+            mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+    else:
+        #不发邮件
+        pass
+
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
+
+#执行SQL
+def executeonly(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+
+    workflowId = int(workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    clusterName = workflowDetail.cluster_name
+    try:
+        listAllReviewMen = json.loads(workflowDetail.review_man)
+    except ValueError:
+        listAllReviewMen = (workflowDetail.review_man, )
+
+    #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人或者提交人. 避免攻击或被接口测试工具强行绕过
+    loginUser = request.session.get('login_username', False)
+    if loginUser is None or (loginUser not in listAllReviewMen and loginUser != workflowDetail.engineer):
+        context = {'errMsg': '当前登录用户不是审核人或者提交人，请重新登录.'}
+        return render(request, 'error.html', context)
+
+    #服务器端二次验证，当前工单状态必须为审核通过状态
+    if workflowDetail.status != Const.workflowStatus['pass']:
+        context = {'errMsg': '当前工单状态不是审核通过，请刷新当前页面！'}
+        return render(request, 'error.html', context)
+
+    dictConn = getMasterConnStr(clusterName)
+
+    #将流程状态修改为执行中，并更新reviewok_time字段
+    workflowDetail.status = Const.workflowStatus['executing']
+    workflowDetail.reviewok_time = getNow()
+    #执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, isSplit='yes')
+    workflowDetail.review_content = json.dumps(splitReviewResult)
+    workflowDetail.save()
+
+    #交给inception先split，再执行
+    (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
+
+    #封装成JSON格式存进数据库字段里
+    strJsonResult = json.dumps(finalList)
+    workflowDetail.execute_result = strJsonResult
+    workflowDetail.finish_time = getNow()
+    workflowDetail.status = finalStatus
+    workflowDetail.save()
+
+    #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
+    if hasattr(settings, 'MAIL_ON_OFF') == True:
+        if getattr(settings, 'MAIL_ON_OFF') == "on":
+            url = _getDetailUrl(request) + str(workflowId) + '/'
+
+            #给主、副审核人，申请人，DBA各发一封邮件
+            engineer = workflowDetail.engineer
+            reviewMen = workflowDetail.review_man
+            workflowStatus = workflowDetail.status
+            workflowName = workflowDetail.workflow_name
+            objEngineer = users.objects.get(username=engineer)
+            strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
+            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+            mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+            for reviewMan in listAllReviewMen:
+                if reviewMan == "":
+                    continue
+                objReviewMan = users.objects.get(username=reviewMan)
+                mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+        else:
+            #不发邮件
+            pass
+
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
 
 #人工审核也通过，执行SQL
 def execute(request):

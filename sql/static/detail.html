@@ -151,16 +151,35 @@
             <br>
 			{% if workflowDetail.status == '等待审核人审核' %}
                 {% if loginUser in listAllReviewMen %}
+                <form action="/passonly/" method="post" style="display:inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+                    <input type="submit" id="btnPass" type="button" onclick="execute()" class="btn btn-primary btn-success" data-loading-text="Loading..." value="审核通过" />
+                </form>
+
                 <form action="/execute/" method="post" style="display:inline-block;">
                     {% csrf_token %}
                     <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnExecute" type="button" onclick="execute()" class="btn btn-primary btn-default" data-loading-text="Loading..." value="审核通过，执行" />
+                    <input type="submit" id="btnExecute" type="button" onclick="execute()" class="btn btn-danger" data-loading-text="Loading..." value="审核通过并执行" />
                 </form>
+
                 {% elif workflowDetail.engineer == loginUser %}
                 <!--只允许发起人提交其他集群-->
                 <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
                 {% endif %}
 
+                <form action="/cancel/" method="post" style="display:inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+                    <input type="submit" id="btnCancel" type="button" onclick="execute()" class="btn btn-default" data-loading-text="Loading..." value="终止流程" />
+                </form>
+
+            {% elif workflowDetail.status == '审核通过' %}
+                <form action="/executeonly/" method="post" style="display:inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
+                    <input type="submit" id="btnExecuteonly" type="button" onclick="execute()" class="btn btn-danger" data-loading-text="Loading..." value="执行SQL" />
+                </form>
                 <form action="/cancel/" method="post" style="display:inline-block;">
                     {% csrf_token %}
                     <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">

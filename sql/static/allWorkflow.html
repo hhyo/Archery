@@ -1,64 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- tab-->
-    <ul class="nav nav-tabs">
-        {% if navStatus == 'all' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?pageNo=0&navStatus=all">全部工单</a>
-        </li>
-
-        {% if navStatus == 'manreviewing' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?navStatus=manreviewing">等待审核人审核</a>
-        </li>
-
-        {% if navStatus == 'finish' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?navStatus=finish">已执行完毕</a>
-        </li>
-
-        {% if navStatus == 'executing' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?navStatus=executing">执行中</a>
-        </li>
-
-        {% if navStatus == 'abort' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?navStatus=abort">人工终止流程</a>
-        </li>
-
-        {% if navStatus == 'autoreviewwrong' %}
-        <li class="active">
-        {% else %}
-        <li>
-        {% endif %}
-             <a href="/allworkflow/?navStatus=autoreviewwrong">自动审核不通过的</a>
-        </li>
-
-    </ul>
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="bootstrap-select">
+        <select id="navStatus" class="form-control dropdown-menu-right selectpicker ">
+            <option value="all" selected="selected">全部工单</option>
+            <option value="manreviewing">待审核</option>
+            <option value="pass">审核通过</option>
+            <option value="finish">已执行完毕</option>
+            <option value="executing">执行中</option>
+            <option value="abort">人工终止流程</option>
+            <option value="autoreviewwrong">自动审核不通过</option>
+        </select>
+    </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">
         <table id="sqlaudit-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
-{% endblock content%}
+{% endblock content %}
 {% block js %}
     {% load staticfiles %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
@@ -105,7 +66,7 @@
                         return {
                             limit: params.limit,
                             offset: params.offset,
-                            navStatus: "{{ navStatus }}",
+                            navStatus: $("#navStatus").val(),
                             search: params.search
                         }
                     },
@@ -150,17 +111,14 @@
             });
 
         }
-                //激活标签页时保存当前标签页的id
-        $(function () {
-            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
-                var active_tab = $(e.target).parents().attr('id');
-                get_sqlauditlist();
-            });
+
+        //状态筛选变动自动刷新
+        $("#navStatus").change(function () {
+            get_sqlauditlist();
         });
 
         //初始化数据
         $(document).ready(function () {
-            var active_tab = 'all';
             get_sqlauditlist();
         });
     </script>

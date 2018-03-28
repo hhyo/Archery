@@ -235,4 +235,11 @@ $(document).ready(function () {
             $(this).dequeue();
         });
     });
+
+    $("#btnExecuteonly").click(function(){
+	$(this).button('loading').delay(2500).queue(function() {
+            $(this).button('reset');
+            $(this).dequeue();
+        });
+    });
 });

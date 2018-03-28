@@ -21,6 +21,7 @@ sqlworkflowStatus = {
     'abort': '人工终止流程',
     'autoreviewing': '自动审核中',
     'manreviewing': '等待审核人审核',
+    'pass': '审核通过',
     'executing': '执行中',
     'autoreviewwrong': '自动审核不通过',
     'exception': '执行有异常'
@@ -38,6 +39,9 @@ function sqlworkflowStatus_formatter(value) {
     }
     else if (value === sqlworkflowStatus.manreviewing) {
         return "<span class=\"label label-info\">" + sqlworkflowStatus.manreviewing + "</span>"
+    }
+    else if (value === sqlworkflowStatus.pass) {
+        return "<span class=\"label label-warning\">" + sqlworkflowStatus.pass + "</span>"
     }
     else if (value === sqlworkflowStatus.executing) {
         return "<span class=\"label label-primary\">" + sqlworkflowStatus.executing + "</span>"
