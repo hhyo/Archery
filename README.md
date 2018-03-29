@@ -19,7 +19,7 @@ linux : 64位linux操作系统均可
 * 在线查询<br/>
   查询权限控制，基于inception解析查询语句，查询权限限制到表级
   查询权限申请、审核和管理，支持审核流程配置<br/>
-  查询结果集限制、查询结果导出、表结构展示、多结果级展示<br/>
+  查询结果集限制、查询结果导出、表结构展示、多结果集展示<br/>
 * 动态脱敏<br/> 
   基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现动态脱敏<br/>
 * 主库集群配置
@@ -97,7 +97,7 @@ cd archer && python3 manage.py createsuperuser<br/>
 这一步是为了进行sql在线查询，所用到的用户名密码、端口等，建议账号仅开放SELECT权限。<br/>
 12. 配置查询权限审核人：<br/>
 使用浏览器访问http://X.X.X.X:port/admin/sql/workflowauditsetting/ ，点击右侧Add 工作流配置<br/>
-这一步是为了添加查询权限审核人，单人审核格式为：user1，多人审核格式为：user1,user2，请正确配置。<br/>
+这一步是为了添加查询权限审核人，单人审核格式为：user1，多级审核格式为：user1,user2，请正确配置。<br/>
 13. 正式访问：<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
 <br/>
@@ -108,6 +108,16 @@ cd archer && python3 manage.py createsuperuser<br/>
 2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
 3. centos需要执行yum install openldap-devel<br/>
 4. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
+
+### 集成SQLAdvisor
+1. 安装SQLAdvisor,[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
+2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'
+3. SQLAdvisor功能依赖从库配置，请先配置从库
+
+### 集成rds管理
+1. 修改配置文件ENABLE_ALIYUN=True
+2. 使用浏览器访问http://X.X.X.X:port/admin/sql/aliyunaccesskey/, 添加aliyun账号的accesskey信息，重新启动服务
+3. 一键获取优化建议功能依赖SQLAdvisor模块和从库配置，请在从库配置中配置对应rds实例的连接信息，依靠集群信息进行关联
 
 ### admin后台加固，防暴力破解
 1.patch目录下，名称为：django_1.8.17_admin_secure_archer.patch
