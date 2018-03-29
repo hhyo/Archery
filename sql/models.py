@@ -68,8 +68,8 @@ class workflow(models.Model):
 
 # 各个线上从库地址
 class slave_config(models.Model):
-    cluster_id = models.IntegerField('集群id')
-    cluster_name = models.CharField('集群名称', max_length=50)
+    cluster_id = models.IntegerField('对应集群id', unique=True)
+    cluster_name = models.CharField('对应集群名称', unique=True, max_length=50)
     slave_host = models.CharField('从库地址', max_length=200)
     slave_port = models.IntegerField('从库端口', default=3306)
     slave_user = models.CharField('登录从库的用户名', max_length=100)
@@ -222,11 +222,11 @@ class QueryLog(models.Model):
         verbose_name = u'sql查询日志'
         verbose_name_plural = u'sql查询日志'
 
-
+# 脱敏字段配置
 class DataMaskingColumns(models.Model):
     column_id = models.AutoField('字段id', primary_key=True)
     rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '姓名'), (3, '证件号码'), (4, '银行卡'), (5, '邮箱')))
+                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
     cluster_id = models.IntegerField('字段所在集群id')
     cluster_name = models.CharField('字段所在集群名称', max_length=50)
@@ -239,18 +239,56 @@ class DataMaskingColumns(models.Model):
 
     class Meta:
         db_table = 'data_masking_columns'
-        verbose_name = u'脱敏字段'
-        verbose_name_plural = u'脱敏字段'
+        verbose_name = u'脱敏字段配置'
+        verbose_name_plural = u'脱敏字段配置'
 
-
+# 脱敏规则配置
 class DataMaskingRules(models.Model):
     rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')))
-    rule_regex = models.CharField('规则脱敏所用的正则表达式，表达式必须分组，脱敏后只显示第一组匹配的信息，后面的信息会用****代替', max_length=255)
+                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')), unique=True)
+    rule_regex = models.CharField('规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替', max_length=255)
+    hide_group = models.IntegerField('需要隐藏的组')
     rule_desc = models.CharField('规则描述', max_length=100)
     sys_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'data_masking_rules'
-        verbose_name = u'脱敏规则'
-        verbose_name_plural = u'脱敏规则'
+        verbose_name = u'脱敏规则配置'
+        verbose_name_plural = u'脱敏规则配置'
+
+# 记录阿里云的认证信息
+class AliyunAccessKey(models.Model):
+    id = models.AutoField(primary_key=True)
+    ak = models.CharField(max_length=50)
+    secret = models.CharField(max_length=100)
+    is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
+    remark = models.CharField(max_length=50, default='')
+
+    def __int__(self):
+        return self.id
+
+    class Meta:
+        db_table = 'aliyun_access_key'
+        verbose_name = u'阿里云认证信息'
+        verbose_name_plural = u'阿里云认证信息'
+
+    def save(self, *args, **kwargs):
+        pc = Prpcrypt()  # 初始化
+        self.ak = pc.encrypt(self.ak)
+        self.secret = pc.encrypt(self.secret)
+        super(AliyunAccessKey, self).save(*args, **kwargs)
+
+# 阿里云rds配置信息
+class AliyunRdsConfig(models.Model):
+    cluster_id = models.IntegerField('对应集群id', unique=True)
+    cluster_name = models.CharField('对应集群名称', unique=True, max_length=50)
+    rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100)
+
+    def __int__(self):
+        return self.rds_dbinstanceid
+
+    class Meta:
+        db_table = 'aliyun_rds_config'
+        verbose_name = u'阿里云rds配置信息'
+        verbose_name_plural = u'阿里云rds配置信息'
+

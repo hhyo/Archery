@@ -245,18 +245,23 @@ class Masking(object):
 
     # 利用正则表达式脱敏数据
     def regex(self, DataMaskingRulesOb, rule_type, str):
-        rule_regex = ''
-        for rules_info in DataMaskingRulesOb:
-            if rules_info.rule_type == rule_type:
-                rule_regex = rules_info.rule_regex
-        # 正则匹配必须分组，且只显示第一组匹配的信息，第一组后面的用****代替
-        try:
-            p = re.compile(rule_regex)
-            m = p.search(str)
-        except Exception:
-            return str
+        rules_info = DataMaskingRulesOb.get(rule_type=rule_type)
+        if rules_info:
+            rule_regex = rules_info.rule_regex
+            hide_group = rules_info.hide_group
+            # 正则匹配必须分组，隐藏的组会使用****代替
+            try:
+                p = re.compile(rule_regex)
+                m = p.search(str)
+                masking_str = ''
+                for i in range(m.lastindex):
+                    if i == hide_group-1:
+                        group = '****'
+                    else:
+                        group = m.group(i+1)
+                    masking_str = masking_str + group
+                return masking_str
+            except Exception:
+                return str
         else:
-            if m:
-                if len(m.groups()) > 0:
-                    return m.group(1) + '****'
             return str

@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 from django.conf.urls import url, include
-from . import views, views_ajax, query
+from . import views, views_ajax, query, aliyun_function
 
 urlpatterns = [
     url(r'^$', views.allworkflow, name='allworkflow'),
@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^login/$', views.login, name='login'),
     url(r'^logout/$', views.logout, name='logout'),
     url(r'^submitsql/$', views.submitSql, name='submitSql'),
-    url(r'editsql/$', views.submitSql, name='editsql'),
+    url(r'^editsql/$', views.submitSql, name='editsql'),
     url(r'^submitothercluster/$', views.submitSql, name='submitothercluster'),
     url(r'^allworkflow/$', views.allworkflow, name='allworkflow'),
 
@@ -22,8 +22,13 @@ urlpatterns = [
     url(r'^rollback/$', views.rollback, name='rollback'),
     url(r'^ldapsync/$', views.ldapsync, name='ldapsync'),
     url(r'^sqlquery/$', views.sqlquery, name='sqlquery'),
+    url(r'^slowquery/$', views.slowquery, name='slowquery'),
+    url(r'^sqladvisor/$', views.sqladvisor, name='sqladvisor'),
+    url(r'^slowquery_advisor/$', views.sqladvisor, name='slowquery_advisor'),
     url(r'^queryapplylist/(?P<workflow_id>[0-9]+)?$', views.queryapplylist, name='queryapplylist'),
     url(r'^queryuserprivileges/$', views.queryuserprivileges, name='queryuserprivileges'),
+    url(r'^diagnosis_process/$', views.diagnosis_process, name='diagnosis_process'),
+    url(r'^diagnosis_sapce/$', views.diagnosis_sapce, name='diagnosis_sapce'),
     url(r'^workflow/$', views.workflows, name='workflows'),
     url(r'^workflowdetail/(?P<audit_id>[0-9]+)/$', views.workflowsdetail, name='workflowsdetail'),
     url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
@@ -38,6 +43,9 @@ urlpatterns = [
     url(r'^getOscPercent/$', views_ajax.getOscPercent, name='getOscPercent'),
     url(r'^getWorkflowStatus/$', views_ajax.getWorkflowStatus, name='getWorkflowStatus'),
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
+    url(r'^sqladvisorcheck/$', views_ajax.sqladvisorcheck, name='sqladvisorcheck'),
+    url(r'^workflowlist/$', views_ajax.workflowlist, name='workflowlist'),
+    url(r'^workflowaudit/$', views_ajax.workflowaudit, name='workflowaudit'),
 
     url(r'^getClusterList/$', query.getClusterList, name='getClusterList'),
     url(r'^getdbNameList/$', query.getdbNameList, name='getdbNameList'),
@@ -49,6 +57,11 @@ urlpatterns = [
     url(r'^modifyqueryprivileges/$', query.modifyqueryprivileges, name='modifyqueryprivileges'),
     url(r'^query/$', query.query, name='query'),
     url(r'^querylog/$', query.querylog, name='querylog'),
-    url(r'^workflowlist/$', query.workflowlist, name='workflowlist'),
-    url(r'^workflowaudit/$', query.workflowaudit, name='workflowaudit'),
+
+    url(r'^slowquery_review/$', aliyun_function.slowquery_review, name='slowquery_review'),
+    url(r'^slowquery_review_history/$', aliyun_function.slowquery_review_history, name='slowquery_review_history'),
+    url(r'^process_status/$', aliyun_function.process_status, name='process_status'),
+    url(r'^sapce_status/$', aliyun_function.sapce_status, name='sapce_status'),
+    url(r'^create_kill_session/$', aliyun_function.create_kill_session, name='create_kill_session'),
+    url(r'^kill_session/$', aliyun_function.kill_session, name='kill_session'),
 ]

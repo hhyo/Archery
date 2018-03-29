@@ -230,10 +230,16 @@ MAIL_REVIEW_SECURE_ADDR=['zhangsan@abc.com', 'lisi01@abc.com']     #登录失败
 CRITICAL_DDL_ON_OFF='off'
 
 # 在线查询当inception语法树打印失败时的控制，on是开启校验，失败不允许继续执行并返回错误，off是关闭校验，继续执行，允许执行会导致解析失败的查询表权限验证和脱敏功能失效
-CHECK_QUERY_ON_OFF = 'on'
+CHECK_QUERY_ON_OFF = True
 
 # 是否开启动态脱敏查询，由于采取遍历处理结果集的方式，会影响部分查询效率
-DATA_MASKING_ON_OFF = 'on'
+DATA_MASKING_ON_OFF = True
 
 # 管理员在线查询的结果集限制
 ADMIN_QUERY_LIMIT = 5000
+
+# sqladvisor的路径配置
+SQLADVISOR = ''
+
+# 是否开启AliYun相关功能
+ENABLE_ALIYUN = False

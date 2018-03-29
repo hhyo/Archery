@@ -20,7 +20,7 @@ from .const import Const, WorkflowDict
 from .sendmail import MailSender
 from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow, slave_config, QueryPrivileges
+from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges
 from .workflow import Workflow
 
 dao = Dao()
@@ -491,6 +491,41 @@ def _getDetailUrl(request):
     host = request.META['HTTP_HOST']
     return "%s://%s/detail/" % (scheme, host)
 
+# SQL在线查询
+def sqlquery(request):
+    # 获取用户信息
+    loginUser = request.session.get('login_username', False)
+
+    # 获取所有从库集群名称
+    slaves = slave_config.objects.all().order_by('cluster_name')
+    if len(slaves) == 0:
+        context = {'errMsg': '从库信息为0，在线查询依赖从库，请先配置从库信息'}
+        return render(request, 'error.html', context)
+    listAllClusterName = [slave.cluster_name for slave in slaves]
+
+    context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
+    return render(request, 'sqlquery.html', context)
+
+# SQL慢日志
+def slowquery(request):
+    # 获取所有实例名称
+    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    cluster_name_list = [master.cluster_name for master in masters]
+
+    context = {'currentMenu': 'slowquery', 'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
+    return render(request, 'slowquery.html', context)
+
+# SQL优化工具
+def sqladvisor(request):
+    # 获取所有从库集群名称
+    slaves = slave_config.objects.all().order_by('cluster_name')
+    if len(slaves) == 0:
+        context = {'errMsg': '从库信息为0，在线查询依赖从库，请先配置从库信息'}
+        return render(request, 'error.html', context)
+    listAllClusterName = [slave.cluster_name for slave in slaves]
+
+    context = {'currentMenu': 'sqladvisor', 'listAllClusterName': listAllClusterName}
+    return render(request, 'sqladvisor.html', context)
 
 # 查询权限申请列表
 def queryapplylist(request, workflow_id):
@@ -513,25 +548,28 @@ def queryuserprivileges(request):
     context = {'currentMenu': 'queryapply', 'user_list': user_list, 'loginUserOb': loginUserOb}
     return render(request, 'queryuserprivileges.html', context)
 
-
-# SQL在线查询
-def sqlquery(request):
+# 问题诊断--进程
+def diagnosis_process(request):
     # 获取用户信息
     loginUser = request.session.get('login_username', False)
     loginUserOb = users.objects.get(username=loginUser)
 
-    # 获取所有从库集群名称
-    slaves = slave_config.objects.all().order_by('cluster_name')
-    if len(slaves) == 0:
-        context = {'errMsg': '从库信息为0，在线查询依赖从库，请先配置从库信息'}
-        return render(request, 'error.html', context)
+    # 获取所有实例名称
+    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    cluster_name_list = [master.cluster_name for master in masters]
 
+    context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list,
+               'loginUserOb': loginUserOb}
+    return render(request, 'diagnosis.html', context)
 
-    listAllClusterName = [slave.cluster_name for slave in slaves]
+# 问题诊断--空间
+def diagnosis_sapce(request):
+    # 获取所有实例名称
+    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    cluster_name_list = [master.cluster_name for master in masters]
 
-    context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
-    return render(request, 'sqlquery.html', context)
-
+    context = {'currentMenu': 'diagnosis', 'tab': 'space', 'cluster_name_list': cluster_name_list}
+    return render(request, 'diagnosis.html', context)
 
 # 获取工作流审核列表
 def workflows(request):

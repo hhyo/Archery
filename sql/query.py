@@ -177,7 +177,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
                 finalResult['status'] = 1
                 finalResult['msg'] = '你无' + dbName + '数据库的查询权限！请先到查询权限管理进行申请'
                 return finalResult
-            if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
+            if settings.CHECK_QUERY_ON_OFF:
                 return table_ref_result
             else:
                 pass
@@ -586,19 +586,19 @@ def query(request):
 
     # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
     t_start = time.time()
-    if getattr(settings, 'DATA_MASKING_ON_OFF') == "on":
+    if settings.DATA_MASKING_ON_OFF:
         # 仅对查询语句进行脱敏
         if re.match(r"^select", sqlContent.lower()):
             try:
                 masking_result = datamasking.data_masking(cluster_name, dbName, sqlContent, sql_result)
             except Exception:
-                if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
+                if settings.CHECK_QUERY_ON_OFF:
                     finalResult['status'] = 1
                     finalResult['msg'] = '脱敏数据报错,请联系管理员'
                     return HttpResponse(json.dumps(finalResult), content_type='application/json')
             else:
                 if masking_result['status'] != 0:
-                    if getattr(settings, 'CHECK_QUERY_ON_OFF') == "on":
+                    if settings.CHECK_QUERY_ON_OFF:
                         return HttpResponse(json.dumps(masking_result), content_type='application/json')
 
     t_end = time.time()
@@ -665,88 +665,4 @@ def querylog(request):
 
     result = {"total": sql_log_count, "rows": sql_log}
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取审核列表
-@csrf_exempt
-def workflowlist(request):
-    # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
-
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
-    workflow_type = int(request.POST.get('workflow_type'))
-    limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
-
-    # 调用工作流接口获取审核列表
-    result = workflowOb.auditlist(loginUserOb, workflow_type, offset, limit, search)
-    auditlist = result['data']['auditlist']
-    auditlistCount = result['data']['auditlistCount']
-
-    # QuerySet 序列化
-    auditlist = serializers.serialize("json", auditlist)
-    auditlist = json.loads(auditlist)
-    list = []
-    for i in range(len(auditlist)):
-        auditlist[i]['fields']['id'] = auditlist[i]['pk']
-        list.append(auditlist[i]['fields'])
-    result = {"total": auditlistCount, "rows": list}
-
-    result = {"total": auditlistCount, "rows": list}
-    # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 工单审核
-@csrf_exempt
-def workflowaudit(request):
-    # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    audit_id = int(request.POST['audit_id'])
-    audit_status = int(request.POST['audit_status'])
-    audit_remark = request.POST['audit_remark']
-
-    # 获取审核信息
-    auditInfo = workflowOb.auditinfo(audit_id)
-
-    # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 调用工作流接口审核
-            auditresult = workflowOb.auditworkflow(audit_id, audit_status, loginUser, audit_remark)
-
-            # 按照审核结果更新业务表审核状态
-            if auditresult['status'] == 0:
-                if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
-                    # 更新业务表审核状态,插入权限信息
-                    query_audit_call_back(auditInfo.workflow_id, auditresult['data']['workflow_status'])
-
-                    # 给拒绝和审核通过的申请人发送邮件
-                    if hasattr(settings, 'MAIL_ON_OFF') is True and getattr(settings, 'MAIL_ON_OFF') == "on":
-                        email_reciver = users.objects.get(username=auditInfo.create_user).email
-
-                        email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                                        + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                                        + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
-                                        + "\n审核备注： " + audit_remark
-                        if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
-                            email_title = "工单审核通过 # " + str(auditInfo.audit_id)
-                            mailSenderOb.sendEmail(email_title, email_content, [email_reciver])
-                        elif auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_reject']:
-                            email_title = "工单被驳回 # " + str(auditInfo.audit_id)
-                            mailSenderOb.sendEmail(email_title, email_content, [email_reciver])
-    except Exception as msg:
-        result['status'] = 1
-        result['msg'] = str(msg)
-    else:
-        result = auditresult
     return HttpResponse(json.dumps(result), content_type='application/json')

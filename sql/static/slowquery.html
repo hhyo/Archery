@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="sqladvisor-toolbar" class="btn-group right" style="display:none;">
+        <button id=sqladvisor class="btn btn-default navbar-btn" style="" type="button">获取优化建议</button>
+    </div>
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="slowsql_tab" class="active">
+            <a href="#slowsql" role="tab" data-toggle="tab">慢日志统计</a>
+        </li>
+        <li id="slowsqlinfo_tab">
+            <a href="#slowsqlinfo" role="tab" data-toggle="tab">慢日志明细</a>
+        </li>
+        <div class="form-inline pull-right">
+            <div class="form-group">
+                <select id=cluster_name class="form-control " name="cluster_name_list">
+                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                    {% for cluster_name in cluster_name_list %}
+                        <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <select id=db_name class="form-control " name="db_name_list">
+                    <option value="is-empty" disabled="" selected="selected">请选择数据库</option>
+                </select>
+            </div>
+            <div class="form-group daterange" style="display: inline-block">
+                <div class="input-prepend input-group">
+                    <input id="reservation" type="text" readonly class="form-control"/>
+                </div>
+            </div>
+        </div>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <!-- 慢日志统计-->
+        <div id="slowsql" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="slowsql-list" data-toggle="table" class="table table-hover"></table>
+        </div>
+        <!-- 慢日志明细-->
+        <div id="slowsqlinfo" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="slowsqlinfo-list" data-toggle="table" class="table table-hover"></table>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <!-- 选择框和切换控件 -->
+    <script>
+        // 初始化时间控件
+        $(function () {
+            $(".daterange input").each(function () {
+                var $this = $(this);
+
+                $this.daterangepicker({
+                    startDate: moment().startOf('day'),
+                    endDate: moment(),
+                    locale: {
+                        "format": "YYYY-MM-DD",// 显示格式
+                        "separator": " / ",// 两个日期之间的分割线
+                        // 中文化
+                        "applyLabel": "确定",
+                        "cancelLabel": "取消",
+                        "fromLabel": "开始",
+                        "toLabel": "结束",
+                        "customRangeLabel": "自定义",
+                        "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                        "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                        "firstDay": 1
+                    },
+                    ranges: {
+                        "今日": [moment().startOf('day'), moment()],
+                        "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                        "最近7日": [moment().subtract('days', 6), moment()],
+                        "最近30日": [moment().subtract('days', 29), moment()],
+                        "本月": [moment().startOf("month"), moment().endOf("month")],
+                        "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                    }
+                }, function (start, end, label) {
+                    // 设置最小宽度，否则显示不全
+                }).css("min-width", "210px").next("i").click(function () {
+                    // 对日期的i标签增加click事件，使其在鼠标点击时可以拉出日期选择
+                    $(this).parent().find('input').click();
+                });
+            });
+        });
+
+        //时间变动保存
+        $('#reservation').on('apply.daterangepicker', function (ev, picker) {
+            sessionStorage.removeItem('SQLId');
+            var start_date = picker.startDate.format('YYYY-MM-DD');
+            var end_date = picker.endDate.format('YYYY-MM-DD');
+            sessionStorage.setItem('start_date', start_date);
+            sessionStorage.setItem('end_date', end_date);
+            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+            if (slowsql_active_li_id === 'slowsql_tab') {
+                slowquery_review()
+            }
+            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                slowquery_review_history()
+
+            }
+        });
+
+        //实例变动自动获取数据库
+        $("#cluster_name").change(function () {
+            sessionStorage.setItem('slow_query_cluster_name', $("#cluster_name").val());
+            sessionStorage.removeItem('SQLId');
+            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+            if (slowsql_active_li_id === 'slowsql_tab') {
+                slowquery_review()
+            }
+            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                slowquery_review_history()
+
+            }
+            get_db_list();
+
+        });
+
+        //获取数据库列表,并且获取日志数据
+        function get_db_list() {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/getdbNameList/",
+                dataType: "json",
+                data: {
+                    cluster_name: $("#cluster_name option:selected").text()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status == 0) {
+                        var result = data.data;
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">全部数据库</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //数据库变动自动获取日志
+        $("#db_name").change(function () {
+            sessionStorage.removeItem('SQLId');
+            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+            if (slowsql_active_li_id === 'slowsql_tab') {
+                slowquery_review()
+            }
+            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                slowquery_review_history()
+
+            }
+        });
+
+        //保留如果已选择cluster_name，进入页面自动加载
+        $(document).ready(function () {
+            sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
+            if (sessionStorage.getItem('slow_query_cluster_name')) {
+                $("#cluster_name").val(sessionStorage.getItem('slow_query_cluster_name'));
+                get_db_list();
+                var start_date = sessionStorage.getItem('start_date');
+                var end_date = sessionStorage.getItem('end_date');
+                if (start_date && end_date) {
+                    $('#reservation').data('daterangepicker').setStartDate(start_date);
+                    $('#reservation').data('daterangepicker').setEndDate(end_date);
+                }
+                slowquery_review()
+            }
+        });
+
+        //tab切换,保留当前激活的标签id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                var active_li_id = $(e.target).parents().attr('id');
+                sessionStorage.setItem('slowsql_active_li_id', active_li_id);
+                //当前激活的标签id
+                if ($("#cluster_name").val()) {
+                    if (active_li_id === 'slowsql_tab') {
+                        $("#sqladvisor-toolbar").hide();
+                        slowquery_review()
+
+                    }
+                    else if (active_li_id === 'slowsqlinfo_tab') {
+                        $("#sqladvisor-toolbar").show();
+                        slowquery_review_history()
+                    }
+                }
+            });
+        });
+    </script>
+    <!-- sqladvisor -->
+    <script>
+        //点击sql统计跳转到对应sql列表
+        $(function () {
+            $('#slowsql-list').on('click-row.bs.table', function (e, row, element) {
+                sessionStorage.setItem('SQLId', row.SQLId);
+                $('#nav-tabs a[href="#slowsqlinfo"]').tab('show')
+            });
+        });
+
+        //点击优化按钮获取优化信息
+        $(function () {
+            $("#sqladvisor").click(function () {
+                if ($("#slowsqlinfo-list").bootstrapTable('getSelections')[0]) {
+                    var advisor_sql_content = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['SQLText'] + ';';
+                    var advisor_db_name = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['DBName'];
+                    var advisor_cluster_name = $("#cluster_name").val();
+                    sessionStorage.setItem('advisor_sql_content', advisor_sql_content);
+                    sessionStorage.setItem('advisor_db_name', advisor_db_name);
+                    sessionStorage.setItem('advisor_cluster_name', advisor_cluster_name);
+                    location.href = '/slowquery_advisor/';
+                }
+                else {
+                    alert("请先选择需要优化的sql")
+                }
+            });
+        });
+    </script>
+    <!-- 获取列表数据 -->
+    <script>
+        // 获取慢日志统计
+        function slowquery_review() {
+            var cluster_name = $("#cluster_name").val();
+            if (cluster_name) {
+                //初始化table
+                $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/slowquery_review/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                     //每页的记录行数（*）
+                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
+                    search: false,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    exportTypes: ['csv', 'txt'],
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    queryParamsType: 'limit',
+                    queryParams: function (params) {
+                        var cluster_name = $("#cluster_name").val();
+                        var db_name = $("#db_name").val();
+                        var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
+                        var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+
+                        return {
+                            cluster_name: cluster_name,
+                            db_name: db_name,
+                            StartTime: StartTime,
+                            EndTime: EndTime,
+                            limit: params.limit,
+                            offset: params.offset
+                        }
+                    },
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'SQLText') {
+                                var sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, "&nbsp;");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    },
+                    columns: [{
+                        title: '日志统计时间',
+                        field: 'CreateTime'
+                    }, {
+                        title: '数据库名',
+                        field: 'DBName'
+                    }, {
+                        title: 'SQL语句',
+                        field: 'SQLText',
+                        cellStyle:      //突出sql统计信息
+                            function formatTableUnit(value, row, index) {
+                                return {
+                                    css: {
+                                        "color": '#06C',
+                                        "text-decoration": 'underline',
+                                        "cursor": 'pointer'
+                                    }
+                                }
+                            },
+                        formatter: function (value, row, index) {
+                            if (value.length > 500) {
+                                var sql = value.substr(0, 500) + '...';
+                                return sql;
+                            }
+                            else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '执行总次数',
+                        field: 'MySQLTotalExecutionCounts'
+                    }, {
+                        title: '执行总时长',
+                        field: 'MySQLTotalExecutionTimes'
+                    }, {
+                        title: '扫描总行数',
+                        field: 'ParseTotalRowCounts'
+                    }, {
+                        title: '返回总行数',
+                        field: 'ReturnTotalRowCounts'
+                    }],
+                    locale: 'zh-CN',
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+            else {
+                alert('请选择实例')
+            }
+        }
+
+        // 获取慢日志明细
+        function slowquery_review_history() {
+            var cluster_name = $("#cluster_name").val();
+            if (cluster_name) {
+                //初始化table
+                $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/slowquery_review_history/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                     //每页的记录行数（*）
+                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
+                    search: false,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    exportTypes: ['csv', 'txt'],
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    queryParamsType: 'limit',
+                    queryParams: function (params) {
+                        var cluster_name = $("#cluster_name").val();
+                        var db_name = $("#db_name").val();
+                        var SQLId = sessionStorage.getItem('SQLId');
+                        var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
+                        var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+
+                        return {
+                            cluster_name: cluster_name,
+                            db_name: db_name,
+                            SQLId: SQLId,
+                            StartTime: StartTime,
+                            EndTime: EndTime,
+                            limit: params.limit,
+                            offset: params.offset
+                        }
+                    },
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'SQLText') {
+                                var sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, "&nbsp;");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    },
+                    columns: [{
+                        title: '',
+                        field: 'checkbox',
+                        checkbox: true
+                    }, {
+                        title: '执行开始时间',
+                        field: 'ExecutionStartTime'
+                    }, {
+                        title: '数据库名',
+                        field: 'DBName'
+                    }, {
+                        title: '用户名',
+                        field: 'HostAddress'
+                    }, {
+                        title: 'SQL语句',
+                        field: 'SQLText',
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                var sql = value.substr(0, 100) + '...';
+                                return sql;
+                            }
+                            else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '执行时长(秒)',
+                        field: 'QueryTimes'
+                    }, {
+                        title: '锁定时长(秒)',
+                        field: 'LockTimes'
+                    }, {
+                        title: '解析行数',
+                        field: 'ParseRowCounts'
+                    }, {
+                        title: '返回行数',
+                        field: 'ReturnRowCounts'
+                    }],
+                    singleSelect: true,
+                    toolbar: "#sqladvisor-toolbar",               //指明自定义的toolbar
+                    locale: 'zh-CN',
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+            else {
+                alert("请选择实例")
+            }
+        }
+    </script>
+{% endblock %}
+

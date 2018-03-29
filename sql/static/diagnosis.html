@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="process-toolbar" class="btn-group right" style="display:none;">
+        <button id="kill_process" class="btn btn-default navbar-btn" type="button">终止会话</button>
+    </div>
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="process_tab" class="active">
+            <a href="#process" role="tab" data-toggle="tab">进程状态</a>
+        </li>
+        <li id="space_tab">
+            <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
+        </li>
+        <div class="form-inline pull-right">
+            <div class="form-group">
+                <select id=cluster_name class="form-control " name="cluster_name_list">
+                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                    {% for cluster_name in cluster_name_list %}
+                        <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                    {% endfor %}
+                </select>
+                <select id=command class="form-control " name="command_type">
+                    <option value="is-empty" disabled="">command类型</option>
+                    <option value="All">All</option>
+                    <option value="Query" selected="selected">Query</option>
+                    <option value="Not Sleep">Not Sleep</option>
+                </select>
+            </div>
+        </div>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <!-- 进程状态的表格-->
+        <div id="process" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="process-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+        <!-- Top表空间的表格-->
+        <div id="space" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="tablespace-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+    </div>
+    <!-- 配置信息确认 -->
+    <div class="modal fade" id="killComfirm">
+        <div class="modal-dialog">
+            <div class="modal-content message_align">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">确定要终止所选会话吗？</h4>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="request_params" hidden>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button type="button" onclick="kill_session()" class="btn btn-danger" data-dismiss="modal">确定终止
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <script>
+        // 问题诊断--进程列表
+        function get_process_list() {
+            if ($("#cluster_name").val()) {
+                //采取异步请求
+                //初始化table
+                $('#process-list').bootstrapTable('destroy').bootstrapTable({
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/process_status/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //是否启用排序
+                    sortOrder: "desc",                   //排序方式
+                    sortName: 'time',                   //排序字段
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    search: false,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    exportTypes: ['csv', 'txt'],
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'info') {
+                                var sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, "&nbsp;");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    },
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#process-toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams:
+                        function (params) {
+                            return {
+                                cluster_name: $("#cluster_name").val(),
+                                command_type: $("#command").val()
+                            }
+                        },
+                    columns: [{
+                        title: '',
+                        field: 'checkbox',
+                        checkbox: true
+                    }, {
+                        title: 'THEEAD ID',
+                        field: 'id'
+                    }, {
+                        title: 'USER',
+                        field: 'user'
+                    }, {
+                        title: 'HOST',
+                        field: 'host'
+                    }, {
+                        title: 'DATABASE',
+                        field: 'db'
+                    }, {
+                        title: 'TIME(s)',
+                        field: 'time',
+                        sortable: true
+                    }, {
+                        title: 'COMMAND',
+                        field: 'command'
+                    }, {
+                        title: 'STATE',
+                        field: 'state'
+                    }, {
+                        title: 'INFO',
+                        field: 'info',
+                        formatter: function (value, row, index) {
+                            if (value.length > 50) {
+                                var sql = value.substr(0, 50) + '...';
+                                return sql;
+                            }
+                            else {
+                                return value
+                            }
+                        }
+                    }],
+                    onLoadSuccess: function () {
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+
+        // 问题诊断--表空间列表
+        function get_space_list() {
+            if ($("#cluster_name").val()) {
+                //初始化table
+                $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/sapce_status/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //是否启用排序
+                    sortName: 'total_size',
+                    sortOrder: "desc",                   //排序方式
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    search: false,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: false,                  //是否显示父子表
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams:
+                        function (params) {
+                            return {
+                                cluster_name: $("#cluster_name").val()
+                            }
+                        },
+                    columns: [{
+                        title: '数据库',
+                        field: 'table_schema'
+                    }, {
+                        title: '表名',
+                        field: 'table_name'
+                    }, {
+                        title: '存储引擎',
+                        field: 'engine'
+                    }, {
+                        title: '总空间(MB)',
+                        field: 'total_size',
+                        sortable: true
+                    }, {
+                        title: '行数',
+                        field: 'table_rows',
+                        sortable: true
+                    }, {
+                        title: '数据空间(MB)',
+                        field: 'data_size',
+                        sortable: true
+                    }, {
+                        title: '索引空间(MB)',
+                        field: 'index_size',
+                        sortable: true
+                    }, {
+                        title: '碎片空间(MB)',
+                        field: 'data_free',
+                        sortable: true
+                    }, {
+                        title: '碎片率(%)',
+                        field: 'pct_free',
+                        sortable: true
+                    }],
+                    onLoadSuccess: function () {
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+
+        //点击终止会话按钮弹出确认框,并且构建终止会话请求
+        $(function () {
+            $("#kill_process").click(function () {
+                var AllSelections = $("#process-list").bootstrapTable('getSelections');
+                if (AllSelections.length > 0) {
+                    //获取选择的线程id
+                    var AllSelectionIds = [];
+                    for (var i = 0; i < AllSelections.length; i++) {
+                        AllSelectionIds.push(AllSelections[i]['id'])
+                    }
+                    var cluster_name = $("#cluster_name").val();
+
+                    //发送请求构造会话数据
+                    $.ajax({
+                        type: "post",
+                        url: "/create_kill_session/",
+                        dataType: "json",
+                        data: {
+                            cluster_name: cluster_name,
+                            ThreadIDs: JSON.stringify(AllSelectionIds)
+                        },
+                        traditional: true,
+                        complete: function () {
+
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                var result = data.data;
+                                //给对话框赋值
+                                $("#request_params").val(result);
+                                //打开对话框
+                                $("#killComfirm").modal();
+                            }
+                            else {
+                                alert("status: " + data.status + "\nmsg: " + data.msg);
+                            }
+                        }
+                    })
+                }
+                else {
+                    alert("请先选择要终止的会话")
+                }
+            });
+        });
+
+        //终止会话
+        function kill_session() {
+            var cluster_name = $("#cluster_name").val();
+            var request_params = $("#request_params").val();
+            if (request_params) {
+                //发送请求构造会话数据
+                $.ajax({
+                    type: "post",
+                    url: "/kill_session/",
+                    dataType: "json",
+                    data: {
+                        cluster_name: cluster_name,
+                        request_params: request_params
+                    },
+                    traditional: true,
+                    complete: function () {
+                        //刷新页面
+                        get_process_list()
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                        }
+                    }
+                })
+            }
+            else {
+                alert("无效请求")
+            }
+        }
+
+        //如果已选择cluster_name，进入页面自动填充，并且重置激活id
+        $(document).ready(function () {
+                sessionStorage.setItem('diagnosis_active_li_id', 'process_tab');
+                if (sessionStorage.getItem('diagnosis_cluster_name')) {
+                    $("#cluster_name").val(sessionStorage.getItem('diagnosis_cluster_name'));
+                    get_process_list();
+                    $("#command").show();
+                    $("#process-toolbar").show();
+                }
+            }
+        );
+
+        //tab切换,保留当前激活的标签id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                var active_li_id = $(e.target).parents().attr('id');
+                sessionStorage.setItem('diagnosis_active_li_id', active_li_id);
+                //当前激活的标签id
+                if ($("#cluster_name").val()) {
+                    if (active_li_id === 'process_tab') {
+                        get_process_list();
+                        $("#command").show();
+                        $("#process-toolbar").show();
+                    }
+                    else if (active_li_id === 'space_tab') {
+                        get_space_list();
+                        $("#command").hide();
+                        $("#process-toolbar").hide();
+                    }
+                }
+            });
+        });
+
+        //实例变动时保存实例信息
+        $("#cluster_name").change(function () {
+            sessionStorage.setItem('diagnosis_cluster_name', $("#cluster_name").val());
+            var active_li_id = sessionStorage.getItem('diagnosis_active_li_id');
+            if (active_li_id === 'process_tab') {
+                get_process_list()
+            }
+            else if (active_li_id === 'space_tab') {
+                get_space_list()
+            }
+        });
+
+        //请求类型变动时自动刷新
+        $("#command").change(function () {
+            get_process_list()
+        });
+    </script>
+{% endblock %}
+

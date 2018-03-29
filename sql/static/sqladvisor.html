@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row clearfix">
+
+            <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
+                {% csrf_token %}
+                <div class="col-md-9 column">
+                    <pre id="sql_content_editor" class="ace_editor" style="min-height:400px"></pre>
+                </div>
+                <div class="text-warning">
+                    <tr>
+                        <td>SQLAdvisor优化工具：<a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a></td>
+                    </tr>
+                </div>
+                <br/>
+                <div class="col-md-3 column">
+                    <div class="form-group">
+                        <select id="cluster_name" name="cluster_name"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                data-placeholder="请选择集群:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择集群:</option>
+                            {% for cluster_name in listAllClusterName %}
+                                {% if cluster_name != 'mycat' %}
+                                    <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
+                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                        <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
+                        <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="sqladvisor-result" style="display:none;" class="row clearfix">
+            <br/>
+            <div id="sqladvisor-result-col" class="col-md-12">
+            </div>
+        </div>
+        <div id="explain_result" style="display:none;" class="row clearfix table-responsive">
+            <table id="tb_explain" data-toggle="table" class="table table-condensed"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'ace/ace.js' %}"></script>
+    <script src="{% static 'ace/ext-language_tools.js' %}"></script>
+    <script src="{% static 'ace/mode-sql.js' %}"></script>
+    <script src="{% static 'ace/theme-github.js' %}"></script>
+    <script src="{% static 'ace/snippets/sql.js' %}"></script>
+    <script src="{% static 'ace/ace_init.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <script>
+        function sqladvisor_validate() {
+            var result = true;
+            var sqlContent = editor.getValue();
+            var clusterName = $("#cluster_name").val();
+            var db_name = $("#db_name").val();
+
+            if (sqlContent === null || sqlContent.trim() === "") {
+                alert("SQL内容不能为空！");
+                return result = false;
+            } else if (clusterName === null || clusterName === $("#cluster_name").attr("data-placeholder")) {
+                alert("请选择实例！");
+                return result = false;
+            } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
+                alert("请选择数据库！");
+                return result = false;
+            }
+            return result;
+        }
+
+        $("#btn-sqladvisor").click(function () {
+                //先做表单验证，成功了提交优化请求
+                if (sqladvisor_validate()) {
+                    $('input[type=button]').addClass('disabled');
+                    $('input[type=button]').prop('disabled', true);
+                    sqladvisor();
+                }
+            }
+        );
+
+        //先做表单验证，验证成功再成功提交格式化sql
+        $("#btn-format").click(function () {
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    var sqlContent = select_sqlContent
+                }
+                else {
+                    var sqlContent = editor.getValue();
+
+                }
+                var sqlContent = window.sqlFormatter.format(sqlContent);
+                editor.setValue(sqlContent);
+                editor.clearSelection();
+            }
+        );
+        $("#btn-explain").click(function () {
+                //先做表单验证，成功了提交优化请求
+                if (sqladvisor_validate()) {
+                    $('input[type=button]').addClass('disabled');
+                    $('input[type=button]').prop('disabled', true);
+                    explain();
+                }
+            }
+        );
+
+        $("#cluster_name").change(function () {
+            get_db_list()
+        });
+
+        function get_db_list() {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/getdbNameList/",
+                dataType: "json",
+                data: {
+                    cluster_name: $("#cluster_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status == 0) {
+                        var result = data.data;
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+
+                        //适配从慢查询过来的优化请求
+                        var pathname = window.location.pathname;
+                        if (pathname == "/slowquery_advisor/") {
+                            var dbName = sessionStorage.getItem('advisor_db_name');
+                            var option = "<option value=\"" + dbName + "\" selected=\"selected\">" + dbName + "</option>";
+                            $("#db_name").prepend(option);
+                            $('#db_name').selectpicker('render');
+                            $('#db_name').selectpicker('refresh');
+                        }
+
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //获取查询建议
+        function sqladvisor() {
+            $('input[type=button]').addClass('disabled');
+            $('input[type=button]').prop('disabled', true);
+            var sqlContent = editor.getValue();
+            var clusterName = $("#cluster_name").val();
+            var dbName = $("#db_name").val();
+
+            //适配从慢查询过来的优化请求
+            var pathname = window.location.pathname;
+            if (pathname == "/slowquery_advisor/")
+                var dbName = sessionStorage.getItem('advisor_db_name');
+
+
+            //将数据通过ajax提交给后端进行检查
+            $.ajax({
+                type: "post",
+                url: "/sqladvisorcheck/",
+                dataType: "json",
+                data: {
+                    sql_content: sqlContent,
+                    cluster_name: clusterName,
+                    db_name: dbName
+
+                },
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').addClass('btn');
+                    $('input[type=button]').prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status == 0) {
+                        var result = data.data;
+                        result = result.replace(/\n/g, '<br>');
+                        alertStyle = "alert-success";
+                        finalHtml = "<table class='table' width='100%' style='table-layout:fixed;'> " +
+                            "<thead><tr><th>优化建议</th></tr></thead>" +
+                            "</table>";
+                        finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                            "<table class='' width='100%' style='table-layout:fixed;'> " +
+                            "<tbody><tr>" +
+                            "<td>" + result + "</td>" +
+                            "</tr> </tbody></table> </div>";
+
+                        $("#sqladvisor-result-col").html(finalHtml);
+                        //填充内容后展现出来
+                        $("#explain_result").hide();
+                        $("#sqladvisor-result").show();
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //获取执行计划
+        function explain() {
+            $('input[type=button]').addClass('disabled');
+            $('input[type=button]').prop('disabled', true);
+            var columns = [];
+            var sqlContent = editor.getValue();
+            var clusterName = $("#cluster_name").val();
+            var dbName = $("#db_name").val();
+
+            $.ajax({
+                type: "post",
+                url: "/query/",
+                dataType: "json",
+                data: {
+                    sql_content: 'explain ' + sqlContent,
+                    cluster_name: clusterName,
+                    db_name: dbName,
+                    limit_num:100
+                },
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').addClass('btn');
+                    $('input[type=button]').prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status == 0) {
+                        var result = data.data;
+                        if (result['Error']) {
+                            alertStyle = "alert-danger";
+                            $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                columns: [{
+                                    field: 'error',
+                                    title: 'Error'
+                                }],
+                                data: [{
+                                    error: result['Error']
+                                }]
+                            })
+                        }
+                        else if (result['column_list']) {
+                            //异步获取要动态生成的列
+                            $.each(result['column_list'], function (i, column) {
+                                columns.push({"field": i, "title": column});
+                            });
+                            //初始化查询结果
+                            $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                data: result['rows'],
+                                columns: columns,
+                                showColumns: true,
+                                striped: true,
+                                pagination: true,
+                                pageSize: 100,
+                                pageList: [100, 500],
+                                locale: 'zh-CN'
+                            });
+                        }
+                        $("#sqladvisor-result").hide();
+                        $("#explain_result").show();
+
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+            ;
+        }
+
+        //适配从慢查询过来的优化请求
+        $(document).ready(function () {
+            var pathname = window.location.pathname;
+            if (pathname == "/slowquery_advisor/") {
+                var sql_content = sessionStorage.getItem('advisor_sql_content');
+                var cluster_name = sessionStorage.getItem('advisor_cluster_name');
+                var db_name = sessionStorage.getItem('advisor_db_name');
+
+
+                if (sql_content && db_name && cluster_name) {
+                    document.getElementById("cluster_name").disabled = true;
+                    document.getElementById("db_name").disabled = true;
+                    editor.setValue(sql_content);
+                    editor.clearSelection();
+                    document.getElementById('cluster_name').value = cluster_name;
+                    document.getElementById('db_name').value = db_name;
+                    get_db_list();
+                    sqladvisor();
+                }
+            }
+        });
+    </script>
+{% endblock %}

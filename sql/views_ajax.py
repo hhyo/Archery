@@ -5,7 +5,9 @@ import json
 import datetime
 import multiprocessing
 
+import subprocess
 from django.db.models import Q
+from django.db import transaction
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
@@ -17,12 +19,14 @@ if settings.ENABLE_LDAP:
 
 from django.core import serializers
 from .dao import Dao
-from .const import Const
+from .const import Const, WorkflowDict
 from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow
+from .models import users, slave_config, workflow
 from sql.sendmail import MailSender
 import logging
+from .workflow import Workflow
+from .query import query_audit_call_back
 
 logger = logging.getLogger('default')
 mailSender = MailSender()
@@ -31,6 +35,7 @@ inceptionDao = InceptionDao()
 prpCryptor = Prpcrypt()
 login_failure_counter = {} #登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {} #存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
+workflowOb = Workflow()
 
 def log_mail_record(login_failed_message):
     mail_title = 'login inception'
@@ -365,3 +370,128 @@ def stopOscProgress(request):
     else:
         optResult = {"status":4, "msg":"不是由pt-OSC执行的", "data":""}
     return HttpResponse(json.dumps(optResult), content_type='application/json')
+
+# 获取SQLAdvisor的优化结果
+@csrf_exempt
+def sqladvisorcheck(request):
+    if request.is_ajax():
+        sqlContent = request.POST.get('sql_content')
+        clusterName = request.POST.get('cluster_name')
+        dbName = request.POST.get('db_name')
+    else:
+        sqlContent = request.POST['sql_content']
+        clusterName = request.POST['cluster_name']
+        dbName = request.POST.get('db_name')
+    finalResult = {'status': 0, 'msg': 'ok', 'data': []}
+
+    # 服务器端参数验证
+    if sqlContent is None or clusterName is None:
+        finalResult['status'] = 1
+        finalResult['msg'] = '页面提交参数可能为空'
+        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+    sqlContent = sqlContent.rstrip()
+    if sqlContent[-1] != ";":
+        finalResult['status'] = 1
+        finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
+        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+    # 取出从库的连接信息
+    cluster_info = slave_config.objects.get(cluster_name=clusterName)
+
+    # 提交给sqladvisor获取审核结果
+    sqladvisor_path = getattr(settings, 'SQLADVISOR')
+    sqlContent = sqlContent.rstrip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
+    try:
+        p = subprocess.Popen(sqladvisor_path + ' -h %s -P %s -u %s -p %s -d %s -v 1 -q "%s"' % (
+            str(cluster_info.slave_host), str(cluster_info.slave_port), str(cluster_info.slave_user),
+            str(prpCryptor.decrypt(cluster_info.slave_password),), str(dbName), sqlContent), stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+        stdout, stderr = p.communicate()
+        finalResult['data'] = stdout
+    except Exception:
+        finalResult['data'] = 'sqladvisor运行报错，请联系管理员'
+    return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+# 获取审核列表
+@csrf_exempt
+def workflowlist(request):
+    # 获取用户信息
+    loginUser = request.session.get('login_username', False)
+    loginUserOb = users.objects.get(username=loginUser)
+
+    limit = int(request.POST.get('limit'))
+    offset = int(request.POST.get('offset'))
+    workflow_type = int(request.POST.get('workflow_type'))
+    limit = offset + limit
+
+    # 获取搜索参数
+    search = request.POST.get('search')
+    if search is None:
+        search = ''
+
+    # 调用工作流接口获取审核列表
+    result = workflowOb.auditlist(loginUserOb, workflow_type, offset, limit, search)
+    auditlist = result['data']['auditlist']
+    auditlistCount = result['data']['auditlistCount']
+
+    # QuerySet 序列化
+    auditlist = serializers.serialize("json", auditlist)
+    auditlist = json.loads(auditlist)
+    list = []
+    for i in range(len(auditlist)):
+        auditlist[i]['fields']['id'] = auditlist[i]['pk']
+        list.append(auditlist[i]['fields'])
+    result = {"total": auditlistCount, "rows": list}
+
+    result = {"total": auditlistCount, "rows": list}
+    # 返回查询结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 工单审核
+@csrf_exempt
+def workflowaudit(request):
+    # 获取用户信息
+    loginUser = request.session.get('login_username', False)
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    audit_id = int(request.POST['audit_id'])
+    audit_status = int(request.POST['audit_status'])
+    audit_remark = request.POST['audit_remark']
+
+    # 获取审核信息
+    auditInfo = workflowOb.auditinfo(audit_id)
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 调用工作流接口审核
+            auditresult = workflowOb.auditworkflow(audit_id, audit_status, loginUser, audit_remark)
+
+            # 按照审核结果更新业务表审核状态
+            if auditresult['status'] == 0:
+                if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
+                    # 更新业务表审核状态,插入权限信息
+                    query_audit_call_back(auditInfo.workflow_id, auditresult['data']['workflow_status'])
+
+                    # 给拒绝和审核通过的申请人发送邮件
+                    if hasattr(settings, 'MAIL_ON_OFF') is True and getattr(settings, 'MAIL_ON_OFF') == "on":
+                        email_reciver = users.objects.get(username=auditInfo.create_user).email
+
+                        email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
+                                        + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
+                                        + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
+                                        + "\n审核备注： " + audit_remark
+                        if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
+                            email_title = "工单审核通过 # " + str(auditInfo.audit_id)
+                            mailSender.sendEmail(email_title, email_content, [email_reciver])
+                        elif auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_reject']:
+                            email_title = "工单被驳回 # " + str(auditInfo.audit_id)
+                            mailSender.sendEmail(email_title, email_content, [email_reciver])
+    except Exception as msg:
+        result['status'] = 1
+        result['msg'] = str(msg)
+    else:
+        result = auditresult
+    return HttpResponse(json.dumps(result), content_type='application/json')

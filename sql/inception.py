@@ -255,6 +255,8 @@ class InceptionDao(object):
                           %s\
                           inception_magic_commit;" % (
             masterUser, masterPassword, masterHost, str(masterPort), dbName, sqlContent)
-        result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
-
+        try:
+            result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+        except Exception:
+            result = None
         return result

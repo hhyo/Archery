@@ -50,16 +50,9 @@ cd Python-3.4.1 <br/>
 ./configure --prefix=/path/to/python3 && make && make install
 或者rpm、yum、binary等其他安装方式
 3. 安装所需相关模块：<br/>
-(1)django：<br/>
-tar -xzvf Django-1.8.17 && cd Django-1.8.17 && python3 setup.py install<br/>
-或者pip3 install Django==1.8.17<br/>
-(2)Crypto:<br/>
-pip3 install Crypto<br/>
-pip3 install pycrypto<br/>
-(3)其他模块:<br/>
-pip3 install -r requirements.txt<br/>
+pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/<br/>
+-i变量是为了加速<br/>
 4. 给python3安装MySQLdb模块:<br/>
-pip3 install pymysql<br/>
 记得确保settings.py里有如下两行：<br/>
 import pymysql<br/>
 pymysql.install_as_MySQLdb()<br/>
@@ -68,6 +61,7 @@ pymysql.install_as_MySQLdb()<br/>
 self.server_version = '5.6.24-72.2-log'<br/>
 最后看起来像这样：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/pymysql.png)<br/>
+/path/to/python3/lib/python3.4/site-packages/pymysql/
 5. 创建archer本身的数据库表：<br/>
 (1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
 (2)通过model创建archer本身的数据库表, 记得先去archer数据库里CREATE DATABASE<br/>
@@ -104,7 +98,6 @@ cd archer && python3 manage.py createsuperuser<br/>
 12. 配置查询权限审核人：<br/>
 使用浏览器访问http://X.X.X.X:port/admin/sql/workflowauditsetting/ ，点击右侧Add 工作流配置<br/>
 这一步是为了添加查询权限审核人，单人审核格式为：user1，多人审核格式为：user1,user2，请正确配置。<br/>
-
 13. 正式访问：<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
 <br/>
@@ -137,12 +130,33 @@ cd archer && python3 manage.py createsuperuser<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/waitingforme.png)<br/>
 5. 用户登录页：<br/>
 ![image](https://github.com/jly8866/archer/raw/master/screenshots/login.png)<br/>
-6. 用户、集群、工单管理：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/adminsqlusers.png)<br/>
-7. 工单统计图表：<br/>
-![image](https://github.com/jly8866/archer/raw/master/screenshots/charts.png)<br/><br/>
-8.pt-osc进度条，以及中止pt-osc进程按钮：<br/>
+6. 工单统计图表：<br/>
+![image](https://github.com/jly8866/archer/raw/master/screenshots/charts.png)<br/>
+7. pt-osc进度条，以及中止pt-osc进程按钮：<br/>
 ![image](https://raw.githubusercontent.com/johnliu2008/archer/master/screenshots/osc_progress.png)<br/>
+8. SQL在线查询、自动补全：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/query.png)<br/>
+9. 动态脱敏：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamasking.png)<br/>
+10. SQL在线查询日志：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/querylog.png)<br/>
+11. SQL在线查询权限申请：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/applyforprivileges.png)<br/>
+12. 阿里云RDS慢查日志统计：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/slowquery.png)<br/>
+13. 阿里云RDS慢查日志明细、一键优化：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/slowquerylog.png)<br/>
+14. 阿里云RDS进程管理、表空间查询：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/process.png)<br/>
+15. SQLAdvisor：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/sqladvisor.png)<br/>
+15. 后台数据管理：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/admin.png)<br/>
+15. 权限审核配置：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/workflowconfig.png)<br/>
+15. 脱敏规则、字段配置：<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamaskingrules.png)<br/>
+![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamaskingcolumns.png)<br/>
 
 ### 联系方式：
 QQ群：524233225
