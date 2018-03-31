@@ -124,6 +124,34 @@ class Dao(object):
                 conn.close()
         return result
 
+    # 连进指定的mysql实例里，执行sql并返回
+    def mysql_execute(self, masterHost, masterPort, masterUser, masterPassword, sql):
+        result = {}
+        conn = None
+        cursor = None
+
+        try:
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
+                                   charset='utf8mb4', max_allowed_packet=1073741824)
+            cursor = conn.cursor()
+            effect_row = cursor.execute(sql)
+            # result = {}
+            # result['effect_row'] = effect_row
+            conn.commit()
+        except MySQLdb.Warning as w:
+            print(str(w))
+            result['Warning'] = str(w)
+        except MySQLdb.Error as e:
+            print(str(e))
+            result['Error'] = str(e)
+        finally:
+            if result.get('Error') or result.get('Warning'):
+                conn.close()
+            elif cursor is not None:
+                cursor.close()
+                conn.close()
+        return result
+
     def getWorkChartsByMonth(self):
         cursor = connection.cursor()
         sql = "select date_format(create_time, '%%m-%%d'),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by date_format(create_time, '%%m-%%d') order by 1 asc;" % (Dao._CHART_DAYS)

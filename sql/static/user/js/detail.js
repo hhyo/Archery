@@ -189,57 +189,81 @@ function getWorkflowStatus(wid){
     }
 }
 
-function execute(){
+$("#btnEditSql").click(function () {
+    var editWorkflowDetailId = $("#workflowDetail_id").val();
+    var editWorkflowNname = $("#editWorkflowNname").text();
+    var editSqlContent = $("#editSqlContent").val();
+    var editClustername = $("#editClustername").val();
+    var editIsbackup = $("#editIsbackup").val();
+    var editReviewman = $("#editReviewman").val();
+    var editSubReviewman = $("#editSubReviewman").val();
+    sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
+    sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+    sessionStorage.setItem('editSqlContent', editSqlContent);
+    sessionStorage.setItem('editClustername', editClustername);
+    sessionStorage.setItem('editIsbackup', editIsbackup);
+    sessionStorage.setItem('editReviewman', editReviewman);
+    sessionStorage.setItem('editSubReviewman', editSubReviewman);
+});
+
+$("#btnViewSql").click(function () {
+    var editWorkflowNname = $("#editWorkflowNname").text();
+    var editSqlContent = $("#editSqlContent").val();
+    var editClustername = $("#editClustername").val();
+    var editIsbackup = $("#editIsbackup").val();
+    var editReviewman = $("#editReviewman").val();
+    var editSubReviewman = $("#editSubReviewman").val();
+    sessionStorage.removeItem('editWorkflowDetailId');
+    sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+    sessionStorage.setItem('editSqlContent', editSqlContent);
+    sessionStorage.setItem('editClustername', editClustername);
+    sessionStorage.setItem('editIsbackup', editIsbackup);
+    sessionStorage.setItem('editReviewman', editReviewman);
+    sessionStorage.setItem('editSubReviewman', editSubReviewman);
+});
+
+$("#btnSubmitOtherCluster").click(function () {
+    var editWorkflowNname = $("#editWorkflowNname").text();
+    var editSqlContent = $("#editSqlContent").val();
+    var editIsbackup = $("#editIsbackup").val();
+    var editReviewman = $("#editReviewman").val();
+    var editSubReviewman = $("#editSubReviewman").val();
+    sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+    sessionStorage.setItem('editSqlContent', editSqlContent);
+    sessionStorage.setItem('editIsbackup', editIsbackup);
+    sessionStorage.setItem('editReviewman', editReviewman);
+    sessionStorage.setItem('editSubReviewman', editSubReviewman);
+});
+
+// 校验备注
+$("#btnCancel").click(function () {
+    //获取form对象，判断输入，通过则提交
+    $("#audit_remark").val($("#remark").val());
+    var formCancel = $("#form-cancel");
+    if ($("#audit_remark").val()) {
+        $(this).button('loading').delay(2500).queue(function () {
+            $(this).button('reset');
+            $(this).dequeue();
+        });
+        formCancel.submit();
+    }
+    else {
+        alert('请填写驳回原因')
+    }
+});
+function executeloading(obj) {
     //点击执行之后，刷新当前页面，以显示执行进度
-    $('input[type=button]').addClass('disabled');
-    $('input[type=button]').prop('disabled', true);
     setTimeout(function () {
         window.location.reload(true);
-    },2500)
+    }, 2500);
+    $(obj).button('loading').delay(2500).queue(function () {
+        $(obj).button('reset');
+        $(obj).dequeue();
+    });
 }
-
-$(document).ready(function () {
-    $("#btnEditSql").click(function () {
-        var editWorkflowDetailId = $("#workflowDetail_id").val();
-        var editWorkflowNname = $("#editWorkflowNname").text();
-        var editSqlContent = $("#editSqlContent").val();
-        var editClustername = $("#editClustername").val();
-        var editIsbackup = $("#editIsbackup").val();
-        var editReviewman = $("#editReviewman").val();
-        var editSubReviewman = $("#editSubReviewman").val();
-        sessionStorage.setItem('editWorkflowDetailId', editWorkflowDetailId);
-        sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
-        sessionStorage.setItem('editSqlContent', editSqlContent);
-        sessionStorage.setItem('editClustername', editClustername);
-        sessionStorage.setItem('editIsbackup', editIsbackup);
-        sessionStorage.setItem('editReviewman', editReviewman);
-        sessionStorage.setItem('editSubReviewman', editSubReviewman);
+function loading(obj) {
+    $(obj).button('loading').delay(2500).queue(function () {
+        $(obj).button('reset');
+        $(obj).dequeue();
     });
-
-    $("#btnSubmitOtherCluster").click(function () {
-        var editWorkflowNname = $("#editWorkflowNname").text();
-        var editSqlContent = $("#editSqlContent").val();
-        var editIsbackup = $("#editIsbackup").val();
-        var editReviewman = $("#editReviewman").val();
-        var editSubReviewman = $("#editSubReviewman").val();
-        sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
-        sessionStorage.setItem('editSqlContent', editSqlContent);
-        sessionStorage.setItem('editIsbackup', editIsbackup);
-        sessionStorage.setItem('editReviewman', editReviewman);
-        sessionStorage.setItem('editSubReviewman', editSubReviewman);
-    });
-
-    $("#btnExecute").click(function(){
-	$(this).button('loading').delay(2500).queue(function() {
-            $(this).button('reset');
-            $(this).dequeue();
-        });
-    });
-
-    $("#btnExecuteonly").click(function(){
-	$(this).button('loading').delay(2500).queue(function() {
-            $(this).button('reset');
-            $(this).dequeue();
-        });
-    });
-});
+}

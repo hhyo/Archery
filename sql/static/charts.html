@@ -16,6 +16,10 @@
 	</div>
 </div>
 </div>
-</script>
 {% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'user/js/charts.js' %}"></script>
+{% endblock %}
 

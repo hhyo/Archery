@@ -6,7 +6,7 @@ import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from .aliyun_api import Aliyun
-from .query import superuser_required
+from .permission import superuser_required
 
 from .models import users, AliyunRdsConfig
 

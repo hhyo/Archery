@@ -1,208 +1,330 @@
 {% extends "base.html" %}
 
 {% block content %}
-			<h4>单子名称：<span id="editWorkflowNname">{{workflowDetail.workflow_name}}</span></h4>
-            <input type="hidden" id="workflowDetail_id" name="workflowid" value="{{workflowDetail.id}}">
-            <input type="hidden" id="editSqlContent" value="{{workflowDetail.sql_content}}"/>
-            <input type="hidden" id="editClustername" value="{{workflowDetail.cluster_name}}"/>
-            <input type="hidden" id="editIsbackup" value="{{workflowDetail.is_backup}}"/>
-            <input type="hidden" id="editReviewman" value="{{listAllReviewMen.0}}"/>
-            <input type="hidden" id="editSubReviewman" value="{{listAllReviewMen.1}}"/>
-			<hr>
-			<table data-toggle="table" class="table table-striped table-hover"
-                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-				<thead>
-					<tr>
-						<th>
-							上线发起人
-						</th>
-						<th>
-							审核人
-						</th>
-						<th>
-							上线集群
-						</th>
-						<th>
-							发起时间
-						</th>
-						<th>
-							结束时间
-						</th>
-						<th>
-							是否备份
-						</th>
-						<th>
-							当前状态
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr class="success">
-						<td>
-							{{workflowDetail.engineer}}
-						</td>
-						<td>
-                            {{listAllReviewMen.0}} {{listAllReviewMen.1}}
-						</td>
-						<td>
-							{{workflowDetail.cluster_name}}
-						</td>
-						<td>
-							{{workflowDetail.create_time|date:"Y-m-d H:i:s"}}
-						</td>
-						<td>
-							{{workflowDetail.finish_time|date:"Y-m-d H:i:s"}}
-						</td>
-						<td>
-							{{workflowDetail.is_backup}}
-						</td>
-						<td>
-							{% if workflowDetail.status == "已正常结束" %}
-								<font color="green">
-							{% else %}
-								<font color="red">
-							{% endif %}
-								<B id="workflowDetail_status">{{workflowDetail.status}}</B></font>
-						</td>
-					</tr>
-					
-				</tbody>
-			</table>
-            <br>
-			<table data-toggle="table" class="table table-striped table-hover">
-				<thead>
-					<tr>
-						<th width="40px">
-							ID
-						</th>
-						<th>
-							SQL内容
-						</th>
-						<th>
-							自动审核结果
-						</th>
-						<th width="110px">
-							扫描/影响行数
-						</th>
-						<th width="100px">
-							执行耗时
-						</th>
-						<th width="100px">
-							执行状态
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for row in listContent %}
-					<tr>
-						<td>
-						{% if forloop.last %}
-							<input type="hidden" id="sqlMaxRowNumber" value="{{forloop.counter}}">
-						{% endif %}
-							{{forloop.counter}}
-						</td>
-					   <td style='word-wrap:break-word;'>
-	 						{% for sql in row.5 %}
- 								{{ sql }}{% if not forloop.last %}<br/>{% endif %}
-							{% endfor %}
-	 					</td>
- 						<td style='word-wrap:break-word;'>
-							{% for statement in row.4 %}
-								{{ statement }}{% if not forloop.last %}<br/>{% endif %}
-							{% endfor %}
-						</td>
-						<td>
-							{{row.6}}
-						</td>
-						<td>
-							{{row.9}}
-						</td>
-						<td id="td_{{forloop.counter}}">
-                            {% if workflowDetail.status == "执行中" %}
-							<div>
-                                <div class="progress" style="width: 80%; height: 18px; float: left;">
-                                    <div id="div_{{forloop.counter}}" class="progress-bar" role="progressbar" aria-valuenow="60"
-                                        aria-valuemin="0" aria-valuemax="100" >
-										<!--style="width: 100%;">-->
-										<span id="span_{{forloop.counter}}"></span>
-                                    </div>
-                                </div>
-								<div style="width: 10%; height: 18px; float: right;">
-									<form  method="post" >
-										{% csrf_token %}
-										<input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-										<!--<input type="hidden" id="sqlID_{{row.0}}" value="{{row.0}}">-->
-										<button id="btnstop_{{forloop.counter}}" value="{{forloop.counter}}" type="button" class="close" style="display: none" title="停止pt-OSC进程">
-										 <span aria-hidden="true">&times;</span>
-										 <span class="sr-only"></span>
-										</button>
-									</form>
-								</div>
-							</div>
-                            {% else %}
-							    {{row.3}}
-                            {% endif %}
-						</td>
-					</tr>
-					{% endfor %}
-					
-				</tbody>
-			</table>
-            <br>
-			{% if workflowDetail.status == '等待审核人审核' %}
-                {% if loginUser in listAllReviewMen %}
-                <form action="/passonly/" method="post" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnPass" type="button" onclick="execute()" class="btn btn-primary btn-success" data-loading-text="Loading..." value="审核通过" />
-                </form>
-
-                <form action="/execute/" method="post" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnExecute" type="button" onclick="execute()" class="btn btn-danger" data-loading-text="Loading..." value="审核通过并执行" />
-                </form>
-
-                {% elif workflowDetail.engineer == loginUser %}
-                <!--只允许发起人提交其他集群-->
-                <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+    <h4 style="display: inline;">单子名称：<span id="editWorkflowNname">{{ workflowDetail.workflow_name }}</span></h4>
+    &nbsp;&nbsp;&nbsp;
+    {% if loginUserOb.is_superuser == 1 %}
+        <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+        {% if workflowDetail.status == '等待审核人审核' or workflowDetail.status == '自动审核不通过' or  workflowDetail.status == '审核通过' %}
+            <button class="btn btn-danger" data-toggle="modal" data-target="#executeComfirm">跳过inception执行
+            </button>
+        {% endif %}
+    {% elif loginUser in listAllReviewMen %}
+        <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+    {% endif %}
+    <input type="hidden" id="workflowDetail_id" name="workflowid" value="{{ workflowDetail.id }}">
+    <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
+    <input type="hidden" id="editClustername" value="{{ workflowDetail.cluster_name }}"/>
+    <input type="hidden" id="editIsbackup" value="{{ workflowDetail.is_backup }}"/>
+    <input type="hidden" id="editReviewman" value="{{ listAllReviewMen.0 }}"/>
+    <input type="hidden" id="editSubReviewman" value="{{ listAllReviewMen.1 }}"/>
+    <hr>
+    <table data-toggle="table" class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>
+                上线发起人
+            </th>
+            <th>
+                审核人
+            </th>
+            <th>
+                上线集群
+            </th>
+            <th>
+                发起时间
+            </th>
+            <th>
+                结束时间
+            </th>
+            <th>
+                是否备份
+            </th>
+            <th>
+                当前状态
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="success">
+            <td>
+                {{ workflowDetail.engineer }}
+            </td>
+            <td>
+                {{ listAllReviewMen.0 }} {{ listAllReviewMen.1 }}
+            </td>
+            <td>
+                {{ workflowDetail.cluster_name }}
+            </td>
+            <td>
+                {{ workflowDetail.create_time }}
+            </td>
+            <td>
+                {{ workflowDetail.finish_time }}
+            </td>
+            <td>
+                {{ workflowDetail.is_backup }}
+            </td>
+            <td>
+                {% if workflowDetail.status == "已正常结束" %}
+                    <font color="green">
+                {% else %}
+                    <font color="red">
                 {% endif %}
-
-                <form action="/cancel/" method="post" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnCancel" type="button" onclick="execute()" class="btn btn-default" data-loading-text="Loading..." value="终止流程" />
-                </form>
-
-            {% elif workflowDetail.status == '审核通过' %}
-                <form action="/executeonly/" method="post" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnExecuteonly" type="button" onclick="execute()" class="btn btn-danger" data-loading-text="Loading..." value="执行SQL" />
-                </form>
-                <form action="/cancel/" method="post" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnCancel" type="button" onclick="execute()" class="btn btn-default" data-loading-text="Loading..." value="终止流程" />
-                </form>
-
-			{% elif workflowDetail.status == '已正常结束' and workflowDetail.is_backup == '是' %}
-                <form action="/rollback/" method="get" style="display:inline-block;">
-                    {% csrf_token %}
-                    <input type="hidden" name="workflowid" value="{{workflowDetail.id}}">
-                    <input type="submit" id="btnRollback" type="button" class="btn btn-default" data-loading-text="Loading..." value="查看回滚SQL" />
-                </form>
-                    {% if workflowDetail.engineer == loginUser %}
-                    <!--只允许发起人提交其他集群-->
-                    <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+                <B id="workflowDetail_status">{{ workflowDetail.status }}</B></font>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+    <table data-toggle="table" class="table table-striped table-hover">
+        <thead class="btn-default">
+        <tr>
+            <th width="40px">
+                ID
+            </th>
+            <th>
+                SQL内容
+            </th>
+            <th>
+                自动审核状态
+            </th>
+            <th>
+                自动审核结果
+            </th>
+            <th width="110px">
+                扫描/影响行数
+            </th>
+            <th width="100px">
+                执行耗时
+            </th>
+            <th width="100px">
+                执行状态
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in listContent %}
+            <tr>
+                <td>
+                    {% if forloop.last %}
+                        <input type="hidden" id="sqlMaxRowNumber" value="{{ forloop.counter }}">
+                    {% endif %}
+                    {{ forloop.counter }}
+                </td>
+                <td style='word-wrap:break-word;'>
+                    {% for sql in row.5 %}
+                        {{ sql }}{% if not forloop.last %}<br/>{% endif %}
+                    {% endfor %}
+                </td>
+                <td style='word-wrap:break-word;'>
+                    {% if  row.2 == 0 %}
+                        pass
+                    {% elif row.2 == 1 %}
+                        <strong><font color="BurlyWood">warning</font></strong>
+                    {% elif row.2 == 2 %}
+                        <strong><font color="Red">error</font></strong>
                     {% endif %}
 
-			{% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行有异常' %}
-				{% if workflowDetail.engineer == loginUser %}
-				<!--只允许发起人修改工单-->
-					{% csrf_token %}
-                	<a type='button' id="btnEditSql" class='btn btn-warning' href="/editsql/">重新修改</a>
-                    <a type='button' id="btnSubmitOtherCluster" class='btn btn-default' href="/submitothercluster/">上线其他集群</a>
-				{% endif %}
-			{% endif %}
-{% endblock content%}
+                </td>
+                <td style='word-wrap:break-word;'>
+                    {% for statement in row.4 %}
+                        {{ statement }}{% if not forloop.last %}<br/>{% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {{ row.6 }}
+                </td>
+                <td>
+                    {{ row.9 }}
+                </td>
+                <td id="td_{{ forloop.counter }}">
+                    {% if workflowDetail.status == "执行中" %}
+                        <div>
+                            <div class="progress" style="width: 80%; height: 18px; float: left;">
+                                <div id="div_{{ forloop.counter }}" class="progress-bar" role="progressbar"
+                                     aria-valuenow="60"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    <!--style="width: 100%;">-->
+                                    <span id="span_{{ forloop.counter }}"></span>
+                                </div>
+                            </div>
+                            <div style="width: 10%; height: 18px; float: right;">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                                    <!--<input type="hidden" id="sqlID_{{row.0}}" value="{{row.0}}">-->
+                                    <button id="btnstop_{{ forloop.counter }}" value="{{ forloop.counter }}"
+                                            type="button" class="close" style="display: none" title="停止pt-OSC进程">
+                                        <span aria-hidden="true">&times;</span>
+                                        <span class="sr-only"></span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ row.3 }}
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if workflowDetail.is_manual == 1 and workflowDetail.execute_result %}
+        <br>
+        <table data-toggle="table" class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>
+                    手工执行结果
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    {{ workflowDetail.execute_result }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    {% endif %}
+    {% if workflowDetail.audit_remark  and workflowDetail.status == '人工终止流程' %}
+        <br>
+        <table data-toggle="table" class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>
+                    驳回原因
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    {{ workflowDetail.audit_remark }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    {% endif %}
+    <br>
+    {% if workflowDetail.status == '等待审核人审核' %}
+        {% if loginUser in listAllReviewMen %}
+            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
+                      placeholder="请填写驳回原因" rows=3></textarea>
+            <br>
+            <form action="/passonly/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
+            </form>
+
+            <form action="/execute/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnExecute" onclick="executeloading(this)" class="btn btn-danger"
+                       value="审核通过，执行"/>
+            </form>
+
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+            </form>
+
+        {% elif workflowDetail.engineer == loginUser %}
+            <!--只允许发起人提交其他集群-->
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="submit" onclick="loading(this)" class="btn btn-default" value="终止流程"/>
+            </form>
+        {% endif %}
+
+    {% elif workflowDetail.status == '审核通过' %}
+        {% if loginUser in listAllReviewMen %}
+            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
+                      placeholder="请填写驳回原因" rows=3></textarea>
+            <br>
+
+            <form action="/executeonly/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnExecuteOnly" onclick="executeloading(this)" class="btn btn-danger"
+                       value="执行SQL"/>
+            </form>
+
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+            </form>
+        {% elif workflowDetail.engineer == loginUser %}
+            <!--只允许发起人提交其他集群-->
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="submit" onclick="loading(this)" class="btn btn-default" value="终止流程"/>
+            </form>
+        {% endif %}
+
+    {% elif workflowDetail.status == '已正常结束' and workflowDetail.is_backup == '是' %}
+        <form action="/rollback/" method="get" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+            <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
+        </form>
+        {% if workflowDetail.engineer == loginUser %}
+            <!--只允许发起人提交其他集群-->
+            <a type='button' id="btnSubmitOtherCluster" onclick="loading(this)" class='btn btn-warning'
+               href="/submitothercluster/">上线其他集群</a>
+        {% endif %}
+
+    {% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行有异常' %}
+        {% if workflowDetail.engineer == loginUser %}
+            <!--只允许发起人修改工单-->
+            {% csrf_token %}
+            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-warning' href="/editsql/">重新修改</a>
+            <a type='button' id="btnSubmitOtherCluster" onclick="loading(this)" class='btn btn-default'
+               href="/submitothercluster/">上线其他集群</a>
+        {% endif %}
+    {% endif %}
+
+    <!-- 手动执行确认 -->
+    <div class="modal fade" id="executeComfirm">
+        <div class="modal-dialog">
+            <div class="modal-content message_align">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">确定要手工执行吗？</h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <form action="/execute_skipinc/" method="post" style="display:inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                        <input type="submit" id="btnExecuteSkipinc" onclick="executeloading(this)"
+                               class="btn btn-danger"
+                               value="确认执行"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'user/js/detail.js' %}"></script>
+{% endblock %}

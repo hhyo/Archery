@@ -32,3 +32,9 @@
 				</tbody>
 			</table>
 {% endblock content%}
+
+{% block js %}
+    {% load staticfiles %}
+	<script src="{% static 'user/js/rollback.js' %}"></script>
+{% endblock %}
+

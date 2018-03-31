@@ -12,8 +12,8 @@ leftMenuBtnsCommon = (
 )
 
 leftMenuBtnsAliYun = (
-    {'key': 'slowquery', 'name': 'SQL慢查日志', 'url': '/slowquery/', 'class': 'glyphicon glyphicon-align-right'},
-    {'key': 'diagnosis', 'name': '实例问题诊断', 'url': '/diagnosis_process/','class': 'glyphicon glyphicon glyphicon-scissors'},
+    {'key': 'slowquery', 'name': 'RDS慢查日志', 'url': '/slowquery/', 'class': 'glyphicon glyphicon-align-right'},
+    {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/','class': 'glyphicon glyphicon glyphicon-scissors'},
 )
 
 leftMenuBtnsSuper = (

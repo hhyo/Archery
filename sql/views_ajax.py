@@ -192,7 +192,7 @@ def simplecheck(request):
         sqlContent = request.POST['sql_content']
         clusterName = request.POST['cluster_name']
      
-    finalResult = {'status':0, 'msg':'ok', 'data':[]}
+    finalResult = {'status':0, 'msg':'ok', 'data':{}}
     #服务器端参数验证
     if sqlContent is None or clusterName is None:
         finalResult['status'] = 1
@@ -211,9 +211,35 @@ def simplecheck(request):
         finalResult['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
     #要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    finalResult['data'] = result
-    return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
+                   'backup_dbname', 'execute_time', 'sqlsha1']
+    rows = []
+    CheckWarningCount = 0
+    CheckErrorCount = 0
+    for row_index, row_item in enumerate(result):
+        row = {}
+        row['ID'] = row_item[0]
+        row['stage'] = row_item[1]
+        row['errlevel'] = row_item[2]
+        if row['errlevel'] == 1:
+            CheckWarningCount = CheckWarningCount + 1
+        elif row['errlevel'] == 2:
+            CheckErrorCount = CheckErrorCount + 1
+        row['stagestatus'] = row_item[3]
+        row['errormessage'] = row_item[4]
+        row['SQL'] = row_item[5]
+        row['Affected_rows'] = row_item[6]
+        row['sequence'] = row_item[7]
+        row['backup_dbname'] = row_item[8]
+        row['execute_time'] = row_item[9]
+        row['sqlsha1'] = row_item[10]
+        rows.append(row)
+    finalResult['data']['rows'] = rows
+    finalResult['data']['column_list'] = column_list
+    finalResult['data']['CheckWarningCount'] = CheckWarningCount
+    finalResult['data']['CheckErrorCount'] = CheckErrorCount
 
+    return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
 #同步ldap用户到数据库
 @csrf_exempt

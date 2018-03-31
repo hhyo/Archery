@@ -58,6 +58,8 @@ class workflow(models.Model):
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
     execute_result = models.TextField('执行结果的JSON格式')
+    is_manual = models.IntegerField('是否手工执行', choices=((0, '否'), (1, '是')),default=0)
+    audit_remark = models.TextField('审核备注', null=True)
 
     def __str__(self):
         return self.workflow_name
@@ -111,6 +113,7 @@ class WorkflowAudit(models.Model):
 
     class Meta:
         db_table = 'workflow_audit'
+        unique_together = ('workflow_id', 'workflow_type')
         verbose_name = u'工作流列表'
         verbose_name_plural = u'工作流列表'
 
@@ -137,8 +140,7 @@ class WorkflowAuditDetail(models.Model):
 # 审批配置表
 class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
-    workflow_type = models.IntegerField('申请类型,',
-                                        choices=((1, '查询权限申请'),))
+    workflow_type = models.IntegerField('申请类型,',choices=((1, '查询权限申请'),), unique=True)
     audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
