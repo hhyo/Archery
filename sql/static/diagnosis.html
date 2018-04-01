@@ -126,13 +126,12 @@
                     toolbar: "#process-toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
-                    queryParams:
-                        function (params) {
-                            return {
-                                cluster_name: $("#cluster_name").val(),
-                                command_type: $("#command").val()
-                            }
-                        },
+                    queryParams: function (params) {
+                        return {
+                            cluster_name: $("#cluster_name").val(),
+                            command_type: $("#command").val()
+                        }
+                    },
                     columns: [{
                         title: '',
                         field: 'checkbox',
@@ -221,12 +220,11 @@
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
                     //请求服务数据时所传参数
-                    queryParams:
-                        function (params) {
-                            return {
-                                cluster_name: $("#cluster_name").val()
-                            }
-                        },
+                    queryParams: function (params) {
+                        return {
+                            cluster_name: $("#cluster_name").val()
+                        }
+                    },
                     columns: [{
                         title: '数据库',
                         field: 'table_schema'
@@ -340,7 +338,9 @@
                     traditional: true,
                     complete: function () {
                         //刷新页面
-                        get_process_list()
+                        get_process_list();
+                        $("#command").show();
+                        $("#process-toolbar").show();
                     },
                     success: function (data) {
                         if (data.status === 0) {
@@ -391,16 +391,22 @@
             sessionStorage.setItem('diagnosis_cluster_name', $("#cluster_name").val());
             var active_li_id = sessionStorage.getItem('diagnosis_active_li_id');
             if (active_li_id === 'process_tab') {
-                get_process_list()
+                get_process_list();
+                $("#command").show();
+                $("#process-toolbar").show();
             }
             else if (active_li_id === 'space_tab') {
-                get_space_list()
+                get_space_list();
+                $("#command").hide();
+                $("#process-toolbar").hide();
             }
         });
 
         //请求类型变动时自动刷新
         $("#command").change(function () {
-            get_process_list()
+            get_process_list();
+            $("#command").show();
+            $("#process-toolbar").show();
         });
     </script>
 {% endblock %}
