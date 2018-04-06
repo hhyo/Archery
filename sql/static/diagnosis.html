@@ -15,13 +15,15 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
-                <select id=cluster_name class="form-control " name="cluster_name_list">
+                <select id=cluster_name class="form-control selectpicker" name="cluster_name_list" data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
                     {% for cluster_name in cluster_name_list %}
                         <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                     {% endfor %}
                 </select>
-                <select id=command class="form-control " name="command_type">
+            </div>
+            <div id=command class="form-group">
+                <select class="form-control selectpicker" name="command_type">
                     <option value="is-empty" disabled="">command类型</option>
                     <option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
