@@ -23,8 +23,8 @@
                     {% endfor %}
                 </select>
             </div>
-            <div id=command class="form-group">
-                <select class="form-control selectpicker" name="command_type">
+            <div id="command-div" class="form-group">
+                <select id="command" class="form-control selectpicker" name="command_type">
                     <option value="is-empty" disabled="">command类型</option>
                     <option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
@@ -343,7 +343,7 @@
                     complete: function () {
                         //刷新页面
                         get_process_list();
-                        $("#command").show();
+                        $("#command-div").show();
                         $("#process-toolbar").show();
                     },
                     success: function (data) {
@@ -363,7 +363,7 @@
                 if (sessionStorage.getItem('diagnosis_cluster_name')) {
                     $("#cluster_name").val(sessionStorage.getItem('diagnosis_cluster_name'));
                     get_process_list();
-                    $("#command").show();
+                    $("#command-div").show();
                     $("#process-toolbar").show();
                 }
             }
@@ -378,12 +378,12 @@
                 if ($("#cluster_name").val()) {
                     if (active_li_id === 'process_tab') {
                         get_process_list();
-                        $("#command").show();
+                        $("#command-div").show();
                         $("#process-toolbar").show();
                     }
                     else if (active_li_id === 'space_tab') {
                         get_space_list();
-                        $("#command").hide();
+                        $("#command-div").hide();
                         $("#process-toolbar").hide();
                     }
                 }
@@ -396,12 +396,12 @@
             var active_li_id = sessionStorage.getItem('diagnosis_active_li_id');
             if (active_li_id === 'process_tab') {
                 get_process_list();
-                $("#command").show();
+                $("#command-div").show();
                 $("#process-toolbar").show();
             }
             else if (active_li_id === 'space_tab') {
                 get_space_list();
-                $("#command").hide();
+                $("#command-div").hide();
                 $("#process-toolbar").hide();
             }
         });
@@ -409,7 +409,7 @@
         //请求类型变动时自动刷新
         $("#command").change(function () {
             get_process_list();
-            $("#command").show();
+            $("#command-div").show();
             $("#process-toolbar").show();
         });
     </script>
