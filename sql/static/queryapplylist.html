@@ -74,6 +74,7 @@
                             <option value="is-empty" disabled="" selected="selected">请选择授权时间:</option>
                             <option value="day">一天</option>
                             <option value="week">一周</option>
+                            <option value="month">一月</option>
                             <option value="year">长期(一年)</option>
                         </select>
                     </div>
@@ -81,8 +82,8 @@
                         <select id="limit_num" name="limit_num"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                             <option value="is-empty" disabled="" selected="selected">请选择查询限制行数:</option>
-                            <option value=50>50</option>
                             <option value=100>100</option>
+                            <option value=500>500</option>
                             <option value=1000>1000</option>
                         </select>
                     </div>
@@ -407,6 +408,9 @@
                 }
                 else if (valid_date === 'week') {
                     valid_date = addDate(date, 7);
+                }
+                else if (valid_date === 'month') {
+                    valid_date = addDate(date, 30);
                 }
                 else if (valid_date === 'year') {
                     valid_date = addDate(date, 365);

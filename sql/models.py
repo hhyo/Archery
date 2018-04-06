@@ -161,7 +161,7 @@ class QueryPrivilegesApply(models.Model):
     user_name = models.CharField('申请人', max_length=30)
     cluster_id = models.IntegerField('集群id')
     cluster_name = models.CharField('集群名称', max_length=50)
-    db_list = models.CharField('数据库', max_length=200)
+    db_list = models.TextField('数据库')
     table_list = models.TextField('表')
     valid_date = models.CharField('有效时间', max_length=30)
     limit_num = models.IntegerField('行数限制', default=100)
