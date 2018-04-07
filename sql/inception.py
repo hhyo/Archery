@@ -157,9 +157,12 @@ class InceptionDao(object):
                 tmpList.append(sqlRow)
             # 每执行一次，就将执行结果更新到工单的execute_result，便于获取osc进度时对比
             workflowDetail.execute_result = json.dumps(tmpList)
-            # 重新获取连接，防止超时
-            connection.close()
-            workflowDetail.save()
+            try:
+                workflowDetail.save()
+            except Exception:
+                # 重新获取连接，防止超时
+                connection.close()
+                workflowDetail.save()
 
         #二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
         finalStatus = "已正常结束"
