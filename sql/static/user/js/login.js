@@ -9,6 +9,8 @@ $(document).ready(function() {
 });
 
 $('#btnLogin').click(function(){
+	$('#btnLogin').addClass('disabled');
+	$('#btnLogin').prop('disabled', true);
 	authenticateUser();
 });
 
@@ -24,6 +26,8 @@ function authenticateUser() {
             password: inputPassword.val()
         },
         complete: function () {
+        	$('#btnLogin').removeClass('disabled');
+        	$('#btnLogin').prop('disabled', false);
         },
         success: function (data) {
 			if (data.status == 0) {

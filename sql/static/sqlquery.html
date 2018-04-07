@@ -365,7 +365,6 @@
                     },
                     complete: function () {
                         $('input[type=button]').removeClass('disabled');
-                        $('input[type=button]').addClass('btn');
                         $('input[type=button]').prop('disabled', false);
                     },
                     success: function (data) {
@@ -494,7 +493,6 @@
             else {
                 alert('仅支持^select|^show.*create.*table|^explain语法，请联系管理员！');
                 $('input[type=button]').removeClass('disabled');
-                $('input[type=button]').addClass('btn');
                 $('input[type=button]').prop('disabled', false);
             }
 

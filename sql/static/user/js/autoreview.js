@@ -22,7 +22,6 @@ $("#btn-autoreview").click(function () {
     }
     else {
         $('#btn-autoreview').removeClass('disabled');
-        $('#btn-autoreview').addClass('btn');
         $('#btn-autoreview').prop('disabled', false);
     }
 });
@@ -42,7 +41,6 @@ function autoreview() {
         },
         complete: function () {
             $('input[type=button]').removeClass('disabled');
-            $('input[type=button]').addClass('btn');
             $('input[type=button]').prop('disabled', false);
         },
         success: function (data) {
