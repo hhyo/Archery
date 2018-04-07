@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 import time
 from django.db.models import Q
+from django.db import connection
 from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -25,6 +26,9 @@ from .aes_decryptor import Prpcrypt
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges
 from .workflow import Workflow
 from .permission import role_required, superuser_required
+import logging
+
+logger = logging.getLogger('default')
 
 dao = Dao()
 inceptionDao = InceptionDao()
@@ -59,26 +63,33 @@ def execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
         listAllReviewMen = (workflowDetail.review_man,)
     # 获取实例连接信息
     masterInfo = getMasterConnStr(clusterName)
-    # 执行sql
-    t_start = time.time()
-    execute_result = dao.mysql_execute(masterInfo['masterHost'], masterInfo['masterPort'], masterInfo['masterUser'],
-                                       masterInfo['masterPassword'], sql_content)
-    t_end = time.time()
-    execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
-    execute_result['execute_time'] = execute_time + 'sec'
+    try:
+        # 执行sql
+        t_start = time.time()
+        execute_result = dao.mysql_execute(masterInfo['masterHost'], masterInfo['masterPort'], masterInfo['masterUser'],
+                                           masterInfo['masterPassword'], sql_content)
+        t_end = time.time()
+        execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
+        execute_result['execute_time'] = execute_time + 'sec'
 
-    if execute_result.get('Warning'):
-        workflowDetail.status = Const.workflowStatus['exception']
-    elif execute_result.get('Error'):
-        workflowDetail.status = Const.workflowStatus['exception']
-    else:
-        workflowDetail.status = Const.workflowStatus['finish']
-    workflowDetail.finish_time = timezone.now()
-    workflowDetail.execute_result = json.dumps(execute_result)
-    workflowDetail.is_manual = 1
-    workflowDetail.audit_remark = ''
-    workflowDetail.is_backup = '否'
-    workflowDetail.save()
+        # 重新获取连接，防止超时
+        workflowDetail = workflow.objects.get(id=workflowId)
+        if execute_result.get('Warning'):
+            workflowDetail.status = Const.workflowStatus['exception']
+        elif execute_result.get('Error'):
+            workflowDetail.status = Const.workflowStatus['exception']
+        else:
+            workflowDetail.status = Const.workflowStatus['finish']
+        workflowDetail.finish_time = timezone.now()
+        workflowDetail.execute_result = json.dumps(execute_result)
+        workflowDetail.is_manual = 1
+        workflowDetail.audit_remark = ''
+        workflowDetail.is_backup = '否'
+        # 重新获取连接，防止超时
+        connection.close()
+        workflowDetail.save()
+    except Exception as e:
+        logger.error(e)
 
     # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
     if getattr(settings, 'MAIL_ON_OFF') == "on":
@@ -108,18 +119,24 @@ def execute_call_back(workflowId , clusterName, url):
         listAllReviewMen = (workflowDetail.review_man,)
 
     dictConn = getMasterConnStr(clusterName)
+    try:
+        #交给inception先split，再执行
+        (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
 
-    #交给inception先split，再执行
-    (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
-
-    #封装成JSON格式存进数据库字段里
-    strJsonResult = json.dumps(finalList)
-    workflowDetail.execute_result = strJsonResult
-    workflowDetail.finish_time = timezone.now()
-    workflowDetail.status = finalStatus
-    workflowDetail.is_manual=0
-    workflowDetail.audit_remark = ''
-    workflowDetail.save()
+        #封装成JSON格式存进数据库字段里
+        strJsonResult = json.dumps(finalList)
+        # 重新获取连接，防止超时
+        workflowDetail = workflow.objects.get(id=workflowId)
+        workflowDetail.execute_result = strJsonResult
+        workflowDetail.finish_time = timezone.now()
+        workflowDetail.status = finalStatus
+        workflowDetail.is_manual=0
+        workflowDetail.audit_remark = ''
+        # 重新获取连接，防止超时
+        connection.close()
+        workflowDetail.save()
+    except Exception as e:
+        logger.error(e)
 
     #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
     if hasattr(settings, 'MAIL_ON_OFF') == True:
