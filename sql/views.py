@@ -72,7 +72,6 @@ def execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
         execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
         execute_result['execute_time'] = execute_time + 'sec'
 
-        # 重新获取连接，防止超时
         workflowDetail = workflow.objects.get(id=workflowId)
         if execute_result.get('Warning'):
             workflowDetail.status = Const.workflowStatus['exception']
@@ -125,7 +124,6 @@ def execute_call_back(workflowId , clusterName, url):
 
         #封装成JSON格式存进数据库字段里
         strJsonResult = json.dumps(finalList)
-        # 重新获取连接，防止超时
         workflowDetail = workflow.objects.get(id=workflowId)
         workflowDetail.execute_result = strJsonResult
         workflowDetail.finish_time = timezone.now()
@@ -302,11 +300,46 @@ def detail(request, workflowId):
     loginUser = request.session.get('login_username', False)
     loginUserOb = users.objects.get(username=loginUser)
 
-    # 格式化detail界面sql语句和审核/执行结果 by 搬砖工
-    for Content in listContent:
-        Content[4] = Content[4].split('\n')     # 审核/执行结果
-        Content[5] = Content[5].split('\r\n')   # sql语句
-    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'listContent':listContent,'listAllReviewMen':listAllReviewMen,'loginUserOb': loginUserOb}
+    column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
+                   'backup_dbname', 'execute_time', 'sqlsha1']
+    rows = []
+    for row_index, row_item in enumerate(listContent):
+        row = {}
+        row['ID'] = row_item[0]
+        row['stage'] = row_item[1]
+        row['errlevel'] = row_item[2]
+        row['stagestatus'] = row_item[3]
+        row['errormessage'] = row_item[4]
+        row['SQL'] = row_item[5]
+        row['Affected_rows'] = row_item[6]
+        row['sequence'] = row_item[7]
+        row['backup_dbname'] = row_item[8]
+        row['execute_time'] = row_item[9]
+        row['sqlsha1'] = row_item[10]
+        rows.append(row)
+
+        if workflowDetail.status == '执行中':
+            row['stagestatus'] = ''.join(
+                ["<div id=\"td_" + str(row['ID']) + "\" class=\"form-inline\">",
+                 "   <div class=\"progress form-group\" style=\"width: 80%; height: 18px; float: left;\">",
+                 "       <div id=\"div_" + str(row['ID']) + "\" class=\"progress-bar\" role=\"progressbar\"",
+                 "            aria-valuenow=\"60\"",
+                 "            aria-valuemin=\"0\" aria-valuemax=\"100\">",
+                 "           <span id=\"span_" + str(row['ID']) + "\"></span>",
+                 "       </div>",
+                 "   </div>",
+                 "   <div class=\"form-group\" style=\"width: 10%; height: 18px; float: right;\">",
+                 "       <form method=\"post\">",
+                 "           <input type=\"hidden\" name=\"workflowid\" value=\"" + str(workflowDetail.id) + "\">",
+                 "           <button id=\"btnstop_" + str(row['ID']) + "\" value=\"" + str(row['ID']) + "\"",
+                 "                   type=\"button\" class=\"close\" style=\"display: none\" title=\"停止pt-OSC进程\">",
+                 "               <span class=\"glyphicons glyphicons-stop\">&times;</span>",
+                 "           </button>",
+                 "       </form>",
+                 "   </div>",
+                 "</div>"])
+    context = {'currentMenu':'allworkflow', 'workflowDetail':workflowDetail, 'column_list':column_list,'rows':rows,
+               'listAllReviewMen':listAllReviewMen,'loginUserOb': loginUserOb}
     return render(request, 'detail.html', context)
 
 #审核通过，不执行
