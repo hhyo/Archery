@@ -524,6 +524,7 @@
                             isStoped = 1;
                         }
                         alert(data.msg);
+                        window.location.reload(true);
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
                         alert(errorThrown);
