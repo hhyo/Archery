@@ -180,23 +180,23 @@ class InceptionDao(object):
         listExecuteResult = json.loads(workflowDetail.execute_result)
         listBackupSql = []
         for row in listExecuteResult:
-            #获取backup_dbname
-            if row[8] == 'None':
-                continue;
-            backupDbName = row[8]
-            sequence = row[7]
-            opidTime = sequence.replace("'", "")
-            sqlTable = "select tablename from %s.$_$Inception_backup_information$_$ where opid_time='%s';" % (backupDbName, opidTime)
-            listTables = self._fetchall(sqlTable, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
-            if listTables is None or len(listTables) != 1:
-                print("Error: returned listTables more than 1.")
-
-            tableName = listTables[0][0]
-            sqlBack = "select rollback_statement from %s.%s where opid_time='%s'" % (backupDbName, tableName, opidTime)
-            listBackup = self._fetchall(sqlBack, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
-            if listBackup is not None and len(listBackup) !=0:
-                for rownum in range(len(listBackup)):
-                    listBackupSql.append(listBackup[rownum][0])
+            try:
+                #获取backup_dbname
+                if row[8] == 'None':
+                    continue
+                backupDbName = row[8]
+                sequence = row[7]
+                opidTime = sequence.replace("'", "")
+                sqlTable = "select tablename from %s.$_$Inception_backup_information$_$ where opid_time='%s';" % (backupDbName, opidTime)
+                listTables = self._fetchall(sqlTable, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
+                tableName = listTables[0][0]
+                sqlBack = "select rollback_statement from %s.%s where opid_time='%s'" % (backupDbName, tableName, opidTime)
+                listBackup = self._fetchall(sqlBack, self.inception_remote_backup_host, self.inception_remote_backup_port, self.inception_remote_backup_user, self.inception_remote_backup_password, '')
+                if listBackup is not None and len(listBackup) != 0:
+                    for rownum in range(len(listBackup)):
+                        listBackupSql.append(listBackup[rownum][0])
+            except Exception:
+                listBackupSql = listBackupSql
         return listBackupSql
 
 

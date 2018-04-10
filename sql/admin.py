@@ -66,7 +66,7 @@ admin.site.register(workflow, workflowAdmin)
 @admin.register(slave_config)
 class WorkflowAuditAdmin(admin.ModelAdmin):
     list_display = (
-    'cluster_id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
+    'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
     search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
 
 # 工作流列表
@@ -85,7 +85,7 @@ class WorkflowAuditSettingAdmin(admin.ModelAdmin):
 @admin.register(DataMaskingColumns)
 class DataMaskingColumnsAdmin(admin.ModelAdmin):
     list_display = (
-        'column_id', 'rule_type', 'active', 'cluster_id', 'cluster_name', 'table_schema', 'table_name', 'column_name', 'create_time',)
+        'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name', 'create_time',)
 
 # 脱敏规则页面定义
 @admin.register(DataMaskingRules)
@@ -98,8 +98,8 @@ class DataMaskingRulesAdmin(admin.ModelAdmin):
 class AliyunAccessKeyAdmin(admin.ModelAdmin):
     list_display = ('ak', 'secret', 'is_enable', 'remark',)
 
-# 阿里云实例配置信息
+# 阿里云集群配置信息
 @admin.register(AliyunRdsConfig)
 class AliyunRdsConfigAdmin(admin.ModelAdmin):
-    list_display = ('cluster_id', 'cluster_name', 'rds_dbinstanceid',)
+    list_display = ('cluster_name', 'rds_dbinstanceid',)
 

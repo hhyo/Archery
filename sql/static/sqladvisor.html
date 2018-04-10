@@ -76,7 +76,7 @@
                 alert("SQL内容不能为空！");
                 return result = false;
             } else if (clusterName === null || clusterName === $("#cluster_name").attr("data-placeholder")) {
-                alert("请选择实例！");
+                alert("请选择集群！");
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
                 alert("请选择数据库！");
@@ -235,7 +235,7 @@
 
             $.ajax({
                 type: "post",
-                url: "/query/",
+                url: "/explain/",
                 dataType: "json",
                 data: {
                     sql_content: 'explain ' + sqlContent,

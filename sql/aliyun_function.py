@@ -12,7 +12,6 @@ from .models import users, AliyunRdsConfig
 
 aliyun = Aliyun()
 
-
 # 获取SQL慢日志统计
 @csrf_exempt
 def slowquery_review(request):
@@ -34,7 +33,7 @@ def slowquery_review(request):
     StartTime = '%sZ' % StartTime
     EndTime = '%sZ' % EndTime
 
-    # 通过实例名称获取实例id
+    # 通过集群名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = aliyun.DescribeSlowLogs(cluster_info.rds_dbinstanceid, StartTime, EndTime, **values)
@@ -48,7 +47,7 @@ def slowquery_review(request):
     result = {"total": json.loads(slowsql)['TotalRecordCount'], "rows": SQLSlowLog,
               "PageSize": json.loads(slowsql)['PageRecordCount'], "PageNumber": json.loads(slowsql)['PageNumber']}
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return result
 
 
 # 获取SQL慢日志明细
@@ -76,7 +75,7 @@ def slowquery_review_history(request):
     StartTime = '%sT16:00Z' % StartTime
     EndTime = '%sT15:59Z' % EndTime
 
-    # 通过实例名称获取实例id
+    # 通过集群名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = aliyun.DescribeSlowLogRecords(cluster_info.rds_dbinstanceid, StartTime, EndTime, **values)
@@ -92,7 +91,7 @@ def slowquery_review_history(request):
               "PageSize": json.loads(slowsql)['PageRecordCount'], "PageNumber": json.loads(slowsql)['PageNumber']}
 
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return result
 
 
 # 问题诊断--进程列表
@@ -104,7 +103,7 @@ def process_status(request):
     if command_type is None or command_type == '':
         command_type = 'Query'
 
-    # 通过实例名称获取实例id
+    # 通过集群名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     process_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'ShowProcessList',
@@ -127,29 +126,20 @@ def create_kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     ThreadIDs = request.POST.get('ThreadIDs')
 
-    # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
-
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    if loginUserOb.is_superuser:
-        # 通过集群名称获取实例id
-        cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
-        # 调用aliyun接口获取进程数据
-        request_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'CreateKillSessionRequest',
-                                                       {"Language": "zh", "ThreadIDs": json.loads(ThreadIDs)})
+    # 通过集群名称获取关联的rds实例id
+    cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
+    # 调用aliyun接口获取进程数据
+    request_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'CreateKillSessionRequest',
+                                                   {"Language": "zh", "ThreadIDs": json.loads(ThreadIDs)})
 
-        # 提取进程列表
-        request_list = json.loads(request_info)['AttrData']
+    # 提取进程列表
+    request_list = json.loads(request_info)['AttrData']
 
-        result['data'] = request_list
+    result['data'] = request_list
 
-        # 返回查询结果
-        return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        result['status'] = 1
-        result['msg'] = '你无权操作'
-        return HttpResponse(json.dumps(result), content_type='application/json')
+    # 返回查询结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 问题诊断--终止会话
@@ -159,31 +149,22 @@ def kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     request_params = request.POST.get('request_params')
 
-    # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
-
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    if loginUserOb.is_superuser:
-        # 通过实例名称获取实例id
-        cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
-        # 调用aliyun接口获取进程数据
-        request_params = json.loads(request_params)
-        ServiceRequestParam = dict({"Language": "zh"}, **request_params)
-        kill_result = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'ConfirmKillSessionRequest',
-                                                      ServiceRequestParam)
+    # 通过集群名称获取关联的rds实例id
+    cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
+    # 调用aliyun接口获取进程数据
+    request_params = json.loads(request_params)
+    ServiceRequestParam = dict({"Language": "zh"}, **request_params)
+    kill_result = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'ConfirmKillSessionRequest',
+                                                  ServiceRequestParam)
 
-        # 获取处理结果
-        kill_result = json.loads(kill_result)['AttrData']
+    # 获取处理结果
+    kill_result = json.loads(kill_result)['AttrData']
 
-        result['data'] = kill_result
+    result['data'] = kill_result
 
-        # 返回查询结果
-        return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        result['status'] = 1
-        result['msg'] = '你无权操作'
-        return HttpResponse(json.dumps(result), content_type='application/json')
+    # 返回查询结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 问题诊断--空间列表
@@ -191,7 +172,7 @@ def kill_session(request):
 def sapce_status(request):
     cluster_name = request.POST.get('cluster_name')
 
-    # 通过实例名称获取实例id
+    # 通过集群名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     space_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'GetSpaceStatForTables',

@@ -180,7 +180,7 @@
                     title: '返回行数',
                     field: 'effect_row'
                 }, {
-                    title: '耗时',
+                    title: '耗时(秒)',
                     field: 'cost_time'
                 }],
                 onLoadSuccess: function () {
@@ -609,7 +609,7 @@
             //默认获取查询历史
             get_querylog();
 
-            //填充实例名
+            //填充集群名
             $('#cluster_name').selectpicker();
             var myObject = {};
             myObject.sql_query_cluster_name = sessionStorage.getItem('sql_query_cluster_name');

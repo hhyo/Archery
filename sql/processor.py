@@ -6,13 +6,13 @@ leftMenuBtnsCommon = (
     {'key': 'allworkflow', 'name': '查看历史工单', 'url': '/allworkflow/', 'class': 'glyphicon glyphicon-home'},
     {'key': 'submitsql', 'name': '发起SQL上线', 'url': '/submitsql/', 'class': 'glyphicon glyphicon-asterisk'},
     {'key': 'sqlquery', 'name': 'SQL在线查询', 'url': '/sqlquery/', 'class': 'glyphicon glyphicon-search'},
+    {'key': 'slowquery', 'name': 'SQL慢查日志', 'url': '/slowquery/', 'class': 'glyphicon glyphicon-align-right'},
     {'key': 'sqladvisor', 'name': 'SQL优化工具', 'url': '/sqladvisor/', 'class': 'glyphicon glyphicon-wrench'},
     {'key': 'queryapply', 'name': '查询权限管理', 'url': '/queryapplylist/', 'class': 'glyphicon glyphicon-eye-open'},
     {'key': 'workflow', 'name': '工单审核管理', 'url': '/workflow/', 'class': 'glyphicon glyphicon-shopping-cart'},
 )
 
 leftMenuBtnsAliYun = (
-    {'key': 'slowquery', 'name': 'RDS慢查日志', 'url': '/slowquery/', 'class': 'glyphicon glyphicon-align-right'},
     {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/','class': 'glyphicon glyphicon glyphicon-scissors'},
 )
 
@@ -31,7 +31,7 @@ if settings.ENABLE_LDAP:
         {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list'},
     )
 
-if settings.ENABLE_ALIYUN:
+if settings.ENABLE_ALIYUN_FUNC:
     leftMenuBtnsCommon = leftMenuBtnsCommon + leftMenuBtnsAliYun
 
 def global_info(request):

@@ -61,7 +61,7 @@ def execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
         listAllReviewMen = (workflowDetail.review_man,)
-    # 获取实例连接信息
+    # 获取集群连接信息
     masterInfo = getMasterConnStr(clusterName)
     try:
         # 执行sql
@@ -174,7 +174,7 @@ def allworkflow(request):
 def submitSql(request):
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
-       context = {'errMsg': '集群数为0，可能后端数据没有配置集群'}
+       context = {'errMsg': '请先配置主库信息'}
        return render(request, 'error.html', context)
 
     #获取所有集群名称
@@ -184,9 +184,6 @@ def submitSql(request):
     #每一个都首先获取主库地址在哪里
     for clusterName in listAllClusterName:
         listMasters = master_config.objects.filter(cluster_name=clusterName)
-        if len(listMasters) != 1:
-            context = {'errMsg': '存在两个集群名称一样的集群，请修改数据库'}
-            return render(request, 'error.html', context)
         #取出该集群的名称以及连接方式，为了后面连进去获取所有databases
         masterHost = listMasters[0].master_host
         masterPort = listMasters[0].master_port
@@ -200,7 +197,7 @@ def submitSql(request):
     loginUser = request.session.get('login_username', False)
     reviewMen = users.objects.filter(role='审核人')
     if len(reviewMen) == 0:
-       context = {'errMsg': '审核人为0，请配置审核人'}
+       context = {'errMsg': '请先配置审核人'}
        return render(request, 'error.html', context)
     listAllReviewMen = [user.username for user in reviewMen]
 
@@ -259,7 +256,7 @@ def autoreview(request):
     Workflow.status = workflowStatus
     Workflow.is_backup = isBackup
     Workflow.review_content = jsonResult
-    Workflow.cluster_name = clusterName
+    Workflow.cluster_name = master_config.objects.get(cluster_name=clusterName)
     Workflow.sql_content = sqlContent
     Workflow.execute_result = ''
     Workflow.audit_remark = ''
@@ -585,13 +582,10 @@ def charts(request):
 
 # SQL在线查询
 def sqlquery(request):
-    # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-
     # 获取所有从库集群名称
     slaves = slave_config.objects.all().order_by('cluster_name')
     if len(slaves) == 0:
-        context = {'errMsg': '从库信息为0，在线查询依赖从库，请先配置从库信息'}
+        context = {'errMsg': '请先配置从库信息'}
         return render(request, 'error.html', context)
     listAllClusterName = [slave.cluster_name for slave in slaves]
 
@@ -600,8 +594,11 @@ def sqlquery(request):
 
 # SQL慢日志
 def slowquery(request):
-    # 获取所有实例名称
-    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    # 获取所有集群主库名称
+    masters = master_config.objects.all().order_by('cluster_name')
+    if len(masters) == 0:
+        context = {'errMsg': '请先配置主库信息'}
+        return render(request, 'error.html', context)
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'slowquery', 'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
@@ -609,14 +606,14 @@ def slowquery(request):
 
 # SQL优化工具
 def sqladvisor(request):
-    # 获取所有从库集群名称
-    slaves = slave_config.objects.all().order_by('cluster_name')
-    if len(slaves) == 0:
-        context = {'errMsg': '从库信息为0，在线查询依赖从库，请先配置从库信息'}
+    # 获取所有集群主库名称
+    masters = master_config.objects.all().order_by('cluster_name')
+    if len(masters) == 0:
+        context = {'errMsg': '请先配置主库信息'}
         return render(request, 'error.html', context)
-    listAllClusterName = [slave.cluster_name for slave in slaves]
+    cluster_name_list = [master.cluster_name for master in masters]
 
-    context = {'currentMenu': 'sqladvisor', 'listAllClusterName': listAllClusterName}
+    context = {'currentMenu': 'sqladvisor', 'listAllClusterName': cluster_name_list}
     return render(request, 'sqladvisor.html', context)
 
 # 查询权限申请列表
@@ -646,7 +643,7 @@ def diagnosis_process(request):
     loginUser = request.session.get('login_username', False)
     loginUserOb = users.objects.get(username=loginUser)
 
-    # 获取所有实例名称
+    # 获取所有集群名称
     masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 
@@ -656,7 +653,7 @@ def diagnosis_process(request):
 
 # 问题诊断--空间
 def diagnosis_sapce(request):
-    # 获取所有实例名称
+    # 获取所有集群名称
     masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 

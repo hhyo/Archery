@@ -137,7 +137,7 @@ class Workflow(object):
 
             # 插入审核明细数据
             audit_detail_result = WorkflowAuditDetail()
-            audit_detail_result.audit_id = audit_id
+            audit_detail_result.audit_id = WorkflowAudit.objects.get(audit_id=audit_id)
             audit_detail_result.audit_user = audit_user
             audit_detail_result.audit_status = DirectionsOb.workflow_status['audit_success']
             audit_detail_result.audit_time = timezone.now()
@@ -158,7 +158,7 @@ class Workflow(object):
 
             # 插入审核明细数据
             audit_detail_result = WorkflowAuditDetail()
-            audit_detail_result.audit_id = audit_id
+            audit_detail_result.audit_id = WorkflowAudit.objects.get(audit_id=audit_id)
             audit_detail_result.audit_user = audit_user
             audit_detail_result.audit_status = DirectionsOb.workflow_status['audit_reject']
             audit_detail_result.audit_time = timezone.now()

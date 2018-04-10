@@ -58,9 +58,11 @@ urlpatterns = [
     url(r'^modifyqueryprivileges/$', query.modifyqueryprivileges, name='modifyqueryprivileges'),
     url(r'^query/$', query.query, name='query'),
     url(r'^querylog/$', query.querylog, name='querylog'),
+    url(r'^explain/$', query.explain, name='explain'),
+    url(r'^slowquery_review/$', query.slowquery_review, name='slowquery_review'),
+    url(r'^slowquery_review_history/$', query.slowquery_review_history, name='slowquery_review_history'),
 
-    url(r'^slowquery_review/$', aliyun_function.slowquery_review, name='slowquery_review'),
-    url(r'^slowquery_review_history/$', aliyun_function.slowquery_review_history, name='slowquery_review_history'),
+
     url(r'^process_status/$', aliyun_function.process_status, name='process_status'),
     url(r'^sapce_status/$', aliyun_function.sapce_status, name='sapce_status'),
     url(r'^create_kill_session/$', aliyun_function.create_kill_session, name='create_kill_session'),

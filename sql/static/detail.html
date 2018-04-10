@@ -297,6 +297,13 @@
             <a type='button' id="btnSubmitOtherCluster" onclick="loading(this)" class='btn btn-default'
                href="/submitothercluster/">上线其他集群</a>
         {% endif %}
+        {% if workflowDetail.status == '执行有异常' %}
+            <form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
+            </form>
+        {% endif %}
     {% endif %}
 
     <!-- 手动执行确认 -->

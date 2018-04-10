@@ -2,7 +2,7 @@
 基于inception的自动化SQL操作平台
 
 ### 开发语言和推荐环境：
-python：3.4<br/>
+python：3.4及以上<br/>
 django：1.8.17<br/>
 mysql : 5.6及以上<br/>
 linux : 64位linux操作系统均可
@@ -17,12 +17,12 @@ linux : 64位linux操作系统均可
   很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念.
 * 回滚数据展示<br/>
 * 在线查询<br/>
-  查询权限控制，基于inception解析查询语句，查询权限限制到表级
+  查询权限控制，基于inception解析查询语句，查询权限支持限制到表级<br/>
   查询权限申请、审核和管理，支持审核流程配置<br/>
   查询结果集限制、查询结果导出、表结构展示、多结果集展示<br/>
 * 动态脱敏<br/> 
   基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现动态脱敏<br/>
-* 主库集群配置
+* 主库集群配置<br/>
 * 用户权限配置<br/>
   工程师角色（engineer）与审核角色（review_man）:工程师可以发起SQL上线，在通过了inception自动审核之后，需要由人工审核点击确认才能执行SQL.<br/>
   还有一个特殊的超级管理员即可以上线、审核，又可以登录admin界面进行管理.
@@ -40,15 +40,12 @@ linux : 64位linux操作系统均可
 * archer/archer/settings.py<br/>
 
 ### 安装步骤：
+centos7一件安装脚本(可配置好除inception和SQLAdvisor之外的环境)：src/script/centos7_install.sh 
 1. 环境准备：<br/>
-(1)克隆代码到本地: git clone https://github.com/jly8866/archer.git  或  下载zip包<br/>
-(2)安装mysql 5.6实例，请注意保证mysql数据库默认字符集为utf8或utf8mb4<br/>
-(3)安装inception<br/>
+(1)克隆代码到本地: git@github.com:hhyo/archer.git  或下载zip包<br/>
+(2)安装mysql集群，请注意保证mysql数据库默认字符集为utf8或utf8mb4<br/>
+(3)安装inception，[项目地址](http://mysql-inception.github.io/inception-document/install/)<br/>
 2. 安装python3：(强烈建议使用virtualenv或venv等单独隔离环境！)<br/>
-tar -xzvf Python-3.4.1.tar.gz <br/>
-cd Python-3.4.1 <br/>
-./configure --prefix=/path/to/python3 && make && make install
-或者rpm、yum、binary等其他安装方式
 3. 安装所需相关模块：<br/>
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/<br/>
 -i变量是为了加速<br/>
@@ -65,27 +62,52 @@ self.server_version = '5.6.24-72.2-log'<br/>
 5. 创建archer本身的数据库表：<br/>
 (1)修改archer/archer/settings.py所有的地址信息,包括DATABASES和INCEPTION_XXX部分<br/>
 (2)通过model创建archer本身的数据库表, 记得先去archer数据库里CREATE DATABASE<br/>
-python3 manage.py makemigrations或python3 manage.py makemigrations sql<br/>
+python3 manage.py makemigrations sql<br/>
 python3 manage.py migrate<br/>
 执行完记得去archer数据库里看表是否被创建了出来<br/>
 6. mysql授权:<br/>
 记得登录到archer/archer/settings.py里配置的各个mysql里给用户授权<br/>
 (1)archer数据库授权<br/>
-(2)远程备份库授权<br/>
+(2)远程备份库授权，为了查询回滚语句，需要额外配置查询权限<br/>
 7. 创建admin系统root用户（该用户可以登录django admin来管理model）：<br/>
 cd archer && python3 manage.py createsuperuser<br/>
 8. 启动，有两种方式：<br/>
 (1)用django内置runserver启动服务,需要修改debug.sh里的ip和port<br/>
-    cd archer && bash debug.sh<br/>
-(2)用gunicorn启动服务，可以使用pip3 install gunicorn安装并用startup.sh启动，但需要配合nginx处理静态资源. (nginx安装这里不做示范)<br/>
-    * gunicorn的安装配置示例:
-        * pip3 install gunicorn
-	    * cat startup.sh
-            * ![image](https://github.com/jly8866/archer/raw/master/screenshots/startup.png)<br/>
-    * nginx配置示例：
-        * startup.sh里面收集静态资源的命令：python3 manage.py collectstatic -v0 --noinput会将所有install app的静态资源收集到STATIC_ROOT目录下，nginx的配置请指定该目录
-        * cat nginx.conf
-            * ![image](https://github.com/jly8866/archer/raw/master/screenshots/nginx.png)<br/>
+cd archer && bash debug.sh<br/>
+(2)用gunicorn+nginx启动服务<br/>
+    * 启动
+    cd archer && bash startup.sh<br/>
+    python3 manage.py collectstatic -v0 --noinput会将所有install app的静态资源收集到settings.py配置项STATIC_ROOT目录下，nginx的配置请指定该目录
+    * nginx配置示例
+    ```
+    server{
+        listen 9123; #监听的端口
+        server_name archer;
+        client_header_timeout 1200; #超时时间与gunicorn超时时间设置一致
+        client_body_timeout 1200;
+        proxy_read_timeout 1200;
+
+        location / {
+          proxy_pass http://127.0.0.1:8888;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /static {
+          alias /archer/static; #此处指向STATIC_ROOT目录的绝对路径，用于ngnix手机静态资源
+        }
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    } 
+    ```
 9. 创建archer系统登录用户：<br/>
 使用浏览器（推荐chrome或火狐）访问debug.sh里的地址：http://X.X.X.X:port/admin/sql/users/ ，如果未登录需要用到步骤7创建的admin系统用户来登录。<br/>
 点击右侧Add users，用户名密码自定义，至少创建一个工程师和一个审核人（步骤7创建的用户也可以登录）后续新的工程师和审核人用户请用LDAP导入sql_users表或django admin增加<br/>
@@ -101,7 +123,6 @@ cd archer && python3 manage.py createsuperuser<br/>
 13. 正式访问：<br/>
 以上步骤完毕，就可以使用步骤9创建的用户登录archer系统啦, 首页地址 http://X.X.X.X:port/<br/>
 <br/>
-如果觉得以上安装步骤还是看不懂，可以看这一篇安装步骤，感谢网友@一条大河 的贡献：https://riverdba.github.io/2017/04/15/archer-install/ <br/>
 
 ### 集成ldap
 1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆<br/>
@@ -110,24 +131,27 @@ cd archer && python3 manage.py createsuperuser<br/>
 4. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
 
 ### 集成SQLAdvisor
-1. 安装SQLAdvisor,[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
+1. 安装SQLAdvisor，[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
 2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'
-3. SQLAdvisor功能依赖从库配置，请先配置从库
 
 ### 集成rds管理
-1. 修改配置文件ENABLE_ALIYUN=True
-2. 使用浏览器访问http://X.X.X.X:port/admin/sql/aliyunaccesskey/, 添加aliyun账号的accesskey信息，重新启动服务
-3. 一键获取优化建议功能依赖SQLAdvisor模块和从库配置，请在从库配置中配置对应rds实例的连接信息，依靠集群信息进行关联
+1. 修改配置文件ENABLE_ALIYUN_FUNC=True
+2. 访问http://X.X.X.X:port/admin/sql/aliyunaccesskey/, 添加aliyun账号的accesskey信息，重新启动服务
+3. 访问http://X.X.X.X:port/admin/sql/aliyunrdsconfig/，添加实例信息
+4. 即可实现rds进程管理、慢日志管理
+
+### 慢日志管理
+1. 安装percona-toolkit（版本>3.0），以centos为例   
+    yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm 
+    yum -y install percona-toolkit.x86_64 
+2. 使用src/script/mysql_slow_query_review.sql创建慢日志收集表到archer数据库
+3. 将src/script/analysis_slow_query.sh部署到各个监控机器，注意修改配置信息
+4. 如果有阿里云RDS实例，可以在后台数据管理添加关联关系
 
 ### admin后台加固，防暴力破解
 1.patch目录下，名称为：django_1.8.17_admin_secure_archer.patch
 2.使用命令：patch  python/site-packages/django/contrib/auth/views.py django_1.8.17_admin_secure_archer.patch
 
-### 已经制作好的docker镜像：
-* 如果不想自己安装上述，可以直接使用做好的docker镜像，安装步骤：
-    1. docker run -p 80:80 -d docker.gaoxiaobang.com/prod/archer    (需要确保docker宿主机80端口能够使用)
-    2. 浏览器直接访问http://宿主机ip:80/ 即可, 初始用户名密码为root/root
-* docker镜像制作感谢@浩气冲天 协助
 
 ### 系统展示截图：
 1. 工单展示页：<br/>
@@ -145,28 +169,28 @@ cd archer && python3 manage.py createsuperuser<br/>
 7. pt-osc进度条，以及中止pt-osc进程按钮：<br/>
 ![image](https://raw.githubusercontent.com/johnliu2008/archer/master/screenshots/osc_progress.png)<br/>
 8. SQL在线查询、自动补全：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/query.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/query.png)<br/>
 9. 动态脱敏：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamasking.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamasking.png)<br/>
 10. SQL在线查询日志：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/querylog.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/querylog.png)<br/>
 11. SQL在线查询权限申请：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/applyforprivileges.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/applyforprivileges.png)<br/>
 12. 阿里云RDS慢查日志统计：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/slowquery.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/slowquery.png)<br/>
 13. 阿里云RDS慢查日志明细、一键优化：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/slowquerylog.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/slowquerylog.png)<br/>
 14. 阿里云RDS进程管理、表空间查询：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/process.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/process.png)<br/>
 15. SQLAdvisor：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/sqladvisor.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/sqladvisor.png)<br/>
 15. 后台数据管理：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/admin.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/admin.png)<br/>
 15. 权限审核配置：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/workflowconfig.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/workflowconfig.png)<br/>
 15. 脱敏规则、字段配置：<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamaskingrules.png)<br/>
-![image](https://github.com/hhyo/archer/blob/develop/screenshots/datamaskingcolumns.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingrules.png)<br/>
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingcolumns.png)<br/>
 
 ### 联系方式：
 QQ群：524233225
