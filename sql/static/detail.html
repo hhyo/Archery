@@ -348,6 +348,17 @@
                 }, {
                     title: '审核状态',
                     field: 'errlevel',
+                    formatter: function (value, row, index) {
+                        if (value === 0) {
+                            return 'pass';
+                        }
+                        else if (value === 1) {
+                            return "<strong><font color=\"blue\">warning</font></strong>"
+                        }
+                        else if (value === 2) {
+                            return "<strong><font color=\"red\">error</font></strong>\n"
+                        }
+                    },
                     sortable: true
                 }, {
                     title: '审核结果',
