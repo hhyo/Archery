@@ -40,7 +40,7 @@ linux : 64位linux操作系统均可
 * archer/archer/settings.py<br/>
 
 ### 安装步骤：
-centos7一件安装脚本(可配置好除inception和SQLAdvisor之外的环境)：src/script/centos7_install.sh 
+centos7一键安装脚本(可配置好除inception和SQLAdvisor之外的环境)：src/script/centos7_install.sh 
 1. 环境准备：<br/>
 (1)克隆代码到本地: git@github.com:hhyo/archer.git  或下载zip包<br/>
 (2)安装mysql集群，请注意保证mysql数据库默认字符集为utf8或utf8mb4<br/>
@@ -77,7 +77,7 @@ cd archer && bash debug.sh<br/>
 (2)用gunicorn+nginx启动服务<br/>
     * 启动
     cd archer && bash startup.sh<br/>
-    python3 manage.py collectstatic -v0 --noinput会将所有install app的静态资源收集到settings.py配置项STATIC_ROOT目录下，nginx的配置请指定该目录
+    nginx的配置请指定settings.py配置项STATIC_ROOT
     * nginx配置示例
     ```
     server{
@@ -96,7 +96,7 @@ cd archer && bash debug.sh<br/>
         }
 
         location /static {
-          alias /archer/static; #此处指向STATIC_ROOT目录的绝对路径，用于ngnix手机静态资源
+          alias /archer/static; #此处指向STATIC_ROOT目录的绝对路径，用于ngnix收集静态资源
         }
 
         error_page 404 /404.html;
