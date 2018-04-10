@@ -225,6 +225,9 @@
                             aria-hidden="true">×</span></button>
                     <h4 class="modal-title text-danger">确定要手工执行吗？</h4>
                 </div>
+                <div class="modal-body">
+                    <p>手工执行将会跳过inception直接执行sql，无法生成备份，请谨慎操作！</p>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
                     <form action="/execute_skipinc/" method="post" style="display:inline-block;">
@@ -350,13 +353,13 @@
                     field: 'errlevel',
                     formatter: function (value, row, index) {
                         if (value === 0) {
-                            return 'pass';
+                            return 'pass'
                         }
                         else if (value === 1) {
-                            return "<strong><font color=\"blue\">warning</font></strong>"
+                            return 'warning'
                         }
                         else if (value === 2) {
-                            return "<strong><font color=\"red\">error</font></strong>\n"
+                            return 'error'
                         }
                     },
                     sortable: true
@@ -380,6 +383,16 @@
                     field: 'stagestatus',
                     sortable: true
                 }],
+                rowStyle: function (row, index) {
+                    var style = "";
+                    if (row.errlevel === 1) {
+                        style = 'warning';
+                    }
+                    else if (row.errlevel === 2) {
+                        style = 'danger';
+                    }
+                    return {classes: style}
+                },
                 onLoadSuccess: function () {
                 },
                 onLoadError: function () {
