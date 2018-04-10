@@ -31,7 +31,7 @@ if settings.ENABLE_LDAP:
         {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list'},
     )
 
-if settings.ENABLE_ALIYUN_FUNC:
+if settings.ENABLE_ALIYUN:
     leftMenuBtnsCommon = leftMenuBtnsCommon + leftMenuBtnsAliYun
 
 def global_info(request):
