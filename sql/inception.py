@@ -239,7 +239,7 @@ class InceptionDao(object):
         sqlStr = "inception stop alter '%s'" % sqlSHA1
         result = self._fetchall(sqlStr, self.inception_host, self.inception_port, '', '', '')
         if result is not None:
-            optResult = {"status":0, "msg":"已成功停止OSC进程，请注意清理触发器和临时表", "data":""}
+            optResult = {"status":0, "msg":"已成功停止OSC进程，请注意清理触发器和临时表，先清理触发器再删除临时表", "data":""}
         else:
             optResult = {"status":1, "msg":"ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data":""}
         return optResult
