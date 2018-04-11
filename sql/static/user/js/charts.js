@@ -1,110 +1,116 @@
-var monthChart = null; 		// 定义全局变量,月工单数量
-var personChart = null; 	// 定义全局变量,个人工单数量
+var personDataSummary = null;
+var personCorlor = [
+'rgba(255, 99, 132, 0.9)',
+'rgba(54, 162, 235, 0.8)',
+'rgba(255, 206, 86, 0.7)',
+'rgba(75, 192, 192, 0.8)',
+'rgba(153, 102, 255, 0.9)']
 
 $(document).ready(function() {
-  var isCharts = window.location.pathname.indexOf("charts");
-  if (isCharts != -1) {
-    monthChart = new Highcharts.Chart({
-      chart: {
-        renderTo: 'container-month',
-        type: 'spline',
-        events: {
-          load: getMonthWork // 图表加载完毕后执行的回调函数
-        }
-      },
-      title: {
-        text: '近三个月内工单数量'
-      },
-      xAxis: {},
-      yAxis: {
-        minPadding: 0.2,
-        maxPadding: 0.2,
-        title: {
-          text: '工单数量',
-          margin: 80
-        }
-      },
-      series: [{
-        name: '日期（当日无工单则不显示）',
-        data: []
-      }]
-    });
-
-    personChart = new Highcharts.Chart({
-      chart: {
-        renderTo: 'container-engineer',
-        type: 'column',
-        events: {
-          load: getPersonWork // 图表加载完毕后执行的回调函数
-        }
-      },
-      title: {
-        text: '近三个月内个人工单数量龙虎榜TOP 50'
-      },
-      xAxis: {},
-      yAxis: {
-        minPadding: 0.2,
-        maxPadding: 0.2,
-        title: {
-          text: '工单数量',
-          margin: 80
-        }
-      },
-      series: [{
-        name: '工程师',
-        data: []
-      }]
-    });
-  }
+    var isCharts = window.location.pathname.indexOf("charts");
+        if (isCharts != -1) {
+        getPersonWork()
+        getMonthWork()
+    }
 });
+
+function getPersonWork(){
+    $.ajax({
+            type: 'get',
+            url: '/getPersonCharts/',
+            success: function(data) {
+                var data_person = new Array();
+                var lb_person = new Array();
+                var bg_corlor = new Array()
+                for (var i=0; i<data.length; i++) {
+                    lb_person.push(data[i][0]);
+                    data_person.push(data[i][1]);
+                    bg_corlor.push(personCorlor[i%5])
+                }
+
+                personDataSummary = {
+                labels : lb_person,
+                datasets : [
+                     {
+                        label: '近三个月内个人工单数量龙虎榜TOP 50',
+                        data : data_person,
+                        backgroundColor:bg_corlor,
+                     }
+                ]}
+                var ctx = document.getElementById("summaryWorkflowByPerson").getContext("2d");
+                var myBar = new Chart.Bar(ctx, {data:personDataSummary, options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }});
+            },
+            cache: false,
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+}
+
+
+
 
 function getMonthWork() {
 	$.ajax({
 		type: 'get',
     	url: '/getMonthCharts/',
     	success: function(data) {
-      		var series = monthChart.series[0],
-        	shift = series.data.length > 1000; // 当数据点数量超过 20 个，则指定删除第一个点
+            var data_month = new Array();
+            var lb_month = new Array();
+            for (var i=0; i<data.length; i++) {
+                lb_month.push(data[i][0]);
+                data_month.push(data[i][1]);
+            }
 
-      		// 新增点操作
-      		//具体的参数详见：https://api.hcharts.cn/highcharts#Series.addPoint
+            console.log(lb_month)
+            console.log(data_month)
 
-			var category = new Array();
-      		for(var i=0; i<data.length; i++){
-				monthChart.series[0].addPoint([data[i][0],data[i][1]], true, shift);
-				category.push(data[i][0]);
-			}
-			monthChart.xAxis[0].setCategories(category);
-	  		// 一秒后继续调用本函数
-	  		// setTimeout(getMonthWork, 1000);
-		},
-		cache: false,
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-            alert(errorThrown);
-        }
-    });
-}
+        var ctx = document.getElementById("summaryWorkflowByMonth").getContext("2d");
+        var myChart = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: lb_month,
+                                        datasets: [{
+                                            label: '近三个月内工单数据量',
+                                            data: data_month,
+                                            backgroundColor: [
+                                                'rgba(255, 99, 132, 0.2)',
+                                                'rgba(54, 162, 235, 0.2)',
+                                                'rgba(255, 206, 86, 0.2)',
+                                                'rgba(75, 192, 192, 0.2)',
+                                                'rgba(153, 102, 255, 0.2)',
+                                                'rgba(255, 159, 64, 0.2)'
+                                            ],
+                                            borderColor: [
+                                                'rgba(255,99,132,1)',
+                                                'rgba(54, 162, 235, 1)',
+                                                'rgba(255, 206, 86, 1)',
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(153, 102, 255, 1)',
+                                                'rgba(255, 159, 64, 1)'
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        scales: {
+                                            yAxes: [{
+                                                ticks: {
+                                                    beginAtZero:true
+                                                }
+                                            }]
+                                        }
+                                    }
+                                });
 
-
-function getPersonWork() {
-	$.ajax({
-		type: 'get',
-    	url: '/getPersonCharts/',
-    	success: function(data) {
-      		var series = personChart.series[0],
-        	shift = series.data.length > 1000; // 当数据点数量超过 20 个，则指定删除第一个点
-
-      		// 新增点操作
-      		//具体的参数详见：https://api.hcharts.cn/highcharts#Series.addPoint
-
-			var category = new Array();
-      		for(var i=0; i<data.length; i++){
-				personChart.series[0].addPoint([data[i][0],data[i][1]], true, shift);
-				category.push(data[i][0]);
-			}
-			personChart.xAxis[0].setCategories(category);
-	  		// 一秒后继续调用本函数
-	  		// setTimeout(getMonthWork, 1000);
 		},
 		cache: false,
 		error: function(XMLHttpRequest, textStatus, errorThrown) {

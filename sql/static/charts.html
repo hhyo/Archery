@@ -1,25 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<div class="container-fluid">
-<div class="row clearfix">
-	<div class="col-md-12 column">
-		<div id="container-month" style="min-width:800px;height:400px">
-			
-		</div>
-	</div>
-	<div class="col-md-12 column">
-		<div id="container-engineer" style="min-width:800px;height:400px">
-			
-		</div>
-	</div>
-</div>
+<div class="container-fluid col-lg-12 cl" >
+<canvas id="summaryWorkflowByMonth" height="88px" ></canvas>
+    <br>
+<canvas id="summaryWorkflowByPerson" height="88px"></canvas>
 </div>
 {% endblock content %}
+
 {% block js %}
     {% load staticfiles %}
-    <script src="{% static 'highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'highcharts/Chart.min.js' %}"></script>
     <script src="{% static 'user/js/charts.js' %}"></script>
 {% endblock %}
+
 
