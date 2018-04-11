@@ -26,7 +26,7 @@ from .models import users, slave_config, workflow
 from sql.sendmail import MailSender
 import logging
 from .workflow import Workflow
-from .query import query_audit_call_back
+from .query import query_audit_call_back, DateEncoder
 
 logger = logging.getLogger('default')
 mailSender = MailSender()
@@ -99,7 +99,7 @@ def authenticateEntry(request):
         ldap = LDAPBackend()
         user = ldap.authenticate(username=strUsername, password=strPassword)
         if strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (
-            datetime.datetime.now() - login_failure_counter[strUsername][
+                datetime.datetime.now() - login_failure_counter[strUsername][
             "last_failure_time"]).seconds <= lockTimeThreshold:
             log_mail_record('user:{},login failed, account locking...'.format(strUsername))
             result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
@@ -138,49 +138,53 @@ def sqlworkflow(request):
 
     # 全部工单里面包含搜索条件,待审核前置
     if navStatus == 'all':
-        if loginUserOb.is_superuser == 1 :
+        if loginUserOb.is_superuser == 1:
             listWorkflow = workflow.objects.filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')[
-                                 offset:limit]
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                                                            "is_backup", "create_time", "cluster_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
         else:
             listWorkflow = workflow.objects.filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')[offset:limit]
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)
+            ).filter(
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                                                            "is_backup", "create_time", "cluster_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
+                Q(engineer__contains=search) | Q(workflow_name__contains=search)
+            ).count()
     elif navStatus in Const.workflowStatus.keys():
         if loginUserOb.is_superuser == 1:
-            listWorkflow = workflow.objects.filter(status=Const.workflowStatus[navStatus]).order_by('-create_time')[
-                           offset:limit]
+            listWorkflow = workflow.objects.filter(
+                status=Const.workflowStatus[navStatus]
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                                                            "is_backup", "create_time", "cluster_name")
             listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         else:
-            listWorkflow = workflow.objects.filter(status=Const.workflowStatus[navStatus]).filter(
-                Q(engineer=loginUser) | Q(
-                    review_man__contains=loginUser)).order_by('-create_time')[
-                           offset:limit]
-            listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).filter(
-                Q(engineer=loginUser) | Q(
-                    review_man__contains=loginUser)).count()
+            listWorkflow = workflow.objects.filter(
+                status=Const.workflowStatus[navStatus]
+            ).filter(
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                                                            "is_backup", "create_time", "cluster_name")
+            listWorkflowCount = workflow.objects.filter(
+                status=Const.workflowStatus[navStatus]
+            ).filter(
+                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).count()
     else:
         context = {'errMsg': '传入的navStatus参数有误！'}
         return render(request, 'error.html', context)
 
     # QuerySet 序列化
-    listWorkflow = serializers.serialize("json", listWorkflow, fields=("id", "workflow_name", "engineer", "status",
-                                                                       "is_backup", "create_time", "cluster_name",
-                                                                       "group_name"))
-    listWorkflow = json.loads(listWorkflow)
-    list = []
-    for i in range(len(listWorkflow)):
-        listWorkflow[i]['fields']['id'] = listWorkflow[i]['pk']
-        list.append(listWorkflow[i]['fields'])
+    rows = [row for row in listWorkflow]
 
-    result = {"total": listWorkflowCount, "rows": list}
+    result = {"total": listWorkflowCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=DateEncoder), content_type='application/json')
+
 
 #提交SQL给inception进行自动审核
 @csrf_exempt
@@ -191,7 +195,7 @@ def simplecheck(request):
     else:
         sqlContent = request.POST['sql_content']
         clusterName = request.POST['cluster_name']
-     
+
     finalResult = {'status':0, 'msg':'ok', 'data':{}}
     #服务器端参数验证
     if sqlContent is None or clusterName is None:

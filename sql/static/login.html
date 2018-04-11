@@ -66,5 +66,10 @@
 	<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
 	<script src="{% static 'user/js/login.js' %}"></script>
 </body>
-
+<script>
+    <!-- 退出登录后清空sessionStorage -->
+    $(document).ready(function () {
+        sessionStorage.clear();
+    })
+</script>
 </html>

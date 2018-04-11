@@ -241,7 +241,7 @@
                     sql_content: 'explain ' + sqlContent,
                     cluster_name: clusterName,
                     db_name: dbName,
-                    limit_num:100
+                    limit_num: 100
                 },
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
@@ -272,6 +272,7 @@
                                 data: result['rows'],
                                 columns: columns,
                                 showColumns: true,
+                                showToggle: true,
                                 striped: true,
                                 pagination: true,
                                 pageSize: 100,
