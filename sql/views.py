@@ -305,7 +305,7 @@ def detail(request, workflowId):
     rows = []
     for row_index, row_item in enumerate(listContent):
         row = {}
-        row['ID'] = row_item[0]
+        row['ID'] = row_index+1
         row['stage'] = row_item[1]
         row['errlevel'] = row_item[2]
         row['stagestatus'] = row_item[3]
