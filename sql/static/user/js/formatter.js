@@ -52,6 +52,9 @@ function sqlworkflowStatus_formatter(value) {
     else if (value === sqlworkflowStatus.exception) {
         return "<span class=\"label label-danger\">" + sqlworkflowStatus.exception + "</span>"
     }
+    else {
+        return "<span class=\"label label-danger\">" + '未知状态' + "</span>"
+    }
 }
 
 function workflow_type_formatter(value) {
@@ -72,5 +75,8 @@ function workflow_status_formatter(value) {
     }
     else if (value === workflow_status.audit_abort) {
         return "<span class='label label-default'>" + workflow_status.audit_abort_display + " </span>"
+    }
+    else {
+        return "<span class=\"label label-danger\">" + '未知状态' + "</span>"
     }
 }
