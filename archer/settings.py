@@ -55,6 +55,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'sql.check_login_middleware.CheckLoginMiddleware',
+    'sql.exception_logging_middleware.ExceptionLoggingMiddleware',
 )
 
 ROOT_URLCONF = 'archer.urls'
@@ -207,6 +208,16 @@ LOGGING = {
         'default': {  # default日志，存放于log中
             'handlers': ['default'],
             'level': 'DEBUG',
+        },
+        'django.db': {  # 打印SQL语句到console，方便开发
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django.request': {  # 打印SQL语句到console，方便开发
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志打印到console
             'handlers': ['ldap'],
