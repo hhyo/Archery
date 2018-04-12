@@ -20,11 +20,6 @@ RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-de
     && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
     && yum -y install Percona-Server-devel-56.x86_64  Percona-Server-shared-56.x86_64  Percona-Server-client-56.x86_64 \ 
     && git clone https://github.com/Meituan-Dianping/SQLAdvisor.git \
-    && cd /opt \
-    && mv /opt/src/SQLAdvisor-master.zip /opt \
-    && unzip SQLAdvisor-master.zip \
-    && rm -rf SQLAdvisor-master.zip \
-    && mv SQLAdvisor-master SQLAdvisor \
     && cd /opt/SQLAdvisor/ \
     && yum -y install make \
     && cmake -DBUILD_CONFIG=mysql_release -DCMAKE_BUILD_TYPE=debug -DCMAKE_INSTALL_PREFIX=/usr/local/sqlparser ./ \
