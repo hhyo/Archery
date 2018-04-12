@@ -39,7 +39,11 @@ linux : 64位linux操作系统均可
 ### 主要配置文件：
 * archer/archer/settings.py<br/>
 
-### 安装步骤：
+### docker部署：
+
+
+
+### 手动安装步骤：
 centos7一键安装脚本(可配置好除inception和SQLAdvisor之外的环境)：src/script/centos7_install.sh 
 1. 环境准备：<br/>
 (1)克隆代码到本地: git@github.com:hhyo/archer.git  或下载zip包<br/>
@@ -49,6 +53,7 @@ centos7一键安装脚本(可配置好除inception和SQLAdvisor之外的环境)�
 3. 安装所需相关模块：<br/>
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/<br/>
 -i变量是为了加速<br/>
+centos安装ladp报错需要执行yum install openldap-devel<br/>
 4. 给python3安装MySQLdb模块:<br/>
 记得确保settings.py里有如下两行：<br/>
 import pymysql<br/>
