@@ -84,7 +84,7 @@ SQLADVISOR ='/opt/SQLAdvisor/sqladvisor/sqladvisor'
 - 指定配置文件和映射端口启动
 ```
 docker run --name archer -v 
-/etc/archer/settings.py:/opt/archer/archer/settings.py  -p 9123:9123 -d registry.cn-hangzhou.aliyuncs.com/lihuanhuan/arche
+/etc/archer/settings.py:/opt/archer/archer/settings.py  -p 9123:9123 -d registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer
 ```
 - 进入容器，初始化数据库，后续升级可走增量变动脚本
 ```
