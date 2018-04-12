@@ -39,4 +39,4 @@ ENV LC_ALL zh_CN.utf8
 EXPOSE 9123
 
 #start service
-ENTRYPOINT source /opt/venv4archer/bin/activate && bash /opt/archer/startup.sh && bash
+ENTRYPOINT source /opt/venv4archer/bin/activate && bash /opt/archer/src/docker/startup.sh && bash
