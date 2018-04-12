@@ -126,9 +126,10 @@ cd archer && bash debug.sh<br/>
 
 ### 集成ldap
 1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆<br/>
-2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
-3. centos需要执行yum install openldap-devel<br/>
-4. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
+2. pip3 install django_auth_ldap <br/>
+3. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释<br/>
+4. centos需要执行yum install openldap-devel<br/>
+5. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改<br/>
 
 ### 集成SQLAdvisor
 1. 安装SQLAdvisor，[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
