@@ -90,7 +90,7 @@ docker run --name archer -v
 ```
 docker exec -ti archer /bin/bash
 cd /opt/archer
-source venv4archer/bin/activate
+source /opt/venv4archer/bin/activate
 # 初始化数据库
 python3 manage.py makemigrations sql
 python3 manage.py migrate
