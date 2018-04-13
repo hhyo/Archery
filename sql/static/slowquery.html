@@ -136,7 +136,8 @@
                 url: "/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name option:selected").text()
+                    cluster_name: $("#cluster_name option:selected").text(),
+                    is_master: true
                 },
                 complete: function () {
                 },
