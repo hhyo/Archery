@@ -1,25 +1,26 @@
 CREATE TABLE `mysql_slow_query_review` (
   `checksum` bigint(20) unsigned NOT NULL,
-  `fingerprint` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sample` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fingerprint` longtext NOT NULL,
+  `sample` longtext NOT NULL,
   `first_seen` datetime(6) DEFAULT NULL,
   `last_seen` datetime(6) DEFAULT NULL,
-  `reviewed_by` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reviewed_by` varchar(20) DEFAULT NULL,
   `reviewed_on` datetime(6) DEFAULT NULL,
-  `comments` longtext COLLATE utf8mb4_unicode_ci,
+  `comments` longtext,
+  `reviewed_status` varchar(24) DEFAULT NULL,
   PRIMARY KEY (`checksum`),
   KEY `idx_last_seen` (`last_seen`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `mysql_slow_query_review_history` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `hostname_max` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `client_max` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_max` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `db_max` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `bytes_max` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `hostname_max` varchar(64) NOT NULL,
+  `client_max` varchar(64) DEFAULT NULL,
+  `user_max` varchar(64) NOT NULL,
+  `db_max` varchar(64) DEFAULT NULL,
+  `bytes_max` varchar(64) DEFAULT NULL,
   `checksum` bigint(20) unsigned NOT NULL,
-  `sample` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sample` longtext NOT NULL,
   `ts_min` datetime(6) NOT NULL,
   `ts_max` datetime(6) NOT NULL,
   `ts_cnt` double DEFAULT NULL,
@@ -112,4 +113,4 @@ CREATE TABLE `mysql_slow_query_review_history` (
   PRIMARY KEY (`id`),
   KEY `idx_hostname_max_ts_min` (`hostname_max`,`ts_min`),
   KEY `idx_checksum` (`checksum`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
