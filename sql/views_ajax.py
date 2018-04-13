@@ -6,6 +6,8 @@ import datetime
 import multiprocessing
 
 import subprocess
+
+from django.contrib.auth import authenticate, login
 from django.db.models import Q
 from django.db import transaction
 from django.conf import settings
@@ -112,6 +114,10 @@ def authenticateEntry(request):
     result = loginAuthenticate(strUsername, strPassword)
     if result['status'] == 0:
         request.session['login_username'] = strUsername
+        # 登录管理后台，避免二次登录
+        user = authenticate(username=strUsername, password=strPassword)
+        if user:
+            login(request, user)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
