@@ -39,6 +39,7 @@ def global_info(request):
     loginUser = request.session.get('login_username', None)
     if loginUser is not None:
         user = users.objects.get(username=loginUser)
+        UserDisplay = user.display
         if user.is_superuser:
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsSuper + leftMenuBtnsDoc
         else:
@@ -49,4 +50,5 @@ def global_info(request):
     return {
         'loginUser': loginUser,
         'leftMenuBtns': leftMenuBtns,
+        'UserDisplay': UserDisplay
     }
