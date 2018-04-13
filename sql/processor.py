@@ -46,6 +46,7 @@ def global_info(request):
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsDoc
     else:
         leftMenuBtns = ()
+        UserDisplay = ''
 
     return {
         'loginUser': loginUser,
