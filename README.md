@@ -40,67 +40,9 @@ linux : 64位linux操作系统均可
 * archer/archer/settings.py<br/>
 
 ### 采取docker部署：
-#### inception部署
-[项目地址](https://github.com/hhyo/inception)
-- 自定义配置文件，参考配置（inc.cnf）
-```
-[inception]
-general_log=1
-general_log_file=inception.log
-port=6669 
-socket=/tmp/inc.socket
-character-set-client-handshake=0
-character-set-server=utf8
-inception_remote_system_password=root #inception备份库配置信息
-inception_remote_system_user=wzf1
-inception_remote_backup_port=3306
-inception_remote_backup_host=127.0.0.1
-inception_support_charset=utf8mb4
-inception_enable_nullable=0
-inception_check_primary_key=1
-inception_check_column_comment=1
-inception_check_table_comment=1
-inception_osc_min_table_size=1
-inception_osc_bin_dir=/data/temp
-inception_osc_chunk_time=0.1
-inception_enable_blob_type=1
-inception_check_column_default_value=1
-```
-- 指定配置文件和映射端口启动
-```
-docker run --name inception -v /etc/inc.cnf:/etc/inc.cnf  -p 6669:6669 -d registry.cn-hangzhou.aliyuncs.com/lihuanhuan/inception
-```
-- 访问
-```
-mysql -hxxxx -P6669
-```
-#### archer部署
-- 下载settings.py文件，替换相关配置项，其中docker已经包含SQLADVISOR，请将SQLADVISOR配置项修改为
-
-```
-SQLADVISOR ='/opt/SQLAdvisor/sqladvisor/sqladvisor'
-```
-
-- 指定配置文件和映射端口启动
-```
-docker run --name archer -v 
-/etc/archer/settings.py:/opt/archer/archer/settings.py  -p 9123:9123 -d registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer
-```
-- 进入容器，初始化数据库，后续升级可走增量变动脚本
-```
-docker exec -ti archer /bin/bash
-cd /opt/archer
-source /opt/venv4archer/bin/activate
-# 初始化数据库
-python3 manage.py makemigrations sql
-python3 manage.py migrate
-# 创建管理员账号
-python3 manage.py createsuperuser
-```
-- 访问
-```
-http://xxxx:9123/
-```
+* 如果不想自己安装上述，可以直接使用做好的docker镜像，参考wiki：
+    * inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
+    * archer镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.38.XtXtLh&repoId=142147
 
 ### 手动安装步骤：
 centos7一键安装脚本：克隆代码到本地后执行`bash src/script/centos7_install.sh`，可配置好除inception和SQLAdvisor之外的环境
@@ -152,7 +94,7 @@ cd archer && bash debug.sh<br/>
         proxy_read_timeout 1200;
 
         location / {
-          proxy_pass http://127.0.0.1:8888;
+          proxy_pass http://127.0.0.1:8000;
           proxy_set_header Host $host;
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
