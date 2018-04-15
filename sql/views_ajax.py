@@ -108,6 +108,10 @@ def authenticateEntry(request):
             return HttpResponse(json.dumps(result), content_type='application/json')
         if user and user.is_active:
             request.session['login_username'] = strUsername
+            # 登录管理后台，避免二次登录
+            user = authenticate(username=strUsername, password=strPassword)
+            if user:
+                login(request, user)
             result = {'status': 0, 'msg': 'ok', 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
 
