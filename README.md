@@ -9,7 +9,7 @@
 ### 主要功能
 * 自动审核  
   发起SQL上线，工单提交，由inception自动审核
-* 人工审核 
+* 人工审核  
   inception自动审核通过的工单由DBA人工审核、审核通过自动执行SQL  
   为什么要有人工审核？  
   这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关  
@@ -39,7 +39,8 @@
 ### 采取docker部署
 * docker镜像，参考wiki：
     * inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
-    * archer镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.38.XtXtLh&repoId=142147
+    * archer镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.38.XtXtLh&repoId=142147  
+    archer镜像分为两个版本，latest是对应github分支，lihuanhuan是对应master分支，两个分支功能不同，请自行选择
 
 ### 一键安装脚本
 * 可快速安装好archer环境，但inception还需自行安装  
@@ -131,10 +132,10 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 
 #### 集成阿里云rds管理  
 1. 修改配置文件ENABLE_ALIYUN=True  
-2. 在【后台数据管理】-【阿里云认证信息】页面，添加aliyun账号的accesskey信息，重新启动服务  
+2. 在【后台数据管理】-【阿里云认证信息】页面，添加阿里云账号的accesskey信息，重新启动服务  
 3. 在【后台数据管理】-【阿里云rds配置】页面，添加实例信息，即可实现对阿里云rds的进程管理、慢日志管理    
 
-###部分功能使用说明
+### 部分功能使用说明
 1. 用户角色配置  
   在【后台数据管理】-【用户配置】页面管理用户，或者使用LADP导入  
   工程师角色（engineer）与审核角色（review_man），工程师可以发起SQL上线，审核人进行审核，超级管理员可以登录admin界面进行管理  
