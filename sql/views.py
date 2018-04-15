@@ -172,8 +172,7 @@ def allworkflow(request):
 def submitSql(request):
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
-       context = {'errMsg': '请先配置主库信息'}
-       return render(request, 'error.html', context)
+        return HttpResponseRedirect('/admin/sql/master_config/add/')
 
     #获取所有集群名称
     listAllClusterName = [master.cluster_name for master in masters]
@@ -194,9 +193,6 @@ def submitSql(request):
     #获取所有审核人
     loginUser = request.session.get('login_username', False)
     reviewMen = users.objects.filter(role='审核人')
-    if len(reviewMen) == 0:
-       context = {'errMsg': '请先配置审核人'}
-       return render(request, 'error.html', context)
     listAllReviewMen = [user.username for user in reviewMen]
 
     context = {'currentMenu':'submitsql', 'dictAllClusterDb':dictAllClusterDb, 'reviewMen':reviewMen}
@@ -618,8 +614,7 @@ def sqlquery(request):
     # 获取所有从库集群名称
     slaves = slave_config.objects.all().order_by('cluster_name')
     if len(slaves) == 0:
-        context = {'errMsg': '请先配置从库信息'}
-        return render(request, 'error.html', context)
+        return HttpResponseRedirect('/admin/sql/slave_config/add/')
     listAllClusterName = [slave.cluster_name for slave in slaves]
 
     context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
@@ -630,8 +625,7 @@ def slowquery(request):
     # 获取所有集群主库名称
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
-        context = {'errMsg': '请先配置主库信息'}
-        return render(request, 'error.html', context)
+        return HttpResponseRedirect('/admin/sql/master_config/add/')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'slowquery', 'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
@@ -642,8 +636,7 @@ def sqladvisor(request):
     # 获取所有集群主库名称
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
-        context = {'errMsg': '请先配置主库信息'}
-        return render(request, 'error.html', context)
+        return HttpResponseRedirect('/admin/sql/master_config/add/')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'sqladvisor', 'listAllClusterName': cluster_name_list}

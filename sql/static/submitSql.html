@@ -7,7 +7,7 @@
             <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
                 {% csrf_token %}
                 <input type="hidden" id="workflowid" name="workflowid"/>
-                <div class="col-md-8 column">
+                <div class="col-md-9 column">
                     <pre id="sql_content_editor" style="min-height:400px"></pre>
                 </div>
                 <div style="display: none" class="col-md-8 column">
@@ -16,7 +16,7 @@
                               required></textarea>
                 </div>
 
-                <div class="col-md-4 column">
+                <div class="col-md-3 column">
                     <div class="form-group">
                         <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
                     </div>
@@ -49,6 +49,7 @@
                             <option value="否">否</option>
                         </select>
                     </div>
+                    <!--审核人-->
                     <div class="form-group">
                         <select id="review_man" name="review_man"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人"
@@ -59,41 +60,18 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <!--增加副审核人选项-->
+                    <!--增加副审核人-->
                     <div class="form-group">
-                        <div class="panel-group" id="accordion">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h4 class="panel-title">
-                                        <a data-toggle="collapse"
-                                           data-parent="#accordion"
-                                           href="#collapseOne">
-                                            <i class="glyphicon-plus
-                                        glyphicon"></i>
-                                            增加副审核人（可选)
-                                        </a>
-                                    </h4>
-                                </div>
-                                <div id="collapseOne" class="panel-collapse
-                            collapse">
-                                    <div class="panel-body" style="margin-left:
-                                25px">
-                                        {% for man in reviewMen %}
-                                            <div class="radio" id="{{ man }}">
-                                                <input type="radio" id="radio1"
-                                                       name="sub_review_man" value="{{ man }}"/>
-                                                <label for="radio1"> {{ man }}
-                                                </label>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <select id="sub_review_man" name="sub_review_man"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-name="副审核人"
+                                data-placeholder="请选择副审核人:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择副审核人:</option>
+                        </select>
                     </div>
+                    <!--button-->
                     <div class="form-group">
                         <input type="button" id="btn-autoreview" class="btn btn-danger btn-lg" value="SQL检测"/>
-                        <button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>
+{#                        <button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
                         <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                     </div>
                 </div>
