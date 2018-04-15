@@ -7,27 +7,27 @@
     mysql : 5.6及以上  
 
 ### 主要功能
-* 自动审核：  
-  发起SQL上线，工单提交，由inception自动审核，审核通过后再由审核人进行人工审核执行
-* 人工审核：  
-  工单DBA人工审核、审核通过自动执行SQL.  
+* 自动审核  
+  发起SQL上线，工单提交，由inception自动审核
+* 人工审核 
+  inception自动审核通过的工单由DBA人工审核、审核通过自动执行SQL  
   为什么要有人工审核？  
-  这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关.  
-  很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念.
-* 回滚数据展示
+  这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关  
+  很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念
+* 回滚数据展示  
   工单内可展示回滚语句，支持一键提交回滚工单
 * MySQL查询  
   库、表、关键字自动补全  
   查询结果集限制、查询结果导出、表结构展示、多结果集展示  
 * MySQL查询权限管理  
   基于inception解析查询语句，查询权限支持限制到表级  
-  查询权限申请、审核和管理，支持审核流程配置  
+  查询权限申请、审核和管理，支持审核流程配置，多级审核  
 * MySQL查询动态脱敏   
-  基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现动态脱敏  
+  基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现敏感数据动态脱敏  
 * pt-osc执行  
   支持pt-osc执行进度展示，并且可以点击中止pt-osc进程  
 * 邮件通知  
-  可配置邮件提醒，上线申请、审核结果通知
+  可配置邮件提醒，对上线申请、审核结果进行通知
 
 ### 设计规范
 * 合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。  
@@ -42,17 +42,18 @@
     * archer镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.38.XtXtLh&repoId=142147
 
 ### 一键安装脚本
-* 可快速安装好archer环境，inception还需自行安装  
+* 可快速安装好archer环境，但inception还需自行安装  
 [centos7_install](https://github.com/hhyo/archer/blob/master/src/script/centos7_install.sh)
 
 ### 手动安装步骤
 1. 环境准备：  
-(1)克隆代码到本地: git@github.com:hhyo/archer.git或下载zip包  
+(1)克隆代码到本地  
+`git clone git@github.com:hhyo/archer.git`
 (2)安装inception，[项目地址](http://mysql-inception.github.io/inception-document/install/)  
 2. 安装python3，版本号>=3.4：(强烈建议使用virtualenv或venv等单独隔离环境！)  
 3. 安装所需相关模块：  
 `pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/`  
-centos如果安装ladp报错需要执行yum install openldap-devel，其他系统请自行查找解决方案  
+centos如果安装ladp报错需要执行yum install openldap-devel，其他系统请自行查找解决方案，如果不需要集成ladp也可以不安装  
 4. MySQLdb模块兼容inception版本信息:  
 使用src/docker/pymysql目录下的文件替换/path/to/python3/lib/python3.4/site-packages/pymysql/目录下的文件
 
@@ -114,24 +115,24 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 3. 将src/script/analysis_slow_query.sh部署到各个监控机器，注意修改配置信息
 4. 如果有阿里云RDS实例，可以在后台数据管理添加关联关系  
 
+#### 集成SQLAdvisor  
+1. 安装SQLAdvisor，[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
+2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'
+
+#### admin后台加固，防暴力破解
+1. patch目录下，名称为：django_1.8.17_admin_secure_archer.patch
+2. 使用命令：  
+`patch  python/site-packages/django/contrib/auth/views.py django_1.8.17_admin_secure_archer.patch`
+
 #### 集成ldap
 1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆  
 2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释  
 3. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改  
 
-#### 集成SQLAdvisor  
-1. 安装SQLAdvisor，[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
-2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'
-
 #### 集成阿里云rds管理  
-1. 修改配置文件ENABLE_ALIYUN=True
-2. 访问http://X.X.X.X:port/admin/sql/aliyunaccesskey/, 添加aliyun账号的accesskey信息，重新启动服务
-3. 访问http://X.X.X.X:port/admin/sql/aliyunrdsconfig/，添加实例信息
-4. 即可实现阿里云rds进程管理、慢日志管理  
-
-#### admin后台加固，防暴力破解
-1.patch目录下，名称为：django_1.8.17_admin_secure_archer.patch
-2.使用命令：patch  python/site-packages/django/contrib/auth/views.py django_1.8.17_admin_secure_archer.patch
+1. 修改配置文件ENABLE_ALIYUN=True  
+2. 在【后台数据管理】-【阿里云认证信息】页面，添加aliyun账号的accesskey信息，重新启动服务  
+3. 在【后台数据管理】-【阿里云rds配置】页面，添加实例信息，即可实现对阿里云rds的进程管理、慢日志管理    
 
 ###部分功能使用说明
 1. 用户角色配置  
@@ -147,42 +148,43 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
   在【后台数据管理】-【工作流配置】页面管理审核流程   
 
 ### 系统展示截图：
-1. 工单展示页：  
+1. 工单展示页  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/allworkflow.png)  
-2. 自助审核SQL：  
+2. 自助审核SQL  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/autoreview.png)  
-3. 提交SQL工单：  
+3. 提交SQL工单  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/submitsql.png)  
 4. SQL自动审核、人工审核、执行结果详情页：  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/waitingforme.png)  
-5. 用户登录页：  
+5. 用户登录页  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/login.png)
-6. 工单统计图表：  
+6. 工单统计图表  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/charts.png)  
-7. pt-osc进度条，以及中止pt-osc进程按钮：  
+7. pt-osc进度条，以及中止pt-osc进程按钮  
 ![image](https://github.com/hhyo/archer/blob/master/src//screenshots/osc_progress.png)  
-8. SQL在线查询、自动补全：  
+8. SQL在线查询、自动补全  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/query.png)  
-9. 动态脱敏：  
+9. 动态脱敏  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamasking.png)  
-10. SQL在线查询日志：  
+10. SQL在线查询日志  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/querylog.png)  
-11. SQL在线查询权限申请：  
+11. SQL在线查询权限申请  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/applyforprivileges.png)  
-12. 阿里云RDS慢查日志统计：  
+12. SQL慢查日志统计  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/slowquery.png)  
-13. 阿里云RDS慢查日志明细、一键优化：  
-![image](https://github.com/hhyo/archer/blob/master/src/screenshots/slowquerylog.png)  
-14. 阿里云RDS进程管理、表空间查询：  
-![image](https://github.com/hhyo/archer/blob/master/src/screenshots/process.png)  
-15. SQLAdvisor：  
+13. SQL慢查日志明细、一键优化  
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/slowquerylog.png)   
+14. SQLAdvisor  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/sqladvisor.png)  
-15. 后台数据管理：  
+15. 阿里云RDS进程管理、表空间查询  
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/process.png) 
+16. 后台数据管理  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/admin.png)  
-15. 权限审核配置：  
+17. 权限审核配置  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/workflowconfig.png)  
-15. 脱敏规则、字段配置：  
+18. 脱敏规则配置  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingrules.png)  
+19. 脱敏字段配置  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingcolumns.png)  
 
 ### 联系方式：
