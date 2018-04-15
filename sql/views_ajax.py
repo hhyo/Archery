@@ -443,7 +443,7 @@ def sqladvisorcheck(request):
     sqladvisor_path = getattr(settings, 'SQLADVISOR')
     sqlContent = sqlContent.rstrip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
     try:
-        p = subprocess.Popen(sqladvisor_path + ' -h %s -P %s -u %s -p %s -d %s -v 1 -q "%s"' % (
+        p = subprocess.Popen(sqladvisor_path + ' -h %s -P %s -u %s -p \'%s\' -d %s -v 1 -q "%s"' % (
             str(cluster_info.slave_host), str(cluster_info.slave_port), str(cluster_info.slave_user),
             str(prpCryptor.decrypt(cluster_info.slave_password),), str(dbName), sqlContent), stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
