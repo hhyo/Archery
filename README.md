@@ -10,7 +10,8 @@
 * 自动审核  
   发起SQL上线，工单提交，由inception自动审核
 * 人工审核  
-  inception自动审核通过的工单由DBA人工审核、审核通过自动执行SQL  
+  inception自动审核通过的工单，由DBA人工审核、审核通过自动执行SQL   
+  inception不支持的语法，如子查询更新，由DBA人工审核，可以选择跳过inception执行  
   为什么要有人工审核？  
   这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关  
   很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念
@@ -49,7 +50,7 @@
 ### 手动安装步骤
 1. 环境准备：  
 (1)克隆代码到本地  
-`git clone git@github.com:hhyo/archer.git`
+`git clone git@github.com:hhyo/archer.git`  
 (2)安装inception，[项目地址](http://mysql-inception.github.io/inception-document/install/)  
 2. 安装python3，版本号>=3.4：(强烈建议使用virtualenv或venv等单独隔离环境！)  
 3. 安装所需相关模块：  
