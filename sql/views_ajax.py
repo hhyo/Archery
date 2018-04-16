@@ -24,7 +24,7 @@ from .dao import Dao
 from .const import Const, WorkflowDict
 from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
-from .models import users, slave_config, workflow
+from .models import users, master_config, workflow
 from sql.sendmail import MailSender
 import logging
 from .workflow import Workflow
@@ -122,6 +122,7 @@ def authenticateEntry(request):
         user = authenticate(username=strUsername, password=strPassword)
         if user:
             login(request, user)
+
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -418,10 +419,14 @@ def sqladvisorcheck(request):
         sqlContent = request.POST.get('sql_content')
         clusterName = request.POST.get('cluster_name')
         dbName = request.POST.get('db_name')
+        verbose = request.POST.get('verbose')
     else:
         sqlContent = request.POST['sql_content']
         clusterName = request.POST['cluster_name']
-        dbName = request.POST.get('db_name')
+        dbName = request.POST.POST['db_name']
+        verbose = request.POST.POST['verbose']
+    if verbose is None:
+        verbose = 1
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
@@ -436,16 +441,16 @@ def sqladvisorcheck(request):
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    # 取出从库的连接信息
-    cluster_info = slave_config.objects.get(cluster_name=clusterName)
+    # 取出主库的连接信息
+    cluster_info = master_config.objects.get(cluster_name=clusterName)
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = getattr(settings, 'SQLADVISOR')
     sqlContent = sqlContent.rstrip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
     try:
-        p = subprocess.Popen(sqladvisor_path + ' -h %s -P %s -u %s -p \'%s\' -d %s -v 1 -q "%s"' % (
-            str(cluster_info.slave_host), str(cluster_info.slave_port), str(cluster_info.slave_user),
-            str(prpCryptor.decrypt(cluster_info.slave_password),), str(dbName), sqlContent), stdin=subprocess.PIPE,
+        p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
+            str(cluster_info.master_host), str(cluster_info.master_port), str(cluster_info.master_user),
+            str(prpCryptor.decrypt(cluster_info.master_password),), str(dbName), verbose, sqlContent), stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         stdout, stderr = p.communicate()
         finalResult['data'] = stdout
