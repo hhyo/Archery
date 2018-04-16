@@ -31,6 +31,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# 解决nginx部署跳转404
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
