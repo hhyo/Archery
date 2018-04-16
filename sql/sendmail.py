@@ -43,7 +43,7 @@ class MailSender(object):
 
         return file_msg
 
-    def _send(self, strTitle, strContent, listToAddr, filename_list=None):
+    def _send(self, strTitle, strContent, listToAddr, **kwargs):
         '''''
             发送邮件
         '''
@@ -55,27 +55,33 @@ class MailSender(object):
         main_msg.attach(text_msg)
 
         # 添加附件
+        filename_list = kwargs.get('filename_list')
         if filename_list:
-            for filename in filename_list:
+            for filename in kwargs['filename_list']:
                 file_msg = self._add_attachment(filename)
                 main_msg.attach(file_msg)
 
         # 收发件人地址和邮件标题:
         main_msg['From'] = formataddr(["archer 通知", self.MAIL_REVIEW_FROM_ADDR])
         main_msg['To'] = ','.join(listToAddr)
+        listCcAddr = kwargs.get('listCcAddr')
+        if listCcAddr:
+            main_msg['Cc'] = ', '.join(kwargs['listCcAddr'])
+            listAddr = listToAddr + listCcAddr
+        else:
+            listAddr = listToAddr
         main_msg['Subject'] = Header(strTitle, "utf-8").encode()
         main_msg['Date'] = email.utils.formatdate()
 
         server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
-        # server.set_debuglevel(1)
 
         # 如果提供的密码为空，则不需要登录SMTP server
         if self.MAIL_REVIEW_FROM_PASSWORD != '':
             server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
-        sendResult = server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listToAddr, main_msg.as_string())
+        server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr , main_msg.as_string())
         server.quit()
 
     # 调用方应该调用此方法，采用子进程方式异步阻塞地发送邮件，避免邮件服务挂掉影响archer主服务
-    def sendEmail(self, strTitle, strContent, listToAddr, filename_list=None):
-        p = Process(target=self._send, args=(strTitle, strContent, listToAddr, filename_list))
+    def sendEmail(self, strTitle, strContent, listToAddr, **kwargs):
+        p = Process(target=self._send, args=(strTitle, strContent, listToAddr), kwargs=kwargs)
         p.start()

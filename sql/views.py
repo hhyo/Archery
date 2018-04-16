@@ -54,13 +54,13 @@ def _getDetailUrl(request):
     return "%s://%s/detail/" % (scheme, host)
 
 #SQL工单跳过inception执行回调
-def execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
+def _execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
     workflowDetail = workflow.objects.get(id=workflowId)
     # 获取审核人
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man,)
+        listAllReviewMen = [workflowDetail.review_man]
     # 获取集群连接信息
     masterInfo = getMasterConnStr(clusterName)
     try:
@@ -102,20 +102,18 @@ def execute_skipinc_call_back(workflowId , clusterName, sql_content, url):
         strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n执行结果：" + workflowStatus
         mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
         mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
-        for reviewMan in listAllReviewMen:
-            if reviewMan == "":
-                continue
-            objReviewMan = users.objects.get(username=reviewMan)
-            mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+        # 邮件通知审核人
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=listAllReviewMen).values('email')]
+        mailSender.sendEmail(strTitle, strContent, listToAddr)
 
 #SQL工单执行回调
-def execute_call_back(workflowId , clusterName, url):
+def _execute_call_back(workflowId , clusterName, url):
     workflowDetail = workflow.objects.get(id=workflowId)
     # 获取审核人
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man,)
+        listAllReviewMen = [workflowDetail.review_man]
 
     dictConn = getMasterConnStr(clusterName)
     try:
@@ -137,23 +135,20 @@ def execute_call_back(workflowId , clusterName, url):
         logger.error(e)
 
     #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
-    if hasattr(settings, 'MAIL_ON_OFF') == True:
-        if getattr(settings, 'MAIL_ON_OFF') == "on":
-            #给主、副审核人，申请人，DBA各发一封邮件
-            engineer = workflowDetail.engineer
-            reviewMen = workflowDetail.review_man
-            workflowStatus = workflowDetail.status
-            workflowName = workflowDetail.workflow_name
-            objEngineer = users.objects.get(username=engineer)
-            strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
-            strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
-            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
-            mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
-            for reviewMan in listAllReviewMen:
-                if reviewMan == "":
-                    continue
-                objReviewMan = users.objects.get(username=reviewMan)
-                mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
+    if getattr(settings, 'MAIL_ON_OFF') == "on":
+        #给主、副审核人，申请人，DBA各发一封邮件
+        engineer = workflowDetail.engineer
+        reviewMen = workflowDetail.review_man
+        workflowStatus = workflowDetail.status
+        workflowName = workflowDetail.workflow_name
+        objEngineer = users.objects.get(username=engineer)
+        strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
+        strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus
+        mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+        mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
+        # 邮件通知审核人
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=listAllReviewMen).values('email')]
+        mailSender.sendEmail(strTitle, strContent, listToAddr)
 
 def login(request):
     return render(request, 'login.html')
@@ -190,12 +185,13 @@ def submitSql(request):
         listDb = dao.getAlldbByCluster(masterHost, masterPort, masterUser, masterPassword)
         dictAllClusterDb[clusterName] = listDb
 
-    #获取所有审核人
-    loginUser = request.session.get('login_username', False)
-    reviewMen = users.objects.filter(role='审核人')
-    listAllReviewMen = [user.username for user in reviewMen]
+    #获取所有用户，通知对象
+    active_user = users.objects.filter(is_active=1)
 
-    context = {'currentMenu':'submitsql', 'dictAllClusterDb':dictAllClusterDb, 'reviewMen':reviewMen}
+    #获取所有审核人
+    reviewMen = active_user.filter(role='审核人')
+
+    context = {'currentMenu':'submitsql', 'dictAllClusterDb':dictAllClusterDb, 'reviewMen':reviewMen, 'active_user':active_user}
     return render(request, 'submitSql.html', context)
 
 #提交SQL给inception进行解析
@@ -206,8 +202,12 @@ def autoreview(request):
     clusterName = request.POST['cluster_name']
     isBackup = request.POST['is_backup']
     reviewMan = request.POST['review_man']
-    subReviewMen = request.POST.get('sub_review_man', '')
-    listAllReviewMen = (reviewMan, subReviewMen)
+    subReviewMen = request.POST.get('sub_review_man')
+    notify_users = request.POST.getlist('notify_users')
+    if subReviewMen:
+        listAllReviewMen = [reviewMan, subReviewMen]
+    else:
+        listAllReviewMen = [reviewMan]
 
     #服务器端参数验证
     if sqlContent is None or workflowName is None or clusterName is None or isBackup is None or reviewMan is None:
@@ -260,22 +260,14 @@ def autoreview(request):
     #自动审核通过了，才发邮件
     if workflowStatus == Const.workflowStatus['manreviewing']:
         #如果进入等待人工审核状态了，则根据settings.py里的配置决定是否给审核人发一封邮件提醒.
-        if hasattr(settings, 'MAIL_ON_OFF') == True:
-            if getattr(settings, 'MAIL_ON_OFF') == "on":
-                url = _getDetailUrl(request) + str(workflowId) + '/'
-
-                #发一封邮件
-                strTitle = "新的SQL上线工单提醒 # " + str(workflowId)
-                objEngineer = users.objects.get(username=engineer)
-                for reviewMan in listAllReviewMen:
-                    if reviewMan == "":
-                        continue
-                    strContent = "发起人：" + engineer + "\n审核人：" + str(listAllReviewMen)  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
-                    objReviewMan = users.objects.get(username=reviewMan)
-                    mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
-            else:
-                #不发邮件
-                pass
+        if getattr(settings, 'MAIL_ON_OFF') == "on":
+            url = _getDetailUrl(request) + str(workflowId) + '/'
+            #邮件通知审核人
+            listToAddr = [email['email'] for email in users.objects.filter(username__in=listAllReviewMen).values('email')]
+            listCcAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
+            strTitle = "新的SQL上线工单提醒 # " + str(workflowId)
+            strContent = "发起人：" + engineer + "\n审核人：" + str(listAllReviewMen)  + "\n工单地址：" + url + "\n工单名称： " + workflowName + "\n具体SQL：" + sqlContent
+            mailSender.sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr )
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
@@ -290,7 +282,7 @@ def detail(request, workflowId):
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man, )
+        listAllReviewMen = [workflowDetail.review_man]
 
     # 获取用户信息
     loginUser = request.session.get('login_username', False)
@@ -350,7 +342,7 @@ def passonly(request):
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man, )
+        listAllReviewMen = [workflowDetail.review_man]
 
     #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     loginUser = request.session.get('login_username', False)
@@ -383,14 +375,9 @@ def passonly(request):
         strContent = "发起人：" + engineer + "\n审核人：" + reviewMen + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n审核结果：" + workflowStatus
         mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
         mailSender.sendEmail(strTitle, strContent, getattr(settings, 'MAIL_REVIEW_DBA_ADDR'))
-        for reviewMan in listAllReviewMen:
-            if reviewMan == "":
-                continue
-            objReviewMan = users.objects.get(username=reviewMan)
-            mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
-    else:
-        #不发邮件
-        pass
+        # 邮件通知审核人
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=listAllReviewMen).values('email')]
+        mailSender.sendEmail(strTitle, strContent, listToAddr)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
@@ -410,7 +397,7 @@ def executeonly(request):
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man, )
+        listAllReviewMen = [workflowDetail.review_man]
 
     #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人或者提交人. 避免攻击或被接口测试工具强行绕过
     loginUser = request.session.get('login_username', False)
@@ -432,7 +419,7 @@ def executeonly(request):
     workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
+    t = Thread(target=_execute_call_back, args=(workflowId, clusterName, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -452,7 +439,7 @@ def execute(request):
     try:
         listAllReviewMen = json.loads(workflowDetail.review_man)
     except ValueError:
-        listAllReviewMen = (workflowDetail.review_man, )
+        listAllReviewMen = [workflowDetail.review_man]
 
     #服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     loginUser = request.session.get('login_username', False)
@@ -475,7 +462,7 @@ def execute(request):
     workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
+    t = Thread(target=_execute_call_back, args=(workflowId, clusterName, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -505,7 +492,7 @@ def execute_skipinc(request):
     workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_skipinc_call_back, args=(workflowId, clusterName, sql_content, url))
+    t = Thread(target=_execute_skipinc_call_back, args=(workflowId, clusterName, sql_content, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -523,7 +510,7 @@ def cancel(request):
     try:
         listAllReviewMen = json.loads(reviewMan)
     except ValueError:
-        listAllReviewMen = (reviewMan, )
+        listAllReviewMen = [reviewMan]
 
     audit_remark = request.POST.get('audit_remark')
     if audit_remark is None:
@@ -545,29 +532,24 @@ def cancel(request):
     workflowDetail.save()
 
     #如果人工终止了，则根据settings.py里的配置决定是否给提交者和审核人发邮件提醒。如果是发起人终止流程，则给主、副审核人各发一封；如果是审核人终止流程，则给发起人发一封邮件，并附带说明此单子被拒绝掉了，需要重新修改.
-    if hasattr(settings, 'MAIL_ON_OFF') == True:
-        if getattr(settings, 'MAIL_ON_OFF') == "on":
-            url = _getDetailUrl(request) + str(workflowId) + '/'
+    if getattr(settings, 'MAIL_ON_OFF') == "on":
+        url = _getDetailUrl(request) + str(workflowId) + '/'
 
-            engineer = workflowDetail.engineer
-            workflowStatus = workflowDetail.status
-            workflowName = workflowDetail.workflow_name
-            if loginUser == engineer:
-                strTitle = "发起人主动终止SQL上线工单流程 # " + str(workflowId)
-                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：发起人主动终止流程"
-                for reviewMan in listAllReviewMen:
-                    if reviewMan == "":
-                        continue
-                    objReviewMan = users.objects.get(username=reviewMan)
-                    mailSender.sendEmail(strTitle, strContent, [objReviewMan.email])
-            else:
-                objEngineer = users.objects.get(username=engineer)
-                strTitle = "SQL上线工单被拒绝执行 # " + str(workflowId)
-                strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交或修改工单"
-                mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
+        engineer = workflowDetail.engineer
+        workflowStatus = workflowDetail.status
+        workflowName = workflowDetail.workflow_name
+        if loginUser == engineer:
+            strTitle = "发起人主动终止SQL上线工单流程 # " + str(workflowId)
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：发起人主动终止流程"
+            # 邮件通知审核人
+            listToAddr = [email['email'] for email in
+                          users.objects.filter(username__in=listAllReviewMen).values('email')]
+            mailSender.sendEmail(strTitle, strContent, listToAddr)
         else:
-            #不发邮件
-            pass
+            objEngineer = users.objects.get(username=engineer)
+            strTitle = "SQL上线工单被拒绝执行 # " + str(workflowId)
+            strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url + "\n工单名称： " + workflowName +"\n执行结果：" + workflowStatus +"\n提醒：此工单被拒绝执行，请登陆重新提交或修改工单"
+            mailSender.sendEmail(strTitle, strContent, [objEngineer.email])
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
