@@ -15,7 +15,8 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
-                <select id=cluster_name class="form-control selectpicker"  name="cluster_name_list" data-live-search="true">
+                <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
+                        data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择集群</option>
                     {% for cluster_name in cluster_name_list %}
                         <option value="{{ cluster_name }}">{{ cluster_name }}</option>
@@ -177,6 +178,7 @@
 
         //保留如果已选择cluster_name，进入页面自动加载
         $(document).ready(function () {
+            sessionStorage.removeItem('SQLId');
             sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
             if (sessionStorage.getItem('slow_query_cluster_name')) {
                 $("#cluster_name").val(sessionStorage.getItem('slow_query_cluster_name'));
@@ -200,8 +202,8 @@
                 if ($("#cluster_name").val()) {
                     if (active_li_id === 'slowsql_tab') {
                         $("#sqladvisor-toolbar").hide();
-                        slowquery_review()
-
+                        sessionStorage.removeItem('SQLId');
+                        slowquery_review();
                     }
                     else if (active_li_id === 'slowsqlinfo_tab') {
                         $("#sqladvisor-toolbar").show();
@@ -263,7 +265,6 @@
                     showRefresh: true,                  //是否显示刷新按钮
                     showExport: true,
                     exportDataType: "all",
-                    exportTypes: ['csv', 'txt'],
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列
@@ -377,7 +378,6 @@
                     showRefresh: true,                  //是否显示刷新按钮
                     showExport: true,
                     exportDataType: "all",
-                    exportTypes: ['csv', 'txt'],
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列

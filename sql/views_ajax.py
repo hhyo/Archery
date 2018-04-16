@@ -425,8 +425,6 @@ def sqladvisorcheck(request):
         clusterName = request.POST['cluster_name']
         dbName = request.POST.POST['db_name']
         verbose = request.POST.POST['verbose']
-    if verbose is None:
-        verbose = 1
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
@@ -440,6 +438,9 @@ def sqladvisorcheck(request):
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+    if verbose is None or verbose == '':
+        verbose = 1
 
     # 取出主库的连接信息
     cluster_info = master_config.objects.get(cluster_name=clusterName)

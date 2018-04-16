@@ -35,6 +35,15 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <select id="verbose" name="verbose"
+                                class="form-control selectpicker show-tick bs-select-hidden" data-name="是否查看优化过程"
+                                data-placeholder="是否查看优化过程:" required>
+                            <option value="is-empty" disabled="">是否查看优化过程:</option>
+                            <option value="1" selected="selected">是</option>
+                            <option value="0">否</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                         <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
                         <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
@@ -66,6 +75,7 @@
     <script src="{% static 'ace/ace_init.js' %}"></script>
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
+        // 表单校验
         function sqladvisor_validate() {
             var result = true;
             var sqlContent = editor.getValue();
@@ -85,6 +95,7 @@
             return result;
         }
 
+        // 获取优化建议
         $("#btn-sqladvisor").click(function () {
                 //先做表单验证，成功了提交优化请求
                 if (sqladvisor_validate()) {
@@ -95,7 +106,7 @@
             }
         );
 
-        //先做表单验证，验证成功再成功提交格式化sql
+        //格式化sql
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
@@ -110,6 +121,8 @@
                 editor.clearSelection();
             }
         );
+
+        //获取执行计划
         $("#btn-explain").click(function () {
                 //先做表单验证，成功了提交优化请求
                 if (sqladvisor_validate()) {
@@ -120,10 +133,12 @@
             }
         );
 
+        //集群变动获取数据库
         $("#cluster_name").change(function () {
             get_db_list()
         });
 
+        //获取主库数据库
         function get_db_list() {
             //将数据通过ajax提交给获取db_name
             $.ajax({
@@ -175,6 +190,7 @@
             var sqlContent = editor.getValue();
             var clusterName = $("#cluster_name").val();
             var dbName = $("#db_name").val();
+            var verbose = $("#verbose").val();
 
             //适配从慢查询过来的优化请求
             var pathname = window.location.pathname;
@@ -190,7 +206,8 @@
                 data: {
                     sql_content: sqlContent,
                     cluster_name: clusterName,
-                    db_name: dbName
+                    db_name: dbName,
+                    verbose: verbose
 
                 },
                 complete: function () {
