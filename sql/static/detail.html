@@ -12,6 +12,10 @@
     {% elif loginUser in listAllReviewMen %}
         <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
     {% endif %}
+    <!--只允许发起人提交其他集群-->
+    {% if loginUser == workflowDetail.engineer %}
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+    {% endif %}
     <input type="hidden" id="workflowDetail_id" name="workflowid" value="{{ workflowDetail.id }}">
     <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
     <input type="hidden" id="editClustername" value="{{ workflowDetail.cluster_name }}"/>
@@ -145,9 +149,6 @@
             </form>
 
         {% elif workflowDetail.engineer == loginUser %}
-            <!--只允许发起人提交其他集群-->
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
-
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
@@ -176,9 +177,13 @@
                 <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
             </form>
         {% elif workflowDetail.engineer == loginUser %}
-            <!--只允许发起人提交其他集群-->
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
-
+            <!--审核通过后提交人也可以执行SQL-->
+            <form action="/executeonly/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnExecuteOnly" onclick="loading(this)" class="btn btn-danger"
+                       value="执行SQL"/>
+            </form>
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
@@ -187,32 +192,27 @@
             </form>
         {% endif %}
 
-    {% elif workflowDetail.status == '已正常结束' and workflowDetail.is_backup == '是' %}
-        <form action="/rollback/" method="get" style="display:inline-block;">
-            {% csrf_token %}
-            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
-            <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
-        </form>
-        {% if workflowDetail.engineer == loginUser %}
-            <!--只允许发起人提交其他集群-->
-            <a type='button' id="btnSubmitOtherCluster" onclick="loading(this)" class='btn btn-warning'
-               href="/submitothercluster/">上线其他集群</a>
+    {% elif workflowDetail.status == '已正常结束' %}
+        {% if workflowDetail.is_backup == '是' %}
+            <form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
+            </form>
         {% endif %}
 
     {% elif workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行有异常' %}
-        {% if workflowDetail.engineer == loginUser %}
-            <!--只允许发起人修改工单-->
-            {% csrf_token %}
-            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-warning' href="/editsql/">重新修改</a>
-            <a type='button' id="btnSubmitOtherCluster" onclick="loading(this)" class='btn btn-default'
-               href="/submitothercluster/">上线其他集群</a>
-        {% endif %}
         {% if workflowDetail.status == '执行有异常' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
             </form>
+        {% endif %}
+        {% if workflowDetail.engineer == loginUser %}
+            <!--只允许发起人修改工单-->
+            {% csrf_token %}
+            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-warning' href="/editsql/">重新修改</a>
         {% endif %}
     {% endif %}
 
