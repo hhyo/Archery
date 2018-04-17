@@ -216,3 +216,10 @@ class Workflow(object):
     # 通过业务id获取审核信息
     def auditinfobyworkflow_id(self, workflow_id, workflow_type):
         return WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
+
+    # 获取审核配置信息
+    def auditsettings(self,workflow_type=None):
+        if workflow_type:
+            return WorkflowAuditSetting.objects.filter(workflow_type=workflow_type)
+        else:
+            return WorkflowAuditSetting.objects.all()

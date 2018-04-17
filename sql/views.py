@@ -629,9 +629,13 @@ def queryapplylist(request, workflow_id):
     if workflow_id is None:
         workflow_id = 0
     slaves = slave_config.objects.all().order_by('cluster_name')
-    # 获取所有集群名称
+    # 获取所有集群从库名称
     listAllClusterName = [slave.cluster_name for slave in slaves]
-    context = {'currentMenu': 'queryapply', 'listAllClusterName': listAllClusterName, 'workflow_id': workflow_id}
+
+    # 获取当前审核人信息
+    auditors = workflowOb.auditsettings(workflow_type=WorkflowDict.workflow_type['query'])
+    context = {'currentMenu': 'queryapply', 'listAllClusterName': listAllClusterName,
+               'workflow_id': workflow_id, 'auditors': auditors}
     return render(request, 'queryapplylist.html', context)
 
 
