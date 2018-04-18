@@ -17,6 +17,8 @@
   很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念
 * 回滚数据展示  
   工单内可展示回滚语句，支持一键提交回滚工单
+* pt-osc执行  
+  支持pt-osc执行进度展示，并且可以点击中止pt-osc进程  
 * MySQL查询  
   库、表、关键字自动补全  
   查询结果集限制、查询结果导出、表结构展示、多结果集展示  
@@ -25,8 +27,8 @@
   查询权限申请、审核和管理，支持审核流程配置，多级审核  
 * MySQL查询动态脱敏   
   基于inception解析查询语句，配合脱敏字段配置、脱敏规则(正则表达式)实现敏感数据动态脱敏  
-* pt-osc执行  
-  支持pt-osc执行进度展示，并且可以点击中止pt-osc进程  
+* 慢日志管理  
+  基于percona-toolkit的pt_query_digest分析和存储慢日志，并在web端展现  
 * 邮件通知  
   可配置邮件提醒，对上线申请、审核结果进行通知
 
@@ -52,7 +54,7 @@
 (1)克隆代码到本地  
 `git clone git@github.com:hhyo/archer.git`  
 (2)安装inception，[项目地址](http://mysql-inception.github.io/inception-document/install/)  
-2. 安装python3，版本号>=3.4：(强烈建议使用virtualenv或venv等单独隔离环境！)  
+2. 安装python3，版本号>=3.4：(由于需要修改官方模块，请使用virtualenv或venv等单独隔离环境！)  
 3. 安装所需相关模块：  
 `pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/`  
 centos如果安装ladp报错需要执行yum install openldap-devel，其他系统请自行查找解决方案，如果不需要集成ladp也可以不安装  
