@@ -120,8 +120,11 @@ class Dao(object):
             if cursor is not None:
                 cursor.close()
             if conn is not None:
-                conn.rollback()
-                conn.close()
+                try:
+                    conn.rollback()
+                    conn.close()
+                except:
+                    conn.close()
         return result
 
     # 连进指定的mysql实例里，执行sql并返回

@@ -3,6 +3,7 @@ import re
 import simplejson as json
 
 from django.db.models import Q, Min, F, Sum
+from django.db import connection
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
@@ -198,7 +199,7 @@ def getdbNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
-            # 取出该集群的连接方式，为了后面连进去获取所有databases
+            # 取出该集群主库的连接方式，为了后面连进去获取所有databases
             listDb = dao.getAlldbByCluster(master_info.master_host, master_info.master_port, master_info.master_user,
                                            prpCryptor.decrypt(master_info.master_password))
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -226,14 +227,31 @@ def getdbNameList(request):
 def getTableNameList(request):
     clusterName = request.POST.get('cluster_name')
     db_name = request.POST.get('db_name')
+    is_master = request.POST.get('is_master')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    slave_info = slave_config.objects.get(cluster_name=clusterName)
-    # 取出该集群的连接方式，为了后面连进去获取所有的表
-    listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                 prpCryptor.decrypt(slave_info.slave_password), db_name)
-    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    result['data'] = listTb
+    if is_master:
+        try:
+            master_info = master_config.objects.get(cluster_name=clusterName)
+            # 取出该集群主库的连接方式，为了后面连进去获取所有的表
+            listTb = dao.getAllTableByDb(master_info.master_host, master_info.master_port, master_info.master_user,
+                                           prpCryptor.decrypt(master_info.master_password), db_name)
+            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+            result['data'] = listTb
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的主库配置信息，请配置'
+    else:
+        try:
+            slave_info = slave_config.objects.get(cluster_name=clusterName)
+                    # 取出该集群从库的连接方式，为了后面连进去获取所有的表
+            listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
+                                         prpCryptor.decrypt(slave_info.slave_password), db_name)
+            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+            result['data'] = listTb
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的从库配置信息，请配置'
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -243,14 +261,31 @@ def getColumnNameList(request):
     clusterName = request.POST.get('cluster_name')
     db_name = request.POST.get('db_name')
     tb_name = request.POST.get('tb_name')
+    is_master = request.POST.get('is_master')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    slave_info = slave_config.objects.get(cluster_name=clusterName)
-    # 取出该集群的连接方式，为了后面连进去获取表的所有字段
-    listCol = dao.getAllColumnsByTb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                    prpCryptor.decrypt(slave_info.slave_password), db_name, tb_name)
-    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    result['data'] = listCol
+    if is_master:
+        try:
+            master_info = master_config.objects.get(cluster_name=clusterName)
+            # 取出该集群主库的连接方式，为了后面连进去获取所有字段
+            listCol = dao.getAllColumnsByTb(master_info.master_host, master_info.master_port, master_info.master_user,
+                                           prpCryptor.decrypt(master_info.master_password),  db_name, tb_name)
+            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+            result['data'] = listCol
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的主库配置信息，请配置'
+    else:
+        try:
+            slave_info = slave_config.objects.get(cluster_name=clusterName)
+            # 取出该集群的连接方式，为了后面连进去获取表的所有字段
+            listCol = dao.getAllColumnsByTb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
+                                            prpCryptor.decrypt(slave_info.slave_password), db_name, tb_name)
+            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+            result['data'] = listCol
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的从库配置信息，请配置'
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -589,6 +624,11 @@ def query(request):
             limit_num = min(int(limit_num), int(sql_result['effect_row']))
         query_log.effect_row = limit_num
         query_log.cost_time = cost_time
+        # 防止查询超时
+        try:
+            query_log.save()
+        except:
+            connection.close()
         query_log.save()
 
     # 返回查询结果

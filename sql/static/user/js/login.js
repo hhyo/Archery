@@ -3,6 +3,8 @@ $(document).ready(function() {
 	$(document).keydown(function(event) {
 		//keycode==13为回车键
 		if (event.keyCode == 13) {
+			$('#btnLogin').addClass('disabled');
+			$('#btnLogin').prop('disabled', true);
 			authenticateUser();
 		}
 	});
