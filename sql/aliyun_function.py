@@ -6,7 +6,7 @@ import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from .aliyun_api import Aliyun
-from .permission import superuser_required
+from .permission import superuser_required, role_required
 
 from .models import users, AliyunRdsConfig
 
@@ -121,7 +121,7 @@ def process_status(request):
 
 # 问题诊断--通过进程id构建请求id
 @csrf_exempt
-@superuser_required
+@role_required(('DBA',))
 def create_kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     ThreadIDs = request.POST.get('ThreadIDs')
@@ -144,7 +144,7 @@ def create_kill_session(request):
 
 # 问题诊断--终止会话
 @csrf_exempt
-@superuser_required
+@role_required(('DBA',))
 def kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     request_params = request.POST.get('request_params')

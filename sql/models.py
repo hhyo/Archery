@@ -11,7 +11,7 @@ from .aes_decryptor import Prpcrypt
 # 2.审核人：可以审核并执行SQL上线单的管理者、高级工程师、系统管理员们。
 class users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50)
-    role = models.CharField('角色', max_length=20, choices=(('工程师', '工程师'), ('审核人', '审核人')), default='工程师')
+    role = models.CharField('角色', max_length=20, choices=(('工程师', '工程师'), ('DBA', 'DBA')), default='工程师')
     is_ldapuser = models.BooleanField('ldap用戶', default=False)
 
     def __str__(self):
@@ -48,9 +48,30 @@ class master_config(models.Model):
         super(master_config, self).save(*args, **kwargs)
 
 
+# 项目组
+class Group(models.Model):
+    group_id = models.AutoField('项目组ID', primary_key=True)
+    group_name = models.CharField('项目组名称', max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField('父级id', default=0)
+    group_sort = models.IntegerField('排序', default=1)
+    group_level = models.IntegerField('层级', default=1)
+    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.group_name
+
+    class Meta:
+        verbose_name = u'项目组配置'
+        verbose_name_plural = u'项目组配置'
+
+
 # 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class workflow(models.Model):
     workflow_name = models.CharField('工单内容', max_length=50)
+    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
+                                 verbose_name='项目组', default=0)
     engineer = models.CharField('发起人', max_length=50)
     review_man = models.CharField('审核人', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
@@ -101,9 +122,11 @@ class slave_config(models.Model):
 # 工作流审核主表
 class WorkflowAudit(models.Model):
     audit_id = models.AutoField(primary_key=True)
+    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
+                                 verbose_name='项目组', default=0)
     workflow_id = models.BigIntegerField('关联业务id')
     workflow_type = models.IntegerField('申请类型',
-                                        choices=((1, '查询权限申请'),))
+                                        choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     workflow_title = models.CharField('申请标题', max_length=50)
     workflow_remark = models.CharField('申请备注', default='', max_length=140)
     audit_users = models.CharField('审核人列表', max_length=255)
@@ -140,14 +163,16 @@ class WorkflowAuditDetail(models.Model):
 
     class Meta:
         db_table = 'workflow_audit_detail'
-        verbose_name = u'审批明细表'
-        verbose_name_plural = u'审批明细表'
+        verbose_name = u'工作流审批明细表'
+        verbose_name_plural = u'工作流审批明细表'
 
 
 # 审批配置表
 class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
-    workflow_type = models.IntegerField('申请类型,', choices=((1, '查询权限申请'),), unique=True)
+    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
+                                 verbose_name='项目组', default=0)
+    workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -157,13 +182,15 @@ class WorkflowAuditSetting(models.Model):
 
     class Meta:
         db_table = 'workflow_audit_setting'
-        verbose_name = u'工作流配置'
-        verbose_name_plural = u'工作流配置'
+        verbose_name = u'审批流程配置'
+        verbose_name_plural = u'审批流程配置'
 
 
 # 查询权限申请记录表
 class QueryPrivilegesApply(models.Model):
     apply_id = models.AutoField(primary_key=True)
+    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
+                                 verbose_name='项目组', default=0)
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
     cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
@@ -174,6 +201,7 @@ class QueryPrivilegesApply(models.Model):
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
     status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
+    audit_users = models.CharField('审核人列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 

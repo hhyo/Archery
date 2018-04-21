@@ -30,6 +30,13 @@
                         <input type="text" class="form-control" id="title" placeholder="简单说明权限用途">
                     </div>
                     <div class="form-group">
+                        <select id="group_name" name="group_name"
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                data-name="项目组" data-placeholder="请选择项目组:" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择项目组:</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <select id="priv_type" name="db_name" data-live-search="true"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
                             <option value="is-empty" disabled="" selected="selected">权限级别:</option>
@@ -87,8 +94,9 @@
                             <option value=1000>1000</option>
                         </select>
                     </div>
+                    <!--审核流程-->
                     <div class="form-group">
-                        <h5>当前工单审核人：<b id="auditor">{{ auditors.0.audit_users }}</b></h5>
+                        <h5 style="color: red">审核流程：<b id="workflow_auditors"></b></h5>
                     </div>
                     <p class="text-info">提示：权限审核通过后即可进行在线查询，请耐心等待。</p>
                 </div>
@@ -102,6 +110,73 @@
 {% endblock content %}
 
 {% block js %}
+    <!--grouptree -->
+    <script>
+        //list 转成树形json
+        function listToTree(list, pid) {
+            var ret = [];//一个存放结果的临时数组
+            for (var i in list) {
+                if (list[i].parent === pid) {//如果当前项的父id等于要查找的父id，进行递归
+                    list[i].children = listToTree(list, list[i].id);
+                    ret.push(list[i]);//把当前项保存到临时数组中
+                }
+            }
+            return ret;//递归结束后返回结果
+        }
+
+        var tree = listToTree({{ group_list|safe }}, 0);//调用函数，传入要转换的list数组，和树中顶级元素的pid
+
+        //生成树下拉菜单
+        var j = "";//前缀符号，用于显示父子关系，这里可以使用其它符号
+        function creatSelectTree(d) {
+            var option = "";
+            for (var i = 0; i < d.length; i++) {
+                if (d[i].children.length) {//如果有子集
+                    option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
+                    j += "&nbsp;&nbsp;&nbsp;&nbsp;┆﹍﹍";//前缀符号加一个符号
+                    option += creatSelectTree(d[i].children);//递归调用子集
+                    j = "";//每次递归结束返回上级时，前缀符号重置
+                } else {//没有子集直接显示
+                    option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
+                }
+            }
+            return option;//返回最终html结果
+        }
+
+        //调用函数，并将结构出入到下拉框容器中
+        $("#group_name").append(creatSelectTree(tree));
+
+        // 获取审核流程
+        $("#group_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/groupauditors/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    workflow_type: 1
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        var auditor = [];
+                        for (var i = 0; i < result.length; i++) {
+                            auditor.push(result[i]);
+                        }
+                        $("#workflow_auditors").text(auditor);
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+    </script>
     <script>
         //选择控件初始化
         $("#table_name").selectpicker({
@@ -149,7 +224,6 @@
                 queryParams:
                     function (params) {
                         return {
-                            workflow_id:{{ workflow_id  }},
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search
@@ -183,7 +257,10 @@
                 },
                 columns: [{
                     title: '工单名称',
-                    field: 'title'
+                    field: 'title',
+                    formatter: function (value, row, index) {
+                       return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
+                    }
                 }, {
                     title: '集群',
                     field: 'cluster_name'
@@ -240,6 +317,9 @@
                 }, {
                     title: '申请时间',
                     field: 'create_time'
+                }, {
+                    title: '项目组',
+                    field: 'group_id__group_name'
                 }],
                 onLoadSuccess: function () {
                 },
@@ -361,31 +441,33 @@
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             var apply_remark = $("#apply_remark").val();
+            var workflow_auditors = $("#workflow_auditors").text();
+            var group_name = $("#group_name").val();
 
             // 参数校验
-            if (priv_type == null) {
-                alert("请填写完整");
-                return false
-            }
-            else if (priv_type) {
+            if (priv_type) {
                 if (priv_type === '1') {
-                    if (title && cluster_name && db_name_multiple && valid_date && limit_num) {
+                    if (title && group_name && workflow_auditors && cluster_name && db_name_multiple && valid_date && limit_num) {
                         return true
                     }
                     else {
-                        alert("请填写完整");
+                        alert("信息填写不完整，或者未配置审核流程");
                         return false
                     }
                 }
                 else if (priv_type === '2') {
-                    if (title && cluster_name && db_name && table_name && valid_date && limit_num) {
+                    if (title && group_name && workflow_auditors && cluster_name && db_name && table_name && valid_date && limit_num) {
                         return true
                     }
                     else {
-                        alert("请填写完整");
+                        alert("信息填写不完整，或者未配置审核流程");
                         return false
                     }
                 }
+            }
+            else if (priv_type == null) {
+                alert("请选择权限类别");
+                return false
             }
         }
 
@@ -400,6 +482,8 @@
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             var apply_remark = $("#apply_remark").val();
+            var workflow_auditors = $("#workflow_auditors").text();
+            var group_name = $("#group_name").val();
 
             // 参数校验
             if (applyvalidate()) {
@@ -458,7 +542,9 @@
                         table_list: table_list,
                         valid_date: valid_date,
                         limit_num: limit_num,
-                        apply_remark: apply_remark
+                        apply_remark: apply_remark,
+                        workflow_auditors: workflow_auditors,
+                        group_name: group_name
                     },
                     complete: function () {
                         $('button[type=button]').removeClass('disabled');

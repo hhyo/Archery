@@ -1,13 +1,14 @@
 import re
 
 import simplejson as json
+from django.core.urlresolvers import reverse
 
 from django.db.models import Q, Min, F, Sum
 from django.db import connection
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.db import transaction
 from datetime import date
@@ -20,7 +21,7 @@ from .dao import Dao
 from .const import WorkflowDict
 from .inception import InceptionDao
 from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, SlowQuery, \
-    SlowQueryHistory
+    SlowQueryHistory, Group
 from .data_masking import Masking
 from .workflow import Workflow
 from .permission import role_required, superuser_required
@@ -235,7 +236,7 @@ def getTableNameList(request):
             master_info = master_config.objects.get(cluster_name=clusterName)
             # 取出该集群主库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(master_info.master_host, master_info.master_port, master_info.master_user,
-                                           prpCryptor.decrypt(master_info.master_password), db_name)
+                                         prpCryptor.decrypt(master_info.master_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listTb
         except Exception:
@@ -244,7 +245,7 @@ def getTableNameList(request):
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
-                    # 取出该集群从库的连接方式，为了后面连进去获取所有的表
+            # 取出该集群从库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                          prpCryptor.decrypt(slave_info.slave_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -269,7 +270,7 @@ def getColumnNameList(request):
             master_info = master_config.objects.get(cluster_name=clusterName)
             # 取出该集群主库的连接方式，为了后面连进去获取所有字段
             listCol = dao.getAllColumnsByTb(master_info.master_host, master_info.master_port, master_info.master_user,
-                                           prpCryptor.decrypt(master_info.master_password),  db_name, tb_name)
+                                            prpCryptor.decrypt(master_info.master_password), db_name, tb_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listCol
         except Exception:
@@ -305,36 +306,29 @@ def getqueryapplylist(request):
     if search is None:
         search = ''
 
-    # 审核列表跳转
-    workflow_id = request.POST.get('workflow_id')
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据
-    if workflow_id != '0':
-        # 判断权限
-        audit_users = workflowOb.auditinfobyworkflow_id(workflow_id, WorkflowDict.workflow_type['query']).audit_users
-        if loginUserOb.is_superuser or loginUserOb.username in audit_users.split(','):
-            applylist = QueryPrivilegesApply.objects.filter(apply_id=workflow_id)
-            applylistCount = QueryPrivilegesApply.objects.filter(apply_id=workflow_id).count()
-        else:
-            applylist = QueryPrivilegesApply.objects.filter(apply_id=workflow_id, user_name=loginUser)
-            applylistCount = QueryPrivilegesApply.objects.filter(apply_id=workflow_id, user_name=loginUser).count()
-    elif loginUserOb.is_superuser:
+    if loginUserOb.is_superuser:
         applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
-                    offset:limit]
+                    offset:limit].values(
+            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'user_name', 'status', 'create_time', 'group_id__group_name'
+        )
         applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
     else:
         applylist = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
-            title__contains=search).order_by('-apply_id')[offset:limit]
+            title__contains=search).order_by('-apply_id')[offset:limit].values(
+            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'user_name', 'status', 'create_time', 'group_id__group_name'
+        )
         applylistCount = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
             title__contains=search).count()
 
     # QuerySet 序列化
-    applylist = serializers.serialize("json", applylist)
-    applylist = json.loads(applylist)
-    applylist_result = [apply_info['fields'] for apply_info in applylist]
+    rows = [row for row in applylist]
 
-    result = {"total": applylistCount, "rows": applylist_result}
+    result = {"total": applylistCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=DateEncoder), content_type='application/json')
 
 
 # 申请查询权限
@@ -342,6 +336,8 @@ def getqueryapplylist(request):
 def applyforprivileges(request):
     title = request.POST['title']
     cluster_name = request.POST['cluster_name']
+    group_id = Group.objects.get(group_name=request.POST['group_name']).group_id
+    workflow_auditors = request.POST['workflow_auditors']
     priv_type = request.POST['priv_type']
     db_name = request.POST['db_name']
     valid_date = request.POST['valid_date']
@@ -410,6 +406,8 @@ def applyforprivileges(request):
             # 保存申请信息到数据库
             applyinfo = QueryPrivilegesApply()
             applyinfo.title = title
+            applyinfo.group_id = Group.objects.get(group_id=group_id)
+            applyinfo.audit_users = workflow_auditors
             applyinfo.user_name = loginUser
             applyinfo.cluster_name = master_config.objects.get(cluster_name=cluster_name)
             if int(priv_type) == 1:
@@ -426,10 +424,8 @@ def applyforprivileges(request):
             applyinfo.save()
             apply_id = applyinfo.apply_id
 
-            # 调用工作流插入审核信息,查询权限申请workflow_type=2
-            auditresult = workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['query'], apply_id,
-                                                      title, loginUser, workflow_remark)
-
+            # 调用工作流插入审核信息,查询权限申请workflow_type=1
+            auditresult = workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['query'], apply_id)
             if auditresult['status'] == 0:
                 # 更新业务表审核状态,判断是否插入权限信息
                 query_audit_call_back(apply_id, auditresult['data']['workflow_status'])
@@ -493,7 +489,7 @@ def getuserprivileges(request):
 
 # 变更权限信息
 @csrf_exempt
-@superuser_required
+@role_required(('DBA',))
 def modifyqueryprivileges(request):
     privilege_id = request.POST.get('privilege_id')
     type = request.POST.get('type')
@@ -516,6 +512,43 @@ def modifyqueryprivileges(request):
         privileges.limit_num = limit_num
         privileges.save(update_fields=['valid_date', 'limit_num'])
         return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 查询权限审核
+@csrf_exempt
+def queryprivaudit(request):
+    # 获取用户信息
+    loginUser = request.session.get('login_username', False)
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    apply_id = int(request.POST['apply_id'])
+    audit_status = int(request.POST['audit_status'])
+    audit_remark = request.POST.get('audit_remark')
+
+    if audit_remark is None:
+        audit_remark = ''
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 获取audit_id
+            audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=apply_id,
+                                                         workflow_type=WorkflowDict.workflow_type['query']).audit_id
+
+            # 调用工作流接口审核
+            auditresult = workflowOb.auditworkflow(request, audit_id, audit_status, loginUser, audit_remark)
+
+            # 按照审核结果更新业务表审核状态
+            auditInfo = workflowOb.auditinfo(audit_id)
+            if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
+                # 更新业务表审核状态,插入权限信息
+                query_audit_call_back(auditInfo.workflow_id, auditresult['data']['workflow_status'])
+
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+
+    return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 
 
 # 获取SQL查询结果

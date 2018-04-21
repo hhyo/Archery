@@ -14,10 +14,12 @@ class Const(object):
 
 
 class WorkflowDict:
-    # 工作流申请类型，1.query
+    # 工作流申请类型，1.query,2.SQL上线申请
     workflow_type = {
         'query': 1,
         'query_display': '查询权限申请',
+        'sqlreview': 2,
+        'sqlreview_display': 'SQL上线申请',
     }
 
     # 工作流状态，0.待审核 1.审核通过 2.审核不通过 3.审核取消

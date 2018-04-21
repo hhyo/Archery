@@ -1,7 +1,9 @@
 // 工作流申请类型，1.sql 2.query
 workflow_type = {
     'query': 1,
-    'query_display': '查询权限申请'
+    'query_display': '查询权限申请',
+    'sqlreview': 2,
+    'sqlreview_display': 'SQL上线申请'
 };
 
 // 0.待审核 1.审核通过/等待执行 2.审核不通过 3.审核取消 101执行中，102执行成功，103执行失败
@@ -60,6 +62,12 @@ function sqlworkflowStatus_formatter(value) {
 function workflow_type_formatter(value) {
     if (value === workflow_type.query) {
         return workflow_type.query_display
+    }
+    else if (value === workflow_type.sqlreview) {
+        return workflow_type.sqlreview_display
+    }
+    else {
+        return '未知状态'
     }
 }
 

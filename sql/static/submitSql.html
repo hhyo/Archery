@@ -7,6 +7,7 @@
             <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
                 {% csrf_token %}
                 <input type="hidden" id="workflowid" name="workflowid"/>
+                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审核流程" required>
                 <div class="col-md-9 column">
                     <pre id="sql_content_editor" style="min-height:400px"></pre>
                 </div>
@@ -15,7 +16,6 @@
                               placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20
                               required></textarea>
                 </div>
-
                 <div class="col-md-3 column">
                     <div class="form-group">
                         <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
@@ -23,6 +23,13 @@
                     <div class="form-group">
                         <input id="workflow_name" type="text" name="workflow_name" class="form-control"
                                data-name="上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表" required>
+                    </div>
+                    <div class="form-group">
+                        <select id="group_name" name="group_name"
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                data-name="项目组" data-placeholder="请选择项目组:" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择项目组:</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
@@ -49,43 +56,25 @@
                             <option value="否">否</option>
                         </select>
                     </div>
-                    <!--审核人-->
-                    <div class="form-group">
-                        <select id="review_man" name="review_man"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="审核人"
-                                data-live-search="true" data-placeholder="请选择RD审核人:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择审核人:</option>
-                            {% for man in reviewMen %}
-                                <option value="{{ man }}">{{ man }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <!--增加副审核人-->
-                    <div class="form-group">
-                        <select id="sub_review_man" name="sub_review_man"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="副审核人"
-                                data-live-search="true" data-placeholder="请选择副审核人:">
-                            <option value="is-empty" disabled="" selected="selected">请选择副审核人:</option>
-                            {% for man in reviewMen %}
-                                <option value="{{ man }}">{{ man }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                     <!--增加通知人-->
                     <div class="form-group">
                         <select id="notify_users" name="notify_users"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="通知人"
-                                data-live-search="true" multiple="multiple" data-placeholder="可选择通知人(邮件抄送):">
-                            <option value="is-empty" disabled="">可选择通知人(邮件抄送):</option>
+                                data-live-search="true" data-placeholder="可选择通知人(邮件抄送):">
+                            <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
                             {% for user_info in active_user %}
                                 <option value="{{ user_info.username }}">{{ user_info.username }}</option>
                             {% endfor %}
                         </select>
                     </div>
+                    <!--审核流程-->
+                    <div class="form-group">
+                        <h5 style="color: red">审核流程：<b id="workflow_auditors_display"></b></h5>
+                    </div>
                     <!--button-->
                     <div class="form-group">
                         <input type="button" id="btn-autoreview" class="btn btn-danger btn-lg" value="SQL检测"/>
-                        {#                        <button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
+                        {#<button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
                         <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                     </div>
                 </div>
@@ -293,6 +282,81 @@
             $("div#" + review_man).hide();
         });
     </script>
+    <!--grouptree -->
+    <script>
+        //list 转成树形json
+        function listToTree(list, pid) {
+            var ret = [];//一个存放结果的临时数组
+            for (var i in list) {
+                if (list[i].parent === pid) {//如果当前项的父id等于要查找的父id，进行递归
+                    list[i].children = listToTree(list, list[i].id);
+                    ret.push(list[i]);//把当前项保存到临时数组中
+                }
+            }
+            return ret;//递归结束后返回结果
+        }
+
+        var tree = listToTree({{ group_list|safe }}, 0);//调用函数，传入要转换的list数组，和树中顶级元素的pid
+
+        //生成树下拉菜单
+        var j = "┆﹍﹍";//前缀符号，用于显示父子关系，这里可以使用其它符号
+        function creatSelectTree(d) {
+            var option = "";
+            for (var i = 0; i < d.length; i++) {
+                if (d[i].children.length) {//如果有子集
+                    if (d[i].parent === 0) {
+                        option += "<option value='" + d[i].name + "'>" + d[i].name + "</option>";
+                        option += creatSelectTree(d[i].children);//递归调用子集
+                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
+                    }
+                    else {
+                        option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
+                        j += "┆﹍﹍";//前缀符号加一个符号
+                        option += creatSelectTree(d[i].children);//递归调用子集
+                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
+                    }
+                } else {//没有子集直接显示
+                    option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
+                }
+            }
+            return option;//返回最终html结果
+        }
+
+
+        //调用函数，并将结构出入到下拉框容器中
+        $("#group_name").append(creatSelectTree(tree));
+
+        // 获取审核流程
+        $("#group_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/groupauditors/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    workflow_type: 2
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        var auditor = [];
+                        for (var i = 0; i < result.length; i++) {
+                            auditor.push(result[i]);
+                        }
+                        $("#workflow_auditors").val(auditor);
+                        $("#workflow_auditors_display").text(auditor);
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+    </script>
     <!--init -->
     <script>
         $(document).ready(function () {
@@ -304,27 +368,35 @@
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
             $("#btn-submitsql").prop('disabled', true);
-
+            // 清空id, 只允许新增不允许修改
+            sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
                 $("#workflowid").val(sessionStorage.getItem('editWorkflowDetailId'));
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#cluster_name").val(sessionStorage.getItem('editClustername'));
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-                $("#review_man").val(sessionStorage.getItem('editReviewman'));
-                var sub_review_name = sessionStorage.getItem('editSubReviewman');
-                $("input[name='sub_review_man'][value=\'" + sub_review_name + "\']").attr("checked", true);
             }
             else if (pathname === "/submitothercluster/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-                $("#review_man").val(sessionStorage.getItem('editReviewman'));
-                var sub_review_name = sessionStorage.getItem('editSubReviewman');
-                $("input[name='sub_review_man'][value=\'" + sub_review_name + "\']").attr("checked", true);
+            }
+            else if (pathname === "/submitsql/") {
+                $("#workflow_name").val(sessionStorage.removeItem('editWorkflowNname'));
+                sessionStorage.removeItem('editGroup');
+                sessionStorage.removeItem('editSqlContent');
+                editor.clearSelection();
+                sessionStorage.removeItem('editClustername');
+                sessionStorage.removeItem('editIsbackup');
+            }
+            if ($("#group_name").val()) {
+                $("#group_name").trigger("change");
             }
         });
     </script>

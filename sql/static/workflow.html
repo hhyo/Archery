@@ -6,6 +6,7 @@
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
             <option value="0" selected="selected">全部</option>
             <option value="1">查询权限申请</option>
+            <option value="2">SQL上线申请</option>
         </select>
     </div>
     <!-- 审核列表的表格-->
@@ -82,19 +83,19 @@
                         }
                     },
                 columns: [{
-                    title: '审核id',
-                    field: 'id'
+                    title: '申请标题',
+                    field: 'workflow_title',
+                    formatter: function (value, row, index) {
+                        return "<a href='/workflowdetail/" + row.audit_id + "/'>" + value + "</a>";
+                    }
+                }, {
+                    title: '项目组',
+                    field: 'group_id__group_name'
                 }, {
                     title: '申请类型',
                     field: 'workflow_type',
                     formatter: function (value, row, index) {
                         return workflow_type_formatter(value)
-                    }
-                }, {
-                    title: '申请标题',
-                    field: 'workflow_title',
-                    formatter: function (value, row, index) {
-                        return "<a href='/workflowdetail/" + row.id + "/'>" + value + "</a>";
                     }
                 }, {
                     title: '申请人',
@@ -126,10 +127,11 @@
                     title: '操作',
                     field: 'id',
                     formatter: function (value, row, index) {
+                        // 当前审核人
                         if (row.current_status === 0 && row.current_audit_user === "{{ loginUserOb.username }}") {
-                            return " <button class=\"btn btn-default btn-xs\" value=\"" + row.id + "\"\n" +
-                                " onclick=\"getaudit_id(value)\" data-toggle=\"modal\" " +
-                                "data-target=\"#auditConfim\">审核\n" + "</button>"
+                            return "<button class=\"btn btn-default btn-xs\" " +
+                                "onclick=\"javascrtpt:window.location.href='/workflowdetail/" + row.audit_id + "/'\">" +
+                                "审核</button>\n"
                         }
                     }
                 }],

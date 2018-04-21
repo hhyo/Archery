@@ -9,14 +9,13 @@
 ### 主要功能
 * 自动审核  
   发起SQL上线，工单提交，由inception自动审核
+* 项目组管理  
+  所有的工单申请都和项目组关联，每个项目组可配置不同的审批流程，审批流程支持多级审批
 * 人工审核  
-  inception自动审核通过的工单，由DBA人工审核、审核通过自动执行SQL   
-  inception不支持的语法，如子查询更新，由DBA人工审核，可以选择跳过inception执行  
-  为什么要有人工审核？  
-  这是遵循运维领域线上操作的流程意识，一个工程师要进行线上数据库SQL更新，最好由另外一个工程师来把关  
-  很多时候DBA并不知道SQL的业务含义，所以人工审核最好由其他研发工程师或研发经理来审核. 这是archer的设计理念
+  inception自动审核通过的工单，由审核人人工审核，人工审核通过后可选择由审核人执行或者申请人执行   
+  inception不支持的语法，如子查询更新，由审核人人工审核，DBA可以跳过inception直接执行，但无法生成回滚语句  
 * 回滚数据展示  
-  工单内可展示回滚语句，支持一键提交回滚工单
+  通过inception执行的工单可自动生成回滚语句并可在工单内查看，支持一键提交回滚工单  
 * pt-osc执行  
   支持pt-osc执行进度展示，并且可以点击中止pt-osc进程  
 * MySQL查询  
@@ -141,15 +140,18 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 ### 部分功能使用说明
 1. 用户角色配置  
   在【后台数据管理】-【用户配置】页面管理用户，或者使用LADP导入  
-  工程师角色（engineer）与审核角色（review_man），工程师可以发起SQL上线，审核人进行审核，超级管理员可以登录admin界面进行管理  
+  工程师角色（engineer）与DBA角色（DBA)以及超级管理员    
+  DBA：所有工单审核通过、执行结束都会抄送DBA，DBA可以跳过inception执行语句、终止SQL会话、变更用户查询权限  
+  超级管理员: 项目组配置、项目组审核流程配置、其他后台数据配置
 2. 配置主库地址  
   在【后台数据管理】-【主库地址】页面管理主库  
-  主库地址用户SQL上线，DDL、DML、慢日志查看、SQL优化等功能
+  主库地址用于SQL上线，DDL、DML、慢日志查看、SQL优化等功能
 3. 配置从库地址    
   在【后台数据管理】-【从库地址】页面管理从库  
-  从库地址用户SQL查询功能  
-4. 配置查询权限审核流程  
-  在【后台数据管理】-【工作流配置】页面管理审核流程   
+  从库地址用于SQL查询功能  
+4. 配置项目组  
+  在【项目配置管理】-页面进行管理   
+  所有的审核流程包括SQL上线申请、查询权限申请都需要选择项目组，并且配置对应的项目组审核流程
 
 ### 系统展示截图：
 1. 工单展示页  
@@ -190,15 +192,8 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingrules.png)  
 19. 脱敏字段配置  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/datamaskingcolumns.png)  
+20. 项目配置管理  
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/config.png)
 
 ### 联系方式：
 QQ群：524233225
-
-### 部分小问题解决办法：
-1. 报错：  
-![image](https://github.com/hhyo/archer/blob/master/src/screenshots/bugs/bug1.png)&nbsp;
-![image](https://github.com/hhyo/archer/blob/master/src/screenshots/bugs/bug2.png)  
-原因：python3的pymysql模块会向inception发送SHOW WARNINGS语句，导致inception返回一个"Must start as begin statement"错误被archer捕捉到报在日志里.  
-解决：如果实在忍受不了，请修改/path/to/python3/lib/python3.4/site-packages/pymysql/cursors.py:338行，将self._show_warnings()这一句注释掉，换成pass，如下：  
-![image](https://github.com/hhyo/archer/blob/master/src/screenshots/bugs/bug3.png)  
-但是此方法有副作用，会导致所有调用该pymysql模块的程序不能show warnings，因此强烈推荐使用virtualenv或venv环境！

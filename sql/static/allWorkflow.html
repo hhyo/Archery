@@ -72,9 +72,6 @@
                         }
                     },
                 columns: [{
-                    title: '工单ID',
-                    field: 'id'
-                }, {
                     title: '工单名称',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
@@ -95,6 +92,9 @@
                 }, {
                     title: '目标集群',
                     field: 'cluster_name'
+                }, {
+                    title: '项目组',
+                    field: 'group_id__group_name'
                 }],
                 onLoadSuccess: function () {
                 },
