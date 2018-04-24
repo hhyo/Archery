@@ -438,7 +438,6 @@ def rollback(request):
     rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
     cluster_name = workflowDetail.cluster_name
     group_id = workflowDetail.group_id
-    group_name = workflowDetail.group_name
     try:
         reviewMan = json.loads(workflowDetail.review_man)
         review_man = reviewMan[0]
@@ -448,7 +447,8 @@ def rollback(request):
         sub_review_man = ''
 
     context = {'listBackupSql': listBackupSql, 'rollbackWorkflowName': rollbackWorkflowName,
-               'cluster_name': cluster_name, 'review_man': review_man, 'sub_review_man': sub_review_man}
+               'cluster_name': cluster_name, 'review_man': review_man, 'sub_review_man': sub_review_man,
+               'group_id': group_id}
     return render(request, 'rollback.html', context)
 
 

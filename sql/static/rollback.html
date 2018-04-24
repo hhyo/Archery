@@ -7,7 +7,7 @@
             <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
             <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
             <input type="hidden" id="editClustername" value="{{ cluster_name }}">
-            <input type="hidden" id="editGroup" value="{{ group_id }},{{ group_name }}">
+            <input type="hidden" id="editGroup" value="{{ group_id }}">
             <input type="hidden" id="editIsbackup" value="是">
             <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
         </div>
