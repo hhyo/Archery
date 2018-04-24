@@ -6,11 +6,11 @@ RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-de
     && yum -y install python34 python34-pip python34-devel.x86_64 \
     && cd /opt \
     && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && virtualenv venv4archer --python=python3.4 \
-    && source /opt/venv4archer/bin/activate
+    && virtualenv venv4archer --python=python3.4
 #archer
 RUN cd /opt \
     && git clone https://github.com/hhyo/archer.git \
+    && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archer/src/docker/pymysql/connections.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
     && cp /opt/archer/src/docker/pymysql/cursors.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
