@@ -16,7 +16,7 @@ RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-de
     && cp /opt/archer/src/docker/nginx.conf /etc/nginx/ \
     && nginx \ 
 #sqladvisor
-    && yum -y install libaio-devel libffi-devel glib2 glib2-devel \
+RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
     && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
     && yum -y install Percona-Server-devel-56.x86_64  Percona-Server-shared-56.x86_64  Percona-Server-client-56.x86_64 \ 
     && git clone https://github.com/Meituan-Dianping/SQLAdvisor.git \
