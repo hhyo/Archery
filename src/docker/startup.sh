@@ -3,8 +3,13 @@
 cd /opt/archer
 #切换python运行环境
 source /opt/venv4archer/bin/activate
-#修改重定向端口，启动ngnix
-sed -i "s/:nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
+#修改重定向端口
+if [ ! -n $NGINX_PORT ]; then
+    sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
+else
+    sed -i "s/nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
+fi
+#启动ngnix
 /usr/sbin/nginx
 
 #收集所有的静态文件到STATIC_ROOT
