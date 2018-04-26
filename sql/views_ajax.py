@@ -263,7 +263,7 @@ def simplecheck(request):
         row['sequence'] = row_item[7]
         row['backup_dbname'] = row_item[8]
         row['execute_time'] = row_item[9]
-        row['sqlsha1'] = row_item[10]
+        #row['sqlsha1'] = row_item[10]
         rows.append(row)
     finalResult['data']['rows'] = rows
     finalResult['data']['column_list'] = column_list
