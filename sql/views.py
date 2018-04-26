@@ -39,17 +39,6 @@ prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
 
-# SQL上线用于工作流审核回调
-def _sqlreview_audit_call_back(workflow_id, workflow_status):
-    # 审核通过则调用sql审核方法
-    if workflow_status == WorkflowDict.workflow_status['audit_success']:
-        passonly(workflow_id)
-    elif workflow_status == WorkflowDict.workflow_status['audit_reject']:
-        cancel('x')
-    elif workflow_status == WorkflowDict.workflow_status['audit_abort']:
-        cancel('x')
-
-
 def login(request):
     return render(request, 'login.html')
 
@@ -57,7 +46,7 @@ def login(request):
 def logout(request):
     if request.session.get('login_username', False):
         del request.session['login_username']
-    return render(request, 'login.html')
+    return HttpResponseRedirect(reverse('sql:login'))
 
 
 # 首页，也是查看所有SQL工单页面，具备翻页功能
