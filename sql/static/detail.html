@@ -214,7 +214,7 @@
         {% if loginUser == workflowDetail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
-            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-warning' href="/editsql/">重新修改</a>
+            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default' href="/editsql/">重新修改</a>
         {% endif %}
     {% endif %}
 
