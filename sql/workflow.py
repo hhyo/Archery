@@ -337,11 +337,17 @@ class Workflow(object):
 
     # 通过审核id获取审核信息
     def auditinfo(self, audit_id):
-        return WorkflowAudit.objects.get(audit_id=audit_id)
+        try:
+            return WorkflowAudit.objects.get(audit_id=audit_id)
+        except Exception:
+            return None
 
     # 通过业务id获取审核信息
     def auditinfobyworkflow_id(self, workflow_id, workflow_type):
-        return WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
+        try:
+            return WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
+        except Exception:
+            return None
 
     # 通过项目组和审核类型，获取审核配置信息
     def auditsettings(self, group_id, workflow_type):
