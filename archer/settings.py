@@ -152,7 +152,7 @@ if ENABLE_LDAP:
 
     AUTH_LDAP_SERVER_URI = "ldap://xxx"
     AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=xxx,dc=xxx,dc=xxx"
-    AUTH_LDAP_ALWAYS_UPDATE_USER = True # 每次登录从ldap同步用户信息
+    AUTH_LDAP_ALWAYS_UPDATE_USER = True  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = {  # key为archer.sql_users字段名，value为ldap中字段名，用户同步信息
         "username": "cn",
         "display": "displayname",
