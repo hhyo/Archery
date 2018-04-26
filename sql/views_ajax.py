@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 
 from sql.permission import superuser_required
 
@@ -58,39 +58,38 @@ def loginAuthenticate(username, password):
     lockTimeThreshold = settings.LOCK_TIME_THRESHOLD
 
     # 服务端二次验证参数
-    strUsername = username
-    strPassword = password
-
-    if strUsername == "" or strPassword == "" or strUsername is None or strPassword is None:
+    if username == "" or password == "" or username is None or password is None:
         result = {'status': 2, 'msg': '登录用户名或密码为空，请重新输入!', 'data': ''}
-    elif strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (
-            datetime.datetime.now() - login_failure_counter[strUsername][
+    elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
+            datetime.datetime.now() - login_failure_counter[username][
         "last_failure_time"]).seconds <= lockTimeThreshold:
-        log_mail_record('user:{},login failed, account locking...'.format(strUsername))
+        log_mail_record('user:{},login failed, account locking...'.format(username))
         result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
     else:
-        correct_users = users.objects.filter(username=strUsername)
-        if len(correct_users) == 1 and correct_users[0].is_active and check_password(strPassword,
-                                                                                     correct_users[0].password) == True:
-            # 调用了django内置函数check_password函数检测输入的密码是否与django默认的PBKDF2算法相匹配
-            if strUsername in login_failure_counter:
-                # 如果登录失败计数器中存在该用户名，则清除之
-                login_failure_counter.pop(strUsername)
-            result = {'status': 0, 'msg': 'ok', 'data': ''}
+        # 登录
+        user = authenticate(username=username, password=password)
+        print(type(user))
+        # 登录成功
+        if user:
+            # 如果登录失败计数器中存在该用户名，则清除之
+            if username in login_failure_counter:
+                login_failure_counter.pop(username)
+            result = {'status': 0, 'msg': 'ok', 'data': user}
+        # 登录失败
         else:
-            if strUsername not in login_failure_counter:
+            if username not in login_failure_counter:
                 # 第一次登录失败，登录失败计数器中不存在该用户，则创建一个该用户的计数器
-                login_failure_counter[strUsername] = {"cnt": 1, "last_failure_time": datetime.datetime.now()}
+                login_failure_counter[username] = {"cnt": 1, "last_failure_time": datetime.datetime.now()}
             else:
-                if (datetime.datetime.now() - login_failure_counter[strUsername][
+                if (datetime.datetime.now() - login_failure_counter[username][
                     "last_failure_time"]).seconds <= lockTimeThreshold:
-                    login_failure_counter[strUsername]["cnt"] += 1
+                    login_failure_counter[username]["cnt"] += 1
                 else:
                     # 上一次登录失败时间早于5分钟前，则重新计数。以达到超过5分钟自动解锁的目的。
-                    login_failure_counter[strUsername]["cnt"] = 1
-                login_failure_counter[strUsername]["last_failure_time"] = datetime.datetime.now()
+                    login_failure_counter[username]["cnt"] = 1
+                login_failure_counter[username]["last_failure_time"] = datetime.datetime.now()
             log_mail_record(
-                'user:{},login failed, fail count:{}'.format(strUsername, login_failure_counter[strUsername]["cnt"]))
+                'user:{},login failed, fail count:{}'.format(username, login_failure_counter[username]["cnt"]))
             result = {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
     return result
 
@@ -99,41 +98,31 @@ def loginAuthenticate(username, password):
 @csrf_exempt
 def authenticateEntry(request):
     """接收http请求，然后把请求中的用户名密码传给loginAuthenticate去验证"""
-    if request.is_ajax():
-        strUsername = request.POST.get('username')
-        strPassword = request.POST.get('password')
-    else:
-        strUsername = request.POST['username']
-        strPassword = request.POST['password']
+    username = request.POST.get('username')
+    password = request.POST.get('password')
 
-    lockCntThreshold = settings.LOCK_CNT_THRESHOLD
-    lockTimeThreshold = settings.LOCK_TIME_THRESHOLD
-
-    if settings.ENABLE_LDAP:
-        ldap = LDAPBackend()
-        user = ldap.authenticate(username=strUsername, password=strPassword)
-        if strUsername in login_failure_counter and login_failure_counter[strUsername]["cnt"] >= lockCntThreshold and (
-                datetime.datetime.now() - login_failure_counter[strUsername][
-            "last_failure_time"]).seconds <= lockTimeThreshold:
-            log_mail_record('user:{},login failed, account locking...'.format(strUsername))
-            result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
-            return HttpResponse(json.dumps(result), content_type='application/json')
-        if user and user.is_active:
-            request.session['login_username'] = strUsername
-            # 登录管理后台，避免二次登录
-            user = authenticate(username=strUsername, password=strPassword)
-            if user:
-                login(request, user)
-            result = {'status': 0, 'msg': 'ok', 'data': ''}
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-    result = loginAuthenticate(strUsername, strPassword)
+    result = loginAuthenticate(username, password)
     if result['status'] == 0:
-        request.session['login_username'] = strUsername
-        # 登录管理后台，避免二次登录
-        user = authenticate(username=strUsername, password=strPassword)
-        if user:
-            login(request, user)
+        user = result.get('data')
+        # 开启LDAP的认证通过后更新用户密码
+        if settings.ENABLE_LDAP:
+            try:
+                users.objects.get(username=username)
+            except Exception:
+                insert_info = users()
+                insert_info.password = make_password(password)
+                insert_info.save()
+            else:
+                replace_info = users.objects.get(username=username)
+                replace_info.password = make_password(password)
+                replace_info.save()
+
+        # 调用了django内置登录方法，防止管理后台二次登录
+        login(request, user)
+
+        # session保存用户信息
+        request.session['login_username'] = username
+        result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -216,12 +205,8 @@ def sqlworkflow(request):
 # 提交SQL给inception进行自动审核
 @csrf_exempt
 def simplecheck(request):
-    if request.is_ajax():
-        sqlContent = request.POST.get('sql_content')
-        clusterName = request.POST.get('cluster_name')
-    else:
-        sqlContent = request.POST['sql_content']
-        clusterName = request.POST['cluster_name']
+    sqlContent = request.POST.get('sql_content')
+    clusterName = request.POST.get('cluster_name')
 
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
@@ -263,7 +248,7 @@ def simplecheck(request):
         row['sequence'] = row_item[7]
         row['backup_dbname'] = row_item[8]
         row['execute_time'] = row_item[9]
-        #row['sqlsha1'] = row_item[10]
+        # row['sqlsha1'] = row_item[10]
         rows.append(row)
     finalResult['data']['rows'] = rows
     finalResult['data']['column_list'] = column_list
@@ -271,40 +256,6 @@ def simplecheck(request):
     finalResult['data']['CheckErrorCount'] = CheckErrorCount
 
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
-
-# 同步ldap用户到数据库
-@csrf_exempt
-def syncldapuser(request):
-    ldapback = LDAPBackend()
-    ldap = ldapback.ldap
-    ldapconn = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
-    tls = getattr(settings, 'AUTH_LDAP_START_TLS', None)
-    if tls:
-        ldapconn.start_tls_s()
-    binddn = settings.AUTH_LDAP_BIND_DN
-    bind_password = settings.AUTH_LDAP_BIND_PASSWORD
-    basedn = settings.AUTH_LDAP_BASEDN
-    ldapconn.simple_bind_s(binddn, bind_password)
-    ldapusers = ldapconn.search_s(basedn, ldap.SCOPE_SUBTREE, 'objectclass=*',
-                                  attrlist=settings.AUTH_LDAP_USER_ATTRLIST)
-    username_field = settings.AUTH_LDAP_USER_ATTR_MAP['username']
-    display_field = settings.AUTH_LDAP_USER_ATTR_MAP['display']
-    email_field = settings.AUTH_LDAP_USER_ATTR_MAP['email']
-    count = 0
-    for user in ldapusers:
-        user_attr = user[1]
-        if user_attr:
-            username = user_attr[username_field][0]
-            display = user_attr[display_field][0]
-            email = user_attr[email_field][0]
-            already_user = users.objects.filter(username=username.decode()).filter(is_ldapuser=True)
-            if len(already_user) == 0:
-                u = users(username=username.decode(), display=display.decode(), email=email.decode(), is_ldapuser=True)
-                u.save()
-                count += 1
-    result = {'msg': '同步{}个用户。'.format(count)}
-    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 请求图表数据
@@ -440,16 +391,10 @@ def stopOscProgress(request):
 # 获取SQLAdvisor的优化结果
 @csrf_exempt
 def sqladvisorcheck(request):
-    if request.is_ajax():
-        sqlContent = request.POST.get('sql_content')
-        clusterName = request.POST.get('cluster_name')
-        dbName = request.POST.get('db_name')
-        verbose = request.POST.get('verbose')
-    else:
-        sqlContent = request.POST['sql_content']
-        clusterName = request.POST['cluster_name']
-        dbName = request.POST.POST['db_name']
-        verbose = request.POST.POST['verbose']
+    sqlContent = request.POST.get('sql_content')
+    clusterName = request.POST.get('cluster_name')
+    dbName = request.POST.get('db_name')
+    verbose = request.POST.get('verbose')
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证

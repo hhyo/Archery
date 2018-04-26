@@ -709,14 +709,9 @@ def querylog(request):
 # 获取SQL执行计划
 @csrf_exempt
 def explain(request):
-    if request.is_ajax():
-        sqlContent = request.POST.get('sql_content')
-        clusterName = request.POST.get('cluster_name')
-        dbName = request.POST.get('db_name')
-    else:
-        sqlContent = request.POST['sql_content']
-        clusterName = request.POST['cluster_name']
-        dbName = request.POST.get('db_name')
+    sqlContent = request.POST.get('sql_content')
+    clusterName = request.POST.get('cluster_name')
+    dbName = request.POST.get('db_name')
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证

@@ -20,7 +20,6 @@ urlpatterns = [
     url(r'^execute_skipinc/$', views.execute_skipinc, name='execute_skipinc'),
     url(r'^cancel/$', views.cancel, name='cancel'),
     url(r'^rollback/$', views.rollback, name='rollback'),
-    url(r'^ldapsync/$', views.ldapsync, name='ldapsync'),
     url(r'^sqlquery/$', views.sqlquery, name='sqlquery'),
     url(r'^slowquery/$', views.slowquery, name='slowquery'),
     url(r'^sqladvisor/$', views.sqladvisor, name='sqladvisor'),
@@ -38,7 +37,6 @@ urlpatterns = [
 
     url(r'^authenticate/$', views_ajax.authenticateEntry, name='authenticate'),
     url(r'^sqlworkflow/$', views_ajax.sqlworkflow, name='sqlworkflow'),
-    url(r'^syncldapuser/$', views_ajax.syncldapuser, name='syncldapuser'),
     url(r'^simplecheck/$', views_ajax.simplecheck, name='simplecheck'),
     url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),
     url(r'^getPersonCharts/$', views_ajax.getPersonCharts, name='getPersonCharts'),

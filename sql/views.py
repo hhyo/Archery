@@ -91,7 +91,7 @@ def submitSql(request):
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
 
-    context = {'currentMenu': 'submitsql', 'dictAllClusterDb': dictAllClusterDb,
+    context = {'currentMenu': 'allworkflow', 'dictAllClusterDb': dictAllClusterDb,
                'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
 
@@ -439,12 +439,6 @@ def rollback(request):
                'cluster_name': cluster_name, 'review_man': review_man, 'sub_review_man': sub_review_man,
                'group_id': group_id}
     return render(request, 'rollback.html', context)
-
-
-# ldap用户同步
-def ldapsync(request):
-    context = {'currentMenu': 'ldapsync'}
-    return render(request, 'ldapsync.html', context)
 
 
 # SQL审核必读

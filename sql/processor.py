@@ -12,7 +12,8 @@ leftMenuBtnsCommon = (
 )
 
 leftMenuBtnsAliYun = (
-    {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/','class': 'glyphicon glyphicon glyphicon-scissors'},
+    {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/',
+     'class': 'glyphicon glyphicon glyphicon-scissors'},
 )
 
 leftMenuBtnsSuper = (
@@ -25,15 +26,9 @@ leftMenuBtnsDoc = (
     {'key': 'charts', 'name': '统计图表展示', 'url': '/charts/', 'class': 'glyphicon glyphicon-file'},
 )
 
-if settings.ENABLE_LDAP:
-    leftMenuBtnsSuper = (
-        {'key': 'ldapsync', 'name': '同步LDAP用户', 'url': '/ldapsync/', 'class': 'glyphicon glyphicon-th-large'},
-        {'key': 'config', 'name': '项目配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon glyphicon-option-horizontal'},
-        {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list'},
-    )
-
 if settings.ENABLE_ALIYUN:
     leftMenuBtnsCommon = leftMenuBtnsCommon + leftMenuBtnsAliYun
+
 
 def global_info(request):
     """存放用户，会话信息等."""
