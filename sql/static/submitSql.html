@@ -73,7 +73,8 @@
                     </div>
                     <!--button-->
                     <div class="form-group">
-                        <input type="button" id="btn-autoreview" class="btn btn-danger btn-lg" value="SQL检测"/>
+                        <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                        <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
                         {#<button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
                         <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                     </div>
@@ -123,6 +124,7 @@
     <script src="{% static 'crypto-js-3.1.9/enc-base64.min.js' %}"></script>
     <script src="{% static 'crypto-js-3.1.9/enc-utf8.min.js' %}"></script>
     <script src="{% static 'user/js/autoreview.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
 
     <!--upload -->
     <script>
@@ -236,6 +238,22 @@
             );
             return result;
         }
+
+        //格式化sql
+        $("#btn-format").click(function () {
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    var sqlContent = select_sqlContent
+                }
+                else {
+                    var sqlContent = editor.getValue();
+
+                }
+                var sqlContent = window.sqlFormatter.format(sqlContent);
+                editor.setValue(sqlContent);
+                editor.clearSelection();
+            }
+        );
 
         $("#btn-submitsql").click(function () {
             //获取form对象，判断输入，通过则提交
