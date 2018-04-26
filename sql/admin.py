@@ -1,10 +1,10 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
-from .models import users, master_config, slave_config, workflow, WorkflowAudit, WorkflowAuditSetting, \
+from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group
 
 
@@ -31,24 +31,19 @@ class workflowAdmin(admin.ModelAdmin):
 class usersCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super(usersCreationForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = True
-        self.fields['display'].required = True
-        self.fields['role'].required = True
 
 
 # 编辑用户表单重新定义，继承自UserChangeForm
 class usersChangeForm(UserChangeForm):
     def __init__(self, *args, **kwargs):
         super(usersChangeForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = True
-        self.fields['display'].required = True
-        self.fields['role'].required = True
 
 
+# 用户管理
 class usersAdmin(UserAdmin):
     def __init__(self, *args, **kwargs):
         super(usersAdmin, self).__init__(*args, **kwargs)
-        self.list_display = ('id', 'username', 'display', 'role', 'email', 'password', 'is_superuser', 'is_staff')
+        self.list_display = ('id', 'username', 'display', 'role', 'email', 'is_superuser', 'is_staff', 'is_active')
         self.search_fields = ('id', 'username', 'display', 'role', 'email')
         self.form = usersChangeForm
         self.add_form = usersCreationForm
@@ -61,14 +56,13 @@ class usersAdmin(UserAdmin):
             self.fieldsets = (
                 (('认证信息'), {'fields': ('username', 'password')}),
                 (('个人信息'), {'fields': ('display', 'role', 'email')}),
-                (('权限信息'), {'fields': ('is_active', 'is_staff')}),
-                # (('Important dates'), {'fields': ('last_login', 'date_joined')}),
+                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff')}),
+                # (('其他信息'), {'fields': ('last_login', 'date_joined')}),
             )
             # 此字段定义UserCreationForm表单中的具体显示内容
-            self.add_fieldsets = ((None, {'classes': ('wide',),
-                                          'fields': ('username', 'display', 'role', 'email', 'password1', 'password2'),
-                                          }),
-                                  )
+            self.add_fieldsets = (
+                (None, {'fields': ('username', 'display', 'role', 'email', 'password1', 'password2'), }),
+            )
         return super(usersAdmin, self).changelist_view(request, extra_context)
 
 
