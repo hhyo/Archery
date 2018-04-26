@@ -68,8 +68,8 @@
                         </select>
                     </div>
                     <!--审核流程-->
-                    <div class="form-group">
-                        <h5 style="color: red">审核流程：<b id="workflow_auditors_display"></b></h5>
+                    <div id="div-workflow_auditors" class="form-group" style="display: none">
+                        <p class="bg-primary">&nbsp&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                     </div>
                     <!--button-->
                     <div class="form-group">
@@ -346,6 +346,7 @@
                             auditor.push(result[i]);
                         }
                         $("#workflow_auditors").val(auditor);
+                        $("#div-workflow_auditors").show();
                         $("#workflow_auditors_display").text(auditor);
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);

@@ -95,8 +95,8 @@
                         </select>
                     </div>
                     <!--审核流程-->
-                    <div class="form-group">
-                        <h5 style="color: red">审核流程：<b id="workflow_auditors"></b></h5>
+                    <div id="div-workflow_auditors" class="form-group" style="display: none">
+                        <p class="bg-primary">&nbsp&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors"></b></p>
                     </div>
                     <p class="text-info">提示：权限审核通过后即可进行在线查询，请耐心等待。</p>
                 </div>
@@ -165,6 +165,7 @@
                         for (var i = 0; i < result.length; i++) {
                             auditor.push(result[i]);
                         }
+                        $("#div-workflow_auditors").show();
                         $("#workflow_auditors").text(auditor);
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
@@ -259,7 +260,7 @@
                     title: '工单名称',
                     field: 'title',
                     formatter: function (value, row, index) {
-                       return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
+                        return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
                     }
                 }, {
                     title: '集群',

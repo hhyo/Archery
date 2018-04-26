@@ -4,7 +4,6 @@ from django.conf import settings
 
 leftMenuBtnsCommon = (
     {'key': 'allworkflow', 'name': 'SQL上线工单', 'url': '/allworkflow/', 'class': 'glyphicon glyphicon-home'},
-    {'key': 'submitsql', 'name': '发起SQL上线', 'url': '/submitsql/', 'class': 'glyphicon glyphicon-asterisk'},
     {'key': 'sqlquery', 'name': 'SQL在线查询', 'url': '/sqlquery/', 'class': 'glyphicon glyphicon-search'},
     {'key': 'slowquery', 'name': 'SQL慢查日志', 'url': '/slowquery/', 'class': 'glyphicon glyphicon-align-right'},
     {'key': 'sqladvisor', 'name': 'SQL优化工具', 'url': '/sqladvisor/', 'class': 'glyphicon glyphicon-wrench'},
@@ -29,6 +28,7 @@ leftMenuBtnsDoc = (
 if settings.ENABLE_LDAP:
     leftMenuBtnsSuper = (
         {'key': 'ldapsync', 'name': '同步LDAP用户', 'url': '/ldapsync/', 'class': 'glyphicon glyphicon-th-large'},
+        {'key': 'config', 'name': '项目配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon glyphicon-option-horizontal'},
         {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list'},
     )
 
