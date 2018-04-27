@@ -204,8 +204,8 @@ LOGGING = {
     }
 }
 
-# 是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA. on是开，off是关，配置为其他值均会被archer认为不开启邮件功能
-MAIL_ON_OFF = 'off'
+# 是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA.
+MAIL_ON_OFF = True
 
 MAIL_REVIEW_SMTP_SERVER = 'mail.xxx.com'
 MAIL_REVIEW_SMTP_PORT = 25
@@ -214,8 +214,8 @@ MAIL_REVIEW_FROM_PASSWORD = ''  # 发件人邮箱密码，如果为空则不需�
 MAIL_REVIEW_SECURE_ADDR = ['archer@xxx.com', 'archer@xxx.com']  # 登录失败，等安全相关发送地址
 
 # 是否过滤【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】等高危DDL操作：
-# on是开，会首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；off是关，直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
-CRITICAL_DDL_ON_OFF = 'off'
+# 开启后，首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；关闭直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
+CRITICAL_DDL_ON_OFF = False
 
 # 在线查询当inception语法树打印失败时的控制，on是开启校验，失败不允许继续执行并返回错误，off是关闭校验，继续执行，允许执行会导致解析失败的查询表权限验证和脱敏功能失效
 CHECK_QUERY_ON_OFF = True

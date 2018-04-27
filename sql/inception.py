@@ -78,52 +78,51 @@ class InceptionDao(object):
         #if sqlContent[-1] != ";":
             #sqlContent = sqlContent + ";"
 
-        if hasattr(settings, 'CRITICAL_DDL_ON_OFF') == True:
-            if getattr(settings, 'CRITICAL_DDL_ON_OFF') == "on":
-                criticalDDL_check = self.criticalDDL(sqlContent)
-            else:
-                criticalDDL_check = None
+        if getattr(settings, 'CRITICAL_DDL_ON_OFF'):
+            criticalDDL_check = self.criticalDDL(sqlContent)
+        else:
+            criticalDDL_check = None
 
-            if criticalDDL_check is not None:
-                result = criticalDDL_check
+        if criticalDDL_check is not None:
+            result = criticalDDL_check
+        else:
+            preCheckResult = self.preCheck(sqlContent)
+            if preCheckResult is not None:
+                result = preCheckResult
             else:
-                preCheckResult = self.preCheck(sqlContent)
-                if preCheckResult is not None:
-                    result = preCheckResult
+                if isSplit == "yes":
+                    # 这种场景只给osc进度功能使用
+                    # 如果一个工单中同时包含DML和DDL，那么执行时被split后的SQL与提交的SQL会不一样（会在每条语句前面加use database;)，导致osc进度更新取不到正确的SHA1值。
+                    # 请参考inception文档中--enable-split参数的说明
+
+                    sqlSplit = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%s; --enable-ignore-warnings;--enable-split;*/\
+                         inception_magic_start;\
+                         %s\
+                         inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+                    splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
+                    tmpList = []
+                    for splitRow in splitResult:
+                        sqlTmp = splitRow[1]
+                        sql = "/*--user=%s;--password=%s;--host=%s;--enable-check;--port=%s; --enable-ignore-warnings;*/\
+                                inception_magic_start;\
+                                %s\
+                                inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlTmp)
+                        reviewResult = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+                        tmpList.append(reviewResult)
+
+                    #二次加工一下
+                    finalList = []
+                    for splitRow in tmpList:
+                        for sqlRow in splitRow:
+                            finalList.append(list(sqlRow))
+                    result = finalList
                 else:
-                    if isSplit == "yes":
-                        # 这种场景只给osc进度功能使用
-                        # 如果一个工单中同时包含DML和DDL，那么执行时被split后的SQL与提交的SQL会不一样（会在每条语句前面加use database;)，导致osc进度更新取不到正确的SHA1值。
-                        # 请参考inception文档中--enable-split参数的说明
-
-                        sqlSplit = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%s; --enable-ignore-warnings;--enable-split;*/\
-                             inception_magic_start;\
-                             %s\
-                             inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
-                        splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
-                        tmpList = []
-                        for splitRow in splitResult:
-                            sqlTmp = splitRow[1]
-                            sql = "/*--user=%s;--password=%s;--host=%s;--enable-check;--port=%s; --enable-ignore-warnings;*/\
-                                    inception_magic_start;\
-                                    %s\
-                                    inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlTmp)
-                            reviewResult = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
-                            tmpList.append(reviewResult)
-
-                        #二次加工一下
-                        finalList = []
-                        for splitRow in tmpList:
-                            for sqlRow in splitRow:
-                                finalList.append(list(sqlRow))
-                        result = finalList
-                    else:
-                        # 工单审核使用
-                        sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
-                          inception_magic_start;\
-                          %s\
-                          inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
-                        result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
+                    # 工单审核使用
+                    sql="/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%s;*/\
+                      inception_magic_start;\
+                      %s\
+                      inception_magic_commit;" % (masterUser, masterPassword, masterHost, str(masterPort), sqlContent)
+                    result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
     def executeFinal(self, workflowDetail, dictConn):

@@ -81,7 +81,7 @@ def _execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
         logger.error(e)
 
     # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if getattr(settings, 'MAIL_ON_OFF') == "on":
+    if getattr(settings, 'MAIL_ON_OFF'):
         engineer = workflowDetail.engineer
         workflowStatus = workflowDetail.status
         workflowName = workflowDetail.workflow_name
@@ -122,7 +122,7 @@ def _execute_call_back(workflowId, clusterName, url):
         logger.error(e)
 
     # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if getattr(settings, 'MAIL_ON_OFF') == "on":
+    if getattr(settings, 'MAIL_ON_OFF'):
         # 给申请人，DBA各发一封邮件
         engineer = workflowDetail.engineer
         workflowStatus = workflowDetail.status

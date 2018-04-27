@@ -2,25 +2,18 @@
 
 import re
 import json
-import time
 from threading import Thread
 from collections import OrderedDict
 
-import time
 from django.db.models import Q, F
 from django.db import connection, transaction
 from django.utils import timezone
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import check_password
 from django.core.urlresolvers import reverse
 
 from .dao import Dao
 from .const import Const, WorkflowDict
-from .sendmail import MailSender
 from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
@@ -34,7 +27,6 @@ logger = logging.getLogger('default')
 
 dao = Dao()
 inceptionDao = InceptionDao()
-mailSender = MailSender()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
