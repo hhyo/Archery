@@ -47,7 +47,7 @@ class Aliyun(object):
         return format_time
 
     def DescribeSlowLogs(self, DBInstanceId, StartTime, EndTime, **kwargs):
-        '''获取集群慢日志列表
+        '''获取实例慢日志列表
         DBName,SortKey、PageSize、PageNumber'''
         request = DescribeSlowLogsRequest.DescribeSlowLogsRequest()
         values = {"action_name": "DescribeSlowLogs", "DBInstanceId": DBInstanceId,

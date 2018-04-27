@@ -158,7 +158,7 @@ def sqlworkflow(request):
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_id__group_name")
+                                                            "group_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
         else:
@@ -168,7 +168,7 @@ def sqlworkflow(request):
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_id__group_name")
+                                                            "group_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
@@ -179,7 +179,7 @@ def sqlworkflow(request):
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_id__group_name")
+                                                            "group_name")
             listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         else:
             listWorkflow = workflow.objects.filter(
@@ -188,7 +188,7 @@ def sqlworkflow(request):
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_id__group_name")
+                                                            "group_name")
             listWorkflowCount = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(
@@ -224,16 +224,6 @@ def simplecheck(request):
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
-    # 判断是否使用了use语句
-    sql_list = sqlContent.split('\n')
-    for sql in sql_list:
-        if re.match(r"^(\--|#)", sql):
-            pass
-        elif re.match(r"^use", sql.lower()):
-            finalResult['status'] = 1
-            finalResult['msg'] = 'SQL语句不允许使用^use语句，请重新修改并提交'
-            return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 交给inception进行自动审核
     result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)

@@ -189,6 +189,6 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 1. 【高危】禁用`update|delete t1 … where a=XX limit XX;` 这种带limit的更新语句。因为会导致主从不一致，导致数据错乱。建议加上`order by PK`。
 2. 【高危】禁止使用关联子查询，如`update t1 set … where name in(select name from user where…);`效率极其低下。
-3. 【强制】禁用procedure、function、trigger、views、event、外键约束。因为他们消耗数据库资源，降低数据库集群可扩展性。推荐都在程序端实现。
+3. 【强制】禁用procedure、function、trigger、views、event、外键约束。因为他们消耗数据库资源，降低数据库实例可扩展性。推荐都在程序端实现。
 4. 【强制】禁用`insert into …on duplicate key update…`在高并发环境下，会造成主从不一致。
 5. 【强制】禁止联表更新语句，如`update t1,t2 where t1.id=t2.id…`。

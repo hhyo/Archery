@@ -33,7 +33,7 @@ def slowquery_review(request):
     StartTime = '%sZ' % StartTime
     EndTime = '%sZ' % EndTime
 
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = aliyun.DescribeSlowLogs(cluster_info.rds_dbinstanceid, StartTime, EndTime, **values)
@@ -75,7 +75,7 @@ def slowquery_review_history(request):
     StartTime = '%sT16:00Z' % StartTime
     EndTime = '%sT15:59Z' % EndTime
 
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = aliyun.DescribeSlowLogRecords(cluster_info.rds_dbinstanceid, StartTime, EndTime, **values)
@@ -103,7 +103,7 @@ def process_status(request):
     if command_type is None or command_type == '':
         command_type = 'Query'
 
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     process_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'ShowProcessList',
@@ -127,7 +127,7 @@ def create_kill_session(request):
     ThreadIDs = request.POST.get('ThreadIDs')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     request_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'CreateKillSessionRequest',
@@ -150,7 +150,7 @@ def kill_session(request):
     request_params = request.POST.get('request_params')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     request_params = json.loads(request_params)
@@ -172,7 +172,7 @@ def kill_session(request):
 def sapce_status(request):
     cluster_name = request.POST.get('cluster_name')
 
-    # 通过集群名称获取关联的rds实例id
+    # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
     # 调用aliyun接口获取进程数据
     space_info = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'GetSpaceStatForTables',

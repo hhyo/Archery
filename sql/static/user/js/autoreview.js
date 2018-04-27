@@ -6,7 +6,7 @@ function validate() {
         alert("SQL内容不能为空！");
         return result = false;
     } else if (clusterName === null || clusterName == $("#cluster_name").attr("data-placeholder")) {
-        alert("请选择要上线的集群！");
+        alert("请选择要上线的实例！");
         return result = false;
     }
     return result;

@@ -23,7 +23,7 @@ class users(AbstractUser):
 
 # 各个线上主库地址。
 class master_config(models.Model):
-    cluster_name = models.CharField('集群名称', max_length=50, unique=True)
+    cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     master_host = models.CharField('主库地址', max_length=200)
     master_port = models.IntegerField('主库端口', default=3306)
     master_user = models.CharField('登录主库的用户名', max_length=100)
@@ -66,8 +66,8 @@ class Group(models.Model):
 # 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class workflow(models.Model):
     workflow_name = models.CharField('工单内容', max_length=50)
-    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
-                                 verbose_name='项目组', default=0)
+    group_id = models.IntegerField('项目ID')
+    group_name = models.CharField('项目名称', max_length=100)
     engineer = models.CharField('发起人', max_length=50)
     review_man = models.CharField('审核人', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
@@ -78,8 +78,7 @@ class workflow(models.Model):
     # is_backup = models.IntegerField('是否备份，0为否，1为是', choices=((0,0),(1,1)))
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
-    cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
-                                     db_column='cluster_name', verbose_name='集群名称')
+    cluster_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=60)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
@@ -98,7 +97,7 @@ class workflow(models.Model):
 # 各个线上从库地址
 class slave_config(models.Model):
     cluster_name = models.OneToOneField(master_config, db_constraint=False, to_field='cluster_name',
-                                        db_column='cluster_name', verbose_name='集群名称', unique=True)
+                                        db_column='cluster_name', verbose_name='实例名称', unique=True)
     slave_host = models.CharField('从库地址', max_length=200)
     slave_port = models.IntegerField('从库端口', default=3306)
     slave_user = models.CharField('登录从库的用户名', max_length=100)
@@ -119,8 +118,8 @@ class slave_config(models.Model):
 # 工作流审核主表
 class WorkflowAudit(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
-                                 verbose_name='项目组', default=0)
+    group_id = models.IntegerField('项目ID')
+    group_name = models.CharField('项目名称', max_length=100)
     workflow_id = models.BigIntegerField('关联业务id')
     workflow_type = models.IntegerField('申请类型',
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
@@ -167,8 +166,8 @@ class WorkflowAuditDetail(models.Model):
 # 审批配置表
 class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
-    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
-                                 verbose_name='项目组', default=0)
+    group_id = models.IntegerField('项目ID')
+    group_name = models.CharField('项目名称', max_length=100)
     workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
@@ -179,6 +178,7 @@ class WorkflowAuditSetting(models.Model):
 
     class Meta:
         db_table = 'workflow_audit_setting'
+        unique_together = ('group_id', 'workflow_type')
         verbose_name = u'审批流程配置'
         verbose_name_plural = u'审批流程配置'
 
@@ -186,12 +186,11 @@ class WorkflowAuditSetting(models.Model):
 # 查询权限申请记录表
 class QueryPrivilegesApply(models.Model):
     apply_id = models.AutoField(primary_key=True)
-    group_id = models.ForeignKey(Group, db_constraint=False, to_field='group_id', db_column='group_id',
-                                 verbose_name='项目组', default=0)
+    group_id = models.IntegerField('项目ID')
+    group_name = models.CharField('项目名称', max_length=100)
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
-    cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
-                                     db_column='cluster_name', verbose_name='集群名称')
+    cluster_name = models.CharField('实例名称', max_length=50)
     db_list = models.TextField('数据库')
     table_list = models.TextField('表')
     valid_date = models.DateField('有效时间')
@@ -215,8 +214,7 @@ class QueryPrivilegesApply(models.Model):
 class QueryPrivileges(models.Model):
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
-    cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
-                                     db_column='cluster_name', verbose_name='集群名称')
+    cluster_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=200)
     table_name = models.CharField('表', max_length=200)
     valid_date = models.DateField('有效时间')
@@ -237,8 +235,7 @@ class QueryPrivileges(models.Model):
 
 # 记录在线查询sql的日志
 class QueryLog(models.Model):
-    cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
-                                     db_column='cluster_name', verbose_name='集群名称')
+    cluster_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=30)
     sqllog = models.TextField('执行的sql查询')
     effect_row = models.BigIntegerField('返回行数')
@@ -259,8 +256,7 @@ class DataMaskingColumns(models.Model):
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
-    cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
-                                     db_column='cluster_name', verbose_name='集群名称')
+    cluster_name = models.CharField('实例名称', max_length=50)
     table_schema = models.CharField('字段所在库名', max_length=64)
     table_name = models.CharField('字段所在表名', max_length=64)
     column_name = models.CharField('字段名', max_length=64)
@@ -311,8 +307,8 @@ class AliyunAccessKey(models.Model):
 # 阿里云rds配置信息
 class AliyunRdsConfig(models.Model):
     cluster_name = models.OneToOneField(master_config, db_constraint=False, to_field='cluster_name',
-                                        db_column='cluster_name', verbose_name='集群名称', unique=True)
-    rds_dbinstanceid = models.CharField('阿里云RDS集群ID', max_length=100)
+                                        db_column='cluster_name', verbose_name='实例名称', unique=True)
+    rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100)
 
     def __int__(self):
         return self.rds_dbinstanceid

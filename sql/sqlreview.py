@@ -32,7 +32,7 @@ def _getDetailUrl(request):
     return "%s://%s/detail/" % (scheme, host)
 
 
-# 根据集群名获取主库连接字符串，并封装成一个dict
+# 根据实例名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):
     listMasters = master_config.objects.filter(cluster_name=clusterName)
 
@@ -51,7 +51,7 @@ def _execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
     # 获取审核人
     reviewMan = workflowDetail.review_man
 
-    # 获取集群连接信息
+    # 获取实例连接信息
     masterInfo = getMasterConnStr(clusterName)
     try:
         # 执行sql

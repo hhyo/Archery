@@ -64,7 +64,7 @@ def submitSql(request):
     if len(group_list) == 0:
         return HttpResponseRedirect('/config/')
 
-    # 获取所有集群名称
+    # 获取所有实例名称
     listAllClusterName = [master.cluster_name for master in masters]
 
     # 获取所有有效用户，通知对象
@@ -80,7 +80,8 @@ def autoreview(request):
     workflowid = request.POST.get('workflowid')
     sqlContent = request.POST['sql_content']
     workflowName = request.POST['workflow_name']
-    group_id = Group.objects.get(group_name=request.POST['group_name']).group_id
+    group_name = request.POST['group_name']
+    group_id = Group.objects.get(group_name=group_name).group_id
     clusterName = request.POST['cluster_name']
     db_name = request.POST.get('db_name')
     isBackup = request.POST['is_backup']
@@ -95,15 +96,6 @@ def autoreview(request):
     if sqlContent[-1] != ";":
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
         return render(request, 'error.html', context)
-
-    # 判断是否使用了use语句
-    sql_list = sqlContent.split('\n')
-    for sql in sql_list:
-        if re.match(r"^(\--|#)", sql):
-            pass
-        elif re.match(r"^use", sql.lower()):
-            context = 'SQL语句不允许使用^use语句，请重新修改并提交'
-            return render(request, 'error.html', context)
 
     # 交给inception进行自动审核
     result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
@@ -137,13 +129,13 @@ def autoreview(request):
             else:
                 Workflow = workflow.objects.get(id=int(workflowid))
             Workflow.workflow_name = workflowName
-            Workflow.group_id = Group.objects.get(group_id=group_id)
+            Workflow.group_id = group_id
             Workflow.engineer = engineer
             Workflow.review_man = reviewMan
             Workflow.status = workflowStatus
             Workflow.is_backup = isBackup
             Workflow.review_content = jsonResult
-            Workflow.cluster_name = master_config.objects.get(cluster_name=clusterName)
+            Workflow.cluster_name = clusterName
             Workflow.db_name = db_name
             Workflow.sql_content = sqlContent
             Workflow.execute_result = ''
@@ -439,7 +431,7 @@ def charts(request):
 
 # SQL在线查询
 def sqlquery(request):
-    # 获取所有从库集群名称
+    # 获取所有从库实例名称
     slaves = slave_config.objects.all().order_by('cluster_name')
     if len(slaves) == 0:
         return HttpResponseRedirect('/admin/sql/slave_config/add/')
@@ -451,7 +443,7 @@ def sqlquery(request):
 
 # SQL慢日志
 def slowquery(request):
-    # 获取所有集群主库名称
+    # 获取所有实例主库名称
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
         return HttpResponseRedirect('/admin/sql/master_config/add/')
@@ -463,7 +455,7 @@ def slowquery(request):
 
 # SQL优化工具
 def sqladvisor(request):
-    # 获取所有集群主库名称
+    # 获取所有实例主库名称
     masters = master_config.objects.all().order_by('cluster_name')
     if len(masters) == 0:
         return HttpResponseRedirect('/admin/sql/master_config/add/')
@@ -476,7 +468,7 @@ def sqladvisor(request):
 # 查询权限申请列表
 def queryapplylist(request):
     slaves = slave_config.objects.all().order_by('cluster_name')
-    # 获取所有集群从库名称
+    # 获取所有实例从库名称
     listAllClusterName = [slave.cluster_name for slave in slaves]
     if len(slaves) == 0:
         return HttpResponseRedirect('/admin/sql/slave_config/add/')
@@ -525,7 +517,7 @@ def diagnosis_process(request):
     loginUser = request.session.get('login_username', False)
     loginUserOb = users.objects.get(username=loginUser)
 
-    # 获取所有集群名称
+    # 获取所有实例名称
     masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 
@@ -536,7 +528,7 @@ def diagnosis_process(request):
 
 # 问题诊断--空间
 def diagnosis_sapce(request):
-    # 获取所有集群名称
+    # 获取所有实例名称
     masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 

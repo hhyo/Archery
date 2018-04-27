@@ -47,8 +47,8 @@
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                data-placeholder="请选择集群:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择集群:</option>
+                                data-placeholder="请选择实例:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                             {% for cluster_name in listAllClusterName %}
                                 <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                             {% endfor %}
@@ -263,7 +263,7 @@
                         return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
                     }
                 }, {
-                    title: '集群',
+                    title: '实例',
                     field: 'cluster_name'
                 }, {
                     title: '数据库',
@@ -320,7 +320,7 @@
                     field: 'create_time'
                 }, {
                     title: '项目组',
-                    field: 'group_id__group_name'
+                    field: 'group_name'
                 }],
                 onLoadSuccess: function () {
                 },
@@ -339,7 +339,7 @@
 
         }
 
-        //集群变更获取数据库列表
+        //实例变更获取数据库列表
         $("#cluster_name").change(function () {
             $.ajax({
                 type: "post",

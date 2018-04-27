@@ -30,7 +30,8 @@ class Workflow(object):
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             workflow_title = workflow_detail.title
             workflow_auditors = workflow_detail.audit_users
-            group_name = workflow_detail.group_id
+            group_id = workflow_detail.group_id
+            group_name = workflow_detail.group_name
             create_user = workflow_detail.user_name
             workflow_remark = ''
             workflow_type_display = DirectionsOb.workflow_type['query_display']
@@ -39,7 +40,8 @@ class Workflow(object):
             workflow_detail = workflow.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.workflow_name
             workflow_auditors = workflow_detail.review_man
-            group_name = workflow_detail.group_id
+            group_id = workflow_detail.group_id
+            group_name = workflow_detail.group_name
             create_user = workflow_detail.engineer
             workflow_remark = ''
             workflow_type_display = DirectionsOb.workflow_type['sqlreview_display']
@@ -64,7 +66,8 @@ class Workflow(object):
         if audit_users_list is None:
             # 向审核主表插入审核通过的数据
             auditInfo = WorkflowAudit()
-            auditInfo.group_id = Group.objects.get(group_name=group_name)
+            auditInfo.group_id = group_id
+            auditInfo.group_name = group_name
             auditInfo.workflow_id = workflow_id
             auditInfo.workflow_type = workflow_type
             auditInfo.workflow_title = workflow_title
@@ -86,7 +89,8 @@ class Workflow(object):
                     raise Exception(result['msg'])
             # 向审核主表插入待审核数据
             auditInfo = WorkflowAudit()
-            auditInfo.group_id = Group.objects.get(group_name=group_name)
+            auditInfo.group_id = group_id
+            auditInfo.group_name = group_name
             auditInfo.workflow_id = workflow_id
             auditInfo.workflow_type = workflow_type
             auditInfo.workflow_title = workflow_title
@@ -306,7 +310,7 @@ class Workflow(object):
                 'audit_id', 'workflow_type', 'workflow_title', 'create_user',
                 'create_time', 'current_status', 'audit_users',
                 'current_audit_user',
-                'group_id__group_name')
+                'group_name')
             auditlistCount = WorkflowAudit.objects.filter(
                 workflow_title__contains=search,
                 current_status=WorkflowDict.workflow_status['audit_wait'],
@@ -324,7 +328,7 @@ class Workflow(object):
                 'create_time', 'current_status',
                 'audit_users',
                 'current_audit_user',
-                'group_id__group_name')
+                'group_name')
             auditlistCount = WorkflowAudit.objects.filter(
                 workflow_title__contains=search,
                 workflow_type=workflow_type,
@@ -359,13 +363,13 @@ class Workflow(object):
     # 修改\添加配置信息
     def changesettings(self, group_id, workflow_type, audit_users):
         try:
-            WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=Group.objects.get(group_id=group_id))
+            WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)
             WorkflowAuditSetting.objects.filter(workflow_type=workflow_type,
-                                                group_id=Group.objects.get(group_id=group_id)
+                                                group_id=group_id
                                                 ).update(audit_users=audit_users)
         except Exception:
             inset = WorkflowAuditSetting()
-            inset.group_id = Group.objects.get(group_id=group_id)
+            inset.group_id = group_id
             inset.audit_users = audit_users
             inset.workflow_type = workflow_type
             inset.save()

@@ -17,7 +17,7 @@
             <div class="form-group">
                 <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择集群</option>
+                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
                     {% for cluster_name in cluster_name_list %}
                         <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                     {% endfor %}
@@ -390,7 +390,7 @@
             });
         });
 
-        //集群变动时保存集群信息
+        //实例变动时保存实例信息
         $("#cluster_name").change(function () {
             sessionStorage.setItem('diagnosis_cluster_name', $("#cluster_name").val());
             var active_li_id = sessionStorage.getItem('diagnosis_active_li_id');

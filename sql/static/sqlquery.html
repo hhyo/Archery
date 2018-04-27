@@ -12,8 +12,8 @@
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                data-placeholder="请选择集群:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择集群:</option>
+                                data-placeholder="请选择实例:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                             {% for cluster_name in listAllClusterName %}
                                 {% if cluster_name != 'mycat' %}
                                     <option value="{{ cluster_name }}">{{ cluster_name }}</option>
@@ -156,7 +156,7 @@
                     title: '用户名',
                     field: 'username'
                 }, {
-                    title: '集群',
+                    title: '实例',
                     field: 'cluster_name'
                 }, {
                     title: '数据库',
@@ -285,7 +285,7 @@
                 alert("SQL内容不能为空！");
                 return result = false;
             } else if (cluster_name === null || cluster_name === $("#cluster_name").attr("data-placeholder")) {
-                alert("请选择集群！");
+                alert("请选择实例！");
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
                 alert("请选择数据库！");
@@ -501,7 +501,7 @@
     </script>
     <!-- common -->
     <script>
-        // 集群变更获取数据库
+        // 实例变更获取数据库
         $("#cluster_name").change(function () {
             sessionStorage.setItem('sql_query_cluster_name', $("#cluster_name").val());
             //将数据通过ajax提交给获取db_name
@@ -609,7 +609,7 @@
             //默认获取查询历史
             get_querylog();
 
-            //填充集群名
+            //填充实例名
             $('#cluster_name').selectpicker();
             var myObject = {};
             myObject.sql_query_cluster_name = sessionStorage.getItem('sql_query_cluster_name');

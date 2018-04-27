@@ -33,9 +33,9 @@
                     </div>
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的集群"
-                                data-live-search="true" data-placeholder="请选择要上线的集群:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择要上线的集群:</option>
+                                class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的实例"
+                                data-live-search="true" data-placeholder="请选择要上线的实例:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择要上线的实例:</option>
                             {% for cluster_name in listAllClusterName %}
                                 <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                             {% endfor %}
@@ -179,7 +179,7 @@
     </script>
     <!--ace -->
     <script>
-        // 集群变更获取数据库补全提示
+        // 实例变更获取数据库补全提示
         $("#cluster_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({

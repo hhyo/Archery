@@ -21,7 +21,7 @@ class Masking(object):
             result['msg'] = 'inception返回异常：\n' + print_info['errmsg']
         else:
             query_tree = print_info['query_tree']
-            # 获取集群所属环境,获取命中脱敏规则的列数据
+            # 获取实例所属环境,获取命中脱敏规则的列数据
             table_hit_columns, hit_columns = self.analy_query_tree(query_tree, cluster_name)
 
             # 存在select * 的查询,遍历column_list,获取命中列的index,添加到hit_columns

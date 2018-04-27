@@ -105,7 +105,7 @@ class AliyunAccessKeyAdmin(admin.ModelAdmin):
     list_display = ('ak', 'secret', 'is_enable', 'remark',)
 
 
-# 阿里云集群配置信息
+# 阿里云实例配置信息
 @admin.register(AliyunRdsConfig)
 class AliyunRdsConfigAdmin(admin.ModelAdmin):
     list_display = ('cluster_name', 'rds_dbinstanceid',)

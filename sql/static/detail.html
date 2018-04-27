@@ -3,9 +3,9 @@
 {% block content %}
     <h4 style="display: inline;">单子名称：<span>{{ workflowDetail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
-    <!--只允许发起人提交其他集群-->
+    <!--只允许发起人提交其他实例-->
     {% if loginUser == workflowDetail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
     {% endif %}
     {% if loginUserOb.role == 'DBA' %}
         {% if workflowDetail.status == '自动审核不通过' %}
@@ -29,7 +29,7 @@
                 当前审核人
             </th>
             <th>
-                上线集群
+                上线实例
             </th>
             <th>
                 数据库
@@ -90,7 +90,7 @@
                 <B id="workflowDetail_status">{{ workflowDetail.status }}</B></font>
             </td>
             <td>
-                {{ workflowDetail.group_id }}
+                {{ workflowDetail.group_name }}
             </td>
         </tr>
         </tbody>
@@ -257,7 +257,7 @@
     <script>
         var editWorkflowNname = "{{ workflowDetail.workflow_name }}";
         var editSqlContent = $("#editSqlContent").val();
-        var editGroup = "{{ workflowDetail.group_id }}";
+        var editGroup = "{{ workflowDetail.group_name }}";
         var editClustername = "{{ workflowDetail.cluster_name }}";
         var editDbname = "{{ workflowDetail.db_name }}";
         var editIsbackup = "{{ workflowDetail.is_backup }}";

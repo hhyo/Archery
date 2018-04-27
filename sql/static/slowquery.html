@@ -17,7 +17,7 @@
             <div class="form-group">
                 <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择集群</option>
+                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
                     {% for cluster_name in cluster_name_list %}
                         <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                     {% endfor %}
@@ -113,7 +113,7 @@
             }
         });
 
-        //集群变动自动获取数据库
+        //实例变动自动获取数据库
         $("#cluster_name").change(function () {
             sessionStorage.setItem('slow_query_cluster_name', $("#cluster_name").val());
             sessionStorage.removeItem('SQLId');
@@ -352,7 +352,7 @@
                 });
             }
             else {
-                alert('请选择集群')
+                alert('请选择实例')
             }
         }
 
@@ -466,7 +466,7 @@
                 });
             }
             else {
-                alert("请选择集群")
+                alert("请选择实例")
             }
         }
     </script>

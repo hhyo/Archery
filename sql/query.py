@@ -177,20 +177,20 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     return finalResult
 
 
-# 获取所有集群名称
+# 获取所有实例名称
 @csrf_exempt
 def getClusterList(request):
     slaves = slave_config.objects.all().order_by('cluster_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    # 获取所有集群名称
+    # 获取所有实例名称
     listAllClusterName = [slave.cluster_name for slave in slaves]
     result['data'] = listAllClusterName
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取集群里面的数据库集合
+# 获取实例里面的数据库集合
 @csrf_exempt
 def getdbNameList(request):
     clusterName = request.POST.get('cluster_name')
@@ -200,7 +200,7 @@ def getdbNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
-            # 取出该集群主库的连接方式，为了后面连进去获取所有databases
+            # 取出该实例主库的连接方式，为了后面连进去获取所有databases
             listDb = dao.getAlldbByCluster(master_info.master_host, master_info.master_port, master_info.master_user,
                                            prpCryptor.decrypt(master_info.master_password))
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -211,7 +211,7 @@ def getdbNameList(request):
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
-            # 取出该集群的连接方式，为了后面连进去获取所有databases
+            # 取出该实例的连接方式，为了后面连进去获取所有databases
             listDb = dao.getAlldbByCluster(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                            prpCryptor.decrypt(slave_info.slave_password))
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -234,7 +234,7 @@ def getTableNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
-            # 取出该集群主库的连接方式，为了后面连进去获取所有的表
+            # 取出该实例主库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(master_info.master_host, master_info.master_port, master_info.master_user,
                                          prpCryptor.decrypt(master_info.master_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -245,7 +245,7 @@ def getTableNameList(request):
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
-            # 取出该集群从库的连接方式，为了后面连进去获取所有的表
+            # 取出该实例从库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                          prpCryptor.decrypt(slave_info.slave_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -268,7 +268,7 @@ def getColumnNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
-            # 取出该集群主库的连接方式，为了后面连进去获取所有字段
+            # 取出该实例主库的连接方式，为了后面连进去获取所有字段
             listCol = dao.getAllColumnsByTb(master_info.master_host, master_info.master_port, master_info.master_user,
                                             prpCryptor.decrypt(master_info.master_password), db_name, tb_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -279,7 +279,7 @@ def getColumnNameList(request):
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
-            # 取出该集群的连接方式，为了后面连进去获取表的所有字段
+            # 取出该实例的连接方式，为了后面连进去获取表的所有字段
             listCol = dao.getAllColumnsByTb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                             prpCryptor.decrypt(slave_info.slave_password), db_name, tb_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
@@ -311,14 +311,14 @@ def getqueryapplylist(request):
         applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
                     offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_name', 'status', 'create_time', 'group_id__group_name'
+            'user_name', 'status', 'create_time', 'group_name'
         )
         applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
     else:
         applylist = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
             title__contains=search).order_by('-apply_id')[offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_name', 'status', 'create_time', 'group_id__group_name'
+            'user_name', 'status', 'create_time', 'group_name'
         )
         applylistCount = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
             title__contains=search).count()
@@ -336,7 +336,8 @@ def getqueryapplylist(request):
 def applyforprivileges(request):
     title = request.POST['title']
     cluster_name = request.POST['cluster_name']
-    group_id = Group.objects.get(group_name=request.POST['group_name']).group_id
+    group_name = request.POST['group_name']
+    group_id = Group.objects.get(group_name=group_name).group_id
     workflow_auditors = request.POST['workflow_auditors']
     priv_type = request.POST['priv_type']
     db_name = request.POST['db_name']
@@ -381,7 +382,7 @@ def applyforprivileges(request):
             for db_name in db_list:
                 if db_name in own_db_list:
                     result['status'] = 1
-                    result['msg'] = '你已拥有' + cluster_name + '集群' + db_name + '库的全部查询权限，不能重复申请'
+                    result['msg'] = '你已拥有' + cluster_name + '实例' + db_name + '库的全部查询权限，不能重复申请'
                     return HttpResponse(json.dumps(result), content_type='application/json')
     # 表权限
     elif int(priv_type) == 2:
@@ -397,7 +398,7 @@ def applyforprivileges(request):
             for table_name in table_list:
                 if table_name in own_table_list:
                     result['status'] = 1
-                    result['msg'] = '你已拥有' + cluster_name + '集群' + db_name + '.' + table_name + '表的查询权限，不能重复申请'
+                    result['msg'] = '你已拥有' + cluster_name + '实例' + db_name + '.' + table_name + '表的查询权限，不能重复申请'
                     return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 使用事务保持数据一致性
@@ -406,10 +407,11 @@ def applyforprivileges(request):
             # 保存申请信息到数据库
             applyinfo = QueryPrivilegesApply()
             applyinfo.title = title
-            applyinfo.group_id = Group.objects.get(group_id=group_id)
+            applyinfo.group_id = group_id
+            applyinfo.group_name = group_name
             applyinfo.audit_users = workflow_auditors
             applyinfo.user_name = loginUser
-            applyinfo.cluster_name = master_config.objects.get(cluster_name=cluster_name)
+            applyinfo.cluster_name = cluster_name
             if int(priv_type) == 1:
                 applyinfo.db_list = ','.join(db_list)
                 applyinfo.table_list = ''
@@ -589,7 +591,7 @@ def query(request):
             finalResult['msg'] = '仅支持^select|^show.*create.*table|^explain语法，请联系管理员！'
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    # 取出该集群的连接方式,查询只读账号,按照分号截取第一条有效sql执行
+    # 取出该实例的连接方式,查询只读账号,按照分号截取第一条有效sql执行
     slave_info = slave_config.objects.get(cluster_name=cluster_name)
     sqlContent = sqlContent.strip().split(';')[0]
 
@@ -649,7 +651,7 @@ def query(request):
         query_log = QueryLog()
         query_log.username = loginUser
         query_log.db_name = dbName
-        query_log.cluster_name = slave_info.cluster_name
+        query_log.cluster_name = cluster_name
         query_log.sqllog = sqlContent
         if int(limit_num) == 0:
             limit_num = int(sql_result['effect_row'])
@@ -738,8 +740,7 @@ def explain(request):
             finalResult['msg'] = '仅支持^explain语法，请联系管理员！'
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-
-    # 取出该集群的连接方式,按照分号截取第一条有效sql执行
+    # 取出该实例的连接方式,按照分号截取第一条有效sql执行
     masterInfo = master_config.objects.get(cluster_name=clusterName)
     sqlContent = sqlContent.strip().split(';')[0]
 

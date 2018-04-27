@@ -3,9 +3,9 @@
 {% block content %}
     <h4 style="display: inline;">工单名称：<span>{{ workflowDetail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
-    <!--只允许发起人提交其他集群-->
+    <!--只允许发起人提交其他实例-->
     {% if loginUser == workflowDetail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他集群</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
     {% endif %}
     {% if loginUserOb.is_superuser == 1 or loginUserOb.role == 'DBA' %}
         {% if workflowDetail.status == '自动审核不通过' %}
@@ -29,7 +29,7 @@
                 当前审核人
             </th>
             <th>
-                集群
+                实例
             </th>
             <th>
                 权限级别
@@ -97,7 +97,7 @@
                 {% endif %}
             </td>
             <td>
-                {{ workflowDetail.group_id }}
+                {{ workflowDetail.group_name }}
             </td>
         </tr>
         </tbody>

@@ -191,7 +191,7 @@
 <ol>
 <li>【高危】禁用<code>update|delete t1 … where a=XX limit XX;</code> 这种带limit的更新语句。因为会导致主从不一致，导致数据错乱。建议加上<code>order by PK</code>。</li>
 <li>【高危】禁止使用关联子查询，如<code>update t1 set … where name in(select name from user where…);</code>效率极其低下。</li>
-<li>【强制】禁用procedure、function、trigger、views、event、外键约束。因为他们消耗数据库资源，降低数据库集群可扩展性。推荐都在程序端实现。</li>
+<li>【强制】禁用procedure、function、trigger、views、event、外键约束。因为他们消耗数据库资源，降低数据库实例可扩展性。推荐都在程序端实现。</li>
 <li>【强制】禁用<code>insert into …on duplicate key update…</code>在高并发环境下，会造成主从不一致。</li>
 <li>【强制】禁止联表更新语句，如<code>update t1,t2 where t1.id=t2.id…</code>。</li>
 </ol>

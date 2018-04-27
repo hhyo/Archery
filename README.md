@@ -30,6 +30,8 @@
   基于percona-toolkit的pt_query_digest分析和存储慢日志，并在web端展现  
 * 邮件通知  
   可配置邮件提醒，对上线申请、审核结果进行通知
+* 项目组配置
+  所有的审批流程包括SQL上线申请、查询权限申请都需要选择项目组，并且配置对应的项目组审批流程
 
 ### 设计规范
 * 合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。  
@@ -128,9 +130,8 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 `patch  python/site-packages/django/contrib/auth/views.py django_1.8.17_admin_secure_archer.patch`
 
 #### 集成ldap
-1. settings中ENABLE_LDAP改为True,可以启用ldap账号登陆  
-2. 如果使用了ldaps，并且是自签名证书，需要打开settings中AUTH_LDAP_GLOBAL_OPTIONS的注释  
-3. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改  
+1. settings中ENABLE_LDAP改为True，可以启用ldap账号登陆，会自动同步用户信息和密码
+2. settings中以AUTH_LDAP开头的配置，需要根据自己的ldap对应修改
 
 #### 集成阿里云rds管理  
 1. 修改配置文件ENABLE_ALIYUN=True  
