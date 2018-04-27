@@ -130,6 +130,7 @@ def autoreview(request):
                 Workflow = workflow.objects.get(id=int(workflowid))
             Workflow.workflow_name = workflowName
             Workflow.group_id = group_id
+            Workflow.group_name = group_name
             Workflow.engineer = engineer
             Workflow.review_man = reviewMan
             Workflow.status = workflowStatus

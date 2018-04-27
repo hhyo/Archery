@@ -370,6 +370,7 @@ class Workflow(object):
         except Exception:
             inset = WorkflowAuditSetting()
             inset.group_id = group_id
+            inset.group_name = Group.objects.get(group_id=group_id).group_name
             inset.audit_users = audit_users
             inset.workflow_type = workflow_type
             inset.save()
