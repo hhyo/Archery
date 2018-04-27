@@ -80,6 +80,7 @@ class workflow(models.Model):
     review_content = models.TextField('自动审核内容的JSON格式')
     cluster_name = models.ForeignKey(master_config, db_constraint=False, to_field='cluster_name',
                                      db_column='cluster_name', verbose_name='集群名称')
+    db_name = models.CharField('数据库', max_length=60)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
     execute_result = models.TextField('执行结果的JSON格式')

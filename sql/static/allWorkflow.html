@@ -96,11 +96,17 @@
                         return sqlworkflowStatus_formatter(value)
                     }
                 }, {
+                    title: '是否备份',
+                    field: 'is_backup'
+                }, {
                     title: '发起时间',
                     field: 'create_time'
                 }, {
-                    title: '目标集群',
+                    title: '目标实例',
                     field: 'cluster_name'
+                }, {
+                    title: '数据库',
+                    field: 'db_name'
                 }, {
                     title: '项目组',
                     field: 'group_id__group_name'

@@ -14,34 +14,34 @@ function validate() {
 
 
 $("#btn-autoreview").click(function () {
+    $('input[type=button]').addClass('disabled');
+    $('input[type=button]').prop('disabled', true);
     //先做表单验证，成功了提交ajax给后端
     if (validate()) {
-        $('#btn-autoreview').addClass('disabled');
-        $('#btn-autoreview').prop('disabled', true);
         autoreview();
     }
     else {
-        $('#btn-autoreview').removeClass('disabled');
-        $('#btn-autoreview').prop('disabled', false);
+        $(this).removeClass('disabled');
+        $(this).prop('disabled', false);
     }
 });
 
 function autoreview() {
-    var sqlContent = editor.getValue();
-    var clusterName = $("#cluster_name");
-
     //将数据通过ajax提交给后端进行检查
     $.ajax({
         type: "post",
         url: "/simplecheck/",
         dataType: "json",
         data: {
-            sql_content: sqlContent,
-            cluster_name: clusterName.val()
+            sql_content: editor.getValue(),
+            cluster_name: $("#cluster_name").val(),
+            db_name: $("#db_name").val()
         },
         complete: function () {
-            $('input[type=button]').removeClass('disabled');
-            $('input[type=button]').prop('disabled', false);
+            $("#btn-format").removeClass('disabled');
+            $("#btn-format").prop('disabled', false);
+            $("#btn-autoreview").removeClass('disabled');
+            $("#btn-autoreview").prop('disabled', false);
         },
         success: function (data) {
             if (data.status === 0) {
@@ -149,6 +149,8 @@ function autoreview() {
                 sessionStorage.setItem('CheckWarningCount', result['CheckWarningCount']);
                 sessionStorage.setItem('CheckErrorCount', result['CheckErrorCount']);
                 $("#inception-result").show();
+                $('input[type=button]').removeClass('disabled');
+                $('input[type=button]').prop('disabled', false);
             } else {
                 alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
             }

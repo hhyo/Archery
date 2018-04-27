@@ -5,10 +5,6 @@
         <div style="width: 80%; float: left">
             {% csrf_token %}
             <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
-            <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
-            <input type="hidden" id="editClustername" value="{{ cluster_name }}">
-            <input type="hidden" id="editGroup" value="{{ group_id }}">
-            <input type="hidden" id="editIsbackup" value="是">
             <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
         </div>
     </div>
@@ -34,6 +30,30 @@
 
 {% block js %}
     {% load staticfiles %}
-    <script src="{% static 'user/js/rollback.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            var isRollback = window.location.pathname.indexOf("rollback");
+            if (isRollback != -1) {
+                $("#btnSubmitRollback").click(function () {
+                    $(this).button('loading').delay(2500).queue(function () {
+                        $(this).button('reset');
+                        $(this).dequeue();
+                    });
+                    var editWorkflowNname = "{{ rollbackWorkflowName }}";
+                    var editSqlContent = $("#editSqlContent").val();
+                    var editGroup = "{{ workflowDetail.group_id }}";
+                    var editClustername = "{{ workflowDetail.cluster_name }}";
+                    var editDbname = "{{ workflowDetail.db_name }}";
+                    var editIsbackup = "{{ workflowDetail.is_backup }}";
+                    sessionStorage.removeItem('editWorkflowDetailId');
+                    sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+                    sessionStorage.setItem('editSqlContent', editSqlContent);
+                    sessionStorage.setItem('editGroup', editGroup);
+                    sessionStorage.setItem('editClustername', editClustername);
+                    sessionStorage.setItem('editDbname', editDbname);
+                    sessionStorage.setItem('editIsbackup', editIsbackup);
+                });
+            }
+        });
+    </script>
 {% endblock %}
-

@@ -67,23 +67,10 @@ def submitSql(request):
     # 获取所有集群名称
     listAllClusterName = [master.cluster_name for master in masters]
 
-    dictAllClusterDb = OrderedDict()
-    # 每一个都首先获取主库地址在哪里
-    for clusterName in listAllClusterName:
-        listMasters = master_config.objects.filter(cluster_name=clusterName)
-        # 取出该集群的名称以及连接方式，为了后面连进去获取所有databases
-        masterHost = listMasters[0].master_host
-        masterPort = listMasters[0].master_port
-        masterUser = listMasters[0].master_user
-        masterPassword = prpCryptor.decrypt(listMasters[0].master_password)
-
-        listDb = dao.getAlldbByCluster(masterHost, masterPort, masterUser, masterPassword)
-        dictAllClusterDb[clusterName] = listDb
-
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
 
-    context = {'currentMenu': 'allworkflow', 'dictAllClusterDb': dictAllClusterDb,
+    context = {'currentMenu': 'allworkflow', 'listAllClusterName': listAllClusterName,
                'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
 
@@ -95,12 +82,13 @@ def autoreview(request):
     workflowName = request.POST['workflow_name']
     group_id = Group.objects.get(group_name=request.POST['group_name']).group_id
     clusterName = request.POST['cluster_name']
+    db_name = request.POST.get('db_name')
     isBackup = request.POST['is_backup']
     reviewMan = request.POST.get('workflow_auditors')
     notify_users = request.POST.getlist('notify_users')
 
     # 服务器端参数验证
-    if sqlContent is None or workflowName is None or clusterName is None or isBackup is None or reviewMan is None:
+    if sqlContent is None or workflowName is None or clusterName is None or db_name is None or isBackup is None or reviewMan is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
     sqlContent = sqlContent.rstrip()
@@ -108,8 +96,18 @@ def autoreview(request):
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
         return render(request, 'error.html', context)
 
+    # 判断是否使用了use语句
+    sql_list = sqlContent.split('\n')
+    for sql in sql_list:
+        if re.match(r"^(\--|#)", sql):
+            pass
+        elif re.match(r"^use", sql.lower()):
+            context = 'SQL语句不允许使用^use语句，请重新修改并提交'
+            return render(request, 'error.html', context)
+
     # 交给inception进行自动审核
-    result = inceptionDao.sqlautoReview(sqlContent, clusterName)
+    result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+
     if result is None or len(result) == 0:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
@@ -146,6 +144,7 @@ def autoreview(request):
             Workflow.is_backup = isBackup
             Workflow.review_content = jsonResult
             Workflow.cluster_name = master_config.objects.get(cluster_name=clusterName)
+            Workflow.db_name = db_name
             Workflow.sql_content = sqlContent
             Workflow.execute_result = ''
             Workflow.audit_remark = ''
@@ -289,6 +288,7 @@ def executeonly(request):
     workflowId = int(workflowId)
     workflowDetail = workflow.objects.get(id=workflowId)
     clusterName = workflowDetail.cluster_name
+    db_name = workflowDetail.db_name
     url = _getDetailUrl(request) + str(workflowId) + '/'
 
     # 获取审核人
@@ -310,7 +310,7 @@ def executeonly(request):
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = timezone.now()
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name,
+    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
                                                    isSplit='yes')
     workflowDetail.review_content = json.dumps(splitReviewResult)
     workflowDetail.save()
@@ -391,9 +391,12 @@ def cancel(request):
             # 获取audit_id
             audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
-                                                   loginUser, '')
-
+            if loginUser == workflowDetail.engineer:
+                auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
+                                                       loginUser, audit_remark)
+            else:
+                auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
+                                                       loginUser, audit_remark)
             # 按照审核结果更新业务表审核状态
             if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_abort']:
                 # 将流程状态修改为人工终止流程
@@ -417,19 +420,8 @@ def rollback(request):
     workflowDetail = workflow.objects.get(id=workflowId)
     workflowName = workflowDetail.workflow_name
     rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
-    cluster_name = workflowDetail.cluster_name
-    group_id = workflowDetail.group_id
-    try:
-        reviewMan = json.loads(workflowDetail.review_man)
-        review_man = reviewMan[0]
-        sub_review_man = reviewMan[1]
-    except ValueError:
-        review_man = workflowDetail.review_man
-        sub_review_man = ''
-
-    context = {'listBackupSql': listBackupSql, 'rollbackWorkflowName': rollbackWorkflowName,
-               'cluster_name': cluster_name, 'review_man': review_man, 'sub_review_man': sub_review_man,
-               'group_id': group_id}
+    context = {'listBackupSql': listBackupSql, 'currentMenu': 'sqlworkflow', 'workflowDetail': workflowDetail,
+               'rollbackWorkflowName': rollbackWorkflowName}
     return render(request, 'rollback.html', context)
 
 

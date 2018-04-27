@@ -726,13 +726,18 @@ def explain(request):
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    # 过滤非查询的语句
-    if re.match(r"^explain", sqlContent.lower()):
-        pass
-    else:
-        finalResult['status'] = 1
-        finalResult['msg'] = '仅支持explain开头的语句，请检查'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    # 过滤注释语句和非explain的语句
+    sql_list = sqlContent.split('\n')
+    for sql in sql_list:
+        if re.match(r"^(\--|#)", sql):
+            pass
+        elif re.match(r"^explain", sql.lower()):
+            break
+        else:
+            finalResult['status'] = 1
+            finalResult['msg'] = '仅支持^explain语法，请联系管理员！'
+            return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
 
     # 取出该集群的连接方式,按照分号截取第一条有效sql执行
     masterInfo = master_config.objects.get(cluster_name=clusterName)

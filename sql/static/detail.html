@@ -32,6 +32,9 @@
                 上线集群
             </th>
             <th>
+                数据库
+            </th>
+            <th>
                 发起时间
             </th>
             <th>
@@ -65,6 +68,9 @@
             </td>
             <td>
                 {{ workflowDetail.cluster_name }}
+            </td>
+            <td>
+                {{ workflowDetail.db_name }}
             </td>
             <td>
                 {{ workflowDetail.create_time }}
@@ -253,6 +259,7 @@
         var editSqlContent = $("#editSqlContent").val();
         var editGroup = "{{ workflowDetail.group_id }}";
         var editClustername = "{{ workflowDetail.cluster_name }}";
+        var editDbname = "{{ workflowDetail.db_name }}";
         var editIsbackup = "{{ workflowDetail.is_backup }}";
 
         $("#btnEditSql").click(function () {
@@ -260,6 +267,7 @@
             sessionStorage.setItem('editSqlContent', editSqlContent);
             sessionStorage.setItem('editGroup', editGroup);
             sessionStorage.setItem('editClustername', editClustername);
+            sessionStorage.setItem('editDbname', editDbname);
             sessionStorage.setItem('editIsbackup', editIsbackup);
         });
         $("#btnSubmitOtherCluster").click(function () {

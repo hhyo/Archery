@@ -42,6 +42,7 @@ login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
 
+
 # 登录失败通知
 def log_mail_record(login_failed_message):
     mail_title = 'login inception'
@@ -156,7 +157,7 @@ def sqlworkflow(request):
             listWorkflow = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
-                                                            "is_backup", "create_time", "cluster_name",
+                                                            "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_id__group_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
@@ -166,7 +167,7 @@ def sqlworkflow(request):
             ).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
-                                                            "is_backup", "create_time", "cluster_name",
+                                                            "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_id__group_name")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
@@ -177,7 +178,7 @@ def sqlworkflow(request):
             listWorkflow = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
-                                                            "is_backup", "create_time", "cluster_name",
+                                                            "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_id__group_name")
             listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         else:
@@ -186,7 +187,7 @@ def sqlworkflow(request):
             ).filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
-                                                            "is_backup", "create_time", "cluster_name",
+                                                            "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_id__group_name")
             listWorkflowCount = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
@@ -209,10 +210,11 @@ def sqlworkflow(request):
 def simplecheck(request):
     sqlContent = request.POST.get('sql_content')
     clusterName = request.POST.get('cluster_name')
+    db_name = request.POST.get('db_name')
 
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
-    if sqlContent is None or clusterName is None:
+    if sqlContent is None or clusterName is None or db_name is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -222,8 +224,19 @@ def simplecheck(request):
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+    # 判断是否使用了use语句
+    sql_list = sqlContent.split('\n')
+    for sql in sql_list:
+        if re.match(r"^(\--|#)", sql):
+            pass
+        elif re.match(r"^use", sql.lower()):
+            finalResult['status'] = 1
+            finalResult['msg'] = 'SQL语句不允许使用^use语句，请重新修改并提交'
+            return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
     # 交给inception进行自动审核
-    result = inceptionDao.sqlautoReview(sqlContent, clusterName)
+    result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
     if result is None or len(result) == 0:
         finalResult['status'] = 1
         finalResult['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'

@@ -205,7 +205,7 @@ LOGGING = {
 }
 
 # 是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA.
-MAIL_ON_OFF = True
+MAIL_ON_OFF = False
 
 MAIL_REVIEW_SMTP_SERVER = 'mail.xxx.com'
 MAIL_REVIEW_SMTP_PORT = 25

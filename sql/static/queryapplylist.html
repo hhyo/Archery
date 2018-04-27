@@ -94,7 +94,7 @@
                             <option value=1000>1000</option>
                         </select>
                     </div>
-                    <!--审核流程-->
+                    <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
                         <p class="bg-primary">&nbsp&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors"></b></p>
                     </div>
@@ -146,7 +146,7 @@
         //调用函数，并将结构出入到下拉框容器中
         $("#group_name").append(creatSelectTree(tree));
 
-        // 获取审核流程
+        // 获取审批流程
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -452,7 +452,7 @@
                         return true
                     }
                     else {
-                        alert("信息填写不完整，或者未配置审核流程");
+                        alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
                 }
@@ -461,7 +461,7 @@
                         return true
                     }
                     else {
-                        alert("信息填写不完整，或者未配置审核流程");
+                        alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
                 }

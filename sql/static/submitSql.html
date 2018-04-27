@@ -7,13 +7,13 @@
             <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
                 {% csrf_token %}
                 <input type="hidden" id="workflowid" name="workflowid"/>
-                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审核流程" required>
+                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程" required>
                 <div class="col-md-9 column">
                     <pre id="sql_content_editor" style="min-height:400px"></pre>
                 </div>
                 <div style="display: none" class="col-md-8 column">
                     <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
-                              placeholder="请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;" rows=20
+                              placeholder="请在此提交SQL，请以分号结尾。" rows=20
                               required></textarea>
                 </div>
                 <div class="col-md-3 column">
@@ -36,15 +36,15 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的集群"
                                 data-live-search="true" data-placeholder="请选择要上线的集群:" required>
                             <option value="is-empty" disabled="" selected="selected">请选择要上线的集群:</option>
-                            {% for cluster_name,dbs in dictAllClusterDb.items %}
-                                <option value="{{ cluster_name }}">{{ cluster_name }}集群 (包含db：
-                                    {% for db in dbs %}
-                                        {{ db }}{% if not forloop.last %},{% endif %}
-                                    {% endfor %}
-                                    )
-                                </option>
+                            {% for cluster_name in listAllClusterName %}
+                                <option value="{{ cluster_name }}">{{ cluster_name }}</option>
                             {% endfor %}
-
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
+                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -67,7 +67,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <!--审核流程-->
+                    <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
                         <p class="bg-primary">&nbsp&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                     </div>
@@ -191,12 +191,25 @@
                     is_master: 1
                 },
                 complete: function () {
+                    var pathname = window.location.pathname;
+                    if (pathname == "/editsql/") {
+                        //填充库名
+                        $('#db_name').selectpicker();
+                        var myObject = {};
+                        myObject.db_name = sessionStorage.getItem('editDbname');
+                        if (myObject.db_name) {
+                            $("#db_name").selectpicker('val', myObject.db_name);
+                        }
+                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
+                        $("#db_name").empty();
                         var dbs = [];
                         for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
                             dbs.push({
                                 name: result[i],
                                 value: result[i],
@@ -205,6 +218,9 @@
                                 score: '100'
                             })
                         }
+                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
                         //自动补全提示
                         setCompleteData(dbs)
                     } else {
@@ -344,7 +360,7 @@
         //调用函数，并将结构出入到下拉框容器中
         $("#group_name").append(creatSelectTree(tree));
 
-        // 获取审核流程
+        // 获取审批流程
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -382,7 +398,7 @@
             // 初始化上传控件
             init_upload();
             // 提示信息
-            editor.setValue("请在此提交SQL，请以分号结尾。例如：use test; create table t1(id int)engine=innodb;");
+            editor.setValue("请在此提交SQL，请以分号结尾。");
             editor.clearSelection();
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
@@ -396,7 +412,7 @@
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
-                $("#cluster_name").val(sessionStorage.getItem('editClustername'));
+                $("#cluster_name").val(sessionStorage.getItem('editClustername')).trigger("change");
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             }
             else if (pathname === "/submitothercluster/") {
