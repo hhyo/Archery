@@ -98,7 +98,11 @@ def autoreview(request):
         return render(request, 'error.html', context)
 
     # 交给inception进行自动审核
-    result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+    try:
+        result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
 
     if result is None or len(result) == 0:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
@@ -303,8 +307,12 @@ def executeonly(request):
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = timezone.now()
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
-                                                   isSplit='yes')
+    try:
+        splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
+                                                       isSplit='yes')
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
     workflowDetail.review_content = json.dumps(splitReviewResult)
     workflowDetail.save()
 
@@ -409,7 +417,11 @@ def rollback(request):
         context = {'errMsg': 'workflowId参数为空.'}
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
-    listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
+    try:
+        listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
     workflowDetail = workflow.objects.get(id=workflowId)
     workflowName = workflowDetail.workflow_name
     rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)

@@ -200,25 +200,38 @@ def getdbNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的主库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例主库的连接方式，为了后面连进去获取所有databases
             listDb = dao.getAlldbByCluster(master_info.master_host, master_info.master_port, master_info.master_user,
                                            prpCryptor.decrypt(master_info.master_password))
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listDb
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
+            result['msg'] = str(msg)
+
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的从库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例的连接方式，为了后面连进去获取所有databases
             listDb = dao.getAlldbByCluster(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                            prpCryptor.decrypt(slave_info.slave_password))
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listDb
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
+            result['msg'] = msg
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -234,25 +247,39 @@ def getTableNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的主库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例主库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(master_info.master_host, master_info.master_port, master_info.master_user,
                                          prpCryptor.decrypt(master_info.master_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listTb
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
+            result['msg'] = msg
+
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的从库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例从库的连接方式，为了后面连进去获取所有的表
             listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                          prpCryptor.decrypt(slave_info.slave_password), db_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listTb
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
+            result['msg'] = msg
+
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -268,25 +295,37 @@ def getColumnNameList(request):
     if is_master:
         try:
             master_info = master_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的主库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例主库的连接方式，为了后面连进去获取所有字段
             listCol = dao.getAllColumnsByTb(master_info.master_host, master_info.master_port, master_info.master_user,
                                             prpCryptor.decrypt(master_info.master_password), db_name, tb_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listCol
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
+            result['msg'] = msg
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
+        except Exception:
+            result['status'] = 1
+            result['msg'] = '找不到对应的从库配置信息，请配置'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+        try:
             # 取出该实例的连接方式，为了后面连进去获取表的所有字段
             listCol = dao.getAllColumnsByTb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
                                             prpCryptor.decrypt(slave_info.slave_password), db_name, tb_name)
             # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
             result['data'] = listCol
-        except Exception:
+        except Exception as msg:
             result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
+            result['msg'] = msg
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 

@@ -12,7 +12,13 @@ class Masking(object):
     def data_masking(self, cluster_name, db_name, sql, sql_result):
         result = {'status': 0, 'msg': 'ok', 'data': []}
         # 通过inception获取语法树,并进行解析
-        print_info = self.query_tree(sql, cluster_name, db_name)
+        try:
+            print_info = self.query_tree(sql, cluster_name, db_name)
+        except Exception as msg:
+            result['status'] = 1
+            result['msg'] = msg
+            return result
+
         if print_info is None:
             result['status'] = 1
             result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
@@ -79,7 +85,13 @@ class Masking(object):
     # 解析语法树，获取语句涉及的表，用于查询权限限制
     def query_table_ref(self, sqlContent, cluster_name, dbName):
         result = {'status': 0, 'msg': 'ok', 'data': []}
-        print_info = self.query_tree(sqlContent, cluster_name, dbName)
+        try:
+            print_info = self.query_tree(sqlContent, cluster_name, dbName)
+        except Exception as msg:
+            result['status'] = 1
+            result['msg'] = msg
+            return result
+
         if print_info is None:
             result['status'] = 1
             result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'

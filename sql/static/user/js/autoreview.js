@@ -152,7 +152,7 @@ function autoreview() {
                 $('input[type=button]').removeClass('disabled');
                 $('input[type=button]').prop('disabled', false);
             } else {
-                alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                alert("status: " + data.status + "\nmsg: " + data.msg);
             }
         },
         error: function (XMLHttpRequest, textStatus, errorThrown) {

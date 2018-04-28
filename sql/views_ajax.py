@@ -226,7 +226,13 @@ def simplecheck(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 交给inception进行自动审核
-    result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+    try:
+        result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+    except Exception as e:
+        finalResult['status'] = 1
+        finalResult['msg'] = str(e) + '\n请参照安装文档配置pymysql'
+        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
     if result is None or len(result) == 0:
         finalResult['status'] = 1
         finalResult['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
@@ -316,7 +322,12 @@ def getOscPercent(request):
 
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
-        result = inceptionDao.getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
+        try:
+            result = inceptionDao.getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
+        except Exception as msg:
+            result = {'status': 1, 'msg': msg, 'data': ''}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
         if result["status"] == 0:
             # 获取到进度值
             pctResult = result
@@ -387,7 +398,11 @@ def stopOscProgress(request):
         dictSHA1 = getSqlSHA1(workflowId)
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
-        optResult = inceptionDao.stopOscProgress(sqlSHA1)
+        try:
+            optResult = inceptionDao.stopOscProgress(sqlSHA1)
+        except Exception as msg:
+            result = {'status': 1, 'msg': msg, 'data': ''}
+            return HttpResponse(json.dumps(result), content_type='application/json')
     else:
         optResult = {"status": 4, "msg": "不是由pt-OSC执行的", "data": ""}
     return HttpResponse(json.dumps(optResult), content_type='application/json')

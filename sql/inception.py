@@ -235,8 +235,8 @@ class InceptionDao(object):
             cur = conn.cursor()
             ret = cur.execute(sql)
             result = cur.fetchall()
-        except MySQLdb.Error as e:
-            print("Mysql Error %d: %s" % (e.args[0], e.args[1]))
+        except Exception as e:
+            raise Exception(e)
         finally:
             if cur is not None:
                 cur.close()
@@ -283,8 +283,5 @@ class InceptionDao(object):
                           %s\
                           inception_magic_commit;" % (
             masterUser, masterPassword, masterHost, str(masterPort), dbName, sqlContent)
-        try:
-            result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
-        except Exception:
-            result = None
+        result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
