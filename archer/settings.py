@@ -44,6 +44,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_apscheduler',
     'sql',
 )
 
@@ -56,8 +57,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'sql.check_login_middleware.CheckLoginMiddleware',
-    'sql.exception_logging_middleware.ExceptionLoggingMiddleware',
+    'sql.middleware.check_login_middleware.CheckLoginMiddleware',
+    'sql.middleware.exception_logging_middleware.ExceptionLoggingMiddleware',
 )
 
 ROOT_URLCONF = 'archer.urls'
@@ -191,11 +192,11 @@ LOGGING = {
             'handlers': ['default'],
             'level': 'DEBUG',
         },
-        'django.db': {  # 打印SQL语句到console，方便开发
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
+        # 'django.db': {  # 打印SQL语句到console，方便开发
+        #     'handlers': ['console'],
+        #     'level': 'DEBUG',
+        #     'propagate': True,
+        # },
         'django.request': {  # 打印请求错误堆栈信息到console，方便开发
             'handlers': ['console'],
             'level': 'DEBUG',

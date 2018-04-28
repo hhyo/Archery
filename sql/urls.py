@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 from django.conf.urls import url, include
-from . import views, views_ajax, query, aliyun_function
+from . import views, views_ajax, query, aliyun_function, jobs
 
 urlpatterns = [
     url(r'^$', views.allworkflow, name='allworkflow'),
@@ -64,9 +64,12 @@ urlpatterns = [
     url(r'^slowquery_review/$', query.slowquery_review, name='slowquery_review'),
     url(r'^slowquery_review_history/$', query.slowquery_review_history, name='slowquery_review_history'),
 
-
     url(r'^process_status/$', aliyun_function.process_status, name='process_status'),
     url(r'^sapce_status/$', aliyun_function.sapce_status, name='sapce_status'),
     url(r'^create_kill_session/$', aliyun_function.create_kill_session, name='create_kill_session'),
     url(r'^kill_session/$', aliyun_function.kill_session, name='kill_session'),
+
+    url(r'^add_sqlcronjob/$', jobs.add_sqlcronjob, name='add_sqlcronjob'),
+    url(r'^del_sqlcronjob/$', jobs.del_sqlcronjob, name='del_sqlcronjob'),
+
 ]

@@ -176,7 +176,7 @@ class InceptionDao(object):
             try:
                 workflowDetail.save()
             except Exception:
-                # 重新获取连接，防止超时
+                # 关闭后重新获取连接，防止超时
                 connection.close()
                 workflowDetail.save()
 

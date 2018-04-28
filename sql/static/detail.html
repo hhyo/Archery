@@ -136,6 +136,25 @@
             </tbody>
         </table>
     {% endif %}
+    {% if workflowDetail.status == '定时执行' %}
+        <br>
+        <table data-toggle="table" class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>
+                    定时执行时间
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    {{ run_date }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    {% endif %}
     <br>
     {% if workflowDetail.status == '等待审核人审核' %}
         {% if loginUser == current_audit_user %}
@@ -167,12 +186,13 @@
     {% elif workflowDetail.status == '审核通过' %}
         {% if loginUser == workflowDetail.engineer %}
             <!--审核通过后提交人也可以执行SQL-->
-            <form action="/executeonly/" method="post" style="display:inline-block;">
+            <form id="from-executeonly" action="/executeonly/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
-                <input type="submit" id="btnExecuteOnly" onclick="loading(this)" class="btn btn-danger"
-                       value="执行SQL"/>
+                <input type="button" id="btnExecuteOnly" class="btn btn-danger"
+                       value="立即执行"/>
             </form>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
@@ -185,7 +205,7 @@
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
 
-            <form action="/executeonly/" method="post" style="display:inline-block;">
+            <form id="from-executeonly" action="/executeonly/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="submit" id="btnExecuteOnly" onclick="loading(this)" class="btn btn-danger"
@@ -200,12 +220,37 @@
             </form>
         {% endif %}
 
+    {% elif workflowDetail.status == '定时执行' %}
+        {% if loginUser == workflowDetail.engineer %}
+            <!--审核通过后提交人也可以执行SQL-->
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="submit" onclick="loading(this)" class="btn btn-default" value="终止流程"/>
+            </form>
+
+        {% elif loginUser in reviewMan %}
+            <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
+                      placeholder="请填写驳回原因" rows=3></textarea>
+            <br>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" id="audit_remark" name="audit_remark" value="">
+                <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+            </form>
+        {% endif %}
+
     {% elif workflowDetail.status == '已正常结束' %}
         {% if workflowDetail.is_backup == '是' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
-                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
+                       value="查看回滚SQL"/>
             </form>
         {% endif %}
 
@@ -214,13 +259,15 @@
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
-                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default" value="查看回滚SQL"/>
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
+                       value="查看回滚SQL"/>
             </form>
         {% endif %}
         {% if loginUser == workflowDetail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
-            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default' href="/editsql/">重新修改</a>
+            <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
+               href="/editsql/">重新修改</a>
         {% endif %}
     {% endif %}
 
@@ -242,17 +289,70 @@
                         {% csrf_token %}
                         <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                         <input type="submit" id="btnExecuteSkipinc" onclick="loading(this)"
-                               class="btn btn-danger"
-                               value="确认执行"/>
+                               class="btn btn-danger" value="确认执行"/>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+    <!-- 定时执行弹出框 -->
+    <form id="from-addsqlcronjob" action="/add_sqlcronjob/" method="post" style="display:inline-block;">
+        <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header ">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <h4 class="modal-title text-danger">定时执行SQL</h4>
+                    </div>
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                            <input type="text" class="form-control" id="run_date" name="run_date"
+                                   data-format="yyyy-MM-dd hh:mm:ss"
+                                   placeholder="请输入执行时间">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+
+                        <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                        <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="确认提交"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
 
 {% endblock content %}
 
 {% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <!--初始化时间控件 -->
+    <script>
+        var date = new Date();
+        $("#run_date").datetimepicker({
+            format: "yyyy-mm-dd hh:ii:ss",
+            autoclose: true,
+            todayBtn: true,
+            todayHighlight: true,
+            showMeridian: false,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 2,//月视图
+            minView: 1,//日期时间选择器所能够提供的最精确的时间选择视图
+            startDate: date,
+            inline: true,
+            sideBySide: true
+        })
+    </script>
     <!--按钮控制 -->
     <script>
         var editWorkflowNname = "{{ workflowDetail.workflow_name }}";
@@ -277,6 +377,18 @@
             sessionStorage.setItem('editIsbackup', editIsbackup);
         });
 
+        // 执行确认
+        $("#btnExecuteOnly").click(function () {
+            var isContinue = confirm("请确认是否立即执行？");
+            var formExecuteOnly = $("#from-executeonly");
+            if (isContinue) {
+                var element = $(this);
+                var sqlNum = element.val();
+                formExecuteOnly.submit();
+                loading(this)
+            }
+        });
+
         // 校验备注
         $("#btnCancel").click(function () {
             //获取form对象，判断输入，通过则提交
@@ -291,6 +403,22 @@
             }
             else {
                 alert('请填写驳回原因')
+            }
+        });
+
+        // 定时时间校验
+        $("#btnAddsqlcronjob").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formAddsqlcronjo = $("#from-addsqlcronjob");
+            if ($("#run_date").val()) {
+                $(this).button('loading').delay(2500).queue(function () {
+                    $(this).button('reset');
+                    $(this).dequeue();
+                });
+                formAddsqlcronjo.submit();
+            }
+            else {
+                alert('请填写定时执行时间')
             }
         });
 

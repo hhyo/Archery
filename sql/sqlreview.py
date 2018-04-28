@@ -2,6 +2,8 @@
 import json
 
 import time
+from threading import Thread
+
 from django.db import connection
 from django.utils import timezone
 from django.conf import settings
@@ -74,7 +76,7 @@ def _execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
         workflowDetail.is_manual = 1
         workflowDetail.audit_remark = ''
         workflowDetail.is_backup = '否'
-        # 重新获取连接，防止超时
+        # 关闭后重新获取连接，防止超时
         connection.close()
         workflowDetail.save()
     except Exception as e:
@@ -91,7 +93,7 @@ def _execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
         # 邮件通知申请人，审核人，抄送DBA
         notify_users = reviewMan.split(',')
         notify_users.append(engineer)
-        listToAddr= [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
         mailSender.sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
 
@@ -115,7 +117,7 @@ def _execute_call_back(workflowId, clusterName, url):
         workflowDetail.status = finalStatus
         workflowDetail.is_manual = 0
         workflowDetail.audit_remark = ''
-        # 重新获取连接，防止超时
+        # 关闭后重新获取连接，防止超时
         connection.close()
         workflowDetail.save()
     except Exception as e:
@@ -133,6 +135,36 @@ def _execute_call_back(workflowId, clusterName, url):
         # 邮件通知申请人，审核人，抄送DBA
         notify_users = reviewMan.split(',')
         notify_users.append(engineer)
-        listToAddr= [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
         mailSender.sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
+
+
+# 给定时任务执行sql
+def _execute_job(workflowId, url):
+    workflowDetail = workflow.objects.get(id=workflowId)
+    clusterName = workflowDetail.cluster_name
+    db_name = workflowDetail.db_name
+
+    # 服务器端二次验证，当前工单状态必须为定时执行过状态
+    if workflowDetail.status != Const.workflowStatus['tasktiming']:
+        raise Exception('工单不是定时执行状态')
+
+    # 将流程状态修改为执行中，并更新reviewok_time字段
+    workflowDetail.status = Const.workflowStatus['executing']
+    workflowDetail.reviewok_time = timezone.now()
+    workflowDetail.save()
+    # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
+                                                   isSplit='yes')
+    workflowDetail.review_content = json.dumps(splitReviewResult)
+    try:
+        workflowDetail.save()
+    except Exception:
+        # 关闭后重新获取连接，防止超时
+        connection.close()
+        workflowDetail.save()
+
+    # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+    t = Thread(target=_execute_call_back, args=(workflowId, clusterName, url))
+    t.start()

@@ -21,6 +21,7 @@ from .models import users, master_config, AliyunRdsConfig, workflow, slave_confi
 from .workflow import Workflow
 from .permission import role_required, superuser_required
 from .sqlreview import _getDetailUrl, _execute_call_back, _execute_skipinc_call_back
+from .jobs import job_info, del_sqlcronjob
 import logging
 
 logger = logging.getLogger('default')
@@ -31,17 +32,19 @@ prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
 
+# 登录
 def login(request):
     return render(request, 'login.html')
 
 
+# 退出登录
 def logout(request):
     if request.session.get('login_username', False):
         del request.session['login_username']
     return HttpResponseRedirect(reverse('sql:login'))
 
 
-# 首页，也是查看所有SQL工单页面，具备翻页功能
+# SQL上线工单页面
 def allworkflow(request):
     context = {'currentMenu': 'allworkflow'}
     return render(request, 'allWorkflow.html', context)
@@ -184,6 +187,18 @@ def detail(request, workflowId):
     loginUser = request.session.get('login_username', False)
     loginUserOb = users.objects.get(username=loginUser)
 
+    # 获取定时执行任务信息
+    if workflowDetail.status == Const.workflowStatus['tasktiming']:
+        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+        job = job_info(job_id)
+        if job:
+            run_date = job.next_run_time
+        else:
+            run_date = ''
+    else:
+        run_date = ''
+
+    # sql结果
     column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
     rows = []
@@ -223,7 +238,8 @@ def detail(request, workflowId):
                  "   </div>",
                  "</div>"])
     context = {'currentMenu': 'allworkflow', 'workflowDetail': workflowDetail, 'column_list': column_list, 'rows': rows,
-               'reviewMan': reviewMan, 'current_audit_user': current_audit_user, 'loginUserOb': loginUserOb}
+               'reviewMan': reviewMan, 'current_audit_user': current_audit_user, 'loginUserOb': loginUserOb,
+               'run_date': run_date}
     return render(request, 'detail.html', context)
 
 
@@ -314,7 +330,12 @@ def executeonly(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflowDetail.review_content = json.dumps(splitReviewResult)
-    workflowDetail.save()
+    try:
+        workflowDetail.save()
+    except Exception:
+        # 关闭后重新获取连接，防止超时
+        connection.close()
+        workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
     t = Thread(target=_execute_call_back, args=(workflowId, clusterName, url))
@@ -398,6 +419,10 @@ def cancel(request):
             else:
                 auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
                                                        loginUser, audit_remark)
+            # 删除定时执行job
+            if workflowDetail.status == Const.workflowStatus['tasktiming']:
+                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+                del_sqlcronjob(job_id)
             # 按照审核结果更新业务表审核状态
             if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_abort']:
                 # 将流程状态修改为人工终止流程
