@@ -231,7 +231,7 @@ def getdbNameList(request):
             result['data'] = listDb
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -260,7 +260,7 @@ def getTableNameList(request):
             result['data'] = listTb
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
 
     else:
         try:
@@ -278,7 +278,7 @@ def getTableNameList(request):
             result['data'] = listTb
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -308,7 +308,7 @@ def getColumnNameList(request):
             result['data'] = listCol
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
     else:
         try:
             slave_info = slave_config.objects.get(cluster_name=clusterName)
@@ -325,7 +325,7 @@ def getColumnNameList(request):
             result['data'] = listCol
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 

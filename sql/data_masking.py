@@ -16,7 +16,7 @@ class Masking(object):
             print_info = self.query_tree(sql, cluster_name, db_name)
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
             return result
 
         if print_info is None:
@@ -89,7 +89,7 @@ class Masking(object):
             print_info = self.query_tree(sqlContent, cluster_name, dbName)
         except Exception as msg:
             result['status'] = 1
-            result['msg'] = msg
+            result['msg'] = str(msg)
             return result
 
         if print_info is None:
