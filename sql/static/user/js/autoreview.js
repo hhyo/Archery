@@ -21,8 +21,10 @@ $("#btn-autoreview").click(function () {
         autoreview();
     }
     else {
-        $(this).removeClass('disabled');
-        $(this).prop('disabled', false);
+        $("#btn-format").removeClass('disabled');
+        $("#btn-format").prop('disabled', false);
+        $("#btn-autoreview").removeClass('disabled');
+        $("#btn-autoreview").prop('disabled', false);
     }
 });
 
