@@ -27,14 +27,14 @@
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="项目组" data-placeholder="请选择项目组:" data-live-search="true" required>
+                                data-name="项目组" data-placeholder="请选择项目组" data-live-search="true" required>
                             <option value="is-empty" disabled="" selected="selected">请选择项目组:</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的实例"
-                                data-live-search="true" data-placeholder="请选择要上线的实例:" required>
+                                data-live-search="true" data-placeholder="请选择要上线的实例" required>
                             <option value="is-empty" disabled="" selected="selected">请选择要上线的实例:</option>
                             {% for cluster_name in listAllClusterName %}
                                 <option value="{{ cluster_name }}">{{ cluster_name }}</option>
@@ -43,14 +43,14 @@
                     </div>
                     <div class="form-group">
                         <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                                data-live-search="true" data-placeholder="请选择数据库" required>
                             <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="is_backup" name="is_backup"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
-                                data-placeholder="请选择是否要备份:" required>
+                                data-placeholder="请选择是否要备份" required>
                             <option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
                             <option value="是">是</option>
                             <option value="否">否</option>
@@ -60,7 +60,7 @@
                     <div class="form-group">
                         <select id="notify_users" name="notify_users"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="通知人"
-                                data-live-search="true" data-placeholder="可选择通知人(邮件抄送):">
+                                data-live-search="true" data-placeholder="可选择通知人(邮件抄送)">
                             <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
                             {% for user_info in active_user %}
                                 <option value="{{ user_info.username }}">{{ user_info.username }}</option>
@@ -246,7 +246,7 @@
                         value = value.trim();
                     }
                     if (!value || value === fieldElement.attr('data-placeholder')) {
-                        alert((fieldElement.attr('data-name') || this.name) + "不能为空！");
+                        alert(fieldElement.attr('data-placeholder'));
                         result = false;
                         return result;
                     }

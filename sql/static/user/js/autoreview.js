@@ -2,12 +2,15 @@ function validate() {
     var result = true;
     var sqlContent = editor.getValue();
     var clusterName = $("#cluster_name").val();
+    var db_name = $("#db_name").val();
     if (sqlContent === null || sqlContent.trim() === "" || sqlContent == $("#sql_content").attr("placeholder")) {
         alert("SQL内容不能为空！");
         return result = false;
     } else if (clusterName === null || clusterName == $("#cluster_name").attr("data-placeholder")) {
         alert("请选择要上线的实例！");
         return result = false;
+    }else if(db_name  === null || db_name == $("#db_name").attr("data-placeholder")){
+        alert("请选择数据库")
     }
     return result;
 }
