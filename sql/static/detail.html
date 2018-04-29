@@ -208,8 +208,8 @@
             <form id="from-executeonly" action="/executeonly/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
-                <input type="submit" id="btnExecuteOnly" onclick="loading(this)" class="btn btn-danger"
-                       value="执行SQL"/>
+                <input type="button" id="btnExecuteOnly" class="btn btn-danger"
+                       value="立即执行"/>
             </form>
 
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
