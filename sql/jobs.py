@@ -24,7 +24,11 @@ logger = logging.getLogger('default')
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
 register_events(scheduler)
-scheduler.start()
+try:
+    scheduler.start()
+    logger.debug("Scheduler started!")
+except SchedulerAlreadyRunningError:
+    logger.debug("Scheduler is already running!")
 
 
 # 添加/修改sql执行任务
@@ -52,14 +56,18 @@ def add_sqlcronjob(request):
         scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id,
                           replace_existing=True)
         register_events(scheduler)
-        scheduler.start()
+        try:
+            scheduler.start()
+            logger.debug("Scheduler started!")
+        except SchedulerAlreadyRunningError:
+            logger.debug("Scheduler is already running!")
         workflowDetail.status = Const.workflowStatus['tasktiming']
         workflowDetail.save()
     except Exception as e:
         context = {'errMsg': '任务添加失败，错误信息：' + str(e)}
         return render(request, 'error.html', context)
     else:
-        logger.debug('add_sqlcronjob:' + job_id)
+        logger.debug('add_sqlcronjob:' + job_id + "run_date:" + run_date.strftime('%Y-%m-%d %H:%M:%S'))
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
