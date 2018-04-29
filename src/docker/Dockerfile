@@ -5,18 +5,12 @@ RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-de
     && yum -y install epel-release \
     && yum -y install python34 python34-pip python34-devel.x86_64 \
     && cd /opt \
-    && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && virtualenv venv4archer --python=python3.4
-#archer
-RUN cd /opt \
-    && git clone https://github.com/hhyo/archer.git \
-    && source /opt/venv4archer/bin/activate \
-    && pip3 install -r /opt/archer/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && cp /opt/archer/src/docker/pymysql/connections.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
-    && cp /opt/archer/src/docker/pymysql/cursors.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
-    && yum -y install nginx \
-    && cp /opt/archer/src/docker/nginx.conf /etc/nginx/ \
-    && nginx
+    && pip3 install virtualenv \
+    && virtualenv venv4archer --python=python3.4 \
+#修改中文支持
+    && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && yum -y install kde-l10n-Chinese && yum -y reinstall glibc-common \
+    && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
 #sqladvisor
 RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
     && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
@@ -29,11 +23,17 @@ RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
     && make && make install \
     && cd sqladvisor/ \
     && cmake -DCMAKE_BUILD_TYPE=debug ./ \
-    && make \ 
-#修改中文支持
-    && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \ 
-    && yum -y install kde-l10n-Chinese && yum -y reinstall glibc-common \ 
-    && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8  
+    && make
+#archer
+RUN cd /opt \
+    && git clone https://github.com/hhyo/archer.git \
+    && source /opt/venv4archer/bin/activate \
+    && pip3 install -r /opt/archer/requirements.txt \
+    && cp /opt/archer/src/docker/pymysql/connections.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
+    && cp /opt/archer/src/docker/pymysql/cursors.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
+    && yum -y install nginx \
+    && cp /opt/archer/src/docker/nginx.conf /etc/nginx/ \
+    && nginx
 
 ENV LANG en_US.UTF-8
 ENV LC_ALL zh_CN.utf8 
