@@ -1,7 +1,5 @@
 # -*- coding:utf-8 -*-
 import datetime
-import atexit
-import fcntl
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers import SchedulerAlreadyRunningError, SchedulerNotRunningError
@@ -19,28 +17,16 @@ import logging
 logging.basicConfig()
 logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
-# 用全局锁确保scheduler只运行一次，解决django使用多进程部署时apscheduler重复运行的问题
-# 参考：https://vimer.im/posts/Solving-the-problem-of-APScheduler-duplication-in-multi-process/
-f = open("scheduler.lock", "wb")
+scheduler = BackgroundScheduler()
+scheduler.add_jobstore(DjangoJobStore(), "default")
+
+register_events(scheduler)
+
 try:
-    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-except:
-    pass
-else:
-    scheduler = BackgroundScheduler()
-    scheduler.add_jobstore(DjangoJobStore(), "default")
-
-    register_events(scheduler)
     scheduler.start()
-
-
-def unlock():
-    fcntl.flock(f, fcntl.LOCK_UN)
-    f.close()
-
-
-atexit.register(unlock)
-
+    print("Scheduler started!")
+except SchedulerAlreadyRunningError:
+    print("Scheduler is already running!")
 
 # 添加/修改sql执行任务
 def add_sqlcronjob(request):
