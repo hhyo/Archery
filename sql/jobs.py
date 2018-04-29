@@ -11,31 +11,20 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events, regist
 
 from sql.const import Const
 from sql.models import workflow
-from .sqlreview import _execute_job, _getDetailUrl
+from .sqlreview import execute_job, getDetailUrl
 
 import logging
 
 logging.basicConfig()
 logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
+logger = logging.getLogger('default')
+
+# 初始化scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
-
-
-# 增加心跳检测job防止任务执行完成后调度器自动关闭
-@scheduler.scheduled_job("cron", second=0, id='Heartbeat')
-def heartbeat_job():
-    time.sleep(5)
-    print("Scheduler is running!")
-
-
 register_events(scheduler)
-
-try:
-    scheduler.start()
-    print("Scheduler started!")
-except SchedulerAlreadyRunningError:
-    print("Scheduler is already running!")
+scheduler.start()
 
 
 # 添加/修改sql执行任务
@@ -54,22 +43,30 @@ def add_sqlcronjob(request):
         return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = _getDetailUrl(request) + str(workflowId) + '/'
+    url = getDetailUrl(request) + str(workflowId) + '/'
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
 
     try:
-        scheduler.add_job(_execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id,
+        scheduler = BackgroundScheduler()
+        scheduler.add_jobstore(DjangoJobStore(), "default")
+        scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id,
                           replace_existing=True)
+        register_events(scheduler)
+        scheduler.start()
         workflowDetail.status = Const.workflowStatus['tasktiming']
         workflowDetail.save()
     except Exception as e:
         context = {'errMsg': '任务添加失败，错误信息：' + str(e)}
         return render(request, 'error.html', context)
+    else:
+        logger.debug('add_sqlcronjob:' + job_id)
+
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
 # 删除sql执行任务
 def del_sqlcronjob(job_id):
+    logger.debug('del_sqlcronjob:' + job_id)
     return scheduler.remove_job(job_id)
 
 

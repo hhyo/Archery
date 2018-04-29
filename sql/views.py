@@ -20,7 +20,7 @@ from .models import users, master_config, AliyunRdsConfig, workflow, slave_confi
     QueryPrivilegesApply
 from .workflow import Workflow
 from .permission import role_required, superuser_required
-from .sqlreview import _getDetailUrl, _execute_call_back, _execute_skipinc_call_back
+from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
 from .jobs import job_info, del_sqlcronjob
 import logging
 
@@ -302,7 +302,7 @@ def executeonly(request):
     workflowDetail = workflow.objects.get(id=workflowId)
     clusterName = workflowDetail.cluster_name
     db_name = workflowDetail.db_name
-    url = _getDetailUrl(request) + str(workflowId) + '/'
+    url = getDetailUrl(request) + str(workflowId) + '/'
 
     # 获取审核人
     reviewMan = workflowDetail.review_man
@@ -338,7 +338,7 @@ def executeonly(request):
         workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=_execute_call_back, args=(workflowId, clusterName, url))
+    t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -354,7 +354,7 @@ def execute_skipinc(request):
     workflowDetail = workflow.objects.get(id=workflowId)
     sql_content = workflowDetail.sql_content
     clusterName = workflowDetail.cluster_name
-    url = _getDetailUrl(request) + str(workflowId) + '/'
+    url = getDetailUrl(request) + str(workflowId) + '/'
 
     # 服务器端二次验证，当前工单状态必须为自动审核不通过
     if workflowDetail.status not in [Const.workflowStatus['manreviewing'], Const.workflowStatus['pass'],
@@ -369,7 +369,7 @@ def execute_skipinc(request):
     workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=_execute_skipinc_call_back, args=(workflowId, clusterName, sql_content, url))
+    t = Thread(target=execute_skipinc_call_back, args=(workflowId, clusterName, sql_content, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
