@@ -1,12 +1,13 @@
 # -*- coding:utf-8 -*-
 import datetime
+import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers import SchedulerAlreadyRunningError, SchedulerNotRunningError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django_apscheduler.jobstores import DjangoJobStore, register_events
+from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 
 from sql.const import Const
 from sql.models import workflow
@@ -20,6 +21,14 @@ logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
 
+
+# 增加心跳检测job防止任务执行完成后调度器自动关闭
+@scheduler.scheduled_job("cron", second=0, id='Heartbeat')
+def heartbeat_job():
+    time.sleep(5)
+    print("Scheduler is running!")
+
+
 register_events(scheduler)
 
 try:
@@ -27,6 +36,7 @@ try:
     print("Scheduler started!")
 except SchedulerAlreadyRunningError:
     print("Scheduler is already running!")
+
 
 # 添加/修改sql执行任务
 def add_sqlcronjob(request):
