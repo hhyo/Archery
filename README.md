@@ -15,7 +15,9 @@
   inception自动审核通过的工单，由审核人人工审核，人工审核通过后可选择由审核人执行或者申请人执行   
   inception不支持的语法，如子查询更新，由审核人人工审核，DBA可以跳过inception直接执行，但无法生成回滚语句  
 * 回滚数据展示  
-  通过inception执行的工单可自动生成回滚语句并可在工单内查看，支持一键提交回滚工单  
+  通过inception执行的工单可自动生成回滚语句并可在工单内查看，支持一键提交回滚工单
+* 定时执行SQL
+  审核通过的工单可由申请人或者审核人选择定时执行，执行前可修改执行时间，可随时终止
 * pt-osc执行  
   支持pt-osc执行进度展示，并且可以点击中止pt-osc进程  
 * MySQL查询  
@@ -168,7 +170,7 @@ centos如果安装ladp报错需要执行yum install openldap-devel，其他系�
 6. 工单统计图表  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/charts.png)  
 7. pt-osc进度条，以及中止pt-osc进程按钮  
-![image](https://github.com/hhyo/archer/blob/master/src//screenshots/osc_progress.png)  
+![image](https://github.com/hhyo/archer/blob/master/src/screenshots/osc_progress.png)
 8. SQL在线查询、自动补全  
 ![image](https://github.com/hhyo/archer/blob/master/src/screenshots/query.png)  
 9. 动态脱敏  

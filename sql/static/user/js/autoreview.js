@@ -10,7 +10,8 @@ function validate() {
         alert("请选择要上线的实例！");
         return result = false;
     }else if(db_name  === null || db_name == $("#db_name").attr("data-placeholder")){
-        alert("请选择数据库")
+        alert("请选择数据库");
+        return result = false;
     }
     return result;
 }
