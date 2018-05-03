@@ -7,7 +7,8 @@
             <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
                 {% csrf_token %}
                 <input type="hidden" id="workflowid" name="workflowid"/>
-                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程" required>
+                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                       data-placeholder="请配置审批流程" required>
                 <div class="col-md-9 column">
                     <pre id="sql_content_editor" style="min-height:450px"></pre>
                 </div>
