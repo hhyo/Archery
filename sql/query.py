@@ -761,7 +761,7 @@ def explain(request):
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    sqlContent = sqlContent.rstrip()
+    sqlContent = sqlContent.strip()
     if sqlContent[-1] != ";":
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'

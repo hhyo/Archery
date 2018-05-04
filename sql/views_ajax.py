@@ -219,7 +219,13 @@ def simplecheck(request):
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    sqlContent = sqlContent.rstrip()
+    # 删除注释语句
+    sqlContent = ''.join(
+        map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
+            sqlContent.splitlines(1))).strip()
+    # 去除空行
+    sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+
     if sqlContent[-1] != ";":
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
@@ -423,7 +429,7 @@ def sqladvisorcheck(request):
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    sqlContent = sqlContent.rstrip()
+    sqlContent = sqlContent.strip()
     if sqlContent[-1] != ";":
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
@@ -437,7 +443,7 @@ def sqladvisorcheck(request):
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = getattr(settings, 'SQLADVISOR')
-    sqlContent = sqlContent.rstrip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
+    sqlContent = sqlContent.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
             str(cluster_info.master_host), str(cluster_info.master_port), str(cluster_info.master_user),
