@@ -36,6 +36,8 @@ def global_info(request):
     if loginUser is not None:
         user = users.objects.get(username=loginUser)
         UserDisplay = user.display
+        if UserDisplay == '':
+            UserDisplay = loginUser
         if user.is_superuser:
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsSuper + leftMenuBtnsDoc
         else:
