@@ -80,19 +80,26 @@
                                 <h6 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h6>
                                 <br>
                                 <div><h6 style="float:left;" class="control-label text-bold">变更审批流程：</h6></div>
-                                <div style="float:left;" class="form-group">
-                                    <select id="group_auditors" name="group"
-                                            class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="审核人" data-placeholder="审核人:" data-live-search="true"
-                                            multiple="multiple" required>
-                                        <option value="is-empty" disabled="" selected="selected">请选择审核人:</option>
-                                        {% for user in user_list %}
-                                            <option value="{{ user.username }}">{{ user.username }}
-                                        {% endfor %}
-                                    </select>
+                                <div class="form-group form-inline">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" id="group_auditors_text"
+                                               disabled="disabled" style="width: 300px">
+                                    </div>
+                                    <div class="form-group">
+                                        <select id="group_auditors" name="group"
+                                                class="selectpicker show-tick form-control bs-select-hidden"
+                                                data-name="审批人" data-placeholder="审批人:" data-live-search="true"
+                                                required>
+                                            <option value="is-empty" disabled="" selected="selected">添加审批人</option>
+                                            {% for user in user_list %}
+                                                <option value="{{ user.username }}">{{ user.username }}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <button id="btn-workflow-config" class="btn btn-default">变更</button>
+                                    <button id="btn-workflow-config-clean" class="btn btn-default">刷新</button>
                                 </div>
                             </div>
                         </form>
@@ -174,9 +181,29 @@
             $("#workflow_type").trigger('change')
         });
 
+        // 点击用户填充到group_auditors_text
+        $("#group_auditors").change(function () {
+            var user = $(this).find(':selected').attr("disabled", "disabled").val();
+            var auditors = $("#group_auditors_text").val();
+            if (auditors) {
+                $("#group_auditors_text").val(auditors + ',' + user);
+            }
+            else {
+                $("#group_auditors_text").val(user)
+            }
+            $('#group_auditors').selectpicker('render');
+            $('#group_auditors').selectpicker('refresh');
+        });
+
+        // 清空审核人信息
+        $("#btn-workflow-config-clean").change(function () {
+            $("#group_auditors_text").val('')
+        });
+
         // 切换工单类型获取对应项目组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
+            $("#group_auditors_text").val('');
             if ($("#group_workflow").val()) {
                 $.ajax({
                     type: "post",
@@ -248,20 +275,13 @@
         $("#btn-workflow-config").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
-            var audit_users = $("#group_auditors").val();
-            if (audit_users.length > 1) {
-                var auditors = audit_users.join(",");
-            }
-            else {
-                var auditors = audit_users.toString();
-            }
             $.ajax({
                 type: "post",
                 url: "/changegroupauditors/",
                 dataType: "json",
                 data: {
                     group_id: $("#group_workflow").val().split(',')[0],
-                    audit_users: auditors,
+                    audit_users: $("#group_auditors_text").val(),
                     workflow_type: $("#workflow_type").val()
                 },
                 complete: function () {

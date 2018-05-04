@@ -458,7 +458,23 @@
                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                 showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
-                detailView: false,                   //是否显示父子表
+                detailView: true,                  //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'SQL') {
+                            var sql = value;
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
                 locale: 'zh-CN',                    //本地化
                 data:{{ rows|safe }},
                 columns: [{
@@ -469,7 +485,12 @@
                     title: 'SQL内容',
                     field: 'SQL',
                     formatter: function (value, row, index) {
-                        return value.replace(/\n/g, '<br>');
+                        if (value.length > 80) {
+                            return value.substr(0, 80) + '...';
+                        }
+                        else {
+                            return value
+                        }
                     },
                     sortable: true
                 }, {

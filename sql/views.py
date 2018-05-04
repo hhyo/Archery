@@ -186,9 +186,12 @@ def detail(request, workflowId):
     reviewMan = reviewMan.split(',')
 
     # 获取当前审核人
-    current_audit_user = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                           workflow_type=WorkflowDict.workflow_type['sqlreview']
-                                                           ).current_audit_user
+    try:
+        current_audit_user = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
+                                                               workflow_type=WorkflowDict.workflow_type['sqlreview']
+                                                               ).current_audit_user
+    except Exception:
+        current_audit_user = None
 
     # 获取用户信息
     loginUser = request.session.get('login_username', False)

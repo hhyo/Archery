@@ -58,9 +58,16 @@ class Workflow(object):
         # else:
         #     audit_users_list = settingInfo.audit_users.split(',')
         if workflow_auditors:
-            audit_users_list = workflow_auditors.split(',')
+            # 验证审批流是否和配置一致
+            auditor_list = self.groupauditors(group_id, workflow_type).get('data')
+            if workflow_auditors == ','.join(auditor_list):
+                audit_users_list = workflow_auditors.split(',')
+            else:
+                result['msg'] = '审批流程与后台配置不同，请核实'
+                raise Exception(result['msg'])
         else:
-            audit_users_list = None
+            result['msg'] = '审批流程不能为空，请先配置审批流程'
+            raise Exception(result['msg'])
 
         # 无审核配置则无需审核，直接通过
         if audit_users_list is None:
@@ -85,7 +92,7 @@ class Workflow(object):
             user_list = [user[0] for user in users.objects.all().values_list('username')]
             for audit_user in audit_users_list:
                 if audit_user not in user_list:
-                    result['msg'] = '审核角色配置错误，审核人不存在，请重新配置，格式为a,b,c或者a'
+                    result['msg'] = '审批人不存在，请重新配置，格式为a,b,c或者a'
                     raise Exception(result['msg'])
             # 向审核主表插入待审核数据
             auditInfo = WorkflowAudit()
@@ -362,6 +369,12 @@ class Workflow(object):
 
     # 修改\添加配置信息
     def changesettings(self, group_id, workflow_type, audit_users):
+        audit_users_list = audit_users.split(',')
+        user_list = [user[0] for user in users.objects.all().values_list('username')]
+        for audit_user in audit_users_list:
+            if audit_user not in user_list:
+                msg = '审批人不存在，请重新配置，格式为a,b,c或者a'
+                raise Exception(msg)
         try:
             WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)
             WorkflowAuditSetting.objects.filter(workflow_type=workflow_type,
@@ -374,3 +387,14 @@ class Workflow(object):
             inset.audit_users = audit_users
             inset.workflow_type = workflow_type
             inset.save()
+
+    # 获取项目的审核人
+    def groupauditors(self, group_id, workflow_type):
+        result = {'status': 0, 'msg': 'ok', 'data': []}
+
+        # 获取审核人列表
+        auditors = self.auditsettings(group_id=group_id, workflow_type=workflow_type)
+        if auditors:
+            auditor_list = auditors.audit_users.split(',')
+            result['data'] = auditor_list
+        return result

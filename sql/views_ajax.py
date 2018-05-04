@@ -544,7 +544,11 @@ def changegroupauditors(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 调用工作流修改审核配置
-    workflowOb.changesettings(group_id, workflow_type, audit_users)
+    try:
+        workflowOb.changesettings(group_id, workflow_type, audit_users)
+    except Exception as msg:
+        result['msg'] = str(msg)
+        result['status'] = 1
 
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')
