@@ -218,8 +218,8 @@ MAIL_REVIEW_SECURE_ADDR = ['archer@xxx.com', 'archer@xxx.com']  # 登录失败�
 # 开启后，首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；关闭直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
 CRITICAL_DDL_ON_OFF = False
 
-# 在线查询当inception语法树打印失败时的控制，on是开启校验，失败不允许继续执行并返回错误，off是关闭校验，继续执行，允许执行会导致解析失败的查询表权限验证和脱敏功能失效
-CHECK_QUERY_ON_OFF = True
+# 在线查询当inception语法树打印失败时的控制，True是开启校验，失败不允许继续执行并返回错误，False是关闭校验，继续执行，允许执行会导致解析失败的查询表权限验证和脱敏功能失效
+CHECK_QUERY_ON_OFF = False
 
 # 是否开启动态脱敏查询，由于采取遍历处理结果集的方式，会影响部分查询效率
 DATA_MASKING_ON_OFF = True
