@@ -1,7 +1,7 @@
 # -*-coding: utf-8-*-
 
 import re
-import json
+import simplejson as json
 import MySQLdb
 from django.conf import settings
 from django.db import connection

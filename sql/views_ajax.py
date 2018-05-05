@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 import re
-import json
+import simplejson as json
 import datetime
 import multiprocessing
 
@@ -31,7 +31,7 @@ from .models import users, master_config, workflow, Group
 from sql.sendmail import MailSender
 import logging
 from .workflow import Workflow
-from .query import query_audit_call_back, DateEncoder
+from .extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
 mailSender = MailSender()
@@ -202,7 +202,7 @@ def sqlworkflow(request):
 
     result = {"total": listWorkflowCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=DateEncoder), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
 
 
 # 提交SQL给inception进行自动审核
@@ -484,7 +484,7 @@ def workflowlist(request):
 
     result = {"total": auditlistCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=DateEncoder), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
 
 
 # 添加项目组

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from .inception import InceptionDao
 from .models import DataMaskingRules, DataMaskingColumns
-import json
+import simplejson as json
 import re
 
 inceptionDao = InceptionDao()

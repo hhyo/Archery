@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 import re
-import json
+import simplejson as json
 from threading import Thread
 from collections import OrderedDict
 

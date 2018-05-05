@@ -12,7 +12,7 @@ PyMySQL==0.7.11
 PyYAML==3.12
 requests==2.18.4
 shellescape==3.4.1
-simplejson==3.13.2
+simplejson==3.14.0
 urllib3==1.22
 django-admin-bootstrapped==2.5.7
 gunicorn==19.7.1

@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import json
+import simplejson as json
 
 from django.core import serializers
 from django.db.models import Q

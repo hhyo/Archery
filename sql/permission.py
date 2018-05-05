@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import json
+import simplejson as json
 from django.shortcuts import render
 from django.http import HttpResponse
 from .models import users
