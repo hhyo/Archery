@@ -4,33 +4,91 @@
     <div>
         <div style="width: 80%; float: left">
             {% csrf_token %}
-            <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql }}{% endfor %}">
+            <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql.1 }}
+{% endfor %}">
+            <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
+            <input type="hidden" id="editClustername" value="{{ cluster_name }}">
+            <input type="hidden" id="editIsbackup" value="是">
+            <input type="hidden" id="editReviewman" value="{{ review_man }}">
+            <input type="hidden" id="editSubReviewman" value="{{ sub_review_man }}">
             <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
         </div>
     </div>
     <br>
     <br>
-    <table data-toggle="table" class="table table-striped table-hover">
-        <thead class="btn-default">
-        <tr>
-            <th>回滚语句</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for sql in listBackupSql %}
-            <tr>
-                <td>
-                    {{ sql }}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <table id="tb-rollback" data-toggle="table" class="table table-condensed"></table>
 {% endblock content %}
 
 {% block js %}
     {% load staticfiles %}
     <script>
+        $('#tb-rollback').bootstrapTable('destroy').bootstrapTable({
+            striped: true,                      //是否显示行间隔色
+            cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+            pagination: false,                   //是否显示分页（*）
+            sortable: true,                     //是否启用排序
+            sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+            pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+            pageSize: 14,                       //每页的记录行数（*）
+            pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
+            search: false,                       //是否显示表格搜索
+            strictSearch: false,                //是否全匹配搜索
+            showColumns: false,                  //是否显示所有的列（选择显示的列）
+            showRefresh: false,                  //是否显示刷新按钮
+            minimumCountColumns: 2,             //最少允许的列数
+            clickToSelect: false,                //是否启用点击选中行
+            uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+            showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+            cardView: false,                    //是否显示详细视图
+            detailView: true,                  //是否显示父子表
+            //格式化详情
+            detailFormatter: function (index, row) {
+                var html = [];
+                $.each(row, function (index, key) {
+                        if (index === 1) {
+                            var sql = key;
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    }
+                );
+                return html.join('');
+            },
+            locale: 'zh-CN',                    //本地化
+            data:{{ listBackupSql|safe }},
+            columns: [{
+                title: '执行语句',
+                field: 0,
+                formatter: function (value, row, index) {
+                    if (value.length > 50) {
+                        return value.substr(0, 50) + '...';
+                    }
+                    else {
+                        return value
+                    }
+                }
+            }, {
+                title: '回滚语句',
+                field: 1,
+                formatter: function (value, row, index) {
+                    if (value.length > 80) {
+                        return value.substr(0, 80) + '...';
+                    }
+                    else {
+                        return value
+                    }
+                }
+            }],
+            onLoadSuccess: function () {
+            },
+            onLoadError: function () {
+                alert("数据加载失败！");
+            }
+        });
         $(document).ready(function () {
             var isRollback = window.location.pathname.indexOf("rollback");
             if (isRollback != -1) {
