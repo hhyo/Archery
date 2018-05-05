@@ -5,7 +5,7 @@ RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-de
     && yum -y install epel-release \
     && yum -y install python34 python34-pip python34-devel.x86_64 \
     && cd /opt \
-    && pip3 install virtualenv \
+    && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && virtualenv venv4archer --python=python3.4 \
 #修改中文支持
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
