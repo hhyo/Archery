@@ -352,7 +352,7 @@
             }
             //校验SQL
             sqlContent = $.trim(sqlContent);
-            if (sqlContent.toLowerCase().match(/^select/) || sqlContent.toLowerCase().match(/^show.*create/) || sqlContent.toLowerCase().match(/^explain/)) {
+            if (sqlContent.toLowerCase().match(/^select/) || sqlContent.toLowerCase().match(/^show.*create.*table/) || sqlContent.toLowerCase().match(/^explain/)) {
                 $.ajax({
                     type: "post",
                     url: "/query/",
@@ -424,7 +424,15 @@
                             else if (result['column_list']) {
                                 //异步获取要动态生成的列
                                 $.each(result['column_list'], function (i, column) {
-                                    columns.push({"field": i, "title": column, "sortable": true});
+                                    columns.push({
+                                        "field": i,
+                                        "title": column,
+                                        "sortable": true,
+                                        "formatter": function (value, row, index) {
+                                            //return value;
+                                            return $('<div/>').text(value).html();
+                                        }
+                                    });
                                 });
                                 /*//插入选择框
                                 columns.unshift({
@@ -440,7 +448,7 @@
                                                 title: 'Create Table',
                                                 field: 1,
                                                 formatter: function (value, row, index) {
-                                                    var sql = value;
+                                                    var sql = window.sqlFormatter.format(value);
                                                     //替换所有的换行符
                                                     sql = sql.replace(/\r\n/g, "<br>");
                                                     sql = sql.replace(/\n/g, "<br>");
