@@ -256,7 +256,7 @@ class Masking(object):
         return hit_columns_info
 
     # 利用正则表达式脱敏数据
-    def regex(self, DataMaskingRulesOb, rule_type, str):
+    def regex(self, DataMaskingRulesOb, rule_type, value):
         rules_info = DataMaskingRulesOb.get(rule_type=rule_type)
         if rules_info:
             rule_regex = rules_info.rule_regex
@@ -264,16 +264,16 @@ class Masking(object):
             # 正则匹配必须分组，隐藏的组会使用****代替
             try:
                 p = re.compile(rule_regex)
-                m = p.search(str)
+                m = p.search(str(value))
                 masking_str = ''
                 for i in range(m.lastindex):
-                    if i == hide_group-1:
+                    if i == hide_group - 1:
                         group = '****'
                     else:
-                        group = m.group(i+1)
+                        group = m.group(i + 1)
                     masking_str = masking_str + group
                 return masking_str
             except Exception:
-                return str
+                return value
         else:
-            return str
+            return value
