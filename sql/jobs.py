@@ -32,44 +32,18 @@ except SchedulerAlreadyRunningError:
 
 
 # 添加/修改sql执行任务
-def add_sqlcronjob(request):
-    workflowId = request.POST.get('workflowid')
-    run_date = request.POST.get('run_date')
-    if run_date is None or workflowId is None:
-        context = {'errMsg': '时间不能为空'}
-        return render(request, 'error.html', context)
-    elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-        context = {'errMsg': '时间不能小于当前时间'}
-        return render(request, 'error.html', context)
-    workflowDetail = workflow.objects.get(id=workflowId)
-    if workflowDetail.status not in ['审核通过', '定时执行']:
-        context = {'errMsg': '必须为审核通过或者定时执行状态'}
-        return render(request, 'error.html', context)
-
-    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = getDetailUrl(request) + str(workflowId) + '/'
-    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
-
+def add_sqlcronjob(job_id, run_date, workflowId, url):
+    scheduler = BackgroundScheduler()
+    scheduler.add_jobstore(DjangoJobStore(), "default")
+    scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id,
+                      replace_existing=True)
+    register_events(scheduler)
     try:
-        scheduler = BackgroundScheduler()
-        scheduler.add_jobstore(DjangoJobStore(), "default")
-        scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id,
-                          replace_existing=True)
-        register_events(scheduler)
-        try:
-            scheduler.start()
-            logger.debug("Scheduler started!")
-        except SchedulerAlreadyRunningError:
-            logger.debug("Scheduler is already running!")
-        workflowDetail.status = Const.workflowStatus['tasktiming']
-        workflowDetail.save()
-    except Exception as e:
-        context = {'errMsg': '任务添加失败，错误信息：' + str(e)}
-        return render(request, 'error.html', context)
-    else:
-        logger.debug('add_sqlcronjob:' + job_id + "run_date:" + run_date.strftime('%Y-%m-%d %H:%M:%S'))
-
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+        scheduler.start()
+        logger.debug("Scheduler started!")
+    except SchedulerAlreadyRunningError:
+        logger.debug("Scheduler is already running!")
+    logger.debug('add_sqlcronjob:' + job_id + " run_date:" + run_date.strftime('%Y-%m-%d %H:%M:%S'))
 
 
 # 删除sql执行任务

@@ -149,7 +149,7 @@ def execute_job(workflowId, url):
     db_name = workflowDetail.db_name
 
     # 服务器端二次验证，当前工单状态必须为定时执行过状态
-    if workflowDetail.status != Const.workflowStatus['tasktiming']:
+    if workflowDetail.status != Const.workflowStatus['timingtask']:
         raise Exception('工单不是定时执行状态')
 
     # 将流程状态修改为执行中，并更新reviewok_time字段

@@ -4,7 +4,7 @@ import re
 import simplejson as json
 from threading import Thread
 from collections import OrderedDict
-
+import datetime
 from django.db.models import Q, F
 from django.db import connection, transaction
 from django.utils import timezone
@@ -21,7 +21,7 @@ from .models import users, master_config, AliyunRdsConfig, workflow, slave_confi
 from .workflow import Workflow
 from .permission import role_required, superuser_required
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
-from .jobs import job_info, del_sqlcronjob
+from .jobs import job_info, del_sqlcronjob, add_sqlcronjob
 import logging
 
 logger = logging.getLogger('default')
@@ -198,7 +198,7 @@ def detail(request, workflowId):
     loginUserOb = users.objects.get(username=loginUser)
 
     # 获取定时执行任务信息
-    if workflowDetail.status == Const.workflowStatus['tasktiming']:
+    if workflowDetail.status == Const.workflowStatus['timingtask']:
         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
         job = job_info(job_id)
         if job:
@@ -354,6 +354,40 @@ def executeonly(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
+# 定时执行SQL
+@role_required(('DBA',))
+def timingtask(request):
+    workflowId = request.POST.get('workflowid')
+    run_date = request.POST.get('run_date')
+    if run_date is None or workflowId is None:
+        context = {'errMsg': '时间不能为空'}
+        return render(request, 'error.html', context)
+    elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+        context = {'errMsg': '时间不能小于当前时间'}
+        return render(request, 'error.html', context)
+    workflowDetail = workflow.objects.get(id=workflowId)
+    if workflowDetail.status not in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
+        context = {'errMsg': '必须为审核通过或者定时执行状态'}
+        return render(request, 'error.html', context)
+
+    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
+    url = getDetailUrl(request) + str(workflowId) + '/'
+    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 将流程状态修改为定时执行
+            workflowDetail.status = Const.workflowStatus['timingtask']
+            workflowDetail.save()
+            # 调用添加定时任务
+            add_sqlcronjob(job_id, run_date, workflowId, url)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+
+
 # 跳过inception直接执行SQL，只是为了兼容inception不支持的语法，谨慎使用
 @role_required(('DBA',))
 def execute_skipinc(request):
@@ -430,7 +464,7 @@ def cancel(request):
                 auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
                                                        loginUser, audit_remark)
             # 删除定时执行job
-            if workflowDetail.status == Const.workflowStatus['tasktiming']:
+            if workflowDetail.status == Const.workflowStatus['timingtask']:
                 job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
                 del_sqlcronjob(job_id)
             # 按照审核结果更新业务表审核状态

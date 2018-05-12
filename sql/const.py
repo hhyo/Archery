@@ -7,7 +7,7 @@ class Const(object):
         'autoreviewing': '自动审核中',
         'manreviewing': '等待审核人审核',
         'pass': '审核通过',
-        'tasktiming': '定时执行',
+        'timingtask': '定时执行',
         'executing': '执行中',
         'autoreviewwrong': '自动审核不通过',
         'exception': '执行有异常',
