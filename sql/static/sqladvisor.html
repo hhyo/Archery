@@ -247,10 +247,6 @@
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
             var columns = [];
-            var sqlContent = editor.getValue();
-            var clusterName = $("#cluster_name").val();
-            var dbName = $("#db_name").val();
-
             $.ajax({
                 type: "post",
                 url: "/explain/",
@@ -258,8 +254,7 @@
                 data: {
                     sql_content: 'explain ' + sqlContent,
                     cluster_name: clusterName,
-                    db_name: dbName,
-                    limit_num: 100
+                    db_name: dbName
                 },
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
@@ -308,8 +303,7 @@
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
-            })
-            ;
+            });
         }
 
         //适配从慢查询过来的优化请求

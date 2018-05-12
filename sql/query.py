@@ -608,11 +608,15 @@ def query(request):
     loginUserOb = users.objects.get(username=loginUser)
 
     # 过滤注释语句和非查询的语句
-    sql_list = sqlContent.split('\n')
+    sqlContent = ''.join(
+        map(lambda x: re.compile(r'(^--[\f\n\r\t\v\s]+.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
+            sqlContent.splitlines(1))).strip()
+    # 去除空行
+    sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+
+    sql_list = sqlContent.strip().split('\n')
     for sql in sql_list:
-        if re.match(r"^(\--|#)", sql):
-            pass
-        elif re.match(r"^select|^show.*create.*table|^explain", sql.lower()):
+        if re.match(r"^select|^show.*create.*table|^explain", sql.lower()):
             break
         else:
             finalResult['status'] = 1
@@ -630,6 +634,9 @@ def query(request):
         limit_num = priv_check_info['data']
     else:
         return HttpResponse(json.dumps(priv_check_info), content_type='application/json')
+
+    if re.match(r"^explain", sqlContent.lower()):
+        limit_num = 0
 
     # 对查询sql增加limit限制
     if re.match(r"^select", sqlContent.lower()):
@@ -692,10 +699,11 @@ def query(request):
             query_log.save()
         except:
             connection.close()
-        query_log.save()
+            query_log.save()
 
     # 返回查询结果
-    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 获取sql查询记录
@@ -756,17 +764,13 @@ def explain(request):
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    # 过滤注释语句和非explain的语句
-    sql_list = sqlContent.split('\n')
-    for sql in sql_list:
-        if re.match(r"^(\--|#)", sql):
-            pass
-        elif re.match(r"^explain", sql.lower()):
-            break
-        else:
-            finalResult['status'] = 1
-            finalResult['msg'] = '仅支持^explain语法，请联系管理员！'
-            return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    # 过滤非查询的语句
+    if re.match(r"^explain", sqlContent.lower()):
+        pass
+    else:
+        finalResult['status'] = 1
+        finalResult['msg'] = '仅支持explain开头的语句，请检查'
+        return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,按照分号截取第一条有效sql执行
     masterInfo = master_config.objects.get(cluster_name=clusterName)
@@ -774,13 +778,13 @@ def explain(request):
 
     # 执行获取执行计划语句
     sql_result = dao.mysql_query(masterInfo.master_host, masterInfo.master_port, masterInfo.master_user,
-                                 prpCryptor.decrypt(masterInfo.master_password), str(dbName), sqlContent,
-                                 limit_num=10000)
+                                 prpCryptor.decrypt(masterInfo.master_password), str(dbName), sqlContent)
 
     finalResult['data'] = sql_result
 
     # 返回查询结果
-    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 获取SQL慢日志统计
@@ -988,4 +992,5 @@ def slowquery_review_history(request):
         result = {"total": slowsql_obj_count, "rows": SQLSlowRecord}
 
         # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
