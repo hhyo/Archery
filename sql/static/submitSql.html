@@ -122,9 +122,6 @@
     <script src="{% static 'ace/ace_init.js' %}"></script>
     <script src="{% static 'fileinput/js/fileinput.min.js' %}"></script>
     <script src="{% static 'fileinput/js/locales/zh.js' %}"></script>
-    <script src="{% static 'crypto-js-3.1.9/core.min.js' %}"></script>
-    <script src="{% static 'crypto-js-3.1.9/enc-base64.min.js' %}"></script>
-    <script src="{% static 'crypto-js-3.1.9/enc-utf8.min.js' %}"></script>
     <script src="{% static 'user/js/autoreview.js' %}"></script>
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
 
@@ -167,16 +164,14 @@
 
             //为文件读取成功设置事件
             reader.onload = function (e) {
-                sqlFile = e.target.result;
-                sqlFile = CryptoJS.enc.Base64.parse(sqlFile.substring(13));
-                sqlFile = sqlFile.toString(CryptoJS.enc.Utf8);
-                editor.setValue("");
-                editor.setValue(sqlFile);
+                var sqlFile = e.target.result;
+                var value = editor.getValue() + sqlFile;
+                editor.setValue(value);
                 editor.clearSelection();
             };
 
             //正式读取文件
-            reader.readAsDataURL(file);
+            reader.readAsText(file);
         }
     </script>
     <!--ace -->
@@ -400,8 +395,8 @@
             // 初始化上传控件
             init_upload();
             // 提示信息
-            editor.setValue("请在此提交SQL，请以分号结尾。");
-            editor.clearSelection();
+            //editor.setValue("请在此提交SQL，请以分号结尾。");
+            //editor.clearSelection();
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
             $("#btn-submitsql").prop('disabled', true);
