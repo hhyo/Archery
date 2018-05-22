@@ -96,12 +96,12 @@ def autoreview(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
-    # 删除注释语句
-    sqlContent = ''.join(
-        map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
-            sqlContent.splitlines(1))).strip()
-    # 去除空行
-    sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+    # # 删除注释语句
+    # sqlContent = ''.join(
+    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
+    #         sqlContent.splitlines(1))).strip()
+    # # 去除空行
+    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
 
     if sqlContent[-1] != ";":
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
