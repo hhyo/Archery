@@ -247,6 +247,9 @@
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
             var columns = [];
+            var sqlContent = editor.getValue();
+            var clusterName = $("#cluster_name").val();
+            var dbName = $("#db_name").val();
             $.ajax({
                 type: "post",
                 url: "/explain/",
