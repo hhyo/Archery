@@ -219,12 +219,14 @@ def simplecheck(request):
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
-    # 删除注释语句
-    sqlContent = ''.join(
-        map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
-            sqlContent.splitlines(1))).strip()
-    # 去除空行
-    sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+    # # 删除注释语句
+    # sqlContent = ''.join(
+    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
+    #         sqlContent.splitlines(1))).strip()
+    # # 去除空行
+    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+
+    sqlContent =sqlContent.strip()
 
     if sqlContent[-1] != ";":
         finalResult['status'] = 1

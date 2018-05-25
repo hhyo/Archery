@@ -103,6 +103,8 @@ def autoreview(request):
     # # 去除空行
     # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
 
+    sqlContent = sqlContent.strip()
+
     if sqlContent[-1] != ";":
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
         return render(request, 'error.html', context)
