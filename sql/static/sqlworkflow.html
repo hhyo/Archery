@@ -44,7 +44,7 @@
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow/",
+                url: "/sqlworkflowlist/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -56,7 +56,7 @@
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
-                    fileName: 'allworkflow'  //文件名称设置
+                    fileName: 'sqlworkflow'  //文件名称设置
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索

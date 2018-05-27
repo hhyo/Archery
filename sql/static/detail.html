@@ -161,7 +161,7 @@
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
-            <form action="/passonly/" method="post" style="display:inline-block;">
+            <form action="/passed/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
@@ -186,7 +186,7 @@
     {% elif workflowDetail.status == '审核通过' %}
         {% if loginUser == workflowDetail.engineer %}
             <!--审核通过后提交人也可以执行SQL-->
-            <form id="from-executeonly" action="/executeonly/" method="post" style="display:inline-block;">
+            <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="button" id="btnExecuteOnly" class="btn btn-danger"
@@ -205,7 +205,7 @@
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
 
-            <form id="from-executeonly" action="/executeonly/" method="post" style="display:inline-block;">
+            <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="button" id="btnExecuteOnly" class="btn btn-danger"
@@ -380,7 +380,7 @@
         // 执行确认
         $("#btnExecuteOnly").click(function () {
             var isContinue = confirm("请确认是否立即执行？");
-            var formExecuteOnly = $("#from-executeonly");
+            var formExecuteOnly = $("#from-execute");
             if (isContinue) {
                 var element = $(this);
                 var sqlNum = element.val();

@@ -28,7 +28,7 @@
 		<div class="col-md-12 column">
 			<nav class="navbar navbar-default" role="navigation">
 				<div class="navbar-header">
-					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="/allworkflow/"><strong>自动化运维平台</strong></a>
+					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="/sqlworkflow/"><strong>自动化运维平台</strong></a>
 				</div>
 				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 					<ul class="nav navbar-nav navbar-right">
@@ -57,6 +57,7 @@
 		<div class="col-md-2 column">
 			<div class="list-group">
 				{% for menu in leftMenuBtns %}
+                    {% if menu.display %}
 					{% if menu.key == currentMenu %}
 						<a href="{{menu.url}}" class="list-group-item active"
 					{% else %}
@@ -68,7 +69,7 @@
 					{% else %}
 						><span class="{{menu.class}}">&nbsp;{{menu.name}}</span></a>
 					{% endif %}
-				
+                    {% endif %}
 				{% endfor %}
 					<!-- <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-cog">&nbsp;审批人权限</span></a>
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-file">&nbsp;功能模块6</span></a>

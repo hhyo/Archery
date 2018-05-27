@@ -28,7 +28,7 @@ RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
 RUN cd /opt \
     && git clone https://github.com/hhyo/archer.git \
     && source /opt/venv4archer/bin/activate \
-    && pip3 install -r /opt/archer/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/\
+    && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archer/src/docker/pymysql/connections.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
     && cp /opt/archer/src/docker/pymysql/cursors.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
     && yum -y install nginx \

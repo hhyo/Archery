@@ -43,12 +43,13 @@ sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与
 workflowOb = Workflow()
 
 
-# 登录失败通知
+# 登录失败邮件推送给DBA
 def log_mail_record(login_failed_message):
-    mail_title = 'login inception'
+    mail_title = 'login archer'
     logger.warning(login_failed_message)
+    dbaAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
     if getattr(settings, 'MAIL_ON_OFF'):
-        mailSender.sendEmail(mail_title, login_failed_message, getattr(settings, 'MAIL_REVIEW_SECURE_ADDR'))
+        mailSender.sendEmail(mail_title, login_failed_message, dbaAddr)
 
 
 # ajax接口，登录页面调用，用来验证用户名密码
@@ -132,7 +133,7 @@ def authenticateEntry(request):
 
 # 获取审核列表
 @csrf_exempt
-def sqlworkflow(request):
+def sqlworkflowlist(request):
     # 获取用户信息
     loginUser = request.session.get('login_username', False)
 
@@ -238,7 +239,7 @@ def simplecheck(request):
         result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
     except Exception as e:
         finalResult['status'] = 1
-        finalResult['msg'] = str(e) + '\n请参照安装文档配置pymysql'
+        finalResult['msg'] = str(e)
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     if result is None or len(result) == 0:

@@ -45,9 +45,9 @@ def logout(request):
 
 
 # SQL上线工单页面
-def allworkflow(request):
-    context = {'currentMenu': 'allworkflow'}
-    return render(request, 'allWorkflow.html', context)
+def sqlworkflow(request):
+    context = {'currentMenu': 'sqlworkflow'}
+    return render(request, 'sqlworkflow.html', context)
 
 
 # 提交SQL的页面
@@ -73,7 +73,7 @@ def submitSql(request):
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
 
-    context = {'currentMenu': 'allworkflow', 'listAllClusterName': listAllClusterName,
+    context = {'currentMenu': 'sqlworkflow', 'listAllClusterName': listAllClusterName,
                'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
 
@@ -249,14 +249,14 @@ def detail(request, workflowId):
                  "       </form>",
                  "   </div>",
                  "</div>"])
-    context = {'currentMenu': 'allworkflow', 'workflowDetail': workflowDetail, 'column_list': column_list, 'rows': rows,
+    context = {'currentMenu': 'sqlworkflow', 'workflowDetail': workflowDetail, 'column_list': column_list, 'rows': rows,
                'reviewMan': reviewMan, 'current_audit_user': current_audit_user, 'loginUserOb': loginUserOb,
                'run_date': run_date}
     return render(request, 'detail.html', context)
 
 
 # 审核通过，不执行
-def passonly(request):
+def passed(request):
     workflowId = request.POST['workflowid']
     if workflowId == '' or workflowId is None:
         context = {'errMsg': 'workflowId参数为空.'}
@@ -304,7 +304,7 @@ def passonly(request):
 
 
 # 仅执行SQL
-def executeonly(request):
+def execute(request):
     workflowId = request.POST['workflowid']
     if workflowId == '' or workflowId is None:
         context = {'errMsg': 'workflowId参数为空.'}

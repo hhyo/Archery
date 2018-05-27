@@ -33,7 +33,7 @@ function authenticateUser() {
         },
         success: function (data) {
 			if (data.status == 0) {
-				$(location).attr('href','/allworkflow/');
+				$(location).attr('href','/sqlworkflow/');
 			} else {
 				$('#wrongpwd-modal-body').html(data.msg);
 				$('#wrongpwd-modal').modal({
