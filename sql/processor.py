@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
+from sql.workflow import Workflow
 from .models import users
 from django.conf import settings
 
@@ -12,9 +13,7 @@ leftMenuBtnsCommon = (
     {'key': 'sqladvisor', 'name': 'SQL优化工具', 'url': '/sqladvisor/', 'class': 'glyphicon glyphicon-wrench',
      'display': settings.SQLADVISOR},
     {'key': 'queryapply', 'name': '查询权限管理', 'url': '/queryapplylist/', 'class': 'glyphicon glyphicon-eye-open',
-     'display': settings.QUERY},
-    {'key': 'workflow', 'name': '所有待办工单', 'url': '/workflow/', 'class': 'glyphicon glyphicon-shopping-cart',
-     'display': settings.QUERY},
+     'display': settings.QUERY}
 )
 
 leftMenuBtnsSuper = (
@@ -44,12 +43,19 @@ def global_info(request):
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsSuper + leftMenuBtnsDoc
         else:
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsDoc
+        # 获取代办数量
+        try:
+            todo = Workflow().auditlist(user, 0, 0, 1)['data']['auditlistCount']
+        except Exception:
+            todo = 0
     else:
         leftMenuBtns = ()
         UserDisplay = ''
+        todo = 0
 
     return {
         'loginUser': loginUser,
         'leftMenuBtns': leftMenuBtns,
-        'UserDisplay': UserDisplay
+        'UserDisplay': UserDisplay,
+        'todo': todo
     }

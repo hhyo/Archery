@@ -6,11 +6,13 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q, Min, F, Sum
 from django.db import connection
 from django.conf import settings
+from django.db.models.functions import Concat
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.db import transaction
+from django.db.models import Value as V
 import datetime
 import time
 
@@ -920,7 +922,7 @@ def slowquery_review_history(request):
                 ts_min__range=(StartTime, EndTime)
             ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
                        DBName=F('db_max'),  # 数据库名
-                       HostAddress=F('user_max'),  # 用户名
+                       HostAddress=Concat('client_max', V('@'), 'user_max'),  # 用户名
                        SQLText=F('sample'),  # SQL语句
                        QueryTimes=F('query_time_sum'),  # 执行时长(秒)
                        LockTimes=F('lock_time_sum'),  # 锁定时长(秒)
@@ -945,7 +947,7 @@ def slowquery_review_history(request):
                     ts_min__range=(StartTime, EndTime)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
                            DBName=F('db_max'),  # 数据库名
-                           HostAddress=F('user_max'),  # 用户名
+                           HostAddress=Concat('client_max', V('@'), 'user_max'),  # 用户名
                            SQLText=F('sample'),  # SQL语句
                            QueryTimes=F('query_time_sum'),  # 执行时长(秒)
                            LockTimes=F('lock_time_sum'),  # 锁定时长(秒)

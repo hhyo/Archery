@@ -1,5 +1,10 @@
 # 说明
-基于archer，调整部分自需功能，[查看开发计划](https://github.com/hhyo/archer/projects/1)
+基于archer，调整部分自需功能，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
+
+## 系统体验
+【[在线体验](http://54.169.188.51) 】  
+【账号】archer:archer
+
 ## 功能说明
 1. 项目组管理  
    支持自定义项目组，项目组成员之间审批流程隔离、主库配置隔离
@@ -11,7 +16,7 @@
    在工单详情可快速提交相同SQL内容到其他实例，可适用于test>beta>ga等多套环境维护的需求
 
 ## 部署
-安装步骤可参考archer源项目
+安装步骤可参考archer源项目[archer](https://github.com/hhyo/archer/tree/github)
 ### 采取docker部署
 archer镜像对应的是版本是:lihuanhuan
 * inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
