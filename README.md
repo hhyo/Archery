@@ -2,8 +2,13 @@
 基于archer，调整部分自需功能，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
 
 ## 系统体验
-【[在线体验](http://54.169.188.51) 】  
-【账号】archer:archer
+[在线体验](http://54.169.188.51) 
+  
+|  角色 | 账号 | 密码 |
+| --- | --- | --- |
+|  管理员| archer | archer |
+|  工程师| engineer | archer |
+|  DBA| dba | archer |
 
 ## 功能说明
 1. 项目组管理  

@@ -6,13 +6,11 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q, Min, F, Sum
 from django.db import connection
 from django.conf import settings
-from django.db.models.functions import Concat
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.db import transaction
-from django.db.models import Value as V
 import datetime
 import time
 
@@ -345,12 +343,14 @@ def getqueryapplylist(request):
         )
         applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
     else:
-        applylist = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
+        applylist = QueryPrivilegesApply.objects.filter(
+            Q(user_name=loginUserOb.username) | Q(audit_users__contains=loginUserOb.username)).filter(
             title__contains=search).order_by('-apply_id')[offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_name', 'status', 'create_time', 'group_name'
         )
-        applylistCount = QueryPrivilegesApply.objects.filter(user_name=loginUserOb.username).filter(
+        applylistCount = QueryPrivilegesApply.objects.filter(
+            Q(user_name=loginUserOb.username) | Q(audit_users__contains=loginUserOb.username)).filter(
             title__contains=search).count()
 
     # QuerySet 序列化
@@ -358,7 +358,8 @@ def getqueryapplylist(request):
 
     result = {"total": applylistCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 申请查询权限
@@ -888,7 +889,8 @@ def slowquery_review(request):
         result = {"total": slowsql_obj_count, "rows": SQLSlowLog}
 
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 获取SQL慢日志明细
@@ -922,7 +924,7 @@ def slowquery_review_history(request):
                 ts_min__range=(StartTime, EndTime)
             ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
                        DBName=F('db_max'),  # 数据库名
-                       HostAddress=Concat('client_max', V('@'), 'user_max'),  # 用户名
+                       HostAddress=F('user_max'),  # 用户名
                        SQLText=F('sample'),  # SQL语句
                        QueryTimes=F('query_time_sum'),  # 执行时长(秒)
                        LockTimes=F('lock_time_sum'),  # 锁定时长(秒)
@@ -947,7 +949,7 @@ def slowquery_review_history(request):
                     ts_min__range=(StartTime, EndTime)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
                            DBName=F('db_max'),  # 数据库名
-                           HostAddress=Concat('client_max', V('@'), 'user_max'),  # 用户名
+                           HostAddress=F('user_max'),  # 用户名
                            SQLText=F('sample'),  # SQL语句
                            QueryTimes=F('query_time_sum'),  # 执行时长(秒)
                            LockTimes=F('lock_time_sum'),  # 锁定时长(秒)

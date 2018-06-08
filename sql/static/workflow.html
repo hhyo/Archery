@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <h4 style="display: inline;">待办列表<span>{{ workflowDetail.workflow_name }}</span></h4>
+    &nbsp;&nbsp;&nbsp;
+    <hr>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <select id="workflow_type" class="form-control dropdown-menu-right selectpicker ">
