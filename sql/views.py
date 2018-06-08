@@ -122,14 +122,14 @@ def autoreview(request):
 
     # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
     workflowStatus = Const.workflowStatus['manreviewing']
-    # for row in result:
-    #     if row[2] == 2:
-    #         # 状态为2表示严重错误，必须修改
-    #         workflowStatus = Const.workflowStatus['autoreviewwrong']
-    #         break
-    #     elif re.match(r"\w*comments\w*", row[4]):
-    #         workflowStatus = Const.workflowStatus['autoreviewwrong']
-    #         break
+    for row in result:
+        if row[2] == 2:
+            # 状态为2表示严重错误，必须修改
+            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            break
+        elif re.match(r"\w*comments\w*", row[4]):
+            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            break
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
