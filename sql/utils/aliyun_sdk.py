@@ -4,8 +4,8 @@ from aliyunsdkcore import client
 from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlowLogRecordsRequest, \
     RequestServiceOfCloudDBARequest
 import simplejson as json
-from .models import AliyunAccessKey
-from .aes_decryptor import Prpcrypt
+from sql.models import AliyunAccessKey
+from sql.utils.aes_decryptor import Prpcrypt
 
 
 class Aliyun(object):

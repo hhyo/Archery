@@ -1,27 +1,25 @@
 # -*- coding: UTF-8 -*- 
 
-import re
 import simplejson as json
 from threading import Thread
-from collections import OrderedDict
 import datetime
-from django.db.models import Q, F
+from django.db.models import F
 from django.db import connection, transaction
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
-from .dao import Dao
+from sql.utils.dao import Dao
 from .const import Const, WorkflowDict
 from .inception import InceptionDao
-from .aes_decryptor import Prpcrypt
+from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
     QueryPrivilegesApply
 from .workflow import Workflow
-from .permission import role_required, superuser_required
+from sql.utils.permission import role_required, superuser_required
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
-from .jobs import job_info, del_sqlcronjob, add_sqlcronjob
+from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 import logging
 
 logger = logging.getLogger('default')
@@ -124,14 +122,14 @@ def autoreview(request):
 
     # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
     workflowStatus = Const.workflowStatus['manreviewing']
-    for row in result:
-        if row[2] == 2:
-            # 状态为2表示严重错误，必须修改
-            workflowStatus = Const.workflowStatus['autoreviewwrong']
-            break
-        elif re.match(r"\w*comments\w*", row[4]):
-            workflowStatus = Const.workflowStatus['autoreviewwrong']
-            break
+    # for row in result:
+    #     if row[2] == 2:
+    #         # 状态为2表示严重错误，必须修改
+    #         workflowStatus = Const.workflowStatus['autoreviewwrong']
+    #         break
+    #     elif re.match(r"\w*comments\w*", row[4]):
+    #         workflowStatus = Const.workflowStatus['autoreviewwrong']
+    #         break
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
@@ -400,6 +398,7 @@ def execute_skipinc(request):
     workflowDetail = workflow.objects.get(id=workflowId)
     sql_content = workflowDetail.sql_content
     clusterName = workflowDetail.cluster_name
+    dbName = workflowDetail.db_name
     url = getDetailUrl(request) + str(workflowId) + '/'
 
     # 服务器端二次验证，当前工单状态必须为自动审核不通过
@@ -415,7 +414,7 @@ def execute_skipinc(request):
     workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_skipinc_call_back, args=(workflowId, clusterName, sql_content, url))
+    t = Thread(target=execute_skipinc_call_back, args=(workflowId, clusterName, dbName, sql_content, url))
     t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))

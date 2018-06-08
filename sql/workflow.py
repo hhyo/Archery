@@ -1,11 +1,8 @@
 # -*- coding: UTF-8 -*-
-import simplejson as json
 
-from django.core import serializers
-from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
-from .sendmail import MailSender
+from sql.utils.sendmail import MailSender
 from .const import WorkflowDict
 from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply

@@ -11,7 +11,7 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events, regist
 
 from sql.const import Const
 from sql.models import workflow
-from .sqlreview import execute_job, getDetailUrl
+from sql.sqlreview import execute_job, getDetailUrl
 
 import logging
 

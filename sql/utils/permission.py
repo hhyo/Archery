@@ -2,7 +2,7 @@
 import simplejson as json
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import users
+from sql.models import users
 
 
 # 管理员操作权限验证

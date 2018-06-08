@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
-from .inception import InceptionDao
-from .models import DataMaskingRules, DataMaskingColumns
+from sql.inception import InceptionDao
+from sql.models import DataMaskingRules, DataMaskingColumns
 import simplejson as json
 import re
 

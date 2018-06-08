@@ -8,14 +8,13 @@ from django.db import connection
 from django.utils import timezone
 from django.conf import settings
 
-from .dao import Dao
-from .const import Const, WorkflowDict
-from .sendmail import MailSender
+from sql.utils.dao import Dao
+from .const import Const
+from sql.utils.sendmail import MailSender
 from .inception import InceptionDao
-from .aes_decryptor import Prpcrypt
+from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, workflow, master_config
 from .workflow import Workflow
-from .permission import role_required, superuser_required
 import logging
 
 logger = logging.getLogger('default')
@@ -48,7 +47,7 @@ def getMasterConnStr(clusterName):
 
 
 # SQL工单跳过inception执行回调
-def execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
+def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url):
     workflowDetail = workflow.objects.get(id=workflowId)
     # 获取审核人
     reviewMan = workflowDetail.review_man
@@ -59,7 +58,7 @@ def execute_skipinc_call_back(workflowId, clusterName, sql_content, url):
         # 执行sql
         t_start = time.time()
         execute_result = dao.mysql_execute(masterInfo['masterHost'], masterInfo['masterPort'], masterInfo['masterUser'],
-                                           masterInfo['masterPassword'], sql_content)
+                                           masterInfo['masterPassword'], db_name, sql_content)
         t_end = time.time()
         execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
         execute_result['execute_time'] = execute_time + 'sec'

@@ -120,8 +120,8 @@ function autoreview() {
                         pagination: true,                   //是否显示分页（*）
                         sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
                         pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                        pageSize: 30,                     //每页的记录行数（*）
-                        pageList: [30, 50, 100],       //可供选择的每页的行数（*）
+                        pageSize: 500,                     //每页的记录行数（*）
+                        pageList: [500, 1000, 5000],       //可供选择的每页的行数（*）
                         search: false,                      //是否显示表格搜索
                         strictSearch: false,                //是否全匹配搜索
                         showColumns: true,                  //是否显示所有的列（选择显示的列）

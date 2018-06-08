@@ -43,7 +43,7 @@ def global_info(request):
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsSuper + leftMenuBtnsDoc
         else:
             leftMenuBtns = leftMenuBtnsCommon + leftMenuBtnsDoc
-        # 获取代办数量
+        # 获取待办数量
         try:
             todo = Workflow().auditlist(user, 0, 0, 1)['data']['auditlistCount']
         except Exception:

@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
-<head> 
-	<title>自动化运维平台</title>
+<head>
+	<title>SQL审核平台</title>
     {% load staticfiles %}
 	<meta charset='utf-8'>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
-	
+
 </head>
 <body>
 
@@ -28,15 +28,11 @@
 		<div class="col-md-12 column">
 			<nav class="navbar navbar-default" role="navigation">
 				<div class="navbar-header">
-					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="/sqlworkflow/"><strong>自动化运维平台</strong></a>
+					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="/sqlworkflow/"><strong>SQL审核平台</strong></a>
 				</div>
 				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 					<ul class="nav navbar-nav navbar-right">
-                        {% if todo == 0 %}
-                            <li>
-                                <a href="/workflow/"><span class="glyphicon glyphicon-shopping-cart"></span></a>
-                            </li>
-                        {% else %}
+                        {% if todo > 0 %}
                             <li>
                                 <a href="/workflow/"><span class="glyphicon glyphicon-envelope"></span></a>
                             </li>
@@ -85,7 +81,7 @@
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-list-alt">&nbsp;功能模块7</span></a>
 					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-align-right">&nbsp;功能模块8</span></a>-->
 			</div>
-			
+
 		</div>
 
 		<div class="col-md-10 column user-center-div-col-md-10">
@@ -94,9 +90,9 @@
 		</div>
 	</div>
 
-	<!--底部部分 -->	
+	<!--底部部分 -->
 	<div class="row clearfix user-bottom-div">
-		<p><strong>自动化运维平台.</strong>&nbsp; Developed by OP.</p>
+		<p><strong>SQL审核平台.</strong>&nbsp; Developed by OP.</p>
 	</div>
 </div>
 	<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->

@@ -66,7 +66,7 @@ ROOT_URLCONF = 'archer.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'sql/static')],
+        'DIRS': [os.path.join(BASE_DIR, 'sql/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'archer.wsgi.application'
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -103,6 +103,7 @@ DATE_FORMAT = 'Y-m-d'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_DIRS = []
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.users"

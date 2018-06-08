@@ -1,7 +1,8 @@
 # -*- coding: UTF-8 -*- 
 
-from django.conf.urls import url, include
-from . import views, views_ajax, query, jobs
+from django.conf.urls import url
+from . import views, views_ajax, query, slowlog, instance
+from sql.utils import jobs
 from django.conf import settings
 
 urlpatterns = [
@@ -51,10 +52,9 @@ urlpatterns = [
     url(r'^groupauditors/$', views_ajax.groupauditors, name='groupauditors'),
     url(r'^changegroupauditors/$', views_ajax.changegroupauditors, name='changegroupauditors'),
 
-    url(r'^getClusterList/$', query.getClusterList, name='getClusterList'),
-    url(r'^getdbNameList/$', query.getdbNameList, name='getdbNameList'),
-    url(r'^getTableNameList/$', query.getTableNameList, name='getTableNameList'),
-    url(r'^getColumnNameList/$', query.getColumnNameList, name='getColumnNameList'),
+    url(r'^getdbNameList/$', instance.getdbNameList, name='getdbNameList'),
+    url(r'^getTableNameList/$', instance.getTableNameList, name='getTableNameList'),
+    url(r'^getColumnNameList/$', instance.getColumnNameList, name='getColumnNameList'),
     url(r'^getqueryapplylist/$', query.getqueryapplylist, name='getqueryapplylist'),
     url(r'^getuserprivileges/$', query.getuserprivileges, name='getuserprivileges'),
     url(r'^applyforprivileges/$', query.applyforprivileges, name='applyforprivileges'),
@@ -63,21 +63,20 @@ urlpatterns = [
     url(r'^query/$', query.query, name='query'),
     url(r'^querylog/$', query.querylog, name='querylog'),
     url(r'^explain/$', query.explain, name='explain'),
-    url(r'^slowquery_review/$', query.slowquery_review, name='slowquery_review'),
-    url(r'^slowquery_review_history/$', query.slowquery_review_history, name='slowquery_review_history'),
-
+    url(r'^slowquery_review/$', slowlog.slowquery_review, name='slowquery_review'),
+    url(r'^slowquery_review_history/$', slowlog.slowquery_review_history, name='slowquery_review_history'),
     url(r'^del_sqlcronjob/$', jobs.del_sqlcronjob, name='del_sqlcronjob'),
 
 ]
 
 if settings.ALIYUN_RDS_MANAGE:
-    from . import aliyun_function
+    from . import aliyun_rds
 
     aliyun_function_url = [
-        url(r'^process_status/$', aliyun_function.process_status, name='process_status'),
-        url(r'^sapce_status/$', aliyun_function.sapce_status, name='sapce_status'),
-        url(r'^create_kill_session/$', aliyun_function.create_kill_session,
+        url(r'^process_status/$', aliyun_rds.process_status, name='process_status'),
+        url(r'^sapce_status/$', aliyun_rds.sapce_status, name='sapce_status'),
+        url(r'^create_kill_session/$', aliyun_rds.create_kill_session,
             name='create_kill_session'),
-        url(r'^kill_session/$', aliyun_function.kill_session, name='kill_session'),
+        url(r'^kill_session/$', aliyun_rds.kill_session, name='kill_session'),
     ]
     urlpatterns.extend(aliyun_function_url)

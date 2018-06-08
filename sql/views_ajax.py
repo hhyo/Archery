@@ -1,37 +1,32 @@
 # -*- coding: UTF-8 -*- 
 
-import re
 import simplejson as json
 import datetime
-import multiprocessing
 
 import subprocess
 
 from django.contrib.auth import authenticate, login
 from django.db.models import Q
-from django.db import transaction
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import check_password, make_password
+from django.http import HttpResponse
+from django.contrib.auth.hashers import make_password
 
-from sql.permission import superuser_required
+from sql.utils.permission import superuser_required
 
 if settings.ENABLE_LDAP:
-    from django_auth_ldap.backend import LDAPBackend
+    pass
 
-from django.core import serializers
-from .dao import Dao
-from .const import Const, WorkflowDict
+from sql.utils.dao import Dao
+from .const import Const
 from .inception import InceptionDao
-from .aes_decryptor import Prpcrypt
+from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, workflow, Group
-from sql.sendmail import MailSender
+from sql.utils.sendmail import MailSender
 import logging
 from .workflow import Workflow
-from .extend_json_encoder import ExtendJSONEncoder
+from sql.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
 mailSender = MailSender()

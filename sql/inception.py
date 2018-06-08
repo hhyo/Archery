@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import connection
 
 from .models import master_config, slave_config, workflow
-from .aes_decryptor import Prpcrypt
+from sql.utils.aes_decryptor import Prpcrypt
 
 
 class InceptionDao(object):

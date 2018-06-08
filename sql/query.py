@@ -1,32 +1,30 @@
+# -*- coding: UTF-8 -*-
 import re
 
 import simplejson as json
 from django.core.urlresolvers import reverse
 
-from django.db.models import Q, Min, F, Sum
+from django.db.models import Q, Min
 from django.db import connection
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.db import transaction
 import datetime
 import time
 
-from sql.extend_json_encoder import ExtendJSONEncoder
-from .aes_decryptor import Prpcrypt
-from .sendmail import MailSender
-from .dao import Dao
+from sql.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.utils.aes_decryptor import Prpcrypt
+from sql.utils.sendmail import MailSender
+from sql.utils.dao import Dao
 from .const import WorkflowDict
 from .inception import InceptionDao
-from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, SlowQuery, \
-    SlowQueryHistory, Group
-from .data_masking import Masking
+from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
+from sql.utils.data_masking import Masking
 from .workflow import Workflow
-from .permission import role_required, superuser_required
-from .aliyun_function import slowquery_review as aliyun_rds_slowquery_review, \
-    slowquery_review_history as aliyun_rds_slowquery_review_history
+from sql.utils.permission import role_required
 
 dao = Dao()
 prpCryptor = Prpcrypt()
@@ -164,159 +162,6 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
             limit_num = min(int(limit_num), user_limit_num)
     finalResult['data'] = limit_num
     return finalResult
-
-
-# 获取所有实例名称
-@csrf_exempt
-def getClusterList(request):
-    slaves = slave_config.objects.all().order_by('cluster_name')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # 获取所有实例名称
-    listAllClusterName = [slave.cluster_name for slave in slaves]
-    result['data'] = listAllClusterName
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取实例里面的数据库集合
-@csrf_exempt
-def getdbNameList(request):
-    clusterName = request.POST.get('cluster_name')
-    is_master = request.POST.get('is_master')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    if is_master:
-        try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例主库的连接方式，为了后面连进去获取所有databases
-            listDb = dao.getAlldbByCluster(master_info.master_host, master_info.master_port, master_info.master_user,
-                                           prpCryptor.decrypt(master_info.master_password))
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listDb
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-
-    else:
-        try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例的连接方式，为了后面连进去获取所有databases
-            listDb = dao.getAlldbByCluster(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                           prpCryptor.decrypt(slave_info.slave_password))
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listDb
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取数据库的表集合
-@csrf_exempt
-def getTableNameList(request):
-    clusterName = request.POST.get('cluster_name')
-    db_name = request.POST.get('db_name')
-    is_master = request.POST.get('is_master')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    if is_master:
-        try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例主库的连接方式，为了后面连进去获取所有的表
-            listTb = dao.getAllTableByDb(master_info.master_host, master_info.master_port, master_info.master_user,
-                                         prpCryptor.decrypt(master_info.master_password), db_name)
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listTb
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-
-    else:
-        try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例从库的连接方式，为了后面连进去获取所有的表
-            listTb = dao.getAllTableByDb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                         prpCryptor.decrypt(slave_info.slave_password), db_name)
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listTb
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取表里面的字段集合
-@csrf_exempt
-def getColumnNameList(request):
-    clusterName = request.POST.get('cluster_name')
-    db_name = request.POST.get('db_name')
-    tb_name = request.POST.get('tb_name')
-    is_master = request.POST.get('is_master')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    if is_master:
-        try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的主库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例主库的连接方式，为了后面连进去获取所有字段
-            listCol = dao.getAllColumnsByTb(master_info.master_host, master_info.master_port, master_info.master_user,
-                                            prpCryptor.decrypt(master_info.master_password), db_name, tb_name)
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listCol
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-    else:
-        try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '找不到对应的从库配置信息，请配置'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        try:
-            # 取出该实例的连接方式，为了后面连进去获取表的所有字段
-            listCol = dao.getAllColumnsByTb(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                            prpCryptor.decrypt(slave_info.slave_password), db_name, tb_name)
-            # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-            result['data'] = listCol
-        except Exception as msg:
-            result['status'] = 1
-            result['msg'] = str(msg)
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
 
 # 获取查询权限申请列表
 @csrf_exempt
@@ -491,21 +336,35 @@ def getuserprivileges(request):
     # 获取用户的权限数据
     if loginUserOb.is_superuser:
         if user_name != 'all':
-            privilegeslist = QueryPrivileges.objects.all().filter(user_name=user_name, is_deleted=0,
-                                                                  table_name__contains=search).order_by(
-                '-privilege_id')[offset:limit]
-            privilegeslistCount = QueryPrivileges.objects.all().filter(user_name=user_name, is_deleted=0,
-                                                                       table_name__contains=search).count()
+            privilegeslist = QueryPrivileges.objects.all().filter(user_name=user_name,
+                                                                  is_deleted=0,
+                                                                  table_name__contains=search,
+                                                                  valid_date__gte=datetime.datetime.now()
+                                                                  ).order_by('-privilege_id')[offset:limit]
+            privilegeslistCount = QueryPrivileges.objects.all().filter(user_name=user_name,
+                                                                       is_deleted=0,
+                                                                       table_name__contains=search,
+                                                                       valid_date__gte=datetime.datetime.now()).count()
         else:
-            privilegeslist = QueryPrivileges.objects.all().filter(is_deleted=0, table_name__contains=search).order_by(
-                '-privilege_id')[offset:limit]
+            privilegeslist = QueryPrivileges.objects.all().filter(is_deleted=0,
+                                                                  table_name__contains=search,
+                                                                  valid_date__gte=datetime.datetime.now()
+                                                                  ).order_by('-privilege_id')[offset:limit]
             privilegeslistCount = QueryPrivileges.objects.all().filter(is_deleted=0,
-                                                                       table_name__contains=search).count()
+                                                                       table_name__contains=search,
+                                                                       valid_date__gte=datetime.datetime.now()
+                                                                       ).count()
     else:
-        privilegeslist = QueryPrivileges.objects.filter(user_name=loginUserOb.username, is_deleted=0).filter(
-            table_name__contains=search).order_by('-privilege_id')[offset:limit]
-        privilegeslistCount = QueryPrivileges.objects.filter(user_name=loginUserOb.username, is_deleted=0).filter(
-            table_name__contains=search).count()
+        privilegeslist = QueryPrivileges.objects.filter(user_name=loginUserOb.username,
+                                                        table_name__contains=search,
+                                                        is_deleted=0,
+                                                        valid_date__gte=datetime.datetime.now()
+                                                        ).order_by('-privilege_id')[offset:limit]
+        privilegeslistCount = QueryPrivileges.objects.filter(user_name=loginUserOb.username,
+                                                             table_name__contains=search,
+                                                             is_deleted=0,
+                                                             valid_date__gte=datetime.datetime.now()
+                                                             ).count()
 
     # QuerySet 序列化
     privilegeslist = serializers.serialize("json", privilegeslist)
@@ -789,210 +648,3 @@ def explain(request):
     return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
-
-# 获取SQL慢日志统计
-@csrf_exempt
-def slowquery_review(request):
-    cluster_name = request.POST.get('cluster_name')
-
-    # 判断是RDS还是其他实例
-    cluster_info = master_config.objects.get(cluster_name=cluster_name)
-    if settings.ALIYUN_RDS_MANAGE:
-        # 调用阿里云慢日志接口
-        result = aliyun_rds_slowquery_review(request)
-    else:
-        StartTime = request.POST.get('StartTime')
-        EndTime = request.POST.get('EndTime')
-        DBName = request.POST.get('db_name')
-        limit = int(request.POST.get('limit'))
-        offset = int(request.POST.get('offset'))
-        limit = offset + limit
-
-        # 时间处理
-        if StartTime == EndTime:
-            EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
-        # DBName非必传
-        if DBName:
-            # 获取慢查数据
-            slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            ).order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
-
-            slowsql_obj_count = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            ).count()
-        else:
-            # 获取慢查数据
-            slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            ).order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
-
-            slowsql_obj_count = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            ).count()
-        # QuerySet 序列化
-        SQLSlowLog = [SlowLog for SlowLog in slowsql_obj]
-        result = {"total": slowsql_obj_count, "rows": SQLSlowLog}
-
-    # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')
-
-
-# 获取SQL慢日志明细
-@csrf_exempt
-def slowquery_review_history(request):
-    cluster_name = request.POST.get('cluster_name')
-
-    # 判断是RDS还是其他实例
-    cluster_info = master_config.objects.get(cluster_name=cluster_name)
-    if settings.ALIYUN_RDS_MANAGE:
-        # 调用阿里云慢日志接口
-        result = aliyun_rds_slowquery_review_history(request)
-    else:
-        StartTime = request.POST.get('StartTime')
-        EndTime = request.POST.get('EndTime')
-        DBName = request.POST.get('db_name')
-        SQLId = request.POST.get('SQLId')
-        limit = int(request.POST.get('limit'))
-        offset = int(request.POST.get('offset'))
-
-        # 时间处理
-        if StartTime == EndTime:
-            EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
-        limit = offset + limit
-        # SQLId、DBName非必传
-        if SQLId:
-            # 获取慢查明细数据
-            slowsql_record_obj = SlowQueryHistory.objects.filter(
-                hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                checksum=int(SQLId),
-                ts_min__range=(StartTime, EndTime)
-            ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
-                       DBName=F('db_max'),  # 数据库名
-                       HostAddress=F('user_max'),  # 用户名
-                       SQLText=F('sample'),  # SQL语句
-                       QueryTimes=F('query_time_sum'),  # 执行时长(秒)
-                       LockTimes=F('lock_time_sum'),  # 锁定时长(秒)
-                       ParseRowCounts=F('rows_examined_sum'),  # 解析行数
-                       ReturnRowCounts=F('rows_sent_sum')  # 返回行数
-                       ).values(
-                'ExecutionStartTime', 'DBName', 'HostAddress', 'SQLText', 'QueryTimes', 'LockTimes', 'ParseRowCounts',
-                'ReturnRowCounts'
-            )[offset:limit]
-
-            slowsql_obj_count = SlowQueryHistory.objects.filter(
-                hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                checksum=int(SQLId),
-                ts_min__range=(StartTime, EndTime)
-            ).count()
-        else:
-            if DBName:
-                # 获取慢查明细数据
-                slowsql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                    db_max=DBName,
-                    ts_min__range=(StartTime, EndTime)
-                ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
-                           DBName=F('db_max'),  # 数据库名
-                           HostAddress=F('user_max'),  # 用户名
-                           SQLText=F('sample'),  # SQL语句
-                           QueryTimes=F('query_time_sum'),  # 执行时长(秒)
-                           LockTimes=F('lock_time_sum'),  # 锁定时长(秒)
-                           ParseRowCounts=F('rows_examined_sum'),  # 解析行数
-                           ReturnRowCounts=F('rows_sent_sum')  # 返回行数
-                           ).values(
-                    'ExecutionStartTime', 'DBName', 'HostAddress', 'SQLText', 'QueryTimes', 'LockTimes',
-                    'ParseRowCounts',
-                    'ReturnRowCounts'
-                )[offset:limit]  # 执行总次数倒序排列
-
-                slowsql_obj_count = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                    db_max=DBName,
-                    ts_min__range=(StartTime, EndTime)
-                ).count()
-            else:
-                # 获取慢查明细数据
-                slowsql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                    ts_min__range=(StartTime, EndTime)
-                ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
-                           DBName=F('db_max'),  # 数据库名
-                           HostAddress=F('user_max'),  # 用户名
-                           SQLText=F('sample'),  # SQL语句
-                           QueryTimes=F('query_time_sum'),  # 执行时长(秒)
-                           LockTimes=F('lock_time_sum'),  # 锁定时长(秒)
-                           ParseRowCounts=F('rows_examined_sum'),  # 解析行数
-                           ReturnRowCounts=F('rows_sent_sum')  # 返回行数
-                           ).values(
-                    'ExecutionStartTime', 'DBName', 'HostAddress', 'SQLText', 'QueryTimes', 'LockTimes',
-                    'ParseRowCounts',
-                    'ReturnRowCounts'
-                )[offset:limit]  # 执行总次数倒序排列
-
-                slowsql_obj_count = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
-                    ts_min__range=(StartTime, EndTime)
-                ).count()
-        # QuerySet 序列化
-        SQLSlowRecord = [SlowRecord for SlowRecord in slowsql_record_obj]
-        result = {"total": slowsql_obj_count, "rows": SQLSlowRecord}
-
-        # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')

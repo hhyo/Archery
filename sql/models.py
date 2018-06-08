@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from .aes_decryptor import Prpcrypt
+from sql.utils.aes_decryptor import Prpcrypt
 
 
 # Create your models here.

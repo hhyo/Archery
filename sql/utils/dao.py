@@ -133,13 +133,13 @@ class Dao(object):
         return result
 
     # 连进指定的mysql实例里，执行sql并返回
-    def mysql_execute(self, masterHost, masterPort, masterUser, masterPassword, sql):
+    def mysql_execute(self, masterHost, masterPort, masterUser, masterPassword, dbName, sql):
         result = {}
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
                                    charset='utf8mb4', max_allowed_packet=1073741824)
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)

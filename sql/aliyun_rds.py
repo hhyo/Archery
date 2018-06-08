@@ -5,10 +5,10 @@ import datetime
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from .aliyun_api import Aliyun
-from .permission import superuser_required, role_required
+from sql.utils.aliyun_sdk import Aliyun
+from sql.utils.permission import role_required
 
-from .models import users, AliyunRdsConfig
+from .models import AliyunRdsConfig
 
 aliyun = Aliyun()
 
