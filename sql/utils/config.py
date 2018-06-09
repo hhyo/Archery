@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-from .models import Config
+from sql.models import Config
 
 
 class SysConfig(object):

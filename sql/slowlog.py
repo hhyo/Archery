@@ -2,7 +2,6 @@
 import simplejson as json
 
 from django.db.models import F, Sum
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 import datetime
@@ -11,7 +10,7 @@ from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import master_config, SlowQuery, SlowQueryHistory
 from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
     slowquery_review_history as aliyun_rds_slowquery_review_history
-from .config import SysConfig
+from sql.utils.config import SysConfig
 
 
 # 获取SQL慢日志统计

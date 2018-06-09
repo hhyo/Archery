@@ -4,8 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
-from archer import settings
-from sql.config import SysConfig
+from sql.utils.config import SysConfig
 from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group
 

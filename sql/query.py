@@ -6,7 +6,6 @@ from django.core.urlresolvers import reverse
 
 from django.db.models import Q, Min
 from django.db import connection
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
@@ -17,20 +16,18 @@ import time
 
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.aes_decryptor import Prpcrypt
-from sql.utils.sendmail import MailSender
 from sql.utils.dao import Dao
 from .const import WorkflowDict
 from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
 from sql.utils.data_masking import Masking
 from .workflow import Workflow
 from sql.utils.permission import role_required
-from sql.config import SysConfig
+from sql.utils.config import SysConfig
 
 dao = Dao()
 prpCryptor = Prpcrypt()
 datamasking = Masking()
 workflowOb = Workflow()
-mailSenderOb = MailSender()
 
 
 # 查询权限申请用于工作流审核回调
@@ -67,8 +64,11 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     loginUser = loginUserOb.username
-    if loginUserOb.is_superuser:
-        user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
+    if loginUserOb.is_superuser or loginUserOb.role == 'DBA':
+        if SysConfig().sys_config.get('admin_query_limit'):
+            user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
+        else:
+            user_limit_num = 5000
         if int(limit_num) == 0:
             limit_num = int(user_limit_num)
         else:
@@ -161,6 +161,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
             limit_num = min(int(limit_num), user_limit_num)
     finalResult['data'] = limit_num
     return finalResult
+
 
 # 获取查询权限申请列表
 @csrf_exempt
@@ -646,4 +647,3 @@ def explain(request):
     # 返回查询结果
     return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
-

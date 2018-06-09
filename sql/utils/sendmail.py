@@ -9,16 +9,19 @@ from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
 import smtplib
 
-from sql.config import SysConfig
+from sql.utils.config import SysConfig
 
 
 class MailSender(object):
 
     def __init__(self):
         try:
-            sys_config=SysConfig().sys_config
+            sys_config = SysConfig().sys_config
             self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
-            self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
+            if sys_config.get('mail_smtp_port'):
+                self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
+            else:
+                self.MAIL_REVIEW_SMTP_PORT = 25
             self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
             self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
 
@@ -78,7 +81,7 @@ class MailSender(object):
         # 如果提供的密码为空，则不需要登录SMTP server
         if self.MAIL_REVIEW_FROM_PASSWORD != '':
             server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
-        server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr , main_msg.as_string())
+        server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
         server.quit()
 
     # 调用方应该调用此方法，采用子进程方式异步阻塞地发送邮件，避免邮件服务挂掉影响archer主服务

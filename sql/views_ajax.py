@@ -27,11 +27,10 @@ from .models import users, master_config, workflow, Group, Config
 from sql.utils.sendmail import MailSender
 import logging
 from .workflow import Workflow
-from .config import SysConfig
+from sql.utils.config import SysConfig
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
-mailSender = MailSender()
 dao = Dao()
 prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
@@ -45,7 +44,7 @@ def log_mail_record(login_failed_message):
     logger.warning(login_failed_message)
     dbaAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
     if SysConfig().sys_config.get('mail') == 'true':
-        mailSender.sendEmail(mail_title, login_failed_message, dbaAddr)
+        MailSender().sendEmail(mail_title, login_failed_message, dbaAddr)
 
 
 # ajax接口，登录页面调用，用来验证用户名密码
@@ -53,8 +52,14 @@ def log_mail_record(login_failed_message):
 def loginAuthenticate(username, password):
     """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
     sys_config = SysConfig().sys_config
-    lockCntThreshold = int(sys_config.get('lock_cnt_threshold'))
-    lockTimeThreshold = int(sys_config.get('lock_time_threshold'))
+    if sys_config.get('lock_cnt_threshold'):
+        lockCntThreshold = int(sys_config.get('lock_cnt_threshold'))
+    else:
+        lockCntThreshold = 5
+    if sys_config.get('lock_time_threshold'):
+        lockTimeThreshold = int(sys_config.get('lock_time_threshold'))
+    else:
+        lockTimeThreshold = 300
 
     # 服务端二次验证参数
     if username == "" or password == "" or username is None or password is None:

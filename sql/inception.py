@@ -3,23 +3,28 @@
 import re
 import simplejson as json
 import MySQLdb
-from django.conf import settings
 from django.db import connection
 
 from .models import master_config, slave_config, workflow
 from sql.utils.aes_decryptor import Prpcrypt
-from .config import SysConfig
+from sql.utils.config import SysConfig
 
 
 class InceptionDao(object):
     def __init__(self):
         try:
-            self.sys_config=SysConfig().sys_config
+            self.sys_config = SysConfig().sys_config
             self.inception_host = self.sys_config.get('inception_host')
-            self.inception_port = int(self.sys_config.get('inception_port'))
+            if self.sys_config.get('inception_port'):
+                self.inception_port = int(self.sys_config.get('inception_port'))
+            else:
+                self.inception_port = 6669
 
             self.inception_remote_backup_host = self.sys_config.get('inception_remote_backup_host')
-            self.inception_remote_backup_port = int(self.sys_config.get('inception_remote_backup_port'))
+            if self.sys_config.get('inception_remote_backup_port'):
+                self.inception_remote_backup_port = int(self.sys_config.get('inception_remote_backup_port'))
+            else:
+                self.inception_remote_backup_port = 3306
             self.inception_remote_backup_user = self.sys_config.get('inception_remote_backup_user')
             self.inception_remote_backup_password = self.sys_config.get('inception_remote_backup_password')
             self.prpCryptor = Prpcrypt()

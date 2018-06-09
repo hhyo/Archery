@@ -6,9 +6,8 @@ from threading import Thread
 
 from django.db import connection
 from django.utils import timezone
-from django.conf import settings
 
-from sql.config import SysConfig
+from sql.utils.config import SysConfig
 from sql.utils.dao import Dao
 from .const import Const
 from sql.utils.sendmail import MailSender
@@ -21,7 +20,6 @@ import logging
 logger = logging.getLogger('default')
 
 dao = Dao()
-mailSender = MailSender()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
@@ -94,7 +92,7 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
         notify_users.append(engineer)
         listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-        mailSender.sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
+        MailSender().sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
 
 
 # SQL工单执行回调
@@ -136,7 +134,7 @@ def execute_call_back(workflowId, clusterName, url):
         notify_users.append(engineer)
         listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-        mailSender.sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
+        MailSender().sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
 
 
 # 给定时任务执行sql

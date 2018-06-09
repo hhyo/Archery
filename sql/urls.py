@@ -3,7 +3,7 @@
 from django.conf.urls import url
 from . import views, views_ajax, query, slowlog, instance
 from sql.utils import jobs
-from .config import SysConfig
+from sql.utils.config import SysConfig
 
 urlpatterns = [
     url(r'^$', views.sqlworkflow, name='sqlworkflow'),

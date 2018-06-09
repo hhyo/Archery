@@ -1,16 +1,15 @@
 # -*- coding: UTF-8 -*-
-from archer import settings
 from sql.workflow import Workflow
-from .models import users, Config
-from .config import SysConfig
+from .models import users
+from sql.utils.config import SysConfig
 
 
 def menu():
     sys_config = SysConfig().sys_config
-    if sys_config.get('sqladvisor') != '':
-        sqladvisor_display = 'true'
-    else:
+    if sys_config.get('sqladvisor') == '' or sys_config.get('sqladvisor') is None:
         sqladvisor_display = 'false'
+    else:
+        sqladvisor_display = 'true'
     leftMenuBtnsCommon = (
         {'key': 'sqlworkflow', 'name': 'SQL上线工单', 'url': '/sqlworkflow/', 'class': 'glyphicon glyphicon-home',
          'display': 'true'},

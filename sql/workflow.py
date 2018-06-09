@@ -1,15 +1,13 @@
 # -*- coding: UTF-8 -*-
 
-from django.conf import settings
 from django.utils import timezone
 from sql.utils.sendmail import MailSender
 from .const import WorkflowDict
 from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply
-from .config import SysConfig
+from sql.utils.config import SysConfig
 
 DirectionsOb = WorkflowDict()
-MailSenderOb = MailSender()
 
 
 class Workflow(object):
@@ -129,7 +127,7 @@ class Workflow(object):
                             + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
                             + str(auditInfo.audit_id) + "\n工单名称：" + auditInfo.workflow_title \
                             + "\n工单详情：" + email_info
-            MailSenderOb.sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
+            MailSender().sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
 
         return result
 
@@ -267,7 +265,7 @@ class Workflow(object):
                                 + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
                                 + str(auditInfo.audit_id) + "\n工单名称：" + auditInfo.workflow_title \
                                 + "\n工单详情：" + email_info
-                MailSenderOb.sendEmail(email_title, email_content, [email_reciver])
+                MailSender().sendEmail(email_title, email_content, [email_reciver])
             # 审核通过，通知提交人，抄送DBA
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
                 email_reciver = users.objects.get(username=auditInfo.create_user).email
@@ -277,7 +275,7 @@ class Workflow(object):
                                 + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
                                 + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
                                 + "\n审核备注： " + audit_remark
-                MailSenderOb.sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
+                MailSender().sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
             # 审核驳回，通知提交人
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:
                 email_reciver = users.objects.get(username=auditInfo.create_user).email
@@ -286,7 +284,7 @@ class Workflow(object):
                                 + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
                                 + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
                                 + "\n审核备注： " + audit_remark + "\n提醒：此工单被审核不通过，请重新提交或修改工单"
-                MailSenderOb.sendEmail(email_title, email_content, [email_reciver])
+                MailSender().sendEmail(email_title, email_content, [email_reciver])
             # 主动取消，通知所有审核人
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_abort']:
                 email_reciver = [email['email'] for email in
@@ -296,7 +294,7 @@ class Workflow(object):
                                 + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
                                 + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
                                 + "\n提醒：提交人主动终止流程"
-                MailSenderOb.sendEmail(email_title, email_content, [email_reciver])
+                MailSender().sendEmail(email_title, email_content, [email_reciver])
         # 返回审核结果
         result['data'] = {'workflow_status': auditresult.current_status}
         return result
