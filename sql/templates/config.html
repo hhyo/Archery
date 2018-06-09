@@ -557,7 +557,8 @@
 
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
-            $("#group_auditors_text").val('')
+            $("#group_auditors_text").val('');
+            window.location.reload()
         });
 
         // 切换工单类型获取对应项目组负责人
