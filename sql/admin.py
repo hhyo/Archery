@@ -5,8 +5,10 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
 from archer import settings
+from sql.config import SysConfig
 from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group
+
 
 
 # 主库配置管理
@@ -71,7 +73,7 @@ admin.site.register(users, usersAdmin)
 admin.site.register(master_config, master_configAdmin)
 admin.site.register(workflow, workflowAdmin)
 
-if settings.QUERY:
+if SysConfig().sys_config.get('query') == 'true':
     # 查询从库配置
     @admin.register(slave_config)
     class WorkflowAuditAdmin(admin.ModelAdmin):
@@ -85,12 +87,13 @@ if settings.QUERY:
     class WorkflowAuditSettingAdmin(admin.ModelAdmin):
         list_display = ('audit_setting_id', 'workflow_type', 'group_id', 'audit_users',)
 
-if settings.DATA_MASKING_ON_OFF:
+if SysConfig().sys_config.get('data_masking') == 'true':
     # 脱敏字段页面定义
     @admin.register(DataMaskingColumns)
     class DataMaskingColumnsAdmin(admin.ModelAdmin):
         list_display = (
-            'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name', 'create_time',)
+            'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name',
+            'create_time',)
 
 
     # 脱敏规则页面定义
@@ -99,7 +102,7 @@ if settings.DATA_MASKING_ON_OFF:
         list_display = (
             'rule_type', 'rule_regex', 'hide_group', 'rule_desc', 'sys_time',)
 
-if settings.ALIYUN_RDS_MANAGE:
+if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
     # 阿里云的认证信息
     @admin.register(AliyunAccessKey)
     class AliyunAccessKeyAdmin(admin.ModelAdmin):

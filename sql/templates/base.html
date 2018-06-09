@@ -67,7 +67,7 @@
         <div class="col-md-2 column">
             <div class="list-group">
                 {% for menu in leftMenuBtns %}
-                    {% if menu.display %}
+                    {% if menu.display == 'true' %}
                         {% if menu.key == currentMenu %}
                             <a href="{{ menu.url }}" class="list-group-item active"
                         {% else %}

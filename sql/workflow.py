@@ -6,6 +6,7 @@ from sql.utils.sendmail import MailSender
 from .const import WorkflowDict
 from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply
+from .config import SysConfig
 
 DirectionsOb = WorkflowDict()
 MailSenderOb = MailSender()
@@ -113,7 +114,7 @@ class Workflow(object):
             result['data'] = {'workflow_status': DirectionsOb.workflow_status['audit_wait']}
 
         # 如果待审核则发送邮件通知当前审核人
-        if getattr(settings, 'MAIL_ON_OFF') \
+        if SysConfig().sys_config.get('mail') == 'true' \
                 and auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
             # 邮件内容
             current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
@@ -254,7 +255,7 @@ class Workflow(object):
             raise Exception(result['msg'])
 
         # 按照审核状态发送邮件
-        if getattr(settings, 'MAIL_ON_OFF'):
+        if SysConfig().sys_config.get('mail') == 'true':
             # 重新获取审核状态
             auditInfo = WorkflowAudit.objects.get(audit_id=audit_id)
             # 给下级审核人发送邮件

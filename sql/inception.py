@@ -8,18 +8,20 @@ from django.db import connection
 
 from .models import master_config, slave_config, workflow
 from sql.utils.aes_decryptor import Prpcrypt
+from .config import SysConfig
 
 
 class InceptionDao(object):
     def __init__(self):
         try:
-            self.inception_host = getattr(settings, 'INCEPTION_HOST')
-            self.inception_port = int(getattr(settings, 'INCEPTION_PORT'))
+            self.sys_config=SysConfig().sys_config
+            self.inception_host = self.sys_config.get('inception_host')
+            self.inception_port = int(self.sys_config.get('inception_port'))
 
-            self.inception_remote_backup_host = getattr(settings, 'INCEPTION_REMOTE_BACKUP_HOST')
-            self.inception_remote_backup_port = int(getattr(settings, 'INCEPTION_REMOTE_BACKUP_PORT'))
-            self.inception_remote_backup_user = getattr(settings, 'INCEPTION_REMOTE_BACKUP_USER')
-            self.inception_remote_backup_password = getattr(settings, 'INCEPTION_REMOTE_BACKUP_PASSWORD')
+            self.inception_remote_backup_host = self.sys_config.get('inception_remote_backup_host')
+            self.inception_remote_backup_port = int(self.sys_config.get('inception_remote_backup_port'))
+            self.inception_remote_backup_user = self.sys_config.get('inception_remote_backup_user')
+            self.inception_remote_backup_password = self.sys_config.get('inception_remote_backup_password')
             self.prpCryptor = Prpcrypt()
         except AttributeError as a:
             print("Error: %s" % a)
@@ -34,8 +36,13 @@ class InceptionDao(object):
         resultList = []
         criticalSqlFound = 0
         for row in sqlContent.rstrip(';').split(';'):
-            if re.match(r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)", row.lower()):
-                result = ('', '', 2, '驳回高危SQL', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！', row, '', '', '', '')
+            if re.match(
+                    r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)",
+                    row.lower()):
+                result = (
+                    '', '', 2, '驳回高危SQL', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！',
+                    row,
+                    '', '', '', '')
                 criticalSqlFound = 1
             else:
                 result = ('', '', 0, '', 'None', row, '', '', '', '')
@@ -77,7 +84,7 @@ class InceptionDao(object):
         masterPassword = self.prpCryptor.decrypt(listMasters[0].master_password)
 
         # 高危SQL检查
-        if getattr(settings, 'CRITICAL_DDL_ON_OFF'):
+        if self.sys_config.get('critical_ddl') == 'true':
             criticalDDL_check = self.criticalDDL(sqlContent)
         else:
             criticalDDL_check = None

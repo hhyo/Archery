@@ -8,6 +8,7 @@ from django.db import connection
 from django.utils import timezone
 from django.conf import settings
 
+from sql.config import SysConfig
 from sql.utils.dao import Dao
 from .const import Const
 from sql.utils.sendmail import MailSender
@@ -20,7 +21,6 @@ import logging
 logger = logging.getLogger('default')
 
 dao = Dao()
-inceptionDao = InceptionDao()
 mailSender = MailSender()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
@@ -82,7 +82,7 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
         logger.error(e)
 
     # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if getattr(settings, 'MAIL_ON_OFF'):
+    if SysConfig().sys_config.get('mail') == 'true':
         engineer = workflowDetail.engineer
         workflowStatus = workflowDetail.status
         workflowName = workflowDetail.workflow_name
@@ -106,7 +106,7 @@ def execute_call_back(workflowId, clusterName, url):
     dictConn = getMasterConnStr(clusterName)
     try:
         # 交给inception先split，再执行
-        (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
+        (finalStatus, finalList) = InceptionDao().executeFinal(workflowDetail, dictConn)
 
         # 封装成JSON格式存进数据库字段里
         strJsonResult = json.dumps(finalList)
@@ -123,7 +123,7 @@ def execute_call_back(workflowId, clusterName, url):
         logger.error(e)
 
     # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if getattr(settings, 'MAIL_ON_OFF'):
+    if SysConfig().sys_config.get('mail') == 'true':
         # 给申请人，DBA各发一封邮件
         engineer = workflowDetail.engineer
         workflowStatus = workflowDetail.status
@@ -162,7 +162,7 @@ def execute_job(workflowId, url):
         workflowDetail.save()
     logger.debug('execute_job:' + job_id + ' executing')
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
+    splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
                                                    isSplit='yes')
     workflowDetail.review_content = json.dumps(splitReviewResult)
     try:

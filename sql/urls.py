@@ -3,7 +3,7 @@
 from django.conf.urls import url
 from . import views, views_ajax, query, slowlog, instance
 from sql.utils import jobs
-from django.conf import settings
+from .config import SysConfig
 
 urlpatterns = [
     url(r'^$', views.sqlworkflow, name='sqlworkflow'),
@@ -70,7 +70,7 @@ urlpatterns = [
 
 ]
 
-if settings.ALIYUN_RDS_MANAGE:
+if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
     from . import aliyun_rds
 
     aliyun_function_url = [

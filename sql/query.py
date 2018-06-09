@@ -20,15 +20,14 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.sendmail import MailSender
 from sql.utils.dao import Dao
 from .const import WorkflowDict
-from .inception import InceptionDao
 from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
 from sql.utils.data_masking import Masking
 from .workflow import Workflow
 from sql.utils.permission import role_required
+from sql.config import SysConfig
 
 dao = Dao()
 prpCryptor = Prpcrypt()
-inceptionDao = InceptionDao()
 datamasking = Masking()
 workflowOb = Workflow()
 mailSenderOb = MailSender()
@@ -69,7 +68,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     # 检查用户是否有该数据库/表的查询权限
     loginUser = loginUserOb.username
     if loginUserOb.is_superuser:
-        user_limit_num = getattr(settings, 'ADMIN_QUERY_LIMIT')
+        user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         if int(limit_num) == 0:
             limit_num = int(user_limit_num)
         else:
@@ -126,7 +125,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
                 finalResult['status'] = 1
                 finalResult['msg'] = '你无' + dbName + '数据库的查询权限！请先到查询权限管理进行申请'
                 return finalResult
-            if settings.CHECK_QUERY_ON_OFF:
+            if SysConfig().sys_config.get('query_check') == 'true':
                 return table_ref_result
             else:
                 pass
@@ -519,19 +518,19 @@ def query(request):
 
     # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
     t_start = time.time()
-    if settings.DATA_MASKING_ON_OFF:
+    if SysConfig().sys_config.get('data_masking') == 'true':
         # 仅对查询语句进行脱敏
         if re.match(r"^select", sqlContent.lower()):
             try:
                 masking_result = datamasking.data_masking(cluster_name, dbName, sqlContent, sql_result)
             except Exception:
-                if settings.CHECK_QUERY_ON_OFF:
+                if SysConfig().sys_config.get('query_check') == 'true':
                     finalResult['status'] = 1
                     finalResult['msg'] = '脱敏数据报错,请联系管理员'
                     return HttpResponse(json.dumps(finalResult), content_type='application/json')
             else:
                 if masking_result['status'] != 0:
-                    if settings.CHECK_QUERY_ON_OFF:
+                    if SysConfig().sys_config.get('query_check') == 'true':
                         return HttpResponse(json.dumps(masking_result), content_type='application/json')
 
     t_end = time.time()

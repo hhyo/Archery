@@ -9,17 +9,18 @@ from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
 import smtplib
 
-from django.conf import settings
+from sql.config import SysConfig
 
 
 class MailSender(object):
 
     def __init__(self):
         try:
-            self.MAIL_REVIEW_SMTP_SERVER = getattr(settings, 'MAIL_REVIEW_SMTP_SERVER')
-            self.MAIL_REVIEW_SMTP_PORT = int(getattr(settings, 'MAIL_REVIEW_SMTP_PORT'))
-            self.MAIL_REVIEW_FROM_ADDR = getattr(settings, 'MAIL_REVIEW_FROM_ADDR')
-            self.MAIL_REVIEW_FROM_PASSWORD = getattr(settings, 'MAIL_REVIEW_FROM_PASSWORD')
+            sys_config=SysConfig().sys_config
+            self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
+            self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
+            self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
+            self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
 
         except AttributeError as a:
             print("Error: %s" % a)

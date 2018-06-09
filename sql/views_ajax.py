@@ -27,12 +27,12 @@ from .models import users, master_config, workflow, Group, Config
 from sql.utils.sendmail import MailSender
 import logging
 from .workflow import Workflow
+from .config import SysConfig
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
 mailSender = MailSender()
 dao = Dao()
-inceptionDao = InceptionDao()
 prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
@@ -44,7 +44,7 @@ def log_mail_record(login_failed_message):
     mail_title = 'login archer'
     logger.warning(login_failed_message)
     dbaAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-    if getattr(settings, 'MAIL_ON_OFF'):
+    if SysConfig().sys_config.get('mail') == 'true':
         mailSender.sendEmail(mail_title, login_failed_message, dbaAddr)
 
 
@@ -52,8 +52,9 @@ def log_mail_record(login_failed_message):
 @csrf_exempt
 def loginAuthenticate(username, password):
     """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
-    lockCntThreshold = settings.LOCK_CNT_THRESHOLD
-    lockTimeThreshold = settings.LOCK_TIME_THRESHOLD
+    sys_config = SysConfig().sys_config
+    lockCntThreshold = int(sys_config.get('lock_cnt_threshold'))
+    lockTimeThreshold = int(sys_config.get('lock_time_threshold'))
 
     # 服务端二次验证参数
     if username == "" or password == "" or username is None or password is None:
@@ -233,7 +234,7 @@ def simplecheck(request):
 
     # 交给inception进行自动审核
     try:
-        result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+        result = InceptionDao().sqlautoReview(sqlContent, clusterName, db_name)
     except Exception as e:
         finalResult['status'] = 1
         finalResult['msg'] = str(e)
@@ -329,7 +330,7 @@ def getOscPercent(request):
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
         try:
-            result = inceptionDao.getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
+            result = InceptionDao().getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
         except Exception as msg:
             result = {'status': 1, 'msg': msg, 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
@@ -405,7 +406,7 @@ def stopOscProgress(request):
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
         try:
-            optResult = inceptionDao.stopOscProgress(sqlSHA1)
+            optResult = InceptionDao().stopOscProgress(sqlSHA1)
         except Exception as msg:
             result = {'status': 1, 'msg': msg, 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
@@ -442,7 +443,7 @@ def sqladvisorcheck(request):
     cluster_info = master_config.objects.get(cluster_name=clusterName)
 
     # 提交给sqladvisor获取审核结果
-    sqladvisor_path = getattr(settings, 'SQLADVISOR')
+    sqladvisor_path = SysConfig().sys_config.get('sqladvisor')
     sqlContent = sqlContent.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (

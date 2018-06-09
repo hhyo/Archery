@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
+import re
 
 import simplejson as json
 from threading import Thread
@@ -25,7 +26,6 @@ import logging
 logger = logging.getLogger('default')
 
 dao = Dao()
-inceptionDao = InceptionDao()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
@@ -109,7 +109,7 @@ def autoreview(request):
 
     # 交给inception进行自动审核
     try:
-        result = inceptionDao.sqlautoReview(sqlContent, clusterName, db_name)
+        result = InceptionDao().sqlautoReview(sqlContent, clusterName, db_name)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
@@ -334,7 +334,7 @@ def execute(request):
     workflowDetail.reviewok_time = timezone.now()
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
     try:
-        splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
+        splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
                                                        isSplit='yes')
     except Exception as msg:
         context = {'errMsg': msg}
@@ -489,7 +489,7 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
     try:
-        listBackupSql = inceptionDao.getRollbackSqlList(workflowId)
+        listBackupSql = InceptionDao().getRollbackSqlList(workflowId)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)

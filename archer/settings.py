@@ -125,22 +125,6 @@ DATABASES = {
     }
 }
 
-# inception组件所在的地址
-INCEPTION_HOST = '192.168.1.11'
-INCEPTION_PORT = '6100'
-
-# 查看回滚SQL时候会用到，这里要告诉archer去哪个mysql里读取inception备份的回滚信息和SQL.
-# 注意这里要和inception组件的inception.conf里的inception_remote_XX部分保持一致.
-INCEPTION_REMOTE_BACKUP_HOST = '192.168.1.12'
-INCEPTION_REMOTE_BACKUP_PORT = 5621
-INCEPTION_REMOTE_BACKUP_USER = 'inception'
-INCEPTION_REMOTE_BACKUP_PASSWORD = 'inception'
-
-# 账户登录失败锁定时间(秒)
-LOCK_TIME_THRESHOLD = 300
-# 账户登录失败 几次 锁账户
-LOCK_CNT_THRESHOLD = 5
-
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
@@ -162,7 +146,7 @@ if ENABLE_LDAP:
     }
 
 # LOG配置
-DEFAULT_LOGS = '/tmp/default.log'
+DEFAULT_LOGS = '/tmp/archer.log'
 stamdard_format = '[%(asctime)s][%(threadName)s:%(thread)d]' + \
                   '[task_id:%(name)s][%(filename)s:%(lineno)d] ' + \
                   '[%(levelname)s]- %(message)s'
@@ -194,7 +178,7 @@ LOGGING = {
             'level': 'DEBUG',
         },
         # 'django.db': {  # 打印SQL语句到console，方便开发
-        #     'handlers': ['console'],
+        #     'handlers': ['colock_time_thresholdnsole'],
         #     'level': 'DEBUG',
         #     'propagate': True,
         # },
@@ -205,38 +189,3 @@ LOGGING = {
         },
     }
 }
-
-# 是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA.
-MAIL_ON_OFF = False
-
-MAIL_REVIEW_SMTP_SERVER = 'mail.xxx.com'
-MAIL_REVIEW_SMTP_PORT = 25
-MAIL_REVIEW_FROM_ADDR = 'archer@xxx.com'  # 发件人，也是登录SMTP server需要提供的用户名
-MAIL_REVIEW_FROM_PASSWORD = ''  # 发件人邮箱密码，如果为空则不需要login SMTP server
-
-# 是否过滤【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】等高危DDL操作：
-# 开启后，首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；关闭直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
-CRITICAL_DDL_ON_OFF = True
-
-# 是否开启SQL查询功能，关闭会隐藏菜单和相关功能
-QUERY = True
-
-# 当inception语法树打印失败时在线查询的结果控制，建议修改inception变量inception_enable_select_star=OFF，否则select * 会报错
-# True是开启校验，失败不允许继续执行并返回错，
-# False是关闭校验，继续执行，关闭校验会导致解析失败的查询表权限验证和脱敏功能失效
-CHECK_QUERY_ON_OFF = True
-
-# 是否开启动态脱敏查询，由于采取遍历处理结果集的方式，会影响部分查询效率
-DATA_MASKING_ON_OFF = True
-
-# 管理员在线查询的结果集限制
-ADMIN_QUERY_LIMIT = 5000
-
-# 是否开启慢日志管理，关闭会隐藏菜单和相关功能
-SLOWQUERY = False
-
-# sqladvisor的路径配置，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'，''代表关闭，隐藏菜单和相关功能
-SQLADVISOR = ''
-
-# 是否开启AliYunRDS管理
-ALIYUN_RDS_MANAGE = False
