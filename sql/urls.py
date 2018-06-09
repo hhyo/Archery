@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^addgroup/$', views_ajax.addgroup, name='addgroup'),
     url(r'^groupauditors/$', views_ajax.groupauditors, name='groupauditors'),
     url(r'^changegroupauditors/$', views_ajax.changegroupauditors, name='changegroupauditors'),
+    url(r'^changeconfig/$', views_ajax.changeconfig, name='changeconfig'),
 
     url(r'^getdbNameList/$', instance.getdbNameList, name='getdbNameList'),
     url(r'^getTableNameList/$', instance.getTableNameList, name='getTableNameList'),

@@ -11,12 +11,13 @@
                     <div class="panel-body">
                         <form class="form">
                             <div id="div-config" class="form-group">
-                                <h5 class="control-label text-bold">操作项：</h5>
+                                <h5 class="control-label text-bold">配置项：</h5>
                                 <div class="form-group">
                                     <select id="config" name="confg"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-name="配置项" data-placeholder="请选择配置项:" required>
                                         <option value="is-empty" disabled="" selected="selected">请选择配置项:</option>
+                                        <option value="0">系统设置</option>
                                         <option value="1">项目组配置</option>
                                         <option value="2">工单审核流配置</option>
                                     </select>
@@ -52,57 +53,333 @@
                         操作
                     </div>
                     <div class="panel-body">
-                        <form class="form">
-                            <div id="div-group-config" class=" form-inline form-group" style="display: none">
-                                <h5 class="control-label text-bold" style="color: red">
-                                    规则：<b>仅支持添加项目组，删除和编辑请到后台数据管理模块操作</b></h5>
-                                <br>
-                                <div class="form-group">
-                                    <select id="group" name="group"
-                                            class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="请选择父级项目" data-placeholder="请选择父级项目:" data-live-search="true"
-                                            required>
-                                        <option value="is-empty" disabled="" selected="selected">请选择父级项目:</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <input type="text" class="form-control" id="group_name" placeholder="请输入项目名称">
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <button id="btn-group-add" class="btn btn-default">添加</button>
-                                </div>
-                            </div>
-                            <div id="div-workflow-config" class=" form-inline form-group" style="display: none">
-                                <h5 class="control-label text-bold" style="color: red">
-                                    规则：<b>选择多人即审核流为多级审核，按照选择顺序进行流转</b></h5>
-                                <br>
-                                <h6 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h6>
-                                <br>
-                                <div><h6 style="float:left;" class="control-label text-bold">变更审批流程：</h6></div>
-                                <div class="form-group form-inline">
+                        <form id="form-system-config" action="/changeconfig/" method="post">
+                            {% csrf_token %}
+                            <div id="div-system-config" class="form-group" style="display: none">
+                                <h4 style="color: darkgrey"><b>Inception配置</b></h4>
+                                <hr/>
+                                <div class="form-horizontal">
                                     <div class="form-group">
-                                        <input type="text" class="form-control" id="group_auditors_text"
-                                               disabled="disabled" style="width: 300px">
+                                        <label for="inception_host"
+                                               class="col-sm-4 control-label">INCEPTION_HOST</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_host"
+                                                   key="inception_host"
+                                                   value="{{ config.inception_host }}"
+                                                   placeholder="Inception地址">
+                                        </div>
                                     </div>
                                     <div class="form-group">
-                                        <select id="group_auditors" name="group"
-                                                class="selectpicker show-tick form-control bs-select-hidden"
-                                                data-name="审批人" data-placeholder="审批人:" data-live-search="true"
-                                                required>
-                                            <option value="is-empty" disabled="" selected="selected">添加审批人</option>
-                                            {% for user in user_list %}
-                                                <option value="{{ user.username }}">{{ user.username }}
-                                            {% endfor %}
-                                        </select>
+                                        <label for="inception_port"
+                                               class="col-sm-4 control-label">INCEPTION_PORT</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_port"
+                                                   key="inception_port"
+                                                   value="{{ config.inception_port }}"
+                                                   placeholder="Inception端口">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inception_remote_backup_host"
+                                               class="col-sm-4 control-label">REMOTE_BACKUP_HOST</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_remote_backup_host"
+                                                   key="inception_remote_backup_host"
+                                                   value="{{ config.inception_remote_backup_host }}"
+                                                   placeholder="Inception备份库地址">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inception_remote_backup_port"
+                                               class="col-sm-4 control-label">REMOTE_BACKUP_PORT</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_remote_backup_port"
+                                                   key="inception_remote_backup_port"
+                                                   value="{{ config.inception_remote_backup_port }}"
+                                                   placeholder="Inception备份库端口">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inception_remote_backup_user"
+                                               class="col-sm-4 control-label">REMOTE_BACKUP_USER</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_remote_backup_user"
+                                                   key="inception_remote_backup_user"
+                                                   value="{{ config.inception_remote_backup_user }}"
+                                                   placeholder="Inception备份库用户">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inception_remote_backup_password"
+                                               class="col-sm-4 control-label">REMOTE_BACKUP_PASSWORD</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="inception_remote_backup_password"
+                                                   key="inception_remote_backup_password"
+                                                   value="{{ config.inception_remote_backup_password }}"
+                                                   placeholder="Inception备份库用户密码">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="critical_ddl"
+                                               class="col-sm-4 control-label">CRITICAL_DDL</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="critical_ddl"
+                                                           key="critical_ddl"
+                                                           value="{{ config.critical_ddl }}"
+                                                           checked="checked"
+                                                           type="checkbox">
+                                                    是否开启DROP、TRUNCATE等高危DDL操作
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br>
+                                <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="query"
+                                               class="col-sm-4 control-label">QUERY</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="query" key="query"
+                                                           value="{{ config.query }}"
+                                                           type="checkbox"> 是否开启SQL查询功能
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="div-query-config" style="display: none">
+                                        <div class="form-group">
+                                            <label for="query_check"
+                                                   class="col-sm-4 control-label">QUERY_CHECK</label>
+                                            <div class="col-sm-8">
+                                                <div class="switch switch-small">
+                                                    <label>
+                                                        <input id="query_check"
+                                                               key="query_check"
+                                                               value="{{ config.query_check }}" type="checkbox">
+                                                        是否强制开启Inception检测
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="data_masking"
+                                                   class="col-sm-4 control-label">DATA_MASKING</label>
+                                            <div class="col-sm-8">
+                                                <div class="switch switch-small">
+                                                    <label>
+                                                        <input id="data_masking"
+                                                               key="data_masking"
+                                                               value="{{ config.query_check }}" type="checkbox">
+                                                        是否开启动态脱敏
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="admin_query_limit"
+                                                   class="col-sm-4 control-label">ADMIN_QUERY_LIMIT</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control" id="admin_query_limit"
+                                                       key="admin_query_limit"
+                                                       value="{{ config.admin_query_limit }}"
+                                                       placeholder="管理员/DBA查询结果集限制">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="slowquery"
+                                               class="col-sm-4 control-label">SLOW_QUERY</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="slowquery"
+                                                           key="slowquery"
+                                                           value="{{ config.slowquery }}" type="checkbox"> 是否开启慢日志管理
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sqladvisor"
+                                               class="col-sm-4 control-label">SQLADVISOR_PATH</label>
+                                        <div class="col-sm-5">
+                                            <div class="switch switch-small">
+                                                <input type="text" class="form-control" id="sqladvisor" key="sqladvisor"
+                                                       value="{{ config.sqladvisor }}"
+                                                       placeholder="SQLADVISOR路径，空代表关闭SQL优化工具">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="aliyun_rds_manage"
+                                               class="col-sm-4 control-label">ALIYUN_RDS_MANAGE</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="aliyun_rds_manage" key="aliyun_rds_manage"
+                                                           value="{{ config.aliyun_rds_manage }}"
+                                                           type="checkbox"> 是否开启阿里云RDS管理
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br>
+                                <h4 style="color: darkgrey"><b>邮件配置</b></h4>
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="mail"
+                                               class="col-sm-4 control-label">MAIL</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="mail" key="mail" value="{{ config.mail }}"
+                                                           type="checkbox"> 是否开启邮件通知
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="div-mail-config" style="display: none">
+                                        <div class="form-group">
+                                            <label for="mail_smtp_server"
+                                                   class="col-sm-4 control-label">MAIL_SMTP_SERVER</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="mail_smtp_server"
+                                                       key="mail_smtp_server"
+                                                       value="{{ config.mail_smtp_server }}"
+                                                       placeholder="邮件smtp地址">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="mail_smtp_port"
+                                                   class="col-sm-4 control-label">MAIL_SMTP_PORT</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="mail_smtp_port"
+                                                       key="mail_smtp_port"
+                                                       value="{{ config.mail_smtp_port }}"
+                                                       placeholder="邮件smtp端口">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="mail_smtp_user"
+                                                   class="col-sm-4 control-label">MAIL_SMTP_USER</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="mail_smtp_user"
+                                                       key="mail_smtp_user"
+                                                       value="{{ config.mail_smtp_user }}"
+                                                       placeholder="邮箱账号">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="mail_smtp_password"
+                                                   class="col-sm-4 control-label">MAIL_SMTP_PASSWORD</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="mail_smtp_password"
+                                                       key="mail_smtp_password"
+                                                       value="{{ config.mail_smtp_password }}"
+                                                       placeholder="邮箱账号密码">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br>
+                                <h4 style="color: darkgrey"><b>其他配置</b></h4>
+                                <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="lock_time_threshold"
+                                               class="col-sm-4 control-label">LOCK_TIME_THRESHOLD</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="lock_time_threshold"
+                                                   key="lock_time_threshold"
+                                                   value="{{ config.lock_time_threshold }}"
+                                                   placeholder="账户登录失败锁定时间(秒)">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lock_cnt_threshold"
+                                               class="col-sm-4 control-label">LOCK_CNT_THRESHOLD</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="lock_cnt_threshold"
+                                                   key="lock_cnt_threshold"
+                                                   value="{{ config.lock_cnt_threshold }}"
+                                                   placeholder="账户登录失败几次锁账户">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <button id="btn-workflow-config" class="btn btn-default">变更</button>
-                                    <button id="btn-workflow-config-clean" class="btn btn-default">刷新</button>
+                                    <div class="col-sm-offset-4 col-sm-10">
+                                        <button id="saveconfig" type="button" class="btn btn-default">保存配置</button>
+                                    </div>
                                 </div>
                             </div>
                         </form>
+                        <div id="div-group-config" class="form-inline form-group" style="display: none">
+                            <h5 class="control-label text-bold" style="color: red">
+                                规则：<b>仅支持添加项目组，删除和编辑请到后台数据管理模块操作</b></h5>
+                            <br>
+                            <div class="form-group">
+                                <select id="group" name="group"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="请选择父级项目" data-placeholder="请选择父级项目:" data-live-search="true"
+                                        required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择父级项目:</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="group_name" placeholder="请输入项目名称">
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <button id="btn-group-add" class="btn btn-default">添加</button>
+                            </div>
+                        </div>
+                        <div id="div-workflow-config" class="form-inline form-group" style="display: none">
+                            <h5 class="control-label text-bold" style="color: red">
+                                规则：<b>选择多人即审核流为多级审核，按照选择顺序进行流转</b></h5>
+                            <br>
+                            <h6 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h6>
+                            <br>
+                            <div><h6 style="float:left;" class="control-label text-bold">变更审批流程：</h6></div>
+                            <div class="form-group form-inline">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="group_auditors_text"
+                                           disabled="disabled" style="width: 250px">
+                                </div>
+                                <div class="form-group">
+                                    <select id="group_auditors" name="group"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-name="审批人" data-placeholder="审批人:" data-live-search="true"
+                                            required>
+                                        <option value="is-empty" disabled="" selected="selected">添加审批人</option>
+                                        {% for user in user_list %}
+                                            <option value="{{ user.username }}">{{ user.username }}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button id="btn-workflow-config" class="btn btn-default">变更</button>
+                                <button id="btn-workflow-config-clean" class="btn btn-default">刷新</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,6 +389,9 @@
 
 {% block js %}
     {% load staticfiles %}
+    <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
+    <!--listToTree -->
     <script>
         //list 转成树形json
         function listToTree(list, pid) {
@@ -161,19 +441,99 @@
         //配置项切换
         $("#config").change(function () {
             sessionStorage.setItem('config_type', $("#config").val());
-            if ($("#config").val() === '1') {
+            if ($("#config").val() === '0') {
+                $("#div-system-config").show();
+                $("#div-group").hide();
+                $("#div-group-config").hide();
+                $("#div-workflow").hide();
+                $("#div-workflow-config").hide();
+                $('input[type="checkbox"]').each(function (i) {
+                    if ($(this).val() === 'true') {
+                        $(this).bootstrapSwitch('state', true);
+                    }
+                    else {
+                        $(this).bootstrapSwitch('state', false);
+                    }
+                });
+            }
+            else if ($("#config").val() === '1') {
+                $("#div-system-config").hide();
                 $("#div-group").show();
                 $("#div-group-config").show();
                 $("#div-workflow").hide();
                 $("#div-workflow-config").hide();
             }
             else if ($("#config").val() === '2') {
+                $("#div-system-config").hide();
                 $("#div-group").hide();
                 $("#div-group-config").hide();
                 $("#div-workflow").show();
                 $("#div-workflow-config").show();
                 $("#workflow_type").trigger("change");
             }
+        });
+
+
+        // 系统设置checkbox事件
+        $('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function (event, state) {
+            if (state) {
+                $(this).val(true);
+                if ($(this).attr("id") === 'query') {
+                    $("#div-query-config").show();
+                }
+                else if ($(this).attr("id") === 'mail') {
+                    $("#div-mail-config").show();
+                }
+            }
+            else {
+                $(this).val(false);
+                if ($(this).attr("id") === 'query') {
+                    $("#query_check").val(false);
+                    $("#data_masking").val(false);
+                    $("#admin_query_limit").val(false);
+                    $("#div-query-config").hide();
+                }
+                else if ($(this).attr("id") === 'mail') {
+                    $("#div-mail-config").hide();
+                }
+            }
+        });
+
+        // 修改系统设置
+        $("#saveconfig").click(function () {
+            var formSubmit = $("#form-system-config");
+            var configs = [];
+            formSubmit.find('[key]').each(
+                function () {
+                    var config_item = $(this).attr("key");
+                    var config_value = $(this).val();
+                    configs.push({
+                        key: config_item,
+                        value: config_value
+                    });
+                }
+            );
+
+            $.ajax({
+                type: "post",
+                url: "/changeconfig/",
+                dataType: "json",
+                data: {
+                    configs: JSON.stringify(configs)
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        window.location.reload()
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
         });
 
         // 切换项目触发工单类型切换事件
@@ -196,7 +556,7 @@
         });
 
         // 清空审核人信息
-        $("#btn-workflow-config-clean").change(function () {
+        $("#btn-workflow-config-clean").click(function () {
             $("#group_auditors_text").val('')
         });
 
@@ -310,6 +670,3 @@
         })
     </script>
 {% endblock %}
-
-
-

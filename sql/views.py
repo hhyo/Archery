@@ -15,7 +15,7 @@ from .const import Const, WorkflowDict
 from .inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
-    QueryPrivilegesApply
+    QueryPrivilegesApply, Config
 from .workflow import Workflow
 from sql.utils.permission import role_required, superuser_required
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -653,6 +653,12 @@ def config(request):
 
     # 获取所有用户
     user_list = users.objects.filter(is_active=1).values('username', 'display')
+    # 获取所有配置项
+    all_config = Config.objects.all().values('item', 'value')
+    sys_config = {}
+    for items in all_config:
+        sys_config[items['item']] = items['value']
+
     context = {'currentMenu': 'config', 'group_list': group_list, 'user_list': user_list,
-               'WorkflowDict': WorkflowDict}
+               'config': sys_config, 'WorkflowDict': WorkflowDict}
     return render(request, 'config.html', context)

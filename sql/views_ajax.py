@@ -6,6 +6,7 @@ import datetime
 import subprocess
 
 from django.contrib.auth import authenticate, login
+from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +23,7 @@ from sql.utils.dao import Dao
 from .const import Const
 from .inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow, Group
+from .models import users, master_config, workflow, Group, Config
 from sql.utils.sendmail import MailSender
 import logging
 from .workflow import Workflow
@@ -198,7 +199,8 @@ def sqlworkflowlist(request):
 
     result = {"total": listWorkflowCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 提交SQL给inception进行自动审核
@@ -222,7 +224,7 @@ def simplecheck(request):
     # # 去除空行
     # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
 
-    sqlContent =sqlContent.strip()
+    sqlContent = sqlContent.strip()
 
     if sqlContent[-1] != ";":
         finalResult['status'] = 1
@@ -482,7 +484,8 @@ def workflowlist(request):
 
     result = {"total": auditlistCount, "rows": rows}
     # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 
 # 添加项目组
@@ -547,6 +550,27 @@ def changegroupauditors(request):
     except Exception as msg:
         result['msg'] = str(msg)
         result['status'] = 1
+
+    # 返回结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 修改系统配置
+@csrf_exempt
+@superuser_required
+def changeconfig(request):
+    configs = request.POST.get('configs')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    # 清空并替换
+    try:
+        with transaction.atomic():
+            Config.objects.all().delete()
+            Config.objects.bulk_create(
+                [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
+    except Exception as e:
+        result['status'] = 1
+        result['msg'] = str(e)
 
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')

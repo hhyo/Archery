@@ -1,19 +1,19 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<title>SQL审核平台</title>
+    <title>SQL审核平台</title>
     {% load staticfiles %}
-	<meta charset='utf-8'>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <!-- 引入 Bootstrap -->
-      <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
-	  <link href="{% static 'user/css/user1.css' %}" rel="stylesheet">
-	  <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
-      <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet" type="text/css">
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 Bootstrap -->
+    <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'user/css/user1.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet" type="text/css">
 
-      <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
-      <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
-      <!--[if lt IE 9]>
+    <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
+    <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
+    <!--[if lt IE 9]>
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
@@ -23,86 +23,91 @@
 
 <div class="container-fluid">
 
-	<!--最顶部导航栏 -->
-	<div class="row clearfix">
-		<div class="col-md-12 column">
-			<nav class="navbar navbar-default" role="navigation">
-				<div class="navbar-header">
-					 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="/sqlworkflow/"><strong>SQL审核平台</strong></a>
-				</div>
-				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-					<ul class="nav navbar-nav navbar-right">
+    <!--最顶部导航栏 -->
+    <div class="row clearfix">
+        <div class="col-md-12 column">
+            <nav class="navbar navbar-default" role="navigation">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse"
+                            data-target="#bs-example-navbar-collapse-1"><span
+                            class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span
+                            class="icon-bar"></span><span class="icon-bar"></span></button>
+                    <a class="navbar-brand" href="/sqlworkflow/"><strong>SQL审核平台</strong></a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav navbar-right">
                         {% if todo > 0 %}
                             <li>
                                 <a href="/workflow/"><span class="glyphicon glyphicon-envelope"></span></a>
                             </li>
                         {% endif %}
-						<li>
-							 <a href="#">你好，{{UserDisplay}}</a>
-						</li>
-						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown">个人设置<strong class="caret"></strong></a>
-							<ul class="dropdown-menu">
-								<li>
-									 <a href="/admin/password_change/">修改密码</a>
-								</li>
-								<li>
-									 <a href="/logout/">退出</a>
-								</li>
-							</ul>
-						</li>
-					</ul>
-				</div>
-			</nav>
-		</div>
-	</div>
+                        <li>
+                            <a href="#">你好，{{ UserDisplay }}</a>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">个人设置<strong
+                                    class="caret"></strong></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a href="/admin/password_change/">修改密码</a>
+                                </li>
+                                <li>
+                                    <a href="/logout/">退出</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
 
-	<!--中间左侧菜单栏和右侧主要内容区，网格分别为2和10 -->
-	<div class="row clearfix">
-		<div class="col-md-2 column">
-			<div class="list-group">
-				{% for menu in leftMenuBtns %}
+    <!--中间左侧菜单栏和右侧主要内容区，网格分别为2和10 -->
+    <div class="row clearfix">
+        <div class="col-md-2 column">
+            <div class="list-group">
+                {% for menu in leftMenuBtns %}
                     {% if menu.display %}
-					{% if menu.key == currentMenu %}
-						<a href="{{menu.url}}" class="list-group-item active"
-					{% else %}
-						<a href="{{menu.url}}" class="list-group-item"
-					{% endif %}
+                        {% if menu.key == currentMenu %}
+                            <a href="{{ menu.url }}" class="list-group-item active"
+                        {% else %}
+                            <a href="{{ menu.url }}" class="list-group-item"
+                        {% endif %}
 
-					{% if menu.key == 'admin' %}
-						target="_blank"><span class="{{menu.class}}">&nbsp;{{menu.name}}</span></a>
-					{% else %}
-						><span class="{{menu.class}}">&nbsp;{{menu.name}}</span></a>
-					{% endif %}
+                    {% if menu.key == 'admin' %}
+                               target="_blank"><span class="{{ menu.class }}">&nbsp;{{ menu.name }}</span></a>
+                    {% else %}
+                        ><span class="{{ menu.class }}">&nbsp;{{ menu.name }}</span></a>
                     {% endif %}
-				{% endfor %}
-					<!-- <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-cog">&nbsp;审批人权限</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-file">&nbsp;功能模块6</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-list-alt">&nbsp;功能模块7</span></a>
-					<a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-align-right">&nbsp;功能模块8</span></a>-->
-			</div>
+                    {% endif %}
+                {% endfor %}
+                <!-- <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon-cog">&nbsp;审批人权限</span></a>
+                <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-file">&nbsp;功能模块6</span></a>
+                <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-list-alt">&nbsp;功能模块7</span></a>
+                <a href="#" class="list-group-item"><span class="glyphicon glyphicon glyphicon glyphicon-align-right">&nbsp;功能模块8</span></a>-->
+            </div>
 
-		</div>
+        </div>
 
-		<div class="col-md-10 column user-center-div-col-md-10">
-		{% block content %}
-    	{% endblock content %}
-		</div>
-	</div>
+        <div class="col-md-10 column user-center-div-col-md-10">
+            {% block content %}
+            {% endblock content %}
+        </div>
+    </div>
 
-	<!--底部部分 -->
-	<div class="row clearfix user-bottom-div">
-		<p><strong>SQL审核平台.</strong>&nbsp; Developed by OP.</p>
-	</div>
+    <!--底部部分 -->
+    <div class="row clearfix user-bottom-div">
+        <p><strong>SQL审核平台.</strong>&nbsp; Developed by OP.</p>
+    </div>
 </div>
-	<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
-	<script src="{% static 'jquery/jquery.min.js' %}"></script>
-	<!-- 包括所有已编译的插件 -->
-	<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
-	<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
-	<script src="{% static 'user/js/formatter.js' %}"></script>
+<!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
+<script src="{% static 'jquery/jquery.min.js' %}"></script>
+<!-- 包括所有已编译的插件 -->
+<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
+<script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+<script src="{% static 'user/js/formatter.js' %}"></script>
 </body>
 {% block js %}
 {% endblock %}

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from sql.workflow import Workflow
-from .models import users
+from .models import users, Config
 from django.conf import settings
 
 leftMenuBtnsCommon = (
@@ -19,7 +19,7 @@ leftMenuBtnsCommon = (
 leftMenuBtnsSuper = (
     {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/', 'class': 'glyphicon  glyphicon-scissors',
      'display': settings.ALIYUN_RDS_MANAGE},
-    {'key': 'config', 'name': '项目配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon glyphicon-option-horizontal',
+    {'key': 'config', 'name': '系统配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon glyphicon-option-horizontal',
      'display': True},
     {'key': 'admin', 'name': '后台数据管理', 'url': '/admin/', 'class': 'glyphicon glyphicon-list', 'display': True},
 )
@@ -48,14 +48,21 @@ def global_info(request):
             todo = Workflow().auditlist(user, 0, 0, 1)['data']['auditlistCount']
         except Exception:
             todo = 0
+        # 获取系统配置信息
+        all_config = Config.objects.all().values('item', 'value')
+        sys_config = {}
+        for items in all_config:
+            sys_config[items['item']] = items['value']
     else:
         leftMenuBtns = ()
         UserDisplay = ''
         todo = 0
+        sys_config = {}
 
     return {
         'loginUser': loginUser,
         'leftMenuBtns': leftMenuBtns,
         'UserDisplay': UserDisplay,
-        'todo': todo
+        'todo': todo,
+        'sys_config': sys_config
     }
