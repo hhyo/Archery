@@ -39,12 +39,12 @@ class Group(models.Model):
 
 
 # 组关系表（角色与组、主库与组等）
-class Group_Relations(models.Model):
+class GroupRelations(models.Model):
     object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，如角色名等', max_length=100)
+    object_name = models.CharField('关联对象描述，如角色名', max_length=100)
     group_id = models.IntegerField('用户组ID')
     group_name = models.CharField('用户组名称', max_length=100)
-    type = models.IntegerField('关联类型', choices=((1, '角色组关联'), (2, '主库组关联'),))
+    object_type = models.IntegerField('关联对象类型', choices=((1, '角色'), (2, '主库'),))
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 

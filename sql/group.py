@@ -4,7 +4,7 @@ from django.core import serializers
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from sql.models import Group, Group_Relations
+from sql.models import Group, GroupRelations
 from sql.utils.permission import superuser_required
 from sql.views_ajax import workflowOb
 
@@ -13,11 +13,11 @@ from sql.views_ajax import workflowOb
 @csrf_exempt
 def group_relations(request):
     group_name = request.POST.get('group_name')
-    type = request.POST.get('type')
+    object_type = request.POST.get('type')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    rows = Group_Relations.objects.filter(group_name=group_name, type=type).values(
-        'object_id', 'object_name', 'group_id', 'group_name', 'type')
+    rows = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).values(
+        'object_id', 'object_name', 'group_id', 'group_name', 'object_type')
     target = [row for row in rows]
     result['data'] = target
     return HttpResponse(json.dumps(result), content_type='application/json')

@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from sql.utils.config import SysConfig
 from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
-    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, Group_Relations
+    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, GroupRelations
 
 
 # 用户管理
@@ -40,7 +40,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 
 # 用户组关系管理
-@admin.register(Group_Relations)
+@admin.register(GroupRelations)
 class GroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_id', 'object_name', 'group_id', 'group_name', 'type', 'create_time')
 
