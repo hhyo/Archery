@@ -42,7 +42,7 @@ class GroupAdmin(admin.ModelAdmin):
 # 用户组关系管理
 @admin.register(GroupRelations)
 class GroupRelationsAdmin(admin.ModelAdmin):
-    list_display = ('object_id', 'object_name', 'group_id', 'group_name', 'type', 'create_time')
+    list_display = ('object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
 
 
 # 主库配置管理
