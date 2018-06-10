@@ -610,7 +610,7 @@ def diagnosis_process(request):
     loginUserOb = users.objects.get(username=loginUser)
 
     # 获取所有实例名称
-    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    masters = master_config.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list,
@@ -621,7 +621,7 @@ def diagnosis_process(request):
 # 问题诊断--空间
 def diagnosis_sapce(request):
     # 获取所有实例名称
-    masters = AliyunRdsConfig.objects.all().order_by('cluster_name')
+    masters = master_config.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'diagnosis', 'tab': 'space', 'cluster_name_list': cluster_name_list}

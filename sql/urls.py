@@ -5,7 +5,7 @@ from django.conf.urls import url
 import sql.group
 import sql.views_ajax
 import sql.workflow
-from . import views, views_ajax, query, slowlog, instance
+from . import views, views_ajax, query, slowlog, instance, process
 from sql.utils import jobs
 from sql.utils.config import SysConfig
 
@@ -72,16 +72,19 @@ urlpatterns = [
     url(r'^slowquery_review_history/$', slowlog.slowquery_review_history, name='slowquery_review_history'),
     url(r'^del_sqlcronjob/$', jobs.del_sqlcronjob, name='del_sqlcronjob'),
 
+    url(r'^process_status/$', process.process_status, name='process_status'),
+    url(r'^create_kill_session/$', process.create_kill_session, name='create_kill_session'),
+    url(r'^kill_session/$', process.kill_session, name='kill_session'),
 ]
 
-if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-    from . import aliyun_rds
-
-    aliyun_function_url = [
-        url(r'^process_status/$', aliyun_rds.process_status, name='process_status'),
-        url(r'^sapce_status/$', aliyun_rds.sapce_status, name='sapce_status'),
-        url(r'^create_kill_session/$', aliyun_rds.create_kill_session,
-            name='create_kill_session'),
-        url(r'^kill_session/$', aliyun_rds.kill_session, name='kill_session'),
-    ]
-    urlpatterns.extend(aliyun_function_url)
+# if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+#     from . import aliyun_rds
+#
+#     aliyun_function_url = [
+#         url(r'^process_status/$', aliyun_rds.process_status, name='process_status'),
+#         url(r'^sapce_status/$', aliyun_rds.sapce_status, name='sapce_status'),
+#         url(r'^create_kill_session/$', aliyun_rds.create_kill_session,
+#             name='create_kill_session'),
+#         url(r'^kill_session/$', aliyun_rds.kill_session, name='kill_session'),
+#     ]
+#     urlpatterns.extend(aliyun_function_url)

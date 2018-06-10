@@ -10,9 +10,11 @@
         <li id="process_tab" class="active">
             <a href="#process" role="tab" data-toggle="tab">进程状态</a>
         </li>
-        <li id="space_tab">
-            <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
-        </li>
+        <!--
+            <li id="space_tab">
+                <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
+            </li>
+        -->
         <div class="form-inline pull-right">
             <div class="form-group">
                 <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
@@ -59,6 +61,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="text" id="request_params" hidden>
+                    <b id="kill_sql"></b>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
@@ -164,8 +167,8 @@
                         title: 'INFO',
                         field: 'info',
                         formatter: function (value, row, index) {
-                            if (value.length > 50) {
-                                var sql = value.substr(0, 50) + '...';
+                            if (value.length > 20) {
+                                var sql = value.substr(0, 20) + '...';
                                 return sql;
                             }
                             else {
@@ -204,7 +207,7 @@
                     sortable: true,                     //是否启用排序
                     sortName: 'total_size',
                     sortOrder: "desc",                   //排序方式
-                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
                     pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
@@ -308,10 +311,17 @@
                         success: function (data) {
                             if (data.status === 0) {
                                 var result = data.data;
-                                //给对话框赋值
-                                $("#request_params").val(result);
-                                //打开对话框
-                                $("#killComfirm").modal();
+
+                                if (result) {
+                                    //给对话框赋值
+                                    $("#request_params").val(result);
+                                    $("#kill_sql").text(result);
+                                    //打开对话框
+                                    $("#killComfirm").modal();
+                                }
+                                else {
+                                    alert("所选会话已终止！")
+                                }
                             }
                             else {
                                 alert("status: " + data.status + "\nmsg: " + data.msg);
@@ -353,7 +363,7 @@
                 })
             }
             else {
-                alert("无效请求")
+                alert("所选会话已终止！")
             }
         }
 

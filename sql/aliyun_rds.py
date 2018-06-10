@@ -12,8 +12,8 @@ from .models import AliyunRdsConfig
 
 aliyun = Aliyun()
 
+
 # 获取SQL慢日志统计
-@csrf_exempt
 def slowquery_review(request):
     cluster_name = request.POST.get('cluster_name')
     DBName = request.POST.get('db_name')
@@ -51,7 +51,6 @@ def slowquery_review(request):
 
 
 # 获取SQL慢日志明细
-@csrf_exempt
 def slowquery_review_history(request):
     cluster_name = request.POST.get('cluster_name')
     StartTime = request.POST.get('StartTime')
@@ -95,7 +94,6 @@ def slowquery_review_history(request):
 
 
 # 问题诊断--进程列表
-@csrf_exempt
 def process_status(request):
     cluster_name = request.POST.get('cluster_name')
     command_type = request.POST.get('command_type')
@@ -116,11 +114,10 @@ def process_status(request):
     result = {'status': 0, 'msg': 'ok', 'data': process_list}
 
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return result
 
 
 # 问题诊断--通过进程id构建请求id
-@csrf_exempt
 @role_required(('DBA',))
 def create_kill_session(request):
     cluster_name = request.POST.get('cluster_name')
@@ -143,7 +140,6 @@ def create_kill_session(request):
 
 
 # 问题诊断--终止会话
-@csrf_exempt
 @role_required(('DBA',))
 def kill_session(request):
     cluster_name = request.POST.get('cluster_name')
@@ -152,7 +148,7 @@ def kill_session(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 通过实例名称获取关联的rds实例id
     cluster_info = AliyunRdsConfig.objects.get(cluster_name=cluster_name)
-    # 调用aliyun接口获取进程数据
+    # 调用aliyun接口获取终止进程
     request_params = json.loads(request_params)
     ServiceRequestParam = dict({"Language": "zh"}, **request_params)
     kill_result = aliyun.RequestServiceOfCloudDBA(cluster_info.rds_dbinstanceid, 'ConfirmKillSessionRequest',
@@ -164,7 +160,7 @@ def kill_session(request):
     result['data'] = kill_result
 
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return result
 
 
 # 问题诊断--空间列表

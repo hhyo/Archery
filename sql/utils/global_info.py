@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from sql.workflow import Workflow
-from .models import users
+from sql.models import users
 from sql.utils.config import SysConfig
 
 
@@ -20,12 +20,12 @@ def menu():
         {'key': 'sqladvisor', 'name': 'SQL优化工具', 'url': '/sqladvisor/', 'class': 'glyphicon glyphicon-wrench',
          'display': sqladvisor_display},
         {'key': 'queryapply', 'name': '查询权限管理', 'url': '/queryapplylist/', 'class': 'glyphicon glyphicon-eye-open',
-         'display': sys_config.get('query')}
+         'display': sys_config.get('query')},
+        {'key': 'diagnosis', 'name': '主库会话管理', 'url': '/diagnosis_process/', 'class': 'glyphicon  glyphicon-scissors',
+         'display': sys_config.get('db_process_manage')},
     )
 
     leftMenuBtnsSuper = (
-        {'key': 'diagnosis', 'name': 'RDS进程管理', 'url': '/diagnosis_process/', 'class': 'glyphicon  glyphicon-scissors',
-         'display': sys_config.get('aliyun_rds_manage')},
         {'key': 'config', 'name': '系统配置管理', 'url': '/config/',
          'class': 'glyphicon glyphicon glyphicon-option-horizontal',
          'display': 'true'},
