@@ -96,7 +96,7 @@ def autoreview(request):
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        Group_Relations.objects.get(group_name=group_name, relation_key=clusterName, type=2)
+        Group_Relations.objects.get(group_name=group_name, object_name=clusterName, type=2)
     except Exception:
         context = {'errMsg': '该用户组不存在所选主库！'}
         return render(request, 'error.html', context)

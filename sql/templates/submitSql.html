@@ -355,7 +355,7 @@
                         var result = data.data;
                         $("#cluster_name").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var cluster = "<option value=\"" + result[i]['relation_key'] + "\">" + result[i]['relation_key'] + "</option>";
+                            var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
                             $("#cluster_name").append(cluster);
                         }
                         $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择要上线的实例:</option>");

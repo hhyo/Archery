@@ -17,7 +17,7 @@ def group_relations(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     rows = Group_Relations.objects.filter(group_name=group_name, type=type).values(
-        'relation_id', 'relation_key', 'group_id', 'group_name', 'type')
+        'object_id', 'object_name', 'group_id', 'group_name', 'type')
     target = [row for row in rows]
     result['data'] = target
     return HttpResponse(json.dumps(result), content_type='application/json')

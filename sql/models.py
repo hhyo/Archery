@@ -40,8 +40,8 @@ class Group(models.Model):
 
 # 组关系表（角色与组、主库与组等）
 class Group_Relations(models.Model):
-    relation_id = models.IntegerField('关联键ID', )
-    relation_key = models.CharField('关联键冗余值', max_length=100)
+    object_id = models.IntegerField('关联对象主键ID', )
+    object_name = models.CharField('关联对象描述，如角色名等', max_length=100)
     group_id = models.IntegerField('用户组ID')
     group_name = models.CharField('用户组名称', max_length=100)
     type = models.IntegerField('关联类型', choices=((1, '角色组关联'), (2, '主库组关联'),))
@@ -49,7 +49,7 @@ class Group_Relations(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('relation_id', 'group_id', 'type')
+        unique_together = ('object_id', 'group_id', 'type')
         verbose_name = u'用户组关系配置'
         verbose_name_plural = u'用户组关系配置'
 
