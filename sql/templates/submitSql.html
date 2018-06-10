@@ -29,8 +29,11 @@
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="项目组" data-placeholder="请选择项目组" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择项目组:</option>
+                                data-name="用户组" data-placeholder="请选择用户组" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择用户组:</option>
+                            {% for group in group_list %}
+                                <option value="{{ group.name }}">{{ group.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -38,9 +41,6 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的实例"
                                 data-live-search="true" data-placeholder="请选择要上线的实例" required>
                             <option value="is-empty" disabled="" selected="selected">请选择要上线的实例:</option>
-                            {% for cluster_name in listAllClusterName %}
-                                <option value="{{ cluster_name }}">{{ cluster_name }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -189,7 +189,7 @@
                 },
                 complete: function () {
                     var pathname = window.location.pathname;
-                    if (pathname == "/editsql/") {
+                    if (pathname === "/editsql/") {
                         //填充库名
                         $('#db_name').selectpicker();
                         var myObject = {};
@@ -313,52 +313,66 @@
             $("div#" + review_man).hide();
         });
     </script>
-    <!--grouptree -->
+    <!--group -->
     <script>
-        //list 转成树形json
-        function listToTree(list, pid) {
-            var ret = [];//一个存放结果的临时数组
-            for (var i in list) {
-                if (list[i].parent === pid) {//如果当前项的父id等于要查找的父id，进行递归
-                    list[i].children = listToTree(list, list[i].id);
-                    ret.push(list[i]);//把当前项保存到临时数组中
-                }
-            }
-            return ret;//递归结束后返回结果
-        }
-
-        var tree = listToTree({{ group_list|safe }}, 0);//调用函数，传入要转换的list数组，和树中顶级元素的pid
-
-        //生成树下拉菜单
-        var j = "┆﹍﹍";//前缀符号，用于显示父子关系，这里可以使用其它符号
-        function creatSelectTree(d) {
-            var option = "";
-            for (var i = 0; i < d.length; i++) {
-                if (d[i].children.length) {//如果有子集
-                    if (d[i].parent === 0) {
-                        option += "<option value='" + d[i].name + "'>" + d[i].name + "</option>";
-                        option += creatSelectTree(d[i].children);//递归调用子集
-                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
-                    }
-                    else {
-                        option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
-                        j += "┆﹍﹍";//前缀符号加一个符号
-                        option += creatSelectTree(d[i].children);//递归调用子集
-                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
-                    }
-                } else {//没有子集直接显示
-                    option += "<option value='" + d[i].name + "'>" + j + d[i].name + "</option>";
-                }
-            }
-            return option;//返回最终html结果
-        }
-
-
-        //调用函数，并将结构出入到下拉框容器中
-        $("#group_name").append(creatSelectTree(tree));
-
-        // 获取审批流程
+        // 获取主库信息和审批流程
         $("#group_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/group_relations/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    type: 2
+                },
+                complete: function () {
+                    var pathname = window.location.pathname;
+                    if (pathname === "/editsql/") {
+                        //填充主库信息
+                        $('#cluster_name').selectpicker();
+                        var myObject = {};
+                        myObject.cluster_name = sessionStorage.getItem('editClustername');
+                        if (myObject.cluster_name) {
+                            $("#cluster_name").selectpicker('val', myObject.cluster_name);
+                            if ($("#cluster_name").val()) {
+                                $("#cluster_name").trigger("change")
+                            }
+                            else {
+                                $("#cluster_name").empty();
+                                $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择要上线的实例:</option>");
+                                $('#cluster_name').selectpicker('render');
+                                $('#cluster_name').selectpicker('refresh');
+                                $("#db_name").empty();
+                                $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
+                                $('#db_name').selectpicker('render');
+                                $('#db_name').selectpicker('refresh');
+                            }
+                        }
+                    }
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#cluster_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var cluster = "<option value=\"" + result[i]['relation_key'] + "\">" + result[i]['relation_key'] + "</option>";
+                            $("#cluster_name").append(cluster);
+                        }
+                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择要上线的实例:</option>");
+                        $('#cluster_name').selectpicker('render');
+                        $('#cluster_name').selectpicker('refresh');
+                        $("#db_name").empty();
+                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
             $.ajax({
                 type: "post",
                 url: "/groupauditors/",
@@ -409,7 +423,6 @@
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
-                $("#cluster_name").val(sessionStorage.getItem('editClustername')).trigger("change");
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             }
             else if (pathname === "/submitothercluster/") {

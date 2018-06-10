@@ -5,7 +5,7 @@ import simplejson as json
 import MySQLdb
 from django.db import connection
 
-from .models import master_config, slave_config, workflow
+from sql.models import master_config, slave_config, workflow
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.config import SysConfig
 

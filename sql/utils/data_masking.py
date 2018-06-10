@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from sql.inception import InceptionDao
+from sql.utils.inception import InceptionDao
 from sql.models import DataMaskingRules, DataMaskingColumns
 import simplejson as json
 import re

@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 from django.utils import timezone
+
 from sql.utils.sendmail import MailSender
 from .const import WorkflowDict
 from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
@@ -53,17 +54,22 @@ class Workflow(object):
         #     audit_users_list = None
         # else:
         #     audit_users_list = settingInfo.audit_users.split(',')
-        if workflow_auditors:
-            # 验证审批流是否和配置一致
-            auditor_list = self.groupauditors(group_id, workflow_type).get('data')
-            if workflow_auditors == ','.join(auditor_list):
-                audit_users_list = workflow_auditors.split(',')
-            else:
-                result['msg'] = '审批流程与后台配置不同，请核实'
-                raise Exception(result['msg'])
+        # 验证审批流是否和配置一致
+        try:
+            audit_users = WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id).audit_users
+        except Exception:
+            audit_users = None
+        if workflow_auditors == audit_users:
+            pass
         else:
+            result['msg'] = '审批流程与后台配置不同，请核实'
+            raise Exception(result['msg'])
+
+        if workflow_auditors is None:
             result['msg'] = '审批流程不能为空，请先配置审批流程'
             raise Exception(result['msg'])
+        else:
+            audit_users_list = workflow_auditors.split(',')
 
         # 无审核配置则无需审核，直接通过
         if audit_users_list is None:
@@ -356,7 +362,7 @@ class Workflow(object):
         except Exception:
             return None
 
-    # 通过项目组和审核类型，获取审核配置信息
+    # 通过用户组和审核类型，获取审核配置信息
     def auditsettings(self, group_id, workflow_type):
         try:
             return WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)
@@ -383,14 +389,3 @@ class Workflow(object):
             inset.audit_users = audit_users
             inset.workflow_type = workflow_type
             inset.save()
-
-    # 获取项目的审核人
-    def groupauditors(self, group_id, workflow_type):
-        result = {'status': 0, 'msg': 'ok', 'data': []}
-
-        # 获取审核人列表
-        auditors = self.auditsettings(group_id=group_id, workflow_type=workflow_type)
-        if auditors:
-            auditor_list = auditors.audit_users.split(',')
-            result['data'] = auditor_list
-        return result

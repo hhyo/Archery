@@ -4,13 +4,11 @@ from django.contrib.auth.models import AbstractUser
 from sql.utils.aes_decryptor import Prpcrypt
 
 
-# Create your models here.
-
 # 角色分两种：
 # 1.工程师：可以提交SQL上线单的工程师们，username字段为登录用户名，display字段为展示的中文名。
-# 2.审核人：可以审核并执行SQL上线单的管理者、高级工程师、系统管理员们。
+# 2.DBA：可以审核并执行SQL上线单的管理者、高级工程师、系统管理员们。
 class users(AbstractUser):
-    display = models.CharField('显示的中文名', max_length=50)
+    display = models.CharField('显示的中文名', max_length=50, blank=True)
     role = models.CharField('角色', max_length=20, choices=(('工程师', '工程师'), ('DBA', 'DBA')), default='工程师')
 
     def __str__(self):
@@ -21,7 +19,42 @@ class users(AbstractUser):
         verbose_name_plural = u'用户配置'
 
 
-# 各个线上主库地址。
+# 用户组
+class Group(models.Model):
+    group_id = models.AutoField('用户组ID', primary_key=True)
+    group_name = models.CharField('用户组名称', max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField('父级id', default=0)
+    group_sort = models.IntegerField('排序', default=1)
+    group_level = models.IntegerField('层级', default=1)
+    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.group_name
+
+    class Meta:
+        verbose_name = u'用户组配置'
+        verbose_name_plural = u'用户组配置'
+
+
+# 组关系表（角色与组、主库与组等）
+class Group_Relations(models.Model):
+    relation_id = models.IntegerField('关联键ID', )
+    relation_key = models.CharField('关联键冗余值', max_length=100)
+    group_id = models.IntegerField('用户组ID')
+    group_name = models.CharField('用户组名称', max_length=100)
+    type = models.IntegerField('关联类型', choices=((1, '角色组关联'), (2, '主库组关联'),))
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('relation_id', 'group_id', 'type')
+        verbose_name = u'用户组关系配置'
+        verbose_name_plural = u'用户组关系配置'
+
+
+# 各个线上主库实例配置）
 class master_config(models.Model):
     cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     master_host = models.CharField('主库地址', max_length=200)
@@ -35,8 +68,8 @@ class master_config(models.Model):
         return self.cluster_name
 
     class Meta:
-        verbose_name = u'主库地址'
-        verbose_name_plural = u'主库地址'
+        verbose_name = u'主库配置'
+        verbose_name_plural = u'主库配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
@@ -44,60 +77,9 @@ class master_config(models.Model):
         super(master_config, self).save(*args, **kwargs)
 
 
-# 项目组
-class Group(models.Model):
-    group_id = models.AutoField('项目组ID', primary_key=True)
-    group_name = models.CharField('项目组名称', max_length=100, unique=True)
-    group_parent_id = models.BigIntegerField('父级id', default=0)
-    group_sort = models.IntegerField('排序', default=1)
-    group_level = models.IntegerField('层级', default=1)
-    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
-    create_time = models.DateTimeField(auto_now_add=True)
-    sys_time = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.group_name
-
-    class Meta:
-        verbose_name = u'项目组配置'
-        verbose_name_plural = u'项目组配置'
-
-
-# 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
-class workflow(models.Model):
-    workflow_name = models.CharField('工单内容', max_length=50)
-    group_id = models.IntegerField('项目ID')
-    group_name = models.CharField('项目名称', max_length=100)
-    engineer = models.CharField('发起人', max_length=50)
-    review_man = models.CharField('审核人', max_length=50)
-    create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    finish_time = models.DateTimeField('结束时间', null=True, blank=True)
-    status = models.CharField(max_length=50, choices=(
-        ('已正常结束', '已正常结束'), ('人工终止流程', '人工终止流程'), ('自动审核中', '自动审核中'), ('等待审核人审核', '等待审核人审核'), ('审核通过', '审核通过'),
-        ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
-    # is_backup = models.IntegerField('是否备份，0为否，1为是', choices=((0,0),(1,1)))
-    is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
-    review_content = models.TextField('自动审核内容的JSON格式')
-    cluster_name = models.CharField('实例名称', max_length=50)
-    db_name = models.CharField('数据库', max_length=60)
-    reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
-    sql_content = models.TextField('具体sql内容')
-    execute_result = models.TextField('执行结果的JSON格式')
-    is_manual = models.IntegerField('是否手工执行', choices=((0, '否'), (1, '是')), default=0)
-    audit_remark = models.TextField('审核备注', null=True)
-
-    def __str__(self):
-        return self.workflow_name
-
-    class Meta:
-        verbose_name = u'工单管理'
-        verbose_name_plural = u'工单管理'
-
-
 # 各个线上从库地址
 class slave_config(models.Model):
-    cluster_name = models.OneToOneField(master_config, db_constraint=False, to_field='cluster_name',
-                                        db_column='cluster_name', verbose_name='实例名称', unique=True)
+    cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     slave_host = models.CharField('从库地址', max_length=200)
     slave_port = models.IntegerField('从库端口', default=3306)
     slave_user = models.CharField('登录从库的用户名', max_length=100)
@@ -106,8 +88,8 @@ class slave_config(models.Model):
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
-        verbose_name = u'从库地址'
-        verbose_name_plural = u'从库地址'
+        verbose_name = u'从库配置'
+        verbose_name_plural = u'从库配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
@@ -115,11 +97,41 @@ class slave_config(models.Model):
         super(slave_config, self).save(*args, **kwargs)
 
 
+# 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
+class workflow(models.Model):
+    workflow_name = models.CharField('工单内容', max_length=50)
+    group_id = models.IntegerField('用户组ID')
+    group_name = models.CharField('用户组名称', max_length=100)
+    engineer = models.CharField('发起人', max_length=50)
+    review_man = models.CharField('审核人', max_length=50)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    finish_time = models.DateTimeField('结束时间', null=True, blank=True)
+    status = models.CharField(max_length=50, choices=(
+        ('已正常结束', '已正常结束'), ('人工终止流程', '人工终止流程'), ('等待审核人审核', '等待审核人审核'), ('审核通过', '审核通过'),
+        ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
+    is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
+    review_content = models.TextField('自动审核内容的JSON格式')
+    cluster_name = models.CharField('实例名称', max_length=50)
+    db_name = models.CharField('数据库', max_length=60)
+    reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
+    sql_content = models.TextField('具体sql内容')
+    execute_result = models.TextField('执行结果的JSON格式')
+    is_manual = models.IntegerField('是否手工执行', choices=((0, '否'), (1, '是')), default=0)
+    audit_remark = models.CharField('审核备注', max_length=200, null=True)
+
+    def __str__(self):
+        return self.workflow_name
+
+    class Meta:
+        verbose_name = u'SQL工单管理'
+        verbose_name_plural = u'SQL工单管理'
+
+
 # 工作流审核主表
 class WorkflowAudit(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('项目ID')
-    group_name = models.CharField('项目名称', max_length=100)
+    group_id = models.IntegerField('用户组ID')
+    group_name = models.CharField('用户组名称', max_length=100)
     workflow_id = models.BigIntegerField('关联业务id')
     workflow_type = models.IntegerField('申请类型',
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
@@ -166,8 +178,8 @@ class WorkflowAuditDetail(models.Model):
 # 审批配置表
 class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('项目ID')
-    group_name = models.CharField('项目名称', max_length=100)
+    group_id = models.IntegerField('用户组ID')
+    group_name = models.CharField('用户组名称', max_length=100)
     workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
@@ -186,8 +198,8 @@ class WorkflowAuditSetting(models.Model):
 # 查询权限申请记录表
 class QueryPrivilegesApply(models.Model):
     apply_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('项目ID')
-    group_name = models.CharField('项目名称', max_length=100)
+    group_id = models.IntegerField('用户组ID')
+    group_name = models.CharField('用户组名称', max_length=100)
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
     cluster_name = models.CharField('实例名称', max_length=50)

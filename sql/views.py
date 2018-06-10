@@ -13,10 +13,10 @@ from django.core.urlresolvers import reverse
 
 from sql.utils.dao import Dao
 from .const import Const, WorkflowDict
-from .inception import InceptionDao
+from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
-    QueryPrivilegesApply, Config
+    QueryPrivilegesApply, Config, Group_Relations
 from .workflow import Workflow
 from sql.utils.permission import role_required, superuser_required
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -92,6 +92,13 @@ def autoreview(request):
     # 服务器端参数验证
     if sqlContent is None or workflowName is None or clusterName is None or db_name is None or isBackup is None or reviewMan is None:
         context = {'errMsg': '页面提交参数可能为空'}
+        return render(request, 'error.html', context)
+
+    # 验证组权限（用户是否在该组、该组是否有指定实例）
+    try:
+        Group_Relations.objects.get(group_name=group_name, relation_key=clusterName, type=2)
+    except Exception:
+        context = {'errMsg': '该用户组不存在所选主库！'}
         return render(request, 'error.html', context)
 
     # # 删除注释语句
@@ -334,8 +341,9 @@ def execute(request):
     workflowDetail.reviewok_time = timezone.now()
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
     try:
-        splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
-                                                       isSplit='yes')
+        splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name,
+                                                         db_name,
+                                                         isSplit='yes')
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
@@ -629,7 +637,7 @@ def workflows(request):
     return render(request, "workflow.html", context)
 
 
-# 工作流审核列表
+# 工作流审核详情
 def workflowsdetail(request, audit_id):
     # 按照不同的workflow_type返回不同的详情
     auditInfo = workflowOb.auditinfo(audit_id)

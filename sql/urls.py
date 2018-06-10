@@ -1,6 +1,10 @@
 # -*- coding: UTF-8 -*- 
 
 from django.conf.urls import url
+
+import sql.group
+import sql.views_ajax
+import sql.workflow
 from . import views, views_ajax, query, slowlog, instance
 from sql.utils import jobs
 from sql.utils.config import SysConfig
@@ -48,10 +52,10 @@ urlpatterns = [
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
     url(r'^sqladvisorcheck/$', views_ajax.sqladvisorcheck, name='sqladvisorcheck'),
     url(r'^workflowlist/$', views_ajax.workflowlist, name='workflowlist'),
-    url(r'^addgroup/$', views_ajax.addgroup, name='addgroup'),
-    url(r'^groupauditors/$', views_ajax.groupauditors, name='groupauditors'),
-    url(r'^changegroupauditors/$', views_ajax.changegroupauditors, name='changegroupauditors'),
-    url(r'^changeconfig/$', views_ajax.changeconfig, name='changeconfig'),
+    url(r'^group_relations/$', sql.group.group_relations, name='group_relations'),
+    url(r'^groupauditors/$', sql.group.groupauditors, name='groupauditors'),
+    url(r'^changegroupauditors/$', sql.views_ajax.changegroupauditors, name='changegroupauditors'),
+    url(r'^changeconfig/$', sql.views_ajax.changeconfig, name='changeconfig'),
 
     url(r'^getdbNameList/$', instance.getdbNameList, name='getdbNameList'),
     url(r'^getTableNameList/$', instance.getTableNameList, name='getTableNameList'),

@@ -14,6 +14,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
+from sql.models import Config, Group
 from sql.utils.permission import superuser_required
 
 if settings.ENABLE_LDAP:
@@ -21,9 +22,9 @@ if settings.ENABLE_LDAP:
 
 from sql.utils.dao import Dao
 from .const import Const
-from .inception import InceptionDao
+from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow, Group, Config
+from .models import users, master_config, workflow
 from sql.utils.sendmail import MailSender
 import logging
 from .workflow import Workflow
@@ -494,73 +495,6 @@ def workflowlist(request):
                         content_type='application/json')
 
 
-# 添加项目组
-@csrf_exempt
-@superuser_required
-def addgroup(request):
-    group_parent_id = int(request.POST.get('group_parent_id'))
-    group_name = request.POST.get('group_name')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    inset = Group()
-    inset.group_parent_id = group_parent_id
-    inset.group_name = group_name
-    if group_parent_id != 0:
-        inset.group_level = Group.objects.get(group_id=group_parent_id).group_level + 1
-    else:
-        inset.group_level = 1
-    inset.save()
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取项目组的审核人
-@csrf_exempt
-def groupauditors(request):
-    group_id = request.POST.get('group_id')
-    group_name = request.POST.get('group_name')
-    workflow_type = request.POST['workflow_type']
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-    if group_id:
-        auditors = workflowOb.auditsettings(group_id=int(group_id), workflow_type=workflow_type)
-    elif group_name:
-        group_id = Group.objects.get(group_name=group_name).group_id
-        auditors = workflowOb.auditsettings(group_id=group_id, workflow_type=workflow_type)
-    else:
-        result['status'] = 1
-        result['msg'] = '参数错误'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    # 获取所有用户
-    if auditors:
-        auditor_list = auditors.audit_users.split(',')
-        result['data'] = auditor_list
-    else:
-        result['data'] = []
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 项目组审核配置
-@csrf_exempt
-@superuser_required
-def changegroupauditors(request):
-    audit_users = request.POST.get('audit_users')
-    group_id = int(request.POST.get('group_id'))
-    workflow_type = request.POST.get('workflow_type')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # 调用工作流修改审核配置
-    try:
-        workflowOb.changesettings(group_id, workflow_type, audit_users)
-    except Exception as msg:
-        result['msg'] = str(msg)
-        result['status'] = 1
-
-    # 返回结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
 # 修改系统配置
 @csrf_exempt
 @superuser_required
@@ -577,6 +511,27 @@ def changeconfig(request):
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
+
+    # 返回结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 组审批流程配置
+@csrf_exempt
+@superuser_required
+def changegroupauditors(request):
+    audit_users = request.POST.get('audit_users')
+    group_name = request.POST.get('group_name')
+    workflow_type = request.POST.get('workflow_type')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    # 调用工作流修改审核配置
+    group_id = Group.objects.get(group_name=group_name).group_id
+    try:
+        workflowOb.changesettings(group_id, workflow_type, audit_users)
+    except Exception as msg:
+        result['msg'] = str(msg)
+        result['status'] = 1
 
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')

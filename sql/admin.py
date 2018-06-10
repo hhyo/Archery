@@ -1,55 +1,20 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
 from sql.utils.config import SysConfig
 from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
-    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group
-
-
-
-# 主库配置管理
-class master_configAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'create_time')
-    search_fields = ['id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'master_password',
-                     'create_time', 'update_time']
-
-
-# 项目组管理
-@admin.register(Group)
-class GroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'group_parent_id', 'group_sort', 'group_level', 'is_deleted')
-
-
-# 工单管理
-class workflowAdmin(admin.ModelAdmin):
-    list_display = ('id', 'workflow_name', 'group_id', 'cluster_name', 'engineer', 'create_time', 'status', 'is_backup')
-    search_fields = ['id', 'workflow_name', 'engineer', 'review_man', 'sql_content']
-
-
-# 创建用户表单重新定义，继承自UserCreationForm
-class usersCreationForm(UserCreationForm):
-    def __init__(self, *args, **kwargs):
-        super(usersCreationForm, self).__init__(*args, **kwargs)
-
-
-# 编辑用户表单重新定义，继承自UserChangeForm
-class usersChangeForm(UserChangeForm):
-    def __init__(self, *args, **kwargs):
-        super(usersChangeForm, self).__init__(*args, **kwargs)
+    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, Group_Relations
 
 
 # 用户管理
+@admin.register(users)
 class usersAdmin(UserAdmin):
     def __init__(self, *args, **kwargs):
-        super(usersAdmin, self).__init__(*args, **kwargs)
+        super(UserAdmin, self).__init__(*args, **kwargs)
         self.list_display = ('id', 'username', 'display', 'role', 'email', 'is_superuser', 'is_staff', 'is_active')
         self.search_fields = ('id', 'username', 'display', 'role', 'email')
-        self.form = usersChangeForm
-        self.add_form = usersCreationForm
-        # 以上的属性都可以在django源码的UserAdmin类中找到，我们做以覆盖
 
     def changelist_view(self, request, extra_context=None):
         # 这个方法在源码的admin/options.py文件的ModelAdmin这个类中定义，我们要重新定义它，以达到不同权限的用户，返回的表单内容不同
@@ -65,12 +30,35 @@ class usersAdmin(UserAdmin):
             self.add_fieldsets = (
                 (None, {'fields': ('username', 'display', 'role', 'email', 'password1', 'password2'), }),
             )
-        return super(usersAdmin, self).changelist_view(request, extra_context)
+        return super(UserAdmin, self).changelist_view(request, extra_context)
 
 
-admin.site.register(users, usersAdmin)
-admin.site.register(master_config, master_configAdmin)
-admin.site.register(workflow, workflowAdmin)
+# 用户组管理
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ('group_id', 'group_name', 'group_parent_id', 'group_sort', 'group_level', 'is_deleted')
+
+
+# 用户组关系管理
+@admin.register(Group_Relations)
+class GroupRelationsAdmin(admin.ModelAdmin):
+    list_display = ('relation_id', 'relation_key', 'group_id', 'group_name', 'type', 'create_time')
+
+
+# 主库配置管理
+@admin.register(master_config)
+class master_configAdmin(admin.ModelAdmin):
+    list_display = ('id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'create_time')
+    search_fields = ['id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'master_password',
+                     'create_time', 'update_time']
+
+
+# 工单管理
+@admin.register(workflow)
+class workflowAdmin(admin.ModelAdmin):
+    list_display = ('id', 'workflow_name', 'group_id', 'cluster_name', 'engineer', 'create_time', 'status', 'is_backup')
+    search_fields = ['id', 'workflow_name', 'engineer', 'review_man', 'sql_content']
+
 
 if SysConfig().sys_config.get('query') == 'true':
     # 查询从库配置

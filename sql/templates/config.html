@@ -18,7 +18,7 @@
                                             data-name="配置项" data-placeholder="请选择配置项:" required>
                                         <option value="is-empty" disabled="" selected="selected">请选择配置项:</option>
                                         <option value="0">系统设置</option>
-                                        <option value="1">项目组配置</option>
+                                        <option value="1">用户组配置</option>
                                         <option value="2">工单审核流配置</option>
                                     </select>
                                 </div>
@@ -35,14 +35,18 @@
                                             {{ WorkflowDict.workflow_type.query_display }}</option>
                                     </select>
                                 </div>
-                                <h5 class="control-label text-bold">项目组：</h5>
+                                <h5 class="control-label text-bold">用户组：</h5>
                                 <div class="form-group">
-                                    <select id="group_workflow" name="group_workflow"
+                                    <select id="group" name="group"
                                             class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="项目组" data-placeholder="请选择项目组:" data-live-search="true" required>
+                                            data-name="用户组" data-placeholder="请选择用户组:" data-live-search="true" required>
+                                        {% for group in group_list %}
+                                            <option value="{{ group.name }}">{{ group.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
+
                         </form>
                     </div>
                 </div>
@@ -333,23 +337,10 @@
                         </form>
                         <div id="div-group-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
-                                规则：<b>仅支持添加项目组，删除和编辑请到后台数据管理模块操作</b></h5>
+                                <b>用户组管理：<a href="/admin/sql/group/">点击访问</a></b></h5>
                             <br>
-                            <div class="form-group">
-                                <select id="group" name="group"
-                                        class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="请选择父级项目" data-placeholder="请选择父级项目:" data-live-search="true"
-                                        required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择父级项目:</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" id="group_name" placeholder="请输入项目名称">
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <button id="btn-group-add" class="btn btn-default">添加</button>
-                            </div>
+                            <h5 class="control-label text-bold" style="color: red">
+                                <b>用户组关系管理：<a href="/admin/sql/group_relations/">点击访问</a></b></h5>
                         </div>
                         <div id="div-workflow-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
@@ -391,52 +382,6 @@
     {% load staticfiles %}
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
-    <!--listToTree -->
-    <script>
-        //list 转成树形json
-        function listToTree(list, pid) {
-            var ret = [];//一个存放结果的临时数组
-            for (var i in list) {
-                if (list[i].parent === pid) {//如果当前项的父id等于要查找的父id，进行递归
-                    list[i].children = listToTree(list, list[i].id);
-                    ret.push(list[i]);//把当前项保存到临时数组中
-                }
-            }
-            return ret;//递归结束后返回结果
-        }
-
-        var tree = listToTree({{ group_list|safe }}, 0);//调用函数，传入要转换的list数组，和树中顶级元素的pid
-
-        //生成树下拉菜单
-        function creatSelectTree(d) {
-            var option = "";
-            for (var i = 0; i < d.length; i++) {
-                if (d[i].children.length) {//如果有子集
-                    if (d[i].parent === 0) {
-                        option += "<option value='" + d[i].id + "'>" + d[i].name + "</option>";
-                        option += creatSelectTree(d[i].children);//递归调用子集
-                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
-                    }
-                    else {
-                        option += "<option value='" + d[i].id + "'>" + j + d[i].name + "</option>";
-                        j += "┆﹍﹍";//前缀符号加一个符号
-                        option += creatSelectTree(d[i].children);//递归调用子集
-                        j = j.slice(0, j.length - 3);//每次递归结束返回上级时，前缀符号需要减一个符号
-                    }
-                } else {//没有子集直接显示
-                    option += "<option value='" + d[i].id + "'>" + j + d[i].name + "</option>";
-                }
-            }
-            return option;//返回最终html结果
-        }
-
-        //调用函数，并将结构出入到下拉框容器中
-        var j = "┆﹍﹍";//前缀符号，用于显示父子关系，这里可以使用其它符号
-        $("#group").append(creatSelectTree(tree));
-        var j = "┆﹍﹍";//前缀符号，用于显示父子关系，这里可以使用其它符号
-        $("#group_workflow").append(creatSelectTree(tree));
-
-    </script>
     <script>
         //配置项切换
         $("#config").change(function () {
@@ -465,7 +410,7 @@
             }
             else if ($("#config").val() === '2') {
                 $("#div-system-config").hide();
-                $("#div-group").hide();
+                $("#div-group").show();
                 $("#div-group-config").hide();
                 $("#div-workflow").show();
                 $("#div-workflow-config").show();
@@ -536,8 +481,8 @@
             });
         });
 
-        // 切换项目触发工单类型切换事件
-        $("#group_workflow").change(function () {
+        // 切换用户组触发工单类型切换事件
+        $("#group").change(function () {
             $("#workflow_type").trigger('change')
         });
 
@@ -561,67 +506,29 @@
             window.location.reload()
         });
 
-        // 切换工单类型获取对应项目组负责人
+        // 切换工单类型获取对应用户组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
             $("#group_auditors_text").val('');
-            if ($("#group_workflow").val()) {
-                $.ajax({
-                    type: "post",
-                    url: "/groupauditors/",
-                    dataType: "json",
-                    data: {
-                        group_id: $("#group_workflow").val().split(',')[0],
-                        workflow_type: $("#workflow_type").val()
-                    },
-                    complete: function () {
-
-                    },
-                    success: function (data) {
-                        if (data.status === 0) {
-                            var result = data.data;
-                            var auditor = [];
-                            for (var i = 0; i < result.length; i++) {
-                                auditor.push(result[i]);
-                            }
-                            $("#workflow_auditors").text(auditor);
-                        } else {
-                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
-                        }
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-                        alert(errorThrown);
-                    }
-                });
-            }
-        });
-
-        // 添加项目组
-        $("#btn-group-add").click(function () {
-            var group = $("#group").val();
-            if (group) {
-                var group_parent_id = $("#group").val().split(',')[0]
-            }
-            else {
-                var group_parent_id = 0
-            }
-            $(this).addClass('disabled');
-            $(this).prop('disabled', true);
             $.ajax({
                 type: "post",
-                url: "/addgroup/",
+                url: "/groupauditors/",
                 dataType: "json",
                 data: {
-                    group_parent_id: group_parent_id,
-                    group_name: $("#group_name").val()
+                    group_name: $("#group").val(),
+                    workflow_type: $("#workflow_type").val()
                 },
                 complete: function () {
-                    $("#btn-group-add").removeClass('disabled');
-                    $("#btn-group-add").prop('disabled', false);
+
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        window.location.reload()
+                        var result = data.data;
+                        var auditor = [];
+                        for (var i = 0; i < result.length; i++) {
+                            auditor.push(result[i]);
+                        }
+                        $("#workflow_auditors").text(auditor);
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -632,7 +539,7 @@
             });
         });
 
-        // 变更项目组工单负责人
+        // 变更用户组工单负责人
         $("#btn-workflow-config").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
@@ -641,7 +548,7 @@
                 url: "/changegroupauditors/",
                 dataType: "json",
                 data: {
-                    group_id: $("#group_workflow").val().split(',')[0],
+                    group_name: $("#group").val(),
                     audit_users: $("#group_auditors_text").val(),
                     workflow_type: $("#workflow_type").val()
                 },
