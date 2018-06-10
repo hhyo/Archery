@@ -49,6 +49,7 @@ class GroupRelations(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'sql_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
         verbose_name = u'用户组关系配置'
         verbose_name_plural = u'用户组关系配置'
