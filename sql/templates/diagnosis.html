@@ -311,17 +311,11 @@
                         success: function (data) {
                             if (data.status === 0) {
                                 var result = data.data;
-
-                                if (result) {
-                                    //给对话框赋值
-                                    $("#request_params").val(result);
-                                    $("#kill_sql").text(result);
-                                    //打开对话框
-                                    $("#killComfirm").modal();
-                                }
-                                else {
-                                    alert("所选会话已终止！")
-                                }
+                                //给对话框赋值
+                                $("#request_params").val(result);
+                                $("#kill_sql").text(result);
+                                //打开对话框
+                                $("#killComfirm").modal();
                             }
                             else {
                                 alert("status: " + data.status + "\nmsg: " + data.msg);
