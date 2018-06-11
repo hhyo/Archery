@@ -32,8 +32,7 @@ def slowquery_review(request):
         limit = offset + limit
 
         # 时间处理
-        if StartTime == EndTime:
-            EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
+        EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
         # DBName非必传
         if DBName:
             # 获取慢查数据
@@ -135,8 +134,7 @@ def slowquery_review_history(request):
         offset = int(request.POST.get('offset'))
 
         # 时间处理
-        if StartTime == EndTime:
-            EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
+        EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
         limit = offset + limit
         # SQLId、DBName非必传
         if SQLId:

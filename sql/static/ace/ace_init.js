@@ -202,10 +202,6 @@ function setColumnsCompleteData(result) {
                     alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                 }
             }
-            ,
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                alert(errorThrown);
-            }
         });
     }
 }

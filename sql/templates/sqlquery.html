@@ -92,6 +92,13 @@
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <!-- 查询历史  -->
     <script>
+        $.ajaxSetup({
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                console.log(errorThrown);
+                location.href = '/login/'
+            }
+        });
+
         //获取查询列表
         function get_querylog() {
             //采取异步请求
@@ -494,9 +501,6 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
                 }
             });
         }
@@ -540,9 +544,6 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
                 }
             });
         });
@@ -577,9 +578,6 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
                 }
             });
         });
