@@ -8,10 +8,7 @@
         <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
     {% endif %}
     {% if loginUserOb.role == 'DBA' %}
-        {% if workflowDetail.status == '自动审核不通过' %}
-            <button class="btn btn-danger" data-toggle="modal" data-target="#executeComfirm">跳过inception执行
-            </button>
-        {% endif %}
+        <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
@@ -104,7 +101,7 @@
             <thead>
             <tr>
                 <th>
-                    手工执行结果
+                    执行结果
                 </th>
             </tr>
             </thead>
@@ -370,6 +367,15 @@
             sessionStorage.setItem('editDbname', editDbname);
             sessionStorage.setItem('editIsbackup', editIsbackup);
         });
+        $("#btnViewSql").click(function () {
+            sessionStorage.removeItem('editWorkflowDetailId');
+            sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
+            sessionStorage.setItem('editSqlContent', editSqlContent);
+            sessionStorage.setItem('editGroup', editGroup);
+            sessionStorage.setItem('editClustername', editClustername);
+            sessionStorage.setItem('editDbname', editDbname);
+            sessionStorage.setItem('editIsbackup', editIsbackup);
+        });
         $("#btnSubmitOtherCluster").click(function () {
             sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
             sessionStorage.setItem('editSqlContent', editSqlContent);
@@ -379,7 +385,12 @@
 
         // 执行确认
         $("#btnExecuteOnly").click(function () {
-            var isContinue = confirm("请确认是否立即执行？");
+            if ({{ workflowDetail.is_manual }}) {
+                var isContinue = confirm("平台不支持该语句备份，将不会自动备份数据，请确认是否立即执行？");
+            }
+            else {
+                var isContinue = confirm("请确认是否立即执行？");
+            }
             var formExecuteOnly = $("#from-execute");
             if (isContinue) {
                 var element = $(this);

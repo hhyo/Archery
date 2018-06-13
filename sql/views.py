@@ -129,13 +129,14 @@ def autoreview(request):
 
     # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
     workflowStatus = Const.workflowStatus['manreviewing']
+    # inception审核不通过的工单，标记手动执行标签
+    is_manual = 0
     for row in result:
         if row[2] == 2:
-            # 状态为2表示严重错误，必须修改
-            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            is_manual = 1
             break
         elif re.match(r"\w*comments\w*", row[4]):
-            workflowStatus = Const.workflowStatus['autoreviewwrong']
+            is_manual = 1
             break
 
     # 调用工作流生成工单
@@ -161,6 +162,7 @@ def autoreview(request):
             Workflow.db_name = db_name
             Workflow.sql_content = sqlContent
             Workflow.execute_result = ''
+            Workflow.is_manual = is_manual
             Workflow.audit_remark = ''
             Workflow.save()
             workflowId = Workflow.id
@@ -339,25 +341,34 @@ def execute(request):
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = timezone.now()
-    # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    try:
-        splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name,
-                                                         db_name,
-                                                         isSplit='yes')
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-    workflowDetail.review_content = json.dumps(splitReviewResult)
-    try:
-        workflowDetail.save()
-    except Exception:
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflowDetail.save()
+    workflowDetail.save()
 
-    # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
-    t.start()
+    # 判断是通过inception执行还是直接执行，is_manual=0则通过inception执行，is_manual=1代表inception审核不通过，需要直接执行
+    if workflowDetail.is_manual == 0:
+        # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+        try:
+            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name,
+                                                             db_name,
+                                                             isSplit='yes')
+        except Exception as msg:
+            context = {'errMsg': msg}
+            return render(request, 'error.html', context)
+        workflowDetail.review_content = json.dumps(splitReviewResult)
+        try:
+            workflowDetail.save()
+        except Exception:
+            # 关闭后重新获取连接，防止超时
+            connection.close()
+            workflowDetail.save()
+
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
+        t.start()
+    else:
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=execute_skipinc_call_back,
+                   args=(workflowId, clusterName, db_name, workflowDetail.sql_content, url))
+        t.start()
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
@@ -394,39 +405,6 @@ def timingtask(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
-
-# 跳过inception直接执行SQL，只是为了兼容inception不支持的语法，谨慎使用
-@role_required(('DBA',))
-def execute_skipinc(request):
-    workflowId = request.POST['workflowid']
-
-    # 获取工单信息
-    workflowId = int(workflowId)
-    workflowDetail = workflow.objects.get(id=workflowId)
-    sql_content = workflowDetail.sql_content
-    clusterName = workflowDetail.cluster_name
-    dbName = workflowDetail.db_name
-    url = getDetailUrl(request) + str(workflowId) + '/'
-
-    # 服务器端二次验证，当前工单状态必须为自动审核不通过
-    if workflowDetail.status not in [Const.workflowStatus['manreviewing'], Const.workflowStatus['pass'],
-                                     Const.workflowStatus['autoreviewwrong']]:
-        context = {'errMsg': '当前工单状态不是自动审核不通过，请刷新当前页面！'}
-        return render(request, 'error.html', context)
-
-    # 更新工单状态为执行中
-    workflowDetail = workflow.objects.get(id=workflowId)
-    workflowDetail.status = Const.workflowStatus['executing']
-    workflowDetail.reviewok_time = timezone.now()
-    workflowDetail.save()
-
-    # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_skipinc_call_back, args=(workflowId, clusterName, dbName, sql_content, url))
-    t.start()
-
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
 
 # 终止流程
 def cancel(request):

@@ -24,7 +24,6 @@ urlpatterns = [
     url(r'^passed/$', views.passed, name='passed'),
     url(r'^execute/$', views.execute, name='execute'),
     url(r'^timingtask/$', views.timingtask, name='timingtask'),
-    url(r'^execute_skipinc/$', views.execute_skipinc, name='execute_skipinc'),
     url(r'^cancel/$', views.cancel, name='cancel'),
     url(r'^rollback/$', views.rollback, name='rollback'),
     url(r'^sqlquery/$', views.sqlquery, name='sqlquery'),
