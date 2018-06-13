@@ -60,43 +60,40 @@ class workflowAdmin(admin.ModelAdmin):
     search_fields = ['id', 'workflow_name', 'engineer', 'review_man', 'sql_content']
 
 
-if SysConfig().sys_config.get('query') == 'true':
-    # 查询从库配置
-    @admin.register(slave_config)
-    class WorkflowAuditAdmin(admin.ModelAdmin):
-        list_display = (
-            'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
-        search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
+# 查询从库配置
+@admin.register(slave_config)
+class WorkflowAuditAdmin(admin.ModelAdmin):
+    list_display = (
+        'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
+    search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
 
 
-    # 审批流程配置
-    @admin.register(WorkflowAuditSetting)
-    class WorkflowAuditSettingAdmin(admin.ModelAdmin):
-        list_display = ('audit_setting_id', 'workflow_type', 'group_id', 'audit_users',)
+# 审批流程配置
+@admin.register(WorkflowAuditSetting)
+class WorkflowAuditSettingAdmin(admin.ModelAdmin):
+    list_display = ('audit_setting_id', 'workflow_type', 'group_id', 'audit_users',)
 
-if SysConfig().sys_config.get('data_masking') == 'true':
-    # 脱敏字段页面定义
-    @admin.register(DataMaskingColumns)
-    class DataMaskingColumnsAdmin(admin.ModelAdmin):
-        list_display = (
-            'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name',
-            'create_time',)
-
-
-    # 脱敏规则页面定义
-    @admin.register(DataMaskingRules)
-    class DataMaskingRulesAdmin(admin.ModelAdmin):
-        list_display = (
-            'rule_type', 'rule_regex', 'hide_group', 'rule_desc', 'sys_time',)
-
-if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-    # 阿里云的认证信息
-    @admin.register(AliyunAccessKey)
-    class AliyunAccessKeyAdmin(admin.ModelAdmin):
-        list_display = ('ak', 'secret', 'is_enable', 'remark',)
+# 脱敏字段页面定义
+@admin.register(DataMaskingColumns)
+class DataMaskingColumnsAdmin(admin.ModelAdmin):
+    list_display = (
+        'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name',
+        'create_time',)
 
 
-    # 阿里云实例配置信息
-    @admin.register(AliyunRdsConfig)
-    class AliyunRdsConfigAdmin(admin.ModelAdmin):
-        list_display = ('cluster_name', 'rds_dbinstanceid',)
+# 脱敏规则页面定义
+@admin.register(DataMaskingRules)
+class DataMaskingRulesAdmin(admin.ModelAdmin):
+    list_display = (
+        'rule_type', 'rule_regex', 'hide_group', 'rule_desc', 'sys_time',)
+
+# 阿里云的认证信息
+@admin.register(AliyunAccessKey)
+class AliyunAccessKeyAdmin(admin.ModelAdmin):
+    list_display = ('ak', 'secret', 'is_enable', 'remark',)
+
+
+# 阿里云实例配置信息
+@admin.register(AliyunRdsConfig)
+class AliyunRdsConfigAdmin(admin.ModelAdmin):
+    list_display = ('cluster_name', 'rds_dbinstanceid',)

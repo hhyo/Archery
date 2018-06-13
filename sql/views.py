@@ -103,7 +103,7 @@ def autoreview(request):
 
     # # 删除注释语句
     # sqlContent = ''.join(
-    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;[\f\n\r\t\v\s]*$)').sub('', x, count=1),
+    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
     #         sqlContent.splitlines(1))).strip()
     # # 去除空行
     # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)

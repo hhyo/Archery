@@ -358,7 +358,7 @@
                 sqlContent = "show create table " + table_name + ";"
             }
             //处理SQL，去除注释、空行等
-            sqlContent = sqlContent.replace(/^--[\f\n\r\t\v\s]+.*|^#[\f\n\r\t\v\s]+.*/g, '');
+            sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
             sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
             sqlContent = sqlContent.trim();
             //提交请求
@@ -449,7 +449,7 @@
                                 field: 'checkbox',
                                 checkbox: true
                             });*/
-                            if (sqlContent.match(/^show.*create.*table/)) {
+                            if (sqlContent.match(/^show\s+create\s+table/)) {
                                 //初始化表结构显示
                                 $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
                                         data: result['rows'],

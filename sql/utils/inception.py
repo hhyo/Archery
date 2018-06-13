@@ -40,6 +40,10 @@ class InceptionDao(object):
         '''
         resultList = []
         criticalSqlFound = 0
+        # 删除注释语句
+        sqlContent = ''.join(
+            map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
+                sqlContent.splitlines(1))).strip()
         for row in sqlContent.rstrip(';').split(';'):
             if re.match(
                     r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)",
