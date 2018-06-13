@@ -28,7 +28,12 @@ class Masking(object):
         else:
             query_tree = print_info['query_tree']
             # 获取实例所属环境,获取命中脱敏规则的列数据
-            table_hit_columns, hit_columns = self.analy_query_tree(query_tree, cluster_name)
+            try:
+                table_hit_columns, hit_columns = self.analy_query_tree(query_tree, cluster_name)
+            except Exception as msg:
+                result['status'] = 2
+                result['msg'] = 'inception语法树解析表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
+                return result
 
             # 存在select * 的查询,遍历column_list,获取命中列的index,添加到hit_columns
             if table_hit_columns and sql_result.get('rows'):
@@ -102,19 +107,33 @@ class Masking(object):
             try:
                 table_ref = json.loads(print_info['query_tree'])['table_ref']
             except Exception:
-                # 处理JSONDecodeError: Expecting property name enclosed in double quotes
-                # json出现{"a":1,}、["a":1,]、{'a':1}
-                query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", print_info['query_tree'])
-                query_tree_str = re.sub(r",\s*?]", "]", query_tree_str)
-                query_tree_str = re.sub(r",\s*?}", "}", query_tree_str)
-                query_tree_str = query_tree_str.replace("'", "\"")
-                table_ref = json.loads(query_tree_str)['table_ref']
+                try:
+                    # 处理JSONDecodeError: Expecting property name enclosed in double quotes
+                    # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
+                    query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", print_info['query_tree'])
+                    query_tree_str = re.sub(r",\s*?]", "]", query_tree_str)
+                    query_tree_str = re.sub(r",\s*?}", "}", query_tree_str)
+                    query_tree_str = re.sub(r"\[,\s*?{", "[{", query_tree_str)
+                    query_tree_str = query_tree_str.replace("'", "\"")
+                    table_ref = json.loads(query_tree_str)['table_ref']
+                except Exception as msg:
+                    result['status'] = 2
+                    result['msg'] = 'inception语法树解析表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
+                    table_ref = ''
             result['data'] = table_ref
         return result
 
     # 解析query_tree,获取语句信息,并返回命中脱敏规则的列信息
     def analy_query_tree(self, query_tree, cluster_name):
-        query_tree_dict = json.loads(query_tree)
+        # 处理JSONDecodeError: Expecting property name enclosed in double quotes
+        # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
+        query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", query_tree)
+        query_tree_str = re.sub(r",\s*?]", "]", query_tree_str)
+        query_tree_str = re.sub(r",\s*?}", "}", query_tree_str)
+        query_tree_str = re.sub(r"\[,\s*?{", "[{", query_tree_str)
+        query_tree_str = query_tree_str.replace("'", "\"")
+
+        query_tree_dict = json.loads(query_tree_str)
         select_list = query_tree_dict.get('select_list')
         table_ref = query_tree_dict.get('table_ref')
 
