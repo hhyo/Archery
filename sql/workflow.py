@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
+import datetime
 
 from django.utils import timezone
 
-from sql.utils.sendmail import MailSender
+from sql.notify import send_msg
+from sql.utils.sendmsg import MailSender
 from .const import WorkflowDict
 from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply
@@ -31,8 +33,23 @@ class Workflow(object):
             group_name = workflow_detail.group_name
             create_user = workflow_detail.user_name
             workflow_remark = ''
-            workflow_type_display = DirectionsOb.workflow_type['query_display']
-            email_info = ''
+            if workflow_detail.priv_type == 1:
+                notify_text = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                    workflow_detail.db_list,
+                    datetime.datetime.strftime(
+                        workflow_detail.valid_date,
+                        '%Y-%m-%d %H:%M:%S'),
+                    workflow_detail.limit_num)
+            elif workflow_detail.priv_type == 2:
+                notify_text = '''数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                    workflow_detail.db_list,
+                    workflow_detail.table_list,
+                    datetime.datetime.strftime(
+                        workflow_detail.valid_date,
+                        '%Y-%m-%d %H:%M:%S'),
+                    workflow_detail.limit_num)
+            else:
+                notify_text = ''
         elif workflow_type == DirectionsOb.workflow_type['sqlreview']:
             workflow_detail = workflow.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.workflow_name
@@ -41,8 +58,7 @@ class Workflow(object):
             group_name = workflow_detail.group_name
             create_user = workflow_detail.engineer
             workflow_remark = ''
-            workflow_type_display = DirectionsOb.workflow_type['sqlreview_display']
-            email_info = workflow_detail.sql_content
+            notify_text = workflow_detail.sql_content
         else:
             result['msg'] = '工单类型不存在'
             raise Exception(result['msg'])
@@ -118,23 +134,29 @@ class Workflow(object):
             result['data'] = {'workflow_status': DirectionsOb.workflow_status['audit_wait']}
 
         # 如果待审核则发送邮件通知当前审核人
-        if SysConfig().sys_config.get('mail') == 'true' \
-                and auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
-            # 邮件内容
-            current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
-            email_reciver = current_audit_userOb.email
-            # 抄送对象
-            if kwargs.get('listCcAddr'):
-                listCcAddr = kwargs.get('listCcAddr')
-            else:
-                listCcAddr = []
-            email_title = "[" + workflow_type_display + "]" + "新的工单申请提醒# " + str(auditInfo.audit_id)
-            email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                            + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                            + str(auditInfo.audit_id) + "\n工单名称：" + auditInfo.workflow_title \
-                            + "\n工单详情：" + email_info
-            MailSender().sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
-
+        if auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
+            # 消息内容
+            msg_data = {}
+            msg_data['audit_id'] = auditInfo.audit_id
+            msg_data['workflow_type'] = auditInfo.workflow_type
+            msg_data['workflow_from'] = auditInfo.create_user
+            msg_data['workflow_auditors'] = auditInfo.audit_users
+            msg_data['workflow_title'] = auditInfo.workflow_title
+            msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
+                                                                          request.get_host(),
+                                                                          auditInfo.audit_id)
+            msg_data['workflow_content'] = notify_text
+            if SysConfig().sys_config.get('mail') == 'true':
+                # 接收人
+                current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
+                msg_data['email_reciver'] = current_audit_userOb.email
+                # 抄送对象
+                if kwargs.get('listCcAddr'):
+                    listCcAddr = kwargs.get('listCcAddr')
+                else:
+                    listCcAddr = []
+                msg_data['email_cc'] = listCcAddr
+                send_msg(msg_data, 1, auditInfo.current_status)
         return result
 
     # 工单审核
@@ -144,12 +166,26 @@ class Workflow(object):
 
         # 获取业务信息
         if auditInfo.workflow_type == DirectionsOb.workflow_type['query']:
-            workflow_type_display = DirectionsOb.workflow_type['query_display']
-            email_info = ''
+            workflow_detail = QueryPrivilegesApply.objects.get(pk=auditInfo.workflow_id)
+            if workflow_detail.priv_type == 1:
+                notify_text = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                    workflow_detail.db_list,
+                    datetime.datetime.strftime(workflow_detail.valid_date,
+                                               '%Y-%m-%d %H:%M:%S'),
+                    workflow_detail.limit_num)
+            elif workflow_detail.priv_type == 2:
+                notify_text = '''数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                    workflow_detail.db_list,
+                    workflow_detail.table_list,
+                    datetime.datetime.strftime(workflow_detail.valid_date,
+                                               '%Y-%m-%d %H:%M:%S'),
+                    workflow_detail.limit_num)
+            else:
+                notify_text = ''
         elif auditInfo.workflow_type == DirectionsOb.workflow_type['sqlreview']:
             workflow_detail = workflow.objects.get(pk=auditInfo.workflow_id)
             workflow_type_display = DirectionsOb.workflow_type['sqlreview_display']
-            email_info = workflow_detail.sql_content
+            notify_text = workflow_detail.sql_content
         else:
             result['msg'] = '工单类型不存在'
             raise Exception(result['msg'])
@@ -258,49 +294,48 @@ class Workflow(object):
             result['msg'] = '审核异常'
             raise Exception(result['msg'])
 
-        # 按照审核状态发送邮件
+        # 准备消息发送
+        # 重新获取审核状态
+        auditInfo = WorkflowAudit.objects.get(audit_id=audit_id)
+        # 消息内容
+        msg_data = {}
+        msg_data['audit_id'] = auditInfo.audit_id
+        msg_data['workflow_type'] = auditInfo.workflow_type
+        msg_data['workflow_from'] = auditInfo.create_user
+        msg_data['workflow_auditors'] = auditInfo.audit_users
+        msg_data['workflow_title'] = auditInfo.workflow_title
+        msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
+                                                                      request.get_host(),
+                                                                      auditInfo.audit_id)
+        msg_data['workflow_content'] = notify_text
         if SysConfig().sys_config.get('mail') == 'true':
-            # 重新获取审核状态
-            auditInfo = WorkflowAudit.objects.get(audit_id=audit_id)
             # 给下级审核人发送邮件
             if auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
                 # 邮件内容
-                email_reciver = users.objects.get(username=auditInfo.current_audit_user).email
-                email_title = "[" + workflow_type_display + "]" + "新的工单申请提醒# " + str(auditInfo.audit_id)
-                email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                                + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                                + str(auditInfo.audit_id) + "\n工单名称：" + auditInfo.workflow_title \
-                                + "\n工单详情：" + email_info
-                MailSender().sendEmail(email_title, email_content, [email_reciver])
+                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.current_audit_user).email]
+                msg_data['email_cc'] = []
             # 审核通过，通知提交人，抄送DBA
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
-                email_reciver = users.objects.get(username=auditInfo.create_user).email
+                # 邮件内容
+                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
                 listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-                email_title = "[" + workflow_type_display + "]" + "工单审核通过 # " + str(auditInfo.audit_id)
-                email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                                + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                                + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
-                                + "\n审核备注： " + audit_remark
-                MailSender().sendEmail(email_title, email_content, [email_reciver], listCcAddr=listCcAddr)
+                msg_data['email_cc'] = listCcAddr
             # 审核驳回，通知提交人
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:
-                email_reciver = users.objects.get(username=auditInfo.create_user).email
-                email_title = "[" + workflow_type_display + "]" + "工单被驳回 # " + str(auditInfo.audit_id)
-                email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                                + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                                + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
-                                + "\n审核备注： " + audit_remark + "\n提醒：此工单被审核不通过，请重新提交或修改工单"
-                MailSender().sendEmail(email_title, email_content, [email_reciver])
+                # 邮件内容
+                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+                msg_data['email_cc'] = []
+                msg_data['workflow_audit_remark'] = audit_remark
             # 主动取消，通知所有审核人
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_abort']:
-                email_reciver = [email['email'] for email in
-                                 users.objects.filter(username__in=auditInfo.audit_users.split(',')).values('email')]
-                email_title = "[" + workflow_type_display + "]" + "提交人主动终止SQL上线工单流程 # " + str(auditInfo.audit_id)
-                email_content = "发起人：" + auditInfo.create_user + "\n审核人：" + auditInfo.audit_users \
-                                + "\n工单地址：" + request.scheme + "://" + request.get_host() + "/workflowdetail/" \
-                                + str(audit_id) + "\n工单名称： " + auditInfo.workflow_title \
-                                + "\n提醒：提交人主动终止流程"
-                MailSender().sendEmail(email_title, email_content, [email_reciver])
+                # 邮件内容
+                msg_data['email_reciver'] = [email['email'] for email in
+                                             users.objects.filter(
+                                                 username__in=auditInfo.audit_users.split(',')).values(
+                                                 'email')]
+                msg_data['email_cc'] = []
+            # 发送邮件
+            send_msg(msg_data, 1, auditInfo.current_status)
         # 返回审核结果
         result['data'] = {'workflow_status': auditresult.current_status}
         return result

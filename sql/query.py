@@ -179,7 +179,7 @@ def getqueryapplylist(request):
     if search is None:
         search = ''
 
-    # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据
+    # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
     if loginUserOb.is_superuser:
         applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
                     offset:limit].values(

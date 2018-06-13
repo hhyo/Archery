@@ -25,7 +25,7 @@ from .const import Const
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, workflow
-from sql.utils.sendmail import MailSender
+from sql.utils.sendmsg import MailSender
 import logging
 from .workflow import Workflow
 from sql.utils.config import SysConfig

@@ -46,7 +46,7 @@ class MailSender(object):
 
         return file_msg
 
-    def _send(self, strTitle, strContent, listToAddr, **kwargs):
+    def _send_mail(self, strTitle, strContent, listToAddr, **kwargs):
         '''''
             发送邮件
         '''
@@ -86,5 +86,5 @@ class MailSender(object):
 
     # 调用方应该调用此方法，采用子进程方式异步阻塞地发送邮件，避免邮件服务挂掉影响archer主服务
     def sendEmail(self, strTitle, strContent, listToAddr, **kwargs):
-        p = Process(target=self._send, args=(strTitle, strContent, listToAddr), kwargs=kwargs)
+        p = Process(target=self._send_mail, args=(strTitle, strContent, listToAddr), kwargs=kwargs)
         p.start()

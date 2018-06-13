@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import re
 import simplejson as json
 
 import time
@@ -9,8 +10,8 @@ from django.utils import timezone
 
 from sql.utils.config import SysConfig
 from sql.utils.dao import Dao
-from .const import Const
-from sql.utils.sendmail import MailSender
+from .const import Const, WorkflowDict
+from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, workflow, master_config
@@ -79,20 +80,8 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
     except Exception as e:
         logger.error(e)
 
-    # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if SysConfig().sys_config.get('mail') == 'true':
-        engineer = workflowDetail.engineer
-        workflowStatus = workflowDetail.status
-        workflowName = workflowDetail.workflow_name
-        strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
-        strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url \
-                     + "\n工单名称： " + workflowName + "\n执行结果：" + workflowStatus
-        # 邮件通知申请人，审核人，抄送DBA
-        notify_users = reviewMan.split(',')
-        notify_users.append(engineer)
-        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
-        listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-        MailSender().sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
+    # 发送消息
+    send_msg(workflowDetail, url)
 
 
 # SQL工单执行回调
@@ -120,21 +109,8 @@ def execute_call_back(workflowId, clusterName, url):
     except Exception as e:
         logger.error(e)
 
-    # 如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    if SysConfig().sys_config.get('mail') == 'true':
-        # 给申请人，DBA各发一封邮件
-        engineer = workflowDetail.engineer
-        workflowStatus = workflowDetail.status
-        workflowName = workflowDetail.workflow_name
-        strTitle = "SQL上线工单执行完毕 # " + str(workflowId)
-        strContent = "发起人：" + engineer + "\n审核人：" + reviewMan + "\n工单地址：" + url \
-                     + "\n工单名称： " + workflowName + "\n执行结果：" + workflowStatus
-        # 邮件通知申请人，审核人，抄送DBA
-        notify_users = reviewMan.split(',')
-        notify_users.append(engineer)
-        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
-        listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
-        MailSender().sendEmail(strTitle, strContent, listToAddr, listCcAddr=listCcAddr)
+    # 发送消息
+    send_msg(workflowDetail, url)
 
 
 # 给定时任务执行sql
@@ -161,7 +137,7 @@ def execute_job(workflowId, url):
     logger.debug('execute_job:' + job_id + ' executing')
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
     splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
-                                                   isSplit='yes')
+                                                     isSplit='yes')
     workflowDetail.review_content = json.dumps(splitReviewResult)
     try:
         workflowDetail.save()
@@ -173,3 +149,21 @@ def execute_job(workflowId, url):
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
     t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
     t.start()
+
+
+def send_msg(workflowDetail, url):
+    mailSender = MailSender()
+    # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
+    msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
+                                     workflowDetail.id)
+    msg_content = '''发起人：{}\n审核人：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        workflowDetail.engineer, workflowDetail.review_man, workflowDetail.workflow_name, url,
+        workflowDetail.sql_content[0:500])
+
+    if SysConfig().sys_config.get('mail') == 'true':
+        # 邮件通知申请人，审核人，抄送DBA
+        notify_users = workflowDetail.review_man.split(',')
+        notify_users.append(workflowDetail.engineer)
+        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
+        listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
+        mailSender.sendEmail(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
