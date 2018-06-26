@@ -588,6 +588,9 @@
             if (sessionStorage.getItem('config_type')) {
                 $("#config").val(sessionStorage.getItem('config_type')).trigger("change")
             }
+            else if ($("#config").val()) {
+                $("#config").trigger("change")
+            }
         })
     </script>
 {% endblock %}
