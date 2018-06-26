@@ -41,10 +41,10 @@ class Group(models.Model):
 # 组关系表（角色与组、主库与组等）
 class GroupRelations(models.Model):
     object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，如角色名', max_length=100)
+    object_name = models.CharField('关联对象描述，如角色名、主库名', max_length=100)
     group_id = models.IntegerField('用户组ID')
     group_name = models.CharField('用户组名称', max_length=100)
-    object_type = models.IntegerField('关联对象类型', choices=((1, '角色'), (2, '主库'),))
+    object_type = models.IntegerField('关联对象类型', choices=((1, '角色'), (2, '主库'), (3, '从库')))
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -267,7 +267,7 @@ class QueryLog(models.Model):
 class DataMaskingColumns(models.Model):
     column_id = models.AutoField('字段id', primary_key=True)
     rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额')))
+                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (5, '其他')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
     cluster_name = models.CharField('实例名称', max_length=50)
     table_schema = models.CharField('字段所在库名', max_length=64)
