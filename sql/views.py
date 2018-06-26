@@ -52,9 +52,14 @@ def sqlworkflow(request):
 def submitSql(request):
     user = request.user
     # 获取组信息
-    group_ids = [group['group_id'] for group in
-                 GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
-    group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
+    if user.is_superuser == 1:
+        group_list = [group for group in Group.objects.filter(is_deleted=0)]
+    else:
+        group_ids = [group['group_id'] for group in
+                     GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
+        group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
+
+
 
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
