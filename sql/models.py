@@ -41,7 +41,7 @@ class Group(models.Model):
 # 组关系表（角色与组、主库与组等）
 class GroupRelations(models.Model):
     object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，如角色名、主库名', max_length=100)
+    object_name = models.CharField('关联对象描述，如用户名、主库名', max_length=100)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')))
