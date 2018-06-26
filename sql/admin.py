@@ -33,13 +33,13 @@ class usersAdmin(UserAdmin):
         return super(UserAdmin, self).changelist_view(request, extra_context)
 
 
-# 用户组管理
+# 组管理
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('group_id', 'group_name', 'group_parent_id', 'group_sort', 'group_level', 'is_deleted')
 
 
-# 用户组关系管理
+# 组关系管理
 @admin.register(GroupRelations)
 class GroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')

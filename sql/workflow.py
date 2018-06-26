@@ -397,7 +397,7 @@ class Workflow(object):
         except Exception:
             return None
 
-    # 通过用户组和审核类型，获取审核配置信息
+    # 通过组和审核类型，获取审核配置信息
     def auditsettings(self, group_id, workflow_type):
         try:
             return WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)

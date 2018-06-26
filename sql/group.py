@@ -9,7 +9,7 @@ from sql.utils.permission import superuser_required
 from sql.views_ajax import workflowOb
 
 
-# 获取用户组关系信息
+# 获取组关系信息
 @csrf_exempt
 def group_relations(request):
     group_name = request.POST.get('group_name')
@@ -23,7 +23,7 @@ def group_relations(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取用户组的审批流程
+# 获取组的审批流程
 @csrf_exempt
 def groupauditors(request):
     group_name = request.POST.get('group_name')

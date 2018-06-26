@@ -19,10 +19,10 @@ class users(AbstractUser):
         verbose_name_plural = u'用户配置'
 
 
-# 用户组
+# 组
 class Group(models.Model):
-    group_id = models.AutoField('用户组ID', primary_key=True)
-    group_name = models.CharField('用户组名称', max_length=100, unique=True)
+    group_id = models.AutoField('组ID', primary_key=True)
+    group_name = models.CharField('组名称', max_length=100, unique=True)
     group_parent_id = models.BigIntegerField('父级id', default=0)
     group_sort = models.IntegerField('排序', default=1)
     group_level = models.IntegerField('层级', default=1)
@@ -34,25 +34,25 @@ class Group(models.Model):
         return self.group_name
 
     class Meta:
-        verbose_name = u'用户组配置'
-        verbose_name_plural = u'用户组配置'
+        verbose_name = u'组配置'
+        verbose_name_plural = u'组配置'
 
 
 # 组关系表（角色与组、主库与组等）
 class GroupRelations(models.Model):
     object_id = models.IntegerField('关联对象主键ID', )
     object_name = models.CharField('关联对象描述，如角色名、主库名', max_length=100)
-    group_id = models.IntegerField('用户组ID')
-    group_name = models.CharField('用户组名称', max_length=100)
-    object_type = models.IntegerField('关联对象类型', choices=((1, '角色'), (2, '主库'), (3, '从库')))
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')))
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'sql_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
-        verbose_name = u'用户组关系配置'
-        verbose_name_plural = u'用户组关系配置'
+        verbose_name = u'组关系配置'
+        verbose_name_plural = u'组关系配置'
 
 
 # 各个线上主库实例配置）
@@ -101,8 +101,8 @@ class slave_config(models.Model):
 # 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class workflow(models.Model):
     workflow_name = models.CharField('工单内容', max_length=50)
-    group_id = models.IntegerField('用户组ID')
-    group_name = models.CharField('用户组名称', max_length=100)
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
     engineer = models.CharField('发起人', max_length=50)
     review_man = models.CharField('审核人', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
@@ -131,8 +131,8 @@ class workflow(models.Model):
 # 工作流审核主表
 class WorkflowAudit(models.Model):
     audit_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('用户组ID')
-    group_name = models.CharField('用户组名称', max_length=100)
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
     workflow_id = models.BigIntegerField('关联业务id')
     workflow_type = models.IntegerField('申请类型',
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
@@ -179,8 +179,8 @@ class WorkflowAuditDetail(models.Model):
 # 审批配置表
 class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('用户组ID')
-    group_name = models.CharField('用户组名称', max_length=100)
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
     workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
@@ -199,8 +199,8 @@ class WorkflowAuditSetting(models.Model):
 # 查询权限申请记录表
 class QueryPrivilegesApply(models.Model):
     apply_id = models.AutoField(primary_key=True)
-    group_id = models.IntegerField('用户组ID')
-    group_name = models.CharField('用户组名称', max_length=100)
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
     cluster_name = models.CharField('实例名称', max_length=50)

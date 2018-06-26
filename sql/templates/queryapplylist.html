@@ -32,8 +32,8 @@
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="用户组" data-placeholder="请选择用户组:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择用户组:</option>
+                                data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择组:</option>
                             {% for group in group_list %}
                                 <option value="{{ group.name }}">{{ group.name }}</option>
                             {% endfor %}
@@ -288,7 +288,7 @@
                     title: '申请时间',
                     field: 'create_time'
                 }, {
-                    title: '用户组',
+                    title: '组',
                     field: 'group_name'
                 }],
                 onLoadSuccess: function () {

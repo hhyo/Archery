@@ -98,7 +98,7 @@ def autoreview(request):
     try:
         GroupRelations.objects.get(group_name=group_name, object_name=clusterName, object_type=2)
     except Exception:
-        context = {'errMsg': '该用户组不存在所选主库！'}
+        context = {'errMsg': '该组不存在所选主库！'}
         return render(request, 'error.html', context)
 
     # # 删除注释语句

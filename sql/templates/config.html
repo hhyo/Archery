@@ -18,7 +18,7 @@
                                             data-name="配置项" data-placeholder="请选择配置项:" required>
                                         <option value="is-empty" disabled="" selected="selected">请选择配置项:</option>
                                         <option value="0">系统设置</option>
-                                        <option value="1">用户组配置</option>
+                                        <option value="1">组配置</option>
                                         <option value="2">工单审核流配置</option>
                                     </select>
                                 </div>
@@ -35,11 +35,11 @@
                                             {{ WorkflowDict.workflow_type.query_display }}</option>
                                     </select>
                                 </div>
-                                <h5 class="control-label text-bold">用户组：</h5>
+                                <h5 class="control-label text-bold">组：</h5>
                                 <div class="form-group">
                                     <select id="group" name="group"
                                             class="selectpicker show-tick form-control bs-select-hidden"
-                                            data-name="用户组" data-placeholder="请选择用户组:" data-live-search="true" required>
+                                            data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                                         {% for group in group_list %}
                                             <option value="{{ group.name }}">{{ group.name }}</option>
                                         {% endfor %}
@@ -350,10 +350,10 @@
                         </form>
                         <div id="div-group-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
-                                <b>用户组管理：<a href="/admin/sql/group/">点击访问</a></b></h5>
+                                <b>组管理：<a href="/admin/sql/group/">点击访问</a></b></h5>
                             <br>
                             <h5 class="control-label text-bold" style="color: red">
-                                <b>用户组关系管理：<a href="/admin/sql/grouprelations/">点击访问</a></b></h5>
+                                <b>组关系管理：<a href="/admin/sql/grouprelations/">点击访问</a></b></h5>
                         </div>
                         <div id="div-workflow-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
@@ -494,7 +494,7 @@
             });
         });
 
-        // 切换用户组触发工单类型切换事件
+        // 切换组触发工单类型切换事件
         $("#group").change(function () {
             $("#workflow_type").trigger('change')
         });
@@ -519,7 +519,7 @@
             window.location.reload()
         });
 
-        // 切换工单类型获取对应用户组负责人
+        // 切换工单类型获取对应组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
             $("#group_auditors_text").val('');
@@ -552,7 +552,7 @@
             });
         });
 
-        // 变更用户组工单负责人
+        // 变更组工单负责人
         $("#btn-workflow-config").click(function () {
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
