@@ -32,7 +32,7 @@
                                 data-name="组" data-placeholder="请选择组" data-live-search="true" required>
                             <option value="is-empty" disabled="" selected="selected">请选择组:</option>
                             {% for group in group_list %}
-                                <option value="{{ group.name }}">{{ group.name }}</option>
+                                <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                             {% endfor %}
                         </select>
                     </div>

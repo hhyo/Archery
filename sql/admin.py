@@ -36,7 +36,8 @@ class usersAdmin(UserAdmin):
 # 组管理
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'group_parent_id', 'group_sort', 'group_level', 'is_deleted')
+    list_display = ('group_id', 'group_name', 'is_deleted')
+    exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
 # 组关系管理

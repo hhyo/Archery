@@ -12,6 +12,9 @@ from sql.views_ajax import workflowOb
 # 获取组关系信息
 @csrf_exempt
 def group_relations(request):
+    '''
+    type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
+    '''
     group_name = request.POST.get('group_name')
     object_type = request.POST.get('type')
     result = {'status': 0, 'msg': 'ok', 'data': []}

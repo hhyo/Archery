@@ -50,29 +50,16 @@ def sqlworkflow(request):
 
 # 提交SQL的页面
 def submitSql(request):
-    masters = master_config.objects.all().order_by('cluster_name')
-    if len(masters) == 0:
-        return HttpResponseRedirect('/admin/sql/master_config/add/')
-
-    # 获取所有项组名称
-    group_list = Group.objects.all().annotate(id=F('group_id'),
-                                              name=F('group_name'),
-                                              parent=F('group_parent_id'),
-                                              level=F('group_level')
-                                              ).values('id', 'name', 'parent', 'level')
-
-    group_list = [group for group in group_list]
-    if len(group_list) == 0:
-        return HttpResponseRedirect('/config/')
-
-    # 获取所有实例名称
-    listAllClusterName = [master.cluster_name for master in masters]
+    user = request.user
+    # 获取组信息
+    group_ids = [group['group_id'] for group in
+                 GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
+    group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
 
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
 
-    context = {'currentMenu': 'sqlworkflow', 'listAllClusterName': listAllClusterName,
-               'active_user': active_user, 'group_list': group_list}
+    context = {'currentMenu': 'sqlworkflow', 'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
 
 
@@ -406,6 +393,7 @@ def timingtask(request):
         return render(request, 'error.html', context)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
+
 # 终止流程
 def cancel(request):
     workflowId = request.POST['workflowid']
@@ -503,8 +491,6 @@ def charts(request):
 def sqlquery(request):
     # 获取所有从库实例名称
     slaves = slave_config.objects.all().order_by('cluster_name')
-    if len(slaves) == 0:
-        return HttpResponseRedirect('/admin/sql/slave_config/add/')
     listAllClusterName = [slave.cluster_name for slave in slaves]
 
     context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
@@ -515,8 +501,6 @@ def sqlquery(request):
 def slowquery(request):
     # 获取所有实例主库名称
     masters = master_config.objects.all().order_by('cluster_name')
-    if len(masters) == 0:
-        return HttpResponseRedirect('/admin/sql/master_config/add/')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'slowquery', 'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
@@ -527,8 +511,6 @@ def slowquery(request):
 def sqladvisor(request):
     # 获取所有实例主库名称
     masters = master_config.objects.all().order_by('cluster_name')
-    if len(masters) == 0:
-        return HttpResponseRedirect('/admin/sql/master_config/add/')
     cluster_name_list = [master.cluster_name for master in masters]
 
     context = {'currentMenu': 'sqladvisor', 'listAllClusterName': cluster_name_list}
@@ -540,8 +522,6 @@ def queryapplylist(request):
     slaves = slave_config.objects.all().order_by('cluster_name')
     # 获取所有实例从库名称
     listAllClusterName = [slave.cluster_name for slave in slaves]
-    if len(slaves) == 0:
-        return HttpResponseRedirect('/admin/sql/slave_config/add/')
 
     # 获取所有项组名称
     group_list = Group.objects.all().annotate(id=F('group_id'),
