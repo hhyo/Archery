@@ -5,7 +5,7 @@ from sql.utils.config import SysConfig
 
 
 def global_info(request):
-    """存放用户，会话信息等."""
+    """存放用户，菜单信息等."""
     user = request.user
     if user:
         # 获取待办数量
@@ -17,6 +17,5 @@ def global_info(request):
         todo = 0
 
     return {
-        'loginUser': user.username,
         'todo': todo,
     }
