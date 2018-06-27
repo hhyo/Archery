@@ -8,9 +8,11 @@ import datetime
 
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import master_config, SlowQuery, SlowQueryHistory
-from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
-    slowquery_review_history as aliyun_rds_slowquery_review_history
 from sql.utils.config import SysConfig
+
+if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+    from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
+        slowquery_review_history as aliyun_rds_slowquery_review_history
 
 
 # 获取SQL慢日志统计

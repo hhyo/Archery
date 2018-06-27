@@ -10,8 +10,9 @@ from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
 from .models import master_config
 
-from .aliyun_rds import process_status as aliyun_process_status, \
-    create_kill_session as aliyun_create_kill_session, kill_session as aliyun_kill_session
+if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+    from .aliyun_rds import process_status as aliyun_process_status, \
+        create_kill_session as aliyun_create_kill_session, kill_session as aliyun_kill_session
 
 dao = Dao()
 prpCryptor = Prpcrypt()
