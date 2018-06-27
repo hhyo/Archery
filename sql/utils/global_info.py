@@ -17,5 +17,6 @@ def global_info(request):
         todo = 0
 
     return {
+        'loginUser': user.username,
         'todo': todo,
     }
