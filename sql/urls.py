@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^$', views.sqlworkflow, name='sqlworkflow'),
     url(r'^index/$', views.sqlworkflow, name='sqlworkflow'),
     url(r'^login/$', views.login, name='login'),
+    url(r'^sign_up/$',views.sign_up, name='sign_up'),
     url(r'^logout/$', views.sign_out, name='logout'),
     url(r'^submitsql/$', views.submitSql, name='submitSql'),
     url(r'^editsql/$', views.submitSql, name='editsql'),

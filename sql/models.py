@@ -116,9 +116,11 @@ class workflow(models.Model):
     db_name = models.CharField('数据库', max_length=60)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
-    execute_result = models.TextField('执行结果的JSON格式')
-    is_manual = models.IntegerField('是否手工执行', choices=((0, '否'), (1, '是')), default=0)
-    audit_remark = models.CharField('审核备注', max_length=200, null=True)
+    execute_result = models.TextField('执行结果的JSON格式', blank=True)
+    is_manual = models.IntegerField('是否跳过inception执行', choices=((0, '否'), (1, '是')), default=0)
+    audit_remark = models.CharField('审核备注', max_length=200, null=True, blank=True)
+    sql_syntax = models.IntegerField('SQL语法 1、DDL，2、DML', choices=((1, 'DDL'), (2, 'DML')))
+
 
     def __str__(self):
         return self.workflow_name

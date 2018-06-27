@@ -5,6 +5,9 @@ from django.contrib.auth import logout
 import simplejson as json
 from threading import Thread
 import datetime
+
+from django.contrib.auth.hashers import make_password
+
 from django.db.models import F
 from django.db import connection, transaction
 from django.utils import timezone
@@ -29,6 +32,35 @@ logger = logging.getLogger('default')
 dao = Dao()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
+
+
+# 注册用户
+def sign_up(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+    password2 = request.POST.get('password2')
+    display = request.POST.get('display')
+    email = request.POST.get('email')
+
+    if username is None or password is None:
+        context = {'errMsg': '用户名和密码不能为空'}
+        return render(request, 'error.html', context)
+    if len(users.objects.filter(username=username)) > 0:
+        context = {'errMsg': '用户名已存在'}
+        return render(request, 'error.html', context)
+    if password != password2:
+        context = {'errMsg': '两次输入密码不一致'}
+        return render(request, 'error.html', context)
+
+    new_account = users.objects.create(username=username,
+                                       password=make_password(password),
+                                       display=display,
+                                       email=email,
+                                       role='工程师',
+                                       is_active=1,
+                                       is_staff=1)
+    new_account.save()
+    return render(request, 'login.html')
 
 
 # 登录
@@ -58,8 +90,6 @@ def submitSql(request):
         group_ids = [group['group_id'] for group in
                      GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
         group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
-
-
 
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
@@ -119,7 +149,7 @@ def autoreview(request):
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
     jsonResult = json.dumps(result)
 
-    # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
+    # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则需要设置is_manual = 0，跳过inception直接执行
     workflowStatus = Const.workflowStatus['manreviewing']
     # inception审核不通过的工单，标记手动执行标签
     is_manual = 0
@@ -129,6 +159,13 @@ def autoreview(request):
             break
         elif re.match(r"\w*comments\w*", row[4]):
             is_manual = 1
+            break
+
+    # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
+    sql_syntax = 2
+    for row in sqlContent.strip(';').split(';'):
+        if re.match(r"^alter|^create|^drop|^truncate|^rename", row.strip().lower()):
+            sql_syntax = 1
             break
 
     # 调用工作流生成工单
@@ -156,6 +193,7 @@ def autoreview(request):
             Workflow.execute_result = ''
             Workflow.is_manual = is_manual
             Workflow.audit_remark = ''
+            Workflow.sql_syntax = sql_syntax
             Workflow.save()
             workflowId = Workflow.id
             # 自动审核通过了，才调用工作流

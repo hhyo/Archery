@@ -38,7 +38,6 @@ login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
 
-
 # 登录失败邮件推送给DBA
 def log_mail_record(login_failed_message):
     mail_title = 'login archer'
@@ -160,7 +159,7 @@ def sqlworkflowlist(request):
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_name")
+                                                            "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
         else:
@@ -170,7 +169,7 @@ def sqlworkflowlist(request):
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_name")
+                                                            "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
@@ -181,7 +180,7 @@ def sqlworkflowlist(request):
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_name")
+                                                            "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         else:
             listWorkflow = workflow.objects.filter(
@@ -190,7 +189,7 @@ def sqlworkflowlist(request):
                 Q(engineer=loginUser) | Q(review_man__contains=loginUser)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_name")
+                                                            "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(

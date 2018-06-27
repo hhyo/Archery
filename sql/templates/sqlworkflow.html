@@ -88,6 +88,17 @@
                         return "<a href=\"/detail/" + row.id + "/\">" + value + "</a>"
                     }
                 }, {
+                    title: '类型',
+                    field: 'sql_syntax',
+                    formatter: function (value, row, index) {
+                        if (value === 1) {
+                            return 'DDL'
+                        }
+                        else if (value === 2) {
+                            return 'DML'
+                        }
+                    }
+                }, {
                     title: '发起人',
                     field: 'engineer'
                 }, {
