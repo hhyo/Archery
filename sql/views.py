@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import re
 
+from django.contrib.auth import logout
 import simplejson as json
 from threading import Thread
 import datetime
@@ -36,9 +37,8 @@ def login(request):
 
 
 # 退出登录
-def logout(request):
-    if request.session.get('login_username', False):
-        del request.session['login_username']
+def sign_out(request):
+    logout(request)
     return HttpResponseRedirect(reverse('sql:login'))
 
 
@@ -136,7 +136,7 @@ def autoreview(request):
     try:
         with transaction.atomic():
             # 存进数据库里
-            engineer = request.session.get('login_username', False)
+            engineer = request.user.username
             if not workflowid:
                 Workflow = workflow()
                 Workflow.create_time = timezone.now()
@@ -195,8 +195,7 @@ def detail(request, workflowId):
         current_audit_user = None
 
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     # 获取定时执行任务信息
     if workflowDetail.status == Const.workflowStatus['timingtask']:
@@ -268,7 +267,7 @@ def passed(request):
     reviewMan = reviewMan.split(',')
 
     # 服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
     if loginUser is None or loginUser not in reviewMan:
         context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
         return render(request, 'error.html', context)
@@ -320,7 +319,7 @@ def execute(request):
     reviewMan = reviewMan.split(',')
 
     # 服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人或者提交人. 避免攻击或被接口测试工具强行绕过
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
     if loginUser is None or (loginUser not in reviewMan and loginUser != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人或者提交人，请重新登录.'}
         return render(request, 'error.html', context)
@@ -419,7 +418,7 @@ def cancel(request):
         return render(request, 'error.html', context)
 
     # 服务器端二次验证，如果正在执行终止动作的当前登录用户，不是提交人也不是审核人，则异常.
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
     if loginUser is None or (loginUser not in reviewMan and loginUser != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人也不是提交人，请重新登录.'}
         return render(request, 'error.html', context)
@@ -558,8 +557,7 @@ def queryapplydetail(request, apply_id):
 # 用户的查询权限管理
 def queryuserprivileges(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
     # 获取所有用户
     user_list = QueryPrivileges.objects.filter(is_deleted=0).values('user_name').distinct()
     context = {'currentMenu': 'queryapply', 'user_list': user_list, 'loginUserOb': loginUserOb}
@@ -569,8 +567,7 @@ def queryuserprivileges(request):
 # 问题诊断--进程
 def diagnosis_process(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     # 获取所有实例名称
     masters = master_config.objects.all().order_by('cluster_name')
@@ -594,8 +591,7 @@ def diagnosis_sapce(request):
 # 获取工作流审核列表
 def workflows(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
     context = {'currentMenu': 'workflow', "loginUserOb": loginUserOb}
     return render(request, "workflow.html", context)
 

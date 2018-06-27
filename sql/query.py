@@ -64,7 +64,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     loginUser = loginUserOb.username
-    if loginUserOb.is_superuser or loginUserOb.role == 'DBA':
+    if loginUserOb.is_superuser :
         if SysConfig().sys_config.get('admin_query_limit'):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
@@ -167,8 +167,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
 @csrf_exempt
 def getqueryapplylist(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -225,7 +224,7 @@ def applyforprivileges(request):
         workflow_remark = ''
 
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
 
     # 服务端参数校验
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -330,8 +329,7 @@ def getuserprivileges(request):
 
     # 判断权限，除了管理员外其他人只能查看自己的权限信息
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     # 获取用户的权限数据
     if loginUserOb.is_superuser:
@@ -410,7 +408,7 @@ def modifyqueryprivileges(request):
 @csrf_exempt
 def queryprivaudit(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     apply_id = int(request.POST['apply_id'])
@@ -466,8 +464,8 @@ def query(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUser = request.user.username
+    loginUserOb = request.user
 
     # 过滤注释语句和非查询的语句
     sqlContent = ''.join(
@@ -572,8 +570,8 @@ def query(request):
 @csrf_exempt
 def querylog(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUser = request.user.username
+    loginUserOb = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))

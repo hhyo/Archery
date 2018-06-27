@@ -129,6 +129,13 @@
                                                    placeholder="Inception备份库用户密码">
                                         </div>
                                     </div>
+                                </div>
+                                <br>
+                                <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
+                                <hr/>
+                                <h5 style="color: darkgrey"><b>SQL上线</b></h5>
+                                <hr/>
+                                <div class="form-horizontal">
                                     <div class="form-group">
                                         <label for="critical_ddl"
                                                class="col-sm-4 control-label">CRITICAL_DDL</label>
@@ -146,8 +153,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <br>
-                                <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
+                                <h5 style="color: darkgrey"><b>SQL查询</b></h5>
+                                <hr/>
                                 <div class="form-horizontal">
                                     <div class="form-group">
                                         <label for="query"
@@ -202,19 +209,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="slowquery"
-                                               class="col-sm-4 control-label">SLOW_QUERY</label>
-                                        <div class="col-sm-8">
-                                            <div class="switch switch-small">
-                                                <label>
-                                                    <input id="slowquery"
-                                                           key="slowquery"
-                                                           value="{{ config.slowquery }}" type="checkbox"> 是否开启慢日志管理
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <h5 style="color: darkgrey"><b>SQL优化</b></h5>
+                                    <hr/>
                                     <div class="form-group">
                                         <label for="sqladvisor"
                                                class="col-sm-4 control-label">SQLADVISOR_PATH</label>
@@ -223,32 +219,6 @@
                                                 <input type="text" class="form-control" id="sqladvisor" key="sqladvisor"
                                                        value="{{ config.sqladvisor }}"
                                                        placeholder="SQLADVISOR路径，空代表关闭SQL优化工具">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="db_process_manage"
-                                               class="col-sm-4 control-label">DB_PROCESS_MANAGE</label>
-                                        <div class="col-sm-5">
-                                            <div class="switch switch-small">
-                                                <label>
-                                                    <input id="db_process_manage" key="db_process_manage"
-                                                           value="{{ config.db_process_manage }}"
-                                                           type="checkbox"> 是否开启主库会话管理
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="aliyun_rds_manage"
-                                               class="col-sm-4 control-label">ALIYUN_RDS_MANAGE</label>
-                                        <div class="col-sm-8">
-                                            <div class="switch switch-small">
-                                                <label>
-                                                    <input id="aliyun_rds_manage" key="aliyun_rds_manage"
-                                                           value="{{ config.aliyun_rds_manage }}"
-                                                           type="checkbox"> 是否开启阿里云RDS管理
-                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -306,7 +276,7 @@
                                             <label for="mail_smtp_password"
                                                    class="col-sm-4 control-label">MAIL_SMTP_PASSWORD</label>
                                             <div class="col-sm-5">
-                                                <input type="text" class="form-control"
+                                                <input type="password" class="form-control"
                                                        id="mail_smtp_password"
                                                        key="mail_smtp_password"
                                                        value="{{ config.mail_smtp_password }}"
@@ -318,6 +288,19 @@
                                 <br>
                                 <h4 style="color: darkgrey"><b>其他配置</b></h4>
                                 <div class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="aliyun_rds_manage"
+                                               class="col-sm-4 control-label">ALIYUN_RDS_MANAGE</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="aliyun_rds_manage" key="aliyun_rds_manage"
+                                                           value="{{ config.aliyun_rds_manage }}"
+                                                           type="checkbox"> 是否开启阿里云RDS管理
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="form-group">
                                         <label for="lock_time_threshold"
                                                class="col-sm-4 control-label">LOCK_TIME_THRESHOLD</label>

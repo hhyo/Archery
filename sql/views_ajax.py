@@ -127,8 +127,6 @@ def authenticateEntry(request):
         if user:
             login(request, user)
 
-        # session保存用户信息
-        request.session['login_username'] = username
         result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')
@@ -138,7 +136,7 @@ def authenticateEntry(request):
 @csrf_exempt
 def sqlworkflowlist(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -153,7 +151,7 @@ def sqlworkflowlist(request):
     navStatus = request.POST.get('navStatus')
 
     # 管理员可以看到全部工单，其他人能看到自己提交和审核的工单
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
@@ -389,7 +387,7 @@ def stopOscProgress(request):
         context = {"status": -1, 'msg': 'workflowId或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    loginUser = request.session.get('login_username', False)
+    loginUser = request.user.username
     workflowDetail = workflow.objects.get(id=workflowId)
     try:
         reviewMan = json.loads(workflowDetail.review_man)
@@ -468,8 +466,7 @@ def sqladvisorcheck(request):
 @csrf_exempt
 def workflowlist(request):
     # 获取用户信息
-    loginUser = request.session.get('login_username', False)
-    loginUserOb = users.objects.get(username=loginUser)
+    loginUserOb = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))

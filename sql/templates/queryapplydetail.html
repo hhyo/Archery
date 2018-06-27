@@ -7,12 +7,6 @@
     {% if loginUser == workflowDetail.engineer %}
         <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
     {% endif %}
-    {% if loginUserOb.is_superuser == 1 or loginUserOb.role == 'DBA' %}
-        {% if workflowDetail.status == '自动审核不通过' %}
-            <button class="btn btn-danger" data-toggle="modal" data-target="#executeComfirm">跳过inception执行
-            </button>
-        {% endif %}
-    {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
     <hr>
