@@ -10,6 +10,7 @@
 |  工程师| engineer | archer |
 |  DBA| dba | archer |
 
+
 ## 功能说明
 1. 组管理  
    支持自定义组，组成员之间审批流程隔离、主库配置隔离
@@ -21,13 +22,24 @@
    在工单详情可快速提交相同SQL内容到其他实例，可适用于test>beta>ga等多套环境维护的需求
 5. 数据库会话管理  
    管理主库实例的连接会话，可以批量KIll PROCESS
-5. 配置项动态化  
-   除数据库依赖外大多数配置项都转移到数据库中，可动态变更，避免重启服务  
-6. 工单通知人  
+6. 配置项动态化  
+   除数据库依赖外大多数配置项都转移到数据库中，可动态变更，避免重启服务
+7. SQL工单类型区分    
+   自动判断DML&DDL  
+8. 工单通知人  
    发起SQL上线时可以选择通知对象，将会在申请时邮件抄送给对方
-
+9. 菜单栏调整  
+   多级菜单展示  
+   
 ## 部署
-安装步骤可参考archer源项目[archer](https://github.com/hhyo/archer/tree/github)
+### 依赖版本
+Python>=3.6  
+Django==2.0.6  
+
+### 安装步骤
+安装步骤可参考archer源项目[archer](https://github.com/hhyo/archer/tree/github)  
+Django2.0使用mysqlclient，无需安装PyMySQL，也无需做相关文件
+
 ### 采取docker部署
 archer镜像对应的是版本是:lihuanhuan
 * inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093

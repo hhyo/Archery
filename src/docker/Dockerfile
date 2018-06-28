@@ -1,12 +1,24 @@
 FROM docker.io/centos
 
-#base
-RUN yum -y install unzip git gcc gcc-c++ make cmake bison openssl-devel mysql-devel openldap-devel \
-    && yum -y install epel-release \
-    && yum -y install python34 python34-pip python34-devel.x86_64 \
+#python3.6
+RUN yum -y groupinstall "Development tools" \
+    && yum -y install wget zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel \
     && cd /opt \
-    && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && virtualenv venv4archer --python=python3.4 \
+    && wget "https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tar.xz" \
+    && tar -xvJf Python-3.6.5.tar.xz \
+    && cd /opt/Python-3.6.5 \
+    &&  ./configure prefix=/usr/local/python3 \
+    && make && make install \
+    && ln -s /usr/local/python3/bin/python3 /usr/bin/python3 \
+    && ln -s /usr/local/python3/bin/pip3 /usr/bin/pip3 \
+    && yum -y install epel-release \
+    && yum -y install python2-pip \
+    && pip install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && cd /opt \
+    && virtualenv venv4archer --python=python3 \
+#其他依赖
+    && yum -y install epel-release \
+    && yum -y install gcc gcc-c++ make cmake bison openssl-devel mysql-devel openldap-devel nginx openssl-devel mysql-devel openldap-devel\
 #修改中文支持
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && yum -y install kde-l10n-Chinese && yum -y reinstall glibc-common \
@@ -29,11 +41,8 @@ RUN cd /opt \
     && git clone https://github.com/hhyo/archer.git \
     && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && cp /opt/archer/src/docker/pymysql/connections.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
-    && cp /opt/archer/src/docker/pymysql/cursors.py /opt/venv4archer/lib/python3.4/site-packages/pymysql/ \
     && yum -y install nginx \
-    && cp /opt/archer/src/docker/nginx.conf /etc/nginx/ \
-    && nginx
+    && cp /opt/archer/src/docker/nginx.conf /etc/nginx/
 
 ENV LANG en_US.UTF-8
 ENV LC_ALL zh_CN.utf8 

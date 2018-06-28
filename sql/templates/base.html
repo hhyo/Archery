@@ -110,7 +110,28 @@
                                     <a href="/config/">配置管理</a>
                                 </li>
                                 <li>
-                                    <a href="/admin/">数据管理</a>
+                                    <a href="#">数据管理 <span class="fa arrow"></span></a>
+                                    <ul class="nav nav-third-level collapse">
+                                        <li>
+                                            <a href="/admin/sql/master_config/">主库配置</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/sql/slave_config/">从库配置</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/sql/users/">用户配置</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/sql/group/">组管理</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/sql/grouprelations/">组关系维护</a>
+                                        </li>
+                                         <li>
+                                            <a href="/admin/">其他数据</a>
+                                        </li>
+                                    </ul>
+                                    <!-- /.nav-third-level -->
                                 </li>
                             {% endif %}
                         </ul>

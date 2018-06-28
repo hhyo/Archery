@@ -10,8 +10,8 @@ monitor_db_password="123456"
 monitor_db_database="archer"
 
 #config mysql server 被监控机
-mysql_host=$mysql_host # 和archer主库配置保持一致
-mysql_port=$mysql_port # 和archer主库配置保持一致
+mysql_host="127.0.0.1" # 和archer主库配置保持一致
+mysql_port=3306 # 和archer主库配置保持一致
 
 #config slowqury 被监控机慢日志位置
 slowquery_file="/home/mysql/log_slow.log"

@@ -162,7 +162,7 @@ class WorkflowAudit(models.Model):
 class WorkflowAuditDetail(models.Model):
     audit_detail_id = models.AutoField(primary_key=True)
     audit_id = models.ForeignKey(WorkflowAudit, db_constraint=False, to_field='audit_id',
-                                 db_column='audit_id', verbose_name='审核主表id')
+                                 db_column='audit_id', verbose_name='审核主表id', on_delete=models.CASCADE)
     audit_user = models.CharField('审核人', max_length=20)
     audit_time = models.DateTimeField('审核时间')
     audit_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
@@ -334,7 +334,7 @@ class AliyunAccessKey(models.Model):
 # 阿里云rds配置信息
 class AliyunRdsConfig(models.Model):
     cluster_name = models.OneToOneField(master_config, db_constraint=False, to_field='cluster_name',
-                                        db_column='cluster_name', verbose_name='实例名称', unique=True)
+                                        db_column='cluster_name', verbose_name='实例名称', unique=True, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100)
 
     def __int__(self):
@@ -371,7 +371,7 @@ class SlowQueryHistory(models.Model):
     user_max = models.CharField(max_length=64, null=False)
     db_max = models.CharField(max_length=64, null=True, default=None)
     bytes_max = models.CharField(max_length=64, null=True)
-    checksum = models.ForeignKey(SlowQuery, db_constraint=False, to_field='checksum', db_column='checksum')
+    checksum = models.ForeignKey(SlowQuery, db_constraint=False, to_field='checksum', db_column='checksum', on_delete=models.CASCADE)
     sample = models.TextField()
     ts_min = models.DateTimeField(db_index=True)
     ts_max = models.DateTimeField()

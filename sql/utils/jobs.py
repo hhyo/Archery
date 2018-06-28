@@ -3,15 +3,10 @@ import datetime
 import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.schedulers import SchedulerAlreadyRunningError, SchedulerNotRunningError
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
+from apscheduler.schedulers import SchedulerAlreadyRunningError
+from django_apscheduler.jobstores import DjangoJobStore, register_events
 
-from sql.const import Const
-from sql.models import workflow
-from sql.sqlreview import execute_job, getDetailUrl
+from sql.sqlreview import execute_job
 
 import logging
 
