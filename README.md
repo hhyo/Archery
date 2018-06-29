@@ -39,7 +39,7 @@ Django==2.0.6
 ### 安装
 ```bash
 git clone https://github.com/hhyo/archer.git 
-pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
+pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
 ```
 ### [启动](https://github.com/hhyo/archer/tree/github#启动前准备)  
 
