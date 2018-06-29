@@ -32,13 +32,16 @@
    多级菜单展示  
    
 ## 部署
-### 依赖版本
+### 基础环境依赖
 Python>=3.6  
 Django==2.0.6  
 
-### 安装步骤
-安装步骤可参考archer源项目[archer](https://github.com/hhyo/archer/tree/github)  
-Django2.0使用mysqlclient，无需安装PyMySQL，也无需做相关文件
+### 安装
+```bash
+git clone https://github.com/hhyo/archer.git 
+pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
+```
+### [启动](https://github.com/hhyo/archer/tree/github#启动前准备)  
 
 ### 采取docker部署
 archer镜像对应的是版本是:lihuanhuan
