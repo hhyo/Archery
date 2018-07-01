@@ -10,25 +10,22 @@ from email.utils import parseaddr, formataddr
 import smtplib
 
 from sql.utils.config import SysConfig
+import logging
+
+logger = logging.getLogger('default')
 
 
 class MailSender(object):
 
     def __init__(self):
-        try:
-            sys_config = SysConfig().sys_config
-            self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
-            if sys_config.get('mail_smtp_port'):
-                self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
-            else:
-                self.MAIL_REVIEW_SMTP_PORT = 25
-            self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
-            self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
-
-        except AttributeError as a:
-            print("Error: %s" % a)
-        except ValueError as v:
-            print("Error: %s" % v)
+        sys_config = SysConfig().sys_config
+        self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
+        if sys_config.get('mail_smtp_port'):
+            self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
+        else:
+            self.MAIL_REVIEW_SMTP_PORT = 25
+        self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
+        self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
 
     def _format_addr(self, s):
         name, addr = parseaddr(s)

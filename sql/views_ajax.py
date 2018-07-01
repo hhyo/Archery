@@ -14,8 +14,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
-from sql.group import user_masters
-from sql.models import Config, Group
+from sql.utils.group import user_masters
+from sql.models import Config, Group, GroupRelations
 from sql.utils.permission import superuser_required
 
 if settings.ENABLE_LDAP:
@@ -38,6 +38,7 @@ prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
+
 
 # 登录失败邮件推送给DBA
 def log_mail_record(login_failed_message):
@@ -73,7 +74,6 @@ def loginAuthenticate(username, password):
     else:
         # 登录
         user = authenticate(username=username, password=password)
-        print(type(user))
         # 登录成功
         if user:
             # 如果登录失败计数器中存在该用户名，则清除之
@@ -516,6 +516,47 @@ def changeconfig(request):
         result['msg'] = str(e)
 
     # 返回结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 获取组关系信息
+@csrf_exempt
+def group_relations(request):
+    '''
+    type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
+    '''
+    group_name = request.POST.get('group_name')
+    object_type = request.POST.get('type')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    rows = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).values(
+        'object_id', 'object_name', 'group_id', 'group_name', 'object_type')
+    target = [row for row in rows]
+    result['data'] = target
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 获取组的审批流程
+@csrf_exempt
+def group_auditors(request):
+    group_name = request.POST.get('group_name')
+    workflow_type = request.POST['workflow_type']
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+    if group_name:
+        group_id = Group.objects.get(group_name=group_name).group_id
+        auditors = Workflow().auditsettings(group_id=group_id, workflow_type=workflow_type)
+    else:
+        result['status'] = 1
+        result['msg'] = '参数错误'
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
+    # 获取所有用户
+    if auditors:
+        auditor_list = auditors.audit_users.split(',')
+        result['data'] = auditor_list
+    else:
+        result['data'] = []
+
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 

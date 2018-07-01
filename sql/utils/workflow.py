@@ -2,14 +2,13 @@
 import datetime
 
 from django.utils import timezone
-
+from sql.sqlreview import is_autoreview
 from sql.notify import send_msg
 from sql.const import WorkflowDict
 from sql.models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply
 from sql.utils.config import SysConfig
-
-DirectionsOb = WorkflowDict()
+from sql.utils.group import group_dbas
 
 
 class Workflow(object):
@@ -19,12 +18,12 @@ class Workflow(object):
 
         # 检查是否已存在待审核数据
         workflowInfo = WorkflowAudit.objects.filter(workflow_type=workflow_type, workflow_id=workflow_id,
-                                                    current_status=DirectionsOb.workflow_status['audit_wait'])
+                                                    current_status=WorkflowDict.workflow_status['audit_wait'])
         if len(workflowInfo) >= 1:
             result['msg'] = '该工单当前状态为待审核，请勿重复提交'
             raise Exception(result['msg'])
 
-        if workflow_type == DirectionsOb.workflow_type['query']:
+        if workflow_type == WorkflowDict.workflow_type['query']:
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             workflow_title = workflow_detail.title
             workflow_auditors = workflow_detail.audit_users
@@ -49,7 +48,7 @@ class Workflow(object):
                     workflow_detail.limit_num)
             else:
                 notify_text = ''
-        elif workflow_type == DirectionsOb.workflow_type['sqlreview']:
+        elif workflow_type == WorkflowDict.workflow_type['sqlreview']:
             workflow_detail = workflow.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.workflow_name
             workflow_auditors = workflow_detail.review_man
@@ -79,6 +78,16 @@ class Workflow(object):
         else:
             audit_users_list = workflow_auditors.split(',')
 
+        # 判断是否无需审核,并且修改审批人为空
+        if SysConfig().sys_config.get('auto_review', False) == 'true':
+            if workflow_type == WorkflowDict.workflow_type['sqlreview']:
+                if is_autoreview(workflow_id):
+                    Workflow = workflow.objects.get(id=int(workflow_id))
+                    Workflow.review_man = '无需审批'
+                    Workflow.status = '审核通过'
+                    Workflow.save()
+                    audit_users_list = None
+
         # 无审核配置则无需审核，直接通过
         if audit_users_list is None:
             # 向审核主表插入审核通过的数据
@@ -92,12 +101,11 @@ class Workflow(object):
             auditInfo.audit_users = ''
             auditInfo.current_audit_user = '-1'
             auditInfo.next_audit_user = '-1'
-            auditInfo.current_status = DirectionsOb.workflow_status['audit_success']  # 审核通过
+            auditInfo.current_status = WorkflowDict.workflow_status['audit_success']  # 审核通过
             auditInfo.create_user = create_user
             auditInfo.save()
-            result['data'] = {'workflow_status': DirectionsOb.workflow_status['audit_success']}
+            result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
-            return result
         else:
             user_list = [user[0] for user in users.objects.all().values_list('username')]
             for audit_user in audit_users_list:
@@ -120,25 +128,29 @@ class Workflow(object):
             else:
                 auditInfo.next_audit_user = audit_users_list[1]
 
-            auditInfo.current_status = DirectionsOb.workflow_status['audit_wait']
+            auditInfo.current_status = WorkflowDict.workflow_status['audit_wait']
             auditInfo.create_user = create_user
             auditInfo.save()
-            result['data'] = {'workflow_status': DirectionsOb.workflow_status['audit_wait']}
+            result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_wait']}
 
-        # 如果待审核则发送邮件通知当前审核人
-        if auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
+        # 消息通知
+        if SysConfig().sys_config.get('mail') == 'true':
             # 消息内容
             msg_data = {}
             msg_data['audit_id'] = auditInfo.audit_id
             msg_data['workflow_type'] = auditInfo.workflow_type
             msg_data['workflow_from'] = auditInfo.create_user
-            msg_data['workflow_auditors'] = auditInfo.audit_users
+            if audit_users_list is None:
+                msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
+            else:
+                msg_data['workflow_auditors'] = auditInfo.audit_users
             msg_data['workflow_title'] = auditInfo.workflow_title
             msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
                                                                           request.get_host(),
                                                                           auditInfo.audit_id)
             msg_data['workflow_content'] = notify_text
-            if SysConfig().sys_config.get('mail') == 'true':
+            # 如果待审核则发送邮件通知当前审核人以及抄送对象
+            if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
                 # 接收人
                 current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
                 msg_data['email_reciver'] = current_audit_userOb.email
@@ -149,6 +161,18 @@ class Workflow(object):
                     listCcAddr = []
                 msg_data['email_cc'] = listCcAddr
                 send_msg(msg_data, 1, auditInfo.current_status)
+            # 如果直接审核通过则发送消息通知DBA和提交人以及抄送对象
+            elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
+                # 接收人
+                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+                # 抄送对象
+                if kwargs.get('listCcAddr'):
+                    listCcAddr = kwargs.get('listCcAddr')
+                else:
+                    listCcAddr = []
+                msg_data['email_cc'] = listCcAddr.append(
+                    [email['email'] for email in group_dbas(group_id).values('email')])
+                send_msg(msg_data, 1, auditInfo.current_status)
         return result
 
     # 工单审核
@@ -157,7 +181,7 @@ class Workflow(object):
         auditInfo = WorkflowAudit.objects.get(audit_id=audit_id)
 
         # 获取业务信息
-        if auditInfo.workflow_type == DirectionsOb.workflow_type['query']:
+        if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
             workflow_detail = QueryPrivilegesApply.objects.get(pk=auditInfo.workflow_id)
             if workflow_detail.priv_type == 1:
                 notify_text = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
@@ -174,9 +198,8 @@ class Workflow(object):
                     workflow_detail.limit_num)
             else:
                 notify_text = ''
-        elif auditInfo.workflow_type == DirectionsOb.workflow_type['sqlreview']:
+        elif auditInfo.workflow_type == WorkflowDict.workflow_type['sqlreview']:
             workflow_detail = workflow.objects.get(pk=auditInfo.workflow_id)
-            workflow_type_display = DirectionsOb.workflow_type['sqlreview_display']
             notify_text = workflow_detail.sql_content
         else:
             result['msg'] = '工单类型不存在'
@@ -185,7 +208,7 @@ class Workflow(object):
         # 不同审核状态
         if audit_status == WorkflowDict.workflow_status['audit_success']:
             # 判断当前工单是否为待审核状态
-            if auditInfo.current_status != DirectionsOb.workflow_status['audit_wait']:
+            if auditInfo.current_status != WorkflowDict.workflow_status['audit_wait']:
                 result['msg'] = '工单不是待审核状态，请返回刷新'
                 raise Exception(result['msg'])
 
@@ -200,13 +223,13 @@ class Workflow(object):
                 auditresult = WorkflowAudit()
                 auditresult.audit_id = audit_id
                 auditresult.current_audit_user = '-1'
-                auditresult.current_status = DirectionsOb.workflow_status['audit_success']
+                auditresult.current_status = WorkflowDict.workflow_status['audit_success']
                 auditresult.save(update_fields=['current_audit_user', 'current_status'])
             else:
                 # 更新主表审核下级审核人和当前审核人
                 auditresult = WorkflowAudit()
                 auditresult.audit_id = audit_id
-                auditresult.current_status = DirectionsOb.workflow_status['audit_wait']
+                auditresult.current_status = WorkflowDict.workflow_status['audit_wait']
                 auditresult.current_audit_user = auditInfo.next_audit_user
                 # 判断后续是否还有下下一级审核人
                 audit_users_list = auditInfo.audit_users.split(',')
@@ -225,13 +248,13 @@ class Workflow(object):
             audit_detail_result = WorkflowAuditDetail()
             audit_detail_result.audit_id = audit_id
             audit_detail_result.audit_user = audit_user
-            audit_detail_result.audit_status = DirectionsOb.workflow_status['audit_success']
+            audit_detail_result.audit_status = WorkflowDict.workflow_status['audit_success']
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
         elif audit_status == WorkflowDict.workflow_status['audit_reject']:
             # 判断当前工单是否为待审核状态
-            if auditInfo.current_status != DirectionsOb.workflow_status['audit_wait']:
+            if auditInfo.current_status != WorkflowDict.workflow_status['audit_wait']:
                 result['msg'] = '工单不是待审核状态，请返回刷新'
                 raise Exception(result['msg'])
 
@@ -245,21 +268,21 @@ class Workflow(object):
             auditresult.audit_id = audit_id
             auditresult.current_audit_user = '-1'
             auditresult.next_audit_user = '-1'
-            auditresult.current_status = DirectionsOb.workflow_status['audit_reject']
+            auditresult.current_status = WorkflowDict.workflow_status['audit_reject']
             auditresult.save(update_fields=['current_audit_user', 'next_audit_user', 'current_status'])
 
             # 插入审核明细数据
             audit_detail_result = WorkflowAuditDetail()
             audit_detail_result.audit_id = audit_id
             audit_detail_result.audit_user = audit_user
-            audit_detail_result.audit_status = DirectionsOb.workflow_status['audit_reject']
+            audit_detail_result.audit_status = WorkflowDict.workflow_status['audit_reject']
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
         elif audit_status == WorkflowDict.workflow_status['audit_abort']:
             # 判断当前工单是否为待审核/审核通过状态
-            if auditInfo.current_status != DirectionsOb.workflow_status['audit_wait'] and \
-                    auditInfo.current_status != DirectionsOb.workflow_status['audit_success']:
+            if auditInfo.current_status != WorkflowDict.workflow_status['audit_wait'] and \
+                    auditInfo.current_status != WorkflowDict.workflow_status['audit_success']:
                 result['msg'] = '工单不是待审核态/审核通过状态，请返回刷新'
                 raise Exception(result['msg'])
 
@@ -271,14 +294,14 @@ class Workflow(object):
             # 更新主表审核状态
             auditresult = WorkflowAudit()
             auditresult.audit_id = audit_id
-            auditresult.current_status = DirectionsOb.workflow_status['audit_abort']
+            auditresult.current_status = WorkflowDict.workflow_status['audit_abort']
             auditresult.save(update_fields=['current_status'])
 
             # 插入审核明细数据
             audit_detail_result = WorkflowAuditDetail()
             audit_detail_result.audit_id = audit_id
             audit_detail_result.audit_user = audit_user
-            audit_detail_result.audit_status = DirectionsOb.workflow_status['audit_abort']
+            audit_detail_result.audit_status = WorkflowDict.workflow_status['audit_abort']
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
@@ -302,7 +325,7 @@ class Workflow(object):
         msg_data['workflow_content'] = notify_text
         if SysConfig().sys_config.get('mail') == 'true':
             # 给下级审核人发送邮件
-            if auditInfo.current_status == DirectionsOb.workflow_status['audit_wait']:
+            if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
                 # 邮件内容
                 msg_data['email_reciver'] = [users.objects.get(username=auditInfo.current_audit_user).email]
                 msg_data['email_cc'] = []
@@ -310,7 +333,7 @@ class Workflow(object):
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
                 # 邮件内容
                 msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
-                listCcAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
+                listCcAddr = [email['email'] for email in group_dbas(auditInfo.group_id).values('email')]
                 msg_data['email_cc'] = listCcAddr
             # 审核驳回，通知提交人
             elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:

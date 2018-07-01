@@ -50,6 +50,10 @@ def send_msg(msg_data, msg_type, status):
     if msg_type == 1:
         email_reciver = msg_data['email_reciver']
         email_cc = msg_data['email_cc']
-        msg_sender.sendEmail(msg_title, msg_content, [email_reciver], listCcAddr=email_cc)
+        if isinstance(email_reciver, str):
+            email_reciver = [email_reciver]
+        if isinstance(email_cc, str):
+            email_cc = [email_cc]
+        msg_sender.sendEmail(msg_title, msg_content, email_reciver, listCcAddr=email_cc)
     else:
         raise Exception('无该通知类型')

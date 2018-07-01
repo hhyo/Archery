@@ -41,7 +41,7 @@
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                                         {% for group in group_list %}
-                                            <option value="{{ group.name }}">{{ group.name }}</option>
+                                            <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -152,6 +152,45 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="form-group">
+                                        <label for="critical_ddl"
+                                               class="col-sm-4 control-label">AUTO_REVIEW</label>
+                                        <div class="col-sm-8">
+                                            <div class="switch switch-small">
+                                                <label>
+                                                    <input id="auto_review"
+                                                           key="auto_review"
+                                                           value="{{ config.auto_review }}"
+                                                           type="checkbox">
+                                                    是否开启SQL上线自动审批
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="div-auto-review-config" style="display: none">
+                                        <div class="form-group">
+                                            <label for="critical_ddl"
+                                                   class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="auto_review_regex"
+                                                       key="auto_review_regex"
+                                                       value="{{ config.auto_review_regex }}"
+                                                       placeholder="非自动审批语句的正则判断条件">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inception_remote_backup_password"
+                                                   class="col-sm-4 control-label">MAX_UPDATE_ROWS</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="auto_review_max_update_rows"
+                                                       key="auto_review_max_update_rows"
+                                                       value="{{ config.auto_review_max_update_rows }}"
+                                                       placeholder="自动审核允许单条语句最大更新行数">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <h5 style="color: darkgrey"><b>SQL查询</b></h5>
                                 <hr/>
@@ -218,13 +257,13 @@
                                             <div class="switch switch-small">
                                                 <input type="text" class="form-control" id="sqladvisor" key="sqladvisor"
                                                        value="{{ config.sqladvisor }}"
-                                                       placeholder="SQLADVISOR路径，空代表关闭SQL优化工具">
+                                                       placeholder="SQLADVISOR路径">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <br>
-                                <h4 style="color: darkgrey"><b>邮件配置</b></h4>
+                                <h4 style="color: darkgrey"><b>通知配置</b></h4>
                                 <div class="form-horizontal">
                                     <div class="form-group">
                                         <label for="mail"
@@ -425,6 +464,9 @@
                 else if ($(this).attr("id") === 'mail') {
                     $("#div-mail-config").show();
                 }
+                else if ($(this).attr("id") === 'auto_review') {
+                    $("#div-auto-review-config").show();
+                }
             }
             else {
                 $(this).val(false);
@@ -436,6 +478,9 @@
                 }
                 else if ($(this).attr("id") === 'mail') {
                     $("#div-mail-config").hide();
+                }
+                else if ($(this).attr("id") === 'auto_review') {
+                    $("#div-auto-review-config").hide();
                 }
             }
         });

@@ -7,7 +7,6 @@ import datetime
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import logout
-from django.db.models import F
 from django.db import connection, transaction
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
@@ -17,15 +16,15 @@ from django.urls import reverse
 from sql.utils.dao import Dao
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from sql.utils.permission import role_required, superuser_required
+from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import users, master_config, workflow, QueryPrivileges, Group, \
+from .models import users, workflow, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
 from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
 from .const import Const, WorkflowDict
-from .group import user_groups, user_masters, user_slaves
+from sql.utils.group import user_groups, user_masters, user_slaves
 
 import logging
 
@@ -399,7 +398,6 @@ def execute(request):
 
 
 # 定时执行SQL
-@role_required(('DBA',))
 def timingtask(request):
     workflowId = request.POST.get('workflowid')
     run_date = request.POST.get('run_date')
@@ -583,9 +581,8 @@ def queryuserprivileges(request):
 
 # 问题诊断--进程
 def diagnosis_process(request):
-    # 获取所有实例名称
-    masters = master_config.objects.all().order_by('cluster_name')
-    cluster_name_list = [master.cluster_name for master in masters]
+    # 获取用户关联主库列表
+    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
     context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list}
     return render(request, 'diagnosis.html', context)
@@ -593,9 +590,8 @@ def diagnosis_process(request):
 
 # 问题诊断--空间
 def diagnosis_sapce(request):
-    # 获取所有实例名称
-    masters = master_config.objects.all().order_by('cluster_name')
-    cluster_name_list = [master.cluster_name for master in masters]
+    # 获取用户关联主库列表
+    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
     context = {'currentMenu': 'diagnosis', 'tab': 'space', 'cluster_name_list': cluster_name_list}
     return render(request, 'diagnosis.html', context)
@@ -621,13 +617,7 @@ def workflowsdetail(request, audit_id):
 @superuser_required
 def config(request):
     # 获取所有项组名称
-    group_list = Group.objects.all().annotate(id=F('group_id'),
-                                              name=F('group_name'),
-                                              parent=F('group_parent_id'),
-                                              level=F('group_level')
-                                              ).values('id', 'name', 'parent', 'level')
-
-    group_list = [group for group in group_list]
+    group_list = Group.objects.all()
 
     # 获取所有用户
     user_list = users.objects.filter(is_active=1).values('username', 'display')

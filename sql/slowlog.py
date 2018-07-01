@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 import datetime
 
-from sql.group import user_masters
+from sql.utils.group import user_masters
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import master_config, SlowQuery, SlowQueryHistory
 from sql.utils.config import SysConfig

@@ -23,7 +23,7 @@ from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
-from .group import user_slaves
+from sql.utils.group import user_slaves
 
 dao = Dao()
 prpCryptor = Prpcrypt()
@@ -65,10 +65,7 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
-        if SysConfig().sys_config.get('admin_query_limit'):
-            user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
-        else:
-            user_limit_num = 5000
+        user_limit_num = int(SysConfig().sys_config.get('admin_query_limit', 0))
         if int(limit_num) == 0:
             limit_num = int(user_limit_num)
         else:

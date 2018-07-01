@@ -2,7 +2,6 @@
 
 from django.conf.urls import url
 
-import sql.group
 import sql.views_ajax
 import sql.utils.workflow
 from . import views, views_ajax, query, slowlog, instance, process
@@ -51,10 +50,10 @@ urlpatterns = [
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
     url(r'^sqladvisorcheck/$', views_ajax.sqladvisorcheck, name='sqladvisorcheck'),
     url(r'^workflowlist/$', views_ajax.workflowlist, name='workflowlist'),
-    url(r'^group_relations/$', sql.group.group_relations, name='group_relations'),
-    url(r'^group_auditors/$', sql.group.group_auditors, name='group_auditors'),
-    url(r'^changegroupauditors/$', sql.views_ajax.changegroupauditors, name='changegroupauditors'),
-    url(r'^changeconfig/$', sql.views_ajax.changeconfig, name='changeconfig'),
+    url(r'^group_relations/$', views_ajax.group_relations, name='group_relations'),
+    url(r'^group_auditors/$', views_ajax.group_auditors, name='group_auditors'),
+    url(r'^changegroupauditors/$', views_ajax.changegroupauditors, name='changegroupauditors'),
+    url(r'^changeconfig/$', views_ajax.changeconfig, name='changeconfig'),
 
     url(r'^getdbNameList/$', instance.getdbNameList, name='getdbNameList'),
     url(r'^getTableNameList/$', instance.getTableNameList, name='getTableNameList'),

@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*- 
 
 import MySQLdb
-
+import logging
 from django.db import connection
+logger = logging.getLogger('default')
 
 
 class Dao(object):
@@ -116,10 +117,10 @@ class Dao(object):
             result['effect_row'] = effect_row
 
         except MySQLdb.Warning as w:
-            print(str(w))
+            logger.warning(str(w))
             result['Warning'] = str(w)
         except MySQLdb.Error as e:
-            print(str(e))
+            logger.error(str(e))
             result['Error'] = str(e)
         finally:
             if cursor is not None:
@@ -147,10 +148,10 @@ class Dao(object):
             # result['effect_row'] = effect_row
             conn.commit()
         except MySQLdb.Warning as w:
-            print(str(w))
+            logger.warning(str(w))
             result['Warning'] = str(w)
         except MySQLdb.Error as e:
-            print(str(e))
+            logger.error(str(e))
             result['Error'] = str(e)
         finally:
             if result.get('Error') or result.get('Warning'):

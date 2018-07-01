@@ -81,7 +81,8 @@ class Masking(object):
                 errlevel = 2
                 errmsg = 'Global environment: ' + query_tree
             if errlevel == 0:
-                print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
+                pass
+                #print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
             return {'id': id, 'statement': statement, 'errlevel': errlevel, 'query_tree': query_tree,
                     'errmsg': errmsg}
         else:

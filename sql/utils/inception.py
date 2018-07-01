@@ -8,30 +8,28 @@ from django.db import connection
 from sql.models import master_config, slave_config, workflow
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.config import SysConfig
+import logging
+
+logger = logging.getLogger('default')
 
 
 class InceptionDao(object):
     def __init__(self):
-        try:
-            self.sys_config = SysConfig().sys_config
-            self.inception_host = self.sys_config.get('inception_host')
-            if self.sys_config.get('inception_port'):
-                self.inception_port = int(self.sys_config.get('inception_port'))
-            else:
-                self.inception_port = 6669
+        self.sys_config = SysConfig().sys_config
+        self.inception_host = self.sys_config.get('inception_host')
+        if self.sys_config.get('inception_port'):
+            self.inception_port = int(self.sys_config.get('inception_port'))
+        else:
+            self.inception_port = 6669
 
-            self.inception_remote_backup_host = self.sys_config.get('inception_remote_backup_host')
-            if self.sys_config.get('inception_remote_backup_port'):
-                self.inception_remote_backup_port = int(self.sys_config.get('inception_remote_backup_port'))
-            else:
-                self.inception_remote_backup_port = 3306
-            self.inception_remote_backup_user = self.sys_config.get('inception_remote_backup_user')
-            self.inception_remote_backup_password = self.sys_config.get('inception_remote_backup_password')
-            self.prpCryptor = Prpcrypt()
-        except AttributeError as a:
-            print("Error: %s" % a)
-        except ValueError as v:
-            print("Error: %s" % v)
+        self.inception_remote_backup_host = self.sys_config.get('inception_remote_backup_host')
+        if self.sys_config.get('inception_remote_backup_port'):
+            self.inception_remote_backup_port = int(self.sys_config.get('inception_remote_backup_port'))
+        else:
+            self.inception_remote_backup_port = 3306
+        self.inception_remote_backup_user = self.sys_config.get('inception_remote_backup_user')
+        self.inception_remote_backup_password = self.sys_config.get('inception_remote_backup_password')
+        self.prpCryptor = Prpcrypt()
 
     def criticalDDL(self, sqlContent):
         '''
@@ -85,8 +83,6 @@ class InceptionDao(object):
         将sql交给inception进行自动审核，并返回审核结果。
         '''
         listMasters = master_config.objects.filter(cluster_name=clusterName)
-        if len(listMasters) != 1:
-            print("Error: 主库配置返回为0")
         masterHost = listMasters[0].master_host
         masterPort = listMasters[0].master_port
         masterUser = listMasters[0].master_user
