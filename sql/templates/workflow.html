@@ -131,7 +131,7 @@
                     field: 'id',
                     formatter: function (value, row, index) {
                         // 当前审核人
-                        if (row.current_status === 0 && row.current_audit_user === "{{ loginUserOb.username }}") {
+                        if (row.current_status === 0 && row.current_audit_user === "{{ user.username }}") {
                             return "<button class=\"btn btn-default btn-xs\" " +
                                 "onclick=\"javascrtpt:window.location.href='/workflowdetail/" + row.audit_id + "/'\">" +
                                 "审核</button>\n"

@@ -61,11 +61,10 @@ def query_audit_call_back(workflow_id, workflow_status):
 
 
 # 查询权限校验
-def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
+def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
-    loginUser = loginUserOb.username
-    if loginUserOb.is_superuser:
+    if user.is_superuser:
         if SysConfig().sys_config.get('admin_query_limit'):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
@@ -79,12 +78,12 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     elif re.match(r"^show\s+create\s+table", sqlContent.lower()):
         tb_name = re.sub('^show\s+create\s+table', '', sqlContent, count=1, flags=0).strip()
         # 先判断是否有整库权限
-        db_privileges = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name,
+        db_privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
                                                        db_name=dbName, priv_type=1,
                                                        valid_date__gte=datetime.datetime.now(), is_deleted=0)
         # 无整库权限再验证表权限
         if len(db_privileges) == 0:
-            tb_privileges = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name,
+            tb_privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
                                                            db_name=dbName, table_name=tb_name, priv_type=2,
                                                            valid_date__gte=datetime.datetime.now(), is_deleted=0)
             if len(tb_privileges) == 0:
@@ -100,7 +99,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
         if table_ref_result['status'] == 0:
             table_ref = table_ref_result['data']
             # 获取表信息,校验是否拥有全部表查询权限
-            QueryPrivilegesOb = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name)
+            QueryPrivilegesOb = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name)
             # 先判断是否有整库权限
             for table in table_ref:
                 db_privileges = QueryPrivilegesOb.filter(db_name=table['db'], priv_type=1,
@@ -119,7 +118,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
         else:
             table_ref = None
             # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
-            privileges = QueryPrivileges.objects.filter(user_name=loginUser, cluster_name=cluster_name, db_name=dbName,
+            privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name, db_name=dbName,
                                                         valid_date__gte=datetime.datetime.now(),
                                                         is_deleted=0)
             if len(privileges) == 0:
@@ -135,7 +134,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
         if table_ref:
             db_list = [table_info['db'] for table_info in table_ref]
             table_list = [table_info['table'] for table_info in table_ref]
-            user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
+            user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                             cluster_name=cluster_name,
                                                             db_name__in=db_list,
                                                             table_name__in=table_list,
@@ -143,7 +142,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
                                                             is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
             if user_limit_num is None:
                 # 如果表没获取到则获取涉及库的最小limit限制
-                user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
+                user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                                 cluster_name=cluster_name,
                                                                 db_name=dbName,
                                                                 valid_date__gte=datetime.datetime.now(),
@@ -151,7 +150,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
                     'limit_num__min']
         else:
             # 如果表没获取到则获取涉及库的最小limit限制
-            user_limit_num = QueryPrivileges.objects.filter(user_name=loginUser,
+            user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                             cluster_name=cluster_name,
                                                             db_name=dbName,
                                                             valid_date__gte=datetime.datetime.now(),
@@ -168,7 +167,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
 @csrf_exempt
 def getqueryapplylist(request):
     # 获取用户信息
-    loginUserOb = request.user
+    user = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -180,7 +179,7 @@ def getqueryapplylist(request):
         search = ''
 
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
-    if loginUserOb.is_superuser:
+    if user.is_superuser:
         applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
                     offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
@@ -189,13 +188,13 @@ def getqueryapplylist(request):
         applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
     else:
         applylist = QueryPrivilegesApply.objects.filter(
-            Q(user_name=loginUserOb.username) | Q(audit_users__contains=loginUserOb.username)).filter(
+            Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
             title__contains=search).order_by('-apply_id')[offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_name', 'status', 'create_time', 'group_name'
         )
         applylistCount = QueryPrivilegesApply.objects.filter(
-            Q(user_name=loginUserOb.username) | Q(audit_users__contains=loginUserOb.username)).filter(
+            Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
             title__contains=search).count()
 
     # QuerySet 序列化
@@ -225,7 +224,7 @@ def applyforprivileges(request):
         workflow_remark = ''
 
     # 获取用户信息
-    loginUser = request.user.username
+    user = request.user.username
 
     # 服务端参数校验
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -252,7 +251,7 @@ def applyforprivileges(request):
     if int(priv_type) == 1:
         db_list = db_list.split(',')
         # 检查申请账号是否已拥整个库的查询权限
-        own_dbs = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=loginUser, db_name__in=db_list,
+        own_dbs = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username, db_name__in=db_list,
                                                  valid_date__gte=datetime.datetime.now(), priv_type=1,
                                                  is_deleted=0).values('db_name')
         own_db_list = [table_info['db_name'] for table_info in own_dbs]
@@ -268,7 +267,7 @@ def applyforprivileges(request):
     elif int(priv_type) == 2:
         table_list = table_list.split(',')
         # 检查申请账号是否已拥有该表的查询权限
-        own_tables = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=loginUser, db_name=db_name,
+        own_tables = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username, db_name=db_name,
                                                     table_name__in=table_list, valid_date__gte=datetime.datetime.now(),
                                                     priv_type=2, is_deleted=0).values('table_name')
         own_table_list = [table_info['table_name'] for table_info in own_tables]
@@ -290,7 +289,7 @@ def applyforprivileges(request):
             applyinfo.group_id = group_id
             applyinfo.group_name = group_name
             applyinfo.audit_users = workflow_auditors
-            applyinfo.user_name = loginUser
+            applyinfo.user_name = user.username
             applyinfo.cluster_name = cluster_name
             if int(priv_type) == 1:
                 applyinfo.db_list = ','.join(db_list)
@@ -302,7 +301,7 @@ def applyforprivileges(request):
             applyinfo.valid_date = valid_date
             applyinfo.status = WorkflowDict.workflow_status['audit_wait']  # 待审核
             applyinfo.limit_num = limit_num
-            applyinfo.create_user = loginUser
+            applyinfo.create_user = user.username
             applyinfo.save()
             apply_id = applyinfo.apply_id
 
@@ -334,10 +333,10 @@ def getuserprivileges(request):
 
     # 判断权限，除了管理员外其他人只能查看自己的权限信息
     result = {'status': 0, 'msg': 'ok', 'data': []}
-    loginUserOb = request.user
+    user = request.user
 
     # 获取用户的权限数据
-    if loginUserOb.is_superuser:
+    if user.is_superuser:
         if user_name != 'all':
             privilegeslist = QueryPrivileges.objects.all().filter(user_name=user_name,
                                                                   is_deleted=0,
@@ -358,12 +357,12 @@ def getuserprivileges(request):
                                                                        valid_date__gte=datetime.datetime.now()
                                                                        ).count()
     else:
-        privilegeslist = QueryPrivileges.objects.filter(user_name=loginUserOb.username,
+        privilegeslist = QueryPrivileges.objects.filter(user_name=user.username,
                                                         table_name__contains=search,
                                                         is_deleted=0,
                                                         valid_date__gte=datetime.datetime.now()
                                                         ).order_by('-privilege_id')[offset:limit]
-        privilegeslistCount = QueryPrivileges.objects.filter(user_name=loginUserOb.username,
+        privilegeslistCount = QueryPrivileges.objects.filter(user_name=user.username,
                                                              table_name__contains=search,
                                                              is_deleted=0,
                                                              valid_date__gte=datetime.datetime.now()
@@ -413,7 +412,7 @@ def modifyqueryprivileges(request):
 @csrf_exempt
 def queryprivaudit(request):
     # 获取用户信息
-    loginUser = request.user.username
+    user = request.user
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     apply_id = int(request.POST['apply_id'])
@@ -431,7 +430,7 @@ def queryprivaudit(request):
                                                          workflow_type=WorkflowDict.workflow_type['query']).audit_id
 
             # 调用工作流接口审核
-            auditresult = workflowOb.auditworkflow(request, audit_id, audit_status, loginUser, audit_remark)
+            auditresult = workflowOb.auditworkflow(request, audit_id, audit_status, user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
             auditInfo = workflowOb.auditinfo(audit_id)
@@ -469,8 +468,7 @@ def query(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 获取用户信息
-    loginUser = request.user.username
-    loginUserOb = request.user
+    user = request.user
 
     # 过滤注释语句和非查询的语句
     sqlContent = ''.join(
@@ -493,7 +491,7 @@ def query(request):
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 查询权限校验
-    priv_check_info = query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num)
+    priv_check_info = query_priv_check(user, cluster_name, dbName, sqlContent, limit_num)
 
     if priv_check_info['status'] == 0:
         limit_num = priv_check_info['data']
@@ -549,7 +547,7 @@ def query(request):
         pass
     else:
         query_log = QueryLog()
-        query_log.username = loginUser
+        query_log.username = user.username
         query_log.db_name = dbName
         query_log.cluster_name = cluster_name
         query_log.sqllog = sqlContent
@@ -575,8 +573,7 @@ def query(request):
 @csrf_exempt
 def querylog(request):
     # 获取用户信息
-    loginUser = request.user.username
-    loginUserOb = request.user
+    user = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -588,15 +585,15 @@ def querylog(request):
         search = ''
 
     # 查询个人记录，超管查看所有数据
-    if loginUserOb.is_superuser:
+    if user.is_superuser:
         sql_log_count = QueryLog.objects.all().filter(Q(sqllog__contains=search) | Q(username__contains=search)).count()
         sql_log_list = QueryLog.objects.all().filter(
             Q(sqllog__contains=search) | Q(username__contains=search)).order_by(
             '-id')[offset:limit]
     else:
-        sql_log_count = QueryLog.objects.filter(username=loginUser).filter(
+        sql_log_count = QueryLog.objects.filter(username=user.username).filter(
             Q(sqllog__contains=search) | Q(username__contains=search)).count()
-        sql_log_list = QueryLog.objects.filter(username=loginUser).filter(
+        sql_log_list = QueryLog.objects.filter(username=user.username).filter(
             Q(sqllog__contains=search) | Q(username__contains=search)).order_by('-id')[offset:limit]
 
     # QuerySet 序列化

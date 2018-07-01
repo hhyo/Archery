@@ -136,7 +136,7 @@ def authenticateEntry(request):
 @csrf_exempt
 def sqlworkflowlist(request):
     # 获取用户信息
-    loginUser = request.user.username
+    user = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -151,11 +151,11 @@ def sqlworkflowlist(request):
     navStatus = request.POST.get('navStatus')
 
     # 管理员可以看到全部工单，其他人能看到自己提交和审核的工单
-    loginUserOb = request.user
+    user = request.user
 
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
-        if loginUserOb.is_superuser == 1:
+        if user.is_superuser == 1:
             listWorkflow = workflow.objects.filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
@@ -165,18 +165,18 @@ def sqlworkflowlist(request):
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
         else:
             listWorkflow = workflow.objects.filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)
+                Q(engineer=user.username) | Q(review_man__contains=user.username)
             ).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).filter(
+                Q(engineer=user.username) | Q(review_man__contains=user.username)).filter(
                 Q(engineer__contains=search) | Q(workflow_name__contains=search)
             ).count()
     elif navStatus in Const.workflowStatus.keys():
-        if loginUserOb.is_superuser == 1:
+        if user.is_superuser == 1:
             listWorkflow = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
@@ -187,14 +187,14 @@ def sqlworkflowlist(request):
             listWorkflow = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)
+                Q(engineer=user.username) | Q(review_man__contains=user.username)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(
-                Q(engineer=loginUser) | Q(review_man__contains=loginUser)).count()
+                Q(engineer=user.username) | Q(review_man__contains=user.username)).count()
     else:
         context = {'errMsg': '传入的navStatus参数有误！'}
         return render(request, 'error.html', context)
@@ -387,7 +387,7 @@ def stopOscProgress(request):
         context = {"status": -1, 'msg': 'workflowId或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    loginUser = request.user.username
+    user = request.user
     workflowDetail = workflow.objects.get(id=workflowId)
     try:
         reviewMan = json.loads(workflowDetail.review_man)
@@ -397,7 +397,7 @@ def stopOscProgress(request):
     if workflowDetail.status != Const.workflowStatus['executing']:
         context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
-    if loginUser is None or loginUser not in reviewMan:
+    if user.username is None or user.username not in reviewMan:
         context = {"status": -1, 'msg': '当前登录用户不是审核人，请重新登录.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
@@ -472,7 +472,7 @@ def sqladvisorcheck(request):
 @csrf_exempt
 def workflowlist(request):
     # 获取用户信息
-    loginUserOb = request.user
+    user = request.user
 
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -485,7 +485,7 @@ def workflowlist(request):
         search = ''
 
     # 调用工作流接口获取审核列表
-    result = workflowOb.auditlist(loginUserOb, workflow_type, offset, limit, search)
+    result = workflowOb.auditlist(user.username, workflow_type, offset, limit, search)
     auditlist = result['data']['auditlist']
     auditlistCount = result['data']['auditlistCount']
 

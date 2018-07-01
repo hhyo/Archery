@@ -35,7 +35,6 @@ dao = Dao()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
-
 # 注册用户
 def sign_up(request):
     username = request.POST.get('username')
@@ -63,7 +62,6 @@ def sign_up(request):
                                        is_staff=1)
     new_account.save()
     return render(request, 'login.html')
-
 
 # 登录
 def login(request):
@@ -213,7 +211,7 @@ def autoreview(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
-# 展示SQL工单详细内容，以及可以人工审核，审核通过即可执行
+# 展示SQL工单详细页面
 def detail(request, workflowId):
     workflowDetail = get_object_or_404(workflow, pk=workflowId)
     if workflowDetail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
@@ -233,9 +231,6 @@ def detail(request, workflowId):
                                                                ).current_audit_user
     except Exception:
         current_audit_user = None
-
-    # 获取用户信息
-    loginUserOb = request.user
 
     # 获取定时执行任务信息
     if workflowDetail.status == Const.workflowStatus['timingtask']:
@@ -288,8 +283,7 @@ def detail(request, workflowId):
                  "   </div>",
                  "</div>"])
     context = {'currentMenu': 'sqlworkflow', 'workflowDetail': workflowDetail, 'column_list': column_list, 'rows': rows,
-               'reviewMan': reviewMan, 'current_audit_user': current_audit_user, 'loginUserOb': loginUserOb,
-               'run_date': run_date}
+               'reviewMan': reviewMan, 'current_audit_user': current_audit_user, 'run_date': run_date}
     return render(request, 'detail.html', context)
 
 
@@ -307,8 +301,8 @@ def passed(request):
     reviewMan = reviewMan.split(',')
 
     # 服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
-    loginUser = request.user.username
-    if loginUser is None or loginUser not in reviewMan:
+    user = request.user
+    if user.username is None or user.username not in reviewMan:
         context = {'errMsg': '当前登录用户不是审核人，请重新登录.'}
         return render(request, 'error.html', context)
 
@@ -325,7 +319,7 @@ def passed(request):
             audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
-                                                   loginUser, '')
+                                                   user.username, '')
 
             # 按照审核结果更新业务表审核状态
             if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
@@ -359,8 +353,8 @@ def execute(request):
     reviewMan = reviewMan.split(',')
 
     # 服务器端二次验证，正在执行人工审核动作的当前登录用户必须为审核人或者提交人. 避免攻击或被接口测试工具强行绕过
-    loginUser = request.user.username
-    if loginUser is None or (loginUser not in reviewMan and loginUser != workflowDetail.engineer):
+    user = request.user
+    if user.username is None or (user.username not in reviewMan and user.username != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人或者提交人，请重新登录.'}
         return render(request, 'error.html', context)
 
@@ -458,8 +452,8 @@ def cancel(request):
         return render(request, 'error.html', context)
 
     # 服务器端二次验证，如果正在执行终止动作的当前登录用户，不是提交人也不是审核人，则异常.
-    loginUser = request.user.username
-    if loginUser is None or (loginUser not in reviewMan and loginUser != workflowDetail.engineer):
+    user = request.user
+    if user.username is None or (user.username not in reviewMan and user.username != workflowDetail.engineer):
         context = {'errMsg': '当前登录用户不是审核人也不是提交人，请重新登录.'}
         return render(request, 'error.html', context)
 
@@ -476,12 +470,12 @@ def cancel(request):
             # 获取audit_id
             audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            if loginUser == workflowDetail.engineer:
+            if user.username == workflowDetail.engineer:
                 auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
-                                                       loginUser, audit_remark)
+                                                       user.username, audit_remark)
             else:
                 auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
-                                                       loginUser, audit_remark)
+                                                       user.username, audit_remark)
             # 删除定时执行job
             if workflowDetail.status == Const.workflowStatus['timingtask']:
                 job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
@@ -581,25 +575,19 @@ def queryapplydetail(request, apply_id):
 
 # 用户的查询权限管理
 def queryuserprivileges(request):
-    # 获取用户信息
-    loginUserOb = request.user
     # 获取所有用户
     user_list = QueryPrivileges.objects.filter(is_deleted=0).values('user_name').distinct()
-    context = {'currentMenu': 'queryapply', 'user_list': user_list, 'loginUserOb': loginUserOb}
+    context = {'currentMenu': 'queryapply', 'user_list': user_list}
     return render(request, 'queryuserprivileges.html', context)
 
 
 # 问题诊断--进程
 def diagnosis_process(request):
-    # 获取用户信息
-    loginUserOb = request.user
-
     # 获取所有实例名称
     masters = master_config.objects.all().order_by('cluster_name')
     cluster_name_list = [master.cluster_name for master in masters]
 
-    context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list,
-               'loginUserOb': loginUserOb}
+    context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list}
     return render(request, 'diagnosis.html', context)
 
 
@@ -615,9 +603,7 @@ def diagnosis_sapce(request):
 
 # 获取工作流审核列表
 def workflows(request):
-    # 获取用户信息
-    loginUserOb = request.user
-    context = {'currentMenu': 'workflow', "loginUserOb": loginUserOb}
+    context = {'currentMenu': 'workflow'}
     return render(request, "workflow.html", context)
 
 

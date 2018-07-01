@@ -7,12 +7,12 @@
             <select id=user_name class="form-control selectpicker show-tick bs-select-hidden " name="user_name_list"
                     data-live-search="true">
                 <option value="all" selected="selected">全部</option>
-                {% if loginUserOb.is_superuser %}
+                {% if user.is_superuser %}
                     {% for user in user_list %}
                         <option value="{{ user.user_name }}">{{ user.user_name }}</option>
                     {% endfor %}
                 {% else %}
-                    <option value="{{ loginUserOb.username }}">{{ loginUserOb.username }}</option>
+                    <option value="{{ user.username }}">{{ user.username }}</option>
                 {% endif %}
             </select>
         </div>
@@ -159,7 +159,7 @@
                     title: '操作',
                     field: 'id',
                     formatter: function (value, row, index) {
-                        if ("{{ loginUserOb.is_superuser }}" === 'True') {
+                        if ("{{ user.is_superuser }}" === 'True') {
                             return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.id + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#modify_privileges\">变更\n" + "</button>\n" +

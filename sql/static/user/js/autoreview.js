@@ -7,7 +7,7 @@ function validate() {
         alert("SQL内容不能为空！");
         return result = false;
     } else if (clusterName === null || clusterName == $("#cluster_name").attr("data-placeholder")) {
-        alert("请选择要上线的实例！");
+        alert("请选择实例！");
         return result = false;
     }else if(db_name  === null || db_name == $("#db_name").attr("data-placeholder")){
         alert("请选择数据库");

@@ -358,7 +358,7 @@
                             var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
                             $("#cluster_name").append(cluster);
                         }
-                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择要上线的实例:</option>");
+                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
                         $('#cluster_name').selectpicker('render');
                         $('#cluster_name').selectpicker('refresh');
                         $("#db_name").empty();

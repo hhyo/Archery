@@ -4,10 +4,10 @@
     <h4 style="display: inline;">单子名称：<span>{{ workflowDetail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
-    {% if loginUser == workflowDetail.engineer %}
+    {% if user.username == workflowDetail.engineer %}
         <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
     {% endif %}
-    {% if loginUserOb.role == 'DBA' %}
+    {% if user.role == 'DBA' %}
         <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -167,7 +167,7 @@
     {% endif %}
 
     {% if workflowDetail.status == '等待审核人审核' %}
-        {% if loginUser == current_audit_user %}
+        {% if user.username == current_audit_user %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
@@ -184,7 +184,7 @@
                 <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
             </form>
 
-        {% elif loginUser == workflowDetail.engineer %}
+        {% elif user.username == workflowDetail.engineer %}
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
@@ -194,7 +194,7 @@
         {% endif %}
 
     {% elif workflowDetail.status == '审核通过' %}
-        {% if loginUser == workflowDetail.engineer %}
+        {% if user.username == workflowDetail.engineer %}
             <!--审核通过后提交人也可以执行SQL-->
             <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
                 {% csrf_token %}
@@ -210,7 +210,7 @@
                 <input type="submit" onclick="loading(this)" class="btn btn-default" value="终止流程"/>
             </form>
 
-        {% elif loginUser in reviewMan %}
+        {% elif user.username in reviewMan %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
@@ -231,7 +231,7 @@
         {% endif %}
 
     {% elif workflowDetail.status == '定时执行' %}
-        {% if loginUser == workflowDetail.engineer %}
+        {% if user.username == workflowDetail.engineer %}
             <!--审核通过后提交人也可以执行SQL-->
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
             <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
@@ -241,7 +241,7 @@
                 <input type="submit" onclick="loading(this)" class="btn btn-default" value="终止流程"/>
             </form>
 
-        {% elif loginUser in reviewMan %}
+        {% elif user.username in reviewMan %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
@@ -273,7 +273,7 @@
                        value="查看回滚SQL"/>
             </form>
         {% endif %}
-        {% if loginUser == workflowDetail.engineer %}
+        {% if user.username == workflowDetail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
             <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'

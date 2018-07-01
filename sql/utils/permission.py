@@ -9,9 +9,9 @@ from sql.models import users
 def superuser_required(func):
     def wrapper(request, *args, **kw):
         # 获取用户信息，权限验证
-        loginUserOb = request.user
+        user = request.user
 
-        if loginUserOb.is_superuser is False:
+        if user.is_superuser is False:
             if request.is_ajax():
                 finalResult = {'status': 1, 'msg': '您无权操作，请联系管理员', 'data': []}
                 return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -29,10 +29,8 @@ def role_required(roles=()):
     def _deco(func):
         def wrapper(request, *args, **kw):
             # 获取用户信息，权限验证
-            loginUserOb = request.user
-            loginrole = loginUserOb.role
-
-            if loginrole not in roles and loginUserOb.is_superuser is False:
+            user = request.user
+            if user.role not in roles and user.is_superuser is False:
                 if request.is_ajax():
                     finalResult = {'status': 1, 'msg': '您无权操作，请联系管理员', 'data': []}
                     return HttpResponse(json.dumps(finalResult), content_type='application/json')

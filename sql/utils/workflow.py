@@ -333,7 +333,7 @@ class Workflow(object):
         return result
 
     # 获取审核列表
-    def auditlist(self, loginUserOb, workflow_type, offset=0, limit=14, search=''):
+    def auditlist(self, user, workflow_type, offset=0, limit=14, search=''):
         result = {'status': 0, 'msg': '', 'data': []}
 
         # 只返回当前待自己审核的数据
@@ -341,7 +341,7 @@ class Workflow(object):
             auditlist = WorkflowAudit.objects.filter(
                 workflow_title__contains=search,
                 current_status=WorkflowDict.workflow_status['audit_wait'],
-                current_audit_user=loginUserOb.username
+                current_audit_user=user.username
             ).order_by('-audit_id')[offset:limit].values(
                 'audit_id', 'workflow_type', 'workflow_title', 'create_user',
                 'create_time', 'current_status', 'audit_users',
@@ -350,14 +350,14 @@ class Workflow(object):
             auditlistCount = WorkflowAudit.objects.filter(
                 workflow_title__contains=search,
                 current_status=WorkflowDict.workflow_status['audit_wait'],
-                current_audit_user=loginUserOb.username
+                current_audit_user=user.username
             ).count()
         else:
             auditlist = WorkflowAudit.objects.filter(
                 workflow_title__contains=search,
                 workflow_type=workflow_type,
                 current_status=WorkflowDict.workflow_status['audit_wait'],
-                current_audit_user=loginUserOb.username
+                current_audit_user=user.username
             ).order_by('-audit_id')[offset:limit].values(
                 'audit_id', 'workflow_type',
                 'workflow_title', 'create_user',
@@ -369,7 +369,7 @@ class Workflow(object):
                 workflow_title__contains=search,
                 workflow_type=workflow_type,
                 current_status=WorkflowDict.workflow_status['audit_wait'],
-                current_audit_user=loginUserOb.username
+                current_audit_user=user.username
             ).count()
 
         result['data'] = {'auditlist': auditlist, 'auditlistCount': auditlistCount}
