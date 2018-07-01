@@ -534,7 +534,7 @@ def charts(request):
 # SQL在线查询
 def sqlquery(request):
     # 获取用户关联从库列表
-    listAllClusterName = [slave.cluster_name for slave in user_masters(request.user)]
+    listAllClusterName = [slave.cluster_name for slave in user_slaves(request.user)]
 
     context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
     return render(request, 'sqlquery.html', context)
