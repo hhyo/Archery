@@ -485,7 +485,7 @@ def workflowlist(request):
         search = ''
 
     # 调用工作流接口获取审核列表
-    result = workflowOb.auditlist(user.username, workflow_type, offset, limit, search)
+    result = workflowOb.auditlist(user, workflow_type, offset, limit, search)
     auditlist = result['data']['auditlist']
     auditlistCount = result['data']['auditlistCount']
 
