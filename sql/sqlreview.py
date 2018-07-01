@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import re
 import simplejson as json
 
 import time
@@ -15,7 +14,7 @@ from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, workflow, master_config
-from .workflow import Workflow
+from sql.utils.workflow import Workflow
 import logging
 
 logger = logging.getLogger('default')

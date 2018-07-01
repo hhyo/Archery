@@ -4,9 +4,8 @@ import datetime
 from django.utils import timezone
 
 from sql.notify import send_msg
-from sql.utils.sendmsg import MailSender
-from .const import WorkflowDict
-from .models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
+from sql.const import WorkflowDict
+from sql.models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
     QueryPrivilegesApply
 from sql.utils.config import SysConfig
 
@@ -63,13 +62,6 @@ class Workflow(object):
             result['msg'] = '工单类型不存在'
             raise Exception(result['msg'])
 
-        # 获取审核配置
-        # try:
-        #     settingInfo = WorkflowAuditSetting.objects.get(workflow_type=workflow_type)
-        # except Exception:
-        #     audit_users_list = None
-        # else:
-        #     audit_users_list = settingInfo.audit_users.split(',')
         # 验证审批流是否和配置一致
         try:
             audit_users = WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id).audit_users

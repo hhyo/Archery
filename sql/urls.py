@@ -4,7 +4,7 @@ from django.conf.urls import url
 
 import sql.group
 import sql.views_ajax
-import sql.workflow
+import sql.utils.workflow
 from . import views, views_ajax, query, slowlog, instance, process
 from sql.utils import jobs
 

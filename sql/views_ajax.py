@@ -28,7 +28,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 from .models import users, master_config, workflow
 from sql.utils.sendmsg import MailSender
 import logging
-from .workflow import Workflow
+from sql.utils.workflow import Workflow
 from sql.utils.config import SysConfig
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 

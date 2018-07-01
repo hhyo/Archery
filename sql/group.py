@@ -4,8 +4,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from sql.models import Group, GroupRelations
-from sql.utils.permission import superuser_required
-from .workflow import Workflow
+from sql.utils.workflow import Workflow
 from .models import master_config, slave_config
 
 

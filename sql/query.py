@@ -18,9 +18,9 @@ from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from .const import WorkflowDict
-from .models import users, master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
+from .models import master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
 from sql.utils.data_masking import Masking
-from .workflow import Workflow
+from sql.utils.workflow import Workflow
 from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
 from .group import user_slaves

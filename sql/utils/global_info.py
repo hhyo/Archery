@@ -1,7 +1,5 @@
 # -*- coding: UTF-8 -*-
-from sql.workflow import Workflow
-from sql.models import users
-from sql.utils.config import SysConfig
+from sql.utils.workflow import Workflow
 
 
 def global_info(request):

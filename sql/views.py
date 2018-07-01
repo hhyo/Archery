@@ -20,9 +20,9 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import role_required, superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
+from .models import users, master_config, workflow, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
-from .workflow import Workflow
+from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
 from .const import Const, WorkflowDict
 from .group import user_groups, user_masters, user_slaves
