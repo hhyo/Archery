@@ -15,8 +15,8 @@ class users(AbstractUser):
         return self.username
 
     class Meta:
-        verbose_name = u'用户配置'
-        verbose_name_plural = u'用户配置'
+        verbose_name = u'用户管理'
+        verbose_name_plural = u'用户管理'
 
 
 # 组
@@ -69,8 +69,8 @@ class master_config(models.Model):
         return self.cluster_name
 
     class Meta:
-        verbose_name = u'主库配置'
-        verbose_name_plural = u'主库配置'
+        verbose_name = u'主库连接配置'
+        verbose_name_plural = u'主库连接配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
@@ -89,8 +89,8 @@ class slave_config(models.Model):
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
-        verbose_name = u'从库配置'
-        verbose_name_plural = u'从库配置'
+        verbose_name = u'查询从库配置'
+        verbose_name_plural = u'查询从库配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
@@ -120,7 +120,6 @@ class workflow(models.Model):
     is_manual = models.IntegerField('是否跳过inception执行', choices=((0, '否'), (1, '是')), default=0)
     audit_remark = models.CharField('审核备注', max_length=200, null=True, blank=True)
     sql_syntax = models.IntegerField('SQL语法 1、DDL，2、DML', choices=((1, 'DDL'), (2, 'DML')))
-
 
     def __str__(self):
         return self.workflow_name
@@ -161,8 +160,7 @@ class WorkflowAudit(models.Model):
 # 审批明细表
 class WorkflowAuditDetail(models.Model):
     audit_detail_id = models.AutoField(primary_key=True)
-    audit_id = models.ForeignKey(WorkflowAudit, db_constraint=False, to_field='audit_id',
-                                 db_column='audit_id', verbose_name='审核主表id', on_delete=models.CASCADE)
+    audit_id = models.IntegerField('审核主表id')
     audit_user = models.CharField('审核人', max_length=20)
     audit_time = models.DateTimeField('审核时间')
     audit_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
@@ -333,9 +331,8 @@ class AliyunAccessKey(models.Model):
 
 # 阿里云rds配置信息
 class AliyunRdsConfig(models.Model):
-    cluster_name = models.OneToOneField(master_config, db_constraint=False, to_field='cluster_name',
-                                        db_column='cluster_name', verbose_name='实例名称', unique=True, on_delete=models.CASCADE)
-    rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100)
+    rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100, unique=True)
+    cluster_name = models.CharField('对应主库实例名称', max_length=50, unique=True)
 
     def __int__(self):
         return self.rds_dbinstanceid
@@ -371,7 +368,8 @@ class SlowQueryHistory(models.Model):
     user_max = models.CharField(max_length=64, null=False)
     db_max = models.CharField(max_length=64, null=True, default=None)
     bytes_max = models.CharField(max_length=64, null=True)
-    checksum = models.ForeignKey(SlowQuery, db_constraint=False, to_field='checksum', db_column='checksum', on_delete=models.CASCADE)
+    checksum = models.ForeignKey(SlowQuery, db_constraint=False, to_field='checksum', db_column='checksum',
+                                 on_delete=models.CASCADE)
     sample = models.TextField()
     ts_min = models.DateTimeField(db_index=True)
     ts_max = models.DateTimeField()

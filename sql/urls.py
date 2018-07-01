@@ -7,7 +7,6 @@ import sql.views_ajax
 import sql.workflow
 from . import views, views_ajax, query, slowlog, instance, process
 from sql.utils import jobs
-from sql.utils.config import SysConfig
 
 urlpatterns = [
     url(r'^$', views.sqlworkflow, name='sqlworkflow'),
@@ -76,15 +75,3 @@ urlpatterns = [
     url(r'^create_kill_session/$', process.create_kill_session, name='create_kill_session'),
     url(r'^kill_session/$', process.kill_session, name='kill_session'),
 ]
-
-# if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-#     from . import aliyun_rds
-#
-#     aliyun_function_url = [
-#         url(r'^process_status/$', aliyun_rds.process_status, name='process_status'),
-#         url(r'^sapce_status/$', aliyun_rds.sapce_status, name='sapce_status'),
-#         url(r'^create_kill_session/$', aliyun_rds.create_kill_session,
-#             name='create_kill_session'),
-#         url(r'^kill_session/$', aliyun_rds.kill_session, name='kill_session'),
-#     ]
-#     urlpatterns.extend(aliyun_function_url)

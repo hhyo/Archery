@@ -99,15 +99,15 @@
                         </ul>
                         <!-- /.nav-second-level -->
                     </li>
-                    <li>
-                        <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level">
-                            <li>
-                                <a href="/diagnosis_process/">会话管理</a>
-                            </li>
-                            {% if user.is_superuser %}
+                    {% if user.is_superuser %}
+                        <li>
+                            <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/config/">配置管理</a>
+                                    <a href="/diagnosis_process/">主库会话管理</a>
+                                </li>
+                                <li>
+                                    <a href="/config/">配置项管理</a>
                                 </li>
                                 <li>
                                     <a href="#">数据管理 <span class="fa arrow"></span></a>
@@ -116,10 +116,10 @@
                                             <a href="/admin/sql/master_config/">主库配置</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/sql/slave_config/">从库配置</a>
+                                            <a href="/admin/sql/slave_config/">查询从库配置</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/sql/users/">用户配置</a>
+                                            <a href="/admin/sql/users/">用户管理</a>
                                         </li>
                                         <li>
                                             <a href="/admin/sql/group/">组管理</a>
@@ -127,16 +127,16 @@
                                         <li>
                                             <a href="/admin/sql/grouprelations/">组关系维护</a>
                                         </li>
-                                         <li>
-                                            <a href="/admin/">其他数据</a>
+                                        <li>
+                                            <a href="/admin/sql/">全部数据</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
                                 </li>
-                            {% endif %}
-                        </ul>
-                        <!-- /.nav-second-level -->
-                    </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
                     <li>
                         <a href="#"><i class="fa fa-sitemap fa-fw"></i> 相关文档<span
                                 class="fa arrow"></span></a>

@@ -573,8 +573,6 @@ def queryapplylist(request):
                                               ).values('id', 'name', 'parent', 'level')
 
     group_list = [group for group in group_list]
-    if len(group_list) == 0:
-        return HttpResponseRedirect('/config/')
 
     context = {'currentMenu': 'queryapply', 'listAllClusterName': listAllClusterName,
                'group_list': group_list}

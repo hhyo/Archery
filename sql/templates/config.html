@@ -18,7 +18,7 @@
                                             data-name="配置项" data-placeholder="请选择配置项:" required>
                                         <option value="is-empty" disabled="">请选择配置项:</option>
                                         <option value="0" selected="selected">系统设置</option>
-{#                                        <option value="1">组配置</option>#}
+                                        {#                                        <option value="1">组配置</option>#}
                                         <option value="2">工单审核流配置</option>
                                     </select>
                                 </div>
@@ -348,7 +348,7 @@
                             <div class="form-group form-inline">
                                 <div class="form-group">
                                     <input type="text" class="form-control" id="group_auditors_text"
-                                           disabled="disabled" style="width: 320px">
+                                           disabled="disabled" style="width: 283px">
                                 </div>
                                 <div class="form-group">
                                     <select id="group_auditors" name="group"
@@ -506,64 +506,72 @@
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
             $("#group_auditors_text").val('');
-            $.ajax({
-                type: "post",
-                url: "/groupauditors/",
-                dataType: "json",
-                data: {
-                    group_name: $("#group").val(),
-                    workflow_type: $("#workflow_type").val()
-                },
-                complete: function () {
+            if ($("#group").val()) {
+                $.ajax({
+                    type: "post",
+                    url: "/groupauditors/",
+                    dataType: "json",
+                    data: {
+                        group_name: $("#group").val(),
+                        workflow_type: $("#workflow_type").val()
+                    },
+                    complete: function () {
 
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        var auditor = [];
-                        for (var i = 0; i < result.length; i++) {
-                            auditor.push(result[i]);
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            var result = data.data;
+                            var auditor = [];
+                            for (var i = 0; i < result.length; i++) {
+                                auditor.push(result[i]);
+                            }
+                            $("#workflow_auditors").text(auditor);
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                         }
-                        $("#workflow_auditors").text(auditor);
-                    } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
+                });
+            }
         });
 
         // 变更组工单负责人
         $("#btn-workflow-config").click(function () {
-            $(this).addClass('disabled');
-            $(this).prop('disabled', true);
-            $.ajax({
-                type: "post",
-                url: "/changegroupauditors/",
-                dataType: "json",
-                data: {
-                    group_name: $("#group").val(),
-                    audit_users: $("#group_auditors_text").val(),
-                    workflow_type: $("#workflow_type").val()
-                },
-                complete: function () {
-                    $("#btn-workflow-config").removeClass('disabled');
-                    $("#btn-workflow-config").prop('disabled', false);
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        //alert('修改成功');
-                        $("#workflow_type").trigger("change")
-                    } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+            if ($("#group").val() && $("#workflow_type").val()) {
+                $(this).addClass('disabled');
+                $(this).prop('disabled', true);
+                $.ajax({
+                    type: "post",
+                    url: "/changegroupauditors/",
+                    dataType: "json",
+                    data: {
+                        group_name: $("#group").val(),
+                        audit_users: $("#group_auditors_text").val(),
+                        workflow_type: $("#workflow_type").val()
+                    },
+                    complete: function () {
+                        $("#btn-workflow-config").removeClass('disabled');
+                        $("#btn-workflow-config").prop('disabled', false);
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            //alert('修改成功');
+                            $("#workflow_type").trigger("change")
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
                     }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
+                });
+            }
+            else {
+                alert('请选择组和工单类型！')
+            }
+
         });
 
         //自动填充操作项

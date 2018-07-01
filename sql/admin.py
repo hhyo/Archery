@@ -3,8 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from sql.utils.config import SysConfig
-from .models import users, master_config, slave_config, workflow, WorkflowAuditSetting, \
+from .models import users, master_config, slave_config, workflow, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, GroupRelations
 
 
@@ -68,11 +67,6 @@ class WorkflowAuditAdmin(admin.ModelAdmin):
         'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
     search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
 
-
-# 审批流程配置
-@admin.register(WorkflowAuditSetting)
-class WorkflowAuditSettingAdmin(admin.ModelAdmin):
-    list_display = ('audit_setting_id', 'workflow_type', 'group_id', 'audit_users',)
 
 # 脱敏字段页面定义
 @admin.register(DataMaskingColumns)
