@@ -40,11 +40,11 @@ class Group(models.Model):
 
 # 组关系表（角色与组、主库与组等）
 class GroupRelations(models.Model):
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (2, '主库'), (3, '从库')))
     object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，如用户名、主库名', max_length=100)
+    object_name = models.CharField('关联对象描述，用户名、主库名、从库名', max_length=100)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
-    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')))
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -109,7 +109,7 @@ class workflow(models.Model):
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     status = models.CharField(max_length=50, choices=(
         ('已正常结束', '已正常结束'), ('人工终止流程', '人工终止流程'), ('等待审核人审核', '等待审核人审核'), ('审核通过', '审核通过'),
-        ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
+        ('定时执行', '定时执行'), ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
     cluster_name = models.CharField('实例名称', max_length=50)
