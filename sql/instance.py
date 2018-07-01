@@ -11,7 +11,6 @@ from .models import master_config, slave_config
 dao = Dao()
 prpCryptor = Prpcrypt()
 
-
 # 获取实例里面的数据库集合
 @csrf_exempt
 def getdbNameList(request):

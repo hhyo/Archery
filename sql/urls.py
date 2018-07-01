@@ -12,7 +12,7 @@ urlpatterns = [
     url(r'^$', views.sqlworkflow, name='sqlworkflow'),
     url(r'^index/$', views.sqlworkflow, name='sqlworkflow'),
     url(r'^login/$', views.login, name='login'),
-    url(r'^sign_up/$',views.sign_up, name='sign_up'),
+    url(r'^sign_up/$', views.sign_up, name='sign_up'),
     url(r'^logout/$', views.sign_out, name='logout'),
     url(r'^submitsql/$', views.submitSql, name='submitSql'),
     url(r'^editsql/$', views.submitSql, name='editsql'),
@@ -52,7 +52,7 @@ urlpatterns = [
     url(r'^sqladvisorcheck/$', views_ajax.sqladvisorcheck, name='sqladvisorcheck'),
     url(r'^workflowlist/$', views_ajax.workflowlist, name='workflowlist'),
     url(r'^group_relations/$', sql.group.group_relations, name='group_relations'),
-    url(r'^groupauditors/$', sql.group.groupauditors, name='groupauditors'),
+    url(r'^group_auditors/$', sql.group.group_auditors, name='group_auditors'),
     url(r'^changegroupauditors/$', sql.views_ajax.changegroupauditors, name='changegroupauditors'),
     url(r'^changeconfig/$', sql.views_ajax.changeconfig, name='changeconfig'),
 

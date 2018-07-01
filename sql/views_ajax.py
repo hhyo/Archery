@@ -14,6 +14,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
+from sql.group import user_masters
 from sql.models import Config, Group
 from sql.utils.permission import superuser_required
 
@@ -437,6 +438,12 @@ def sqladvisorcheck(request):
     if sqlContent[-1] != ";":
         finalResult['status'] = 1
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
+        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    try:
+        user_masters(request.user).get(cluster_name=clusterName)
+    except Exception:
+        finalResult['status'] = 1
+        finalResult['msg'] = '你所在组未关联该主库！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     if verbose is None or verbose == '':

@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 import datetime
 
+from sql.group import user_masters
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import master_config, SlowQuery, SlowQueryHistory
 from sql.utils.config import SysConfig
@@ -19,6 +20,12 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 @csrf_exempt
 def slowquery_review(request):
     cluster_name = request.POST.get('cluster_name')
+    # 服务端权限校验
+    try:
+        user_masters(request.user).get(cluster_name=cluster_name)
+    except Exception:
+        result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
     cluster_info = master_config.objects.get(cluster_name=cluster_name)
@@ -121,6 +128,12 @@ def slowquery_review(request):
 @csrf_exempt
 def slowquery_review_history(request):
     cluster_name = request.POST.get('cluster_name')
+    # 服务端权限校验
+    try:
+        user_masters(request.user).get(cluster_name=cluster_name)
+    except Exception:
+        result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
     cluster_info = master_config.objects.get(cluster_name=cluster_name)

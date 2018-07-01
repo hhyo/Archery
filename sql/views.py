@@ -1,13 +1,12 @@
 # -*- coding: UTF-8 -*-
 import re
 
-from django.contrib.auth import logout
 import simplejson as json
 from threading import Thread
 import datetime
 
 from django.contrib.auth.hashers import make_password
-
+from django.contrib.auth import logout
 from django.db.models import F
 from django.db import connection, transaction
 from django.utils import timezone
@@ -16,15 +15,18 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from sql.utils.dao import Dao
-from .const import Const, WorkflowDict
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
+from sql.utils.permission import role_required, superuser_required
+from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
+
 from .models import users, master_config, AliyunRdsConfig, workflow, slave_config, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
 from .workflow import Workflow
-from sql.utils.permission import role_required, superuser_required
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
-from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
+from .const import Const, WorkflowDict
+from .group import user_groups, user_masters, user_slaves
+
 import logging
 
 logger = logging.getLogger('default')
@@ -84,12 +86,7 @@ def sqlworkflow(request):
 def submitSql(request):
     user = request.user
     # 获取组信息
-    if user.is_superuser == 1:
-        group_list = [group for group in Group.objects.filter(is_deleted=0)]
-    else:
-        group_ids = [group['group_id'] for group in
-                     GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
-        group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
+    group_list = user_groups(user)
 
     # 获取所有有效用户，通知对象
     active_user = users.objects.filter(is_active=1)
@@ -121,6 +118,11 @@ def autoreview(request):
         GroupRelations.objects.get(group_name=group_name, object_name=clusterName, object_type=2)
     except Exception:
         context = {'errMsg': '该组不存在所选主库！'}
+        return render(request, 'error.html', context)
+    try:
+        user_masters(request.user).get(cluster_name=clusterName)
+    except Exception:
+        context = {'errMsg': '你所在组未关联该主库！'}
         return render(request, 'error.html', context)
 
     # # 删除注释语句
@@ -531,9 +533,8 @@ def charts(request):
 
 # SQL在线查询
 def sqlquery(request):
-    # 获取所有从库实例名称
-    slaves = slave_config.objects.all().order_by('cluster_name')
-    listAllClusterName = [slave.cluster_name for slave in slaves]
+    # 获取用户关联从库列表
+    listAllClusterName = [slave.cluster_name for slave in user_masters(request.user)]
 
     context = {'currentMenu': 'sqlquery', 'listAllClusterName': listAllClusterName}
     return render(request, 'sqlquery.html', context)
@@ -541,9 +542,8 @@ def sqlquery(request):
 
 # SQL慢日志
 def slowquery(request):
-    # 获取所有实例主库名称
-    masters = master_config.objects.all().order_by('cluster_name')
-    cluster_name_list = [master.cluster_name for master in masters]
+    # 获取用户关联主库列表
+    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
     context = {'currentMenu': 'slowquery', 'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
     return render(request, 'slowquery.html', context)
@@ -551,9 +551,8 @@ def slowquery(request):
 
 # SQL优化工具
 def sqladvisor(request):
-    # 获取所有实例主库名称
-    masters = master_config.objects.all().order_by('cluster_name')
-    cluster_name_list = [master.cluster_name for master in masters]
+    # 获取用户关联主库列表
+    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
     context = {'currentMenu': 'sqladvisor', 'listAllClusterName': cluster_name_list}
     return render(request, 'sqladvisor.html', context)
@@ -561,21 +560,11 @@ def sqladvisor(request):
 
 # 查询权限申请列表
 def queryapplylist(request):
-    slaves = slave_config.objects.all().order_by('cluster_name')
-    # 获取所有实例从库名称
-    listAllClusterName = [slave.cluster_name for slave in slaves]
+    user = request.user
+    # 获取项目组
+    group_list = user_groups(user)
 
-    # 获取所有项组名称
-    group_list = Group.objects.all().annotate(id=F('group_id'),
-                                              name=F('group_name'),
-                                              parent=F('group_parent_id'),
-                                              level=F('group_level')
-                                              ).values('id', 'name', 'parent', 'level')
-
-    group_list = [group for group in group_list]
-
-    context = {'currentMenu': 'queryapply', 'listAllClusterName': listAllClusterName,
-               'group_list': group_list}
+    context = {'currentMenu': 'queryapply', 'group_list': group_list}
     return render(request, 'queryapplylist.html', context)
 
 

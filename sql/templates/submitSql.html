@@ -38,9 +38,9 @@
                     </div>
                     <div class="form-group">
                         <select id="cluster_name" name="cluster_name"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="要上线的实例"
-                                data-live-search="true" data-placeholder="请选择要上线的实例" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择要上线的实例:</option>
+                                class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
+                                data-live-search="true" data-placeholder="请选择实例" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -339,7 +339,7 @@
                             }
                             else {
                                 $("#cluster_name").empty();
-                                $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择要上线的实例:</option>");
+                                $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
                                 $('#cluster_name').selectpicker('render');
                                 $('#cluster_name').selectpicker('refresh');
                                 $("#db_name").empty();
@@ -375,7 +375,7 @@
             });
             $.ajax({
                 type: "post",
-                url: "/groupauditors/",
+                url: "/group_auditors/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),

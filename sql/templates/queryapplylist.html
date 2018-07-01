@@ -35,7 +35,7 @@
                                 data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                             <option value="is-empty" disabled="" selected="selected">请选择组:</option>
                             {% for group in group_list %}
-                                <option value="{{ group.name }}">{{ group.name }}</option>
+                                <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -115,11 +115,40 @@
 {% block js %}
     <!--group -->
     <script>
-        // 获取审批流程
+        // 获取从库信息和审批流程
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/groupauditors/",
+                url: "/group_relations/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    type: 3
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#cluster_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
+                            $("#cluster_name").append(cluster);
+                        }
+                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
+                        $('#cluster_name').selectpicker('render');
+                        $('#cluster_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+            $.ajax({
+                type: "post",
+                url: "/group_auditors/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),

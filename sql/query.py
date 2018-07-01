@@ -23,6 +23,7 @@ from sql.utils.data_masking import Masking
 from .workflow import Workflow
 from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
+from .group import user_slaves
 
 dao = Dao()
 prpCryptor = Prpcrypt()
@@ -64,7 +65,7 @@ def query_priv_check(loginUserOb, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     loginUser = loginUserOb.username
-    if loginUserOb.is_superuser :
+    if loginUserOb.is_superuser:
         if SysConfig().sys_config.get('admin_query_limit'):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
@@ -234,13 +235,17 @@ def applyforprivileges(request):
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
-
     elif int(priv_type) == 2:
         table_list = request.POST['table_list']
         if title is None or cluster_name is None or db_name is None or valid_date is None or table_list is None or limit_num is None:
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
+    try:
+        user_slaves(request.user).get(cluster_name=cluster_name)
+    except Exception:
+        context = {'errMsg': '你所在组未关联该从库！'}
+        return render(request, 'error.html', context)
 
     # 判断是否需要限制到表级别的权限
     # 库权限
