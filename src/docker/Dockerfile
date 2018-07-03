@@ -41,6 +41,7 @@ RUN cd /opt \
     && git clone https://github.com/hhyo/archer.git \
     && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && cp /opt/archer/src/docker/connections.py /opt/venv4archer/lib/python3.6/site-packages/MySQLdb/connections.py
     && yum -y install nginx \
     && cp /opt/archer/src/docker/nginx.conf /etc/nginx/
 

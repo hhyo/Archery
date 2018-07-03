@@ -2,9 +2,7 @@
 
 from django.conf.urls import url
 
-import sql.views_ajax
-import sql.utils.workflow
-from . import views, views_ajax, query, slowlog, instance, process
+from . import views, views_ajax, query, slowlog, instance, process, charts
 from sql.utils import jobs
 
 urlpatterns = [
@@ -37,14 +35,12 @@ urlpatterns = [
     url(r'^workflow/$', views.workflows, name='workflows'),
     url(r'^workflowdetail/(?P<audit_id>[0-9]+)/$', views.workflowsdetail, name='workflowsdetail'),
     url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
-    url(r'^charts/$', views.charts, name='charts'),
+    url(r'^charts/$', charts.pyecharts, name='charts'),
     url(r'^config/$', views.config, name='config'),
 
     url(r'^authenticate/$', views_ajax.authenticateEntry, name='authenticate'),
     url(r'^sqlworkflowlist/$', views_ajax.sqlworkflowlist, name='sqlworkflowlist'),
     url(r'^simplecheck/$', views_ajax.simplecheck, name='simplecheck'),
-    url(r'^getMonthCharts/$', views_ajax.getMonthCharts, name='getMonthCharts'),
-    url(r'^getPersonCharts/$', views_ajax.getPersonCharts, name='getPersonCharts'),
     url(r'^getOscPercent/$', views_ajax.getOscPercent, name='getOscPercent'),
     url(r'^getWorkflowStatus/$', views_ajax.getWorkflowStatus, name='getWorkflowStatus'),
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),

@@ -39,11 +39,36 @@ Python>=3.6
 Django==2.0.6  
 
 ### 安装
-```bash
+```
+#基础环境
+virtualenv venv4archer --python=python3
+source /opt/venv4archer/bin/activate
 git clone https://github.com/hhyo/archer.git 
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
+
+#修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
+#数据库初始化
+python3 manage.py makemigrations sql  
+python3 manage.py migrate 
+
+#创建管理用户
+python3 manage.py createsuperuser
+
+#修改venv4archer/lib/python3.6/site-packages/MySQLdb/connections.py
+def show_warnings(self):
+    """Return detailed information about warnings as a
+    sequence of tuples of (Level, Code, Message). This
+    is only supported in MySQL-4.1 and up. If your server
+    is an earlier version, an empty sequence is returned."""
+    if self._server_version[0] is None: return () #增加一行，解决语法SQL语法错误时弹出的报错信息
+    if self._server_version < (4,1): return ()
+    self.query("SHOW WARNINGS")
+    r = self.store_result()
+    warnings = r.fetch_row(0)
+    return warnings
 ```
-### [启动](https://github.com/hhyo/archer/tree/github#启动前准备)  
+### 启动
+`python3 manage.py runserver 0.0.0.0:9123  --insecure`   
 
 ### 采取docker部署
 archer镜像对应的是版本是:lihuanhuan

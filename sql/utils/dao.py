@@ -92,7 +92,7 @@ class Dao(object):
 
     # 连进指定的mysql实例里，执行sql并返回
     def mysql_query(self, masterHost, masterPort, masterUser, masterPassword, dbName, sql, limit_num=0):
-        result = {}
+        result = {'column_list': [], 'rows': [], 'effect_row': 0}
         conn = None
         cursor = None
 

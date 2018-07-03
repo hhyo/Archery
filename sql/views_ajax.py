@@ -280,19 +280,6 @@ def simplecheck(request):
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
 
-# 请求图表数据
-@csrf_exempt
-def getMonthCharts(request):
-    result = dao.getWorkChartsByMonth()
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-@csrf_exempt
-def getPersonCharts(request):
-    result = dao.getWorkChartsByPerson()
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
 def getSqlSHA1(workflowId):
     """调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值"""
     workflowDetail = get_object_or_404(workflow, pk=workflowId)

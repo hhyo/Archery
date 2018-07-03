@@ -1,17 +1,5 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid col-lg-12 cl" >
-<canvas id="summaryWorkflowByMonth" height="88px" ></canvas>
-    <br>
-<canvas id="summaryWorkflowByPerson" height="88px"></canvas>
-</div>
+    {{ myechart|safe }}
 {% endblock content %}
-
-{% block js %}
-    {% load staticfiles %}
-    <script src="{% static 'highcharts/Chart.min.js' %}"></script>
-    <script src="{% static 'user/js/charts.js' %}"></script>
-{% endblock %}
-
-

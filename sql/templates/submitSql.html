@@ -133,16 +133,17 @@
             countSelectedText: "已选中{0}项",
             selectedTextFormat: "count > 3"
         });
-
         //初始化上传控件
         function init_upload() {
             $("#sql-upload").fileinput({
                 language: 'zh',
                 allowedFileExtensions: ['sql'],//接收的文件后缀
                 showCaption: true,//是否显示标题
-                initialCaption: '仅支持后缀名为sql的文件',
+                initialCaption: '仅支持10M内的SQL文件',
+                defaultPreviewContent: '仅支持10M内的SQL文件',
                 showUpload: false,     //不显示上传按钮
-                showPreview: false    // 不显示预览,
+                showPreview: false,    // 不显示预览,
+                maxFileSize: 10240
             }).on('fileloaded', function () {
                 loadsql();
             })

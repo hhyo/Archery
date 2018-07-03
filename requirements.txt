@@ -11,3 +11,5 @@ shellescape==3.4.1
 simplejson==3.14.0
 urllib3==1.22
 django-apscheduler==0.2.8
+pyecharts==0.5.5
+pyecharts_snapshot==0.1.7
