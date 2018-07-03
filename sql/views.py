@@ -580,21 +580,21 @@ def queryuserprivileges(request):
 
 
 # 问题诊断--进程
-def diagnosis_process(request):
+def diagnostic_process(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
-    context = {'currentMenu': 'diagnosis', 'tab': 'process', 'cluster_name_list': cluster_name_list}
-    return render(request, 'diagnosis.html', context)
+    context = {'currentMenu': 'diagnostic', 'tab': 'process', 'cluster_name_list': cluster_name_list}
+    return render(request, 'dbdiagnostics.html', context)
 
 
 # 问题诊断--空间
-def diagnosis_sapce(request):
+def diagnostic_sapce(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
-    context = {'currentMenu': 'diagnosis', 'tab': 'space', 'cluster_name_list': cluster_name_list}
-    return render(request, 'diagnosis.html', context)
+    context = {'currentMenu': 'diagnostic', 'tab': 'space', 'cluster_name_list': cluster_name_list}
+    return render(request, 'dbdiagnostics.html', context)
 
 
 # 获取工作流审核列表

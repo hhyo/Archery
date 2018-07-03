@@ -2,7 +2,7 @@
 
 from django.conf.urls import url
 
-from . import views, views_ajax, query, slowlog, instance, process, charts
+from . import views, views_ajax, query, slowlog, instance, db_diagnostics, charts
 from sql.utils import jobs
 
 urlpatterns = [
@@ -30,8 +30,8 @@ urlpatterns = [
     url(r'^queryapplylist/$', views.queryapplylist, name='queryapplylist'),
     url(r'^queryapplydetail/(?P<apply_id>[0-9]+)/$', views.queryapplydetail, name='queryapplydetail'),
     url(r'^queryuserprivileges/$', views.queryuserprivileges, name='queryuserprivileges'),
-    url(r'^diagnosis_process/$', views.diagnosis_process, name='diagnosis_process'),
-    url(r'^diagnosis_sapce/$', views.diagnosis_sapce, name='diagnosis_sapce'),
+    url(r'^diagnostic_process/$', views.diagnostic_process, name='diagnostic_process'),
+    url(r'^diagnostic_sapce/$', views.diagnostic_sapce, name='diagnostic_sapce'),
     url(r'^workflow/$', views.workflows, name='workflows'),
     url(r'^workflowdetail/(?P<audit_id>[0-9]+)/$', views.workflowsdetail, name='workflowsdetail'),
     url(r'^dbaprinciples/$', views.dbaprinciples, name='dbaprinciples'),
@@ -66,7 +66,9 @@ urlpatterns = [
     url(r'^slowquery_review_history/$', slowlog.slowquery_review_history, name='slowquery_review_history'),
     url(r'^del_sqlcronjob/$', jobs.del_sqlcronjob, name='del_sqlcronjob'),
 
-    url(r'^process_status/$', process.process_status, name='process_status'),
-    url(r'^create_kill_session/$', process.create_kill_session, name='create_kill_session'),
-    url(r'^kill_session/$', process.kill_session, name='kill_session'),
+    url(r'^process_status/$', db_diagnostics.process_status, name='process_status'),
+    url(r'^create_kill_session/$', db_diagnostics.create_kill_session, name='create_kill_session'),
+    url(r'^kill_session/$', db_diagnostics.kill_session, name='kill_session'),
+    url(r'^sapce_status/$', db_diagnostics.sapce_status, name='sapce_status'),
+
 ]

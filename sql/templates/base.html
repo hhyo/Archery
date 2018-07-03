@@ -99,9 +99,11 @@
                             <li>
                                 <a href="/slowquery/">慢查日志</a>
                             </li>
-                            <li>
-                                <a href="/diagnosis_process/">主库会话查看</a>
-                            </li>
+                            {% if user.role == 'DBA' or user.is_superuser %}
+                                <li>
+                                    <a href="/diagnostic_process/">会话管理</a>
+                                </li>
+                            {% endif %}
                         </ul>
                         <!-- /.nav-second-level -->
                     </li>
@@ -109,9 +111,6 @@
                         <li>
                             <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="/config/">配置项管理</a>
-                                </li>
                                 <li>
                                     <a href="#">数据管理 <span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
