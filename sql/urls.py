@@ -2,7 +2,7 @@
 
 from django.conf.urls import url
 
-from . import views, views_ajax, query, slowlog, instance, db_diagnostics, charts
+from . import views, views_ajax, query, slowlog, instance, db_diagnostics, charts, sql_tuning
 from sql.utils import jobs
 
 urlpatterns = [
@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^getWorkflowStatus/$', views_ajax.getWorkflowStatus, name='getWorkflowStatus'),
     url(r'^stopOscProgress/$', views_ajax.stopOscProgress, name='stopOscProgress'),
     url(r'^sqladvisorcheck/$', views_ajax.sqladvisorcheck, name='sqladvisorcheck'),
+    url(r'^sql_tuning/$', sql_tuning.tuning, name='sql_tuning'),
     url(r'^workflowlist/$', views_ajax.workflowlist, name='workflowlist'),
     url(r'^group_relations/$', views_ajax.group_relations, name='group_relations'),
     url(r'^group_auditors/$', views_ajax.group_auditors, name='group_auditors'),

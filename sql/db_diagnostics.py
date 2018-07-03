@@ -120,7 +120,7 @@ def sapce_status(request):
           TRUNCATE(index_length/1024/1024,2) AS index_size,
           TRUNCATE(data_free/1024/1024,2) AS data_free,
           TRUNCATE(data_free/(data_length+index_length+data_free)*100,2) AS pct_free
-        FROM information_schema.tables WHERE TABLE_SCHEMA='{}'
+        FROM information_schema.tables
           ORDER BY total_size DESC 
         LIMIT 14;'''.format(cluster_name)
         table_space = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,

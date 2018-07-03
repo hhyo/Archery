@@ -276,15 +276,22 @@ class InceptionDao(object):
             optResult = {"status": 1, "msg": "ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data": ""}
         return optResult
 
-    def query_print(self, sqlContent, clusterName, dbName):
+    def query_print(self, sqlContent, clusterName, dbName, is_master=False):
         '''
         将sql交给inception打印语法树。
         '''
-        listSlaves = slave_config.objects.get(cluster_name=clusterName)
-        masterHost = listSlaves.slave_host
-        masterPort = listSlaves.slave_port
-        masterUser = listSlaves.slave_user
-        masterPassword = self.prpCryptor.decrypt(listSlaves.slave_password)
+        if is_master:
+            masters = master_config.objects.get(cluster_name=clusterName)
+            Host = masters.slave_host
+            Port = masters.slave_port
+            User = masters.slave_user
+            Password = self.prpCryptor.decrypt(masters.slave_password)
+        else:
+            salves = slave_config.objects.get(cluster_name=clusterName)
+            Host = salves.slave_host
+            Port = salves.slave_port
+            User = salves.slave_user
+            Password = self.prpCryptor.decrypt(salves.slave_password)
 
         # 工单审核使用
         sql = "/*--user=%s;--password=%s;--host=%s;--port=%s;--enable-query-print;*/\
@@ -292,7 +299,7 @@ class InceptionDao(object):
                           use %s;\
                           %s\
                           inception_magic_commit;" % (
-            masterUser, masterPassword, masterHost, str(masterPort), dbName, sqlContent)
+            User, Password, Host, str(Port), dbName, sqlContent)
         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 

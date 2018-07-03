@@ -35,12 +35,29 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <select id="tools" name="tools" class="form-control selectpicker show-tick bs-select-hidden"
+                                data-live-search="true" data-placeholder="请选择优化方式:" required>
+                            <option value="is-empty" disabled="">请选择优化方式:</option>
+                            <option value="1" selected="selected">SQLAdvisor</option>
+                            <option value="2">SQLTuning(仅支持MySQL5.7)</option>
+                        </select>
+                    </div>
+                    <div id="div_verbose" class="form-group">
                         <select id="verbose" name="verbose"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-name="是否查看优化过程"
                                 data-placeholder="是否查看优化过程:" required>
                             <option value="is-empty" disabled="">是否查看优化过程:</option>
                             <option value="1" selected="selected">是</option>
                             <option value="0">否</option>
+                        </select>
+                    </div>
+                    <div id="div_ses_status" class="form-group" style="display: none">
+                        <select id="ses_status" name="ses_status"
+                                class="form-control selectpicker show-tick bs-select-hidden" data-name="是否显示运行前后状态信息"
+                                data-placeholder="是否查看优化过程:" required>
+                            <option value="is-empty" disabled="">是否显示运行前后状态信息:</option>
+                            <option value="1">是</option>
+                            <option value="0" selected="selected">否</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -52,14 +69,93 @@
             </form>
         </div>
 
+        <!-- sqladvisor优化信息 -->
         <div id="sqladvisor-result" style="display:none;" class="row clearfix">
             <br/>
             <div id="sqladvisor-result-col" class="col-md-12">
             </div>
         </div>
+        <!-- 执行计划 -->
         <div id="explain_result" style="display:none;" class="row clearfix table-responsive">
             <table id="tb_explain" data-toggle="table" class="table table-condensed"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+        </div>
+        <!-- MySQLtuning信息 -->
+        <div id="tuning_result" style="display:none;" class="row clearfix table-responsive">
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">BASIC INFORMATION</div>
+                <div class="panel-body">
+                    <p>author：<b id="author"></b><a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a></p>
+                    <p>db_version：<b id="db_version"></b></p>
+                </div>
+            </div>
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">SYSTEM PARAMETER</div>
+                <div class="panel-body">
+                    <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                </div>
+            </div>
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER SWITCH</div>
+                <div class="panel-body">
+                    <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                </div>
+            </div>
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PLAN</div>
+                <div class="panel-body">
+                    <table id="tb_plan" data-toggle="table" class="table table-condensed"></table>
+                </div>
+            </div>
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER REWRITE SQL</div>
+                <div class="panel-body">
+                    <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                </div>
+            </div>
+            <div class="panel panel-default base_info" style="border-color: darkgrey;margin-top: 10px;">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">OBJECT STATISTICS</div>
+                <div class="panel-body">
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">TABLE STRUCTURE</div>
+                    <table id="tb_object_statistics_tableistructure" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                    <br>
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">TABLE INFO</div>
+                    <table id="tb_object_statistics_tableinfo" data-toggle="table"
+                           class="table table-condensed"></table>
+                    <br>
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">INDEX INFO</div>
+                    <table id="tb_object_statistics_indexinfo" data-toggle="table"
+                           class="table table-condensed"></table>
+                </div>
+            </div>
+            <div id="div_exec_sql_info" class="panel panel-default base_info"
+                 style="border-color: darkgrey;margin-top: 10px;display: none">
+                <div class="panel-heading" style="background-color: darkgrey; color: white">STATUS&PROFILING</div>
+                <div class="panel-body">
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">SESSION STATUS
+                        (DIFFERENT)
+                    </div>
+                    <table id="tb_session_status" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                    <br>
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PROFILING(DETAIL)
+                    </div>
+                    <table id="tb_sql_profiling_detail" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                    <br>
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PROFILING(SUMMARY)
+                    </div>
+                    <table id="tb_sql_profiling_summary" data-toggle="table" class="table table-condensed"
+                           style="table-layout:fixed;word-break: break-word"></table>
+                    <br>
+                    <div class="panel-heading" style="background-color: darkgrey; color: white">EXECUTE TIME</div>
+                    <p>&nbsp&nbsp&nbsp&nbspexecute_time:&nbsp&nbsp&nbsp&nbsp<b id="execute_time"></b></p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -75,6 +171,21 @@
     <script src="{% static 'ace/ace_init.js' %}"></script>
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
+        //判断页面显示
+        $("#tools").change(function () {
+            //SQLAdvisor
+            if ($("#tools").val() === '1') {
+                $("#div_ses_status").hide();
+                $("#div_verbose").show();
+
+            }
+            //SQLTuning
+            else if ($("#tools").val() === '2') {
+                $("#div_ses_status").show();
+                $("#div_verbose").hide();
+            }
+        });
+
         // 表单校验
         function sqladvisor_validate() {
             var result = true;
@@ -101,7 +212,12 @@
                 if (sqladvisor_validate()) {
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
-                    sqladvisor();
+                    if ($("#tools").val() === '1') {
+                        sqladvisor();
+                    }
+                    else if (($("#tools").val() === '2')) {
+                        tunning();
+                    }
                 }
             }
         );
@@ -230,8 +346,9 @@
 
                         $("#sqladvisor-result-col").html(finalHtml);
                         //填充内容后展现出来
-                        $("#explain_result").hide();
                         $("#sqladvisor-result").show();
+                        $("#explain_result").hide();
+                        $("#tuning_result").hide();
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -247,17 +364,14 @@
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
             var columns = [];
-            var sqlContent = editor.getValue();
-            var clusterName = $("#cluster_name").val();
-            var dbName = $("#db_name").val();
             $.ajax({
                 type: "post",
                 url: "/explain/",
                 dataType: "json",
                 data: {
-                    sql_content: 'explain ' + sqlContent,
-                    cluster_name: clusterName,
-                    db_name: dbName
+                    sql_content: 'explain ' + editor.getValue(),
+                    cluster_name: $("#cluster_name").val(),
+                    db_name: $("#db_name").val()
                 },
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
@@ -281,7 +395,15 @@
                         else if (result['column_list']) {
                             //异步获取要动态生成的列
                             $.each(result['column_list'], function (i, column) {
-                                columns.push({"field": i, "title": column});
+                                columns.push({
+                                    "field": i,
+                                    "title": column,
+                                    "sortable": true,
+                                    "formatter": function (value, row, index) {
+                                        //return value;
+                                        return $('<div/>').text(value).html();
+                                    }
+                                });
                             });
                             //初始化查询结果
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
@@ -298,6 +420,7 @@
                         }
                         $("#sqladvisor-result").hide();
                         $("#explain_result").show();
+                        $("#tuning_result").hide();
 
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
@@ -306,7 +429,243 @@
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
-            });
+            })
+            ;
+        }
+
+        //获取tunning信息
+        function tunning() {
+            $('input[type=button]').addClass('disabled');
+            $('input[type=button]').prop('disabled', true);
+            var ses_status = $("#ses_status").val();
+            $.ajax({
+                type: "post",
+                url: "/sql_tuning/",
+                dataType: "json",
+                data: {
+                    sql_content: editor.getValue(),
+                    cluster_name: $("#cluster_name").val(),
+                    db_name: $("#db_name").val(),
+                    ses_status: ses_status
+                },
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status == 0) {
+                        var result = data.data;
+                        if (result['Error']) {
+                            alertStyle = "alert-danger";
+                            $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                columns: [{
+                                    field: 'error',
+                                    title: 'Error'
+                                }],
+                                data: [{
+                                    error: result['Error']
+                                }]
+                            })
+                        }
+                        else {
+                            //===== BASIC INFORMATION =====
+                            $("#author").text("MySQL SQL Tuning Tools v1.0 (by hanfeng)");
+                            $("#db_version").text(result['basic_information']['rows'][0]);
+
+                            //===== SYSTEM PARAMETER =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['sys_parameter']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column
+                                });
+                            });
+                            //初始化查询结果
+                            $('#tb_sys_parameter').bootstrapTable('destroy').bootstrapTable({
+                                data: result['sys_parameter']['rows'],
+                                columns: columns
+                            });
+
+                            //===== OPTIMIZER SWITCH =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['optimizer_switch']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column,
+                                    formatter: function (value, row, index) {
+                                        return value.replace(/,/g, '<br>');
+                                    }
+                                });
+                            });
+                            //初始化查询结果
+                            $('#tb_optimizer_switch').bootstrapTable('destroy').bootstrapTable({
+                                data: result['optimizer_switch']['rows'],
+                                columns: columns
+                            });
+
+                            //===== SQL PLAN =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['plan']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column
+                                });
+                            });
+                            //初始化查询结果
+                            $('#tb_plan').bootstrapTable('destroy').bootstrapTable({
+                                data: result['plan']['rows'],
+                                columns: columns
+                            });
+
+                            //===== OPTIMIZER REWRITE SQL =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['optimizer_rewrite_sql']['column_list'], function (i, column) {
+                                if (column === 'Message') {
+                                    columns.push({
+                                        "field": i,
+                                        "title": column,
+                                        formatter: function (value, row, index) {
+                                            var sql = window.sqlFormatter.format(value);
+                                            //替换所有的换行符
+                                            sql = sql.replace(/\r\n/g, "<br>");
+                                            sql = sql.replace(/\n/g, "<br>");
+                                            //替换所有的空格
+                                            sql = sql.replace(/\s/g, "&nbsp;");
+                                            return sql;
+                                        }
+                                    })
+                                }
+                            });
+                            //初始化查询结果
+                            $('#tb_optimizer_rewrite_sql').bootstrapTable('destroy').bootstrapTable({
+                                data: result['optimizer_rewrite_sql']['rows'],
+                                columns: columns
+                            });
+
+                            //===== OBJECT STATISTICS =====
+                            //===== TABLE STRUCTURE =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['object_statistics_tableistructure']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column,
+                                    formatter: function (value, row, index) {
+                                        var sql = window.sqlFormatter.format(value);
+                                        //替换所有的换行符
+                                        sql = sql.replace(/\r\n/g, "<br>");
+                                        sql = sql.replace(/\n/g, "<br>");
+                                        //替换所有的空格
+                                        sql = sql.replace(/\s/g, "&nbsp;");
+                                        return sql;
+                                    }
+                                })
+                            });
+                            //初始化查询结果
+                            $('#tb_object_statistics_tableistructure').bootstrapTable('destroy').bootstrapTable({
+                                data: result['object_statistics_tableistructure']['rows'],
+                                columns: columns
+                            });
+                            //===== TABLE INFO =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['object_statistics_tableinfo']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column
+                                })
+                            });
+                            //初始化查询结果
+                            $('#tb_object_statistics_tableinfo').bootstrapTable('destroy').bootstrapTable({
+                                data: result['object_statistics_tableinfo']['rows'],
+                                columns: columns
+                            });
+                            //===== INDEX INFO =====
+                            //异步获取要动态生成的列
+                            var columns = [];
+                            $.each(result['object_statistics_indexinfo']['column_list'], function (i, column) {
+                                columns.push({
+                                    "field": i,
+                                    "title": column
+                                })
+                            });
+                            //初始化查询结果
+                            $('#tb_object_statistics_indexinfo').bootstrapTable('destroy').bootstrapTable({
+                                data: result['object_statistics_indexinfo']['rows'],
+                                columns: columns
+                            });
+
+                            if (ses_status === "1") {
+                                $("#div_exec_sql_info").show();
+                                //===== SESSION STATUS (DIFFERENT) =====
+                                //异步获取要动态生成的列
+                                var columns = [];
+                                $.each(result['session_status']['SESSION_STATUS(DIFFERENT)']['column_list'], function (i, column) {
+                                    columns.push({
+                                        "field": i,
+                                        "title": column
+                                    })
+                                });
+                                //初始化查询结果
+                                $('#tb_session_status').bootstrapTable('destroy').bootstrapTable({
+                                    data: result['session_status']['SESSION_STATUS(DIFFERENT)']['rows'],
+                                    columns: columns
+                                });
+
+                                //===== SQL PROFILING(DETAIL)=====
+                                //异步获取要动态生成的列
+                                var columns = [];
+                                $.each(result['session_status']['PROFILING_DETAIL']['column_list'], function (i, column) {
+                                    columns.push({
+                                        "field": i,
+                                        "title": column
+                                    })
+                                });
+                                //初始化查询结果
+                                $('#tb_sql_profiling_detail').bootstrapTable('destroy').bootstrapTable({
+                                    data: result['session_status']['PROFILING_DETAIL']['rows'],
+                                    columns: columns
+                                });
+
+                                //===== SQL PROFILING(SUMMARY)=====
+                                //异步获取要动态生成的列
+                                var columns = [];
+                                $.each(result['session_status']['PROFILING_SUMMARY']['column_list'], function (i, column) {
+                                    columns.push({
+                                        "field": i,
+                                        "title": column
+                                    })
+                                });
+                                //初始化查询结果
+                                $('#tb_sql_profiling_summary').bootstrapTable('destroy').bootstrapTable({
+                                    data: result['session_status']['PROFILING_SUMMARY']['rows'],
+                                    columns: columns
+                                });
+
+                                //===== EXECUTE TIME =====
+                                $("#execute_time").text(result['session_status']['EXECUTE_TIME'] + ' sec')
+                            }
+                            else {
+                                $("#div_exec_sql_info").hide();
+                            }
+                        }
+                        $("#sqladvisor-result").hide();
+                        $("#explain_result").hide();
+                        $("#tuning_result").show();
+
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+            ;
         }
 
         //适配从慢查询过来的优化请求

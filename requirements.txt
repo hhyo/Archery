@@ -13,3 +13,5 @@ urllib3==1.22
 django-apscheduler==0.2.8
 pyecharts==0.5.5
 pyecharts_snapshot==0.1.7
+sqlparse==0.2.4
+
