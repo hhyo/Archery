@@ -13,8 +13,11 @@
         <li id="space_tab">
             <a href="#space" role="tab" data-toggle="tab">Top表空间</a>
         </li>
+        <li id="trxandlocks_tab">
+            <a href="#trxandlocks" role="tab" data-toggle="tab">锁信息</a>
+        </li>
         <div class="form-inline pull-right">
-            <div class="form-group">
+            <div class="form-group ">
                 <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
@@ -44,6 +47,12 @@
         <!-- Top表空间的表格-->
         <div id="space" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="tablespace-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+        <!-- 锁信息的表格-->
+        <div id="trxandlocks" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="trxandlocks-list" data-toggle="table" class="table table-hover"
                    style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             </table>
         </div>
@@ -86,7 +95,7 @@
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
-                    url: "/process_status/",
+                    url: "/db_diagnostic/process/",
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
@@ -197,7 +206,7 @@
                 $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
-                    url: "/sapce_status/",
+                    url: "/db_diagnostic/tablesapce/",
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
@@ -280,10 +289,77 @@
             }
         }
 
+        // 问题诊断--锁等待列表
+        function get_trxandlocks_list() {
+            if ($("#cluster_name").val()) {
+                $.ajax({
+                    type: "post",
+                    url: "/db_diagnostic/trxandlocks/",
+                    dataType: "json",
+                    data: {
+                        cluster_name: $("#cluster_name").val()
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            var result = data.data;
+                            if (result['Error']) {
+                                alertStyle = "alert-danger";
+                                $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
+                                    columns: [{
+                                        field: 'error',
+                                        title: 'Error'
+                                    }],
+                                    data: [{
+                                        error: result['Error']
+                                    }]
+                                })
+                            }
+                            else {
+                                //异步获取要动态生成的列
+                                var columns = [];
+                                $.each(result['column_list'], function (i, column) {
+                                    columns.push({
+                                        "field": i,
+                                        "title": column
+                                    })
+                                });
+                                //初始化查询结果
+                                $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
+                                    data: result['rows'],
+                                    columns: columns,
+                                    striped: true,                      //是否显示行间隔色
+                                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                                    pageSize: 14,                     //每页的记录行数（*）
+                                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                                    minimumCountColumns: 2,             //最少允许的列数
+                                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                                    showExport: true,
+                                    exportDataType: "all",
+                                    locale: 'zh-CN',                    //本地化
+                                });
+
+
+                            }
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+        }
+
+
         //点击终止会话按钮弹出确认框,并且构建终止会话请求
         $(function () {
             $("#kill_process").click(function () {
-                var AllSelections = $("#process-list").bootstrapTable('getSelections');
+                var AllSelections = $("#metadatalocks-list").bootstrapTable('getSelections');
                 if (AllSelections.length > 0) {
                     //获取选择的线程id
                     var AllSelectionIds = [];
@@ -295,7 +371,7 @@
                     //发送请求构造会话数据
                     $.ajax({
                         type: "post",
-                        url: "/create_kill_session/",
+                        url: "/db_diagnostic/create_kill_session/",
                         dataType: "json",
                         data: {
                             cluster_name: cluster_name,
@@ -334,7 +410,7 @@
                 //发送请求构造会话数据
                 $.ajax({
                     type: "post",
-                    url: "/kill_session/",
+                    url: "/db_diagnostic/kill_session/",
                     dataType: "json",
                     data: {
                         cluster_name: cluster_name,
@@ -387,6 +463,11 @@
                         $("#command-div").hide();
                         $("#process-toolbar").hide();
                     }
+                    else if (active_li_id === 'trxandlocks_tab') {
+                        get_trxandlocks_list();
+                        $("#command-div").hide();
+                        $("#process-toolbar").hide();
+                    }
                 }
             });
         });
@@ -402,6 +483,11 @@
             }
             else if (active_li_id === 'space_tab') {
                 get_space_list();
+                $("#command-div").hide();
+                $("#process-toolbar").hide();
+            }
+            else if (active_li_id === 'trxandlocks_tab') {
+                get_trxandlocks_list();
                 $("#command-div").hide();
                 $("#process-toolbar").hide();
             }

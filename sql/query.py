@@ -65,7 +65,10 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
-        user_limit_num = int(SysConfig().sys_config.get('admin_query_limit', 0))
+        if SysConfig().sys_config.get('admin_query_limit'):
+            user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
+        else:
+            user_limit_num = 0
         if int(limit_num) == 0:
             limit_num = int(user_limit_num)
         else:
@@ -115,7 +118,8 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
         else:
             table_ref = None
             # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
-            privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name, db_name=dbName,
+            privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
+                                                        db_name=dbName,
                                                         valid_date__gte=datetime.datetime.now(),
                                                         is_deleted=0)
             if len(privileges) == 0:
@@ -248,7 +252,8 @@ def applyforprivileges(request):
     if int(priv_type) == 1:
         db_list = db_list.split(',')
         # 检查申请账号是否已拥整个库的查询权限
-        own_dbs = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username, db_name__in=db_list,
+        own_dbs = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username,
+                                                 db_name__in=db_list,
                                                  valid_date__gte=datetime.datetime.now(), priv_type=1,
                                                  is_deleted=0).values('db_name')
         own_db_list = [table_info['db_name'] for table_info in own_dbs]

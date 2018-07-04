@@ -119,14 +119,14 @@
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写驳回原因" rows=3></textarea>
             <br>
-            <form action="/queryprivaudit/" method="post" style="display:inline-block;">
+            <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="apply_id" value="{{ workflowDetail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
                 <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
             </form>
 
-            <form id="form-cancel" action="/queryprivaudit/" method="post" style="display:inline-block;">
+            <form id="form-cancel" action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="apply_id" value="{{ workflowDetail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">

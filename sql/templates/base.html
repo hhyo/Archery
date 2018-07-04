@@ -33,7 +33,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">SQL审核平台</a>
+            <a class="navbar-brand" href="/index/">SQL审核平台</a>
         </div>
 
         <!-- /.navbar-header -->
@@ -101,7 +101,7 @@
                             </li>
                             {% if user.role == 'DBA' or user.is_superuser %}
                                 <li>
-                                    <a href="/diagnostic_process/">会话管理</a>
+                                    <a href="/dbdiagnostic/">会话管理</a>
                                 </li>
                             {% endif %}
                         </ul>

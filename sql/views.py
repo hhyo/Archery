@@ -34,6 +34,18 @@ dao = Dao()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
+
+# 登录
+def login(request):
+    return render(request, 'login.html')
+
+
+# 退出登录
+def sign_out(request):
+    logout(request)
+    return HttpResponseRedirect(reverse('sql:login'))
+
+
 # 注册用户
 def sign_up(request):
     username = request.POST.get('username')
@@ -61,16 +73,6 @@ def sign_up(request):
                                        is_staff=1)
     new_account.save()
     return render(request, 'login.html')
-
-# 登录
-def login(request):
-    return render(request, 'login.html')
-
-
-# 退出登录
-def sign_out(request):
-    logout(request)
-    return HttpResponseRedirect(reverse('sql:login'))
 
 
 # SQL上线工单页面
@@ -580,21 +582,13 @@ def queryuserprivileges(request):
 
 
 # 问题诊断--进程
-def diagnostic_process(request):
+def dbdiagnostic(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
 
     context = {'currentMenu': 'diagnostic', 'tab': 'process', 'cluster_name_list': cluster_name_list}
-    return render(request, 'dbdiagnostics.html', context)
+    return render(request, 'dbdiagnostic.html', context)
 
-
-# 问题诊断--空间
-def diagnostic_sapce(request):
-    # 获取用户关联主库列表
-    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
-
-    context = {'currentMenu': 'diagnostic', 'tab': 'space', 'cluster_name_list': cluster_name_list}
-    return render(request, 'dbdiagnostics.html', context)
 
 
 # 获取工作流审核列表

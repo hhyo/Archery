@@ -259,7 +259,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/getdbNameList/",
+                url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val(),
@@ -317,7 +317,7 @@
             //将数据通过ajax提交给后端进行检查
             $.ajax({
                 type: "post",
-                url: "/sqladvisorcheck/",
+                url: "/slowquery/sqladvisor/",
                 dataType: "json",
                 data: {
                     sql_content: sqlContent,
@@ -366,7 +366,7 @@
             var columns = [];
             $.ajax({
                 type: "post",
-                url: "/explain/",
+                url: "/query/explain/",
                 dataType: "json",
                 data: {
                     sql_content: 'explain ' + editor.getValue(),
@@ -440,7 +440,7 @@
             var ses_status = $("#ses_status").val();
             $.ajax({
                 type: "post",
-                url: "/sql_tuning/",
+                url: "/slowquery/sqltuning/",
                 dataType: "json",
                 data: {
                     sql_content: editor.getValue(),
@@ -664,8 +664,7 @@
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
-            })
-            ;
+            });
         }
 
         //适配从慢查询过来的优化请求

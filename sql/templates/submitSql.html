@@ -182,7 +182,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/getdbNameList/",
+                url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val(),
@@ -320,7 +320,7 @@
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/group_relations/",
+                url: "/group/relations/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
@@ -376,7 +376,7 @@
             });
             $.ajax({
                 type: "post",
-                url: "/group_auditors/",
+                url: "/group/auditors/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),

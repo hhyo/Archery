@@ -502,7 +502,7 @@
 
             $.ajax({
                 type: "post",
-                url: "/changeconfig/",
+                url: "/config/change/",
                 dataType: "json",
                 data: {
                     configs: JSON.stringify(configs)
@@ -554,7 +554,7 @@
             if ($("#group").val()) {
                 $.ajax({
                     type: "post",
-                    url: "/group_auditors/",
+                    url: "/group/auditors/",
                     dataType: "json",
                     data: {
                         group_name: $("#group").val(),
@@ -589,7 +589,7 @@
                 $(this).prop('disabled', true);
                 $.ajax({
                     type: "post",
-                    url: "/changegroupauditors/",
+                    url: "/group/changeauditors/",
                     dataType: "json",
                     data: {
                         group_name: $("#group").val(),

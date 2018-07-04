@@ -175,7 +175,7 @@ function setColumnsCompleteData(result) {
     else {
         $.ajax({
             type: "post",
-            url: "/getColumnNameList/",
+            url: "/instance/getColumnNameList/",
             dataType: "json",
             data: {
                 cluster_name: $("#cluster_name").val(),

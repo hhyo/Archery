@@ -92,13 +92,6 @@
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <!-- 查询历史  -->
     <script>
-        $.ajaxSetup({
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                console.log(errorThrown);
-                location.href = '/login/'
-            }
-        });
-
         //获取查询列表
         function get_querylog() {
             //采取异步请求
@@ -106,7 +99,7 @@
             $('#sql-log').bootstrapTable('destroy').bootstrapTable({
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/querylog/",
+                url: "/query/querylog/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -513,7 +506,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/getdbNameList/",
+                url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val()
@@ -554,7 +547,7 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/getTableNameList/",
+                url: "/instance/getTableNameList/",
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val(),
