@@ -305,6 +305,7 @@ class Config(models.Model):
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:
+        managed = False
         db_table = 'sql_config'
         verbose_name = u'系统配置'
         verbose_name_plural = u'系统配置'

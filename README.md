@@ -47,6 +47,16 @@ git clone https://github.com/hhyo/archer.git
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
 
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
+
+#创建配置表
+CREATE TABLE `sql_config` (
+  `item` varchar(50) NOT NULL,
+  `value` varchar(200) NOT NULL DEFAULT '',
+  `type` tinyint(4) NOT NULL DEFAULT '0',
+  `description` varchar(200) NOT NULL DEFAULT '',
+  PRIMARY KEY (`item`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 #数据库初始化
 python3 manage.py makemigrations sql  
 python3 manage.py migrate 
