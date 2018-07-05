@@ -43,28 +43,14 @@ Django==2.0.6
 #基础环境
 virtualenv venv4archer --python=python3
 source /opt/venv4archer/bin/activate
-git clone https://github.com/hhyo/archer.git 
+
+#下载release包，安装依赖
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
 
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
 
 #数据库初始化
-##方式一
-使用初始化脚本：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
-
-##方式二
-###创建配置表
-CREATE TABLE `sql_config` (
-  `item` varchar(50) NOT NULL,
-  `value` varchar(200) NOT NULL DEFAULT '',
-  `type` tinyint(4) NOT NULL DEFAULT '0',
-  `description` varchar(200) NOT NULL DEFAULT '',
-  PRIMARY KEY (`item`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-###命令初始化
-python3 manage.py makemigrations sql  
-python3 manage.py migrate 
+使用初始化脚本(与release版本对应)：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
 
 #创建管理用户
 python3 manage.py createsuperuser
@@ -82,15 +68,26 @@ def show_warnings(self):
     warnings = r.fetch_row(0)
     return warnings
 ```
-### 启动&访问
+### 启动
 ```
+#启动
 python3 manage.py runserver 0.0.0.0:9123  --insecure   
+#访问
 http://127.0.0.1:9123/
 在【系统管理】-【配置项管理】修改相关配置项
 ```
 
+### 错误日志
+```
+/tmp/archer.log
+```
+
 ### 采取docker部署
-archer镜像对应的是版本是:lihuanhuan
-* inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
-* archer镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.38.XtXtLh&repoId=142147    
+```bash
+#使用初始化脚本(与release版本对应)初始化数据库：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
+#准备settings.py文件，修改相关配置项
+docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:1.0.0
+```
+inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
+
 
