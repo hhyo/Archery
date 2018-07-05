@@ -48,7 +48,12 @@ pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
 
-#创建配置表
+#数据库初始化
+##方式一
+使用初始化脚本：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
+
+##方式二
+###创建配置表
 CREATE TABLE `sql_config` (
   `item` varchar(50) NOT NULL,
   `value` varchar(200) NOT NULL DEFAULT '',
@@ -57,7 +62,7 @@ CREATE TABLE `sql_config` (
   PRIMARY KEY (`item`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-#数据库初始化
+###命令初始化
 python3 manage.py makemigrations sql  
 python3 manage.py migrate 
 
@@ -77,8 +82,12 @@ def show_warnings(self):
     warnings = r.fetch_row(0)
     return warnings
 ```
-### 启动
-`python3 manage.py runserver 0.0.0.0:9123  --insecure`   
+### 启动&访问
+```
+python3 manage.py runserver 0.0.0.0:9123  --insecure   
+http://127.0.0.1:9123/
+在【系统管理】-【配置项管理】修改相关配置项
+```
 
 ### 采取docker部署
 archer镜像对应的是版本是:lihuanhuan
