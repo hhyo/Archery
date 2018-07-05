@@ -5,7 +5,6 @@ import simplejson as json
 from threading import Thread
 import datetime
 
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth import logout
 from django.db import connection, transaction
 from django.utils import timezone
@@ -64,14 +63,13 @@ def sign_up(request):
         context = {'errMsg': '两次输入密码不一致'}
         return render(request, 'error.html', context)
 
-    new_account = users.objects.create(username=username,
-                                       password=make_password(password),
-                                       display=display,
-                                       email=email,
-                                       role='工程师',
-                                       is_active=1,
-                                       is_staff=1)
-    new_account.save()
+    users.objects.create_user(username=username,
+                              password=password,
+                              display=display,
+                              email=email,
+                              role='工程师',
+                              is_active=1,
+                              is_staff=1)
     return render(request, 'login.html')
 
 
@@ -588,7 +586,6 @@ def dbdiagnostic(request):
 
     context = {'currentMenu': 'diagnostic', 'tab': 'process', 'cluster_name_list': cluster_name_list}
     return render(request, 'dbdiagnostic.html', context)
-
 
 
 # 获取工作流审核列表

@@ -23,7 +23,7 @@ class usersAdmin(UserAdmin):
                 (('认证信息'), {'fields': ('username', 'password')}),
                 (('个人信息'), {'fields': ('display', 'role', 'email')}),
                 (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff')}),
-                # (('其他信息'), {'fields': ('last_login', 'date_joined')}),
+                (('其他信息'), {'fields': ('last_login', 'date_joined')}),
             )
             # 此字段定义UserCreationForm表单中的具体显示内容
             self.add_fieldsets = (
@@ -42,7 +42,7 @@ class GroupAdmin(admin.ModelAdmin):
 # 组关系管理
 @admin.register(GroupRelations)
 class GroupRelationsAdmin(admin.ModelAdmin):
-    list_display = ('object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
+    list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
 # 主库配置管理
@@ -64,7 +64,7 @@ class workflowAdmin(admin.ModelAdmin):
 @admin.register(slave_config)
 class WorkflowAuditAdmin(admin.ModelAdmin):
     list_display = (
-        'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
+        'id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
     search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
 
 
@@ -81,6 +81,7 @@ class DataMaskingColumnsAdmin(admin.ModelAdmin):
 class DataMaskingRulesAdmin(admin.ModelAdmin):
     list_display = (
         'rule_type', 'rule_regex', 'hide_group', 'rule_desc', 'sys_time',)
+
 
 # 阿里云的认证信息
 @admin.register(AliyunAccessKey)

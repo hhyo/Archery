@@ -16,8 +16,7 @@ class Dao(object):
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
-                                   charset='utf8mb4')
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword)
             cursor = conn.cursor()
             sql = "show databases"
             n = cursor.execute(sql)
@@ -42,9 +41,7 @@ class Dao(object):
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
-                                   db=dbName,
-                                   charset='utf8mb4')
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,db=dbName)
             cursor = conn.cursor()
             sql = "show tables"
             n = cursor.execute(sql)
@@ -70,9 +67,7 @@ class Dao(object):
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
-                                   db=dbName,
-                                   charset='utf8mb4')
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,db=dbName)
             cursor = conn.cursor()
             sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='%s' AND TABLE_NAME='%s';" % (
                 dbName, tbName)
@@ -97,8 +92,7 @@ class Dao(object):
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
-                                   charset='utf8mb4')
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName)
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
@@ -140,8 +134,7 @@ class Dao(object):
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
-                                   charset='utf8mb4')
+            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName)
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             # result = {}
