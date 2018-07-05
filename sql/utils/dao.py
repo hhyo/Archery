@@ -141,7 +141,7 @@ class Dao(object):
 
         try:
             conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
-                                   charset='utf8mb4', max_allowed_packet=1073741824)
+                                   charset='utf8mb4')
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             # result = {}
