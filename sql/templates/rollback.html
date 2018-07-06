@@ -6,16 +6,12 @@
             {% csrf_token %}
             <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql.1 }}
 {% endfor %}">
-            <input type="hidden" id="editWorkflowNname" value="{{ rollbackWorkflowName }}">
-            <input type="hidden" id="editClustername" value="{{ cluster_name }}">
-            <input type="hidden" id="editIsbackup" value="是">
-            <input type="hidden" id="editReviewman" value="{{ review_man }}">
-            <input type="hidden" id="editSubReviewman" value="{{ sub_review_man }}">
-            <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
         </div>
     </div>
-    <br>
-    <br>
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="btn-group right">
+        <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
+    </div>
     <table id="tb-rollback" data-toggle="table" class="table table-condensed"></table>
 {% endblock content %}
 
@@ -33,13 +29,14 @@
             pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
             search: false,                       //是否显示表格搜索
             strictSearch: false,                //是否全匹配搜索
-            showColumns: false,                  //是否显示所有的列（选择显示的列）
+            showColumns: true,                  //是否显示所有的列（选择显示的列）
             showRefresh: false,                  //是否显示刷新按钮
             minimumCountColumns: 2,             //最少允许的列数
             clickToSelect: false,                //是否启用点击选中行
             uniqueId: "id",                     //每一行的唯一标识，一般为主键列
             showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
             cardView: false,                    //是否显示详细视图
+            toolbar: "#toolbar",               //指明自定义的toolbar
             detailView: true,                  //是否显示父子表
             //格式化详情
             detailFormatter: function (index, row) {
@@ -72,6 +69,10 @@
                     }
                 }
             }, {
+                title: '完整执行语句',
+                field: 0,
+                visible: false
+            },{
                 title: '回滚语句',
                 field: 1,
                 formatter: function (value, row, index) {
