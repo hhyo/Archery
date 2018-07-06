@@ -45,6 +45,7 @@ def query_audit_call_back(workflow_id, workflow_status):
         if apply_queryset.priv_type == 1:
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,
+                user_display = apply_queryset.user_display,
                 cluster_name=apply_queryset.cluster_name, db_name=db_name,
                 table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
@@ -53,6 +54,7 @@ def query_audit_call_back(workflow_id, workflow_status):
         elif apply_queryset.priv_type == 2:
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,
+                user_display=apply_queryset.user_display,
                 cluster_name=apply_queryset.cluster_name, db_name=apply_queryset.db_list,
                 table_name=table_name, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for table_name in
@@ -181,22 +183,23 @@ def getqueryapplylist(request):
 
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
     if user.is_superuser:
-        applylist = QueryPrivilegesApply.objects.all().filter(title__contains=search).order_by('-apply_id')[
+        applylist = QueryPrivilegesApply.objects.all().filter(
+            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[
                     offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_name', 'status', 'create_time', 'group_name'
+            'user_display', 'status', 'create_time', 'group_name'
         )
         applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
     else:
         applylist = QueryPrivilegesApply.objects.filter(
             Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
-            title__contains=search).order_by('-apply_id')[offset:limit].values(
+            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_name', 'status', 'create_time', 'group_name'
+            'user_display', 'status', 'create_time', 'group_name'
         )
         applylistCount = QueryPrivilegesApply.objects.filter(
             Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
-            title__contains=search).count()
+            Q(title__contains=search) | Q(user_display__contains=search)).count()
 
     # QuerySet 序列化
     rows = [row for row in applylist]
@@ -225,7 +228,7 @@ def applyforprivileges(request):
         workflow_remark = ''
 
     # 获取用户信息
-    user = request.user.username
+    user = request.user
 
     # 服务端参数校验
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -292,6 +295,7 @@ def applyforprivileges(request):
             applyinfo.group_name = group_name
             applyinfo.audit_users = workflow_auditors
             applyinfo.user_name = user.username
+            applyinfo.user_display = user.display
             applyinfo.cluster_name = cluster_name
             if int(priv_type) == 1:
                 applyinfo.db_list = ','.join(db_list)
@@ -550,6 +554,7 @@ def query(request):
     else:
         query_log = QueryLog()
         query_log.username = user.username
+        query_log.user_display = user.display
         query_log.db_name = dbName
         query_log.cluster_name = cluster_name
         query_log.sqllog = sqlContent

@@ -182,6 +182,7 @@ def autoreview(request):
             Workflow.group_id = group_id
             Workflow.group_name = group_name
             Workflow.engineer = engineer
+            Workflow.engineer_display = request.user.display
             Workflow.review_man = reviewMan
             Workflow.status = workflowStatus
             Workflow.is_backup = isBackup

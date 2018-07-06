@@ -109,6 +109,7 @@ class workflow(models.Model):
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     engineer = models.CharField('发起人', max_length=50)
+    engineer_display = models.CharField('发起人中文名', max_length=50, default='')
     review_man = models.CharField('审核人', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
@@ -150,6 +151,7 @@ class WorkflowAudit(models.Model):
     next_audit_user = models.CharField('下级审核人', max_length=20)
     current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
     create_user = models.CharField('申请人', max_length=20)
+    create_user_display = models.CharField('申请人中文名', max_length=50, default='')
     create_time = models.DateTimeField('申请时间', auto_now_add=True)
     sys_time = models.DateTimeField('系统时间', auto_now=True)
 
@@ -212,6 +214,7 @@ class QueryPrivilegesApply(models.Model):
     group_name = models.CharField('组名称', max_length=100)
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
+    user_display = models.CharField('申请人中文名', max_length=50, default='')
     cluster_name = models.CharField('实例名称', max_length=50)
     db_list = models.TextField('数据库')
     table_list = models.TextField('表')
@@ -237,6 +240,7 @@ class QueryPrivilegesApply(models.Model):
 class QueryPrivileges(models.Model):
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
+    user_display = models.CharField('申请人中文名', max_length=50, default='')
     cluster_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=200)
     table_name = models.CharField('表', max_length=200)
@@ -265,6 +269,7 @@ class QueryLog(models.Model):
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
     username = models.CharField('操作人', max_length=30)
+    user_display = models.CharField('申请人中文名', max_length=50, default='')
     create_time = models.DateTimeField('操作时间', auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 

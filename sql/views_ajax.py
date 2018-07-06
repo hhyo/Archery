@@ -67,8 +67,8 @@ def loginAuthenticate(username, password):
     if username == "" or password == "" or username is None or password is None:
         result = {'status': 2, 'msg': '登录用户名或密码为空，请重新输入!', 'data': ''}
     elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
-            datetime.datetime.now() - login_failure_counter[username][
-        "last_failure_time"]).seconds <= lockTimeThreshold:
+                datetime.datetime.now() - login_failure_counter[username][
+                "last_failure_time"]).seconds <= lockTimeThreshold:
         log_mail_record('user:{},login failed, account locking...'.format(username))
         result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
     else:
@@ -157,29 +157,29 @@ def sqlworkflowlist(request):
     if navStatus == 'all':
         if user.is_superuser == 1:
             listWorkflow = workflow.objects.filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)).count()
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
         else:
             listWorkflow = workflow.objects.filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)
             ).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)).filter(
-                Q(engineer__contains=search) | Q(workflow_name__contains=search)
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).count()
     elif navStatus in Const.workflowStatus.keys():
         if user.is_superuser == 1:
             listWorkflow = workflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
@@ -188,7 +188,7 @@ def sqlworkflowlist(request):
                 status=Const.workflowStatus[navStatus]
             ).filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer", "status",
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
             listWorkflowCount = workflow.objects.filter(
@@ -528,7 +528,7 @@ def group_relations(request):
 def group_auditors(request):
     group_name = request.POST.get('group_name')
     workflow_type = request.POST['workflow_type']
-    result = {'status': 0, 'msg': 'ok', 'data': []}
+    result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
     if group_name:
         group_id = Group.objects.get(group_name=group_name).group_id
         auditors = Workflow().auditsettings(group_id=group_id, workflow_type=workflow_type)
@@ -539,10 +539,10 @@ def group_auditors(request):
 
     # 获取所有用户
     if auditors:
-        auditor_list = auditors.audit_users.split(',')
-        result['data'] = auditor_list
-    else:
-        result['data'] = []
+        auditors = auditors.audit_users
+        auditors_display = ','.join([users.objects.get(username=auditor).display for auditor in auditors.split(',')])
+        result['data']['auditors'] = auditors
+        result['data']['auditors_display'] = auditors_display
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 

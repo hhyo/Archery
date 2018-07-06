@@ -159,12 +159,9 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        var auditor = [];
-                        for (var i = 0; i < result.length; i++) {
-                            auditor.push(result[i]);
-                        }
                         $("#div-workflow_auditors").show();
-                        $("#workflow_auditors").text(auditor);
+                        $("#workflow_auditors").val(result['auditors']);
+                        $("#workflow_auditors").text(result['auditors_display']);
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -306,7 +303,7 @@
                     field: 'valid_date'
                 }, {
                     title: '申请人',
-                    field: 'user_name'
+                    field: 'user_display'
                 }, {
                     title: '工单状态',
                     field: 'status',
@@ -377,7 +374,7 @@
         $("#db_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/getTableNameList/",
+                url: "/instance/getTableNameList/",
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val(),
@@ -440,7 +437,7 @@
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             var apply_remark = $("#apply_remark").val();
-            var workflow_auditors = $("#workflow_auditors").text();
+            var workflow_auditors = $("#workflow_auditors").val();
             var group_name = $("#group_name").val();
 
             // 参数校验
@@ -481,7 +478,7 @@
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             var apply_remark = $("#apply_remark").val();
-            var workflow_auditors = $("#workflow_auditors").text();
+            var workflow_auditors = $("#workflow_auditors").val();
             var group_name = $("#group_name").val();
 
             // 参数校验

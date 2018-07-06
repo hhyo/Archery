@@ -103,6 +103,7 @@ class Workflow(object):
             auditInfo.next_audit_user = '-1'
             auditInfo.current_status = WorkflowDict.workflow_status['audit_success']  # 审核通过
             auditInfo.create_user = create_user
+            auditInfo.create_user_display = request.user.display
             auditInfo.save()
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
@@ -130,6 +131,7 @@ class Workflow(object):
 
             auditInfo.current_status = WorkflowDict.workflow_status['audit_wait']
             auditInfo.create_user = create_user
+            auditInfo.create_user_display = request.user.display
             auditInfo.save()
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_wait']}
 
@@ -138,7 +140,7 @@ class Workflow(object):
         msg_data = {}
         msg_data['audit_id'] = auditInfo.audit_id
         msg_data['workflow_type'] = auditInfo.workflow_type
-        msg_data['workflow_from'] = auditInfo.create_user
+        msg_data['workflow_from'] = auditInfo.create_user_display
         if audit_users_list is None:
             msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
         else:
@@ -321,7 +323,7 @@ class Workflow(object):
         msg_data = {}
         msg_data['audit_id'] = auditInfo.audit_id
         msg_data['workflow_type'] = auditInfo.workflow_type
-        msg_data['workflow_from'] = auditInfo.create_user
+        msg_data['workflow_from'] = auditInfo.create_user_display
         msg_data['workflow_auditors'] = auditInfo.audit_users
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
@@ -374,7 +376,7 @@ class Workflow(object):
                 current_status=WorkflowDict.workflow_status['audit_wait'],
                 current_audit_user=user.username
             ).order_by('-audit_id')[offset:limit].values(
-                'audit_id', 'workflow_type', 'workflow_title', 'create_user',
+                'audit_id', 'workflow_type', 'workflow_title', 'create_user_display',
                 'create_time', 'current_status', 'audit_users',
                 'current_audit_user',
                 'group_name')
@@ -391,7 +393,7 @@ class Workflow(object):
                 current_audit_user=user.username
             ).order_by('-audit_id')[offset:limit].values(
                 'audit_id', 'workflow_type',
-                'workflow_title', 'create_user',
+                'workflow_title', 'create_user_display',
                 'create_time', 'current_status',
                 'audit_users',
                 'current_audit_user',

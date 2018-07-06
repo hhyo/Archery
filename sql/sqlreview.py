@@ -195,7 +195,7 @@ def send_msg(workflowDetail, url):
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
                                      workflowDetail.id)
     msg_content = '''发起人：{}\n审核人：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
-        workflowDetail.engineer, workflowDetail.review_man, workflowDetail.workflow_name, url,
+        workflowDetail.engineer_display, workflowDetail.review_man, workflowDetail.workflow_name, url,
         workflowDetail.sql_content[0:500])
 
     if sys_config.get('mail') == 'true':

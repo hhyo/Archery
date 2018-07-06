@@ -578,11 +578,7 @@
                     success: function (data) {
                         if (data.status === 0) {
                             var result = data.data;
-                            var auditor = [];
-                            for (var i = 0; i < result.length; i++) {
-                                auditor.push(result[i]);
-                            }
-                            $("#workflow_auditors").text(auditor);
+                            $("#workflow_auditors").text(result['auditors_display']);
                         } else {
                             alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                         }
