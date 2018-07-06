@@ -15,7 +15,7 @@ from .const import Const, WorkflowDict
 from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import users, workflow, master_config
+from .models import users, workflow, master_config, Group
 import logging
 
 logger = logging.getLogger('default')
@@ -162,7 +162,8 @@ def is_autoreview(workflowid):
             sql_content.splitlines(1))).strip()
 
     # 获取正则表达式
-    auto_review_regex = SysConfig().sys_config.get('auto_review_regex','^alter|^create|^drop|^truncate|^rename|^delete')
+    auto_review_regex = SysConfig().sys_config.get('auto_review_regex',
+                                                   '^alter|^create|^drop|^truncate|^rename|^delete')
     p = re.compile(auto_review_regex)
 
     # 判断是否匹配到需要手动审核的语句
@@ -189,6 +190,7 @@ def is_autoreview(workflowid):
 
 def send_msg(workflowDetail, url):
     mailSender = MailSender()
+    sys_config = SysConfig().sys_config
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
                                      workflowDetail.id)
@@ -196,10 +198,14 @@ def send_msg(workflowDetail, url):
         workflowDetail.engineer, workflowDetail.review_man, workflowDetail.workflow_name, url,
         workflowDetail.sql_content[0:500])
 
-    if SysConfig().sys_config.get('mail') == 'true':
+    if sys_config.get('mail') == 'true':
         # 邮件通知申请人，审核人，抄送DBA
         notify_users = workflowDetail.review_man.split(',')
         notify_users.append(workflowDetail.engineer)
         listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in group_dbas(workflowDetail.group_id).values('email')]
         mailSender.sendEmail(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
+    if sys_config.get('ding') == 'true':
+        # 钉钉通知申请人，审核人，抄送DBA
+        webhook_url = Group.objects.get(group_id=workflowDetail.group_id).ding_webhook
+        mailSender.sendDing(webhook_url, msg_content)

@@ -134,45 +134,50 @@ class Workflow(object):
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_wait']}
 
         # 消息通知
-        if SysConfig().sys_config.get('mail') == 'true':
-            # 消息内容
-            msg_data = {}
-            msg_data['audit_id'] = auditInfo.audit_id
-            msg_data['workflow_type'] = auditInfo.workflow_type
-            msg_data['workflow_from'] = auditInfo.create_user
-            if audit_users_list is None:
-                msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
+        # 消息内容
+        msg_data = {}
+        msg_data['audit_id'] = auditInfo.audit_id
+        msg_data['workflow_type'] = auditInfo.workflow_type
+        msg_data['workflow_from'] = auditInfo.create_user
+        if audit_users_list is None:
+            msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
+        else:
+            msg_data['workflow_auditors'] = auditInfo.audit_users
+        msg_data['workflow_title'] = auditInfo.workflow_title
+        msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
+                                                                      request.get_host(),
+                                                                      auditInfo.audit_id)
+        msg_data['workflow_content'] = notify_text
+        # 如果待审核则发送邮件通知当前审核人以及抄送对象
+        if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
+            # 接收人
+            current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
+            msg_data['email_reciver'] = current_audit_userOb.email
+            # 抄送对象
+            if kwargs.get('listCcAddr'):
+                listCcAddr = kwargs.get('listCcAddr')
             else:
-                msg_data['workflow_auditors'] = auditInfo.audit_users
-            msg_data['workflow_title'] = auditInfo.workflow_title
-            msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
-                                                                          request.get_host(),
-                                                                          auditInfo.audit_id)
-            msg_data['workflow_content'] = notify_text
-            # 如果待审核则发送邮件通知当前审核人以及抄送对象
-            if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
-                # 接收人
-                current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
-                msg_data['email_reciver'] = current_audit_userOb.email
-                # 抄送对象
-                if kwargs.get('listCcAddr'):
-                    listCcAddr = kwargs.get('listCcAddr')
-                else:
-                    listCcAddr = []
-                msg_data['email_cc'] = listCcAddr
-                send_msg(msg_data, 1, auditInfo.current_status)
-            # 如果直接审核通过则发送消息通知DBA和提交人以及抄送对象
-            elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
-                # 接收人
-                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
-                # 抄送对象
-                if kwargs.get('listCcAddr'):
-                    listCcAddr = kwargs.get('listCcAddr')
-                else:
-                    listCcAddr = []
-                msg_data['email_cc'] = listCcAddr.append(
-                    [email['email'] for email in group_dbas(group_id).values('email')])
-                send_msg(msg_data, 1, auditInfo.current_status)
+                listCcAddr = []
+            msg_data['email_cc'] = listCcAddr
+        # 如果直接审核通过则发送消息通知DBA和提交人以及抄送对象
+        elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
+            # 接收人
+            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            # 抄送对象
+            if kwargs.get('listCcAddr'):
+                listCcAddr = kwargs.get('listCcAddr')
+            else:
+                listCcAddr = []
+            msg_data['email_cc'] = listCcAddr.append(
+                [email['email'] for email in group_dbas(group_id).values('email')])
+
+        sys_config = SysConfig().sys_config
+        if sys_config.get('mail') == 'true':
+            send_msg(msg_data, 1, auditInfo.current_status)
+        if sys_config.get('ding') == 'true':
+            msg_data['webhook_url'] = Group.objects.get(group_id=auditInfo.group_id).ding_webhook
+            send_msg(msg_data, 2, auditInfo.current_status)
+
         return result
 
     # 工单审核
@@ -323,34 +328,37 @@ class Workflow(object):
                                                                       request.get_host(),
                                                                       auditInfo.audit_id)
         msg_data['workflow_content'] = notify_text
-        if SysConfig().sys_config.get('mail') == 'true':
-            # 给下级审核人发送邮件
-            if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
-                # 邮件内容
-                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.current_audit_user).email]
-                msg_data['email_cc'] = []
-            # 审核通过，通知提交人，抄送DBA
-            elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
-                # 邮件内容
-                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
-                listCcAddr = [email['email'] for email in group_dbas(auditInfo.group_id).values('email')]
-                msg_data['email_cc'] = listCcAddr
-            # 审核驳回，通知提交人
-            elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:
-                # 邮件内容
-                msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
-                msg_data['email_cc'] = []
-                msg_data['workflow_audit_remark'] = audit_remark
-            # 主动取消，通知所有审核人
-            elif auditInfo.current_status == WorkflowDict.workflow_status['audit_abort']:
-                # 邮件内容
-                msg_data['email_reciver'] = [email['email'] for email in
-                                             users.objects.filter(
-                                                 username__in=auditInfo.audit_users.split(',')).values(
-                                                 'email')]
-                msg_data['email_cc'] = []
-            # 发送邮件
+        # 给下级审核人发送邮件
+        if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
+            # 邮件内容
+            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.current_audit_user).email]
+            msg_data['email_cc'] = []
+        # 审核通过，通知提交人，抄送DBA
+        elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
+            # 邮件内容
+            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            listCcAddr = [email['email'] for email in group_dbas(auditInfo.group_id).values('email')]
+            msg_data['email_cc'] = listCcAddr
+        # 审核驳回，通知提交人
+        elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:
+            # 邮件内容
+            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            msg_data['email_cc'] = []
+            msg_data['workflow_audit_remark'] = audit_remark
+        # 主动取消，通知所有审核人
+        elif auditInfo.current_status == WorkflowDict.workflow_status['audit_abort']:
+            # 邮件内容
+            msg_data['email_reciver'] = [email['email'] for email in
+                                         users.objects.filter(
+                                             username__in=auditInfo.audit_users.split(',')).values(
+                                             'email')]
+            msg_data['email_cc'] = []
+        sys_config = SysConfig().sys_config
+        if sys_config.get('mail') == 'true':
             send_msg(msg_data, 1, auditInfo.current_status)
+        if sys_config.get('ding') == 'true':
+            msg_data['webhook_url'] = Group.objects.get(group_id=auditInfo.group_id).ding_webhook
+            send_msg(msg_data, 2, auditInfo.current_status)
         # 返回审核结果
         result['data'] = {'workflow_status': auditresult.current_status}
         return result

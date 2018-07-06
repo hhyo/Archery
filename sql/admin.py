@@ -22,7 +22,7 @@ class usersAdmin(UserAdmin):
             self.fieldsets = (
                 (('认证信息'), {'fields': ('username', 'password')}),
                 (('个人信息'), {'fields': ('display', 'role', 'email')}),
-                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff')}),
+                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
                 (('其他信息'), {'fields': ('last_login', 'date_joined')}),
             )
             # 此字段定义UserCreationForm表单中的具体显示内容
@@ -35,7 +35,7 @@ class usersAdmin(UserAdmin):
 # 组管理
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'is_deleted')
+    list_display = ('group_id', 'group_name', 'ding_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 

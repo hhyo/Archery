@@ -8,6 +8,7 @@ from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import parseaddr, formataddr
 import smtplib
+import requests
 
 from sql.utils.config import SysConfig
 import logging
@@ -81,7 +82,24 @@ class MailSender(object):
         server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
         server.quit()
 
+    def _send_ding(self, url, content):
+        '''
+        发送钉钉消息
+        '''
+        data = {
+            "msgtype": "text",
+            "text": {
+                "content": "{}".format(content)
+            },
+        }
+        requests.post(url=url, json=data)
+
     # 调用方应该调用此方法，采用子进程方式异步阻塞地发送邮件，避免邮件服务挂掉影响archer主服务
     def sendEmail(self, strTitle, strContent, listToAddr, **kwargs):
         p = Process(target=self._send_mail, args=(strTitle, strContent, listToAddr), kwargs=kwargs)
+        p.start()
+
+    # 发送钉钉消息
+    def sendDing(self, url, content):
+        p = Process(target=self._send_ding, args=(url, content))
         p.start()

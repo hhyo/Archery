@@ -26,6 +26,7 @@ class Group(models.Model):
     group_parent_id = models.BigIntegerField('父级id', default=0)
     group_sort = models.IntegerField('排序', default=1)
     group_level = models.IntegerField('层级', default=1)
+    ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -34,11 +35,12 @@ class Group(models.Model):
         return self.group_name
 
     class Meta:
+        managed = False
         verbose_name = u'组配置'
         verbose_name_plural = u'组配置'
 
 
-# 组关系表（角色与组、主库与组等）
+# 组关系表（用户与组、主库与组等）
 class GroupRelations(models.Model):
     object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (2, '主库'), (3, '从库')))
     object_id = models.IntegerField('关联对象主键ID', )
@@ -49,6 +51,7 @@ class GroupRelations(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed = False
         db_table = 'sql_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
         verbose_name = u'组关系配置'
@@ -69,6 +72,7 @@ class master_config(models.Model):
         return self.cluster_name
 
     class Meta:
+        managed = False
         verbose_name = u'主库连接配置'
         verbose_name_plural = u'主库连接配置'
 
@@ -89,6 +93,7 @@ class slave_config(models.Model):
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
+        managed = False
         verbose_name = u'查询从库配置'
         verbose_name_plural = u'查询从库配置'
 
@@ -125,6 +130,7 @@ class workflow(models.Model):
         return self.workflow_name
 
     class Meta:
+        managed = False
         verbose_name = u'SQL工单管理'
         verbose_name_plural = u'SQL工单管理'
 
@@ -151,6 +157,7 @@ class WorkflowAudit(models.Model):
         return self.audit_id
 
     class Meta:
+        managed = False
         db_table = 'workflow_audit'
         unique_together = ('workflow_id', 'workflow_type')
         verbose_name = u'工作流列表'
@@ -171,6 +178,7 @@ class WorkflowAuditDetail(models.Model):
         return self.audit_detail_id
 
     class Meta:
+        managed = False
         db_table = 'workflow_audit_detail'
         verbose_name = u'工作流审批明细表'
         verbose_name_plural = u'工作流审批明细表'
@@ -190,6 +198,7 @@ class WorkflowAuditSetting(models.Model):
         return self.audit_setting_id
 
     class Meta:
+        managed = False
         db_table = 'workflow_audit_setting'
         unique_together = ('group_id', 'workflow_type')
         verbose_name = u'审批流程配置'
@@ -218,6 +227,7 @@ class QueryPrivilegesApply(models.Model):
         return self.apply_id
 
     class Meta:
+        managed = False
         db_table = 'query_privileges_apply'
         verbose_name = u'查询权限申请记录表'
         verbose_name_plural = u'查询权限申请记录表'
@@ -241,6 +251,7 @@ class QueryPrivileges(models.Model):
         return self.privilege_id
 
     class Meta:
+        managed = False
         db_table = 'query_privileges'
         verbose_name = u'查询权限记录表'
         verbose_name_plural = u'查询权限记录表'
@@ -258,6 +269,7 @@ class QueryLog(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed = False
         db_table = 'query_log'
         verbose_name = u'sql查询日志'
         verbose_name_plural = u'sql查询日志'
@@ -278,6 +290,7 @@ class DataMaskingColumns(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed = False
         db_table = 'data_masking_columns'
         verbose_name = u'脱敏字段配置'
         verbose_name_plural = u'脱敏字段配置'
@@ -293,6 +306,7 @@ class DataMaskingRules(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed = False
         db_table = 'data_masking_rules'
         verbose_name = u'脱敏规则配置'
         verbose_name_plural = u'脱敏规则配置'
@@ -319,6 +333,7 @@ class AliyunAccessKey(models.Model):
     remark = models.CharField(max_length=50, default='', blank=True)
 
     class Meta:
+        managed = False
         db_table = 'aliyun_access_key'
         verbose_name = u'阿里云认证信息'
         verbose_name_plural = u'阿里云认证信息'
@@ -339,6 +354,7 @@ class AliyunRdsConfig(models.Model):
         return self.rds_dbinstanceid
 
     class Meta:
+        managed = False
         db_table = 'aliyun_rds_config'
         verbose_name = u'阿里云rds配置'
         verbose_name_plural = u'阿里云rds配置'
