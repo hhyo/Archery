@@ -52,7 +52,8 @@ pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
 
 #数据库初始化
-使用初始化脚本(与release版本对应)：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
+使用初始化脚本(与release版本对应)
+https://github.com/hhyo/archer/tree/master/src/init_sql
 
 #创建管理用户
 python3 manage.py createsuperuser
