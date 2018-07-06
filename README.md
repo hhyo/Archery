@@ -1,5 +1,6 @@
 # 说明
-基于archer，调整部分自需功能，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
+基于archer，调整部分自需功能，[查看开发计划](https://github.com/hhyo/archer/projects/1)    
+master分支是最新代码，但是不保证功能稳定，建议使用release版本
 
 ## 系统体验
 [在线体验](http://52.221.195.102) 
@@ -31,7 +32,8 @@
 8. 工单通知人  
    发起SQL上线时可以选择通知对象，将会在申请时邮件抄送给对方
 9. 菜单栏调整  
-   多级菜单展示  
+   多级菜单展示    
+10. 钉钉通知  
    
 ## 部署
 ### 基础环境依赖
@@ -84,9 +86,10 @@ http://127.0.0.1:9123/
 
 ### 采取docker部署
 ```bash
-#使用初始化脚本(与release版本对应)初始化数据库：https://github.com/hhyo/archer/tree/master/src/script/v1.0_init.sql
+#使用初始化脚本初始化数据库，文件夹内脚本依次执行
+https://github.com/hhyo/archer/tree/master/src/script/init_sql
 #准备settings.py文件，修改相关配置项
-docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:1.0.0
+docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:1.1.0
 ```
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
