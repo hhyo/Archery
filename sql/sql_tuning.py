@@ -4,6 +4,7 @@ import time
 
 import MySQLdb
 import simplejson as json
+from MySQLdb.connections import numeric_part
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -160,23 +161,37 @@ def __basic_information(cluster_name, db_name):
 def __sys_parameter(cluster_name, db_name):
     # 取出该实例的连接方式
     masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    # 获取mysql版本信息
+    version = __basic_information(cluster_name, db_name)['rows'][0][0]
+    server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
+    if server_version < (5, 7):
+        sql = sql_variable.replace('performance_schema', 'information_schema')
+    else:
+        sql = sql_variable
     return dao.mysql_query(masterInfo.master_host,
                            masterInfo.master_port,
                            masterInfo.master_user,
                            prpCryptor.decrypt(masterInfo.master_password),
                            db_name,
-                           sql_variable)
+                           sql)
 
 
 def __optimizer_switch(cluster_name, db_name):
     # 取出该实例的连接方式
     masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    # 获取mysql版本信息
+    version = __basic_information(cluster_name, db_name)['rows'][0][0]
+    server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
+    if server_version < (5, 7):
+        sql = sql_optimizer_switch.replace('performance_schema', 'information_schema')
+    else:
+        sql = sql_variable
     return dao.mysql_query(masterInfo.master_host,
                            masterInfo.master_port,
                            masterInfo.master_user,
                            prpCryptor.decrypt(masterInfo.master_password),
                            db_name,
-                           sql_optimizer_switch)
+                           sql)
 
 
 def __sqlplan(cluster_name, db_name, sqltext):
@@ -228,7 +243,7 @@ def __object_statistics(cluster_name, db_name, sqltext):
                                           masterInfo.master_port,
                                           masterInfo.master_user,
                                           prpCryptor.decrypt(masterInfo.master_password),
-                                          db_name, "show create table {};".format(table_name.lower()))
+                                          db_name, "show create table {};".format(table_name.replace('`', '').lower()))
         all_tableistructure['column_list'] = tableistructure['column_list']
         all_tableistructure['rows'] = tableistructure['rows']
 
@@ -237,7 +252,7 @@ def __object_statistics(cluster_name, db_name, sqltext):
                                     masterInfo.master_user,
                                     prpCryptor.decrypt(masterInfo.master_password),
                                     db_name,
-                                    sql_table_info % (db_name, table_name.lower()))
+                                    sql_table_info % (db_name, table_name.replace('`', '').lower()))
         all_tableinfo['column_list'] = tableinfo['column_list']
         all_tableinfo['rows'].extend(tableinfo['rows'])
 
@@ -246,7 +261,7 @@ def __object_statistics(cluster_name, db_name, sqltext):
                                     masterInfo.master_user,
                                     prpCryptor.decrypt(masterInfo.master_password),
                                     db_name,
-                                    sql_table_index % (db_name, table_name.lower()))
+                                    sql_table_index % (db_name, table_name.replace('`', '').lower()))
         all_indexinfo['column_list'] = indexinfo['column_list']
         all_indexinfo['rows'].extend(indexinfo['rows'])
     return all_tableistructure, all_tableinfo, all_indexinfo
@@ -262,7 +277,15 @@ def __exec_sql(cluster_name, db_name, sqltext):
               "PROFILING_DETAIL": {'column_list': [], 'rows': []},
               "PROFILING_SUMMARY": {'column_list': [], 'rows': []}
               }
+    sql_profiling = "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1"
 
+    # 获取mysql版本信息
+    version = __basic_information(cluster_name, db_name)['rows'][0][0]
+    server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
+    if server_version < (5, 7):
+        sql = sql_profiling.replace('performance_schema', 'information_schema')
+    else:
+        sql = sql_profiling
     conn = MySQLdb.connect(host=masterInfo.master_host,
                            port=masterInfo.master_port,
                            user=masterInfo.master_user,
@@ -275,8 +298,7 @@ def __exec_sql(cluster_name, db_name, sqltext):
     records = cursor.fetchall()
     query_id = records[0][0] + 2  # skip next sql
 
-    cursor.execute(
-        "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1")
+    cursor.execute(sql)
     rows = cursor.fetchall()
     fields = cursor.description
     column_list = []
@@ -293,8 +315,7 @@ def __exec_sql(cluster_name, db_name, sqltext):
     cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
     result['EXECUTE_TIME'] = cost_time
 
-    cursor.execute(
-        "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1")
+    cursor.execute(sql)
     rows = cursor.fetchall()
     fields = cursor.description
     column_list = []
