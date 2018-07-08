@@ -202,7 +202,7 @@ def __sqlplan(cluster_name, db_name, sqltext):
                          port=masterInfo.master_port,
                          user=masterInfo.master_user,
                          passwd=prpCryptor.decrypt(masterInfo.master_password),
-                         db=db_name)
+                         db=db_name, charset='utf8')
     cursor = db.cursor()
     effect_row = cursor.execute("explain extended " + sqltext)
     rows = cursor.fetchall()
@@ -290,7 +290,7 @@ def __exec_sql(cluster_name, db_name, sqltext):
                            port=masterInfo.master_port,
                            user=masterInfo.master_user,
                            passwd=prpCryptor.decrypt(masterInfo.master_password),
-                           db=db_name)
+                           db=db_name, charset='utf8')
     cursor = conn.cursor()
 
     cursor.execute("set profiling=1")

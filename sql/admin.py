@@ -22,7 +22,7 @@ class usersAdmin(UserAdmin):
             self.fieldsets = (
                 (('认证信息'), {'fields': ('username', 'password')}),
                 (('个人信息'), {'fields': ('display', 'role', 'email')}),
-                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff')}),
                 (('其他信息'), {'fields': ('last_login', 'date_joined')}),
             )
             # 此字段定义UserCreationForm表单中的具体显示内容
