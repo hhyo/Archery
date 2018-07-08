@@ -52,7 +52,6 @@ pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
 
 #数据库初始化
-使用初始化脚本(与release版本对应)
 https://github.com/hhyo/archer/tree/master/src/init_sql
 
 #创建管理用户
@@ -87,10 +86,11 @@ http://127.0.0.1:9123/
 
 ### 采取docker部署
 ```bash
-#使用初始化脚本初始化数据库，文件夹内脚本依次执行
+#使用初始化脚本初始化数据库
 https://github.com/hhyo/archer/tree/master/src/script/init_sql
 #准备settings.py文件，修改相关配置项
-docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:1.1.0
+#启动，tag我release版本，如1.1.1
+docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
 ```
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
