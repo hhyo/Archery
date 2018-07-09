@@ -89,7 +89,7 @@
                     title: '申请标题',
                     field: 'workflow_title',
                     formatter: function (value, row, index) {
-                        return "<a href='/workflowdetail/" + row.audit_id + "/'>" + value + "</a>";
+                        return "<a href='/workflow/" + row.audit_id + "/'>" + value + "</a>";
                     }
                 }, {
                     title: '组',
@@ -133,7 +133,7 @@
                         // 当前审核人
                         if (row.current_status === 0 && row.current_audit_user === "{{ user.username }}") {
                             return "<button class=\"btn btn-default btn-xs\" " +
-                                "onclick=\"javascrtpt:window.location.href='/workflowdetail/" + row.audit_id + "/'\">" +
+                                "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
                                 "审核</button>\n"
                         }
                     }
@@ -141,7 +141,7 @@
                 onLoadSuccess: function () {
                 },
                 onLoadError: function () {
-                    alert("数据加载失败！");
+                    alert("数据加载失败！请检查接口返回信息！");
                 },
                 onSearch: function (e) {
                     //传搜索参数给服务器

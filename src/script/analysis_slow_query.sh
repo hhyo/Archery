@@ -2,18 +2,18 @@
 DIR="$( cd "$( dirname "$0"  )" && pwd  )"
 cd $DIR
 
-#收集日志  配置archer数据库的连接地址
+#配置archer数据库的连接地址
 monitor_db_host="127.0.0.1"
 monitor_db_port=3306
 monitor_db_user="root"
 monitor_db_password="123456"
 monitor_db_database="archer"
 
-#config slowqury 被监控机慢日志位置
+#被监控机慢日志位置
 slowquery_file="/home/mysql/log_slow.log"
 pt_query_digest="/usr/bin/pt-query-digest"
 
-#config server_id
+#被监控机连接信息
 hostname=mysql_host:mysql_port # 被监控机连接信息，和archer主库配置内容保持一致，用于archer做筛选
 
 #获取上次分析时间，初始化时请删除last_analysis_time_$hostname文件，可分析全部日志数据
@@ -23,7 +23,7 @@ else
     last_analysis_time='0000-00-00-00 00:00:00'
 fi
 
-#c收集日志
+#收集日志
 #RDS需要增加--no-version-check选项
 $pt_query_digest \
 --user=$monitor_db_user --password=$monitor_db_password --port=$monitor_db_port \

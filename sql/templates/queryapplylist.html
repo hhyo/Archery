@@ -129,7 +129,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        var result = data.data;
+                        var result = data.data['rows'];
                         $("#cluster_name").empty();
                         for (var i = 0; i < result.length; i++) {
                             var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
@@ -320,7 +320,7 @@
                 onLoadSuccess: function () {
                 },
                 onLoadError: function () {
-                    alert("数据加载失败！");
+                    alert("数据加载失败！请检查接口返回信息！");
                 },
                 onSearch: function (e) {
                     //传搜索参数给服务器

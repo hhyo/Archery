@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 from django.urls import path, re_path
-from sql import views, views_ajax, query, slowlog, instance, db_diagnostic, charts, sql_tuning
+from sql import views, views_ajax, query, slowlog, instance, db_diagnostic, charts, sql_tuning,groupmgmt
 from sql.utils import jobs
 
 urlpatterns = [
@@ -30,9 +30,11 @@ urlpatterns = [
     path('queryuserprivileges/', views.queryuserprivileges),
     path('dbdiagnostic/', views.dbdiagnostic),
     path('workflow/', views.workflows),
-    path('workflowdetail/<int:audit_id>/', views.workflowsdetail),
+    path('workflow/<int:audit_id>/', views.workflowsdetail),
     path('dbaprinciples/', views.dbaprinciples),
     path('charts/', charts.pyecharts),
+    path('group/', views.group),
+    path('grouprelations/<str:group_name>/', views.groupmgmt),
     path('config/', views.config),
 
     path('authenticate/', views_ajax.authenticateEntry),
@@ -46,9 +48,12 @@ urlpatterns = [
     path('workflow/list/', views_ajax.workflowlist),
     path('config/change/', views_ajax.changeconfig),
 
-    path('group/relations/', views_ajax.group_relations),
-    path('group/auditors/', views_ajax.group_auditors),
-    path('group/changeauditors/', views_ajax.changegroupauditors),
+    path('group/group/', groupmgmt.group),
+    path('group/addrelation/', groupmgmt.addrelation),
+    path('group/relations/', groupmgmt.associated_objects),
+    path('group/unassociated/', groupmgmt.unassociated_objects),
+    path('group/auditors/', groupmgmt.auditors),
+    path('group/changeauditors/', groupmgmt.changeauditors),
 
     path('instance/getdbNameList/', instance.getdbNameList),
     path('instance/getTableNameList/', instance.getTableNameList),

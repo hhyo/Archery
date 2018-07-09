@@ -18,7 +18,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import users, workflow, QueryPrivileges, Group, \
+from .models import users, master_config, slave_config, workflow, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
 from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -622,3 +622,15 @@ def config(request):
     context = {'currentMenu': 'config', 'group_list': group_list, 'user_list': user_list,
                'config': sys_config, 'WorkflowDict': WorkflowDict}
     return render(request, 'config.html', context)
+
+
+# 组管理
+@superuser_required
+def group(request):
+    return render(request, 'group.html')
+
+
+# 组关系管理
+@superuser_required
+def groupmgmt(request, group_name):
+    return render(request, 'groupmgmt.html',{'group_name': group_name})

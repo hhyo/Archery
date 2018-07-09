@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="form-inline">
+        <div class="form-group bootstrap-select ">
+            <select id="type" class="dropdown-menu-right selectpicker ">
+                <option value="" selected="selected">全部</option>
+                <option value=0>用户</option>
+                {#                <option value=1>角色</option>#}
+                <option value=2>主库</option>
+                <option value=3>从库</option>
+            </select>
+        </div>
+        <div class="form-group ">
+            <button id="btn_add" type="button" class="btn btn-default" data-toggle="modal" data-target="#add">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                新增关联对象
+            </button>
+        </div>
+    </div>
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="group-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+    <!-- 关联管理-->
+    <div class="modal fade" id="add" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">新增关联对象</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="group_name" value="{{ group_name }}" disabled
+                               placeholder="组">
+                    </div>
+                    <div class="form-group">
+                        <select id="object_type" name="object_type"
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                data-name="关联对象类型" data-placeholder="请选择关联对象类型:" data-live-search="true" required>
+                            <option value="is-empty" disabled="" selected="selected">请选择关联对象类型:</option>
+                            <option value=0>用户</option>
+                            {#                <option value=1>角色</option>#}
+                            <option value=2>主库</option>
+                            <option value=3>从库</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="object_info" name="object_info" data-live-search="true" multiple="multiple"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                            <option value="is-empty" disabled="" selected="selected">请选择关联对象:</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" onclick="addRelation()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <script>
+        //获取列表
+        function groupmgmt() {
+            //采取异步请求
+            //初始化table
+            $('#group-list').bootstrapTable('destroy').bootstrapTable({
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/group/relations/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    fileName: 'group'  //文件名称设置
+                },
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            group_name: "{{ group_name }}",
+                            type: $("#type").val(),
+                            search: params.search
+                        }
+                    },
+                columns: [{
+                    title: '关联ID',
+                    field: 'id',
+                    formatter: function (value, row, index) {
+                        return "<a href=\"/admin/sql/grouprelations/" + row.id + "/change/\">" + value + "</a>"
+                    }
+                }, {
+                    title: '关联对象类型',
+                    field: 'object_type',
+                    formatter: function (value, row, index) {
+                        switch (value) {
+                            case 0:
+                                return "用户";
+                                break;
+                            case 1:
+                                return "角色";
+                                break;
+                            case 2:
+                                return "主库";
+                                break;
+                            case 3:
+                                return "从库";
+                                break;
+                            default:
+                                return "未知"
+                        }
+                    }
+                }, {
+                    title: '关联对象ID',
+                    field: 'object_id'
+                }, {
+                    title: '关联对象描述',
+                    field: 'object_name'
+                }, {
+                    title: '组ID',
+                    field: 'group_id'
+                }, {
+                    title: '组名称',
+                    field: 'group_name'
+                }, {
+                    title: '操作',
+                    field: '',
+                    formatter: function (value, row, index) {
+                        return "<button class=\"btn btn-danger btn-xs\" onclick=\"window.location.href='/admin/sql/grouprelations/" + row.id + "/delete/'\" >删除</button>\n"
+                    }
+                }],
+                onLoadSuccess: function () {
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                }
+            });
+
+        }
+
+        //选择控件初始化
+        $("#object_info").selectpicker({
+            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+            countSelectedText: "已选中{0}项",
+            selectedTextFormat: "count > 5"
+        });
+
+        // 获取未关联对象信息
+        $("#object_type").change(function () {
+            var group_name = $("#group_name").val();
+            var object_type = $("#object_type").val();
+            $.ajax({
+                type: "post",
+                url: "/group/unassociated/",
+                dataType: "json",
+                data: {
+                    group_name: group_name,
+                    object_type: object_type
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.rows;
+                        $("#object_info").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i]['object_id'] + "," +  result[i]['object_name'] + "\">" + result[i]['object_name']  + "</option>";
+                            $("#object_info").append(name);
+                        }
+                        $('#object_info').selectpicker('render');
+                        $('#object_info').selectpicker('refresh');
+                    }
+                    else {
+                        alert(data.msg)
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        // 信息关联对象
+        function addRelation() {
+            var group_name = $("#group_name").val();
+            var object_type = $("#object_type").val();
+            var object_info = $("#object_info").val();
+            if (group_name && object_type && object_info) {
+                $.ajax({
+                    type: "post",
+                    url: "/group/addrelation/",
+                    dataType: "json",
+                    data: {
+                        group_name: group_name,
+                        object_type: object_type,
+                        object_info: JSON.stringify(object_info)
+                    },
+                    complete: function () {
+                        $('button[type=button]').removeClass('disabled');
+                        $('button[type=button]').prop('disabled', false);
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#apply').modal('hide');
+                            window.location.reload(true);
+                        }
+                        else {
+                            alert(data.msg)
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+            else {
+                alert('请填写完整！')
+            }
+
+        }
+
+        //状态筛选变动自动刷新
+        $("#type").change(function () {
+            groupmgmt();
+        });
+
+        //初始化数据
+        $(document).ready(function () {
+            groupmgmt();
+        });
+    </script>
+{% endblock %}

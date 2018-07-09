@@ -64,10 +64,10 @@ class ChartDao(object):
     def workflow_by_user(self, cycle):
         sql = '''
         select
-          engineer,
+          engineer_display,
           count(*)
         from sql_workflow
         where create_time >= date_add(now(), interval -{} month)
-        group by engineer
+        group by engineer_display
         order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
