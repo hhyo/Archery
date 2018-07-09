@@ -106,6 +106,7 @@ def unassociated_objects(request):
 
 # 添加组关联对象
 @csrf_exempt
+@superuser_required
 def addrelation(request):
     '''
     type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
