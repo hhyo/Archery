@@ -176,9 +176,12 @@ def sapce_status(request):
 
     # 提取进程列表
     space_list = json.loads(space_info)['ListData']
-    space_list = json.loads(space_list)
+    if space_list:
+        space_list = json.loads(space_list)
+    else:
+        space_list = []
 
     result = {'status': 0, 'msg': 'ok', 'data': space_list}
 
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return result
