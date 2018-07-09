@@ -46,7 +46,7 @@ def pyecharts(request):
         value = [int(row) for row in data['rows'][0]]
     else:
         value = []
-    pie3.add("", attr, value, is_legend_show=True)
+    pie3.add("", attr, value,is_legend_show=False, is_label_show=True)
 
     # 可视化展示页面
     page = Page()
