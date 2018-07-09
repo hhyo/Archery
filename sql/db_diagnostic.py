@@ -8,7 +8,7 @@ from sql.utils.dao import Dao
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
-from .models import master_config
+from .models import master_config, AliyunRdsConfig
 
 if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
     from .aliyun_rds import process_status as aliyun_process_status, \
@@ -28,8 +28,11 @@ def process(request):
 
     base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
     # 判断是RDS还是其他实例
-    if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-        result = aliyun_process_status(request)
+    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+        if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+            result = aliyun_process_status(request)
+        else:
+            raise Exception('未开启rds管理，无法查看rds数据！')
     else:
         master_info = master_config.objects.get(cluster_name=cluster_name)
         if command_type == 'All':
@@ -63,8 +66,11 @@ def create_kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-        result = aliyun_create_kill_session(request)
+    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+        if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+            result = aliyun_create_kill_session(request)
+        else:
+            raise Exception('未开启rds管理，无法查看rds数据！')
     else:
         master_info = master_config.objects.get(cluster_name=cluster_name)
         ThreadIDs = ThreadIDs.replace('[', '').replace(']', '')
@@ -89,8 +95,11 @@ def kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-        result = aliyun_kill_session(request)
+    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+        if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+            result = aliyun_kill_session(request)
+        else:
+            raise Exception('未开启rds管理，无法查看rds数据！')
     else:
         master_info = master_config.objects.get(cluster_name=cluster_name)
         kill_sql = request_params
@@ -109,8 +118,11 @@ def tablesapce(request):
     cluster_name = request.POST.get('cluster_name')
 
     # 判断是RDS还是其他实例
-    if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
-        result = aliyun_sapce_status(request)
+    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+        if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
+            result = aliyun_sapce_status(request)
+        else:
+            raise Exception('未开启rds管理，无法查看rds数据！')
     else:
         master_info = master_config.objects.get(cluster_name=cluster_name)
         sql = '''

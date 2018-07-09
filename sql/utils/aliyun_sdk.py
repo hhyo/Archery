@@ -6,21 +6,24 @@ from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlow
 import simplejson as json
 from sql.models import AliyunAccessKey
 from sql.utils.aes_decryptor import Prpcrypt
+import logging
+
+logger = logging.getLogger('default')
 
 
 class Aliyun(object):
     def __init__(self):
         prpCryptor = Prpcrypt()
-        auth = AliyunAccessKey.objects.filter(is_enable=1)
         try:
+            auth = AliyunAccessKey.objects.filter(is_enable=1)
             ak = prpCryptor.decrypt(auth[0].ak)
             secret = prpCryptor.decrypt(auth[0].secret)
         except Exception:
-            ak = ''
-            secret = ''
-        self.clt = client.AcsClient(
-            ak=ak,
-            secret=secret)
+            logger.error('没有找到有效的ak信息！')
+        else:
+            self.clt = client.AcsClient(
+                ak=ak,
+                secret=secret)
 
     def request_api(self, request, *values):
         if values:
