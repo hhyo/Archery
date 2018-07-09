@@ -129,7 +129,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        var result = data.data['rows'];
+                        var result = data['rows'];
                         $("#cluster_name").empty();
                         for (var i = 0; i < result.length; i++) {
                             var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
