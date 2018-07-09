@@ -14,7 +14,7 @@ master分支是最新代码，但是不保证功能稳定，建议使用release�
 
 ## 功能说明
 1. 组管理  
-   支持自定义组，组成员之间审批流程隔离、主库配置隔离
+   支持自定义组，组成员之间审批流程隔离、主库配置隔离、钉钉通知隔离
 2. 审批流程改造  
    SQL上线审核、查询权限审核接入工作流，审批流程支持多级，自主配置
 3. 跳过inception执行工单  
@@ -32,8 +32,7 @@ master分支是最新代码，但是不保证功能稳定，建议使用release�
 8. 工单通知人  
    发起SQL上线时可以选择通知对象，将会在申请时邮件抄送给对方
 9. 菜单栏调整  
-   多级菜单展示    
-10. 钉钉通知  
+   多级菜单展示
    
 ## 部署
 ### 基础环境依赖
@@ -89,7 +88,7 @@ http://127.0.0.1:9123/
 #使用初始化脚本初始化数据库
 https://github.com/hhyo/archer/tree/master/src/script/init_sql
 #准备settings.py文件，修改相关配置项
-#启动，tag对应release版本，如1.1.1
+#启动，tag对应release版本，如1.1.2
 docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
 ```
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
