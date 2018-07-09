@@ -359,7 +359,7 @@
         //点击终止会话按钮弹出确认框,并且构建终止会话请求
         $(function () {
             $("#kill_process").click(function () {
-                var AllSelections = $("#metadatalocks-list").bootstrapTable('getSelections');
+                var AllSelections = $("#process-list").bootstrapTable('getSelections');
                 if (AllSelections.length > 0) {
                     //获取选择的线程id
                     var AllSelectionIds = [];
