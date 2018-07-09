@@ -92,7 +92,7 @@ http://127.0.0.1:9123/
 #使用初始化脚本初始化数据库
 https://github.com/hhyo/archer/tree/master/src/script/init_sql
 #准备settings.py文件，修改相关配置项
-#启动，tag对应release版本，如1.1.2
+#启动，tag对应release版本，如1.1.3
 docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
 ```
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
