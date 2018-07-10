@@ -128,7 +128,7 @@ if ENABLE_LDAP:
 
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
-        'django.contrib.auth.backends.ModelBackend',  # sso系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
+        'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
     )
 
     AUTH_LDAP_SERVER_URI = "ldap://xxx"
@@ -141,34 +141,39 @@ if ENABLE_LDAP:
     }
 
 # LOG配置
-DEFAULT_LOGS = '/tmp/archer.log'
-stamdard_format = '[%(asctime)s][%(threadName)s:%(thread)d]' + \
-                  '[task_id:%(name)s][%(filename)s:%(lineno)d] ' + \
-                  '[%(levelname)s]- %(message)s'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'standard': {  # 详细
-            'format': stamdard_format
+        'verbose': {
+            'format': '[%(asctime)s][%(threadName)s:%(thread)d][task_id:%(name)s][%(filename)s:%(lineno)d][%(levelname)s]- %(message)s'
         },
     },
     'handlers': {
         'default': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': DEFAULT_LOGS,
+            'filename': '/tmp/archer.log',
             'maxBytes': 1024 * 1024 * 100,  # 5 MB
             'backupCount': 5,
-            'formatter': 'standard',
+            'formatter': 'verbose',
         },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
         'default': {  # default日志，存放于log中
+            'handlers': ['default'],
+            'level': 'DEBUG',
+        },
+        'django_auth_ldap': {  # django_auth_ldap模块相关日志
+            'handlers': ['default'],
+            'level': 'DEBUG',
+        },
+        'django_apscheduler': {  # django_auth_ldap模块相关日志
             'handlers': ['default'],
             'level': 'DEBUG',
         },

@@ -191,11 +191,14 @@ def is_autoreview(workflowid):
 def send_msg(workflowDetail, url):
     mailSender = MailSender()
     sys_config = SysConfig().sys_config
+    # 获取审核人中文名
+    review_man_display = [users.objects.get(username=auditor).display for auditor in
+                                   workflowDetail.review_man.split(',')]
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
                                      workflowDetail.id)
     msg_content = '''发起人：{}\n审核人：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
-        workflowDetail.engineer_display, workflowDetail.review_man, workflowDetail.workflow_name, url,
+        workflowDetail.engineer_display, ','.join(review_man_display), workflowDetail.workflow_name, url,
         workflowDetail.sql_content[0:500])
 
     if sys_config.get('mail') == 'true':

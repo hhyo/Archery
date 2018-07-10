@@ -93,8 +93,6 @@ def loginAuthenticate(username, password):
                     # 上一次登录失败时间早于5分钟前，则重新计数。以达到超过5分钟自动解锁的目的。
                     login_failure_counter[username]["cnt"] = 1
                 login_failure_counter[username]["last_failure_time"] = datetime.datetime.now()
-            log_mail_record(
-                'user:{},login failed, fail count:{}'.format(username, login_failure_counter[username]["cnt"]))
             result = {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
     return result
 

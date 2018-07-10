@@ -144,7 +144,10 @@ class Workflow(object):
         if audit_users_list is None:
             msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
         else:
-            msg_data['workflow_auditors'] = auditInfo.audit_users
+            # 获取审核人中文名
+            workflow_auditors_display = [users.objects.get(username=auditor).display for auditor in
+                                  auditInfo.audit_users.split(',')]
+            msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
                                                                       request.get_host(),
@@ -324,7 +327,10 @@ class Workflow(object):
         msg_data['audit_id'] = auditInfo.audit_id
         msg_data['workflow_type'] = auditInfo.workflow_type
         msg_data['workflow_from'] = auditInfo.create_user_display
-        msg_data['workflow_auditors'] = auditInfo.audit_users
+        # 获取审核人中文名
+        workflow_auditors_display = [users.objects.get(username=auditor).display for auditor in
+                              auditInfo.audit_users.split(',')]
+        msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
                                                                       request.get_host(),

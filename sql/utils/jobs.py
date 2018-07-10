@@ -10,9 +10,6 @@ from sql.sqlreview import execute_job
 
 import logging
 
-logging.basicConfig()
-logging.getLogger('apscheduler').setLevel(logging.DEBUG)
-
 logger = logging.getLogger('default')
 
 # 初始化scheduler
@@ -21,7 +18,6 @@ scheduler.add_jobstore(DjangoJobStore(), "default")
 register_events(scheduler)
 try:
     scheduler.start()
-    logger.debug("Scheduler started!")
 except SchedulerAlreadyRunningError:
     logger.debug("Scheduler is already running!")
 
@@ -35,7 +31,6 @@ def add_sqlcronjob(job_id, run_date, workflowId, url):
     register_events(scheduler)
     try:
         scheduler.start()
-        logger.debug("Scheduler started!")
     except SchedulerAlreadyRunningError:
         logger.debug("Scheduler is already running!")
     logger.debug('add_sqlcronjob:' + job_id + " run_date:" + run_date.strftime('%Y-%m-%d %H:%M:%S'))
