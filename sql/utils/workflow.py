@@ -149,7 +149,7 @@ class Workflow(object):
                                   auditInfo.audit_users.split(',')]
             msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
-        msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
+        msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
                                                                       request.get_host(),
                                                                       auditInfo.audit_id)
         msg_data['workflow_content'] = notify_text
@@ -332,7 +332,7 @@ class Workflow(object):
                               auditInfo.audit_users.split(',')]
         msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
-        msg_data['workflow_url'] = "{}://{}/workflowdetail/{}".format(request.scheme,
+        msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
                                                                       request.get_host(),
                                                                       auditInfo.audit_id)
         msg_data['workflow_content'] = notify_text
