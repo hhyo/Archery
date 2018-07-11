@@ -193,7 +193,7 @@ def send_msg(workflowDetail, url):
     sys_config = SysConfig().sys_config
     # 获取审核人中文名
     review_man_display = [users.objects.get(username=auditor).display for auditor in
-                                   workflowDetail.review_man.split(',')]
+                          workflowDetail.review_man.split(',')]
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
                                      workflowDetail.id)
@@ -211,4 +211,4 @@ def send_msg(workflowDetail, url):
     if sys_config.get('ding') == 'true':
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = Group.objects.get(group_id=workflowDetail.group_id).ding_webhook
-        mailSender.sendDing(webhook_url, msg_content)
+        mailSender.sendDing(webhook_url, msg_title + '\n' + msg_content)

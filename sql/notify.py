@@ -58,4 +58,4 @@ def send_msg(msg_data, msg_type, status):
     elif msg_type == 2:
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = msg_data['webhook_url']
-        msg_sender.sendDing(webhook_url, msg_content)
+        msg_sender.sendDing(webhook_url, msg_title + '\n' + msg_content)
