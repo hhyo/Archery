@@ -106,7 +106,6 @@ def authenticateEntry(request):
 
     result = loginAuthenticate(username, password)
     if result['status'] == 0:
-        user = result.get('data')
         # 开启LDAP的认证通过后更新用户密码
         if settings.ENABLE_LDAP:
             try:
@@ -119,11 +118,6 @@ def authenticateEntry(request):
                 replace_info = users.objects.get(username=username)
                 replace_info.password = make_password(password)
                 replace_info.save()
-
-        # 调用了django内置登录方法，防止管理后台二次登录
-        user = authenticate(username=username, password=password)
-        if user:
-            login(request, user)
 
         result = {'status': 0, 'msg': 'ok', 'data': None}
 
