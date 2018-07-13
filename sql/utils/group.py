@@ -20,9 +20,12 @@ def user_masters(user):
     # 先获取用户管理组列表
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
-    # 获取组关联的主库列表
-    master_ids = [group['object_id'] for group in
-                  GroupRelations.objects.filter(group_id__in=group_ids, object_type=2).values('object_id')]
+    if user.is_superuser == 1:
+        master_ids = [group['object_id'] for group in GroupRelations.objects.filter(object_type=2).values('object_id')]
+    else:
+        # 获取组关联的主库列表
+        master_ids = [group['object_id'] for group in
+                      GroupRelations.objects.filter(group_id__in=group_ids, object_type=2).values('object_id')]
     # 获取主库信息
     masters = master_config.objects.filter(pk__in=master_ids)
     return masters
@@ -33,9 +36,12 @@ def user_slaves(user):
     # 先获取用户管理组列表
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
-    # 获取组关联的主库列表
-    slave_ids = [group['object_id'] for group in
-                 GroupRelations.objects.filter(group_id__in=group_ids, object_type=3).values('object_id')]
+    if user.is_superuser == 1:
+        slave_ids = [group['object_id'] for group in GroupRelations.objects.filter(object_type=3).values('object_id')]
+    else:
+        # 获取组关联的主库列表
+        slave_ids = [group['object_id'] for group in
+                     GroupRelations.objects.filter(group_id__in=group_ids, object_type=3).values('object_id')]
     # 获取主库信息
     slaves = slave_config.objects.filter(pk__in=slave_ids)
     return slaves
