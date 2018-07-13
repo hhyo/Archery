@@ -469,23 +469,25 @@ def cancel(request):
             # 获取audit_id
             audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=workflowId,
                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            if user.username == workflowDetail.engineer:
-                auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
-                                                       user.username, audit_remark)
+            # 仅待审核的需要调用工作流，审核通过的不需要
+            if workflowDetail.status == Const.workflowStatus['pass']:
+                auditresult = None
             else:
-                auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
-                                                       user.username, audit_remark)
+                if user.username == workflowDetail.engineer:
+                    auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
+                                                           user.username, audit_remark)
+                else:
+                    auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
+                                                           user.username, audit_remark)
+
             # 删除定时执行job
             if workflowDetail.status == Const.workflowStatus['timingtask']:
                 job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
                 del_sqlcronjob(job_id)
-            # 按照审核结果更新业务表审核状态
-            if auditresult['data']['workflow_status'] in (
-                    WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
-                # 将流程状态修改为人工终止流程
-                workflowDetail.status = Const.workflowStatus['abort']
-                workflowDetail.audit_remark = audit_remark
-                workflowDetail.save()
+            # 将流程状态修改为人工终止流程
+            workflowDetail.status = Const.workflowStatus['abort']
+            workflowDetail.audit_remark = audit_remark
+            workflowDetail.save()
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
