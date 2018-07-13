@@ -21,7 +21,7 @@ def user_masters(user):
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
     if user.is_superuser == 1:
-        master_ids = [group['object_id'] for group in GroupRelations.objects.filter(object_type=2).values('object_id')]
+        master_ids = [master['id'] for master in master_config.objects.all().values('id')]
     else:
         # 获取组关联的主库列表
         master_ids = [group['object_id'] for group in
@@ -37,7 +37,8 @@ def user_slaves(user):
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
     if user.is_superuser == 1:
-        slave_ids = [group['object_id'] for group in GroupRelations.objects.filter(object_type=3).values('object_id')]
+        slave_ids = [slave['id'] for slave in slave_config.objects.all().values('id')]
+
     else:
         # 获取组关联的主库列表
         slave_ids = [group['object_id'] for group in
