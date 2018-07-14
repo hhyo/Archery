@@ -1,0 +1,28 @@
+.user-bottom-div {
+    display: block;
+    text-align: center;
+    background-color: #ddd;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+}
+
+.lsb-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+}
+
+.mypanalbox {
+    background-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 3px 3px 3px;
+}
+
+.login-form {
+    margin: 20px;
+}
+

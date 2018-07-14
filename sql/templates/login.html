@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'user/css/login.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/login.css' %}" rel="stylesheet">
     <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
     <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
@@ -110,12 +110,60 @@
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
 <!-- 包括所有已编译的插件 -->
 <script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
-<script src="{% static 'user/js/login.js' %}"></script>
 </body>
 <script>
     <!-- 退出登录后清空sessionStorage -->
     $(document).ready(function () {
         sessionStorage.clear();
     });
+
+    //回车键提交表单登录
+    $(document).ready(function () {
+        $(document).keydown(function (event) {
+            //keycode==13为回车键
+            if (event.keyCode == 13) {
+                $('#btnLogin').addClass('disabled');
+                $('#btnLogin').prop('disabled', true);
+                authenticateUser();
+            }
+        });
+    });
+
+    $('#btnLogin').click(function () {
+        $('#btnLogin').addClass('disabled');
+        $('#btnLogin').prop('disabled', true);
+        authenticateUser();
+    });
+
+    function authenticateUser() {
+        var inputUsername = $('#inputUsername');
+        var inputPassword = $('#inputPassword');
+        $.ajax({
+            type: "post",
+            url: "/authenticate/",
+            dataType: "json",
+            data: {
+                username: inputUsername.val(),
+                password: inputPassword.val()
+            },
+            complete: function () {
+                $('#btnLogin').removeClass('disabled');
+                $('#btnLogin').prop('disabled', false);
+            },
+            success: function (data) {
+                if (data.status == 0) {
+                    $(location).attr('href', '/sqlworkflow/');
+                } else {
+                    $('#wrongpwd-modal-body').html(data.msg);
+                    $('#wrongpwd-modal').modal({
+                        keyboard: true
+                    });
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+    };
 </script>
 </html>
