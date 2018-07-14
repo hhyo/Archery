@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import MySQLdb
-
+from datetime import datetime, timedelta
 from django.db import connection
 
 
@@ -21,6 +21,17 @@ class ChartDao(object):
         result['rows'] = rows
         result['effect_row'] = effect_row
         return result
+
+    # 获取连续时间
+    def get_date_list(self, begin_date, end_date):
+        dates = []
+        dt = datetime.strptime(begin_date, "%Y-%m-%d")
+        date = begin_date[:]
+        while date <= end_date:
+            dates.append(date)
+            dt += timedelta(days=1)
+            date = dt.strftime("%Y-%m-%d")
+        return dates
 
     # 语法类型
     def sql_syntax(self):
@@ -43,7 +54,7 @@ class ChartDao(object):
           date_format(create_time, '%Y-%m-%d'),
           count(*)
         from sql_workflow
-        where create_time >= date_add(now(), interval -1 {} )
+        where create_time >= date_add(now(), interval -{} month)
         group by date_format(create_time, '%Y-%m-%d')
         order by 1 asc;'''.format(cycle)
         return self.__query(sql)
@@ -71,3 +82,30 @@ class ChartDao(object):
         group by engineer_display
         order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
+
+    # SQL查询统计(每日检索行数)
+    def querylog_by_date(self, cycle):
+        sql = '''
+        select
+          date_format(create_time, '%Y-%m-%d'),
+          count(*)
+        from query_log
+        where create_time >= date_add(now(), interval -{} month )
+        group by date_format(create_time, '%Y-%m-%d')
+        order by sum(effect_row) desc;'''.format(cycle)
+        return self.__query(sql)
+
+    # SQL查询统计(用户检索行数)
+    def querylog_by_user(self, cycle):
+        sql = '''
+        select 
+          user_display,
+          sum(effect_row)
+        from query_log
+        where create_time >= date_add(now(), interval -{} month)
+        group by user_display
+        order by sum(effect_row) desc;'''.format(cycle)
+        return self.__query(sql)
+
+    import calendar
+    print (range(calendar.monthrange(2018, 1)[1] + 1)[1:])

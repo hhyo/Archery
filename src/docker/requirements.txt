@@ -12,3 +12,4 @@ django-auth-ldap==1.6.1
 aliyun-python-sdk-core==2.3.5
 aliyun-python-sdk-core-v3==2.5.3
 aliyun-python-sdk-rds==2.1.1
+python-dateutil==2.7.3
