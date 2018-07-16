@@ -18,7 +18,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import users, master_config, slave_config, workflow, QueryPrivileges, Group, \
+from .models import users, workflow, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
 from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -474,10 +474,12 @@ def cancel(request):
                 auditresult = None
             else:
                 if user.username == workflowDetail.engineer:
-                    auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_abort'],
+                    auditresult = workflowOb.auditworkflow(request, audit_id,
+                                                           WorkflowDict.workflow_status['audit_abort'],
                                                            user.username, audit_remark)
                 else:
-                    auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_reject'],
+                    auditresult = workflowOb.auditworkflow(request, audit_id,
+                                                           WorkflowDict.workflow_status['audit_reject'],
                                                            user.username, audit_remark)
 
             # 删除定时执行job
@@ -635,4 +637,4 @@ def group(request):
 # 组关系管理
 @superuser_required
 def groupmgmt(request, group_name):
-    return render(request, 'groupmgmt.html',{'group_name': group_name})
+    return render(request, 'groupmgmt.html', {'group_name': group_name})

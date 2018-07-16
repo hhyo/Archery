@@ -1,7 +1,4 @@
 # -*- coding:utf-8 -*-
-import datetime
-import time
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers import SchedulerAlreadyRunningError
 from django_apscheduler.jobstores import DjangoJobStore, register_events

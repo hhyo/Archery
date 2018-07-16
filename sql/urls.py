@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 from django.urls import path, re_path
-from sql import views, views_ajax, query, slowlog, instance, db_diagnostic, charts, sql_tuning,groupmgmt
+from sql import views, views_ajax, query, slowlog, instance, db_diagnostic, charts, sql_tuning, groupmgmt
 from sql.utils import jobs
 
 urlpatterns = [

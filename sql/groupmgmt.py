@@ -1,9 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 import simplejson as json
-from django.core import serializers
 
-from django.db.models import Q, F
+from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
@@ -84,17 +83,17 @@ def unassociated_objects(request):
         unassociated_objects = users.objects.exclude(pk__in=associated_object_ids
                                                      ).annotate(object_id=F('pk'),
                                                                 object_name=F('display')
-                                                                ).values('object_id','object_name')
+                                                                ).values('object_id', 'object_name')
     elif object_type == 2:
         unassociated_objects = master_config.objects.exclude(pk__in=associated_object_ids
                                                              ).annotate(object_id=F('pk'),
                                                                         object_name=F('cluster_name')
-                                                                        ).values('object_id','object_name')
+                                                                        ).values('object_id', 'object_name')
     elif object_type == 3:
         unassociated_objects = slave_config.objects.exclude(pk__in=associated_object_ids
                                                             ).annotate(object_id=F('pk'),
                                                                        object_name=F('cluster_name')
-                                                                       ).values('object_id','object_name')
+                                                                       ).values('object_id', 'object_name')
     else:
         unassociated_objects = []
 

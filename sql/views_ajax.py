@@ -15,12 +15,8 @@ from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
 from sql.utils.group import user_masters
-from sql.models import Config, Group, GroupRelations
+from sql.models import Config
 from sql.utils.permission import superuser_required
-
-if settings.ENABLE_LDAP:
-    pass
-
 from sql.utils.dao import Dao
 from .const import Const
 from sql.utils.inception import InceptionDao
@@ -67,8 +63,8 @@ def loginAuthenticate(username, password):
     if username == "" or password == "" or username is None or password is None:
         result = {'status': 2, 'msg': '登录用户名或密码为空，请重新输入!', 'data': ''}
     elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
-                datetime.datetime.now() - login_failure_counter[username][
-                "last_failure_time"]).seconds <= lockTimeThreshold:
+            datetime.datetime.now() - login_failure_counter[username][
+        "last_failure_time"]).seconds <= lockTimeThreshold:
         log_mail_record('user:{},login failed, account locking...'.format(username))
         result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
     else:

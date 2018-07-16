@@ -15,6 +15,7 @@ class users(AbstractUser):
         return self.username
 
     class Meta:
+        managed = False
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
 

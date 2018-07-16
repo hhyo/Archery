@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 from django.shortcuts import render
-from pyecharts import Pie, Bar, Line
-from pyecharts import Page, Grid
+from pyecharts import Pie, Bar
+from pyecharts import Page
 from sql.utils.inception import InceptionDao
 from sql.utils.chart_dao import ChartDao
 from datetime import date
