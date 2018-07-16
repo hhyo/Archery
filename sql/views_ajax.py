@@ -117,7 +117,7 @@ def authenticateEntry(request):
                 replace_info.save()
 
         # 调用了django内置登录方法，防止管理后台二次登录
-        user = result['data']
+        user = authenticate(username=username, password=password)
         if user:
             login(request, user)
 
