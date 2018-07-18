@@ -60,7 +60,7 @@ def associated_objects(request):
     else:
         rows = GroupRelations.objects.filter(group_name=group_name).values(
             'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type')
-        count = GroupRelations.objects.count()
+        count = GroupRelations.objects.filter(group_name=group_name).count()
     rows = [row for row in rows]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
