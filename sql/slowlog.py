@@ -8,7 +8,7 @@ import datetime
 
 from sql.utils.group import user_masters
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from .models import master_config, SlowQuery, SlowQueryHistory, AliyunRdsConfig
+from .models import MasterConfig, SlowQuery, SlowQueryHistory, AliyunRdsConfig
 from sql.utils.config import SysConfig
 import logging
 
@@ -31,7 +31,7 @@ def slowquery_review(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    cluster_info = master_config.objects.get(cluster_name=cluster_name)
+    cluster_info = MasterConfig.objects.get(cluster_name=cluster_name)
     if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             # 调用阿里云慢日志接口
@@ -142,7 +142,7 @@ def slowquery_review_history(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    cluster_info = master_config.objects.get(cluster_name=cluster_name)
+    cluster_info = MasterConfig.objects.get(cluster_name=cluster_name)
     if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             # 调用阿里云慢日志接口

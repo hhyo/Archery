@@ -6,7 +6,7 @@ from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.models import Group, GroupRelations, users, master_config, slave_config
+from sql.models import Group, GroupRelations, Users, MasterConfig, SlaveConfig
 from sql.utils.permission import superuser_required
 
 import logging
@@ -80,18 +80,18 @@ def unassociated_objects(request):
                                                            object_type=object_type).values('object_id')]
 
     if object_type == 0:
-        unassociated_objects = users.objects.exclude(pk__in=associated_object_ids
+        unassociated_objects = Users.objects.exclude(pk__in=associated_object_ids
                                                      ).annotate(object_id=F('pk'),
                                                                 object_name=F('display')
                                                                 ).values('object_id', 'object_name')
     elif object_type == 2:
-        unassociated_objects = master_config.objects.exclude(pk__in=associated_object_ids
-                                                             ).annotate(object_id=F('pk'),
+        unassociated_objects = MasterConfig.objects.exclude(pk__in=associated_object_ids
+                                                            ).annotate(object_id=F('pk'),
                                                                         object_name=F('cluster_name')
                                                                         ).values('object_id', 'object_name')
     elif object_type == 3:
-        unassociated_objects = slave_config.objects.exclude(pk__in=associated_object_ids
-                                                            ).annotate(object_id=F('pk'),
+        unassociated_objects = SlaveConfig.objects.exclude(pk__in=associated_object_ids
+                                                           ).annotate(object_id=F('pk'),
                                                                        object_name=F('cluster_name')
                                                                        ).values('object_id', 'object_name')
     else:
@@ -144,7 +144,7 @@ def auditors(request):
     # 获取所有用户
     if auditors:
         auditors = auditors.audit_users
-        auditors_display = ','.join([users.objects.get(username=auditor).display for auditor in auditors.split(',')])
+        auditors_display = ','.join([Users.objects.get(username=auditor).display for auditor in auditors.split(',')])
         result['data']['auditors'] = auditors
         result['data']['auditors_display'] = auditors_display
 

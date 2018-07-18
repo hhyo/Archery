@@ -7,7 +7,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 # 角色分两种：
 # 1.工程师：可以提交SQL上线单的工程师们，username字段为登录用户名，display字段为展示的中文名。
 # 2.DBA：可以接受到工单变更通知以及管理主库会话信息。
-class users(AbstractUser):
+class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, blank=True)
     role = models.CharField('角色', max_length=20, choices=(('工程师', '工程师'), ('DBA', 'DBA')), default='工程师')
 
@@ -16,6 +16,7 @@ class users(AbstractUser):
 
     class Meta:
         managed = False
+        db_table = 'sql_users'
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
 
@@ -37,6 +38,7 @@ class Group(models.Model):
 
     class Meta:
         managed = False
+        db_table = 'sql_group'
         verbose_name = u'组配置'
         verbose_name_plural = u'组配置'
 
@@ -60,7 +62,7 @@ class GroupRelations(models.Model):
 
 
 # 各个线上主库实例配置）
-class master_config(models.Model):
+class MasterConfig(models.Model):
     cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     master_host = models.CharField('主库地址', max_length=200)
     master_port = models.IntegerField('主库端口', default=3306)
@@ -74,17 +76,18 @@ class master_config(models.Model):
 
     class Meta:
         managed = False
+        db_table = 'sql_master_config'
         verbose_name = u'主库连接配置'
         verbose_name_plural = u'主库连接配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
         self.master_password = pc.encrypt(self.master_password)
-        super(master_config, self).save(*args, **kwargs)
+        super(MasterConfig, self).save(*args, **kwargs)
 
 
 # 各个线上从库地址
-class slave_config(models.Model):
+class SlaveConfig(models.Model):
     cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     slave_host = models.CharField('从库地址', max_length=200)
     slave_port = models.IntegerField('从库端口', default=3306)
@@ -95,17 +98,18 @@ class slave_config(models.Model):
 
     class Meta:
         managed = False
+        db_table = 'sql_slave_config'
         verbose_name = u'查询从库配置'
         verbose_name_plural = u'查询从库配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
         self.slave_password = pc.encrypt(self.slave_password)
-        super(slave_config, self).save(*args, **kwargs)
+        super(SlaveConfig, self).save(*args, **kwargs)
 
 
 # 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
-class workflow(models.Model):
+class SqlWorkflow(models.Model):
     workflow_name = models.CharField('工单内容', max_length=50)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
@@ -133,6 +137,7 @@ class workflow(models.Model):
 
     class Meta:
         managed = False
+        db_table = 'sql_workflow'
         verbose_name = u'SQL工单管理'
         verbose_name_plural = u'SQL工单管理'
 

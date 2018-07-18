@@ -3,13 +3,13 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from .models import users, master_config, slave_config, workflow, \
+from .models import Users, MasterConfig, SlaveConfig, SqlWorkflow, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, GroupRelations
 
 
 # 用户管理
-@admin.register(users)
-class usersAdmin(UserAdmin):
+@admin.register(Users)
+class UsersAdmin(UserAdmin):
     def __init__(self, *args, **kwargs):
         super(UserAdmin, self).__init__(*args, **kwargs)
         self.list_display = ('id', 'username', 'display', 'role', 'email', 'is_superuser', 'is_staff', 'is_active')
@@ -46,23 +46,23 @@ class GroupRelationsAdmin(admin.ModelAdmin):
 
 
 # 主库配置管理
-@admin.register(master_config)
-class master_configAdmin(admin.ModelAdmin):
+@admin.register(MasterConfig)
+class MasterConfigAdmin(admin.ModelAdmin):
     list_display = ('id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'create_time')
     search_fields = ['id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'master_password',
                      'create_time', 'update_time']
 
 
 # 工单管理
-@admin.register(workflow)
-class workflowAdmin(admin.ModelAdmin):
+@admin.register(SqlWorkflow)
+class SqlWorkflowAdmin(admin.ModelAdmin):
     list_display = ('id', 'workflow_name', 'group_id', 'cluster_name', 'engineer', 'create_time', 'status', 'is_backup')
     search_fields = ['id', 'workflow_name', 'engineer', 'review_man', 'sql_content']
 
 
 # 查询从库配置
-@admin.register(slave_config)
-class WorkflowAuditAdmin(admin.ModelAdmin):
+@admin.register(SlaveConfig)
+class SlaveConfigAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
     search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
@@ -85,11 +85,11 @@ class DataMaskingRulesAdmin(admin.ModelAdmin):
 
 # 阿里云的认证信息
 @admin.register(AliyunAccessKey)
-class AliyunAccessKeyAdmin(admin.ModelAdmin):
+class AliAccessKeyAdmin(admin.ModelAdmin):
     list_display = ('ak', 'secret', 'is_enable', 'remark',)
 
 
 # 阿里云实例配置信息
 @admin.register(AliyunRdsConfig)
-class AliyunRdsConfigAdmin(admin.ModelAdmin):
+class AliRdsConfigAdmin(admin.ModelAdmin):
     list_display = ('cluster_name', 'rds_dbinstanceid',)

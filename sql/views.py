@@ -18,7 +18,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import users, workflow, QueryPrivileges, Group, \
+from .models import Users, SqlWorkflow, QueryPrivileges, Group, \
     QueryPrivilegesApply, Config, GroupRelations
 from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -56,14 +56,14 @@ def sign_up(request):
     if username is None or password is None:
         context = {'errMsg': '用户名和密码不能为空'}
         return render(request, 'error.html', context)
-    if len(users.objects.filter(username=username)) > 0:
+    if len(Users.objects.filter(username=username)) > 0:
         context = {'errMsg': '用户名已存在'}
         return render(request, 'error.html', context)
     if password != password2:
         context = {'errMsg': '两次输入密码不一致'}
         return render(request, 'error.html', context)
 
-    users.objects.create_user(username=username,
+    Users.objects.create_user(username=username,
                               password=password,
                               display=display,
                               email=email,
@@ -86,7 +86,7 @@ def submitSql(request):
     group_list = user_groups(user)
 
     # 获取所有有效用户，通知对象
-    active_user = users.objects.filter(is_active=1)
+    active_user = Users.objects.filter(is_active=1)
 
     context = {'currentMenu': 'sqlworkflow', 'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
@@ -174,10 +174,10 @@ def autoreview(request):
             # 存进数据库里
             engineer = request.user.username
             if not workflowid:
-                Workflow = workflow()
+                Workflow = SqlWorkflow()
                 Workflow.create_time = timezone.now()
             else:
-                Workflow = workflow.objects.get(id=int(workflowid))
+                Workflow = SqlWorkflow.objects.get(id=int(workflowid))
             Workflow.workflow_name = workflowName
             Workflow.group_id = group_id
             Workflow.group_name = group_name
@@ -201,7 +201,7 @@ def autoreview(request):
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
                 # 抄送通知人
                 listCcAddr = [email['email'] for email in
-                              users.objects.filter(username__in=notify_users).values('email')]
+                              Users.objects.filter(username__in=notify_users).values('email')]
                 workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflowId,
                                             listCcAddr=listCcAddr)
     except Exception as msg:
@@ -213,7 +213,7 @@ def autoreview(request):
 
 # 展示SQL工单详细页面
 def detail(request, workflowId):
-    workflowDetail = get_object_or_404(workflow, pk=workflowId)
+    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
     if workflowDetail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
             and workflowDetail.is_manual == 0:
         listContent = json.loads(workflowDetail.execute_result)
@@ -294,7 +294,7 @@ def passed(request):
         context = {'errMsg': 'workflowId参数为空.'}
         return render(request, 'error.html', context)
     workflowId = int(workflowId)
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
 
     # 获取审核人
     reviewMan = workflowDetail.review_man
@@ -343,7 +343,7 @@ def execute(request):
         return render(request, 'error.html', context)
 
     workflowId = int(workflowId)
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     clusterName = workflowDetail.cluster_name
     db_name = workflowDetail.db_name
     url = getDetailUrl(request) + str(workflowId) + '/'
@@ -408,7 +408,7 @@ def timingtask(request):
     elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
         context = {'errMsg': '时间不能小于当前时间'}
         return render(request, 'error.html', context)
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     if workflowDetail.status not in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
         context = {'errMsg': '必须为审核通过或者定时执行状态'}
         return render(request, 'error.html', context)
@@ -439,7 +439,7 @@ def cancel(request):
         return render(request, 'error.html', context)
 
     workflowId = int(workflowId)
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
 
     # 获取审核人
     reviewMan = workflowDetail.review_man
@@ -508,7 +508,7 @@ def rollback(request):
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     workflowName = workflowDetail.workflow_name
     rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
     context = {'listBackupSql': listBackupSql, 'currentMenu': 'sqlworkflow', 'workflowDetail': workflowDetail,
@@ -616,7 +616,7 @@ def config(request):
     group_list = Group.objects.all()
 
     # 获取所有用户
-    user_list = users.objects.filter(is_active=1).values('username', 'display')
+    user_list = Users.objects.filter(is_active=1).values('username', 'display')
     # 获取所有配置项
     all_config = Config.objects.all().values('item', 'value')
     sys_config = {}

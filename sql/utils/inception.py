@@ -5,7 +5,7 @@ import simplejson as json
 import MySQLdb
 from django.db import connection
 
-from sql.models import master_config, slave_config, workflow
+from sql.models import MasterConfig, SlaveConfig, SqlWorkflow
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.config import SysConfig
 from sql.utils.dao import Dao
@@ -83,7 +83,7 @@ class InceptionDao(object):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''
-        listMasters = master_config.objects.filter(cluster_name=clusterName)
+        listMasters = MasterConfig.objects.filter(cluster_name=clusterName)
         masterHost = listMasters[0].master_host
         masterPort = listMasters[0].master_port
         masterUser = listMasters[0].master_user
@@ -197,7 +197,7 @@ class InceptionDao(object):
         return (finalStatus, finalList)
 
     def getRollbackSqlList(self, workflowId):
-        workflowDetail = workflow.objects.get(id=workflowId)
+        workflowDetail = SqlWorkflow.objects.get(id=workflowId)
         listExecuteResult = json.loads(workflowDetail.execute_result)
         # 回滚数据倒序展示
         listExecuteResult.reverse()
@@ -281,13 +281,13 @@ class InceptionDao(object):
         将sql交给inception打印语法树。
         '''
         if is_master:
-            masters = master_config.objects.get(cluster_name=clusterName)
+            masters = MasterConfig.objects.get(cluster_name=clusterName)
             Host = masters.slave_host
             Port = masters.slave_port
             User = masters.slave_user
             Password = self.prpCryptor.decrypt(masters.slave_password)
         else:
-            salves = slave_config.objects.get(cluster_name=clusterName)
+            salves = SlaveConfig.objects.get(cluster_name=clusterName)
             Host = salves.slave_host
             Port = salves.slave_port
             User = salves.slave_user

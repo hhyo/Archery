@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.models import master_config
+from sql.models import MasterConfig
 from sql.utils.dao import Dao
 from sql.utils.permission import role_required
 from .const import SQLTuning
@@ -149,7 +149,7 @@ def __extract_tables(p_sqltext):
 
 def __basic_information(cluster_name, db_name):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
     return dao.mysql_query(masterInfo.master_host,
                            masterInfo.master_port,
                            masterInfo.master_user,
@@ -160,7 +160,7 @@ def __basic_information(cluster_name, db_name):
 
 def __sys_parameter(cluster_name, db_name):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
     # 获取mysql版本信息
     version = __basic_information(cluster_name, db_name)['rows'][0][0]
     server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
@@ -178,7 +178,7 @@ def __sys_parameter(cluster_name, db_name):
 
 def __optimizer_switch(cluster_name, db_name):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
     # 获取mysql版本信息
     version = __basic_information(cluster_name, db_name)['rows'][0][0]
     server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
@@ -196,7 +196,7 @@ def __optimizer_switch(cluster_name, db_name):
 
 def __sqlplan(cluster_name, db_name, sqltext):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
 
     db = MySQLdb.connect(host=masterInfo.master_host,
                          port=masterInfo.master_port,
@@ -234,7 +234,7 @@ def __sqlplan(cluster_name, db_name, sqltext):
 
 def __object_statistics(cluster_name, db_name, sqltext):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
     all_tableistructure = {'column_list': [], 'rows': []}
     all_tableinfo = {'column_list': [], 'rows': []}
     all_indexinfo = {'column_list': [], 'rows': []}
@@ -269,7 +269,7 @@ def __object_statistics(cluster_name, db_name, sqltext):
 
 def __exec_sql(cluster_name, db_name, sqltext):
     # 取出该实例的连接方式
-    masterInfo = master_config.objects.get(cluster_name=cluster_name)
+    masterInfo = MasterConfig.objects.get(cluster_name=cluster_name)
     result = {"EXECUTE_TIME": 0,
               "BEFORE_STATUS": {'column_list': [], 'rows': []},
               "AFTER_STATUS": {'column_list': [], 'rows': []},

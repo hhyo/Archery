@@ -5,7 +5,7 @@ from django.utils import timezone
 from sql.sqlreview import is_autoreview
 from sql.notify import send_msg
 from sql.const import WorkflowDict
-from sql.models import users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, workflow, \
+from sql.models import Users, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, Group, SqlWorkflow, \
     QueryPrivilegesApply
 from sql.utils.config import SysConfig
 from sql.utils.group import group_dbas
@@ -49,7 +49,7 @@ class Workflow(object):
             else:
                 notify_text = ''
         elif workflow_type == WorkflowDict.workflow_type['sqlreview']:
-            workflow_detail = workflow.objects.get(pk=workflow_id)
+            workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.workflow_name
             workflow_auditors = workflow_detail.review_man
             group_id = workflow_detail.group_id
@@ -82,7 +82,7 @@ class Workflow(object):
         if SysConfig().sys_config.get('auto_review', False) == 'true':
             if workflow_type == WorkflowDict.workflow_type['sqlreview']:
                 if is_autoreview(workflow_id):
-                    Workflow = workflow.objects.get(id=int(workflow_id))
+                    Workflow = SqlWorkflow.objects.get(id=int(workflow_id))
                     Workflow.review_man = '无需审批'
                     Workflow.status = '审核通过'
                     Workflow.save()
@@ -108,7 +108,7 @@ class Workflow(object):
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
         else:
-            user_list = [user[0] for user in users.objects.all().values_list('username')]
+            user_list = [user[0] for user in Users.objects.all().values_list('username')]
             for audit_user in audit_users_list:
                 if audit_user not in user_list:
                     result['msg'] = '审批人不存在，请重新配置，格式为a,b,c或者a'
@@ -145,8 +145,8 @@ class Workflow(object):
             msg_data['workflow_auditors'] = '无需审批，系统自动审核通过'
         else:
             # 获取审核人中文名
-            workflow_auditors_display = [users.objects.get(username=auditor).display for auditor in
-                                  auditInfo.audit_users.split(',')]
+            workflow_auditors_display = [Users.objects.get(username=auditor).display for auditor in
+                                         auditInfo.audit_users.split(',')]
             msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
@@ -156,7 +156,7 @@ class Workflow(object):
         # 如果待审核则发送邮件通知当前审核人以及抄送对象
         if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
             # 接收人
-            current_audit_userOb = users.objects.get(username=auditInfo.current_audit_user)
+            current_audit_userOb = Users.objects.get(username=auditInfo.current_audit_user)
             msg_data['email_reciver'] = current_audit_userOb.email
             # 抄送对象
             if kwargs.get('listCcAddr'):
@@ -167,7 +167,7 @@ class Workflow(object):
         # 如果直接审核通过则发送消息通知DBA和提交人以及抄送对象
         elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
             # 接收人
-            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            msg_data['email_reciver'] = [Users.objects.get(username=auditInfo.create_user).email]
             # 抄送对象
             if kwargs.get('listCcAddr'):
                 listCcAddr = kwargs.get('listCcAddr')
@@ -209,7 +209,7 @@ class Workflow(object):
             else:
                 notify_text = ''
         elif auditInfo.workflow_type == WorkflowDict.workflow_type['sqlreview']:
-            workflow_detail = workflow.objects.get(pk=auditInfo.workflow_id)
+            workflow_detail = SqlWorkflow.objects.get(pk=auditInfo.workflow_id)
             notify_text = workflow_detail.sql_content
         else:
             result['msg'] = '工单类型不存在'
@@ -328,8 +328,8 @@ class Workflow(object):
         msg_data['workflow_type'] = auditInfo.workflow_type
         msg_data['workflow_from'] = auditInfo.create_user_display
         # 获取审核人中文名
-        workflow_auditors_display = [users.objects.get(username=auditor).display for auditor in
-                              auditInfo.audit_users.split(',')]
+        workflow_auditors_display = [Users.objects.get(username=auditor).display for auditor in
+                                     auditInfo.audit_users.split(',')]
         msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
@@ -339,25 +339,25 @@ class Workflow(object):
         # 给下级审核人发送邮件
         if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
             # 邮件内容
-            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.current_audit_user).email]
+            msg_data['email_reciver'] = [Users.objects.get(username=auditInfo.current_audit_user).email]
             msg_data['email_cc'] = []
         # 审核通过，通知提交人，抄送DBA
         elif auditInfo.current_status == WorkflowDict.workflow_status['audit_success']:
             # 邮件内容
-            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            msg_data['email_reciver'] = [Users.objects.get(username=auditInfo.create_user).email]
             listCcAddr = [email['email'] for email in group_dbas(auditInfo.group_id).values('email')]
             msg_data['email_cc'] = listCcAddr
         # 审核驳回，通知提交人
         elif auditInfo.current_status == WorkflowDict.workflow_status['audit_reject']:
             # 邮件内容
-            msg_data['email_reciver'] = [users.objects.get(username=auditInfo.create_user).email]
+            msg_data['email_reciver'] = [Users.objects.get(username=auditInfo.create_user).email]
             msg_data['email_cc'] = []
             msg_data['workflow_audit_remark'] = audit_remark
         # 主动取消，通知所有审核人
         elif auditInfo.current_status == WorkflowDict.workflow_status['audit_abort']:
             # 邮件内容
             msg_data['email_reciver'] = [email['email'] for email in
-                                         users.objects.filter(
+                                         Users.objects.filter(
                                              username__in=auditInfo.audit_users.split(',')).values(
                                              'email')]
             msg_data['email_cc'] = []
@@ -438,7 +438,7 @@ class Workflow(object):
     # 修改\添加配置信息
     def changesettings(self, group_id, workflow_type, audit_users):
         audit_users_list = audit_users.split(',')
-        user_list = [user[0] for user in users.objects.all().values_list('username')]
+        user_list = [user[0] for user in Users.objects.all().values_list('username')]
         for audit_user in audit_users_list:
             if audit_user not in user_list:
                 msg = '审批人不存在，请重新配置，格式为a,b,c或者a'

@@ -21,7 +21,7 @@ from sql.utils.dao import Dao
 from .const import Const
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow
+from .models import Users, MasterConfig, SqlWorkflow
 from sql.utils.sendmsg import MailSender
 import logging
 from sql.utils.workflow import Workflow
@@ -40,7 +40,7 @@ workflowOb = Workflow()
 def log_mail_record(login_failed_message):
     mail_title = 'login archer'
     logger.warning(login_failed_message)
-    dbaAddr = [email['email'] for email in users.objects.filter(role='DBA').values('email')]
+    dbaAddr = [email['email'] for email in Users.objects.filter(role='DBA').values('email')]
     if SysConfig().sys_config.get('mail') == 'true':
         MailSender().sendEmail(mail_title, login_failed_message, dbaAddr)
 
@@ -106,13 +106,13 @@ def authenticateEntry(request):
         # 开启LDAP的认证通过后更新用户密码
         if settings.ENABLE_LDAP:
             try:
-                users.objects.get(username=username)
+                Users.objects.get(username=username)
             except Exception:
-                insert_info = users()
+                insert_info = Users()
                 insert_info.password = make_password(password)
                 insert_info.save()
             else:
-                replace_info = users.objects.get(username=username)
+                replace_info = Users.objects.get(username=username)
                 replace_info.password = make_password(password)
                 replace_info.save()
 
@@ -150,42 +150,42 @@ def sqlworkflowlist(request):
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
         if user.is_superuser == 1:
-            listWorkflow = workflow.objects.filter(
+            listWorkflow = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = workflow.objects.filter(
+            listWorkflowCount = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
         else:
-            listWorkflow = workflow.objects.filter(
+            listWorkflow = SqlWorkflow.objects.filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)
             ).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = workflow.objects.filter(
+            listWorkflowCount = SqlWorkflow.objects.filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).count()
     elif navStatus in Const.workflowStatus.keys():
         if user.is_superuser == 1:
-            listWorkflow = workflow.objects.filter(
+            listWorkflow = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = workflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
+            listWorkflowCount = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         else:
-            listWorkflow = workflow.objects.filter(
+            listWorkflow = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = workflow.objects.filter(
+            listWorkflowCount = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).filter(
                 Q(engineer=user.username) | Q(review_man__contains=user.username)).count()
@@ -276,7 +276,7 @@ def simplecheck(request):
 
 def getSqlSHA1(workflowId):
     """调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值"""
-    workflowDetail = get_object_or_404(workflow, pk=workflowId)
+    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
     dictSHA1 = {}
     # 使用json.loads方法，把review_content从str转成list,
     listReCheckResult = json.loads(workflowDetail.review_content)
@@ -325,7 +325,7 @@ def getOscPercent(request):
             pctResult = result
         else:
             # result["status"] == 1, 未获取到进度值,需要与workflow.execute_result对比，来判断是已经执行过了，还是还未执行
-            execute_result = workflow.objects.get(id=workflowId).execute_result
+            execute_result = SqlWorkflow.objects.get(id=workflowId).execute_result
             try:
                 listExecResult = json.loads(execute_result)
             except ValueError:
@@ -353,7 +353,7 @@ def getWorkflowStatus(request):
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     workflowId = int(workflowId)
-    workflowDetail = get_object_or_404(workflow, pk=workflowId)
+    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
     workflowStatus = workflowDetail.status
     result = {"status": workflowStatus, "msg": "", "data": ""}
     return HttpResponse(json.dumps(result), content_type='application/json')
@@ -369,7 +369,7 @@ def stopOscProgress(request):
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     user = request.user
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     try:
         reviewMan = json.loads(workflowDetail.review_man)
     except ValueError:
@@ -431,7 +431,7 @@ def sqladvisorcheck(request):
         verbose = 1
 
     # 取出主库的连接信息
-    cluster_info = master_config.objects.get(cluster_name=clusterName)
+    cluster_info = MasterConfig.objects.get(cluster_name=clusterName)
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = SysConfig().sys_config.get('sqladvisor')

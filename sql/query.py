@@ -18,7 +18,7 @@ from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from .const import WorkflowDict
-from .models import master_config, slave_config, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
+from .models import MasterConfig, SlaveConfig, QueryPrivilegesApply, QueryPrivileges, QueryLog, Group
 from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from sql.utils.permission import role_required
@@ -493,7 +493,7 @@ def query(request):
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,查询只读账号,按照分号截取第一条有效sql执行
-    slave_info = slave_config.objects.get(cluster_name=cluster_name)
+    slave_info = SlaveConfig.objects.get(cluster_name=cluster_name)
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 查询权限校验
@@ -642,7 +642,7 @@ def explain(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,按照分号截取第一条有效sql执行
-    masterInfo = master_config.objects.get(cluster_name=clusterName)
+    masterInfo = MasterConfig.objects.get(cluster_name=clusterName)
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 执行获取执行计划语句

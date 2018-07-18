@@ -6,7 +6,7 @@ from django.http import HttpResponse
 
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
-from .models import master_config, slave_config
+from .models import MasterConfig, SlaveConfig
 
 dao = Dao()
 prpCryptor = Prpcrypt()
@@ -20,7 +20,7 @@ def getdbNameList(request):
 
     if is_master:
         try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
+            master_info = MasterConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的主库配置信息，请配置'
@@ -38,7 +38,7 @@ def getdbNameList(request):
 
     else:
         try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
+            slave_info = SlaveConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的从库配置信息，请配置'
@@ -67,7 +67,7 @@ def getTableNameList(request):
 
     if is_master:
         try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
+            master_info = MasterConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的主库配置信息，请配置'
@@ -85,7 +85,7 @@ def getTableNameList(request):
 
     else:
         try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
+            slave_info = SlaveConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的从库配置信息，请配置'
@@ -115,7 +115,7 @@ def getColumnNameList(request):
 
     if is_master:
         try:
-            master_info = master_config.objects.get(cluster_name=clusterName)
+            master_info = MasterConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的主库配置信息，请配置'
@@ -132,7 +132,7 @@ def getColumnNameList(request):
             result['msg'] = str(msg)
     else:
         try:
-            slave_info = slave_config.objects.get(cluster_name=clusterName)
+            slave_info = SlaveConfig.objects.get(cluster_name=clusterName)
         except Exception:
             result['status'] = 1
             result['msg'] = '找不到对应的从库配置信息，请配置'

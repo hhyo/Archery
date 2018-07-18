@@ -15,7 +15,7 @@ from .const import Const, WorkflowDict
 from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import users, workflow, master_config, Group
+from .models import Users, SqlWorkflow, MasterConfig, Group
 import logging
 
 logger = logging.getLogger('default')
@@ -30,7 +30,7 @@ def getDetailUrl(request):
 
 # 根据实例名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):
-    listMasters = master_config.objects.filter(cluster_name=clusterName)
+    listMasters = MasterConfig.objects.filter(cluster_name=clusterName)
 
     masterHost = listMasters[0].master_host
     masterPort = listMasters[0].master_port
@@ -43,7 +43,7 @@ def getMasterConnStr(clusterName):
 
 # SQL工单跳过inception执行回调
 def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url):
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     # 获取审核人
     reviewMan = workflowDetail.review_man
 
@@ -59,7 +59,7 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
         execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
         execute_result['execute_time'] = execute_time + 'sec'
 
-        workflowDetail = workflow.objects.get(id=workflowId)
+        workflowDetail = SqlWorkflow.objects.get(id=workflowId)
         if execute_result.get('Warning'):
             workflowDetail.status = Const.workflowStatus['exception']
         elif execute_result.get('Error'):
@@ -83,7 +83,7 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
 
 # SQL工单执行回调
 def execute_call_back(workflowId, clusterName, url):
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     # 获取审核人
     reviewMan = workflowDetail.review_man
 
@@ -94,7 +94,7 @@ def execute_call_back(workflowId, clusterName, url):
 
         # 封装成JSON格式存进数据库字段里
         strJsonResult = json.dumps(finalList)
-        workflowDetail = workflow.objects.get(id=workflowId)
+        workflowDetail = SqlWorkflow.objects.get(id=workflowId)
         workflowDetail.execute_result = strJsonResult
         workflowDetail.finish_time = timezone.now()
         workflowDetail.status = finalStatus
@@ -114,7 +114,7 @@ def execute_call_back(workflowId, clusterName, url):
 def execute_job(workflowId, url):
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
     logger.debug('execute_job:' + job_id + ' start')
-    workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     clusterName = workflowDetail.cluster_name
     db_name = workflowDetail.db_name
 
@@ -150,7 +150,7 @@ def execute_job(workflowId, url):
 
 # 判断SQL上线是否无需审批
 def is_autoreview(workflowid):
-    workflowDetail = workflow.objects.get(id=workflowid)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowid)
     sql_content = workflowDetail.sql_content
     cluster_name = workflowDetail.cluster_name
     db_name = workflowDetail.db_name
@@ -192,7 +192,7 @@ def send_msg(workflowDetail, url):
     mailSender = MailSender()
     sys_config = SysConfig().sys_config
     # 获取审核人中文名
-    review_man_display = [users.objects.get(username=auditor).display for auditor in
+    review_man_display = [Users.objects.get(username=auditor).display for auditor in
                           workflowDetail.review_man.split(',')]
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
@@ -205,7 +205,7 @@ def send_msg(workflowDetail, url):
         # 邮件通知申请人，审核人，抄送DBA
         notify_users = workflowDetail.review_man.split(',')
         notify_users.append(workflowDetail.engineer)
-        listToAddr = [email['email'] for email in users.objects.filter(username__in=notify_users).values('email')]
+        listToAddr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in group_dbas(workflowDetail.group_id).values('email')]
         mailSender.sendEmail(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
     if sys_config.get('ding') == 'true':

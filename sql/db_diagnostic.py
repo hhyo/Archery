@@ -8,7 +8,7 @@ from sql.utils.dao import Dao
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
-from .models import master_config, AliyunRdsConfig
+from .models import MasterConfig, AliyunRdsConfig
 
 if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
     from .aliyun_rds import process_status as aliyun_process_status, \
@@ -34,7 +34,7 @@ def process(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = master_config.objects.get(cluster_name=cluster_name)
+        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         if command_type == 'All':
             sql = base_sql + ";"
         elif command_type == 'Not Sleep':
@@ -72,7 +72,7 @@ def create_kill_session(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = master_config.objects.get(cluster_name=cluster_name)
+        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         ThreadIDs = ThreadIDs.replace('[', '').replace(']', '')
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(ThreadIDs)
         all_kill_sql = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,
@@ -101,7 +101,7 @@ def kill_session(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = master_config.objects.get(cluster_name=cluster_name)
+        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         kill_sql = request_params
         dao.mysql_execute(master_info.master_host, master_info.master_port, master_info.master_user,
                           prpCryptor.decrypt(master_info.master_password), 'information_schema', kill_sql)
@@ -124,7 +124,7 @@ def tablesapce(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = master_config.objects.get(cluster_name=cluster_name)
+        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         sql = '''
         SELECT
           table_schema,
@@ -162,7 +162,7 @@ def tablesapce(request):
 @role_required(('DBA',))
 def trxandlocks(request):
     cluster_name = request.POST.get('cluster_name')
-    master_info = master_config.objects.get(cluster_name=cluster_name)
+    master_info = MasterConfig.objects.get(cluster_name=cluster_name)
     sql = '''
     SELECT
       rtrx.`trx_state`                                                        AS "等待的状态",
