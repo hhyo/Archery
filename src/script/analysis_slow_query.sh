@@ -14,7 +14,7 @@ slowquery_file="/home/mysql/log_slow.log"
 pt_query_digest="/usr/bin/pt-query-digest"
 
 #被监控机连接信息
-hostname=mysql_host:mysql_port # 被监控机连接信息，和archer主库配置内容保持一致，用于archer做筛选
+hostname="mysql_host:mysql_port" # 被监控机连接信息，和archer主库配置内容保持一致，用于archer做筛选
 
 #获取上次分析时间，初始化时请删除last_analysis_time_$hostname文件，可分析全部日志数据
 if [ -s last_analysis_time_$hostname ]; then
