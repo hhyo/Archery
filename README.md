@@ -1,5 +1,5 @@
 # 说明
-项目基于archer，调整部分自需功能，不定期更新，[查看开发计划](https://github.com/hhyo/archer/projects/1)
+项目基于archer，调整部分自需功能，不定期更新，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
 master分支是最新代码，但是不保证功能稳定，建议使用最新release包
 
 ## 目录
@@ -61,9 +61,9 @@ master分支是最新代码，但是不保证功能稳定，建议使用最新re
    
 ## 部署
 ### 基础环境依赖
-Python>=3.4
-Django>=2.0.0
-[Inception审核工具](https://github.com/mysql-inception/inception)
+Python>=3.4    
+Django>=2.0.0    
+[Inception审核工具](https://github.com/mysql-inception/inception)    
 
 ### 安装
 ```
