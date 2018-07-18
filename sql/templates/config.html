@@ -18,8 +18,7 @@
                                             data-name="配置项" data-placeholder="请选择配置项:" required>
                                         <option value="is-empty" disabled="">请选择配置项:</option>
                                         <option value="0" selected="selected">系统设置</option>
-                                        {#                                        <option value="1">组配置</option>#}
-                                        <option value="2">工单审核流配置</option>
+                                        <option value="1">工单审核流配置</option>
                                     </select>
                                 </div>
                             </div>
@@ -382,13 +381,6 @@
                                 </div>
                             </div>
                         </form>
-                        <div id="div-group-config" class="form-inline form-group" style="display: none">
-                            <h5 class="control-label text-bold" style="color: red">
-                                <b>组管理：<a href="/admin/sql/group/">点击访问</a></b></h5>
-                            <br>
-                            <h5 class="control-label text-bold" style="color: red">
-                                <b>组关系管理：<a href="/admin/sql/grouprelations/">点击访问</a></b></h5>
-                        </div>
                         <div id="div-workflow-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
                                 规则：<b>选择多人即审核流为多级审核，按照选择顺序进行流转</b></h5>
@@ -408,7 +400,7 @@
                                             required>
                                         <option value="is-empty" disabled="" selected="selected">添加审批人</option>
                                         {% for user in user_list %}
-                                            <option value="{{ user.username }}">{{ user.username }}
+                                            <option value="{{ user.username }}">{{ user.display }}
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -435,8 +427,6 @@
             sessionStorage.setItem('config_type', $("#config").val());
             if ($("#config").val() === '0') {
                 $("#div-system-config").show();
-                $("#div-group").hide();
-                $("#div-group-config").hide();
                 $("#div-workflow").hide();
                 $("#div-workflow-config").hide();
                 $('input[type="checkbox"]').each(function (i) {
@@ -450,21 +440,11 @@
             }
             else if ($("#config").val() === '1') {
                 $("#div-system-config").hide();
-                $("#div-group").show();
-                $("#div-group-config").show();
-                $("#div-workflow").hide();
-                $("#div-workflow-config").hide();
-            }
-            else if ($("#config").val() === '2') {
-                $("#div-system-config").hide();
-                $("#div-group").show();
-                $("#div-group-config").hide();
                 $("#div-workflow").show();
                 $("#div-workflow-config").show();
                 $("#workflow_type").trigger("change");
             }
         });
-
 
         // 系统设置checkbox事件
         $('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function (event, state) {
