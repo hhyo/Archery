@@ -106,6 +106,3 @@ class ChartDao(object):
         group by user_display
         order by sum(effect_row) desc;'''.format(cycle)
         return self.__query(sql)
-
-    import calendar
-    print (range(calendar.monthrange(2018, 1)[1] + 1)[1:])

@@ -135,8 +135,8 @@ def create_kill_session(request):
 
     result['data'] = request_list
 
-    # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    # 返回处理结果
+    return result
 
 
 # 问题诊断--终止会话
