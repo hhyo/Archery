@@ -9,6 +9,7 @@ master分支是最新代码，但是不保证功能稳定，建议使用最新re
     * [docker部署](#采取docker部署)
     * [手动安装](#部署)
 * [使用说明](#使用说明)
+    * [组管理](#组管理)
     * [SQL审核](#sql审核)
     * [在线查询](#在线查询)
     * [慢日志管理](#慢日志管理)
@@ -115,6 +116,11 @@ docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
 ## 使用说明
+### 组管理
+- 功能说明：目前组设定类似于一个对象集合，组可关联的对象有用户、主库、从库，不同组的对象隔离，组成员仅可以查看组关联对象的数据
+- 相关配置：
+    1. 在系统管理-组关系维护页面，进行组管理以及组关联对象管理
+    2. 在系统管理-配置项管理页面，进行组工单审批流程的配置
 ### SQL审核
 - 功能说明：SQL上线和审核功能依靠Inception审核平台，建议使用前先阅读Inception的[项目文档](http://mysql-inception.github.io/inception-document/)
 - 相关配置：
