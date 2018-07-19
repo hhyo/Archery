@@ -11,6 +11,6 @@ class CheckLoginMiddleware(MiddlewareMixin):
         """
         if not request.user.is_authenticated:
             # 以下是不用跳转到login页面的url白名单
-            if request.path not in ('/login/', '/authenticate/', '/sign_up/') and re.match(r"/admin/\w*",
-                                                                                           request.path) is None:
+            if request.path not in ('/login/', '/authenticate/', '/signup/') and re.match(r"/admin/\w*",
+                                                                                          request.path) is None:
                 return HttpResponseRedirect('/login/')
