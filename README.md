@@ -1,6 +1,6 @@
 # 说明
 项目基于archer，调整部分自需功能，不定期更新，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
-master分支是最新代码，但是不保证功能稳定，建议使用最新release包
+master分支是最新代码，但是不保证功能稳定，建议使用最新[release包](https://github.com/hhyo/archer/releases/)
 
 ## 目录
 * [系统体验](#系统体验)
@@ -159,7 +159,7 @@ inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475a
 - 功能说明：利用美团SQLAdvisor对收集的慢日志进行优化，一键获取优化建议
 - 相关配置：
     1. 安装SQLAdvisor，安装方法见[项目地址](https://github.com/Meituan-Dianping/SQLAdvisor)
-    2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'
+    2. 修改配置文件SQLADVISOR为程序路径，路径需要完整，如'/opt/SQLAdvisor/sqladvisor/sqladvisor'，docker部署的请修改为'/opt/sqladvisor'
 ### 阿里云RDS管理
 - 功能说明：调用阿里云SDK对RDS进行管理，支持管理慢日志、进程、表空间，其中进程和表空间需要管理权限的key
 - 相关配置：
