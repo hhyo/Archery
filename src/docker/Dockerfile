@@ -1,38 +1,33 @@
 FROM docker.io/centos
 
 #python3.6
-RUN yum -y groupinstall "Development tools" \
-    && yum -y install wget zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel \
+RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tar.xz" \
     && tar -xvJf Python-3.6.5.tar.xz \
     && cd /opt/Python-3.6.5 \
-    &&  ./configure prefix=/usr/local/python3 \
+    && ./configure prefix=/usr/local/python3 \
     && make && make install \
-    && ln -s /usr/local/python3/bin/python3 /usr/bin/python3 \
-    && ln -s /usr/local/python3/bin/pip3 /usr/bin/pip3 \
-    && yum -y install epel-release \
-    && yum -y install python2-pip \
-    && pip install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && ln -fs /usr/local/python3/bin/python3 /usr/bin/python3 \
+    && ln -fs /usr/local/python3/bin/pip3 /usr/bin/pip3 \
+    && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cd /opt \
+    && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
     && virtualenv venv4archer --python=python3 \
     && rm -rf Python-3.6.5 \
     && rm -rf Python-3.6.5.tar.xz \
-#其他依赖
-    && yum -y install epel-release \
-    && yum -y install gcc gcc-c++ make cmake bison openssl-devel mysql-devel openldap-devel nginx openssl-devel mysql-devel openldap-devel\
 #修改中文支持
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && yum -y install kde-l10n-Chinese && yum -y reinstall glibc-common \
+    && yum -y install kde-l10n-Chinese \
     && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
 #sqladvisor
-RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
+RUN yum -y install epel-release \
+    && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel libffi-devel glib2 glib2-devel \
     && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
     && yum -y install Percona-Server-devel-56.x86_64  Percona-Server-shared-56.x86_64  Percona-Server-client-56.x86_64 \
     && cd /opt \
     && git clone https://github.com/Meituan-Dianping/SQLAdvisor.git \
     && cd /opt/SQLAdvisor/ \
-    && yum -y install make \
     && cmake -DBUILD_CONFIG=mysql_release -DCMAKE_BUILD_TYPE=debug -DCMAKE_INSTALL_PREFIX=/usr/local/sqlparser ./ \
     && make && make install \
     && cd sqladvisor/ \
@@ -42,6 +37,7 @@ RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
     && rm -rf /opt/SQLAdvisor/
 #archer
 RUN cd /opt \
+    && yum -y install openldap-devel nginx \
     && git clone https://github.com/hhyo/archer.git \
     && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
