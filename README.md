@@ -110,8 +110,12 @@ http://127.0.0.1:9123/
 #使用初始化脚本初始化数据库
 https://github.com/hhyo/archer/tree/master/src/script/init_sql
 #准备settings.py文件，修改相关配置项
-#启动，tag对应release版本，如1.1.6
+#启动，tag对应release版本，如1.1.7
 docker run --name archer -v /local_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
+#启动日志查看和问题排查
+docker exec -ti archer /bin/bash
+cat /tmp/archer.log
+cat /tmp/archer.err
 ```
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
@@ -225,7 +229,7 @@ inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475a
 - 检查脱敏规则的正则表达式是否可以匹配到数据，无法匹配的会返回原结果
 - 检查是否关闭了CHECK_QUERY参数，导致inception无法解析的语句未脱敏直接返回结果
 ### 慢日志不显示
-- 检查pt工具的版本，建议大于3.0，3.0以下的表信息不一致
+- 检查pt工具的版本是否为3.0.6
 - 检查脚本内的配置，hostname和主库配置表中的内容是否保持一致
 - 检查慢日志收集表mysql_slow_query_review_history是否存在记录，并且hostname_max是否和主库配置的host:port一致
 ## 联系方式
