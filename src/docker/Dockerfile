@@ -16,6 +16,8 @@ RUN yum -y groupinstall "Development tools" \
     && pip install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cd /opt \
     && virtualenv venv4archer --python=python3 \
+    && rm -rf Python-3.6.5 \
+    && rm -rf Python-3.6.5.tar.xz \
 #其他依赖
     && yum -y install epel-release \
     && yum -y install gcc gcc-c++ make cmake bison openssl-devel mysql-devel openldap-devel nginx openssl-devel mysql-devel openldap-devel\
@@ -35,7 +37,9 @@ RUN yum -y install libaio-devel libffi-devel glib2 glib2-devel \
     && make && make install \
     && cd sqladvisor/ \
     && cmake -DCMAKE_BUILD_TYPE=debug ./ \
-    && make
+    && make \
+    && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
+    && rm -rf /opt/SQLAdvisor/
 #archer
 RUN cd /opt \
     && git clone https://github.com/hhyo/archer.git \
