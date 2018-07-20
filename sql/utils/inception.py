@@ -39,16 +39,17 @@ class InceptionDao(object):
         '''
         resultList = []
         criticalSqlFound = 0
+        critical_ddl_regex = self.sys_config.get('critical_ddl_regex')
+        p = re.compile(critical_ddl_regex)
         # 删除注释语句
         sqlContent = ''.join(
             map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
                 sqlContent.splitlines(1))).strip()
+
         for row in sqlContent.rstrip(';').split(';'):
-            if re.match(
-                    r"([\s\S]*)drop(\s+)database(\s+.*)|([\s\S]*)drop(\s+)table(\s+.*)|([\s\S]*)truncate(\s+.*)|([\s\S]*)truncate(\s+)partition(\s+.*)|([\s\S]*)truncate(\s+)table(\s+.*)",
-                    row.lower()):
+            if p.match(row.strip().lower()):
                 result = (
-                    '', '', 2, '驳回高危SQL', '不能包含【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】关键字！',
+                    '', '', 2, '驳回高危SQL', '禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                     row,
                     '', '', '', '')
                 criticalSqlFound = 1
@@ -90,7 +91,7 @@ class InceptionDao(object):
         masterPassword = self.prpCryptor.decrypt(listMasters[0].master_password)
 
         # 高危SQL检查
-        if self.sys_config.get('critical_ddl') == 'true':
+        if self.sys_config.get('critical_ddl_regex', '') != '':
             criticalDDL_check = self.criticalDDL(sqlContent)
         else:
             criticalDDL_check = None

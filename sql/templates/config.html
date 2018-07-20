@@ -136,23 +136,18 @@
                                 <hr/>
                                 <div class="form-horizontal">
                                     <div class="form-group">
-                                        <label for="critical_ddl"
-                                               class="col-sm-4 control-label">CRITICAL_DDL</label>
-                                        <div class="col-sm-8">
-                                            <div class="switch switch-small">
-                                                <label>
-                                                    <input id="critical_ddl"
-                                                           key="critical_ddl"
-                                                           value="{{ config.critical_ddl }}"
-                                                           checked="checked"
-                                                           type="checkbox">
-                                                    是否禁止DROP、TRUNCATE高危DDL操作
-                                                </label>
-                                            </div>
+                                        <label for="critical_ddl_regex"
+                                               class="col-sm-4 control-label">CRITICAL_DDL_REGEX</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control"
+                                                   id="critical_ddl_regex"
+                                                   key="critical_ddl_regex"
+                                                   value="{{ config.critical_ddl_regex }}"
+                                                   placeholder="高危SQL判断条件，匹配的语句会禁止提交">
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="critical_ddl"
+                                        <label for="auto_review"
                                                class="col-sm-4 control-label">AUTO_REVIEW</label>
                                         <div class="col-sm-8">
                                             <div class="switch switch-small">
@@ -168,25 +163,25 @@
                                     </div>
                                     <div id="div-auto-review-config" style="display: none">
                                         <div class="form-group">
-                                            <label for="critical_ddl"
+                                            <label for="auto_review_regex"
                                                    class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                             <div class="col-sm-5">
                                                 <input type="text" class="form-control"
                                                        id="auto_review_regex"
                                                        key="auto_review_regex"
                                                        value="{{ config.auto_review_regex }}"
-                                                       placeholder="非自动审批语句的正则判断条件">
+                                                       placeholder="高危SQL判断条件，匹配的语句需要人工审批">
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="inception_remote_backup_password"
+                                            <label for="auto_review_max_update_rows"
                                                    class="col-sm-4 control-label">MAX_UPDATE_ROWS</label>
                                             <div class="col-sm-5">
                                                 <input type="text" class="form-control"
                                                        id="auto_review_max_update_rows"
                                                        key="auto_review_max_update_rows"
                                                        value="{{ config.auto_review_max_update_rows }}"
-                                                       placeholder="自动审核允许单条语句最大更新行数">
+                                                       placeholder="自动审批允许单条语句最大更新行数">
                                             </div>
                                         </div>
                                     </div>
