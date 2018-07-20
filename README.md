@@ -63,7 +63,7 @@ master分支是最新代码，但是不保证功能稳定，建议使用最新re
 ## 部署
 ### 基础环境依赖
 Python>=3.4    
-Django>=2.0.0    
+Django>=2.0.7
 [Inception审核工具](https://github.com/mysql-inception/inception)    
 
 ### 安装
@@ -73,6 +73,7 @@ virtualenv venv4archer --python=python3
 source /opt/venv4archer/bin/activate
 
 #下载release包，安装依赖
+https://github.com/hhyo/archer/releases/
 pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ 
 
 #修改archer/settings.py文件DATABASES配置项，数据库字符集utf8，如果使用mysql5.7，sql_mode需要删除ONLY_FULL_GROUP_BY
