@@ -6,6 +6,9 @@ from threading import Thread
 import datetime
 
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
@@ -18,7 +21,7 @@ from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
-from .models import Users, SqlWorkflow, QueryPrivileges, Group, \
+from .models import Users, SqlWorkflow, QueryPrivileges, SqlGroup, \
     QueryPrivilegesApply, Config, GroupRelations
 from sql.utils.workflow import Workflow
 from .sqlreview import getDetailUrl, execute_call_back, execute_skipinc_call_back
@@ -63,23 +66,28 @@ def sign_up(request):
         context = {'errMsg': '两次输入密码不一致'}
         return render(request, 'error.html', context)
 
+    # 添加用户明确添加到默认组
     Users.objects.create_user(username=username,
                               password=password,
                               display=display,
                               email=email,
-                              role='工程师',
                               is_active=1,
                               is_staff=1)
+    user = Users.objects.get(username=username)
+    group = Group.objects.get(id=1)
+    user.groups.add(group)
     return render(request, 'login.html')
 
 
 # SQL上线工单页面
+@permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sqlworkflow(request):
     context = {'currentMenu': 'sqlworkflow'}
     return render(request, 'sqlworkflow.html', context)
 
 
 # 提交SQL的页面
+@permission_required('sql.sql_submit', raise_exception=True)
 def submitSql(request):
     user = request.user
     # 获取组信息
@@ -93,12 +101,13 @@ def submitSql(request):
 
 
 # 提交SQL给inception进行解析
+@permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
     workflowid = request.POST.get('workflowid')
     sqlContent = request.POST['sql_content']
     workflowName = request.POST['workflow_name']
     group_name = request.POST['group_name']
-    group_id = Group.objects.get(group_name=group_name).group_id
+    group_id = SqlGroup.objects.get(group_name=group_name).group_id
     clusterName = request.POST['cluster_name']
     db_name = request.POST.get('db_name')
     isBackup = request.POST['is_backup']
@@ -287,6 +296,7 @@ def detail(request, workflowId):
 
 
 # 审核通过，不执行
+@permission_required('sql.sql_review', raise_exception=True)
 def passed(request):
     workflowId = request.POST['workflowid']
     if workflowId == '' or workflowId is None:
@@ -335,6 +345,7 @@ def passed(request):
 
 
 # 仅执行SQL
+@permission_required('sql.sql_execute', raise_exception=True)
 def execute(request):
     workflowId = request.POST['workflowid']
     if workflowId == '' or workflowId is None:
@@ -398,6 +409,7 @@ def execute(request):
 
 
 # 定时执行SQL
+@permission_required('sql.sql_execute', raise_exception=True)
 def timingtask(request):
     workflowId = request.POST.get('workflowid')
     run_date = request.POST.get('run_date')
@@ -476,10 +488,13 @@ def cancel(request):
                     workflowOb.auditworkflow(request, audit_id,
                                              WorkflowDict.workflow_status['audit_abort'],
                                              user.username, audit_remark)
-                else:
+                # 非提交人需要校验审核权限
+                elif user.has_perm('sql.sql_review'):
                     workflowOb.auditworkflow(request, audit_id,
                                              WorkflowDict.workflow_status['audit_reject'],
                                              user.username, audit_remark)
+                else:
+                    raise PermissionDenied
 
             # 删除定时执行job
             if workflowDetail.status == Const.workflowStatus['timingtask']:
@@ -516,18 +531,21 @@ def rollback(request):
 
 
 # SQL审核必读
+@permission_required('sql.menu_document', raise_exception=True)
 def dbaprinciples(request):
     context = {'currentMenu': 'dbaprinciples'}
     return render(request, 'dbaprinciples.html', context)
 
 
 # 图表展示
+@permission_required('sql.menu_dashboard', raise_exception=True)
 def charts(request):
     context = {'currentMenu': 'charts'}
     return render(request, 'charts.html', context)
 
 
 # SQL在线查询
+@permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联从库列表
     listAllClusterName = [slave.cluster_name for slave in user_slaves(request.user)]
@@ -537,6 +555,7 @@ def sqlquery(request):
 
 
 # SQL慢日志
+@permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
@@ -546,6 +565,7 @@ def slowquery(request):
 
 
 # SQL优化工具
+@permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
@@ -555,6 +575,7 @@ def sqladvisor(request):
 
 
 # 查询权限申请列表
+@permission_required('sql.menu_queryapplylist', raise_exception=True)
 def queryapplylist(request):
     user = request.user
     # 获取项目组
@@ -584,6 +605,7 @@ def queryuserprivileges(request):
 
 
 # 问题诊断--进程
+@permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
     # 获取用户关联主库列表
     cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
@@ -612,7 +634,7 @@ def workflowsdetail(request, audit_id):
 @superuser_required
 def config(request):
     # 获取所有项组名称
-    group_list = Group.objects.all()
+    group_list = SqlGroup.objects.all()
 
     # 获取所有用户
     user_list = Users.objects.filter(is_active=1).values('username', 'display')

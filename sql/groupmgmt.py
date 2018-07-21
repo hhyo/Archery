@@ -6,7 +6,7 @@ from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.models import Group, GroupRelations, Users, MasterConfig, SlaveConfig
+from sql.models import SqlGroup, GroupRelations, Users, MasterConfig, SlaveConfig
 from sql.utils.permission import superuser_required
 
 import logging
@@ -30,10 +30,10 @@ def group(request):
         search = ''
 
     # 全部工单里面包含搜索条件
-    group_list = Group.objects.filter(group_name__contains=search)[offset:limit].values("group_id",
+    group_list = SqlGroup.objects.filter(group_name__contains=search)[offset:limit].values("group_id",
                                                                                         "group_name",
                                                                                         "ding_webhook")
-    group_count = Group.objects.filter(group_name__contains=search).count()
+    group_count = SqlGroup.objects.filter(group_name__contains=search).count()
 
     # QuerySet 序列化
     rows = [row for row in group_list]
@@ -113,7 +113,7 @@ def addrelation(request):
     group_name = request.POST.get('group_name')
     object_type = request.POST.get('object_type')
     object_list = json.loads(request.POST.get('object_info'))
-    group_id = Group.objects.get(group_name=group_name).group_id
+    group_id = SqlGroup.objects.get(group_name=group_name).group_id
     try:
         GroupRelations.objects.bulk_create(
             [GroupRelations(object_id=int(object.split(',')[0]),
@@ -134,7 +134,7 @@ def auditors(request):
     workflow_type = request.POST['workflow_type']
     result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
     if group_name:
-        group_id = Group.objects.get(group_name=group_name).group_id
+        group_id = SqlGroup.objects.get(group_name=group_name).group_id
         auditors = Workflow().auditsettings(group_id=group_id, workflow_type=workflow_type)
     else:
         result['status'] = 1
@@ -160,7 +160,7 @@ def changeauditors(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 调用工作流修改审核配置
-    group_id = Group.objects.get(group_name=group_name).group_id
+    group_id = SqlGroup.objects.get(group_name=group_name).group_id
     try:
         Workflow().changesettings(group_id, workflow_type, audit_users)
     except Exception as msg:

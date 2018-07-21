@@ -4,12 +4,9 @@ from django.contrib.auth.models import AbstractUser
 from sql.utils.aes_decryptor import Prpcrypt
 
 
-# 角色分两种：
-# 1.工程师：可以提交SQL上线单的工程师们，username字段为登录用户名，display字段为展示的中文名。
-# 2.DBA：可以接受到工单变更通知以及管理主库会话信息。
+# display字段为展示的中文名。
 class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, blank=True)
-    role = models.CharField('角色', max_length=20, choices=(('工程师', '工程师'), ('DBA', 'DBA')), default='工程师')
 
     def __str__(self):
         return self.username
@@ -22,7 +19,7 @@ class Users(AbstractUser):
 
 
 # 组
-class Group(models.Model):
+class SqlGroup(models.Model):
     group_id = models.AutoField('组ID', primary_key=True)
     group_name = models.CharField('组名称', max_length=100, unique=True)
     group_parent_id = models.BigIntegerField('父级id', default=0)
@@ -310,7 +307,8 @@ class DataMaskingColumns(models.Model):
 # 脱敏规则配置
 class DataMaskingRules(models.Model):
     rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')), unique=True)
+                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')),
+                                    unique=True)
     rule_regex = models.CharField('规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替', max_length=255)
     hide_group = models.IntegerField('需要隐藏的组')
     rule_desc = models.CharField('规则描述', max_length=100, default='', blank=True)
@@ -354,6 +352,38 @@ class AliyunAccessKey(models.Model):
         self.ak = pc.encrypt(self.ak)
         self.secret = pc.encrypt(self.secret)
         super(AliyunAccessKey, self).save(*args, **kwargs)
+
+
+# 自定义权限定义
+class Permission(models.Model):
+    class Meta:
+        managed = False
+        permissions = (
+            ('menu_dashboard', '菜单 Dashboard'),
+            ('menu_sqlworkflow', '菜单 SQL上线'),
+            ('menu_query', '菜单 SQL查询'),
+            ('menu_sqlquery', '菜单 MySQL查询'),
+            ('menu_queryapplylist', '菜单 查询权限申请'),
+            ('menu_sqloptimize', '菜单 SQL优化'),
+            ('menu_sqladvisor', '菜单 优化工具'),
+            ('menu_slowquery', '菜单 慢查日志'),
+            ('menu_dbdiagnostic', '菜单 会话管理'),
+            ('menu_system', '菜单 系统管理'),
+            ('menu_document', '菜单 相关文档'),
+            ('sql_submit', '提交SQL上线工单'),
+            ('sql_review', '审核SQL上线工单'),
+            ('sql_execute', '执行SQL上线工单'),
+            ('optimize_sqladvisor', '执行SQLAdvisor'),
+            ('optimize_sqltuning', '执行SQLTuning'),
+            ('query_applypriv', '申请查询权限'),
+            ('query_mgtpriv', '管理查询权限'),
+            ('query_review', '审核查询权限'),
+            ('query_submit', '提交SQL查询'),
+            ('process_view', '查看会话'),
+            ('process_kill', '终止会话'),
+            ('tablespace_view', '查看表空间'),
+            ('trxandlocks_view', '查看锁信息'),
+        )
 
 
 # 阿里云rds配置信息

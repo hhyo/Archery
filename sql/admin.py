@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, MasterConfig, SlaveConfig, SqlWorkflow, \
-    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, Group, GroupRelations
+    DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, SqlGroup, GroupRelations
 
 
 # 用户管理
@@ -12,8 +12,8 @@ from .models import Users, MasterConfig, SlaveConfig, SqlWorkflow, \
 class UsersAdmin(UserAdmin):
     def __init__(self, *args, **kwargs):
         super(UserAdmin, self).__init__(*args, **kwargs)
-        self.list_display = ('id', 'username', 'display', 'role', 'email', 'is_superuser', 'is_staff', 'is_active')
-        self.search_fields = ('id', 'username', 'display', 'role', 'email')
+        self.list_display = ('id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
+        self.search_fields = ('id', 'username', 'display', 'email')
 
     def changelist_view(self, request, extra_context=None):
         # 这个方法在源码的admin/options.py文件的ModelAdmin这个类中定义，我们要重新定义它，以达到不同权限的用户，返回的表单内容不同
@@ -21,19 +21,19 @@ class UsersAdmin(UserAdmin):
             # 此字段定义UserChangeForm表单中的具体显示内容，并可以分类显示
             self.fieldsets = (
                 (('认证信息'), {'fields': ('username', 'password')}),
-                (('个人信息'), {'fields': ('display', 'role', 'email')}),
-                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff')}),
+                (('个人信息'), {'fields': ('display', 'email')}),
+                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
                 (('其他信息'), {'fields': ('last_login', 'date_joined')}),
             )
             # 此字段定义UserCreationForm表单中的具体显示内容
             self.add_fieldsets = (
-                (None, {'fields': ('username', 'display', 'role', 'email', 'password1', 'password2'), }),
+                (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
             )
         return super(UserAdmin, self).changelist_view(request, extra_context)
 
 
 # 组管理
-@admin.register(Group)
+@admin.register(SqlGroup)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('group_id', 'group_name', 'ding_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)

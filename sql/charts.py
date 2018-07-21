@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from pyecharts import Pie, Bar
 from pyecharts import Page
@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 chart_dao = ChartDao()
 
 
+@permission_required('sql.menu_dashboard', raise_exception=True)
 def pyecharts(request):
     # 工单数量统计
     bar1 = Bar('SQL上线工单统计(数量)', width="100%")

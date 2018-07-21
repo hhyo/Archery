@@ -72,42 +72,59 @@
         <div class="navbar-default sidebar" role="navigation">
             <div class="sidebar-nav navbar-collapse">
                 <ul class="nav" id="side-menu">
-                    <li>
-                        <a href="/charts/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
-                    </li>
-                    <li>
-                        <a href="/sqlworkflow/"><i class="fa fa-cloud-upload fa-fw"></i> SQL上线</a>
-                    </li>
-                    <li>
-                        <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level">
-                            <li>
-                                <a href="/sqlquery/">MySQL查询</a>
-                            </li>
-                            <li>
-                                <a href="/queryapplylist/">查询权限申请</a>
-                            </li>
-                        </ul>
-                        <!-- /.nav-second-level -->
-                    </li>
-                    <li>
-                        <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level">
-                            <li>
-                                <a href="/sqladvisor/">优化工具</a>
-                            </li>
-                            <li>
-                                <a href="/slowquery/">慢查日志</a>
-                            </li>
-                            {% if user.role == 'DBA' or user.is_superuser %}
-                                <li>
-                                    <a href="/dbdiagnostic/">会话管理</a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                        <!-- /.nav-second-level -->
-                    </li>
-                    {% if user.is_superuser %}
+                    {% if perms.sql.menu_dashboard %}
+                        <li>
+                            <a href="/charts/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqlworkflow %}
+                        <li>
+                            <a href="/sqlworkflow/"><i class="fa fa-cloud-upload fa-fw"></i> SQL上线</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_query %}
+                        <li>
+                            <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqlquery %}
+                                    <li>
+                                        <a href="/sqlquery/">MySQL查询</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_queryapplylist %}
+                                    <li>
+                                        <a href="/queryapplylist/">查询权限申请</a>
+                                    </li>
+                                {% endif %}
+
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqloptimize %}
+                        <li>
+                            <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqladvisor %}
+                                    <li>
+                                        <a href="/sqladvisor/">优化工具</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_slowquery %}
+                                    <li>
+                                        <a href="/slowquery/">慢查日志</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_dbdiagnostic %}
+                                    <li>
+                                        <a href="/dbdiagnostic/">会话管理</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_system %}
                         <li>
                             <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
@@ -115,7 +132,7 @@
                                     <a href="/config/">配置项管理</a>
                                 </li>
                                 <li>
-                                    <a href="/group/">组关系维护</a>
+                                    <a href="/group/">用户组维护</a>
                                 </li>
                                 <li>
                                     <a href="#">其他配置管理 <span class="fa arrow"></span></a>
@@ -130,6 +147,9 @@
                                             <a href="/admin/sql/users/">用户管理</a>
                                         </li>
                                         <li>
+                                            <a href="/admin/auth/group/">权限组管理</a>
+                                        </li>
+                                        <li>
                                             <a href="/admin/sql/">全部后台数据</a>
                                         </li>
                                     </ul>
@@ -139,16 +159,18 @@
                             <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
-                    <li>
-                        <a href="#"><i class="fa fa-sitemap fa-fw"></i> 相关文档<span
-                                class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level">
-                            <li>
-                                <a href="/dbaprinciples/">设计规范</a>
-                            </li>
-                        </ul>
-                        <!-- /.nav-second-level -->
-                    </li>
+                    {% if perms.sql.menu_document %}
+                        <li>
+                            <a href="#"><i class="fa fa-sitemap fa-fw"></i> 相关文档<span
+                                    class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/dbaprinciples/">设计规范</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
             <!-- /.sidebar-collapse -->

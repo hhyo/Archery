@@ -1,17 +1,17 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Group, GroupRelations
+from sql.models import SqlGroup, GroupRelations
 from sql.models import Users, MasterConfig, SlaveConfig
 
 
 # 获取用户关联组列表
 def user_groups(user):
     if user.is_superuser == 1:
-        group_list = [group for group in Group.objects.filter(is_deleted=0)]
+        group_list = [group for group in SqlGroup.objects.filter(is_deleted=0)]
     else:
         group_ids = [group['group_id'] for group in
                      GroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
-        group_list = [group for group in Group.objects.filter(group_id__in=group_ids, is_deleted=0)]
+        group_list = [group for group in SqlGroup.objects.filter(group_id__in=group_ids, is_deleted=0)]
     return group_list
 
 

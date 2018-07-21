@@ -6,6 +6,7 @@ import datetime
 import subprocess
 
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import permission_required
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
@@ -36,15 +37,6 @@ sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与
 workflowOb = Workflow()
 
 
-# 登录失败邮件推送给DBA
-def log_mail_record(login_failed_message):
-    mail_title = 'login archer'
-    logger.warning(login_failed_message)
-    dbaAddr = [email['email'] for email in Users.objects.filter(role='DBA').values('email')]
-    if SysConfig().sys_config.get('mail') == 'true':
-        MailSender().sendEmail(mail_title, login_failed_message, dbaAddr)
-
-
 # ajax接口，登录页面调用，用来验证用户名密码
 @csrf_exempt
 def loginAuthenticate(username, password):
@@ -65,7 +57,6 @@ def loginAuthenticate(username, password):
     elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
             datetime.datetime.now() - login_failure_counter[username][
         "last_failure_time"]).seconds <= lockTimeThreshold:
-        log_mail_record('user:{},login failed, account locking...'.format(username))
         result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
     else:
         # 登录
@@ -128,6 +119,7 @@ def authenticateEntry(request):
 
 # 获取审核列表
 @csrf_exempt
+@permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sqlworkflowlist(request):
     # 获取用户信息
     user = request.user
@@ -204,6 +196,7 @@ def sqlworkflowlist(request):
 
 # 提交SQL给inception进行自动审核
 @csrf_exempt
+@permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
     sqlContent = request.POST.get('sql_content')
     clusterName = request.POST.get('cluster_name')
@@ -402,6 +395,7 @@ def stopOscProgress(request):
 
 # 获取SQLAdvisor的优化结果
 @csrf_exempt
+@permission_required('sql.optimize_sqladvisor', raise_exception=True)
 def sqladvisorcheck(request):
     sqlContent = request.POST.get('sql_content')
     clusterName = request.POST.get('cluster_name')

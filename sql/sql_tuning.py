@@ -5,13 +5,13 @@ import time
 import MySQLdb
 import simplejson as json
 from MySQLdb.connections import numeric_part
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import MasterConfig
 from sql.utils.dao import Dao
-from sql.utils.permission import role_required
 from .const import SQLTuning
 from sql.utils.aes_decryptor import Prpcrypt
 import sqlparse
@@ -68,7 +68,7 @@ order by 1, 3;
 
 
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.optimize_sqltuning', raise_exception=True)
 def tuning(request):
     cluster_name = request.POST.get('cluster_name')
     db_name = request.POST.get('db_name')

@@ -3,6 +3,7 @@ import simplejson as json
 from django.shortcuts import render
 from django.http import HttpResponse
 
+
 # 管理员操作权限验证
 def superuser_required(func):
     def wrapper(request, *args, **kw):

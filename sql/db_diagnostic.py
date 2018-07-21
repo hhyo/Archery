@@ -1,4 +1,5 @@
 import simplejson as json
+from django.contrib.auth.decorators import permission_required
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
@@ -6,7 +7,6 @@ from django.http import HttpResponse
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.utils.permission import role_required
 from sql.utils.config import SysConfig
 from .models import MasterConfig, AliyunRdsConfig
 
@@ -21,7 +21,7 @@ prpCryptor = Prpcrypt()
 
 # 问题诊断--进程列表
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.process_view', raise_exception=True)
 def process(request):
     cluster_name = request.POST.get('cluster_name')
     command_type = request.POST.get('command_type')
@@ -59,7 +59,7 @@ def process(request):
 
 # 问题诊断--通过进程id构建请求
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.process_kill', raise_exception=True)
 def create_kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     ThreadIDs = request.POST.get('ThreadIDs')
@@ -88,7 +88,7 @@ def create_kill_session(request):
 
 # 问题诊断--终止会话
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.process_kill', raise_exception=True)
 def kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     request_params = request.POST.get('request_params')
@@ -111,9 +111,9 @@ def kill_session(request):
                         content_type='application/json')
 
 
-# 问题诊断--锁信息
+# 问题诊断--表空间信息
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.tablespace_view', raise_exception=True)
 def tablesapce(request):
     cluster_name = request.POST.get('cluster_name')
 
@@ -159,7 +159,7 @@ def tablesapce(request):
 
 # 问题诊断--锁等待
 @csrf_exempt
-@role_required(('DBA',))
+@permission_required('sql.trxandlocks_view', raise_exception=True)
 def trxandlocks(request):
     cluster_name = request.POST.get('cluster_name')
     master_info = MasterConfig.objects.get(cluster_name=cluster_name)

@@ -4,10 +4,7 @@ import simplejson as json
 import datetime
 
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
 from sql.utils.aliyun_sdk import Aliyun
-from sql.utils.permission import role_required
-
 from .models import AliyunRdsConfig
 
 aliyun = Aliyun()
@@ -118,7 +115,6 @@ def process_status(request):
 
 
 # 问题诊断--通过进程id构建请求id
-@role_required(('DBA',))
 def create_kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     ThreadIDs = request.POST.get('ThreadIDs')
@@ -140,7 +136,6 @@ def create_kill_session(request):
 
 
 # 问题诊断--终止会话
-@role_required(('DBA',))
 def kill_session(request):
     cluster_name = request.POST.get('cluster_name')
     request_params = request.POST.get('request_params')

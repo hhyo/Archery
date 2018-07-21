@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import simplejson as json
+from django.contrib.auth.decorators import permission_required
 
 from django.db.models import F, Sum
 from django.views.decorators.csrf import csrf_exempt
@@ -21,6 +22,7 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 
 # 获取SQL慢日志统计
 @csrf_exempt
+@permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review(request):
     cluster_name = request.POST.get('cluster_name')
     # 服务端权限校验
@@ -132,6 +134,7 @@ def slowquery_review(request):
 
 # 获取SQL慢日志明细
 @csrf_exempt
+@permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review_history(request):
     cluster_name = request.POST.get('cluster_name')
     # 服务端权限校验

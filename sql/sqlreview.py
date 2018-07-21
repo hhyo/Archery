@@ -15,7 +15,7 @@ from .const import Const, WorkflowDict
 from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import Users, SqlWorkflow, MasterConfig, Group
+from .models import Users, SqlWorkflow, MasterConfig, SqlGroup
 import logging
 
 logger = logging.getLogger('default')
@@ -210,5 +210,5 @@ def send_msg(workflowDetail, url):
         mailSender.sendEmail(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
     if sys_config.get('ding') == 'true':
         # 钉钉通知申请人，审核人，抄送DBA
-        webhook_url = Group.objects.get(group_id=workflowDetail.group_id).ding_webhook
+        webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
         mailSender.sendDing(webhook_url, msg_title + '\n' + msg_content)

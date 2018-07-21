@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import datetime
 
-from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, Group, WorkflowAudit
+from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup, WorkflowAudit
 from sql.utils.group import group_dbas
 from sql.utils.sendmsg import MailSender
 from .const import WorkflowDict
@@ -24,7 +24,7 @@ def send_msg(audit_id, msg_type, **kwargs):
         workflow_auditors = '.'.join([Users.objects.get(username=auditor).display for auditor in
                                       audit_info.audit_users.split(',')])
     workflow_url = kwargs.get('workflow_url')
-    webhook_url = Group.objects.get(group_id=audit_info.group_id).ding_webhook
+    webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type['query']:
