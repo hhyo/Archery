@@ -45,7 +45,7 @@ def query_audit_call_back(workflow_id, workflow_status):
         if apply_queryset.priv_type == 1:
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,
-                user_display = apply_queryset.user_display,
+                user_display=apply_queryset.user_display,
                 cluster_name=apply_queryset.cluster_name, db_name=db_name,
                 table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
@@ -217,7 +217,6 @@ def applyforprivileges(request):
     cluster_name = request.POST['cluster_name']
     group_name = request.POST['group_name']
     group_id = Group.objects.get(group_name=group_name).group_id
-    workflow_auditors = request.POST['workflow_auditors']
     priv_type = request.POST['priv_type']
     db_name = request.POST['db_name']
     valid_date = request.POST['valid_date']
@@ -293,7 +292,7 @@ def applyforprivileges(request):
             applyinfo.title = title
             applyinfo.group_id = group_id
             applyinfo.group_name = group_name
-            applyinfo.audit_users = workflow_auditors
+            applyinfo.audit_users = workflowOb.auditsettings(group_id, WorkflowDict.workflow_type['query'])
             applyinfo.user_name = user.username
             applyinfo.user_display = user.display
             applyinfo.cluster_name = cluster_name

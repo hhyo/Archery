@@ -143,7 +143,6 @@ def auditors(request):
 
     # 获取所有用户
     if auditors:
-        auditors = auditors.audit_users
         auditors_display = ','.join([Users.objects.get(username=auditor).display for auditor in auditors.split(',')])
         result['data']['auditors'] = auditors
         result['data']['auditors_display'] = auditors_display

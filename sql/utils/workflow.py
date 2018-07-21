@@ -26,7 +26,6 @@ class Workflow(object):
         if workflow_type == WorkflowDict.workflow_type['query']:
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             workflow_title = workflow_detail.title
-            workflow_auditors = workflow_detail.audit_users
             group_id = workflow_detail.group_id
             group_name = workflow_detail.group_name
             create_user = workflow_detail.user_name
@@ -51,7 +50,6 @@ class Workflow(object):
         elif workflow_type == WorkflowDict.workflow_type['sqlreview']:
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.workflow_name
-            workflow_auditors = workflow_detail.review_man
             group_id = workflow_detail.group_id
             group_name = workflow_detail.group_name
             create_user = workflow_detail.engineer
@@ -61,22 +59,13 @@ class Workflow(object):
             result['msg'] = '工单类型不存在'
             raise Exception(result['msg'])
 
-        # 验证审批流是否和配置一致
-        try:
-            audit_users = WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id).audit_users
-        except Exception:
-            audit_users = None
-        if workflow_auditors == audit_users:
-            pass
-        else:
-            result['msg'] = '审批流程与后台配置不同，请核实'
-            raise Exception(result['msg'])
-
-        if workflow_auditors is None:
+        # 校验是否配置审批流程
+        audit_users = self.auditsettings(group_id, workflow_type)
+        if audit_users is None:
             result['msg'] = '审批流程不能为空，请先配置审批流程'
             raise Exception(result['msg'])
         else:
-            audit_users_list = workflow_auditors.split(',')
+            audit_users_list = audit_users.split(',')
 
         # 判断是否无需审核,并且修改审批人为空
         if SysConfig().sys_config.get('auto_review', False) == 'true':
@@ -150,8 +139,8 @@ class Workflow(object):
             msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
-                                                                      request.get_host(),
-                                                                      auditInfo.audit_id)
+                                                                request.get_host(),
+                                                                auditInfo.audit_id)
         msg_data['workflow_content'] = notify_text
         # 如果待审核则发送邮件通知当前审核人以及抄送对象
         if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
@@ -333,8 +322,8 @@ class Workflow(object):
         msg_data['workflow_auditors'] = ','.join(workflow_auditors_display)
         msg_data['workflow_title'] = auditInfo.workflow_title
         msg_data['workflow_url'] = "{}://{}/workflow/{}".format(request.scheme,
-                                                                      request.get_host(),
-                                                                      auditInfo.audit_id)
+                                                                request.get_host(),
+                                                                auditInfo.audit_id)
         msg_data['workflow_content'] = notify_text
         # 给下级审核人发送邮件
         if auditInfo.current_status == WorkflowDict.workflow_status['audit_wait']:
@@ -431,7 +420,7 @@ class Workflow(object):
     # 通过组和审核类型，获取审核配置信息
     def auditsettings(self, group_id, workflow_type):
         try:
-            return WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)
+            return WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id).audit_users
         except Exception:
             return None
 

@@ -102,11 +102,10 @@ def autoreview(request):
     clusterName = request.POST['cluster_name']
     db_name = request.POST.get('db_name')
     isBackup = request.POST['is_backup']
-    reviewMan = request.POST.get('workflow_auditors')
     notify_users = request.POST.getlist('notify_users')
 
     # 服务器端参数验证
-    if sqlContent is None or workflowName is None or clusterName is None or db_name is None or isBackup is None or reviewMan is None:
+    if sqlContent is None or workflowName is None or clusterName is None or db_name is None or isBackup is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
@@ -183,7 +182,7 @@ def autoreview(request):
             Workflow.group_name = group_name
             Workflow.engineer = engineer
             Workflow.engineer_display = request.user.display
-            Workflow.review_man = reviewMan
+            Workflow.review_man = workflowOb.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
             Workflow.status = workflowStatus
             Workflow.is_backup = isBackup
             Workflow.review_content = jsonResult
@@ -259,7 +258,7 @@ def detail(request, workflowId):
         row['sequence'] = row_item[7]
         row['backup_dbname'] = row_item[8]
         row['execute_time'] = row_item[9]
-        #row['sqlsha1'] = row_item[10]
+        # row['sqlsha1'] = row_item[10]
         rows.append(row)
 
         if workflowDetail.status == '执行中':
@@ -471,16 +470,16 @@ def cancel(request):
                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
             if workflowDetail.status == Const.workflowStatus['pass']:
-                auditresult = None
+                pass
             else:
                 if user.username == workflowDetail.engineer:
-                    auditresult = workflowOb.auditworkflow(request, audit_id,
-                                                           WorkflowDict.workflow_status['audit_abort'],
-                                                           user.username, audit_remark)
+                    workflowOb.auditworkflow(request, audit_id,
+                                             WorkflowDict.workflow_status['audit_abort'],
+                                             user.username, audit_remark)
                 else:
-                    auditresult = workflowOb.auditworkflow(request, audit_id,
-                                                           WorkflowDict.workflow_status['audit_reject'],
-                                                           user.username, audit_remark)
+                    workflowOb.auditworkflow(request, audit_id,
+                                             WorkflowDict.workflow_status['audit_reject'],
+                                             user.username, audit_remark)
 
             # 删除定时执行job
             if workflowDetail.status == Const.workflowStatus['timingtask']:
