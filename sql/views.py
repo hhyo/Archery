@@ -182,28 +182,28 @@ def autoreview(request):
             # 存进数据库里
             engineer = request.user.username
             if not workflowid:
-                Workflow = SqlWorkflow()
-                Workflow.create_time = timezone.now()
+                sql_workflow = SqlWorkflow()
+                sql_workflow.create_time = timezone.now()
             else:
-                Workflow = SqlWorkflow.objects.get(id=int(workflowid))
-            Workflow.workflow_name = workflowName
-            Workflow.group_id = group_id
-            Workflow.group_name = group_name
-            Workflow.engineer = engineer
-            Workflow.engineer_display = request.user.display
-            Workflow.review_man = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
-            Workflow.status = workflowStatus
-            Workflow.is_backup = isBackup
-            Workflow.review_content = jsonResult
-            Workflow.cluster_name = clusterName
-            Workflow.db_name = db_name
-            Workflow.sql_content = sqlContent
-            Workflow.execute_result = ''
-            Workflow.is_manual = is_manual
-            Workflow.audit_remark = ''
-            Workflow.sql_syntax = sql_syntax
-            Workflow.save()
-            workflowId = Workflow.id
+                sql_workflow = SqlWorkflow.objects.get(id=int(workflowid))
+            sql_workflow.workflow_name = workflowName
+            sql_workflow.group_id = group_id
+            sql_workflow.group_name = group_name
+            sql_workflow.engineer = engineer
+            sql_workflow.engineer_display = request.user.display
+            sql_workflow.review_man = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
+            sql_workflow.status = workflowStatus
+            sql_workflow.is_backup = isBackup
+            sql_workflow.review_content = jsonResult
+            sql_workflow.cluster_name = clusterName
+            sql_workflow.db_name = db_name
+            sql_workflow.sql_content = sqlContent
+            sql_workflow.execute_result = ''
+            sql_workflow.is_manual = is_manual
+            sql_workflow.audit_remark = ''
+            sql_workflow.sql_syntax = sql_syntax
+            sql_workflow.save()
+            workflowId = sql_workflow.id
             # 自动审核通过了，才调用工作流
             if workflowStatus == Const.workflowStatus['manreviewing']:
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
