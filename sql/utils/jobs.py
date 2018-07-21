@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers import SchedulerAlreadyRunningError
 from django_apscheduler.jobstores import DjangoJobStore, register_events
 
-from sql.sqlreview import execute_job
+from sql.utils.execute_sql import execute_job
 
 import logging
 

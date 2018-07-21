@@ -378,14 +378,14 @@
                         </form>
                         <div id="div-workflow-config" class="form-inline form-group" style="display: none">
                             <h5 class="control-label text-bold" style="color: red">
-                                规则：<b>选择多人即审核流为多级审核，按照选择顺序进行流转</b></h5>
+                                规则：<b>选择多个权限组即审批流程为多级审核，按照选择顺序进行流转，权限组内用户都可审核</b></h5>
                             <br>
-                            <h6 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h6>
+                            <h5 class="control-label text-bold">当前审批流程：<b id="workflow_auditors"></b></h5>
                             <br>
-                            <div><h6 style="float:left;" class="control-label text-bold">变更审批流程：</h6></div>
+                            <div><h5 style="float:left;" class="control-label text-bold">变更审批流程：</h5></div>
                             <div class="form-group form-inline">
                                 <div class="form-group">
-                                    <input type="text" class="form-control" id="group_auditors_text"
+                                    <input type="text" class="form-control" id="workflow_auditors_text"
                                            disabled="disabled" style="width: 283px">
                                 </div>
                                 <div class="form-group">
@@ -393,9 +393,9 @@
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-name="审批人" data-placeholder="审批人:" data-live-search="true"
                                             required>
-                                        <option value="is-empty" disabled="" selected="selected">添加审批人</option>
-                                        {% for user in user_list %}
-                                            <option value="{{ user.username }}">{{ user.display }}
+                                        <option value="is-empty" disabled="" selected="selected">添加审批权限组</option>
+                                        {% for auth_group in auth_group_list %}
+                                            <option value="{{ auth_group.name }}">{{ auth_group.name }}
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -514,15 +514,15 @@
             $("#workflow_type").trigger('change')
         });
 
-        // 点击用户填充到group_auditors_text
+        // 点击用户填充到workflow_auditors_text
         $("#group_auditors").change(function () {
-            var user = $(this).find(':selected').attr("disabled", "disabled").val();
-            var auditors = $("#group_auditors_text").val();
+            var auth_group = $(this).find(':selected').attr("disabled", "disabled").val();
+            var auditors = $("#workflow_auditors_text").val();
             if (auditors) {
-                $("#group_auditors_text").val(auditors + ',' + user);
+                $("#workflow_auditors_text").val(auditors + '->' + auth_group);
             }
             else {
-                $("#group_auditors_text").val(user)
+                $("#workflow_auditors_text").val(auth_group)
             }
             $('#group_auditors').selectpicker('render');
             $('#group_auditors').selectpicker('refresh');
@@ -530,14 +530,14 @@
 
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
-            $("#group_auditors_text").val('');
+            $("#workflow_auditors_text").val('');
             window.location.reload()
         });
 
         // 切换工单类型获取对应组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
-            $("#group_auditors_text").val('');
+            $("#workflow_auditors_text").val('');
             if ($("#group").val()) {
                 $.ajax({
                     type: "post",
@@ -565,18 +565,19 @@
             }
         });
 
-        // 变更组工单负责人
+        // 变更组工单审批流程
         $("#btn-workflow-config").click(function () {
             if ($("#group").val() && $("#workflow_type").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
+                var audit_users = $("#workflow_auditors_text").val().replace(/->/g, ",");
                 $.ajax({
                     type: "post",
                     url: "/group/changeauditors/",
                     dataType: "json",
                     data: {
                         group_name: $("#group").val(),
-                        audit_users: $("#group_auditors_text").val(),
+                        audit_users: audit_users,
                         workflow_type: $("#workflow_type").val()
                     },
                     complete: function () {

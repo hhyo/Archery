@@ -11,7 +11,7 @@ truncate table sql_users_groups;
 set foreign_key_checks =1;
 
 -- 插入权限和默认权限组
-INSERT INTO auth_group (id, name) VALUES (1, '默认组'); # 用户注册默认关联id=1的组，请勿删除
+INSERT INTO auth_group (id, name) VALUES (1, '默认组'); # 用户注册默认关联id=1的组,请勿删除
 INSERT INTO django_content_type (id, app_label, model) VALUES (27, 'sql', 'permission');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (1, '菜单 Dashboard', 27, 'menu_dashboard');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (2, '菜单 SQL上线', 27, 'menu_sqlworkflow');

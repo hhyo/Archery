@@ -113,29 +113,14 @@
                         return workflow_status_formatter(value)
                     }
                 }, {
-                    title: '审核人列表',
-                    field: 'audit_users'
-                }, {
-                    title: '当前审核人',
-                    field: 'current_audit_user',
-                    formatter: function (value, row, index) {
-                        if (value === '-1') {
-                            return ''
-                        }
-                        else {
-                            return value
-                        }
-                    }
-                }, {
                     title: '操作',
                     field: 'id',
                     formatter: function (value, row, index) {
                         // 当前审核人
-                        if (row.current_status === 0 && row.current_audit_user === "{{ user.username }}") {
-                            return "<button class=\"btn btn-default btn-xs\" " +
-                                "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
-                                "审核</button>\n"
-                        }
+                        return "<button class=\"btn btn-default btn-xs\" " +
+                            "onclick=\"javascrtpt:window.location.href='/workflow/" + row.audit_id + "/'\">" +
+                            "审核</button>\n"
+
                     }
                 }],
                 onLoadSuccess: function () {

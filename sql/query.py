@@ -294,7 +294,7 @@ def applyforprivileges(request):
             applyinfo.title = title
             applyinfo.group_id = group_id
             applyinfo.group_name = group_name
-            applyinfo.audit_users = workflowOb.auditsettings(group_id, WorkflowDict.workflow_type['query'])
+            applyinfo.audit_users = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['query'])
             applyinfo.user_name = user.username
             applyinfo.user_display = user.display
             applyinfo.cluster_name = cluster_name
@@ -434,14 +434,14 @@ def queryprivaudit(request):
     try:
         with transaction.atomic():
             # 获取audit_id
-            audit_id = workflowOb.auditinfobyworkflow_id(workflow_id=apply_id,
+            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=apply_id,
                                                          workflow_type=WorkflowDict.workflow_type['query']).audit_id
 
             # 调用工作流接口审核
             auditresult = workflowOb.auditworkflow(request, audit_id, audit_status, user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
-            auditInfo = workflowOb.auditinfo(audit_id)
+            auditInfo = Workflow.auditinfo(audit_id)
             if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
                 # 更新业务表审核状态,插入权限信息
                 query_audit_call_back(auditInfo.workflow_id, auditresult['data']['workflow_status'])

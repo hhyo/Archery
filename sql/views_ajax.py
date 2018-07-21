@@ -15,7 +15,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
-from sql.utils.group import user_masters
+from sql.utils.group import user_masters, user_groups
 from sql.models import Config
 from sql.utils.permission import superuser_required
 from sql.utils.dao import Dao
@@ -142,53 +142,78 @@ def sqlworkflowlist(request):
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
         if user.is_superuser == 1:
-            listWorkflow = SqlWorkflow.objects.filter(
+            workflowlist = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = SqlWorkflow.objects.filter(
+            count = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
-        else:
-            listWorkflow = SqlWorkflow.objects.filter(
-                Q(engineer=user.username) | Q(review_man__contains=user.username)
-            ).filter(
+        elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
+            # 先获取用户管理组列表
+            group_list = user_groups(user)
+            group_ids = [group.group_id for group in group_list]
+            workflowlist = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = SqlWorkflow.objects.filter(
-                Q(engineer=user.username) | Q(review_man__contains=user.username)).filter(
+            count = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).count()
+        else:
+            workflowlist = SqlWorkflow.objects.filter(engineer=user.username).filter(
+                workflow_name__contains=search
+            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
+                                                            "is_backup", "create_time", "cluster_name", "db_name",
+                                                            "group_name", "sql_syntax")
+            count = SqlWorkflow.objects.filter(engineer=user.username).filter(
+                workflow_name__contains=search).count()
     elif navStatus in Const.workflowStatus.keys():
         if user.is_superuser == 1:
-            listWorkflow = SqlWorkflow.objects.filter(
+            workflowlist = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "cluster_name", "db_name",
                                                             "group_name", "sql_syntax")
-            listWorkflowCount = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
+            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
+        elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
+            # 先获取用户管理组列表
+            group_list = user_groups(user)
+            group_ids = [group.group_id for group in group_list]
+            workflowlist = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids
+                                                      ).order_by('-create_time')[offset:limit].values("id",
+                                                                                                      "workflow_name",
+                                                                                                      "engineer_display",
+                                                                                                      "status",
+                                                                                                      "is_backup",
+                                                                                                      "create_time",
+                                                                                                      "cluster_name",
+                                                                                                      "db_name",
+                                                                                                      "group_name",
+                                                                                                      "sql_syntax")
+            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids).count()
         else:
-            listWorkflow = SqlWorkflow.objects.filter(
-                status=Const.workflowStatus[navStatus]
-            ).filter(
-                Q(engineer=user.username) | Q(review_man__contains=user.username)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "cluster_name", "db_name",
-                                                            "group_name", "sql_syntax")
-            listWorkflowCount = SqlWorkflow.objects.filter(
-                status=Const.workflowStatus[navStatus]
-            ).filter(
-                Q(engineer=user.username) | Q(review_man__contains=user.username)).count()
+            workflowlist = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username
+                                                      ).order_by('-create_time')[offset:limit].values("id",
+                                                                                                      "workflow_name",
+                                                                                                      "engineer_display",
+                                                                                                      "status",
+                                                                                                      "is_backup",
+                                                                                                      "create_time",
+                                                                                                      "cluster_name",
+                                                                                                      "db_name",
+                                                                                                      "group_name",
+                                                                                                      "sql_syntax")
+            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username).count()
     else:
         context = {'errMsg': '传入的navStatus参数有误！'}
         return render(request, 'error.html', context)
 
     # QuerySet 序列化
-    rows = [row for row in listWorkflow]
+    rows = [row for row in workflowlist]
 
-    result = {"total": listWorkflowCount, "rows": rows}
+    result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')

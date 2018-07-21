@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import SqlGroup, GroupRelations
-from sql.models import Users, MasterConfig, SlaveConfig
+from sql.models import Users, MasterConfig, SlaveConfig, SqlGroup, GroupRelations
 
 
 # 获取用户关联组列表
@@ -48,12 +47,9 @@ def user_slaves(user):
     return slaves
 
 
-# 获取组内DBA角色的用户
-def group_dbas(group_id):
-    # 获取组关联的用户列表
-    dba_ids = [group['object_id'] for group in
-               GroupRelations.objects.filter(group_id=group_id, object_type=0).values('object_id')]
-    # 获取用户信息
-    dbas = Users.objects.filter(pk__in=dba_ids)
-    return dbas
-
+# 获取组内在指定权限组的用户
+def auth_group_users(auth_group_names, group_id):
+    group_user_ids = [group['object_id'] for group in
+                      GroupRelations.objects.filter(group_id=group_id, object_type=0).values('object_id')]
+    users = Users.objects.filter(groups__name__in=auth_group_names, id__in=group_user_ids)
+    return users

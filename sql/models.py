@@ -36,8 +36,8 @@ class SqlGroup(models.Model):
     class Meta:
         managed = False
         db_table = 'sql_group'
-        verbose_name = u'组配置'
-        verbose_name_plural = u'组配置'
+        verbose_name = u'资源组管理'
+        verbose_name_plural = u'资源组管理'
 
 
 # 组关系表（用户与组、主库与组等）
@@ -54,8 +54,8 @@ class GroupRelations(models.Model):
         managed = False
         db_table = 'sql_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
-        verbose_name = u'组关系配置'
-        verbose_name_plural = u'组关系配置'
+        verbose_name = u'资源组对象管理'
+        verbose_name_plural = u'资源组对象管理'
 
 
 # 各个线上主库实例配置）
@@ -149,8 +149,8 @@ class WorkflowAudit(models.Model):
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     workflow_title = models.CharField('申请标题', max_length=50)
     workflow_remark = models.CharField('申请备注', default='', max_length=140)
-    audit_users = models.CharField('审核人列表', max_length=255)
-    current_audit_user = models.CharField('当前审核人', max_length=20)
+    audit_users = models.CharField('审核权限组列表', max_length=255)
+    current_audit_user = models.CharField('当前审核权限组', max_length=20)
     next_audit_user = models.CharField('下级审核人', max_length=20)
     current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
     create_user = models.CharField('申请人', max_length=20)

@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import re
 import simplejson as json
 
 import time
@@ -8,37 +7,18 @@ from threading import Thread
 from django.db import connection
 from django.utils import timezone
 
-from sql.utils.group import group_dbas
+from sql.utils.group import auth_group_users
 from sql.utils.config import SysConfig
 from sql.utils.dao import Dao
-from .const import Const, WorkflowDict
+from sql.const import Const, WorkflowDict
 from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
-from sql.utils.aes_decryptor import Prpcrypt
-from .models import Users, SqlWorkflow, MasterConfig, SqlGroup
+from sql.models import Users, SqlWorkflow, SqlGroup
 import logging
 
+from sql.utils.sql_review import getMasterConnStr
+
 logger = logging.getLogger('default')
-
-
-# 获取当前请求url
-def getDetailUrl(request):
-    scheme = request.scheme
-    host = request.META['HTTP_HOST']
-    return "%s://%s/detail/" % (scheme, host)
-
-
-# 根据实例名获取主库连接字符串，并封装成一个dict
-def getMasterConnStr(clusterName):
-    listMasters = MasterConfig.objects.filter(cluster_name=clusterName)
-
-    masterHost = listMasters[0].master_host
-    masterPort = listMasters[0].master_port
-    masterUser = listMasters[0].master_user
-    masterPassword = Prpcrypt().decrypt(listMasters[0].master_password)
-    dictConn = {'masterHost': masterHost, 'masterPort': masterPort, 'masterUser': masterUser,
-                'masterPassword': masterPassword}
-    return dictConn
 
 
 # SQL工单跳过inception执行回调
@@ -148,46 +128,7 @@ def execute_job(workflowId, url):
     t.start()
 
 
-# 判断SQL上线是否无需审批
-def is_autoreview(workflowid):
-    workflowDetail = SqlWorkflow.objects.get(id=workflowid)
-    sql_content = workflowDetail.sql_content
-    cluster_name = workflowDetail.cluster_name
-    db_name = workflowDetail.db_name
-    is_manual = workflowDetail.is_manual
-
-    # 删除注释语句
-    sql_content = ''.join(
-        map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-            sql_content.splitlines(1))).strip()
-
-    # 获取正则表达式
-    auto_review_regex = SysConfig().sys_config.get('auto_review_regex',
-                                                   '^alter|^create|^drop|^truncate|^rename|^delete')
-    p = re.compile(auto_review_regex)
-
-    # 判断是否匹配到需要手动审核的语句
-    is_autoreview = True
-    for row in sql_content.strip(';').split(';'):
-        if p.match(row.strip().lower()):
-            is_autoreview = False
-            break
-        if is_autoreview:
-            # 更新影响行数加测,单条更新语句影响行数超过指定数量则需要人工审核
-            inception_review = InceptionDao().sqlautoReview(sql_content, cluster_name, db_name)
-            for review_result in inception_review:
-                SQL = review_result[5]
-                Affected_rows = review_result[6]
-                if re.match(r"^update", SQL.strip().lower()):
-                    if int(Affected_rows) > int(SysConfig().sys_config.get('auto_review_max_update_rows', 0)):
-                        is_autoreview = False
-                        break
-    # inception不支持语法都需要审批
-    if is_manual == 1:
-        is_autoreview = False
-    return is_autoreview
-
-
+# 执行结果通知
 def send_msg(workflowDetail, url):
     mailSender = MailSender()
     sys_config = SysConfig().sys_config
@@ -206,9 +147,10 @@ def send_msg(workflowDetail, url):
         notify_users = workflowDetail.review_man.split(',')
         notify_users.append(workflowDetail.engineer)
         listToAddr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
-        listCcAddr = [email['email'] for email in group_dbas(workflowDetail.group_id).values('email')]
-        mailSender.sendEmail(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
+        listCcAddr = [email['email'] for email in
+                      auth_group_users(auth_group_names=['DBA'], group_id=workflowDetail.group_id).values('email')]
+        mailSender.send_email(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
     if sys_config.get('ding') == 'true':
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
-        mailSender.sendDing(webhook_url, msg_title + '\n' + msg_content)
+        mailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)

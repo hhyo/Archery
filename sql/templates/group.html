@@ -5,7 +5,7 @@
     <div id="toolbar" class="form-inline">
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/group/add/'">
+                    onclick="window.location.href='/admin/sql/sqlgroup/add/'">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 添加组
             </button>
@@ -71,7 +71,7 @@
                     title: '组名称',
                     field: 'group_name',
                     formatter: function (value, row, index) {
-                        return "<a href=\"/admin/sql/group/" + row.group_id + "/change/\">" + value + "</a>"
+                        return "<a href=\"/admin/sql/sqlgroup/" + row.group_id + "/change/\">" + value + "</a>"
                     }
                 }, {
                     title: '钉钉webhook地址',
