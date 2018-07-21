@@ -142,17 +142,16 @@ def auditors(request):
         result['msg'] = '参数错误'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 校验配置
-    for auth_group_id in audit_auth_groups.split(','):
-        try:
-            Group.objects.get(id=auth_group_id)
-        except Exception:
-            result['status'] = 1
-            result['msg'] = '审批流程权限组不存在，请重新配置！'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
     # 获取权限组名称
     if audit_auth_groups:
+        # 校验配置
+        for auth_group_id in audit_auth_groups.split(','):
+            try:
+                Group.objects.get(id=auth_group_id)
+            except Exception:
+                result['status'] = 1
+                result['msg'] = '审批流程权限组不存在，请重新配置！'
+                return HttpResponse(json.dumps(result), content_type='application/json')
         audit_auth_groups_name = '->'.join(
             [Group.objects.get(id=auth_group_id).name for auth_group_id in audit_auth_groups.split(',')])
         result['data']['auditors'] = audit_auth_groups
