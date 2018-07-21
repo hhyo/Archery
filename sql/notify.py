@@ -21,18 +21,25 @@ def _send(audit_id, msg_type, **kwargs):
     status = audit_info.current_status
     workflow_title = audit_info.workflow_title
     workflow_from = audit_info.create_user_display
-    # 获取审核权限组名
-    if audit_info.audit_users is None:
-        workflow_auditors = '无需审批，系统自动审核通过'
-    else:
-        workflow_auditors = '->'.join([Group.objects.get(id=int(auth_group_id)).name for auth_group_id in
-                                       audit_info.audit_users.split(',')])
-    if audit_info.current_audit_user == '-1':
-        current_workflow_auditors = ''
-    else:
-        current_workflow_auditors = Group.objects.get(id=audit_info.current_audit_user).name
     workflow_url = kwargs.get('workflow_url')
     webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
+
+    audit_info = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
+    if audit_info.audit_users == '':
+        workflow_auditors = '无需审批'
+    else:
+        try:
+            workflow_auditors = '->'.join([Group.objects.get(id=auth_group_id).name for auth_group_id in
+                                           audit_info.audit_users.split(',')])
+        except Exception:
+            workflow_auditors = audit_info.audit_users
+    if audit_info.current_audit_user == '-1':
+        current_workflow_auditors = None
+    else:
+        try:
+            current_workflow_auditors = Group.objects.get(id=audit_info.current_audit_user).name
+        except Exception:
+            current_workflow_auditors = audit_info.current_audit_user
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type['query']:

@@ -289,7 +289,7 @@ class Workflow(object):
 
     # 修改\添加配置信息
     @staticmethod
-    def changesettings(self, group_id, workflow_type, audit_auth_groups):
+    def changesettings(group_id, workflow_type, audit_auth_groups):
         try:
             WorkflowAuditSetting.objects.get(workflow_type=workflow_type, group_id=group_id)
             WorkflowAuditSetting.objects.filter(workflow_type=workflow_type,
@@ -315,7 +315,7 @@ class Workflow(object):
                 auth_group_id = Workflow.auditinfobyworkflow_id(workflow_id, workflow_type).current_audit_user
                 audit_auth_group = Group.objects.get(id=auth_group_id).name
             except Exception:
-                raise Exception('auth_group_id不存在')
+                raise Exception('当前审批auth_group_id不存在，请检查并清洗历史数据')
             if len(auth_group_users([audit_auth_group], group_id).filter(id=user.id)) > 0:
                 if workflow_type == 1:
                     if user.has_perm('sql.query_review'):
@@ -332,10 +332,16 @@ class Workflow(object):
         if audit_info.audit_users == '':
             audit_auth_group = '无需审批'
         else:
-            audit_auth_group = '->'.join([Group.objects.get(id=auth_group_id).name for auth_group_id in
-                                          audit_info.audit_users.split(',')])
+            try:
+                audit_auth_group = '->'.join([Group.objects.get(id=auth_group_id).name for auth_group_id in
+                                              audit_info.audit_users.split(',')])
+            except Exception:
+                audit_auth_group = audit_info.audit_users
         if audit_info.current_audit_user == '-1':
             current_audit_auth_group = None
         else:
-            current_audit_auth_group = Group.objects.get(id=audit_info.current_audit_user).name
+            try:
+                current_audit_auth_group = Group.objects.get(id=audit_info.current_audit_user).name
+            except Exception:
+                current_audit_auth_group = audit_info.current_audit_user
         return audit_auth_group, current_audit_auth_group
