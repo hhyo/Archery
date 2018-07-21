@@ -2,14 +2,16 @@
 alter table sql_users drop role;
 
 -- 清空权限和权限组数据
+set foreign_key_checks =0;
 truncate table auth_group_permissions;
 truncate table sql_users_user_permissions;
-truncate table auth_group;
 truncate table auth_permission;
+truncate table auth_group;
 truncate table sql_users_groups;
+set foreign_key_checks =1;
 
 -- 插入权限和默认权限组
-INSERT INTO auth_group (id, name) VALUES (1, '默认组'); # 用户注册默认关联id=1的组,请勿删除
+INSERT INTO auth_group (id, name) VALUES (1, '默认组'); # 用户注册默认关联id=1的组，请勿删除
 INSERT INTO django_content_type (id, app_label, model) VALUES (27, 'sql', 'permission');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (1, '菜单 Dashboard', 27, 'menu_dashboard');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (2, '菜单 SQL上线', 27, 'menu_sqlworkflow');
@@ -47,7 +49,7 @@ INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (7, 1, 1
 INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (8, 1, 17);
 INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (9, 1, 20);
 
--- 全部用户关联默认组，
+-- 全部用户都关联默认组，
 insert into sql_users_groups(users_id, group_id)
 select id,1
 from sql_users;
