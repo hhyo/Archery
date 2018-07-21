@@ -320,7 +320,7 @@ class Workflow(object):
                 if workflow_type == 1:
                     if user.has_perm('sql.query_review'):
                         result = True
-                elif workflow_type == 1:
+                elif workflow_type == 2:
                     if user.has_perm('sql.sql_review'):
                         result = True
         return result
