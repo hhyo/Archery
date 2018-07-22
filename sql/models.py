@@ -112,7 +112,7 @@ class SqlWorkflow(models.Model):
     group_name = models.CharField('组名称', max_length=100)
     engineer = models.CharField('发起人', max_length=50)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
-    review_man = models.CharField('审核人', max_length=50)
+    review_man = models.CharField('审批权限组列表', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     status = models.CharField(max_length=50, choices=(
@@ -149,8 +149,8 @@ class WorkflowAudit(models.Model):
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     workflow_title = models.CharField('申请标题', max_length=50)
     workflow_remark = models.CharField('申请备注', default='', max_length=140)
-    audit_users = models.CharField('审核权限组列表', max_length=255)
-    current_audit_user = models.CharField('当前审核权限组', max_length=20)
+    audit_users = models.CharField('审批权限组列表', max_length=255)
+    current_audit_user = models.CharField('当前审批权限组', max_length=20)
     next_audit_user = models.CharField('下级审核人', max_length=20)
     current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
     create_user = models.CharField('申请人', max_length=20)
@@ -195,7 +195,7 @@ class WorkflowAuditSetting(models.Model):
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
-    audit_users = models.CharField('审核人，单人审核格式为：user1，多级审核格式为：user1,user2', max_length=255)
+    audit_users = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -225,7 +225,7 @@ class QueryPrivilegesApply(models.Model):
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
     status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
-    audit_users = models.CharField('审核人列表', max_length=255)
+    audit_users = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
