@@ -14,9 +14,9 @@ from sql.const import Const, WorkflowDict
 from sql.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.models import Users, SqlWorkflow, SqlGroup
-import logging
-
 from sql.utils.sql_review import getMasterConnStr
+from sql.utils.workflow import Workflow
+import logging
 
 logger = logging.getLogger('default')
 
@@ -132,14 +132,13 @@ def execute_job(workflowId, url):
 def send_msg(workflowDetail, url):
     mailSender = MailSender()
     sys_config = SysConfig().sys_config
-    # 获取审核人中文名
-    review_man_display = [Users.objects.get(username=auditor).display for auditor in
-                          workflowDetail.review_man.split(',')]
+    # 获取当前审批和审批流程
+    audit_auth_group, current_audit_auth_group = Workflow.review_info(workflowDetail.id, 2)
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
                                      workflowDetail.id)
-    msg_content = '''发起人：{}\n审核人：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
-        workflowDetail.engineer_display, ','.join(review_man_display), workflowDetail.workflow_name, url,
+    msg_content = '''发起人：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        workflowDetail.engineer_display, audit_auth_group, workflowDetail.workflow_name, url,
         workflowDetail.sql_content[0:500])
 
     if sys_config.get('mail') == 'true':
@@ -153,4 +152,4 @@ def send_msg(workflowDetail, url):
     if sys_config.get('ding') == 'true':
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
-        mailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)

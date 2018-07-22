@@ -159,14 +159,14 @@
                     title: '操作',
                     field: 'id',
                     formatter: function (value, row, index) {
-                        if ("{{ user.is_superuser }}" === 'True') {
+                        {% if perms.sql.query_mgtpriv %}
                             return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.id + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#modify_privileges\">变更\n" + "</button>\n" +
                                 "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.id + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
-                        }
+                        {% endif %}
                     }
                 }],
                 onLoadSuccess: function () {

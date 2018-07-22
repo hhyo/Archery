@@ -7,6 +7,7 @@ import subprocess
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import Group
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
@@ -93,7 +94,6 @@ def authenticateEntry(request):
 
     result = loginAuthenticate(username, password)
     if result['status'] == 0:
-        user = result.get('data')
         # 开启LDAP的认证通过后更新用户密码
         if settings.ENABLE_LDAP:
             try:
@@ -106,6 +106,10 @@ def authenticateEntry(request):
                 replace_info = Users.objects.get(username=username)
                 replace_info.password = make_password(password)
                 replace_info.save()
+            # 添加到默认组
+            user = Users.objects.get(username=username)
+            group = Group.objects.get(id=1)
+            user.groups.add(group)
 
         # 调用了django内置登录方法，防止管理后台二次登录
         user = authenticate(username=username, password=password)
