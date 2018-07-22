@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.4"
+  - "3.6.5"
+services:
+  - mysql
+install:
+  - pip install -r requirements.txt
+script:
+  - python manage.py test sql -v 3
