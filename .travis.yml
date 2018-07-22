@@ -7,7 +7,7 @@ services:
 install:
   - pip install -r requirements.txt
 before_script:
-  - mysql -e "CREATE DATABASE archer_master CHARSET UTH8;"
+  - mysql -e "CREATE DATABASE archer_master CHARSET UTF8;"
   - python manage.py makemigrations
   - python manage.py makemigrations sql
 script:
