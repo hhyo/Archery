@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/hhyo/archer.svg?branch=master)](https://travis-ci.org/hhyo/archer)
+[![codecov](https://codecov.io/gh/hhyo/archer/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archer)
+*** 
 # 说明
 项目基于archer，调整部分自需功能，不定期更新，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
 master分支是最新代码，但是不保证功能稳定，建议使用最新[release包](https://github.com/hhyo/archer/releases/)
