@@ -74,9 +74,12 @@ def sign_up(request):
                               email=email,
                               is_active=1,
                               is_staff=1)
-    user = Users.objects.get(username=username)
-    group = Group.objects.get(id=1)
-    user.groups.add(group)
+    try:
+        user = Users.objects.get(username=username)
+        group = Group.objects.get(id=1)
+        user.groups.add(group)
+    except Exception:
+        logger.error('无id=1的权限组，无法默认添加')
     return render(request, 'login.html')
 
 
@@ -386,7 +389,10 @@ def execute(request):
         t = Thread(target=execute_skipinc_call_back,
                    args=(workflowId, clusterName, db_name, workflowDetail.sql_content, url))
         t.start()
-
+    # 删除定时执行job
+    if workflowDetail.status == Const.workflowStatus['timingtask']:
+        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+        del_sqlcronjob(job_id)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
@@ -452,7 +458,7 @@ def cancel(request):
             audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
                                                        workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflowDetail.status == Const.workflowStatus['pass']:
+            if workflowDetail.status != Const.workflowStatus['manreviewing']:
                 pass
             else:
                 if user.username == workflowDetail.engineer:

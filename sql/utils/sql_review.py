@@ -72,8 +72,8 @@ def is_autoreview(workflowid):
 def can_execute(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
-    # 只有审核通过的数据才可以执行
-    if workflow_detail.status == Const.workflowStatus['pass']:
+    # 只有审核通过和定时执行的数据才可以立即执行
+    if workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
         # 当前登录用户必须为有执行权限的组内用户
         group_ids = [group.group_id for group in user_groups(user)]
         if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute'):
@@ -85,7 +85,7 @@ def can_execute(user, workflow_id):
 def can_timingtask(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
-    # 只有审核通过的数据才可以执行
+    # 只有审核通过和定时执行的数据才可以执行
     if workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
         # 当前登录用户必须为有执行权限的组内用户
         group_ids = [group.group_id for group in user_groups(user)]

@@ -140,7 +140,6 @@
         <br>
     {% endif %}
     {% if workflowDetail.status == '定时执行' %}
-        <br>
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
@@ -185,7 +184,11 @@
     {% endif %}
     <!--定时执行按钮-->
     {% if is_can_timingtask %}
-        <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
+        {% if workflowDetail.status == '审核通过' %}
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
+        {% elif workflowDetail.status == '定时执行' %}
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+        {% endif %}
     {% endif %}
     <!--终止执行按钮-->
     {% if is_can_review or is_can_cancel %}
