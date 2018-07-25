@@ -316,7 +316,7 @@ class Workflow(object):
                 audit_auth_group = Group.objects.get(id=auth_group_id).name
             except Exception:
                 raise Exception('当前审批auth_group_id不存在，请检查并清洗历史数据')
-            if len(auth_group_users([audit_auth_group], group_id).filter(id=user.id)) > 0:
+            if len(auth_group_users([audit_auth_group], group_id).filter(id=user.id)) > 0 or user.is_superuser == 1:
                 if workflow_type == 1:
                     if user.has_perm('sql.query_review'):
                         result = True
