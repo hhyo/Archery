@@ -10,7 +10,7 @@ alter table sql_instance
   change master_user user varchar(200) NOT NULL,
   change master_password password varchar(200) NOT NULL,
   add type char(6) NOT NULL after instance_name,
-  add db_type varchar(10) NOT NULL after db_type;
+  add db_type varchar(10) NOT NULL after type;
 
 -- 更新信息
 update sql_instance set db_type='mysql',type='master';
@@ -33,7 +33,7 @@ insert into sql_instance (instance_name, db_type, type, host, port, user, passwo
 update sql_group_relations a
   join sql_instance b on a.object_name = b.instance_name
 set a.object_id = b.id, a.object_type = 1
-where a.object_type in (2, 3)
+where a.object_type in (2, 3);
 
 -- 变更关联字段信息
 alter table sql_workflow change cluster_name instance_name varchar(50) NOT NULL ;
