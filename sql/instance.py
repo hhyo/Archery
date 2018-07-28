@@ -39,13 +39,21 @@ def lists(request):
 
 # 获取实例用户列表
 @csrf_exempt
-def user_list(request):
+def users(request):
     instance_name = request.POST.get('instance_name')
+    sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
+    dao = Dao(instance_name=instance_name)
+    db_users = dao.mysql_query('mysql', sql_get_user)['rows']
+    # 获取用户权限信息
+    data = []
+    for db_user in db_users:
+        user_info = {}
+        user_priv = dao.mysql_query('mysql', 'show grants for {};'.format(db_user[0]))['rows']
+        user_info['user'] = db_user[0]
+        user_info['privileges'] = user_priv
+        data.append(user_info)
 
-    # QuerySet 序列化
-    rows = [row for row in instances]
-
-    result = {'status': 0, 'msg': 'ok', 'data': rows}
+    result = {'status': 0, 'msg': 'ok', 'data': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 

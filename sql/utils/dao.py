@@ -53,12 +53,9 @@ class Dao(object):
 
     # 连进指定的mysql实例里，读取所有tables并返回
     def getAllTableByDb(self, db_name):
-        conn = None
-        cursor = None
-
+        conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+                               charset='utf8')
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
-                                   charset='utf8')
             cursor = conn.cursor()
             sql = "show tables"
             cursor.execute(sql)
@@ -68,21 +65,15 @@ class Dao(object):
         except MySQLdb.Error as e:
             raise Exception(e)
         finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                conn.commit()
-                conn.close()
+            conn.commit()
+            conn.close()
         return tb_list
 
     # 连进指定的mysql实例里，读取所有Columns并返回
     def getAllColumnsByTb(self, db_name, tb_name):
-        conn = None
-        cursor = None
-
+        conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+                               charset='utf8')
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
-                                   charset='utf8')
             cursor = conn.cursor()
             sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='%s' AND TABLE_NAME='%s';" % (
                 db_name, tb_name)
@@ -93,22 +84,16 @@ class Dao(object):
         except MySQLdb.Error as e:
             raise Exception(e)
         finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                conn.commit()
-                conn.close()
+            conn.commit()
+            conn.close()
         return col_list
 
     # 连进指定的mysql实例里，执行sql并返回
     def mysql_query(self, db_name, sql, limit_num=0):
         result = {'column_list': [], 'rows': [], 'effect_row': 0}
-        conn = None
-        cursor = None
-
+        conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+                               charset='utf8')
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
-                                   charset='utf8')
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
@@ -132,25 +117,20 @@ class Dao(object):
             logger.error(str(e))
             result['Error'] = str(e)
         finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                try:
-                    conn.rollback()
-                    conn.close()
-                except Exception:
-                    conn.close()
+            try:
+                conn.rollback()
+                conn.close()
+            except Exception:
+                conn.close()
         return result
 
     # 连进指定的mysql实例里，执行sql并返回
     def mysql_execute(self, db_name, sql):
         result = {}
-        conn = None
-        cursor = None
-
+        conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+                               charset='utf8')
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
-                                   charset='utf8')
+
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             # result = {}
@@ -163,9 +143,5 @@ class Dao(object):
             logger.error(str(e))
             result['Error'] = str(e)
         finally:
-            if result.get('Error') or result.get('Warning'):
-                conn.close()
-            elif cursor is not None:
-                cursor.close()
-                conn.close()
+            conn.close()
         return result

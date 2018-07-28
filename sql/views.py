@@ -640,4 +640,4 @@ def instance(request):
 # 实例用户管理
 @superuser_required
 def instancedbuser(request, instance_name):
-    return render(request, 'instance.html')
+    return render(request, 'instancedbuser.html', {'instance_name': instance_name})
