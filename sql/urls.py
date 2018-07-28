@@ -36,7 +36,7 @@ urlpatterns = [
     path('group/', views.group),
     path('grouprelations/<str:group_name>/', views.groupmgmt),
     path('instance/', views.instance),
-    path('instancedbuser/<str:instance_name>/', views.instancedbuser),
+    path('instanceuser/<str:instance_name>/', views.instanceuser),
     path('config/', views.config),
 
     path('authenticate/', views_ajax.authenticateEntry),

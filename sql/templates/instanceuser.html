@@ -5,9 +5,9 @@
     <div id="toolbar" class="form-inline">
         <div class="form-group ">
             <button id="btn_add_master" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/instance/add/'">
+                    onclick="window.location.href=''">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加实例
+                添加用户
             </button>
         </div>
     </div>
@@ -72,10 +72,20 @@
                         field: 'user'
                     }, {
                         title: 'privileges',
-                        field: 'privileges'
+                        field: 'privileges',
+                        formatter: function (value, row, index) {
+                            var priv = '';
+                            for (var i = 0; i < value.length; i++) {
+                                priv = priv + value[i] + ';</br>'
+                            }
+                            return priv
+                        }
                     }, {
                         title: '操作',
-                        field: ''
+                        field: '',
+                        formatter: function (value, row, index) {
+                            return "<button class=\"btn btn-danger btn-xs\" onclick=\"window.location.href='" + row.user + "/'\">变更权限</button>\n"
+                        }
                     }],
                 onLoadSuccess: function () {
                 },

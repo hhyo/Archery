@@ -639,5 +639,5 @@ def instance(request):
 
 # 实例用户管理
 @superuser_required
-def instancedbuser(request, instance_name):
-    return render(request, 'instancedbuser.html', {'instance_name': instance_name})
+def instanceuser(request, instance_name):
+    return render(request, 'instanceuser.html', {'instance_name': instance_name})

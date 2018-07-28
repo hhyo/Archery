@@ -96,10 +96,10 @@
                         title: '创建时间',
                         field: 'create_time'
                     }, {
-                        title: '用户管理',
+                        title: '操作',
                         field: '',
                         formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/instancedbuser/" + row.instance_name + "/'\">管理</button>\n"
+                            return "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.instance_name + "/'\">用户管理</button>\n"
                         }
                     }],
                 onLoadSuccess: function () {
