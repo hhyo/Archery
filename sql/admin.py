@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from .models import Users, MasterConfig, SlaveConfig, SqlWorkflow, \
+from .models import Users, Instance, SlaveConfig, SqlWorkflow, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, SqlGroup, GroupRelations
 
 
@@ -46,7 +46,7 @@ class GroupRelationsAdmin(admin.ModelAdmin):
 
 
 # 主库配置管理
-@admin.register(MasterConfig)
+@admin.register(Instance)
 class MasterConfigAdmin(admin.ModelAdmin):
     list_display = ('id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'create_time')
     search_fields = ['id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'master_password',

@@ -180,7 +180,8 @@ function setColumnsCompleteData(result) {
             data: {
                 cluster_name: $("#cluster_name").val(),
                 db_name: $("#db_name").val(),
-                tb_name: $("#table_name").val()
+                tb_name: $("#table_name").val(),
+                is_master: 0
             },
             complete: function () {
             },

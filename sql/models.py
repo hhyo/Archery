@@ -58,8 +58,8 @@ class GroupRelations(models.Model):
         verbose_name_plural = u'资源组对象管理'
 
 
-# 各个线上主库实例配置）
-class MasterConfig(models.Model):
+# 各个线上实例配置
+class Instance(models.Model):
     cluster_name = models.CharField('实例名称', max_length=50, unique=True)
     master_host = models.CharField('主库地址', max_length=200)
     master_port = models.IntegerField('主库端口', default=3306)
@@ -80,7 +80,7 @@ class MasterConfig(models.Model):
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
         self.master_password = pc.encrypt(self.master_password)
-        super(MasterConfig, self).save(*args, **kwargs)
+        super(Instance, self).save(*args, **kwargs)
 
 
 # 各个线上从库地址

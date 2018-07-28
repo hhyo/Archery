@@ -15,7 +15,6 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from sql.utils.dao import Dao
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.permission import superuser_required
@@ -33,7 +32,6 @@ import logging
 
 logger = logging.getLogger('default')
 
-dao = Dao()
 prpCryptor = Prpcrypt()
 workflowOb = Workflow()
 
@@ -636,3 +634,15 @@ def group(request):
 @superuser_required
 def groupmgmt(request, group_name):
     return render(request, 'groupmgmt.html', {'group_name': group_name})
+
+
+# 实例管理
+@superuser_required
+def instance(request):
+    return render(request, 'instance.html')
+
+
+# 实例用户管理
+@superuser_required
+def instancedbuser(request, instance_name):
+    return render(request, 'instance.html')

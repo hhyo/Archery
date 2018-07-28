@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Users, MasterConfig, SlaveConfig, SqlGroup, GroupRelations
+from sql.models import Users, Instance, SlaveConfig, SqlGroup, GroupRelations
 
 
 # 获取用户关联资源组列表
@@ -20,13 +20,13 @@ def user_masters(user):
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
     if user.is_superuser == 1:
-        master_ids = [master['id'] for master in MasterConfig.objects.all().values('id')]
+        master_ids = [master['id'] for master in Instance.objects.all().values('id')]
     else:
         # 获取资源组关联的主库列表
         master_ids = [group['object_id'] for group in
                       GroupRelations.objects.filter(group_id__in=group_ids, object_type=2).values('object_id')]
     # 获取主库信息
-    masters = MasterConfig.objects.filter(pk__in=master_ids)
+    masters = Instance.objects.filter(pk__in=master_ids)
     return masters
 
 

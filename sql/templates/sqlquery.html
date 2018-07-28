@@ -509,7 +509,8 @@
                 url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name").val()
+                    cluster_name: $("#cluster_name").val(),
+                    is_master: 0
                 },
                 complete: function () {
                 },
@@ -551,7 +552,8 @@
                 dataType: "json",
                 data: {
                     cluster_name: $("#cluster_name").val(),
-                    db_name: $("#db_name").val()
+                    db_name: $("#db_name").val(),
+                    is_master: 0
                 },
                 complete: function () {
                 },

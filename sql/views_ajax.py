@@ -23,7 +23,7 @@ from sql.utils.dao import Dao
 from .const import Const
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
-from .models import Users, MasterConfig, SqlWorkflow
+from .models import Users, Instance, SqlWorkflow
 from sql.utils.sendmsg import MailSender
 import logging
 from sql.utils.workflow import Workflow
@@ -31,7 +31,6 @@ from sql.utils.config import SysConfig
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
-dao = Dao()
 prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
@@ -154,7 +153,7 @@ def sqlworkflowlist(request):
             count = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
-            # 先获取用户管理组列表
+            # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
             workflowlist = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
@@ -454,7 +453,7 @@ def sqladvisorcheck(request):
         verbose = 1
 
     # 取出主库的连接信息
-    cluster_info = MasterConfig.objects.get(cluster_name=clusterName)
+    cluster_info = Instance.objects.get(cluster_name=clusterName)
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = SysConfig().sys_config.get('sqladvisor')

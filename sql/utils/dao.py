@@ -1,28 +1,54 @@
 # -*- coding: UTF-8 -*- 
 
 import MySQLdb
+from sql.utils.aes_decryptor import Prpcrypt
+from sql.models import Instance, SlaveConfig
 import logging
-from django.db import connection
+
+prpCryptor = Prpcrypt()
+
 logger = logging.getLogger('default')
 
 
 class Dao(object):
-    _CHART_DAYS = 90
+    def __init__(self, instance_name=None, is_master=None, **kwargs):
+        if instance_name:
+            if is_master:
+                try:
+                    instance_info = Instance.objects.get(cluster_name=instance_name)
+                    self.host = instance_info.master_host
+                    self.port = instance_info.master_port
+                    self.user = instance_info.master_user
+                    self.password = prpCryptor.decrypt(instance_info.master_password)
+                except Exception:
+                    raise Exception('找不到对应的主库配置信息，请配置')
+            else:
+                try:
+                    instance_info = SlaveConfig.objects.get(cluster_name=instance_name)
+                    self.host = instance_info.slave_host
+                    self.port = instance_info.slave_port
+                    self.user = instance_info.slave_user
+                    self.password = prpCryptor.decrypt(instance_info.slave_password)
+                except Exception:
+                    raise Exception('找不到对应的从库配置信息，请配置')
+        else:
+            self.host = kwargs.get('host', '')
+            self.port = kwargs.get('port', 0)
+            self.user = kwargs.get('user', '')
+            self.password = kwargs.get('password', '')
 
     # 连进指定的mysql实例里，读取所有databases并返回
-    def getAlldbByCluster(self, masterHost, masterPort, masterUser, masterPassword):
-        listDb = []
+    def getAlldbByCluster(self):
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword,
-                                   charset='utf8')
+            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, charset='utf8')
             cursor = conn.cursor()
             sql = "show databases"
-            n = cursor.execute(sql)
-            listDb = [row[0] for row in cursor.fetchall()
-                      if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test')]
+            cursor.execute(sql)
+            db_list = [row[0] for row in cursor.fetchall()
+                       if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test')]
         except MySQLdb.Warning as w:
             raise Exception(w)
         except MySQLdb.Error as e:
@@ -33,23 +59,20 @@ class Dao(object):
             if conn is not None:
                 conn.commit()
                 conn.close()
-        return listDb
+        return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
-    def getAllTableByDb(self, masterHost, masterPort, masterUser, masterPassword, dbName):
-        listTb = []
+    def getAllTableByDb(self, db_name):
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
+            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
             cursor = conn.cursor()
             sql = "show tables"
-            n = cursor.execute(sql)
-            listTb = [row[0] for row in cursor.fetchall()
-                      if row[0] not in (
-                          'test')]
+            cursor.execute(sql)
+            tb_list = [row[0] for row in cursor.fetchall() if row[0] not in ['test']]
         except MySQLdb.Warning as w:
             raise Exception(w)
         except MySQLdb.Error as e:
@@ -60,22 +83,21 @@ class Dao(object):
             if conn is not None:
                 conn.commit()
                 conn.close()
-        return listTb
+        return tb_list
 
     # 连进指定的mysql实例里，读取所有Columns并返回
-    def getAllColumnsByTb(self, masterHost, masterPort, masterUser, masterPassword, dbName, tbName):
-        listCol = []
+    def getAllColumnsByTb(self, db_name, tb_name):
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
+            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
             cursor = conn.cursor()
             sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='%s' AND TABLE_NAME='%s';" % (
-                dbName, tbName)
-            n = cursor.execute(sql)
-            listCol = [row[0] for row in cursor.fetchall()]
+                db_name, tb_name)
+            cursor.execute(sql)
+            col_list = [row[0] for row in cursor.fetchall()]
         except MySQLdb.Warning as w:
             raise Exception(w)
         except MySQLdb.Error as e:
@@ -86,16 +108,16 @@ class Dao(object):
             if conn is not None:
                 conn.commit()
                 conn.close()
-        return listCol
+        return col_list
 
     # 连进指定的mysql实例里，执行sql并返回
-    def mysql_query(self, masterHost, masterPort, masterUser, masterPassword, dbName, sql, limit_num=0):
+    def mysql_query(self, db_name, sql, limit_num=0):
         result = {'column_list': [], 'rows': [], 'effect_row': 0}
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
+            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
@@ -109,7 +131,6 @@ class Dao(object):
             if fields:
                 for i in fields:
                     column_list.append(i[0])
-            result = {}
             result['column_list'] = column_list
             result['rows'] = rows
             result['effect_row'] = effect_row
@@ -127,18 +148,18 @@ class Dao(object):
                 try:
                     conn.rollback()
                     conn.close()
-                except:
+                except Exception:
                     conn.close()
         return result
 
     # 连进指定的mysql实例里，执行sql并返回
-    def mysql_execute(self, masterHost, masterPort, masterUser, masterPassword, dbName, sql):
+    def mysql_execute(self, db_name, sql):
         result = {}
         conn = None
         cursor = None
 
         try:
-            conn = MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, db=dbName,
+            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
@@ -157,20 +178,4 @@ class Dao(object):
             elif cursor is not None:
                 cursor.close()
                 conn.close()
-        return result
-
-    def getWorkChartsByMonth(self):
-        cursor = connection.cursor()
-        sql = "select date_format(create_time, '%%m-%%d'),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by date_format(create_time, '%%m-%%d') order by 1 asc;" % (
-            Dao._CHART_DAYS)
-        cursor.execute(sql)
-        result = cursor.fetchall()
-        return result
-
-    def getWorkChartsByPerson(self):
-        cursor = connection.cursor()
-        sql = "select engineer, count(*) as cnt from sql_workflow where create_time>=date_add(now(),interval -%s day) group by engineer order by cnt desc limit 50;" % (
-            Dao._CHART_DAYS)
-        cursor.execute(sql)
-        result = cursor.fetchall()
         return result

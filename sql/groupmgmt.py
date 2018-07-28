@@ -7,7 +7,7 @@ from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.models import SqlGroup, GroupRelations, Users, MasterConfig, SlaveConfig
+from sql.models import SqlGroup, GroupRelations, Users, Instance, SlaveConfig
 from sql.utils.permission import superuser_required
 
 import logging
@@ -86,8 +86,8 @@ def unassociated_objects(request):
                                                                 object_name=F('display')
                                                                 ).values('object_id', 'object_name')
     elif object_type == 2:
-        unassociated_objects = MasterConfig.objects.exclude(pk__in=associated_object_ids
-                                                            ).annotate(object_id=F('pk'),
+        unassociated_objects = Instance.objects.exclude(pk__in=associated_object_ids
+                                                        ).annotate(object_id=F('pk'),
                                                                        object_name=F('cluster_name')
                                                                        ).values('object_id', 'object_name')
     elif object_type == 3:

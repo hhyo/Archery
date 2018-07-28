@@ -35,6 +35,8 @@ urlpatterns = [
     path('charts/', charts.pyecharts),
     path('group/', views.group),
     path('grouprelations/<str:group_name>/', views.groupmgmt),
+    path('instance/', views.instance),
+    path('instancedbuser/<str:instance_name>/', views.instance),
     path('config/', views.config),
 
     path('authenticate/', views_ajax.authenticateEntry),
@@ -55,6 +57,7 @@ urlpatterns = [
     path('group/auditors/', groupmgmt.auditors),
     path('group/changeauditors/', groupmgmt.changeauditors),
 
+    path('instance/list/', instance.lists),
     path('instance/getdbNameList/', instance.getdbNameList),
     path('instance/getTableNameList/', instance.getTableNameList),
     path('instance/getColumnNameList/', instance.getColumnNameList),

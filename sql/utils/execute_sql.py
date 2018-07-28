@@ -24,17 +24,10 @@ logger = logging.getLogger('default')
 # SQL工单跳过inception执行回调
 def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    # 获取审核人
-    reviewMan = workflowDetail.review_man
-
-    # 获取实例连接信息
-    masterInfo = getMasterConnStr(clusterName)
     try:
         # 执行sql
         t_start = time.time()
-        execute_result = Dao().mysql_execute(masterInfo['masterHost'], masterInfo['masterPort'],
-                                             masterInfo['masterUser'],
-                                             masterInfo['masterPassword'], db_name, sql_content)
+        execute_result = Dao(instance_name=clusterName, is_master=True).mysql_execute(db_name, sql_content)
         t_end = time.time()
         execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
         execute_result['execute_time'] = execute_time + 'sec'
@@ -64,9 +57,6 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
 # SQL工单执行回调
 def execute_call_back(workflowId, clusterName, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    # 获取审核人
-    reviewMan = workflowDetail.review_man
-
     dictConn = getMasterConnStr(clusterName)
     try:
         # 交给inception先split，再执行

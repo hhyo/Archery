@@ -3,17 +3,30 @@
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline">
-        <div class="form-group ">
-            <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/sqlgroup/add/'">
+        <div class="form-group bootstrap-select ">
+            <select id="is_master" class="dropdown-menu-right selectpicker ">
+                <option value=1 selected="selected">主库</option>
+                <option value=0>从库</option>
+            </select>
+        </div>
+        <div id="div-master" class="form-group " style="display: none">
+            <button id="btn_add_master" type="button" class="btn btn-default"
+                    onclick="window.location.href='/admin/sql/masterconfig/add/'">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加组
+                添加主库实例
+            </button>
+        </div>
+        <div id="div-slave" class="form-group " style="display: none">
+            <button id="btn_add_slave" type="button" class="btn btn-default"
+                    onclick="window.location.href='/admin/sql/masterconfig/add/'">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                添加从库实例
             </button>
         </div>
     </div>
     <!-- 表格-->
     <div class="table-responsive">
-        <table id="group-list" data-toggle="table" class="table table-striped table-hover"
+        <table id="instance-list" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
@@ -25,13 +38,13 @@
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
         //获取列表
-        function grouplist() {
+        function instancelist() {
             //采取异步请求
             //初始化table
-            $('#group-list').bootstrapTable('destroy').bootstrapTable({
+            $('#instance-list').bootstrapTable('destroy').bootstrapTable({
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/group/group/",
+                url: "/instance/list/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -43,7 +56,7 @@
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
-                    fileName: 'group'  //文件名称设置
+                    fileName: 'instance'  //文件名称设置
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -64,28 +77,45 @@
                         return {
                             limit: params.limit,
                             offset: params.offset,
-                            search: params.search
+                            search: params.search,
+                            is_master: parseInt($("#is_master").val())
                         }
                     },
-                columns: [{
-                    title: 'ID',
-                    field: 'group_id'
-                }, {
-                    title: '组名称',
-                    field: 'group_name',
-                    formatter: function (value, row, index) {
-                        return "<a href=\"/admin/sql/sqlgroup/" + row.group_id + "/change/\">" + value + "</a>"
-                    }
-                }, {
-                    title: '钉钉webhook地址',
-                    field: 'ding_webhook'
-                }, {
-                    title: '关联对象',
-                    field: '',
-                    formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_name + "/'\">管理</button>\n"
-                    }
-                }],
+                columns: [
+                    {
+                        title: 'ID',
+                        field: 'id'
+                    }, {
+                        title: '实例名称',
+                        field: 'name',
+                        formatter: function (value, row, index) {
+                            if ($("#is_master").val() === '1') {
+                                return "<a href=\"/admin/sql/masterconfig/" + row.id + "/change/\">" + value + "</a>"
+
+                            }
+                            else {
+                                return "<a href=\"/admin/sql/slaveconfig/" + row.id + "/change/\">" + value + "</a>"
+                            }
+                        }
+                    }, {
+                        title: 'HOST',
+                        field: 'host'
+                    }, {
+                        title: 'PORT',
+                        field: 'port'
+                    }, {
+                        title: 'USER',
+                        field: 'user'
+                    }, {
+                        title: '创建时间',
+                        field: 'create_time'
+                    }, {
+                        title: '用户管理',
+                        field: '',
+                        formatter: function (value, row, index) {
+                            return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/instance/dbuser/" + row.group_name + "/'\">管理</button>\n"
+                        }
+                    }],
                 onLoadSuccess: function () {
                 },
                 onLoadError: function () {
@@ -99,9 +129,22 @@
 
         }
 
+        //状态筛选变动自动刷新
+        $("#is_master").change(function () {
+            instancelist();
+            if ($("#is_master").val() === '1') {
+                $("#div-master").show();
+                $("#div-slave").hide()
+            }
+            else {
+                $("#div-master").hide();
+                $("#div-slave").show()
+            }
+        });
+
         //初始化数据
         $(document).ready(function () {
-            grouplist();
+            $("#is_master").trigger("change")
         });
     </script>
 {% endblock %}

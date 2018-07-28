@@ -4,19 +4,15 @@ from django.contrib.auth.decorators import permission_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.config import SysConfig
-from .models import MasterConfig, AliyunRdsConfig
+from .models import AliyunRdsConfig
 
 if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
     from .aliyun_rds import process_status as aliyun_process_status, \
         create_kill_session as aliyun_create_kill_session, kill_session as aliyun_kill_session, \
         sapce_status as aliyun_sapce_status
-
-dao = Dao()
-prpCryptor = Prpcrypt()
 
 
 # 问题诊断--进程列表
@@ -34,15 +30,13 @@ def process(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         if command_type == 'All':
             sql = base_sql + ";"
         elif command_type == 'Not Sleep':
             sql = "{} where command<>'Sleep';".format(base_sql)
         else:
             sql = "{} where command= '{}';".format(base_sql, command_type)
-        processlist = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,
-                                      prpCryptor.decrypt(master_info.master_password), 'information_schema', sql)
+        processlist = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
         column_list = processlist['column_list']
         rows = []
         for row in processlist['rows']:
@@ -72,11 +66,9 @@ def create_kill_session(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         ThreadIDs = ThreadIDs.replace('[', '').replace(']', '')
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(ThreadIDs)
-        all_kill_sql = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,
-                                       prpCryptor.decrypt(master_info.master_password), 'information_schema', sql)
+        all_kill_sql = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
         kill_sql = ''
         for row in all_kill_sql['rows']:
             kill_sql = kill_sql + row[0]
@@ -101,10 +93,8 @@ def kill_session(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         kill_sql = request_params
-        dao.mysql_execute(master_info.master_host, master_info.master_port, master_info.master_user,
-                          prpCryptor.decrypt(master_info.master_password), 'information_schema', kill_sql)
+        Dao(instance_name=cluster_name, is_master=True).mysql_execute('information_schema', kill_sql)
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -124,7 +114,6 @@ def tablesapce(request):
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
-        master_info = MasterConfig.objects.get(cluster_name=cluster_name)
         sql = '''
         SELECT
           table_schema,
@@ -140,8 +129,7 @@ def tablesapce(request):
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
         LIMIT 14;'''.format(cluster_name)
-        table_space = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,
-                                      prpCryptor.decrypt(master_info.master_password), 'information_schema', sql)
+        table_space = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
         column_list = table_space['column_list']
         rows = []
         for row in table_space['rows']:
@@ -162,7 +150,6 @@ def tablesapce(request):
 @permission_required('sql.trxandlocks_view', raise_exception=True)
 def trxandlocks(request):
     cluster_name = request.POST.get('cluster_name')
-    master_info = MasterConfig.objects.get(cluster_name=cluster_name)
     sql = '''
     SELECT
       rtrx.`trx_state`                                                        AS "等待的状态",
@@ -191,8 +178,7 @@ def trxandlocks(request):
           AND lw.requesting_trx_id = rtrx.trx_id
           AND lw.blocking_trx_id = trx.trx_id;'''
 
-    trxandlocks = dao.mysql_query(master_info.master_host, master_info.master_port, master_info.master_user,
-                                  prpCryptor.decrypt(master_info.master_password), 'information_schema', sql)
+    trxandlocks = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
     result = {'status': 0, 'msg': 'ok', 'data': trxandlocks}
 
     # 返回查询结果

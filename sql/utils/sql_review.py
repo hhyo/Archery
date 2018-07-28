@@ -1,7 +1,7 @@
 import re
 
 from sql.const import Const
-from sql.models import MasterConfig, SqlWorkflow
+from sql.models import Instance, SqlWorkflow
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.config import SysConfig
 from sql.utils.group import user_groups
@@ -17,7 +17,7 @@ def getDetailUrl(request):
 
 # 根据实例名获取主库连接字符串，并封装成一个dict
 def getMasterConnStr(clusterName):
-    listMasters = MasterConfig.objects.filter(cluster_name=clusterName)
+    listMasters = Instance.objects.filter(cluster_name=clusterName)
 
     masterHost = listMasters[0].master_host
     masterPort = listMasters[0].master_port

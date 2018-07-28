@@ -19,13 +19,12 @@ from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from .const import WorkflowDict
-from .models import MasterConfig, SlaveConfig, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
+from .models import Instance, SlaveConfig, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from sql.utils.config import SysConfig
-from sql.utils.group import user_slaves
+from sql.utils.group import user_slaves, user_groups
 
-dao = Dao()
 prpCryptor = Prpcrypt()
 datamasking = Masking()
 workflowOb = Workflow()
@@ -184,28 +183,37 @@ def getqueryapplylist(request):
 
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
     if user.is_superuser:
-        applylist = QueryPrivilegesApply.objects.all().filter(
+        lists = QueryPrivilegesApply.objects.all().filter(
             Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[
-                    offset:limit].values(
+                offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_display', 'status', 'create_time', 'group_name'
         )
-        applylistCount = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
-    else:
-        applylist = QueryPrivilegesApply.objects.filter(
-            Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
+        count = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
+    elif user.has_perm('sql.query_review'):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        lists = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
             Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
             'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_display', 'status', 'create_time', 'group_name'
         )
-        applylistCount = QueryPrivilegesApply.objects.filter(
-            Q(user_name=user.username) | Q(audit_users__contains=user.username)).filter(
+        count = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
+            Q(title__contains=search) | Q(user_display__contains=search)).count()
+    else:
+        lists = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
+            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
+            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'user_display', 'status', 'create_time', 'group_name'
+        )
+        count = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
             Q(title__contains=search) | Q(user_display__contains=search)).count()
 
     # QuerySet 序列化
-    rows = [row for row in applylist]
+    rows = [row for row in lists]
 
-    result = {"total": applylistCount, "rows": rows}
+    result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
@@ -338,8 +346,7 @@ def getuserprivileges(request):
     if search is None:
         search = ''
 
-    # 判断权限，除了管理员外其他人只能查看自己的权限信息
-    result = {'status': 0, 'msg': 'ok', 'data': []}
+    # 判断权限，除了管理员外其他人只能查看自己的权限信息，
     user = request.user
 
     # 获取用户的权限数据
@@ -435,7 +442,7 @@ def queryprivaudit(request):
         with transaction.atomic():
             # 获取audit_id
             audit_id = Workflow.auditinfobyworkflow_id(workflow_id=apply_id,
-                                                         workflow_type=WorkflowDict.workflow_type['query']).audit_id
+                                                       workflow_type=WorkflowDict.workflow_type['query']).audit_id
 
             # 调用工作流接口审核
             auditresult = workflowOb.auditworkflow(request, audit_id, audit_status, user.username, audit_remark)
@@ -520,8 +527,7 @@ def query(request):
 
     # 执行查询语句,统计执行时间
     t_start = time.time()
-    sql_result = dao.mysql_query(slave_info.slave_host, slave_info.slave_port, slave_info.slave_user,
-                                 prpCryptor.decrypt(slave_info.slave_password), str(dbName), sqlContent, limit_num)
+    sql_result = Dao(instance_name=cluster_name, is_master=False).mysql_query(str(dbName), sqlContent, limit_num)
     t_end = time.time()
     cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
@@ -647,12 +653,11 @@ def explain(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,按照分号截取第一条有效sql执行
-    masterInfo = MasterConfig.objects.get(cluster_name=clusterName)
+    masterInfo = Instance.objects.get(cluster_name=clusterName)
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 执行获取执行计划语句
-    sql_result = dao.mysql_query(masterInfo.master_host, masterInfo.master_port, masterInfo.master_user,
-                                 prpCryptor.decrypt(masterInfo.master_password), str(dbName), sqlContent)
+    sql_result = Dao(instance_name=clusterName, is_master=False).mysql_query(str(dbName), sqlContent)
 
     finalResult['data'] = sql_result
 
