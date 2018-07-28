@@ -22,12 +22,12 @@ from sqlparse.tokens import Keyword, DML
 @csrf_exempt
 @permission_required('sql.optimize_sqltuning', raise_exception=True)
 def tuning(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     sqltext = request.POST.get('sql_content')
     ses_status = request.POST.get('ses_status')
 
-    sql_tunning = SqlTuning(instance_name=cluster_name, db_name=db_name, sqltext=sqltext)
+    sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
 
     basic_information = sql_tunning.basic_information()
     sys_parameter = sql_tunning.sys_parameter()
@@ -63,7 +63,7 @@ def tuning(request):
 
 class SqlTuning(object):
     def __init__(self, instance_name, db_name, sqltext):
-        self.dao = Dao(instance_name=instance_name, is_master=True)
+        self.dao = Dao(instance_name=instance_name)
         self.db_name = db_name
         self.sqltext = sqltext
         self.sql_variable = '''

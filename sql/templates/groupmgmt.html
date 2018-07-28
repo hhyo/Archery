@@ -7,9 +7,7 @@
             <select id="type" class="dropdown-menu-right selectpicker ">
                 <option value="" selected="selected">全部</option>
                 <option value=0>用户</option>
-                {#                <option value=1>角色</option>#}
-                <option value=2>主库</option>
-                <option value=3>从库</option>
+                <option value=1>实例</option>
             </select>
         </div>
         <div class="form-group ">
@@ -45,9 +43,7 @@
                                 data-name="关联对象类型" data-placeholder="请选择关联对象类型:" data-live-search="true" required>
                             <option value="is-empty" disabled="" selected="selected">请选择关联对象类型:</option>
                             <option value=0>用户</option>
-                            {#                <option value=1>角色</option>#}
-                            <option value=2>主库</option>
-                            <option value=3>从库</option>
+                            <option value=1>实例</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -131,24 +127,33 @@
                                 return "用户";
                                 break;
                             case 1:
-                                return "角色";
-                                break;
-                            case 2:
-                                return "主库";
-                                break;
-                            case 3:
-                                return "从库";
+                                return "实例";
                                 break;
                             default:
                                 return "未知"
                         }
                     }
                 }, {
-                    title: '关联对象',
-                    field: 'object_name'
+                    title: '关联对象描述',
+                    field: 'object_name',
+                    formatter: function (value, row, index) {
+                        switch (row.object_type) {
+                            case 0:
+                                return "<a href=\"/admin/sql/users/" + row.object_id + "/change/\">" + value + "</a>";
+                                break;
+                            case 1:
+                                return "<a href=\"/admin/sql/instance/" + row.object_id + "/change/\">" + value + "</a>";
+                                break;
+                            default:
+                                return "未知"
+                        }
+                    }
                 }, {
                     title: '组名称',
                     field: 'group_name'
+                }, {
+                    title: '关联时间',
+                    field: 'create_time'
                 }, {
                     title: '操作',
                     field: '',
@@ -195,7 +200,7 @@
                         var result = data.rows;
                         $("#object_info").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i]['object_id'] + "," +  result[i]['object_name'] + "\">" + result[i]['object_name']  + "</option>";
+                            var name = "<option value=\"" + result[i]['object_id'] + "," + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
                             $("#object_info").append(name);
                         }
                         $('#object_info').selectpicker('render');

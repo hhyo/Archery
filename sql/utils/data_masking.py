@@ -9,11 +9,11 @@ inceptionDao = InceptionDao()
 
 class Masking(object):
     # 脱敏数据
-    def data_masking(self, cluster_name, db_name, sql, sql_result):
+    def data_masking(self, instance_name, db_name, sql, sql_result):
         result = {'status': 0, 'msg': 'ok', 'data': []}
         # 通过inception获取语法树,并进行解析
         try:
-            print_info = self.query_tree(sql, cluster_name, db_name)
+            print_info = self.query_tree(sql, instance_name, db_name)
         except Exception as msg:
             result['status'] = 1
             result['msg'] = str(msg)
@@ -29,7 +29,7 @@ class Masking(object):
             query_tree = print_info['query_tree']
             # 获取实例所属环境,获取命中脱敏规则的列数据
             try:
-                table_hit_columns, hit_columns = self.analy_query_tree(query_tree, cluster_name)
+                table_hit_columns, hit_columns = self.analy_query_tree(query_tree, instance_name)
             except Exception as msg:
                 result['status'] = 2
                 result['msg'] = 'inception语法树解析表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
@@ -67,8 +67,8 @@ class Masking(object):
         return result
 
     # 通过inception获取语法树
-    def query_tree(self, sqlContent, cluster_name, dbName):
-        print_info = inceptionDao.query_print(sqlContent, cluster_name, dbName)
+    def query_tree(self, sqlContent, instance_name, dbName):
+        print_info = inceptionDao.query_print(sqlContent, instance_name, dbName)
         if print_info:
             id = print_info[0][0]
             statement = print_info[0][1]
@@ -89,10 +89,10 @@ class Masking(object):
             return None
 
     # 解析语法树，获取语句涉及的表，用于查询权限限制
-    def query_table_ref(self, sqlContent, cluster_name, dbName):
+    def query_table_ref(self, sqlContent, instance_name, dbName):
         result = {'status': 0, 'msg': 'ok', 'data': []}
         try:
-            print_info = self.query_tree(sqlContent, cluster_name, dbName)
+            print_info = self.query_tree(sqlContent, instance_name, dbName)
         except Exception as msg:
             result['status'] = 1
             result['msg'] = str(msg)
@@ -125,7 +125,7 @@ class Masking(object):
         return result
 
     # 解析query_tree,获取语句信息,并返回命中脱敏规则的列信息
-    def analy_query_tree(self, query_tree, cluster_name):
+    def analy_query_tree(self, query_tree, instance_name):
         # 处理JSONDecodeError: Expecting property name enclosed in double quotes
         # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
         query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", query_tree)
@@ -154,7 +154,7 @@ class Masking(object):
             # 如果发现存在field='*',则遍历所有表,找出所有的命中字段
             if '*' in select_index:
                 for table in table_ref:
-                    hit_columns_info = self.hit_table(DataMaskingColumnsOb, cluster_name, table['db'],
+                    hit_columns_info = self.hit_table(DataMaskingColumnsOb, instance_name, table['db'],
                                                       table['table'])
                     table_hit_columns.extend(hit_columns_info)
                 # [*]
@@ -170,7 +170,7 @@ class Masking(object):
                                 columns.append(item)
 
                     for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, cluster_name, column['db'],
+                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
                                                    column['table'], column['field'])
                         if hit_info['is_hit']:
                             hit_info['index'] = column['index']
@@ -185,7 +185,7 @@ class Masking(object):
                                 columns.append(item)
 
                     for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, cluster_name, column['db'],
+                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
                                                    column['table'], column['field'])
                         if hit_info['is_hit']:
                             hit_info['index'] = column['index']
@@ -220,7 +220,7 @@ class Masking(object):
                                 columns.append(item)
 
                     for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, cluster_name, column['db'],
+                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
                                                    column['table'], column['field'])
                         if hit_info['is_hit']:
                             hit_info['index'] = column['index']
@@ -239,7 +239,7 @@ class Masking(object):
                             columns.append(item)
 
                 for column in columns:
-                    hit_info = self.hit_column(DataMaskingColumnsOb, cluster_name, column['db'], column['table'],
+                    hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'], column['table'],
                                                column['field'])
                     if hit_info['is_hit']:
                         hit_info['index'] = column['index']
@@ -247,12 +247,12 @@ class Masking(object):
         return table_hit_columns, hit_columns
 
     # 判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型
-    def hit_column(self, DataMaskingColumnsOb, cluster_name, table_schema, table_name, column_name):
-        column_info = DataMaskingColumnsOb.filter(cluster_name=cluster_name, table_schema=table_schema,
+    def hit_column(self, DataMaskingColumnsOb, instance_name, table_schema, table_name, column_name):
+        column_info = DataMaskingColumnsOb.filter(instance_name=instance_name, table_schema=table_schema,
                                                   table_name=table_name, column_name=column_name, active=1)
 
         hit_column_info = {}
-        hit_column_info['cluster_name'] = cluster_name
+        hit_column_info['instance_name'] = instance_name
         hit_column_info['table_schema'] = table_schema
         hit_column_info['table_name'] = table_name
         hit_column_info['column_name'] = column_name
@@ -267,15 +267,15 @@ class Masking(object):
         return hit_column_info
 
     # 获取表中所有命中脱敏规则的字段信息
-    def hit_table(self, DataMaskingColumnsOb, cluster_name, table_schema, table_name):
-        columns_info = DataMaskingColumnsOb.filter(cluster_name=cluster_name, table_schema=table_schema,
+    def hit_table(self, DataMaskingColumnsOb, instance_name, table_schema, table_name):
+        columns_info = DataMaskingColumnsOb.filter(instance_name=instance_name, table_schema=table_schema,
                                                    table_name=table_name, active=1)
 
         # 命中规则
         hit_columns_info = []
         for column in columns_info:
             hit_column_info = {}
-            hit_column_info['cluster_name'] = cluster_name
+            hit_column_info['instance_name'] = instance_name
             hit_column_info['table_schema'] = table_schema
             hit_column_info['table_name'] = table_name
             hit_column_info['is_hit'] = True

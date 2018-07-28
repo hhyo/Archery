@@ -2,7 +2,7 @@
 
 import MySQLdb
 from sql.utils.aes_decryptor import Prpcrypt
-from sql.models import Instance, SlaveConfig
+from sql.models import Instance
 import logging
 
 prpCryptor = Prpcrypt()
@@ -11,26 +11,16 @@ logger = logging.getLogger('default')
 
 
 class Dao(object):
-    def __init__(self, instance_name=None, is_master=None, **kwargs):
+    def __init__(self, instance_name=None, **kwargs):
         if instance_name:
-            if is_master:
-                try:
-                    instance_info = Instance.objects.get(cluster_name=instance_name)
-                    self.host = instance_info.master_host
-                    self.port = instance_info.master_port
-                    self.user = instance_info.master_user
-                    self.password = prpCryptor.decrypt(instance_info.master_password)
-                except Exception:
-                    raise Exception('找不到对应的主库配置信息，请配置')
-            else:
-                try:
-                    instance_info = SlaveConfig.objects.get(cluster_name=instance_name)
-                    self.host = instance_info.slave_host
-                    self.port = instance_info.slave_port
-                    self.user = instance_info.slave_user
-                    self.password = prpCryptor.decrypt(instance_info.slave_password)
-                except Exception:
-                    raise Exception('找不到对应的从库配置信息，请配置')
+            try:
+                instance_info = Instance.objects.get(instance_name=instance_name)
+                self.host = instance_info.host
+                self.port = int(instance_info.port)
+                self.user = instance_info.user
+                self.password = prpCryptor.decrypt(instance_info.password)
+            except Exception:
+                raise Exception('找不到对应的实例配置信息，请配置')
         else:
             self.host = kwargs.get('host', '')
             self.port = kwargs.get('port', 0)

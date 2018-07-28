@@ -42,9 +42,9 @@ class SqlGroup(models.Model):
 
 # 组关系表（用户与组、主库与组等）
 class GroupRelations(models.Model):
-    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (2, '主库'), (3, '从库')))
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
     object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，用户名、主库名、从库名', max_length=100)
+    object_name = models.CharField('关联对象描述，用户名、实例名', max_length=100)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     create_time = models.DateTimeField(auto_now_add=True)
@@ -60,49 +60,29 @@ class GroupRelations(models.Model):
 
 # 各个线上实例配置
 class Instance(models.Model):
-    cluster_name = models.CharField('实例名称', max_length=50, unique=True)
-    master_host = models.CharField('主库地址', max_length=200)
-    master_port = models.IntegerField('主库端口', default=3306)
-    master_user = models.CharField('登录主库的用户名', max_length=100)
-    master_password = models.CharField('登录主库的密码', max_length=300)
+    instance_name = models.CharField('实例名称', max_length=50, unique=True)
+    type = models.CharField('实例类型', max_length=5, choices=(('master', '主库'), ('slave', '从库')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),))
+    host = models.CharField('实例连接', max_length=200)
+    port = models.IntegerField('端口', default=3306)
+    user = models.CharField('用户名', max_length=100)
+    password = models.CharField('密码', max_length=300)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     def __str__(self):
-        return self.cluster_name
+        return self.instance_name
 
     class Meta:
         managed = True
-        db_table = 'sql_master_config'
-        verbose_name = u'主库连接配置'
-        verbose_name_plural = u'主库连接配置'
+        db_table = 'sql_instance'
+        verbose_name = u'实例配置'
+        verbose_name_plural = u'实例配置'
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
-        self.master_password = pc.encrypt(self.master_password)
+        self.password = pc.encrypt(self.password)
         super(Instance, self).save(*args, **kwargs)
-
-
-# 各个线上从库地址
-class SlaveConfig(models.Model):
-    cluster_name = models.CharField('实例名称', max_length=50, unique=True)
-    slave_host = models.CharField('从库地址', max_length=200)
-    slave_port = models.IntegerField('从库端口', default=3306)
-    slave_user = models.CharField('登录从库的用户名', max_length=100)
-    slave_password = models.CharField('登录从库的密码', max_length=300)
-    create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    update_time = models.DateTimeField('更新时间', auto_now=True)
-
-    class Meta:
-        managed = True
-        db_table = 'sql_slave_config'
-        verbose_name = u'查询从库配置'
-        verbose_name_plural = u'查询从库配置'
-
-    def save(self, *args, **kwargs):
-        pc = Prpcrypt()  # 初始化
-        self.slave_password = pc.encrypt(self.slave_password)
-        super(SlaveConfig, self).save(*args, **kwargs)
 
 
 # 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
@@ -112,7 +92,7 @@ class SqlWorkflow(models.Model):
     group_name = models.CharField('组名称', max_length=100)
     engineer = models.CharField('发起人', max_length=50)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
-    review_man = models.CharField('审批权限组列表', max_length=50)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=50)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     status = models.CharField(max_length=50, choices=(
@@ -120,7 +100,7 @@ class SqlWorkflow(models.Model):
         ('定时执行', '定时执行'), ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
-    cluster_name = models.CharField('实例名称', max_length=50)
+    instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=60)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
@@ -149,9 +129,9 @@ class WorkflowAudit(models.Model):
                                         choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
     workflow_title = models.CharField('申请标题', max_length=50)
     workflow_remark = models.CharField('申请备注', default='', max_length=140)
-    audit_users = models.CharField('审批权限组列表', max_length=255)
-    current_audit_user = models.CharField('当前审批权限组', max_length=20)
-    next_audit_user = models.CharField('下级审核人', max_length=20)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
+    current_audit = models.CharField('当前审批权限组', max_length=20)
+    next_audit = models.CharField('下级审核人', max_length=20)
     current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
     create_user = models.CharField('申请人', max_length=20)
     create_user_display = models.CharField('申请人中文名', max_length=50, default='')
@@ -195,7 +175,7 @@ class WorkflowAuditSetting(models.Model):
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
-    audit_users = models.CharField('审批权限组列表', max_length=255)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -218,14 +198,14 @@ class QueryPrivilegesApply(models.Model):
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
-    cluster_name = models.CharField('实例名称', max_length=50)
+    instance_name = models.CharField('实例名称', max_length=50)
     db_list = models.TextField('数据库')
     table_list = models.TextField('表')
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
     status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
-    audit_users = models.CharField('审批权限组列表', max_length=255)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -244,7 +224,7 @@ class QueryPrivileges(models.Model):
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
-    cluster_name = models.CharField('实例名称', max_length=50)
+    instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=200)
     table_name = models.CharField('表', max_length=200)
     valid_date = models.DateField('有效时间')
@@ -266,7 +246,7 @@ class QueryPrivileges(models.Model):
 
 # 记录在线查询sql的日志
 class QueryLog(models.Model):
-    cluster_name = models.CharField('实例名称', max_length=50)
+    instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=30)
     sqllog = models.TextField('执行的sql查询')
     effect_row = models.BigIntegerField('返回行数')
@@ -289,7 +269,7 @@ class DataMaskingColumns(models.Model):
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
-    cluster_name = models.CharField('实例名称', max_length=50)
+    instance_name = models.CharField('实例名称', max_length=50)
     table_schema = models.CharField('字段所在库名', max_length=64)
     table_name = models.CharField('字段所在表名', max_length=64)
     column_name = models.CharField('字段名', max_length=64)
@@ -389,7 +369,7 @@ class Permission(models.Model):
 # 阿里云rds配置信息
 class AliyunRdsConfig(models.Model):
     rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100, unique=True)
-    cluster_name = models.CharField('对应主库实例名称', max_length=50, unique=True)
+    instance_name = models.CharField('对应主库实例名称', max_length=50, unique=True)
 
     def __int__(self):
         return self.rds_dbinstanceid

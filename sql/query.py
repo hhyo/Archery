@@ -19,11 +19,11 @@ from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from .const import WorkflowDict
-from .models import Instance, SlaveConfig, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
+from .models import Instance, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from sql.utils.config import SysConfig
-from sql.utils.group import user_slaves, user_groups
+from sql.utils.group import user_instances, user_groups
 
 prpCryptor = Prpcrypt()
 datamasking = Masking()
@@ -45,7 +45,7 @@ def query_audit_call_back(workflow_id, workflow_status):
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,
                 user_display=apply_queryset.user_display,
-                cluster_name=apply_queryset.cluster_name, db_name=db_name,
+                instance_name=apply_queryset.instance_name, db_name=db_name,
                 table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
                 apply_queryset.db_list.split(',')]
@@ -54,7 +54,7 @@ def query_audit_call_back(workflow_id, workflow_status):
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,
                 user_display=apply_queryset.user_display,
-                cluster_name=apply_queryset.cluster_name, db_name=apply_queryset.db_list,
+                instance_name=apply_queryset.instance_name, db_name=apply_queryset.db_list,
                 table_name=table_name, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for table_name in
                 apply_queryset.table_list.split(',')]
@@ -62,7 +62,7 @@ def query_audit_call_back(workflow_id, workflow_status):
 
 
 # 查询权限校验
-def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
+def query_priv_check(user, instance_name, dbName, sqlContent, limit_num):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
@@ -79,12 +79,12 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
     elif re.match(r"^show\s+create\s+table", sqlContent.lower()):
         tb_name = re.sub('^show\s+create\s+table', '', sqlContent, count=1, flags=0).strip()
         # 先判断是否有整库权限
-        db_privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
+        db_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
                                                        db_name=dbName, priv_type=1,
                                                        valid_date__gte=datetime.datetime.now(), is_deleted=0)
         # 无整库权限再验证表权限
         if len(db_privileges) == 0:
-            tb_privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
+            tb_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
                                                            db_name=dbName, table_name=tb_name, priv_type=2,
                                                            valid_date__gte=datetime.datetime.now(), is_deleted=0)
             if len(tb_privileges) == 0:
@@ -94,13 +94,13 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
     # sql查询, 可以校验到表级权限
     else:
         # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = datamasking.query_table_ref(sqlContent + ';', cluster_name, dbName)
+        table_ref_result = datamasking.query_table_ref(sqlContent + ';', instance_name, dbName)
 
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:
             table_ref = table_ref_result['data']
             # 获取表信息,校验是否拥有全部表查询权限
-            QueryPrivilegesOb = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name)
+            QueryPrivilegesOb = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name)
             # 先判断是否有整库权限
             for table in table_ref:
                 db_privileges = QueryPrivilegesOb.filter(db_name=table['db'], priv_type=1,
@@ -119,7 +119,7 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
         else:
             table_ref = None
             # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
-            privileges = QueryPrivileges.objects.filter(user_name=user.username, cluster_name=cluster_name,
+            privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
                                                         db_name=dbName,
                                                         valid_date__gte=datetime.datetime.now(),
                                                         is_deleted=0)
@@ -137,7 +137,7 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
             db_list = [table_info['db'] for table_info in table_ref]
             table_list = [table_info['table'] for table_info in table_ref]
             user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
-                                                            cluster_name=cluster_name,
+                                                            instance_name=instance_name,
                                                             db_name__in=db_list,
                                                             table_name__in=table_list,
                                                             valid_date__gte=datetime.datetime.now(),
@@ -145,7 +145,7 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
             if user_limit_num is None:
                 # 如果表没获取到则获取涉及库的最小limit限制
                 user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
-                                                                cluster_name=cluster_name,
+                                                                instance_name=instance_name,
                                                                 db_name=dbName,
                                                                 valid_date__gte=datetime.datetime.now(),
                                                                 is_deleted=0).aggregate(Min('limit_num'))[
@@ -153,7 +153,7 @@ def query_priv_check(user, cluster_name, dbName, sqlContent, limit_num):
         else:
             # 如果表没获取到则获取涉及库的最小limit限制
             user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
-                                                            cluster_name=cluster_name,
+                                                            instance_name=instance_name,
                                                             db_name=dbName,
                                                             valid_date__gte=datetime.datetime.now(),
                                                             is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
@@ -186,7 +186,7 @@ def getqueryapplylist(request):
         lists = QueryPrivilegesApply.objects.all().filter(
             Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[
                 offset:limit].values(
-            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_display', 'status', 'create_time', 'group_name'
         )
         count = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
@@ -196,7 +196,7 @@ def getqueryapplylist(request):
         group_ids = [group.group_id for group in group_list]
         lists = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
             Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
-            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_display', 'status', 'create_time', 'group_name'
         )
         count = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
@@ -204,7 +204,7 @@ def getqueryapplylist(request):
     else:
         lists = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
             Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
-            'apply_id', 'title', 'cluster_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
             'user_display', 'status', 'create_time', 'group_name'
         )
         count = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
@@ -224,7 +224,7 @@ def getqueryapplylist(request):
 @permission_required('sql.query_applypriv', raise_exception=True)
 def applyforprivileges(request):
     title = request.POST['title']
-    cluster_name = request.POST['cluster_name']
+    instance_name = request.POST['instance_name']
     group_name = request.POST['group_name']
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
     priv_type = request.POST['priv_type']
@@ -243,18 +243,18 @@ def applyforprivileges(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     if int(priv_type) == 1:
         db_list = request.POST['db_list']
-        if title is None or cluster_name is None or db_list is None or valid_date is None or limit_num is None:
+        if title is None or instance_name is None or db_list is None or valid_date is None or limit_num is None:
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     elif int(priv_type) == 2:
         table_list = request.POST['table_list']
-        if title is None or cluster_name is None or db_name is None or valid_date is None or table_list is None or limit_num is None:
+        if title is None or instance_name is None or db_name is None or valid_date is None or table_list is None or limit_num is None:
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_slaves(request.user).get(cluster_name=cluster_name)
+        user_instances(request.user,'slave').get(instance_name=instance_name)
     except Exception:
         context = {'errMsg': '你所在组未关联该从库！'}
         return render(request, 'error.html', context)
@@ -264,7 +264,7 @@ def applyforprivileges(request):
     if int(priv_type) == 1:
         db_list = db_list.split(',')
         # 检查申请账号是否已拥整个库的查询权限
-        own_dbs = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username,
+        own_dbs = QueryPrivileges.objects.filter(instance_name=instance_name, user_name=user.username,
                                                  db_name__in=db_list,
                                                  valid_date__gte=datetime.datetime.now(), priv_type=1,
                                                  is_deleted=0).values('db_name')
@@ -275,13 +275,13 @@ def applyforprivileges(request):
             for db_name in db_list:
                 if db_name in own_db_list:
                     result['status'] = 1
-                    result['msg'] = '你已拥有' + cluster_name + '实例' + db_name + '库的全部查询权限，不能重复申请'
+                    result['msg'] = '你已拥有' + instance_name + '实例' + db_name + '库的全部查询权限，不能重复申请'
                     return HttpResponse(json.dumps(result), content_type='application/json')
     # 表权限
     elif int(priv_type) == 2:
         table_list = table_list.split(',')
         # 检查申请账号是否已拥有该表的查询权限
-        own_tables = QueryPrivileges.objects.filter(cluster_name=cluster_name, user_name=user.username, db_name=db_name,
+        own_tables = QueryPrivileges.objects.filter(instance_name=instance_name, user_name=user.username, db_name=db_name,
                                                     table_name__in=table_list, valid_date__gte=datetime.datetime.now(),
                                                     priv_type=2, is_deleted=0).values('table_name')
         own_table_list = [table_info['table_name'] for table_info in own_tables]
@@ -291,7 +291,7 @@ def applyforprivileges(request):
             for table_name in table_list:
                 if table_name in own_table_list:
                     result['status'] = 1
-                    result['msg'] = '你已拥有' + cluster_name + '实例' + db_name + '.' + table_name + '表的查询权限，不能重复申请'
+                    result['msg'] = '你已拥有' + instance_name + '实例' + db_name + '.' + table_name + '表的查询权限，不能重复申请'
                     return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 使用事务保持数据一致性
@@ -302,10 +302,10 @@ def applyforprivileges(request):
             applyinfo.title = title
             applyinfo.group_id = group_id
             applyinfo.group_name = group_name
-            applyinfo.audit_users = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['query'])
+            applyinfo.audit_auth_groups = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['query'])
             applyinfo.user_name = user.username
             applyinfo.user_display = user.display
-            applyinfo.cluster_name = cluster_name
+            applyinfo.instance_name = instance_name
             if int(priv_type) == 1:
                 applyinfo.db_list = ','.join(db_list)
                 applyinfo.table_list = ''
@@ -464,7 +464,7 @@ def queryprivaudit(request):
 @csrf_exempt
 @permission_required('sql.query_submit', raise_exception=True)
 def query(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     sqlContent = request.POST.get('sql_content')
     dbName = request.POST.get('db_name')
     limit_num = request.POST.get('limit_num')
@@ -472,7 +472,7 @@ def query(request):
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
 
     # 服务器端参数验证
-    if sqlContent is None or dbName is None or cluster_name is None or limit_num is None:
+    if sqlContent is None or dbName is None or instance_name is None or limit_num is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -503,11 +503,11 @@ def query(request):
             return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,查询只读账号,按照分号截取第一条有效sql执行
-    slave_info = SlaveConfig.objects.get(cluster_name=cluster_name)
+    slave_info = Instance.objects.get(instance_name=instance_name)
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 查询权限校验
-    priv_check_info = query_priv_check(user, cluster_name, dbName, sqlContent, limit_num)
+    priv_check_info = query_priv_check(user, instance_name, dbName, sqlContent, limit_num)
 
     if priv_check_info['status'] == 0:
         limit_num = priv_check_info['data']
@@ -527,7 +527,7 @@ def query(request):
 
     # 执行查询语句,统计执行时间
     t_start = time.time()
-    sql_result = Dao(instance_name=cluster_name, is_master=False).mysql_query(str(dbName), sqlContent, limit_num)
+    sql_result = Dao(instance_name=instance_name).mysql_query(str(dbName), sqlContent, limit_num)
     t_end = time.time()
     cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
@@ -539,7 +539,7 @@ def query(request):
         # 仅对查询语句进行脱敏
         if re.match(r"^select", sqlContent.lower()):
             try:
-                masking_result = datamasking.data_masking(cluster_name, dbName, sqlContent, sql_result)
+                masking_result = datamasking.data_masking(instance_name, dbName, sqlContent, sql_result)
             except Exception:
                 if SysConfig().sys_config.get('query_check') == 'true':
                     finalResult['status'] = 1
@@ -565,7 +565,7 @@ def query(request):
         query_log.username = user.username
         query_log.user_display = user.display
         query_log.db_name = dbName
-        query_log.cluster_name = cluster_name
+        query_log.instance_name = instance_name
         query_log.sqllog = sqlContent
         if int(limit_num) == 0:
             limit_num = int(sql_result['effect_row'])
@@ -628,12 +628,12 @@ def querylog(request):
 @permission_required('sql.optimize_sqladvisor', raise_exception=True)
 def explain(request):
     sqlContent = request.POST.get('sql_content')
-    clusterName = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     dbName = request.POST.get('db_name')
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
-    if sqlContent is None or clusterName is None:
+    if sqlContent is None or instance_name is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -653,11 +653,11 @@ def explain(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
     # 取出该实例的连接方式,按照分号截取第一条有效sql执行
-    masterInfo = Instance.objects.get(cluster_name=clusterName)
+    masterInfo = Instance.objects.get(instance_name=instance_name)
     sqlContent = sqlContent.strip().split(';')[0]
 
     # 执行获取执行计划语句
-    sql_result = Dao(instance_name=clusterName, is_master=False).mysql_query(str(dbName), sqlContent)
+    sql_result = Dao(instance_name=instance_name).mysql_query(str(dbName), sqlContent)
 
     finalResult['data'] = sql_result
 

@@ -19,12 +19,12 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 @csrf_exempt
 @permission_required('sql.process_view', raise_exception=True)
 def process(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     command_type = request.POST.get('command_type')
 
     base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             result = aliyun_process_status(request)
         else:
@@ -36,7 +36,7 @@ def process(request):
             sql = "{} where command<>'Sleep';".format(base_sql)
         else:
             sql = "{} where command= '{}';".format(base_sql, command_type)
-        processlist = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
+        processlist = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
         column_list = processlist['column_list']
         rows = []
         for row in processlist['rows']:
@@ -55,12 +55,12 @@ def process(request):
 @csrf_exempt
 @permission_required('sql.process_kill', raise_exception=True)
 def create_kill_session(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     ThreadIDs = request.POST.get('ThreadIDs')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             result = aliyun_create_kill_session(request)
         else:
@@ -68,7 +68,7 @@ def create_kill_session(request):
     else:
         ThreadIDs = ThreadIDs.replace('[', '').replace(']', '')
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(ThreadIDs)
-        all_kill_sql = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
+        all_kill_sql = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
         kill_sql = ''
         for row in all_kill_sql['rows']:
             kill_sql = kill_sql + row[0]
@@ -82,19 +82,19 @@ def create_kill_session(request):
 @csrf_exempt
 @permission_required('sql.process_kill', raise_exception=True)
 def kill_session(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     request_params = request.POST.get('request_params')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             result = aliyun_kill_session(request)
         else:
             raise Exception('未开启rds管理，无法查看rds数据！')
     else:
         kill_sql = request_params
-        Dao(instance_name=cluster_name, is_master=True).mysql_execute('information_schema', kill_sql)
+        Dao(instance_name=instance_name).mysql_execute('information_schema', kill_sql)
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -105,10 +105,10 @@ def kill_session(request):
 @csrf_exempt
 @permission_required('sql.tablespace_view', raise_exception=True)
 def tablesapce(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
 
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             result = aliyun_sapce_status(request)
         else:
@@ -128,8 +128,8 @@ def tablesapce(request):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
-        LIMIT 14;'''.format(cluster_name)
-        table_space = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
+        LIMIT 14;'''.format(instance_name)
+        table_space = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
         column_list = table_space['column_list']
         rows = []
         for row in table_space['rows']:
@@ -149,7 +149,7 @@ def tablesapce(request):
 @csrf_exempt
 @permission_required('sql.trxandlocks_view', raise_exception=True)
 def trxandlocks(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     sql = '''
     SELECT
       rtrx.`trx_state`                                                        AS "等待的状态",
@@ -178,7 +178,7 @@ def trxandlocks(request):
           AND lw.requesting_trx_id = rtrx.trx_id
           AND lw.blocking_trx_id = trx.trx_id;'''
 
-    trxandlocks = Dao(instance_name=cluster_name, is_master=True).mysql_query('information_schema', sql)
+    trxandlocks = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
     result = {'status': 0, 'msg': 'ok', 'data': trxandlocks}
 
     # 返回查询结果

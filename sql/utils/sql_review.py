@@ -16,13 +16,13 @@ def getDetailUrl(request):
 
 
 # 根据实例名获取主库连接字符串，并封装成一个dict
-def getMasterConnStr(clusterName):
-    listMasters = Instance.objects.filter(cluster_name=clusterName)
+def getMasterConnStr(instance_name):
+    listMasters = Instance.objects.filter(instance_name=instance_name)
 
-    masterHost = listMasters[0].master_host
-    masterPort = listMasters[0].master_port
-    masterUser = listMasters[0].master_user
-    masterPassword = Prpcrypt().decrypt(listMasters[0].master_password)
+    masterHost = listMasters[0].host
+    masterPort = listMasters[0].port
+    masterUser = listMasters[0].user
+    masterPassword = Prpcrypt().decrypt(listMasters[0].password)
     dictConn = {'masterHost': masterHost, 'masterPort': masterPort, 'masterUser': masterUser,
                 'masterPassword': masterPassword}
     return dictConn
@@ -32,7 +32,7 @@ def getMasterConnStr(clusterName):
 def is_autoreview(workflowid):
     workflowDetail = SqlWorkflow.objects.get(id=workflowid)
     sql_content = workflowDetail.sql_content
-    cluster_name = workflowDetail.cluster_name
+    instance_name = workflowDetail.instance_name
     db_name = workflowDetail.db_name
     is_manual = workflowDetail.is_manual
 
@@ -54,7 +54,7 @@ def is_autoreview(workflowid):
             break
         if is_autoreview:
             # 更新影响行数加测,单条更新语句影响行数超过指定数量则需要人工审核
-            inception_review = InceptionDao().sqlautoReview(sql_content, cluster_name, db_name)
+            inception_review = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
             for review_result in inception_review:
                 SQL = review_result[5]
                 Affected_rows = review_result[6]

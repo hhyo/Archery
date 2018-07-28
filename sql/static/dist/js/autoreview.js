@@ -1,12 +1,12 @@
 function validate() {
     var result = true;
     var sqlContent = editor.getValue();
-    var clusterName = $("#cluster_name").val();
+    var instance_name = $("#instance_name").val();
     var db_name = $("#db_name").val();
     if (sqlContent === null || sqlContent.trim() === "" || sqlContent == $("#sql_content").attr("placeholder")) {
         alert("SQL内容不能为空！");
         return result = false;
-    } else if (clusterName === null || clusterName == $("#cluster_name").attr("data-placeholder")) {
+    } else if (instance_name === null || instance_name == $("#instance_name").attr("data-placeholder")) {
         alert("请选择实例！");
         return result = false;
     }else if(db_name  === null || db_name == $("#db_name").attr("data-placeholder")){
@@ -40,7 +40,7 @@ function autoreview() {
         dataType: "json",
         data: {
             sql_content: editor.getValue(),
-            cluster_name: $("#cluster_name").val(),
+            instance_name: $("#instance_name").val(),
             db_name: $("#db_name").val()
         },
         complete: function () {

@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from .models import Users, Instance, SlaveConfig, SqlWorkflow, \
+from .models import Users, Instance, SqlWorkflow, \
     DataMaskingColumns, DataMaskingRules, AliyunAccessKey, AliyunRdsConfig, SqlGroup, GroupRelations
 
 
@@ -45,35 +45,31 @@ class GroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
-# 主库配置管理
+# 实例管理
 @admin.register(Instance)
-class MasterConfigAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'create_time')
-    search_fields = ['id', 'cluster_name', 'master_host', 'master_port', 'master_user', 'master_password',
-                     'create_time', 'update_time']
+class InstanceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
+    search_fields = ['instance_name', 'host', 'port', 'user']
+    list_filter = ('db_type', 'type',)
 
 
 # 工单管理
 @admin.register(SqlWorkflow)
 class SqlWorkflowAdmin(admin.ModelAdmin):
-    list_display = ('id', 'workflow_name', 'group_id', 'cluster_name', 'engineer', 'create_time', 'status', 'is_backup')
-    search_fields = ['id', 'workflow_name', 'engineer', 'review_man', 'sql_content']
-
-
-# 查询从库配置
-@admin.register(SlaveConfig)
-class SlaveConfigAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'create_time', 'update_time')
-    search_fields = ['id', 'cluster_name', 'slave_host', 'slave_port', 'slave_user', 'slave_password', ]
+        'id', 'workflow_name', 'group_name', 'instance_name', 'engineer_display', 'create_time', 'status', 'is_backup')
+    search_fields = ['id', 'workflow_name', 'engineer_display', 'sql_content']
+    list_filter = ('group_name', 'instance_name', 'status', 'sql_syntax',)
 
 
 # 脱敏字段页面定义
 @admin.register(DataMaskingColumns)
 class DataMaskingColumnsAdmin(admin.ModelAdmin):
     list_display = (
-        'column_id', 'rule_type', 'active', 'cluster_name', 'table_schema', 'table_name', 'column_name',
+        'column_id', 'rule_type', 'active', 'instance_name', 'table_schema', 'table_name', 'column_name',
         'create_time',)
+    search_fields = ['table_name', 'column_name']
+    list_filter = ('rule_type', 'active', 'instance_name')
 
 
 # 脱敏规则页面定义
@@ -92,4 +88,4 @@ class AliAccessKeyAdmin(admin.ModelAdmin):
 # 阿里云实例配置信息
 @admin.register(AliyunRdsConfig)
 class AliRdsConfigAdmin(admin.ModelAdmin):
-    list_display = ('cluster_name', 'rds_dbinstanceid',)
+    list_display = ('instance_name', 'rds_dbinstanceid',)

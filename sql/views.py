@@ -21,12 +21,12 @@ from sql.utils.permission import superuser_required
 from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
 
 from .models import Users, SqlWorkflow, QueryPrivileges, SqlGroup, \
-    QueryPrivilegesApply, Config, GroupRelations
+    QueryPrivilegesApply, Config
 from sql.utils.workflow import Workflow
 from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
 from sql.utils.sql_review import getDetailUrl, can_execute, can_timingtask, can_cancel
 from .const import Const, WorkflowDict
-from sql.utils.group import user_groups, user_masters, user_slaves
+from sql.utils.group import user_groups, user_instances
 
 import logging
 
@@ -109,24 +109,19 @@ def autoreview(request):
     workflowName = request.POST['workflow_name']
     group_name = request.POST['group_name']
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
-    clusterName = request.POST['cluster_name']
+    instance_name = request.POST['instance_name']
     db_name = request.POST.get('db_name')
     isBackup = request.POST['is_backup']
     notify_users = request.POST.getlist('notify_users')
 
     # 服务器端参数验证
-    if sqlContent is None or workflowName is None or clusterName is None or db_name is None or isBackup is None:
+    if sqlContent is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        GroupRelations.objects.get(group_name=group_name, object_name=clusterName, object_type=2)
-    except Exception:
-        context = {'errMsg': '该组不存在所选主库！'}
-        return render(request, 'error.html', context)
-    try:
-        user_masters(request.user).get(cluster_name=clusterName)
+        user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
         context = {'errMsg': '你所在组未关联该主库！'}
         return render(request, 'error.html', context)
@@ -146,7 +141,7 @@ def autoreview(request):
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sqlContent, clusterName, db_name)
+        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
@@ -192,11 +187,11 @@ def autoreview(request):
             sql_workflow.group_name = group_name
             sql_workflow.engineer = engineer
             sql_workflow.engineer_display = request.user.display
-            sql_workflow.review_man = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
+            sql_workflow.audit_auth_groups = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
             sql_workflow.status = workflowStatus
             sql_workflow.is_backup = isBackup
             sql_workflow.review_content = jsonResult
-            sql_workflow.cluster_name = clusterName
+            sql_workflow.instance_name = instance_name
             sql_workflow.db_name = db_name
             sql_workflow.sql_content = sqlContent
             sql_workflow.execute_result = ''
@@ -347,7 +342,7 @@ def execute(request):
 
     workflowId = int(workflowId)
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    clusterName = workflowDetail.cluster_name
+    instance_name = workflowDetail.instance_name
     db_name = workflowDetail.db_name
     url = getDetailUrl(request) + str(workflowId) + '/'
 
@@ -365,7 +360,7 @@ def execute(request):
     if workflowDetail.is_manual == 0:
         # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
         try:
-            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name,
+            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name,
                                                              db_name,
                                                              isSplit='yes')
         except Exception as msg:
@@ -380,12 +375,12 @@ def execute(request):
             workflowDetail.save()
 
         # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
+        t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
         t.start()
     else:
         # 采取异步回调的方式执行语句，防止出现持续执行中的异常
         t = Thread(target=execute_skipinc_call_back,
-                   args=(workflowId, clusterName, db_name, workflowDetail.sql_content, url))
+                   args=(workflowId, instance_name, db_name, workflowDetail.sql_content, url))
         t.start()
     # 删除定时执行job
     if workflowDetail.status == Const.workflowStatus['timingtask']:
@@ -521,7 +516,7 @@ def charts(request):
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联从库列表
-    listAllClusterName = [slave.cluster_name for slave in user_slaves(request.user)]
+    listAllClusterName = [slave.instance_name for slave in user_instances(request.user, 'slave')]
 
     context = {'listAllClusterName': listAllClusterName}
     return render(request, 'sqlquery.html', context)
@@ -531,9 +526,9 @@ def sqlquery(request):
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
     # 获取用户关联主库列表
-    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
+    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
 
-    context = {'tab': 'slowquery', 'cluster_name_list': cluster_name_list}
+    context = {'tab': 'slowquery', 'instance_name_list': instance_name_list}
     return render(request, 'slowquery.html', context)
 
 
@@ -541,9 +536,9 @@ def slowquery(request):
 @permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
     # 获取用户关联主库列表
-    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
+    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
 
-    context = {'listAllClusterName': cluster_name_list}
+    context = {'listAllClusterName': instance_name_list}
     return render(request, 'sqladvisor.html', context)
 
 
@@ -584,9 +579,9 @@ def queryuserprivileges(request):
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
     # 获取用户关联主库列表
-    cluster_name_list = [master.cluster_name for master in user_masters(request.user)]
+    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
 
-    context = {'tab': 'process', 'cluster_name_list': cluster_name_list}
+    context = {'tab': 'process', 'instance_name_list': instance_name_list}
     return render(request, 'dbdiagnostic.html', context)
 
 

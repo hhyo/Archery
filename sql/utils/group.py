@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Users, Instance, SlaveConfig, SqlGroup, GroupRelations
+from sql.models import Users, Instance, SqlGroup, GroupRelations
 
 
 # 获取用户关联资源组列表
@@ -14,37 +14,20 @@ def user_groups(user):
     return group_list
 
 
-# 获取用户关联主库列表（通过资源组间接关联）
-def user_masters(user):
+# 获取用户实例列表（通过资源组间接关联）
+def user_instances(user, type):
     # 先获取用户关联资源组列表
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
     if user.is_superuser == 1:
-        master_ids = [master['id'] for master in Instance.objects.all().values('id')]
+        instance_ids = [master['id'] for master in Instance.objects.all().values('id')]
     else:
-        # 获取资源组关联的主库列表
-        master_ids = [group['object_id'] for group in
-                      GroupRelations.objects.filter(group_id__in=group_ids, object_type=2).values('object_id')]
-    # 获取主库信息
-    masters = Instance.objects.filter(pk__in=master_ids)
-    return masters
-
-
-# 获取用户关联从库列表（通过资源组间接关联）
-def user_slaves(user):
-    # 先获取用户管理资源组列表
-    group_list = user_groups(user)
-    group_ids = [group.group_id for group in group_list]
-    if user.is_superuser == 1:
-        slave_ids = [slave['id'] for slave in SlaveConfig.objects.all().values('id')]
-
-    else:
-        # 获取资源组关联的主库列表
-        slave_ids = [group['object_id'] for group in
-                     GroupRelations.objects.filter(group_id__in=group_ids, object_type=3).values('object_id')]
-    # 获取主库信息
-    slaves = SlaveConfig.objects.filter(pk__in=slave_ids)
-    return slaves
+        # 获取资源组关联的实例列表
+        instance_ids = [group['object_id'] for group in
+                        GroupRelations.objects.filter(group_id__in=group_ids, object_type=1).values('object_id')]
+    # 获取实例信息
+    instances = Instance.objects.filter(pk__in=instance_ids, type=type)
+    return instances
 
 
 # 获取资源组内关联指定权限组的用户

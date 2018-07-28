@@ -72,7 +72,7 @@ function setDbsCompleteData(result) {
             url: "/getdbNameList/",
             dataType: "json",
             data: {
-                cluster_name: $("#cluster_name").val()
+                instance_name: $("#instance_name").val()
             },
             complete: function () {
             },
@@ -125,7 +125,7 @@ function setTablesCompleteData(result) {
             url: "/getTableNameList/",
             dataType: "json",
             data: {
-                cluster_name: $("#cluster_name").val(),
+                instance_name: $("#instance_name").val(),
                 db_name: $("#db_name").val()
             },
             complete: function () {
@@ -178,10 +178,9 @@ function setColumnsCompleteData(result) {
             url: "/instance/getColumnNameList/",
             dataType: "json",
             data: {
-                cluster_name: $("#cluster_name").val(),
+                instance_name: $("#instance_name").val(),
                 db_name: $("#db_name").val(),
-                tb_name: $("#table_name").val(),
-                is_master: 0
+                tb_name: $("#table_name").val()
             },
             complete: function () {
             },

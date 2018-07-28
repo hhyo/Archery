@@ -5,7 +5,7 @@
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflowDetail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
@@ -57,7 +57,7 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflowDetail.cluster_name }}
+                {{ workflowDetail.instance_name }}
             </td>
             <td>
                 {% if workflowDetail.priv_type == 1 %}

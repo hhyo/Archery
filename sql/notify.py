@@ -25,21 +25,21 @@ def _send(audit_id, msg_type, **kwargs):
     webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
     audit_info = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
-    if audit_info.audit_users == '':
+    if audit_info.audit_auth_groups == '':
         workflow_auditors = '无需审批'
     else:
         try:
             workflow_auditors = '->'.join([Group.objects.get(id=auth_group_id).name for auth_group_id in
-                                           audit_info.audit_users.split(',')])
+                                           audit_info.audit_auth_groups.split(',')])
         except Exception:
-            workflow_auditors = audit_info.audit_users
-    if audit_info.current_audit_user == '-1':
+            workflow_auditors = audit_info.audit_auth_groups
+    if audit_info.current_audit == '-1':
         current_workflow_auditors = None
     else:
         try:
-            current_workflow_auditors = Group.objects.get(id=audit_info.current_audit_user).name
+            current_workflow_auditors = Group.objects.get(id=audit_info.current_audit).name
         except Exception:
-            current_workflow_auditors = audit_info.current_audit_user
+            current_workflow_auditors = audit_info.current_audit
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type['query']:
@@ -69,7 +69,7 @@ def _send(audit_id, msg_type, **kwargs):
     if status == WorkflowDict.workflow_status['audit_wait']:  # 申请阶段
         msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
         # 接收人，发送给该项目组内对应权限组所有的用户
-        auth_group_names = Group.objects.get(id=audit_info.current_audit_user).name
+        auth_group_names = Group.objects.get(id=audit_info.current_audit).name
         msg_email_reciver = [user.email for user in
                              auth_group_users([auth_group_names], audit_info.group_id)]
         # 抄送对象
@@ -107,7 +107,7 @@ def _send(audit_id, msg_type, **kwargs):
         msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
         # 接收人，发送给该项目组内对应权限组所有的用户
         auth_group_names = [Group.objects.get(id=auth_group_id).name for auth_group_id in
-                            audit_info.audit_users.split(',')]
+                            audit_info.audit_auth_groups.split(',')]
         msg_email_reciver = [user.email for user in auth_group_users(auth_group_names, audit_info.group_id)]
         msg_email_cc = []
         msg_content = '''发起人：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(

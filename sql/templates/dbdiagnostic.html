@@ -18,11 +18,11 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
-                <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
+                <select id=instance_name class="form-control selectpicker" name="instance_name_list"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for cluster_name in cluster_name_list %}
-                        <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                    {% for instance_name in instance_name_list %}
+                        <option value="{{ instance_name }}">{{ instance_name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -89,7 +89,7 @@
     <script>
         // 问题诊断--进程列表
         function get_process_list() {
-            if ($("#cluster_name").val()) {
+            if ($("#instance_name").val()) {
                 //采取异步请求
                 //初始化table
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
@@ -139,7 +139,7 @@
                     //请求服务数据时所传参数
                     queryParams: function (params) {
                         return {
-                            cluster_name: $("#cluster_name").val(),
+                            instance_name: $("#instance_name").val(),
                             command_type: $("#command").val()
                         }
                     },
@@ -201,7 +201,7 @@
 
         // 问题诊断--表空间列表
         function get_space_list() {
-            if ($("#cluster_name").val()) {
+            if ($("#instance_name").val()) {
                 //初始化table
                 $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
                     method: 'post',
@@ -235,7 +235,7 @@
                     //请求服务数据时所传参数
                     queryParams: function (params) {
                         return {
-                            cluster_name: $("#cluster_name").val()
+                            instance_name: $("#instance_name").val()
                         }
                     },
                     columns: [{
@@ -291,13 +291,13 @@
 
         // 问题诊断--锁等待列表
         function get_trxandlocks_list() {
-            if ($("#cluster_name").val()) {
+            if ($("#instance_name").val()) {
                 $.ajax({
                     type: "post",
                     url: "/db_diagnostic/trxandlocks/",
                     dataType: "json",
                     data: {
-                        cluster_name: $("#cluster_name").val()
+                        instance_name: $("#instance_name").val()
                     },
                     complete: function () {
                     },
@@ -366,7 +366,7 @@
                     for (var i = 0; i < AllSelections.length; i++) {
                         AllSelectionIds.push(AllSelections[i]['id'])
                     }
-                    var cluster_name = $("#cluster_name").val();
+                    var instance_name = $("#instance_name").val();
 
                     //发送请求构造会话数据
                     $.ajax({
@@ -374,7 +374,7 @@
                         url: "/db_diagnostic/create_kill_session/",
                         dataType: "json",
                         data: {
-                            cluster_name: cluster_name,
+                            instance_name: instance_name,
                             ThreadIDs: JSON.stringify(AllSelectionIds)
                         },
                         traditional: true,
@@ -404,7 +404,7 @@
 
         //终止会话
         function kill_session() {
-            var cluster_name = $("#cluster_name").val();
+            var instance_name = $("#instance_name").val();
             var request_params = $("#request_params").val();
             if (request_params) {
                 //发送请求构造会话数据
@@ -413,7 +413,7 @@
                     url: "/db_diagnostic/kill_session/",
                     dataType: "json",
                     data: {
-                        cluster_name: cluster_name,
+                        instance_name: instance_name,
                         request_params: request_params
                     },
                     traditional: true,
@@ -434,11 +434,11 @@
             }
         }
 
-        //如果已选择cluster_name，进入页面自动填充，并且重置激活id
+        //如果已选择instance_name，进入页面自动填充，并且重置激活id
         $(document).ready(function () {
                 sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
-                if (sessionStorage.getItem('diagnostic_cluster_name')) {
-                    $("#cluster_name").val(sessionStorage.getItem('diagnostic_cluster_name'));
+                if (sessionStorage.getItem('diagnostic_instance_name')) {
+                    $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name'));
                     get_process_list();
                     $("#command-div").show();
                     $("#process-toolbar").show();
@@ -452,7 +452,7 @@
                 var active_li_id = $(e.target).parents().attr('id');
                 sessionStorage.setItem('diagnostic_active_li_id', active_li_id);
                 //当前激活的标签id
-                if ($("#cluster_name").val()) {
+                if ($("#instance_name").val()) {
                     if (active_li_id === 'process_tab') {
                         get_process_list();
                         $("#command-div").show();
@@ -473,8 +473,8 @@
         });
 
         //实例变动时保存实例信息
-        $("#cluster_name").change(function () {
-            sessionStorage.setItem('diagnostic_cluster_name', $("#cluster_name").val());
+        $("#instance_name").change(function () {
+            sessionStorage.setItem('diagnostic_instance_name', $("#instance_name").val());
             var active_li_id = sessionStorage.getItem('diagnostic_active_li_id');
             if (active_li_id === 'process_tab') {
                 get_process_list();

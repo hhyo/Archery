@@ -5,7 +5,7 @@
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflowDetail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitothercluster/">上线其他实例</a>
+        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
     {% endif %}
     {% if is_can_review %}
         <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
@@ -63,7 +63,7 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflowDetail.cluster_name }}
+                {{ workflowDetail.instance_name }}
             </td>
             <td>
                 {{ workflowDetail.db_name }}
@@ -307,7 +307,7 @@
         var editWorkflowNname = "{{ workflowDetail.workflow_name }}";
         var editSqlContent = $("#editSqlContent").val();
         var editGroup = "{{ workflowDetail.group_name }}";
-        var editClustername = "{{ workflowDetail.cluster_name }}";
+        var editClustername = "{{ workflowDetail.instance_name }}";
         var editDbname = "{{ workflowDetail.db_name }}";
         var editIsbackup = "{{ workflowDetail.is_backup }}";
 

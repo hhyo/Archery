@@ -7,7 +7,7 @@ from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.models import SqlGroup, GroupRelations, Users, Instance, SlaveConfig
+from sql.models import SqlGroup, GroupRelations, Users, Instance
 from sql.utils.permission import superuser_required
 
 import logging
@@ -49,29 +49,29 @@ def group(request):
 @csrf_exempt
 def associated_objects(request):
     '''
-    type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
+    type：(0, '用户'), (1, '实例')
     '''
     group_name = request.POST.get('group_name')
     object_type = request.POST.get('type')
 
     if object_type:
         rows = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).values(
-            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type')
+            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
         count = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).count()
     else:
         rows = GroupRelations.objects.filter(group_name=group_name).values(
-            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type')
+            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
         count = GroupRelations.objects.filter(group_name=group_name).count()
     rows = [row for row in rows]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
 
 
 # 获取组未关联对象信息
 @csrf_exempt
 def unassociated_objects(request):
     '''
-    type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
+    type：(0, '用户'), (1, '实例')
     '''
     group_name = request.POST.get('group_name')
     object_type = int(request.POST.get('object_type'))
@@ -85,22 +85,33 @@ def unassociated_objects(request):
                                                      ).annotate(object_id=F('pk'),
                                                                 object_name=F('display')
                                                                 ).values('object_id', 'object_name')
-    elif object_type == 2:
+    elif object_type == 1:
         unassociated_objects = Instance.objects.exclude(pk__in=associated_object_ids
                                                         ).annotate(object_id=F('pk'),
-                                                                       object_name=F('cluster_name')
-                                                                       ).values('object_id', 'object_name')
-    elif object_type == 3:
-        unassociated_objects = SlaveConfig.objects.exclude(pk__in=associated_object_ids
-                                                           ).annotate(object_id=F('pk'),
-                                                                      object_name=F('cluster_name')
-                                                                      ).values('object_id', 'object_name')
+                                                                   object_name=F('instance_name')
+                                                                   ).values('object_id', 'object_name')
     else:
         unassociated_objects = []
 
     rows = [row for row in unassociated_objects]
 
     result = {'status': 0, 'msg': 'ok', "rows": rows, "total": len(rows)}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 获取组关联实例列表
+@csrf_exempt
+def instances(request):
+    group_name = request.POST.get('group_name')
+    type = request.POST.get('type')
+    # 先获取资源组关联所有实例列表
+    instance_ids = [group['object_id'] for group in
+                    GroupRelations.objects.filter(group_name=group_name, object_type=1).values('object_id')]
+
+    # 获取实例信息
+    instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'instance_name')
+    rows = [row for row in instances_ob]
+    result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -164,7 +175,7 @@ def auditors(request):
 @csrf_exempt
 @superuser_required
 def changeauditors(request):
-    auth_groups = request.POST.get('audit_users')
+    auth_groups = request.POST.get('audit_auth_groups')
     group_name = request.POST.get('group_name')
     workflow_type = request.POST.get('workflow_type')
     result = {'status': 0, 'msg': 'ok', 'data': []}

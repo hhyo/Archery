@@ -16,7 +16,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
 
-from sql.utils.group import user_masters, user_groups
+from sql.utils.group import user_instances, user_groups
 from sql.models import Config
 from sql.utils.permission import superuser_required
 from sql.utils.dao import Dao
@@ -148,7 +148,7 @@ def sqlworkflowlist(request):
             workflowlist = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "cluster_name", "db_name",
+                                                            "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
             count = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
@@ -159,7 +159,7 @@ def sqlworkflowlist(request):
             workflowlist = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "cluster_name", "db_name",
+                                                            "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
             count = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
@@ -168,7 +168,7 @@ def sqlworkflowlist(request):
             workflowlist = SqlWorkflow.objects.filter(engineer=user.username).filter(
                 workflow_name__contains=search
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "cluster_name", "db_name",
+                                                            "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
             count = SqlWorkflow.objects.filter(engineer=user.username).filter(
                 workflow_name__contains=search).count()
@@ -177,7 +177,7 @@ def sqlworkflowlist(request):
             workflowlist = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "cluster_name", "db_name",
+                                                            "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
             count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
@@ -191,7 +191,7 @@ def sqlworkflowlist(request):
                                                                                                       "status",
                                                                                                       "is_backup",
                                                                                                       "create_time",
-                                                                                                      "cluster_name",
+                                                                                                      "instance_name",
                                                                                                       "db_name",
                                                                                                       "group_name",
                                                                                                       "sql_syntax")
@@ -204,7 +204,7 @@ def sqlworkflowlist(request):
                                                                                                       "status",
                                                                                                       "is_backup",
                                                                                                       "create_time",
-                                                                                                      "cluster_name",
+                                                                                                      "instance_name",
                                                                                                       "db_name",
                                                                                                       "group_name",
                                                                                                       "sql_syntax")
@@ -227,12 +227,12 @@ def sqlworkflowlist(request):
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
     sqlContent = request.POST.get('sql_content')
-    clusterName = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
 
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
-    if sqlContent is None or clusterName is None or db_name is None:
+    if sqlContent is None or instance_name is None or db_name is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -253,7 +253,7 @@ def simplecheck(request):
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sqlContent, clusterName, db_name)
+        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
     except Exception as e:
         finalResult['status'] = 1
         finalResult['msg'] = str(e)
@@ -392,9 +392,9 @@ def stopOscProgress(request):
     user = request.user
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     try:
-        reviewMan = json.loads(workflowDetail.review_man)
+        reviewMan = json.loads(workflowDetail.audit_auth_groups)
     except ValueError:
-        reviewMan = (workflowDetail.review_man,)
+        reviewMan = (workflowDetail.audit_auth_groups,)
     # 服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     if workflowDetail.status != Const.workflowStatus['executing']:
         context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
@@ -426,13 +426,13 @@ def stopOscProgress(request):
 @permission_required('sql.optimize_sqladvisor', raise_exception=True)
 def sqladvisorcheck(request):
     sqlContent = request.POST.get('sql_content')
-    clusterName = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     dbName = request.POST.get('db_name')
     verbose = request.POST.get('verbose')
     finalResult = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
-    if sqlContent is None or clusterName is None:
+    if sqlContent is None or instance_name is None:
         finalResult['status'] = 1
         finalResult['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
@@ -443,7 +443,7 @@ def sqladvisorcheck(request):
         finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
     try:
-        user_masters(request.user).get(cluster_name=clusterName)
+        user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
         finalResult['status'] = 1
         finalResult['msg'] = '你所在组未关联该主库！'
@@ -453,15 +453,15 @@ def sqladvisorcheck(request):
         verbose = 1
 
     # 取出主库的连接信息
-    cluster_info = Instance.objects.get(cluster_name=clusterName)
+    instance_info = Instance.objects.get(instance_name=instance_name)
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = SysConfig().sys_config.get('sqladvisor')
     sqlContent = sqlContent.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
-            str(cluster_info.master_host), str(cluster_info.master_port), str(cluster_info.master_user),
-            str(prpCryptor.decrypt(cluster_info.master_password), ), str(dbName), verbose, sqlContent),
+            str(instance_info.host), str(instance_info.port), str(instance_info.user),
+            str(prpCryptor.decrypt(instance_info.password), ), str(dbName), verbose, sqlContent),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         stdout, stderr = p.communicate()

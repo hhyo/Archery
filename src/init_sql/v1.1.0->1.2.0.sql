@@ -1,5 +1,67 @@
+-- 主从表合并相关修改
+-- 表名修改
+rename table sql_master_config to sql_instance;
+
+-- 字段定义修改
+alter table sql_instance
+  change cluster_name instance_name varchar(50) NOT NULL ,
+  change master_host host varchar(200) NOT NULL ,
+  change master_port port varchar(200) NOT NULL,
+  change master_user user varchar(200) NOT NULL,
+  change master_password password varchar(200) NOT NULL,
+  add type char(6) NOT NULL after instance_name,
+  add db_type varchar(10) NOT NULL after db_type;
+
+-- 更新信息
+update sql_instance set db_type='mysql',type='master';
+
+-- 从库数据添加到实例信息表（如果原主从实例存在相同实例名的请先修改，并且修改相关关联表的数据）
+insert into sql_instance (instance_name, db_type, type, host, port, user, password, create_time, update_time)
+  select
+    cluster_name,
+    'mysql',
+    'slave',
+    host,
+    port,
+    user,
+    password,
+    create_time,
+    update_time
+  from sql_slave_config;
+
+-- 重新修改资源组实例关联信息，单独一个类型定义实例，不区分主从库
+update sql_group_relations a
+  join sql_instance b on a.object_name = b.instance_name
+set a.object_id = b.id, a.object_type = 1
+where a.object_type in (2, 3)
+
+-- 变更关联字段信息
+alter table sql_workflow change cluster_name instance_name varchar(50) NOT NULL ;
+alter table query_privileges_apply change cluster_name instance_name varchar(50) NOT NULL ;
+alter table query_privileges change cluster_name instance_name varchar(50) NOT NULL ;
+alter table query_log change cluster_name instance_name varchar(50) NOT NULL ;
+alter table data_masking_columns change cluster_name instance_name varchar(50) NOT NULL ;
+alter table aliyun_rds_config change cluster_name instance_name varchar(50) NOT NULL ;
+
+
+
+
+
+-- 权限管理相关修改
 -- 删除角色字段
 alter table sql_users drop role;
+
+-- 变更字段信息
+alter table sql_workflow
+  change review_man audit_auth_groups varchar(255) NOT NULL;
+alter table query_privileges_apply
+  change audit_users audit_auth_groups varchar(255) NOT NULL;
+alter table workflow_audit_setting
+  change audit_users audit_auth_groups varchar(255) NOT NULL;
+alter table workflow_audit
+  change audit_users audit_auth_groups varchar(255) NOT NULL,
+  change current_audit_user  current_audit varchar(20) NOT NULL,
+  change next_audit_user next_audit varchar(20) NOT NULL;
 
 -- 清空权限和权限组数据
 set foreign_key_checks =0;

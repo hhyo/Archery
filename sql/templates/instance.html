@@ -3,24 +3,11 @@
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline">
-        <div class="form-group bootstrap-select ">
-            <select id="is_master" class="dropdown-menu-right selectpicker ">
-                <option value=1 selected="selected">主库</option>
-                <option value=0>从库</option>
-            </select>
-        </div>
-        <div id="div-master" class="form-group " style="display: none">
+        <div class="form-group ">
             <button id="btn_add_master" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/masterconfig/add/'">
+                    onclick="window.location.href='/admin/sql/instance/add/'">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加主库实例
-            </button>
-        </div>
-        <div id="div-slave" class="form-group " style="display: none">
-            <button id="btn_add_slave" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/masterconfig/add/'">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加从库实例
+                添加实例
             </button>
         </div>
     </div>
@@ -77,8 +64,7 @@
                         return {
                             limit: params.limit,
                             offset: params.offset,
-                            search: params.search,
-                            is_master: parseInt($("#is_master").val())
+                            search: params.search
                         }
                     },
                 columns: [
@@ -87,16 +73,16 @@
                         field: 'id'
                     }, {
                         title: '实例名称',
-                        field: 'name',
+                        field: 'instance_name',
                         formatter: function (value, row, index) {
-                            if ($("#is_master").val() === '1') {
-                                return "<a href=\"/admin/sql/masterconfig/" + row.id + "/change/\">" + value + "</a>"
-
-                            }
-                            else {
-                                return "<a href=\"/admin/sql/slaveconfig/" + row.id + "/change/\">" + value + "</a>"
-                            }
+                            return "<a href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
+                    }, {
+                        title: '实例类型',
+                        field: 'db_type'
+                    }, {
+                        title: '主从类型',
+                        field: 'type'
                     }, {
                         title: 'HOST',
                         field: 'host'
@@ -129,22 +115,9 @@
 
         }
 
-        //状态筛选变动自动刷新
-        $("#is_master").change(function () {
-            instancelist();
-            if ($("#is_master").val() === '1') {
-                $("#div-master").show();
-                $("#div-slave").hide()
-            }
-            else {
-                $("#div-master").hide();
-                $("#div-slave").show()
-            }
-        });
-
         //初始化数据
         $(document).ready(function () {
-            $("#is_master").trigger("change")
+            instancelist()
         });
     </script>
 {% endblock %}

@@ -570,14 +570,14 @@
             if ($("#group").val() && $("#workflow_type").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
-                var audit_users = $("#workflow_auditors_text").val().replace(/->/g, ",");
+                var audit_auth_groups = $("#workflow_auditors_text").val().replace(/->/g, ",");
                 $.ajax({
                     type: "post",
                     url: "/group/changeauditors/",
                     dataType: "json",
                     data: {
                         group_name: $("#group").val(),
-                        audit_users: audit_users,
+                        audit_auth_groups: audit_auth_groups,
                         workflow_type: $("#workflow_type").val()
                     },
                     complete: function () {

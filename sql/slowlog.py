@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 import datetime
 
-from sql.utils.group import user_masters
+from sql.utils.group import user_instances
 from sql.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
 from sql.utils.config import SysConfig
@@ -24,17 +24,17 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 @csrf_exempt
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     # 服务端权限校验
     try:
-        user_masters(request.user).get(cluster_name=cluster_name)
+        user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
         result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    cluster_info = Instance.objects.get(cluster_name=cluster_name)
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    instance_info = Instance.objects.get(instance_name=instance_name)
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             # 调用阿里云慢日志接口
             result = aliyun_rds_slowquery_review(request)
@@ -54,7 +54,7 @@ def slowquery_review(request):
         if DBName:
             # 获取慢查数据
             slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__db_max=DBName,
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
                 last_seen__range=(StartTime, EndTime)
@@ -72,7 +72,7 @@ def slowquery_review(request):
             ).order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
 
             slowsql_obj_count = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__db_max=DBName,
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
                 last_seen__range=(StartTime, EndTime)
@@ -91,7 +91,7 @@ def slowquery_review(request):
         else:
             # 获取慢查数据
             slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
                 last_seen__range=(StartTime, EndTime)
             ).annotate(CreateTime=F('last_seen'),
@@ -108,7 +108,7 @@ def slowquery_review(request):
             ).order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
 
             slowsql_obj_count = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
                 last_seen__range=(StartTime, EndTime)
             ).annotate(CreateTime=F('last_seen'),
@@ -136,17 +136,17 @@ def slowquery_review(request):
 @csrf_exempt
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review_history(request):
-    cluster_name = request.POST.get('cluster_name')
+    instance_name = request.POST.get('instance_name')
     # 服务端权限校验
     try:
-        user_masters(request.user).get(cluster_name=cluster_name)
+        user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
         result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    cluster_info = Instance.objects.get(cluster_name=cluster_name)
-    if len(AliyunRdsConfig.objects.filter(cluster_name=cluster_name)) > 0:
+    instance_info = Instance.objects.get(instance_name=instance_name)
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
             # 调用阿里云慢日志接口
             result = aliyun_rds_slowquery_review_history(request)
@@ -167,7 +167,7 @@ def slowquery_review_history(request):
         if SQLId:
             # 获取慢查明细数据
             slowsql_record_obj = SlowQueryHistory.objects.filter(
-                hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 checksum=int(SQLId),
                 ts_min__range=(StartTime, EndTime)
             ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
@@ -184,7 +184,7 @@ def slowquery_review_history(request):
             )[offset:limit]
 
             slowsql_obj_count = SlowQueryHistory.objects.filter(
-                hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 checksum=int(SQLId),
                 ts_min__range=(StartTime, EndTime)
             ).count()
@@ -192,7 +192,7 @@ def slowquery_review_history(request):
             if DBName:
                 # 获取慢查明细数据
                 slowsql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                     db_max=DBName,
                     ts_min__range=(StartTime, EndTime)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
@@ -210,14 +210,14 @@ def slowquery_review_history(request):
                 )[offset:limit]  # 执行总次数倒序排列
 
                 slowsql_obj_count = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                     db_max=DBName,
                     ts_min__range=(StartTime, EndTime)
                 ).count()
             else:
                 # 获取慢查明细数据
                 slowsql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                     ts_min__range=(StartTime, EndTime)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 执行开始时间
                            DBName=F('db_max'),  # 数据库名
@@ -234,7 +234,7 @@ def slowquery_review_history(request):
                 )[offset:limit]  # 执行总次数倒序排列
 
                 slowsql_obj_count = SlowQueryHistory.objects.filter(
-                    hostname_max=(cluster_info.master_host + ':' + str(cluster_info.master_port)),
+                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                     ts_min__range=(StartTime, EndTime)
                 ).count()
         # QuerySet 序列化

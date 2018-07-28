@@ -22,12 +22,12 @@ logger = logging.getLogger('default')
 
 
 # SQL工单跳过inception执行回调
-def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url):
+def execute_skipinc_call_back(workflowId, instance_name, db_name, sql_content, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     try:
         # 执行sql
         t_start = time.time()
-        execute_result = Dao(instance_name=clusterName, is_master=True).mysql_execute(db_name, sql_content)
+        execute_result = Dao(instance_name=instance_name).mysql_execute(db_name, sql_content)
         t_end = time.time()
         execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
         execute_result['execute_time'] = execute_time + 'sec'
@@ -55,9 +55,9 @@ def execute_skipinc_call_back(workflowId, clusterName, db_name, sql_content, url
 
 
 # SQL工单执行回调
-def execute_call_back(workflowId, clusterName, url):
+def execute_call_back(workflowId, instance_name, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    dictConn = getMasterConnStr(clusterName)
+    dictConn = getMasterConnStr(instance_name)
     try:
         # 交给inception先split，再执行
         (finalStatus, finalList) = InceptionDao().executeFinal(workflowDetail, dictConn)
@@ -85,7 +85,7 @@ def execute_job(workflowId, url):
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
     logger.debug('execute_job:' + job_id + ' start')
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    clusterName = workflowDetail.cluster_name
+    instance_name = workflowDetail.instance_name
     db_name = workflowDetail.db_name
 
     # 服务器端二次验证，当前工单状态必须为定时执行过状态
@@ -103,7 +103,7 @@ def execute_job(workflowId, url):
         workflowDetail.save()
     logger.debug('execute_job:' + job_id + ' executing')
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.cluster_name, db_name,
+    splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name, db_name,
                                                      isSplit='yes')
     workflowDetail.review_content = json.dumps(splitReviewResult)
     try:
@@ -114,7 +114,7 @@ def execute_job(workflowId, url):
         workflowDetail.save()
 
     # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_call_back, args=(workflowId, clusterName, url))
+    t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
     t.start()
 
 
@@ -133,7 +133,7 @@ def send_msg(workflowDetail, url):
 
     if sys_config.get('mail') == 'true':
         # 邮件通知申请人，审核人，抄送DBA
-        notify_users = workflowDetail.review_man.split(',')
+        notify_users = workflowDetail.audit_auth_groups.split(',')
         notify_users.append(workflowDetail.engineer)
         listToAddr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
         listCcAddr = [email['email'] for email in

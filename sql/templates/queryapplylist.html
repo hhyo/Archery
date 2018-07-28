@@ -48,12 +48,12 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="cluster_name" name="cluster_name"
+                        <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 data-placeholder="请选择实例:" required>
                             <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                            {% for cluster_name in listAllClusterName %}
-                                <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                            {% for instance_name in listAllClusterName %}
+                                <option value="{{ instance_name }}">{{ instance_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -119,25 +119,25 @@
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/group/relations/",
+                url: "/group/instances/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 3
+                    type: 'slave'
                 },
                 complete: function () {
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        var result = data['rows'];
-                        $("#cluster_name").empty();
+                        var result = data['data'];
+                        $("#instance_name").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
-                            $("#cluster_name").append(cluster);
+                            var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            $("#instance_name").append(instance);
                         }
-                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
-                        $('#cluster_name').selectpicker('render');
-                        $('#cluster_name').selectpicker('refresh');
+                        $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -259,7 +259,7 @@
                     }
                 }, {
                     title: '实例',
-                    field: 'cluster_name'
+                    field: 'instance_name'
                 }, {
                     title: '数据库',
                     field: 'db_list',
@@ -335,14 +335,13 @@
         }
 
         //实例变更获取数据库列表
-        $("#cluster_name").change(function () {
+        $("#instance_name").change(function () {
             $.ajax({
                 type: "post",
                 url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name").val(),
-                    is_master: 0
+                    instance_name: $("#instance_name").val()
                 },
                 complete: function () {
                 },
@@ -378,9 +377,8 @@
                 url: "/instance/getTableNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name").val(),
-                    db_name: $("#db_name").val(),
-                    is_master: 0
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val()
                 },
                 complete: function () {
                 },
@@ -432,7 +430,7 @@
         function applyvalidate() {
             var title = $("#title").val();
             var priv_type = $("#priv_type").val();
-            var cluster_name = $("#cluster_name").val();
+            var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var db_name_multiple = $("#db_name_multiple").val();
             var table_name = $("#table_name").val();
@@ -445,7 +443,7 @@
             // 参数校验
             if (priv_type) {
                 if (priv_type === '1') {
-                    if (title && group_name && workflow_auditors && cluster_name && db_name_multiple && valid_date && limit_num) {
+                    if (title && group_name && workflow_auditors && instance_name && db_name_multiple && valid_date && limit_num) {
                         return true
                     }
                     else {
@@ -454,7 +452,7 @@
                     }
                 }
                 else if (priv_type === '2') {
-                    if (title && group_name && workflow_auditors && cluster_name && db_name && table_name && valid_date && limit_num) {
+                    if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
                     }
                     else {
@@ -473,7 +471,7 @@
         function applyforprivileges() {
             var title = $("#title").val();
             var priv_type = $("#priv_type").val();
-            var cluster_name = $("#cluster_name").val();
+            var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var db_name_multiple = $("#db_name_multiple").val();
             var table_name = $("#table_name").val();
@@ -533,7 +531,7 @@
                     dataType: "json",
                     data: {
                         title: title,
-                        cluster_name: cluster_name,
+                        instance_name: instance_name,
                         priv_type: priv_type,
                         db_list: db_list,
                         db_name: db_name,

@@ -17,13 +17,13 @@
                 <br/>
                 <div class="col-md-3 column">
                     <div class="form-group">
-                        <select id="cluster_name" name="cluster_name"
+                        <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 data-placeholder="请选择实例:" required>
                             <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                            {% for cluster_name in listAllClusterName %}
-                                {% if cluster_name != 'mycat' %}
-                                    <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                            {% for instance_name in listAllClusterName %}
+                                {% if instance_name != 'mycat' %}
+                                    <option value="{{ instance_name }}">{{ instance_name }}</option>
                                 {% endif %}
                             {% endfor %}
                         </select>
@@ -187,13 +187,13 @@
         function sqladvisor_validate() {
             var result = true;
             var sqlContent = editor.getValue();
-            var clusterName = $("#cluster_name").val();
+            var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
 
             if (sqlContent === null || sqlContent.trim() === "") {
                 alert("SQL内容不能为空！");
                 return result = false;
-            } else if (clusterName === null || clusterName === $("#cluster_name").attr("data-placeholder")) {
+            } else if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
                 alert("请选择实例！");
                 return result = false;
             } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
@@ -247,7 +247,7 @@
         );
 
         //实例变动获取数据库
-        $("#cluster_name").change(function () {
+        $("#instance_name").change(function () {
             get_db_list()
         });
 
@@ -259,8 +259,7 @@
                 url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name").val(),
-                    is_master: 1
+                    instance_name: $("#instance_name").val()
                 },
                 complete: function () {
                 },
@@ -301,7 +300,7 @@
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
             var sqlContent = editor.getValue();
-            var clusterName = $("#cluster_name").val();
+            var instance_name = $("#instance_name").val();
             var dbName = $("#db_name").val();
             var verbose = $("#verbose").val();
 
@@ -318,7 +317,7 @@
                 dataType: "json",
                 data: {
                     sql_content: sqlContent,
-                    cluster_name: clusterName,
+                    instance_name: instance_name,
                     db_name: dbName,
                     verbose: verbose
 
@@ -367,7 +366,7 @@
                 dataType: "json",
                 data: {
                     sql_content: 'explain ' + editor.getValue(),
-                    cluster_name: $("#cluster_name").val(),
+                    instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val()
                 },
                 complete: function () {
@@ -441,7 +440,7 @@
                 dataType: "json",
                 data: {
                     sql_content: editor.getValue(),
-                    cluster_name: $("#cluster_name").val(),
+                    instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val(),
                     ses_status: ses_status
                 },
@@ -669,15 +668,15 @@
             var pathname = window.location.pathname;
             if (pathname == "/slowquery_advisor/") {
                 var sql_content = sessionStorage.getItem('advisor_sql_content');
-                var cluster_name = sessionStorage.getItem('advisor_cluster_name');
+                var instance_name = sessionStorage.getItem('advisor_instance_name');
                 var db_name = sessionStorage.getItem('advisor_db_name');
 
 
-                if (sql_content && db_name && cluster_name) {
-                    document.getElementById("cluster_name").disabled = true;
+                if (sql_content && db_name && instance_name) {
+                    document.getElementById("instance_name").disabled = true;
                     editor.setValue(sql_content);
                     editor.clearSelection();
-                    document.getElementById('cluster_name').value = cluster_name;
+                    document.getElementById('instance_name').value = instance_name;
                     document.getElementById('db_name').value = db_name;
                     get_db_list();
                     sqladvisor();

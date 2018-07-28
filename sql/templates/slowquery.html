@@ -15,11 +15,11 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
-                <select id=cluster_name class="form-control selectpicker" name="cluster_name_list"
+                <select id=instance_name class="form-control selectpicker" name="instance_name_list"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for cluster_name in cluster_name_list %}
-                        <option value="{{ cluster_name }}">{{ cluster_name }}</option>
+                    {% for instance_name in instance_name_list %}
+                        <option value="{{ instance_name }}">{{ instance_name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -114,8 +114,8 @@
         });
 
         //实例变动自动获取数据库
-        $("#cluster_name").change(function () {
-            sessionStorage.setItem('slow_query_cluster_name', $("#cluster_name").val());
+        $("#instance_name").change(function () {
+            sessionStorage.setItem('slow_query_instance_name', $("#instance_name").val());
             sessionStorage.removeItem('SQLId');
             var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
             if (slowsql_active_li_id === 'slowsql_tab') {
@@ -137,8 +137,7 @@
                 url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name option:selected").text(),
-                    is_master: 1
+                    instance_name: $("#instance_name option:selected").text()
                 },
                 complete: function () {
                 },
@@ -176,12 +175,12 @@
             }
         });
 
-        //保留如果已选择cluster_name，进入页面自动加载
+        //保留如果已选择instance_name，进入页面自动加载
         $(document).ready(function () {
             sessionStorage.removeItem('SQLId');
             sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
-            if (sessionStorage.getItem('slow_query_cluster_name')) {
-                $("#cluster_name").val(sessionStorage.getItem('slow_query_cluster_name'));
+            if (sessionStorage.getItem('slow_query_instance_name')) {
+                $("#instance_name").val(sessionStorage.getItem('slow_query_instance_name'));
                 get_db_list();
                 var start_date = sessionStorage.getItem('start_date');
                 var end_date = sessionStorage.getItem('end_date');
@@ -199,7 +198,7 @@
                 var active_li_id = $(e.target).parents().attr('id');
                 sessionStorage.setItem('slowsql_active_li_id', active_li_id);
                 //当前激活的标签id
-                if ($("#cluster_name").val()) {
+                if ($("#instance_name").val()) {
                     if (active_li_id === 'slowsql_tab') {
                         $("#sqladvisor-toolbar").hide();
                         sessionStorage.removeItem('SQLId');
@@ -229,10 +228,10 @@
                 if ($("#slowsqlinfo-list").bootstrapTable('getSelections')[0]) {
                     var advisor_sql_content = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['SQLText'] + ';';
                     var advisor_db_name = $("#slowsqlinfo-list").bootstrapTable('getSelections')[0]['DBName'];
-                    var advisor_cluster_name = $("#cluster_name").val();
+                    var advisor_instance_name = $("#instance_name").val();
                     sessionStorage.setItem('advisor_sql_content', advisor_sql_content);
                     sessionStorage.setItem('advisor_db_name', advisor_db_name);
-                    sessionStorage.setItem('advisor_cluster_name', advisor_cluster_name);
+                    sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
                 }
                 else {
@@ -245,8 +244,8 @@
     <script>
         // 获取慢日志统计
         function slowquery_review() {
-            var cluster_name = $("#cluster_name").val();
-            if (cluster_name) {
+            var instance_name = $("#instance_name").val();
+            if (instance_name) {
                 //初始化table
                 $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
                     method: 'post',
@@ -273,13 +272,13 @@
                     detailView: true,                  //是否显示父子表
                     queryParamsType: 'limit',
                     queryParams: function (params) {
-                        var cluster_name = $("#cluster_name").val();
+                        var instance_name = $("#instance_name").val();
                         var db_name = $("#db_name").val();
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
 
                         return {
-                            cluster_name: cluster_name,
+                            instance_name: instance_name,
                             db_name: db_name,
                             StartTime: StartTime,
                             EndTime: EndTime,
@@ -361,8 +360,8 @@
 
         // 获取慢日志明细
         function slowquery_review_history() {
-            var cluster_name = $("#cluster_name").val();
-            if (cluster_name) {
+            var instance_name = $("#instance_name").val();
+            if (instance_name) {
                 //初始化table
                 $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
                     method: 'post',
@@ -389,14 +388,14 @@
                     detailView: true,                  //是否显示父子表
                     queryParamsType: 'limit',
                     queryParams: function (params) {
-                        var cluster_name = $("#cluster_name").val();
+                        var instance_name = $("#instance_name").val();
                         var db_name = $("#db_name").val();
                         var SQLId = sessionStorage.getItem('SQLId');
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
 
                         return {
-                            cluster_name: cluster_name,
+                            instance_name: instance_name,
                             db_name: db_name,
                             SQLId: SQLId,
                             StartTime: StartTime,

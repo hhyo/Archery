@@ -5,7 +5,7 @@ import simplejson as json
 import MySQLdb
 from django.db import connection
 
-from sql.models import Instance, SlaveConfig, SqlWorkflow
+from sql.models import Instance, SqlWorkflow
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.utils.config import SysConfig
 from sql.utils.dao import Dao
@@ -80,15 +80,15 @@ class InceptionDao(object):
         else:
             return None
 
-    def sqlautoReview(self, sqlContent, clusterName, db_name, isSplit="no"):
+    def sqlautoReview(self, sqlContent, instance_name, db_name, isSplit="no"):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''
-        listMasters = Instance.objects.filter(cluster_name=clusterName)
-        masterHost = listMasters[0].master_host
-        masterPort = listMasters[0].master_port
-        masterUser = listMasters[0].master_user
-        masterPassword = self.prpCryptor.decrypt(listMasters[0].master_password)
+        listMasters = Instance.objects.filter(instance_name=instance_name)
+        masterHost = listMasters[0].host
+        masterPort = listMasters[0].port
+        masterUser = listMasters[0].user
+        masterPassword = self.prpCryptor.decrypt(listMasters[0].password)
 
         # 高危SQL检查
         if self.sys_config.get('critical_ddl_regex', '') != '':
@@ -277,22 +277,15 @@ class InceptionDao(object):
             optResult = {"status": 1, "msg": "ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data": ""}
         return optResult
 
-    def query_print(self, sqlContent, clusterName, dbName, is_master=False):
+    def query_print(self, sqlContent, instance_name, dbName):
         '''
         将sql交给inception打印语法树。
         '''
-        if is_master:
-            masters = Instance.objects.get(cluster_name=clusterName)
-            Host = masters.slave_host
-            Port = masters.slave_port
-            User = masters.slave_user
-            Password = self.prpCryptor.decrypt(masters.slave_password)
-        else:
-            salves = SlaveConfig.objects.get(cluster_name=clusterName)
-            Host = salves.slave_host
-            Port = salves.slave_port
-            User = salves.slave_user
-            Password = self.prpCryptor.decrypt(salves.slave_password)
+        instance_info = Instance.objects.get(instance_name=instance_name)
+        Host = instance_info.host
+        Port = instance_info.port
+        User = instance_info.user
+        Password = self.prpCryptor.decrypt(instance_info.password)
 
         # 工单审核使用
         sql = "/*--user=%s;--password=%s;--host=%s;--port=%s;--enable-query-print;*/\

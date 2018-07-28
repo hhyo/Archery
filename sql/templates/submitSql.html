@@ -37,7 +37,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="cluster_name" name="cluster_name"
+                        <select id="instance_name" name="instance_name"
                                 class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
                                 data-live-search="true" data-placeholder="请选择实例" required>
                             <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
@@ -177,15 +177,14 @@
     <!--ace -->
     <script>
         // 实例变更获取数据库补全提示
-        $("#cluster_name").change(function () {
+        $("#instance_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
                 url: "/instance/getdbNameList/",
                 dataType: "json",
                 data: {
-                    cluster_name: $("#cluster_name").val(),
-                    is_master: 1
+                    instance_name: $("#instance_name").val()
                 },
                 complete: function () {
                     var pathname = window.location.pathname;
@@ -308,9 +307,9 @@
             $(".selectpicker").selectpicker('refresh');
         });
 
-        $("#review_man").change(function review_man() {
-            var review_man = $(this).val();
-            $("div#" + review_man).hide();
+        $("#audit_auth_groups").change(function audit_auth_groups() {
+            var audit_auth_groups = $(this).val();
+            $("div#" + audit_auth_groups).hide();
         });
     </script>
     <!--group -->
@@ -319,29 +318,29 @@
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/group/relations/",
+                url: "/group/instances/",
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 2
+                    type: 'master'
                 },
                 complete: function () {
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充主库信息
-                        $('#cluster_name').selectpicker();
+                        $('#instance_name').selectpicker();
                         var myObject = {};
-                        myObject.cluster_name = sessionStorage.getItem('editClustername');
-                        if (myObject.cluster_name) {
-                            $("#cluster_name").selectpicker('val', myObject.cluster_name);
-                            if ($("#cluster_name").val()) {
-                                $("#cluster_name").trigger("change")
+                        myObject.instance_name = sessionStorage.getItem('editClustername');
+                        if (myObject.instance_name) {
+                            $("#instance_name").selectpicker('val', myObject.instance_name);
+                            if ($("#instance_name").val()) {
+                                $("#instance_name").trigger("change")
                             }
                             else {
-                                $("#cluster_name").empty();
-                                $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
-                                $('#cluster_name').selectpicker('render');
-                                $('#cluster_name').selectpicker('refresh');
+                                $("#instance_name").empty();
+                                $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
+                                $('#instance_name').selectpicker('render');
+                                $('#instance_name').selectpicker('refresh');
                                 $("#db_name").empty();
                                 $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                                 $('#db_name').selectpicker('render');
@@ -352,15 +351,15 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        var result = data['rows'];
-                        $("#cluster_name").empty();
+                        var result = data['data'];
+                        $("#instance_name").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var cluster = "<option value=\"" + result[i]['object_name'] + "\">" + result[i]['object_name'] + "</option>";
-                            $("#cluster_name").append(cluster);
+                            var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            $("#instance_name").append(instance);
                         }
-                        $("#cluster_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
-                        $('#cluster_name').selectpicker('render');
-                        $('#cluster_name').selectpicker('refresh');
+                        $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
                         $("#db_name").empty();
                         $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
@@ -421,7 +420,7 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             }
-            else if (pathname === "/submitothercluster/") {
+            else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
