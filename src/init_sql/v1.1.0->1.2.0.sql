@@ -21,10 +21,10 @@ insert into sql_instance (instance_name, db_type, type, host, port, user, passwo
     cluster_name,
     'mysql',
     'slave',
-    host,
-    port,
-    user,
-    password,
+    slave_host,
+    slave_port,
+    slave_user,
+    slave_password,
     create_time,
     update_time
   from sql_slave_config;
