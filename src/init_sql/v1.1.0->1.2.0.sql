@@ -1,3 +1,4 @@
+==============================================================
 -- 主从表合并相关修改
 -- 表名修改
 rename table sql_master_config to sql_instance;
@@ -45,8 +46,7 @@ alter table aliyun_rds_config change cluster_name instance_name varchar(50) NOT 
 
 
 
-
-
+==============================================================
 -- 权限管理相关修改
 -- 删除角色字段
 alter table sql_users drop role;
@@ -73,7 +73,7 @@ truncate table sql_users_groups;
 set foreign_key_checks =1;
 
 -- 插入权限和默认权限组
-INSERT INTO auth_group (id, name) VALUES (1, '默认组'); # 用户注册默认关联id=1的组,请勿删除
+INSERT INTO auth_group (id, name) VALUES (1, '默认组'); -- 用户注册默认关联id=1的组,请勿删除
 INSERT INTO django_content_type (id, app_label, model) VALUES (27, 'sql', 'permission');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (1, '菜单 Dashboard', 27, 'menu_dashboard');
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (2, '菜单 SQL上线', 27, 'menu_sqlworkflow');
@@ -101,18 +101,14 @@ INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (23, '�
 INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (24, '查看锁信息', 27, 'trxandlocks_view');
 
 -- 给默认组赋予默认权限
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (1, 1, 1);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (2, 1, 2);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (3, 1, 3);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (4, 1, 4);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (5, 1, 5);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (6, 1, 11);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (7, 1, 12);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (8, 1, 17);
-INSERT INTO auth_group_permissions (id, group_id, permission_id) VALUES (9, 1, 20);
+insert into auth_group_permissions (group_id, permission_id)
+select 1,id from auth_permission;
 
 -- 全部用户都关联默认组，
 insert into sql_users_groups(users_id, group_id)
-select id,1
-from sql_users;
+select id,1 from sql_users;
 
+==============================================================
+-- 兼容pt-query-digest3.0.11版本
+alter table mysql_slow_query_review modify `checksum` CHAR(32) NOT NULL;
+alter table mysql_slow_query_review_history modify `checksum` CHAR(32) NOT NULL;
