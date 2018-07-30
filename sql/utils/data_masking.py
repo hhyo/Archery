@@ -27,7 +27,7 @@ class Masking(object):
             result['msg'] = 'inception返回异常：\n' + print_info['errmsg']
         else:
             query_tree = print_info['query_tree']
-            # 获取实例所属环境,获取命中脱敏规则的列数据
+            # 获取命中脱敏规则的列数据
             try:
                 table_hit_columns, hit_columns = self.analy_query_tree(query_tree, instance_name)
             except Exception as msg:
@@ -55,20 +55,20 @@ class Masking(object):
 
             # 对命中规则列hit_columns的数据进行脱敏
             # 获取全部脱敏规则信息，减少循环查询，提升效率
-            DataMaskingRulesOb = DataMaskingRules.objects.all()
+            masking_rules = DataMaskingRules.objects.all()
             if hit_columns and sql_result.get('rows'):
                 rows = list(sql_result['rows'])
                 for column in hit_columns:
                     index = column['index']
                     for idx, item in enumerate(rows):
                         rows[idx] = list(item)
-                        rows[idx][index] = self.regex(DataMaskingRulesOb, column['rule_type'], rows[idx][index])
+                        rows[idx][index] = self.regex(masking_rules, column['rule_type'], rows[idx][index])
                     sql_result['rows'] = rows
         return result
 
     # 通过inception获取语法树
-    def query_tree(self, sqlContent, instance_name, dbName):
-        print_info = inceptionDao.query_print(sqlContent, instance_name, dbName)
+    def query_tree(self, sql_content, instance_name, db_name):
+        print_info = inceptionDao.query_print(sql_content, instance_name, db_name)
         if print_info:
             id = print_info[0][0]
             statement = print_info[0][1]
@@ -82,17 +82,17 @@ class Masking(object):
                 errmsg = 'Global environment: ' + query_tree
             if errlevel == 0:
                 pass
-                #print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
+                # print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
             return {'id': id, 'statement': statement, 'errlevel': errlevel, 'query_tree': query_tree,
                     'errmsg': errmsg}
         else:
             return None
 
     # 解析语法树，获取语句涉及的表，用于查询权限限制
-    def query_table_ref(self, sqlContent, instance_name, dbName):
+    def query_table_ref(self, sql_content, instance_name, db_name):
         result = {'status': 0, 'msg': 'ok', 'data': []}
         try:
-            print_info = self.query_tree(sqlContent, instance_name, dbName)
+            print_info = self.query_tree(sql_content, instance_name, db_name)
         except Exception as msg:
             result['status'] = 1
             result['msg'] = str(msg)
@@ -139,117 +139,101 @@ class Masking(object):
         table_ref = query_tree_dict.get('table_ref')
 
         # 获取全部脱敏字段信息，减少循环查询，提升效率
-        DataMaskingColumnsOb = DataMaskingColumns.objects.all()
+        masking_columns = DataMaskingColumns.objects.all()
 
         # 遍历select_list
         columns = []
         hit_columns = []  # 命中列
         table_hit_columns = []  # 涉及表命中的列
 
-        # 获取select信息的规则，仅处理type为FIELD_ITEM的select信息，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*],
-        select_index = [select_item['field'] for select_item in select_list if
-                        select_item['type'] == 'FIELD_ITEM']
+        # 获取select信息的规则，仅处理type为FIELD_ITEM和aggregate类型的select信息，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*],
+        select_index = [
+            select_item['field'] if select_item['type'] == 'FIELD_ITEM' else select_item['aggregate']['field'] for
+            select_item in select_list if select_item['type'] in ('FIELD_ITEM', 'aggregate')]
+
+        # 处理select_list，为统一的{'type': 'FIELD_ITEM', 'db': 'archer_master', 'table': 'sql_users', 'field': 'email'}格式
+        select_list = [select_item if select_item['type'] == 'FIELD_ITEM' else select_item['aggregate'] for
+                       select_item in select_list if select_item['type'] in ('FIELD_ITEM', 'aggregate')]
 
         if select_index:
             # 如果发现存在field='*',则遍历所有表,找出所有的命中字段
             if '*' in select_index:
+                # 涉及表命中的列
                 for table in table_ref:
-                    hit_columns_info = self.hit_table(DataMaskingColumnsOb, instance_name, table['db'],
+                    hit_columns_info = self.hit_table(masking_columns, instance_name, table['db'],
                                                       table['table'])
                     table_hit_columns.extend(hit_columns_info)
+                # 几种不同查询格式
                 # [*]
                 if re.match(r"^(\*,?)+$", ','.join(select_index)):
                     hit_columns = []
                 # [*,column_a]
                 elif re.match(r"^(\*,)+(\w,?)+$", ','.join(select_index)):
-                    # 找出field不为* 的列信息, 循环判断列是否命中脱敏规则，并增加规则类型和index,index采取后切片
+                    # 找出field不为* 的列信息, 循环判断列是否命中脱敏规则，并增加规则类型和index，index采取后切片
                     for index, item in enumerate(select_list):
-                        if item['type'] == 'FIELD_ITEM':
-                            item['index'] = index - len(select_list)
-                            if item['field'] != '*':
-                                columns.append(item)
+                        item['index'] = index - len(select_list)
+                        if item['field'] != '*':
+                            columns.append(item)
 
-                    for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
-                                                   column['table'], column['field'])
-                        if hit_info['is_hit']:
-                            hit_info['index'] = column['index']
-                            hit_columns.append(hit_info)
                 # [column_a, *]
                 elif re.match(r"^(\w,?)+(\*,?)+$", ','.join(select_index)):
                     # 找出field不为* 的列信息, 循环判断列是否命中脱敏规则，并增加规则类型和index,index采取前切片
                     for index, item in enumerate(select_list):
-                        if item['type'] == 'FIELD_ITEM':
-                            item['index'] = index
-                            if item['field'] != '*':
-                                columns.append(item)
-
-                    for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
-                                                   column['table'], column['field'])
-                        if hit_info['is_hit']:
-                            hit_info['index'] = column['index']
-                            hit_columns.append(hit_info)
-                # [column_a,a.*,column_b]
-                elif re.match(r"^(\w,?)+(\*,?)+(\w,?)+$", ','.join(select_index)):
-                    # 找出field不为* 的列信息, 循环判断列是否命中脱敏规则，并增加规则类型和index,*前面的字段index采取前切片,*后面的字段采取后切片
-                    for index, item in enumerate(select_list):
-                        if item['type'] == 'FIELD_ITEM':
-                            item['index'] = index
-                            if item['field'] == '*':
-                                first_idx = index
-                                break
-
-                    select_list.reverse()
-                    for index, item in enumerate(select_list):
-                        if item['type'] == 'FIELD_ITEM':
-                            item['index'] = index
-                            if item['field'] == '*':
-                                last_idx = len(select_list) - index - 1
-                                break
-
-                    select_list.reverse()
-                    for index, item in enumerate(select_list):
-                        if item['type'] == 'FIELD_ITEM':
-                            if item['field'] != '*' and index < first_idx:
-                                item['index'] = index
-                                columns.append(item)
-
-                            if item['field'] != '*' and index > last_idx:
-                                item['index'] = index - len(select_list)
-                                columns.append(item)
-
-                    for column in columns:
-                        hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'],
-                                                   column['table'], column['field'])
-                        if hit_info['is_hit']:
-                            hit_info['index'] = column['index']
-                            hit_columns.append(hit_info)
-
-                # [a.*, column_a, b.*]
-                else:
-                    hit_columns = []
-                return table_hit_columns, hit_columns
-            # 没有*的查询，直接遍历查询命中字段，query_tree的列index就是查询语句列的index
-            else:
-                for index, item in enumerate(select_list):
-                    if item['type'] == 'FIELD_ITEM':
                         item['index'] = index
                         if item['field'] != '*':
                             columns.append(item)
 
-                for column in columns:
-                    hit_info = self.hit_column(DataMaskingColumnsOb, instance_name, column['db'], column['table'],
-                                               column['field'])
-                    if hit_info['is_hit']:
-                        hit_info['index'] = column['index']
-                        hit_columns.append(hit_info)
+                # [column_a,a.*,column_b]
+                elif re.match(r"^(\w,?)+(\*,?)+(\w,?)+$", ','.join(select_index)):
+                    # 找出field不为* 的列信息, 循环判断列是否命中脱敏规则，并增加规则类型和index,*前面的字段index采取前切片,*后面的字段采取后切片
+                    for index, item in enumerate(select_list):
+                        item['index'] = index
+                        if item['field'] == '*':
+                            first_idx = index
+                            break
+
+                    select_list.reverse()
+                    for index, item in enumerate(select_list):
+                        item['index'] = index
+                        if item['field'] == '*':
+                            last_idx = len(select_list) - index - 1
+                            break
+
+                    select_list.reverse()
+                    for index, item in enumerate(select_list):
+                        if item['field'] != '*' and index < first_idx:
+                            item['index'] = index
+
+                        if item['field'] != '*' and index > last_idx:
+                            item['index'] = index - len(select_list)
+                        columns.append(item)
+
+                # [a.*, column_a, b.*]
+                else:
+                    raise Exception('不支持select信息为[a.*, column_a, b.*]格式的查询脱敏！')
+
+            # 没有*的查询，直接遍历查询命中字段，query_tree的列index就是查询语句列的index
+            else:
+                for index, item in enumerate(select_list):
+                    item['index'] = index
+                    if item['field'] != '*':
+                        columns.append(item)
+                    else:
+                        raise Exception('不支持select信息包含函数的查询脱敏！')
+
+        # 格式化命中的列信息
+        for column in columns:
+            hit_info = self.hit_column(masking_columns, instance_name, column['db'], column['table'],
+                                       column['field'])
+            if hit_info['is_hit']:
+                hit_info['index'] = column['index']
+                hit_columns.append(hit_info)
         return table_hit_columns, hit_columns
 
     # 判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型
-    def hit_column(self, DataMaskingColumnsOb, instance_name, table_schema, table_name, column_name):
-        column_info = DataMaskingColumnsOb.filter(instance_name=instance_name, table_schema=table_schema,
-                                                  table_name=table_name, column_name=column_name, active=1)
+    def hit_column(self, masking_columns, instance_name, table_schema, table_name, column_name):
+        column_info = masking_columns.filter(instance_name=instance_name, table_schema=table_schema,
+                                             table_name=table_name, column_name=column_name, active=1)
 
         hit_column_info = {}
         hit_column_info['instance_name'] = instance_name
@@ -267,9 +251,9 @@ class Masking(object):
         return hit_column_info
 
     # 获取表中所有命中脱敏规则的字段信息
-    def hit_table(self, DataMaskingColumnsOb, instance_name, table_schema, table_name):
-        columns_info = DataMaskingColumnsOb.filter(instance_name=instance_name, table_schema=table_schema,
-                                                   table_name=table_name, active=1)
+    def hit_table(self, masking_columns, instance_name, table_schema, table_name):
+        columns_info = masking_columns.filter(instance_name=instance_name, table_schema=table_schema,
+                                              table_name=table_name, active=1)
 
         # 命中规则
         hit_columns_info = []
@@ -285,8 +269,8 @@ class Masking(object):
         return hit_columns_info
 
     # 利用正则表达式脱敏数据
-    def regex(self, DataMaskingRulesOb, rule_type, value):
-        rules_info = DataMaskingRulesOb.get(rule_type=rule_type)
+    def regex(self, masking_rules, rule_type, value):
+        rules_info = masking_rules.get(rule_type=rule_type)
         if rules_info:
             rule_regex = rules_info.rule_regex
             hide_group = rules_info.hide_group
