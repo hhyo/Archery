@@ -383,7 +383,7 @@ class AliyunRdsConfig(models.Model):
 
 # SlowQuery
 class SlowQuery(models.Model):
-    checksum = models.CharField(max_length=32)
+    checksum = models.CharField(max_length=32, primary_key=True)
     fingerprint = models.TextField()
     sample = models.TextField()
     first_seen = models.DateTimeField(blank=True, null=True)
