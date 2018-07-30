@@ -146,6 +146,11 @@ class Masking(object):
         hit_columns = []  # 命中列
         table_hit_columns = []  # 涉及表命中的列
 
+        # 判断是否存在不支持脱敏的语法
+        for select_item in select_list:
+            if select_item['type'] not in ('FIELD_ITEM', 'aggregate'):
+                raise Exception('不支持该查询语句脱敏！')
+
         # 获取select信息的规则，仅处理type为FIELD_ITEM和aggregate类型的select信息，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*],
         select_index = [
             select_item['field'] if select_item['type'] == 'FIELD_ITEM' else select_item['aggregate']['field'] for
@@ -218,8 +223,6 @@ class Masking(object):
                     item['index'] = index
                     if item['field'] != '*':
                         columns.append(item)
-                    else:
-                        raise Exception('不支持select信息包含函数的查询脱敏！')
 
         # 格式化命中的列信息
         for column in columns:
