@@ -83,8 +83,21 @@ class ChartDao(object):
         order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
 
+
     # SQL查询统计(每日检索行数)
-    def querylog_by_date(self, cycle):
+    def querylog_effect_row_by_date(self, cycle):
+        sql = '''
+        select
+          date_format(create_time, '%Y-%m-%d'),
+          sum(effect_row)
+        from query_log
+        where create_time >= date_add(now(), interval -{} month )
+        group by date_format(create_time, '%Y-%m-%d')
+        order by sum(effect_row) desc;'''.format(cycle)
+        return self.__query(sql)
+
+    # SQL查询统计(每日检索次数)
+    def querylog_count_by_date(self, cycle):
         sql = '''
         select
           date_format(create_time, '%Y-%m-%d'),
@@ -92,17 +105,31 @@ class ChartDao(object):
         from query_log
         where create_time >= date_add(now(), interval -{} month )
         group by date_format(create_time, '%Y-%m-%d')
-        order by sum(effect_row) desc;'''.format(cycle)
+        order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
 
     # SQL查询统计(用户检索行数)
-    def querylog_by_user(self, cycle):
+    def querylog_effect_row_by_user(self, cycle):
         sql = '''
         select 
-          user_display,
+          username,
           sum(effect_row)
         from query_log
         where create_time >= date_add(now(), interval -{} month)
-        group by user_display
-        order by sum(effect_row) desc;'''.format(cycle)
+        group by username
+        order by sum(effect_row) desc
+        limit 10;'''.format(cycle)
+        return self.__query(sql)
+
+    # SQL查询统计(DB检索行数)
+    def querylog_effect_row_by_db(self, cycle):
+        sql = '''
+       select
+          db_name,
+          sum(effect_row)
+        from query_log
+        where create_time >= date_add(now(), interval -{} month )
+        group by db_name
+        order by sum(effect_row) desc
+        limit 10;'''.format(cycle)
         return self.__query(sql)

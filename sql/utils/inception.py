@@ -319,7 +319,10 @@ class InceptionDao(object):
                  sum(createdb)     createdb,
                  sum(truncating)   truncating
                from statistic;'''
-        return Dao(host=self.inception_remote_backup_host,
-                   user=self.inception_remote_backup_user,
-                   port=self.inception_remote_backup_port,
-                   password=self.inception_remote_backup_password).mysql_query('inception', sql)
+        try:
+            return Dao(host=self.inception_remote_backup_host,
+                       user=self.inception_remote_backup_user,
+                       port=self.inception_remote_backup_port,
+                       password=self.inception_remote_backup_password).mysql_query('inception', sql)
+        except Exception:
+            return {'column_list': [], 'rows': [], 'effect_row': 0}
