@@ -112,3 +112,10 @@ select id,1 from sql_users;
 -- 兼容pt-query-digest3.0.11版本
 alter table mysql_slow_query_review modify `checksum` CHAR(32) NOT NULL;
 alter table mysql_slow_query_review_history modify `checksum` CHAR(32) NOT NULL;
+
+==============================================================
+-- 统一用户名长度
+alter table sql_workflow modify engineer varchar(30) not null;
+alter table workflow_audit modify create_user varchar(30) not null;
+alter table workflow_audit_detail modify audit_user varchar(30) not null;
+
