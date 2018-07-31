@@ -4,8 +4,6 @@ from sql.models import DataMaskingRules, DataMaskingColumns
 import simplejson as json
 import re
 
-inceptionDao = InceptionDao()
-
 
 class Masking(object):
     # 脱敏数据
@@ -68,7 +66,7 @@ class Masking(object):
 
     # 通过inception获取语法树
     def query_tree(self, sql_content, instance_name, db_name):
-        print_info = inceptionDao.query_print(sql_content, instance_name, db_name)
+        print_info = InceptionDao().query_print(sql_content, instance_name, db_name)
         if print_info:
             id = print_info[0][0]
             statement = print_info[0][1]

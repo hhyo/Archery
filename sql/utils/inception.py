@@ -3,6 +3,7 @@
 import re
 import simplejson as json
 import MySQLdb
+import traceback
 from django.db import connection
 
 from sql.models import Instance, SqlWorkflow
@@ -236,10 +237,6 @@ class InceptionDao(object):
         '''
         封装mysql连接和获取结果集方法
         '''
-        result = None
-        conn = None
-        cur = None
-
         try:
             conn = MySQLdb.connect(host=paramHost, user=paramUser, passwd=paramPasswd, db=paramDb, port=paramPort,
                                    charset='utf8')
@@ -247,12 +244,11 @@ class InceptionDao(object):
             ret = cur.execute(sql)
             result = cur.fetchall()
         except Exception as e:
+            logger.error(traceback.format_exc())
             raise Exception(e)
-        finally:
-            if cur is not None:
-                cur.close()
-            if conn is not None:
-                conn.close()
+        else:
+            cur.close()
+            conn.close()
         return result
 
     def getOscPercent(self, sqlSHA1):
