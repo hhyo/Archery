@@ -1,4 +1,4 @@
-==============================================================
+-- ==============================================================
 -- 主从表合并相关修改
 -- 表名修改
 rename table sql_master_config to sql_instance;
@@ -46,7 +46,7 @@ alter table aliyun_rds_config change cluster_name instance_name varchar(50) NOT 
 
 
 
-==============================================================
+-- ==============================================================
 -- 权限管理相关修改
 -- 删除角色字段
 alter table sql_users drop role;
@@ -74,33 +74,34 @@ set foreign_key_checks =1;
 
 -- 插入权限和默认权限组
 INSERT INTO auth_group (id, name) VALUES (1, '默认组'); -- 用户注册默认关联id=1的组,请勿删除
-INSERT INTO django_content_type (id, app_label, model) VALUES (27, 'sql', 'permission');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (1, '菜单 Dashboard', 27, 'menu_dashboard');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (2, '菜单 SQL上线', 27, 'menu_sqlworkflow');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (3, '菜单 SQL查询', 27, 'menu_query');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (4, '菜单 MySQL查询', 27, 'menu_sqlquery');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (5, '菜单 查询权限申请', 27, 'menu_queryapplylist');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (6, '菜单 SQL优化', 27, 'menu_sqloptimize');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (7, '菜单 优化工具', 27, 'menu_sqladvisor');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (8, '菜单 慢查日志', 27, 'menu_slowquery');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (9, '菜单 会话管理', 27, 'menu_dbdiagnostic');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (10, '菜单 系统管理', 27, 'menu_system');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (11, '菜单 相关文档', 27, 'menu_document');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (12, '提交SQL上线工单', 27, 'sql_submit');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (13, '审核SQL上线工单', 27, 'sql_review');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (14, '执行SQL上线工单', 27, 'sql_execute');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (15, '执行SQLAdvisor', 27, 'optimize_sqladvisor');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (16, '执行SQLTuning', 27, 'optimize_sqltuning');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (17, '申请查询权限', 27, 'query_applypriv');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (18, '管理查询权限', 27, 'query_mgtpriv');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (19, '审核查询权限', 27, 'query_review');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (20, '提交SQL查询', 27, 'query_submit');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (21, '查看会话', 27, 'process_view');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (22, '终止会话', 27, 'process_kill');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (23, '查看表空间', 27, 'tablespace_view');
-INSERT INTO auth_permission (id, name, content_type_id, codename) VALUES (24, '查看锁信息', 27, 'trxandlocks_view');
+INSERT INTO django_content_type (app_label, model) VALUES ('sql', 'permission');
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 Dashboard', @content_type_id, 'menu_dashboard');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL上线', @content_type_id, 'menu_sqlworkflow');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL查询', @content_type_id, 'menu_query');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 MySQL查询', @content_type_id, 'menu_sqlquery');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 查询权限申请', @content_type_id, 'menu_queryapplylist');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL优化', @content_type_id, 'menu_sqloptimize');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 优化工具', @content_type_id, 'menu_sqladvisor');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 慢查日志', @content_type_id, 'menu_slowquery');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 会话管理', @content_type_id, 'menu_dbdiagnostic');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '菜单 系统管理', @content_type_id, 'menu_system');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '菜单 相关文档', @content_type_id, 'menu_document');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '提交SQL上线工单', @content_type_id, 'sql_submit');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '审核SQL上线工单', @content_type_id, 'sql_review');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '执行SQL上线工单', @content_type_id, 'sql_execute');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '执行SQLAdvisor', @content_type_id, 'optimize_sqladvisor');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '执行SQLTuning', @content_type_id, 'optimize_sqltuning');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '申请查询权限', @content_type_id, 'query_applypriv');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '管理查询权限', @content_type_id, 'query_mgtpriv');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '审核查询权限', @content_type_id, 'query_review');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '提交SQL查询', @content_type_id, 'query_submit');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '查看会话', @content_type_id, 'process_view');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '终止会话', @content_type_id, 'process_kill');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '查看表空间', @content_type_id, 'tablespace_view');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ( '查看锁信息', @content_type_id, 'trxandlocks_view');
 
--- 给默认组赋予默认权限
+-- 给默认组赋予默认权限(默认所有权限，请自行调整)
 insert into auth_group_permissions (group_id, permission_id)
 select 1,id from auth_permission;
 
@@ -108,14 +109,13 @@ select 1,id from auth_permission;
 insert into sql_users_groups(users_id, group_id)
 select id,1 from sql_users;
 
-==============================================================
+-- ==============================================================
 -- 兼容pt-query-digest3.0.11版本
 alter table mysql_slow_query_review modify `checksum` CHAR(32) NOT NULL;
 alter table mysql_slow_query_review_history modify `checksum` CHAR(32) NOT NULL;
 
-==============================================================
+-- ==============================================================
 -- 统一用户名长度
 alter table sql_workflow modify engineer varchar(30) not null;
 alter table workflow_audit modify create_user varchar(30) not null;
 alter table workflow_audit_detail modify audit_user varchar(30) not null;
-
