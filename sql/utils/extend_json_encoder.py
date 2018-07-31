@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import simplejson as json
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
 from functools import singledispatch
 
@@ -36,6 +36,11 @@ def _(o):
     return o.strftime('%Y-%m-%d')
 
 
+@convert.register(timedelta)
+def _(o):
+    return o.total_seconds()
+
+
 # @convert.register(Decimal)
 # def _(o):
 #     return float(o)
@@ -59,7 +64,8 @@ data = {
     'dm': dm,
     'dt': dt,
     'dat': dat,
+    'tl': timedelta(minutes=30),
     'bigint': 988983860501598208
 }
 
-#print(json.dumps(data, cls=ExtendJSONEncoder, bigint_as_string=True))
+# print(json.dumps(data, cls=ExtendJSONEncoder, bigint_as_string=True))
