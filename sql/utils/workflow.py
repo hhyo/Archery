@@ -218,7 +218,10 @@ class Workflow(object):
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
         # 再获取用户所在权限组列表
-        auth_group_ids = [group.id for group in Group.objects.filter(user=user)]
+        if user.is_superuser:
+            auth_group_ids = [group.id for group in Group.objects.all()]
+        else:
+            auth_group_ids = [group.id for group in Group.objects.filter(user=user)]
 
         # 只返回当前待自己审核的数据
         if workflow_type == 0:
