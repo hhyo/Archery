@@ -81,6 +81,7 @@ class MailSender(object):
             server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
         server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
         server.quit()
+        logger.debug('邮件推送成功')
 
     @staticmethod
     def send_ding(url, content):
@@ -94,3 +95,4 @@ class MailSender(object):
             },
         }
         requests.post(url=url, json=data)
+        logger.debug('钉钉推送成功')

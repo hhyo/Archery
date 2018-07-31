@@ -9,7 +9,9 @@ from sql.utils.config import SysConfig
 from sql.utils.group import auth_group_users
 from sql.utils.sendmsg import MailSender
 from .const import WorkflowDict
+import logging
 
+logger = logging.getLogger('default')
 
 # 邮件消息通知,0.all,1.email,2.dingding
 def _send(audit_id, msg_type, **kwargs):
@@ -138,5 +140,6 @@ def _send(audit_id, msg_type, **kwargs):
 
 # 异步调用
 def send_msg(audit_id, msg_type, **kwargs):
+    logger.debug('异步发送消息通知')
     p = Thread(target=_send, args=(audit_id, msg_type), kwargs=kwargs)
     p.start()

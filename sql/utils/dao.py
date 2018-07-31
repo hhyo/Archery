@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*- 
 
 import MySQLdb
+import traceback
+
 from sql.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
 import logging
@@ -29,26 +31,21 @@ class Dao(object):
 
     # 连进指定的mysql实例里，读取所有databases并返回
     def getAlldbByCluster(self):
-        conn = None
-        cursor = None
-
+        conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, charset='utf8')
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, charset='utf8')
             cursor = conn.cursor()
             sql = "show databases"
             cursor.execute(sql)
             db_list = [row[0] for row in cursor.fetchall()
                        if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test')]
         except MySQLdb.Warning as w:
+            logger.error(traceback.format_exc())
             raise Exception(w)
         except MySQLdb.Error as e:
+            logger.error(traceback.format_exc())
             raise Exception(e)
         finally:
-            if cursor is not None:
-                cursor.close()
-            if conn is not None:
-                conn.commit()
-                conn.close()
+            conn.close()
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
@@ -61,8 +58,10 @@ class Dao(object):
             cursor.execute(sql)
             tb_list = [row[0] for row in cursor.fetchall() if row[0] not in ['test']]
         except MySQLdb.Warning as w:
+            logger.error(traceback.format_exc())
             raise Exception(w)
         except MySQLdb.Error as e:
+            logger.error(traceback.format_exc())
             raise Exception(e)
         finally:
             conn.commit()
@@ -80,8 +79,10 @@ class Dao(object):
             cursor.execute(sql)
             col_list = [row[0] for row in cursor.fetchall()]
         except MySQLdb.Warning as w:
+            logger.error(traceback.format_exc())
             raise Exception(w)
         except MySQLdb.Error as e:
+            logger.error(traceback.format_exc())
             raise Exception(e)
         finally:
             conn.commit()
@@ -111,10 +112,10 @@ class Dao(object):
             result['effect_row'] = effect_row
 
         except MySQLdb.Warning as w:
-            logger.warning(str(w))
+            logger.error(traceback.format_exc())
             result['Warning'] = str(w)
         except MySQLdb.Error as e:
-            logger.error(str(e))
+            logger.error(traceback.format_exc())
             result['Error'] = str(e)
         finally:
             try:
@@ -137,10 +138,10 @@ class Dao(object):
             # result['effect_row'] = effect_row
             conn.commit()
         except MySQLdb.Warning as w:
-            logger.warning(str(w))
+            logger.error(traceback.format_exc())
             result['Warning'] = str(w)
         except MySQLdb.Error as e:
-            logger.error(str(e))
+            logger.error(traceback.format_exc())
             result['Error'] = str(e)
         finally:
             conn.close()
