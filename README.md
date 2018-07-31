@@ -57,11 +57,8 @@ master分支是最新代码，但是不保证功能稳定，建议使用最新[r
    自动判断DML&DDL，并且支持统计  
 9. SQL工单自动审批  
    支持正则判断工单是否需要人工审批，开启自动审批后，不在正则范围内的SQL语句无需审批，系统自动审核  
-10. 工单通知人  
-   发起SQL上线时可以选择通知对象，将会在申请时邮件抄送给对方  
-11. 菜单栏调整  
-   多级菜单展示
-12. 平台数据多维度报表展示  
+10. 权限组管理  
+   支持自定权限组，隔离用户操作权限 
 
    
 ## 部署
@@ -84,6 +81,10 @@ pip3 install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 
 #数据库初始化
 https://github.com/hhyo/archer/tree/master/src/init_sql
+
+#或者使用命令初始化
+python3 manage.py makemigrations sql  
+python3 manage.py migrate 
 
 #创建管理用户
 python3 manage.py createsuperuser
@@ -122,7 +123,7 @@ docker exec -ti archer /bin/bash
 cat /tmp/archer.log
 cat /tmp/archer.err
 ```
-archer镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.14.58c75aaaaSPjnX&repoId=142147
+archer镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.14.58c75aaaaSPjnX&repoId=142147  
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
 ## 使用说明
