@@ -5,7 +5,7 @@ from django.utils import timezone
 from sql.utils.group import user_groups, auth_group_users
 from sql.utils.sql_review import is_autoreview
 from sql.notify import send_msg
-from sql.const import WorkflowDict, Const
+from sql.const import WorkflowDict
 from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, SqlGroup, SqlWorkflow, \
     QueryPrivilegesApply
 from sql.utils.config import SysConfig
@@ -131,20 +131,20 @@ class Workflow(object):
                 auditresult.current_status = WorkflowDict.workflow_status['audit_success']
                 auditresult.save(update_fields=['current_audit', 'current_status'])
             else:
-                # 更新主表审核下级审核人和当前审核人
+                # 更新主表审核下级审核组和当前审核组
                 auditresult = WorkflowAudit()
                 auditresult.audit_id = audit_id
                 auditresult.current_status = WorkflowDict.workflow_status['audit_wait']
                 auditresult.current_audit = auditInfo.next_audit
-                # 判断后续是否还有下下一级审核人
+                # 判断后续是否还有下下一级审核组
                 audit_auth_groups_list = auditInfo.audit_auth_groups.split(',')
-                for index, audit_user in enumerate(audit_auth_groups_list):
-                    if audit_user == auditInfo.next_audit:
-                        # 无下下级审核人
+                for index, auth_group in enumerate(audit_auth_groups_list):
+                    if auth_group == auditInfo.next_audit:
+                        # 无下下级审核组
                         if index == len(audit_auth_groups_list) - 1:
                             auditresult.next_audit = '-1'
                             break
-                        # 存在下下级审核人
+                        # 存在下下级审核组
                         else:
                             auditresult.next_audit = audit_auth_groups_list[index + 1]
                 auditresult.save(update_fields=['current_audit', 'next_audit', 'current_status'])
@@ -214,7 +214,7 @@ class Workflow(object):
     # 获取审核列表
     def auditlist(self, user, workflow_type, offset=0, limit=14, search=''):
         result = {'status': 0, 'msg': '', 'data': []}
-        # 先获取用户管理组列表
+        # 先获取用户所在资源组列表
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
         # 再获取用户所在权限组列表
@@ -319,7 +319,7 @@ class Workflow(object):
                 audit_auth_group = Group.objects.get(id=auth_group_id).name
             except Exception:
                 raise Exception('当前审批auth_group_id不存在，请检查并清洗历史数据')
-            if len(auth_group_users([audit_auth_group], group_id).filter(id=user.id)) > 0 or user.is_superuser == 1:
+            if auth_group_users([audit_auth_group], group_id).filter(id=user.id).exists() or user.is_superuser == 1:
                 if workflow_type == 1:
                     if user.has_perm('sql.query_review'):
                         result = True
@@ -328,7 +328,7 @@ class Workflow(object):
                         result = True
         return result
 
-    # 获取当前工单审批流程和当前审核人
+    # 获取当前工单审批流程和当前审核组
     @staticmethod
     def review_info(workflow_id, workflow_type):
         audit_info = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)

@@ -65,7 +65,7 @@ def sign_up(request):
         context = {'errMsg': '两次输入密码不一致'}
         return render(request, 'error.html', context)
 
-    # 添加用户明确添加到默认组
+    # 添加用户并且添加到默认组
     Users.objects.create_user(username=username,
                               password=password,
                               display=display,
@@ -627,8 +627,9 @@ def group(request):
 
 # 组关系管理
 @superuser_required
-def groupmgmt(request, group_name):
-    return render(request, 'groupmgmt.html', {'group_name': group_name})
+def groupmgmt(request, group_id):
+    group = SqlGroup.objects.get(group_id=group_id)
+    return render(request, 'groupmgmt.html', {'group': group})
 
 
 # 实例管理
@@ -639,5 +640,5 @@ def instance(request):
 
 # 实例用户管理
 @superuser_required
-def instanceuser(request, instance_name):
-    return render(request, 'instanceuser.html', {'instance_name': instance_name})
+def instanceuser(request, instance_id):
+    return render(request, 'instanceuser.html', {'instance_id': instance_id})

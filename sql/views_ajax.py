@@ -105,10 +105,13 @@ def authenticateEntry(request):
                 replace_info = Users.objects.get(username=username)
                 replace_info.password = make_password(password)
                 replace_info.save()
-            # 添加到默认组
+        # 添加到默认组
+        try:
             user = Users.objects.get(username=username)
             group = Group.objects.get(id=1)
             user.groups.add(group)
+        except Exception:
+            logger.error('无id=1的权限组，无法默认添加')
 
         # 调用了django内置登录方法，防止管理后台二次登录
         user = authenticate(username=username, password=password)
@@ -181,7 +184,7 @@ def sqlworkflowlist(request):
                                                             "group_name", "sql_syntax")
             count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
-            # 先获取用户管理组列表
+            # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
             workflowlist = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids

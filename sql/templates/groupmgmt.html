@@ -34,7 +34,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <input type="text" class="form-control" id="group_name" value="{{ group_name }}" disabled
+                        <input type="text" class="form-control" id="group_name" value="{{ group.group_name }}" disabled
                                placeholder="组">
                     </div>
                     <div class="form-group">
@@ -107,7 +107,7 @@
                         return {
                             limit: params.limit,
                             offset: params.offset,
-                            group_name: "{{ group_name }}",
+                            group_id: parseInt({{ group.group_id }}),
                             type: $("#type").val(),
                             search: params.search
                         }
@@ -183,14 +183,14 @@
 
         // 获取未关联对象信息
         $("#object_type").change(function () {
-            var group_name = $("#group_name").val();
+            var group_id = parseInt({{ group.group_id }});
             var object_type = $("#object_type").val();
             $.ajax({
                 type: "post",
                 url: "/group/unassociated/",
                 dataType: "json",
                 data: {
-                    group_name: group_name,
+                    group_id: group_id,
                     object_type: object_type
                 },
                 complete: function () {
@@ -218,16 +218,16 @@
 
         // 信息关联对象
         function addRelation() {
-            var group_name = $("#group_name").val();
+            var group_id = parseInt({{ group.group_id }});
             var object_type = $("#object_type").val();
             var object_info = $("#object_info").val();
-            if (group_name && object_type && object_info) {
+            if (group_id && object_type && object_info) {
                 $.ajax({
                     type: "post",
                     url: "/group/addrelation/",
                     dataType: "json",
                     data: {
-                        group_name: group_name,
+                        group_id: group_id,
                         object_type: object_type,
                         object_info: JSON.stringify(object_info)
                     },

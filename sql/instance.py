@@ -40,7 +40,8 @@ def lists(request):
 # 获取实例用户列表
 @csrf_exempt
 def users(request):
-    instance_name = request.POST.get('instance_name')
+    instance_id = request.POST.get('instance_id')
+    instance_name = Instance.objects.get(id=instance_id).instance_name
     sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
     dao = Dao(instance_name=instance_name)
     db_users = dao.mysql_query('mysql', sql_get_user)['rows']

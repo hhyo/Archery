@@ -14,6 +14,7 @@ import logging
 
 logger = logging.getLogger('default')
 
+
 # 邮件消息通知,0.all,1.email,2.dingding
 def _send(audit_id, msg_type, **kwargs):
     msg_sender = MailSender()
@@ -140,6 +141,7 @@ def _send(audit_id, msg_type, **kwargs):
                 msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
     except Exception:
         logger.error(traceback.format_exc())
+
 
 # 异步调用
 def send_msg(audit_id, msg_type, **kwargs):

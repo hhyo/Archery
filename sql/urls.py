@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*- 
 
-from django.urls import path, re_path
+from django.urls import path
 from sql import views, views_ajax, query, slowlog, instance, db_diagnostic, charts, sql_tuning, groupmgmt
 from sql.utils import jobs
 
 urlpatterns = [
-    re_path(r'^$', views.sqlworkflow),
+    path('', views.sqlworkflow),
     path('index/', views.sqlworkflow),
     path('login/', views.login, name='login'),
     path('logout/', views.sign_out),
@@ -34,9 +34,9 @@ urlpatterns = [
     path('dbaprinciples/', views.dbaprinciples),
     path('charts/', charts.pyecharts),
     path('group/', views.group),
-    path('grouprelations/<str:group_name>/', views.groupmgmt),
+    path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
-    path('instanceuser/<str:instance_name>/', views.instanceuser),
+    path('instanceuser/<int:instance_id>/', views.instanceuser),
     path('config/', views.config),
 
     path('authenticate/', views_ajax.authenticateEntry),

@@ -7,3 +7,4 @@
 archer/settings.py.github
 archer/settings.py.dev
 sql/migrations/
+venv

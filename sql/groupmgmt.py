@@ -51,17 +51,17 @@ def associated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
     '''
-    group_name = request.POST.get('group_name')
+    group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('type')
 
     if object_type:
-        rows = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).values(
+        rows = GroupRelations.objects.filter(group_id=group_id, object_type=object_type).values(
             'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = GroupRelations.objects.filter(group_name=group_name, object_type=object_type).count()
+        count = GroupRelations.objects.filter(group_id=group_id, object_type=object_type).count()
     else:
-        rows = GroupRelations.objects.filter(group_name=group_name).values(
+        rows = GroupRelations.objects.filter(group_id=group_id).values(
             'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = GroupRelations.objects.filter(group_name=group_name).count()
+        count = GroupRelations.objects.filter(group_id=group_id).count()
     rows = [row for row in rows]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
@@ -73,11 +73,11 @@ def unassociated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
     '''
-    group_name = request.POST.get('group_name')
+    group_id = int(request.POST.get('group_id'))
     object_type = int(request.POST.get('object_type'))
 
     associated_object_ids = [object_id['object_id'] for object_id in
-                             GroupRelations.objects.filter(group_name=group_name,
+                             GroupRelations.objects.filter(group_id=group_id,
                                                            object_type=object_type).values('object_id')]
 
     if object_type == 0:
@@ -103,10 +103,11 @@ def unassociated_objects(request):
 @csrf_exempt
 def instances(request):
     group_name = request.POST.get('group_name')
+    group_id = SqlGroup.objects.get(group_name=group_name).group_id
     type = request.POST.get('type')
     # 先获取资源组关联所有实例列表
     instance_ids = [group['object_id'] for group in
-                    GroupRelations.objects.filter(group_name=group_name, object_type=1).values('object_id')]
+                    GroupRelations.objects.filter(group_id=group_id, object_type=1).values('object_id')]
 
     # 获取实例信息
     instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'instance_name')
@@ -122,10 +123,10 @@ def addrelation(request):
     '''
     type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
     '''
-    group_name = request.POST.get('group_name')
+    group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('object_type')
     object_list = json.loads(request.POST.get('object_info'))
-    group_id = SqlGroup.objects.get(group_name=group_name).group_id
+    group_name = SqlGroup.objects.get(group_id=group_id).group_name
     try:
         GroupRelations.objects.bulk_create(
             [GroupRelations(object_id=int(object.split(',')[0]),
