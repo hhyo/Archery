@@ -7,9 +7,9 @@ rename table sql_master_config to sql_instance;
 alter table sql_instance
   change cluster_name instance_name varchar(50) NOT NULL ,
   change master_host host varchar(200) NOT NULL ,
-  change master_port port varchar(200) NOT NULL,
-  change master_user user varchar(200) NOT NULL,
-  change master_password password varchar(200) NOT NULL,
+  change master_port port int NOT NULL,
+  change master_user user varchar(100) NOT NULL,
+  change master_password password varchar(300) NOT NULL,
   add type char(6) NOT NULL after instance_name,
   add db_type varchar(10) NOT NULL after type;
 
