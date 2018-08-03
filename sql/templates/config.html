@@ -273,6 +273,18 @@
                                     </div>
                                     <div id="div-mail-config" style="display: none">
                                         <div class="form-group">
+                                            <label for="mail_ssl"
+                                                   class="col-sm-4 control-label">MAIL_SSL</label>
+                                            <div class="col-sm-8">
+                                                <div class="switch switch-small">
+                                                    <label>
+                                                        <input id="mail" key="mail_ssl" value="{{ config.mail_ssl }}"
+                                                               type="checkbox"> 是否使用SSL
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
                                             <label for="mail_smtp_server"
                                                    class="col-sm-4 control-label">MAIL_SMTP_SERVER</label>
                                             <div class="col-sm-5">
