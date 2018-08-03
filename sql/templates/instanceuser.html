@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <!-- 自定义操作按钮-->
-    <div id="toolbar" class="form-inline">
-        <div class="form-group ">
-            <button id="btn_add_master" type="button" class="btn btn-default"
-                    onclick="window.location.href=''">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                添加用户
-            </button>
-        </div>
-    </div>
     <!-- 表格-->
     <div class="table-responsive">
         <table id="user-list" data-toggle="table" class="table table-striped table-hover"
@@ -79,12 +69,6 @@
                                 priv = priv + value[i] + ';</br>'
                             }
                             return priv
-                        }
-                    }, {
-                        title: '操作',
-                        field: '',
-                        formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-danger btn-xs\" onclick=\"window.location.href='" + row.user + "/'\">变更权限</button>\n"
                         }
                     }],
                 onLoadSuccess: function () {
