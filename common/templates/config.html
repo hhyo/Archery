@@ -278,7 +278,8 @@
                                             <div class="col-sm-8">
                                                 <div class="switch switch-small">
                                                     <label>
-                                                        <input id="mail_ssl" key="mail_ssl" value="{{ config.mail_ssl }}"
+                                                        <input id="mail_ssl" key="mail_ssl"
+                                                               value="{{ config.mail_ssl }}"
                                                                type="checkbox"> 是否使用SSL
                                                     </label>
                                                 </div>
@@ -328,9 +329,20 @@
                                                        placeholder="邮箱账号密码">
                                             </div>
                                         </div>
+                                        <div class="form-group">
+                                            <label for="ddl_notify_group"
+                                                   class="col-sm-4 control-label">DDL_NOTIFY_GROUP</label>
+                                            <div class="col-sm-5">
+                                                <input type="text" class="form-control"
+                                                       id="ddl_notify_group"
+                                                       key="ddl_notify_group"
+                                                       value="{{ config.ddl_notify_auth_group }}"
+                                                       placeholder="DDL工单通知组名，为空则不通知">
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="mail"
+                                        <label for="ding"
                                                class="col-sm-4 control-label">DING</label>
                                         <div class="col-sm-8">
                                             <div class="switch switch-small">
@@ -476,6 +488,7 @@
                     $("#div-query-config").hide();
                 }
                 else if ($(this).attr("id") === 'mail') {
+                    $("#mail_ssl").val(false);
                     $("#div-mail-config").hide();
                 }
                 else if ($(this).attr("id") === 'auto_review') {

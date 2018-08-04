@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import re
+
 import simplejson as json
 
 import time
@@ -124,9 +126,9 @@ def send_msg(workflowDetail, url):
     sys_config = SysConfig().sys_config
     # 获取当前审批和审批流程
     audit_auth_group, current_audit_auth_group = Workflow.review_info(workflowDetail.id, 2)
+    audit_id = Workflow.auditinfobyworkflow_id(workflowDetail.id, 2).audit_id
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
-    msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status,
-                                     workflowDetail.id)
+    msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status, audit_id)
     msg_content = '''发起人：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
         workflowDetail.engineer_display, audit_auth_group, workflowDetail.workflow_name, url,
         workflowDetail.sql_content[0:500])
@@ -143,3 +145,57 @@ def send_msg(workflowDetail, url):
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
         MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+
+    if sys_config.get('mail') == 'true' and sys_config.get('ddl_notify_auth_group', None) \
+            and workflowDetail.status == '已正常结束':
+        # 判断上线语句是否存在DDL，存在则通知相关人员
+        sql_content = workflowDetail.sql_content
+        # 删除注释语句
+        sql_content = ''.join(
+            map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
+                sql_content.splitlines(1))).strip()
+        # 去除空行
+        sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
+
+        # 匹配DDL语句CREATE、ALTER（排除索引变更）、DROP、TRUNCATE、RENAME
+        send = 0
+        for row in sql_content.strip(';').split(';'):
+            # alter语法
+            if re.match(r"^alter\s+table\s+\S+\s+(add|alter|change|drop|rename|modify)\s+(?!.*(index|key|unique))",
+                        row.strip().lower()):
+                send = 1
+                break
+            # create语法
+            elif re.match(r"^create\s+(temporary\s+)?(database|schema|table)", row.strip().lower()):
+                send = 1
+                break
+            # drop语法
+            elif re.match(r"^drop", row.strip().lower()):
+                send = 1
+                break
+            # rename语法
+            elif re.match(r"^rename", row.strip().lower()):
+                send = 1
+                break
+            # truncate语法
+            elif re.match(r"^truncate", row.strip().lower()):
+                send = 1
+                break
+
+        if send == 1:
+            # Ding消息内容通知
+            msg_title = '[Archer]有新的DDL语句执行完成#{}'.format(audit_id)
+            msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
+                Users.objects.get(username=workflowDetail.engineer).display,
+                workflowDetail.group_name,
+                workflowDetail.instance_name,
+                workflowDetail.db_name,
+                workflowDetail.workflow_name,
+                url,
+                workflowDetail.sql_content[0:500])
+            # 获取通知成员
+            msg_to = [email['email'] for email in
+                      Users.objects.filter(groups__name=sys_config.get('ddl_notify_auth_group')).values('email')]
+
+            # 发送
+            mailSender.send_email(msg_title, msg_content, msg_to)

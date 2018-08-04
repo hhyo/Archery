@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-from multiprocessing import Process
 import email
 from email import encoders
 from email.header import Header
@@ -46,9 +45,13 @@ class MailSender(object):
         return file_msg
 
     def send_email(self, strTitle, strContent, listToAddr, **kwargs):
-        '''''
+        '''
             发送邮件
         '''
+        if listToAddr is None or listToAddr == ['']:
+            logger.error('收件人为空，无法发送邮件')
+            return
+
         # 构造MIMEMultipart对象做为根容器
         main_msg = email.mime.multipart.MIMEMultipart()
 

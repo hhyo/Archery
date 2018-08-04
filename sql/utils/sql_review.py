@@ -8,11 +8,13 @@ from sql.utils.group import user_groups
 from sql.utils.inception import InceptionDao
 
 
-# 获取当前请求url
-def getDetailUrl(request):
+# 获取工单地址
+def getDetailUrl(request, workflow_id):
     scheme = request.scheme
     host = request.META['HTTP_HOST']
-    return "%s://%s/detail/" % (scheme, host)
+    from sql.utils.workflow import Workflow
+    audit_id = Workflow.auditinfobyworkflow_id(workflow_id, 2).audit_id
+    return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
 
 
 # 根据实例名获取主库连接字符串，并封装成一个dict

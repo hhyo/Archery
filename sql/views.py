@@ -344,9 +344,8 @@ def execute(request):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     instance_name = workflowDetail.instance_name
     db_name = workflowDetail.db_name
-    url = getDetailUrl(request) + str(workflowId) + '/'
+    url = getDetailUrl(request, workflowId)
 
-    user = request.user
     if can_execute(request.user, workflowId) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
@@ -407,7 +406,7 @@ def timingtask(request):
         return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = getDetailUrl(request) + str(workflowId) + '/'
+    url = getDetailUrl(request, workflowId)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
 
     # 使用事务保持数据一致性
