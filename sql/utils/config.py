@@ -11,12 +11,12 @@ class SysConfig(object):
             sys_config = {}
             try:
                 for items in all_config:
-                    sys_config[items['item']] = items['value']
+                    sys_config[items['item']] = items['value'].strip()
             except Exception:
                 # 关闭后重新获取连接，防止超时
                 connection.close()
                 for items in all_config:
-                    sys_config[items['item']] = items['value']
+                    sys_config[items['item']] = items['value'].strip()
         except Exception:
             self.sys_config = {}
         else:
