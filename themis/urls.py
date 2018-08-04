@@ -17,7 +17,6 @@ urlpatterns = [
     path('new/version/sql/review/task/rule/detail/info', views.SqlReviewTaskRuleDetailInfo.as_view()),
     path('new/version/sql/review/task/rule/plan/info', views.SqlReviewTaskRulePlanInfo.as_view()),
     path('new/version/sql/review/task/rule/text/info', views.SqlReviewTaskRuleTextInfo.as_view()),
-    path('new/version/sql/review/get/db/user/list', views.SqlReviewGetDbUserList.as_view()),
     path('new/version/sql/review/task/publish', views.SqlReviewTaskPublish.as_view()),
 
 ]
