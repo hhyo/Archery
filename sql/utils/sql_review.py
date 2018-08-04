@@ -98,14 +98,10 @@ def can_timingtask(user, workflow_id):
 def can_cancel(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
-    # 结束的工单不可终止
-    if workflow_detail.status == Const.workflowStatus['manreviewing']:
+    # 结束的工单不可终止，执行前提交人可终止、审核人可打回
+    if workflow_detail.status in [Const.workflowStatus['manreviewing'], Const.workflowStatus['pass'],
+                                  Const.workflowStatus['timingtask']]:
         from sql.utils.workflow import Workflow
         if Workflow.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
-            result = True
-    elif workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
-        # 当前登录用户必须为有审核权限的组内用户
-        group_ids = [group.group_id for group in user_groups(user)]
-        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_review'):
             result = True
     return result

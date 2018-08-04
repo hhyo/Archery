@@ -142,4 +142,4 @@ def send_msg(workflowDetail, url):
     if sys_config.get('ding') == 'true':
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
-    MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+        MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
