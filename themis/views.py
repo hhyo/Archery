@@ -2,7 +2,6 @@
 from multiprocessing import Process
 
 import simplejson as json
-from django.http import HttpResponse
 import time
 import json
 import sqlparse
@@ -13,12 +12,10 @@ from pymongo import DESCENDING
 from django.views import View
 from themis.utils.jsonres import temRes
 from themis.utils.raiseerr import APIError
-from themis.utils.f_mysql_user_get import f_user_get
 from themis.utils.wtform_models import SimpleForm, ComplexForm
 from themis.themis import Themis
 from themis.rule_analysis.db.mongo_operat import MongoOperat
 from sql.models import Instance
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -126,7 +123,7 @@ class SqlReRuleSetInfoIndex(BaseHandler):
         任务发布界面之ip地址显示
         """
         # 获取实例列表
-        instances = Instance.objects.all()
+        instances = Instance.objects.filter(type='master')
         return render(request, "rule_set_info.html", {'instances': instances})
 
 
