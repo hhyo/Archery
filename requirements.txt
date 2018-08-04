@@ -8,3 +8,6 @@ pyecharts_snapshot==0.1.7
 sqlparse==0.2.4
 pycryptodome==3.6.3
 python-dateutil==2.7.3
+django-auth-ldap==1.7.0
+pymongo==3.7.1
+wtforms_json==0.3.3

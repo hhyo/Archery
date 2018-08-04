@@ -1,0 +1,148 @@
+{% extends 'base/parent.html' %}
+{% load staticfiles %}
+{% block extra_styles %}
+    <link href="{% static 'assets/plugins/bootstrap-datepicker/css/datepicker.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/navbar.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'css/dataTables.bootstrap.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'css/base.css' %}" rel="stylesheet"/>
+{% endblock %}
+
+{% block content %}
+    <!-- begin #content -->
+    <div class="content">
+        <!-- begin page-header -->
+        <h1 class="page-header">任务发布
+            <small>发布sql review的各种任务</small>
+        </h1>
+        <!-- end page-header -->
+
+        <!-- begin row -->
+        <div class="row">
+            <!-- begin col-12 -->
+            <div class="col-md-12">
+                <!-- begin panel -->
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default"
+                               data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success"
+                               data-click="panel-reload"><i class="fa fa-repeat"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning"
+                               data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger"
+                               data-click="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                        <h4 class="panel-title">任务发布页面</h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-horizontal form-bordered">
+                            <div id="wizard">
+                                <!-- begin wizard step-1 -->
+                                <div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4 col-sm-4" for="ipaddress">实例:</label>
+                                        <div class="col-md-4 col-sm-4">
+                                            <select class="form-control" id="pubIp">
+                                                <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                                {% for instance in instances %}
+                                                    <option> {{ instance.instance_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4 col-sm-4" for="objname">审核对象 :</label>
+                                        <div class="col-md-4 col-sm-4 input-group">
+                                            <select id="objname" class="form-control" >
+                                                <option value="is-empty" disabled="" selected="selected">请选择审核对象:
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4 col-sm-4" for="rule_type">审核规则类型 :</label>
+                                        <div class="col-md-6 col-sm-6 input-group">
+                                            <label class="radio-inline">
+                                                <input type="radio" name="optionstask" value="sqlplan"/>
+                                                plan
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="optionstask" value="text"/>
+                                                text
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="optionstask" value="obj"/>
+                                                对象
+                                            </label>
+                                            <label class="radio-inline">
+                                                <input type="radio" name="optionstask" value="sqlstat"/>
+                                                执行特征
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4 col-sm-4" for="rel_user">日期选择 :</label>
+                                        <div class="col-md-4 col-sm-4 input-group input-daterange"
+                                             data-date-format="yyyy-mm-dd" id="datepicker">
+                                            <input type="text" class="form-control to_oracle" placeholder="选择日期"/>
+                                            <input type="text" class="form-control to_mysql" name="start"
+                                                   placeholder="开始日期"/>
+                                            <span class="input-group-addon to_mysql">到</span>
+                                            <input type="text" class="form-control to_mysql" name="stop"
+                                                   placeholder="结束日期"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4 col-sm-4"></label>
+                                        <div class="col-md-1 col-sm-1">
+                                            <button id="task_execute" class="btn btn-primary">执行任务</button>
+                                        </div>
+                                        <label id="alert_message" class="col-md-4 col-sm-4">
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- end wizard step-1 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end panel -->
+                <!-- begin panel -->
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default"
+                               data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success"
+                               data-click="panel-reload"><i class="fa fa-repeat"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning"
+                               data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger"
+                               data-click="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                        <h4 class="panel-title">规则信息</h4>
+                    </div>
+                    <div id="table_info" class="panel-body">
+                    </div>
+                </div>
+                <!-- end panel -->
+            </div>
+            <!-- end col-12 -->
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end #content -->
+
+{% endblock %}
+
+{% block extra_scripts %}
+    <script src="{% static 'js/jquery.dataTables.js' %}"></script>
+    <script src="{% static 'js/dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'js/jquery.jeditable.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+    <script src="{% static 'assets/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'assets/js/form-slider-switcher.demo.js' %}"></script>
+    <script src="{% static 'js/base.js' %}"></script>
+    <script src="{% static 'js/sql_review/rule_set_info.js' %}"></script>
+{% endblock %}

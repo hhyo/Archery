@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    {% load staticfiles %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>SQL审核平台</title>
+
+    <!-- 引入 Bootstrap -->
+    <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'metisMenu/css/metisMenu.min.css' %}" rel="stylesheet">
+    <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
+    <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    {% for jsfile_name in script_list %}
+        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
+    {% endfor %}
+</head>
+<body>
+
+<div id="wrapper">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/index/">SQL审核平台</a>
+        </div>
+
+        <!-- /.navbar-header -->
+        <ul class="nav navbar-top-links navbar-right">
+            <li>
+                <a>你好，{{ user.display }}</a>
+            </li>
+            {% if todo > 0 %}
+                <li>
+                    <a href="/workflow/">
+                        <span class="fa fa-bell ">{{ todo }}</span>
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <a href="/workflow/">
+                        <span class="fa fa-bell "></span>
+                    </a>
+                </li>
+            {% endif %}
+            <!-- /.dropdown -->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-user">
+                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
+                    <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
+                </ul>
+                <!-- /.dropdown-user -->
+            </li>
+            <!-- /.dropdown -->
+        </ul>
+        <!-- /.navbar-top-links -->
+
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav" id="side-menu">
+                    {% if perms.sql.menu_dashboard %}
+                        <li>
+                            <a href="/charts/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqlworkflow %}
+                        <li>
+                            <a href="/sqlworkflow/"><i class="fa fa-cloud-upload fa-fw"></i> SQL上线</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_query %}
+                        <li>
+                            <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqlquery %}
+                                    <li>
+                                        <a href="/sqlquery/">MySQL查询</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_queryapplylist %}
+                                    <li>
+                                        <a href="/queryapplylist/">查询权限申请</a>
+                                    </li>
+                                {% endif %}
+
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqloptimize %}
+                        <li>
+                            <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqladvisor %}
+                                    <li>
+                                        <a href="/sqladvisor/">优化工具</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_slowquery %}
+                                    <li>
+                                        <a href="/slowquery/">慢查日志</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_dbdiagnostic %}
+                                    <li>
+                                        <a href="/dbdiagnostic/">会话管理</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_themis %}
+                        <li>
+                            <a href="#"><i class="fa fa-stethoscope fa-fw"></i> 数据库审核<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/themis/">规则设置</a>
+                                </li>
+                                <li>
+                                    <a href="#">规则增加<span class="fa arrow"></span></a>
+                                    <ul class="nav nav-third-level collapse">
+                                        <li>
+                                            <a href="/themis/sqlreview/rule/simple/addition">简单规则</a>
+                                        </li>
+                                        <li>
+                                            <a href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
+                                        </li>
+                                    </ul>
+                                    <!-- /.nav-third-level -->
+                                </li>
+                                <li>
+                                    <a href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
+                                </li>
+                                <li>
+                                    <a href="/themis/new/version/sql/review/task/index">任务查询</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_system %}
+                        <li>
+                            <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/config/">配置项管理</a>
+                                </li>
+                                <li>
+                                    <a href="/instance/">实例管理</a>
+                                </li>
+                                <li>
+                                    <a href="/group/">资源组管理</a>
+                                </li>
+                                <li>
+                                    <a href="#">其他配置管理 <span class="fa arrow"></span></a>
+                                    <ul class="nav nav-third-level collapse">
+                                        <li>
+                                            <a href="/admin/sql/users/">用户管理</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/auth/group/">权限组管理</a>
+                                        </li>
+                                        <li>
+                                            <a href="/admin/">全部后台数据</a>
+                                        </li>
+                                    </ul>
+                                    <!-- /.nav-third-level -->
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_document %}
+                        <li>
+                            <a href="#"><i class="fa fa-sitemap fa-fw"></i> 相关文档<span
+                                    class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/dbaprinciples/">设计规范</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>
+        <!-- /.navbar-static-side -->
+    </nav>
+
+    <!-- Page Content -->
+    <div id="page-wrapper">
+        <div class="clearfix">
+            <br>
+            {% block content %}
+            {% endblock content %}
+        </div>
+    </div>
+    <!-- /#page-wrapper -->
+
+</div>
+
+<script src="{% static 'jquery/jquery.min.js' %}"></script>
+<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'metisMenu/js/metisMenu.min.js' %}"></script>
+<script src="{% static 'sb-admin-2/js/sb-admin-2.js' %}"></script>
+<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
+<script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+<script src="{% static 'dist/js/formatter.js' %}"></script>
+
+</body>
+{% block js %}
+    <script>
+        <!-- 解决CSRF-->
+        $(function () {
+            $.ajaxSetup({
+                headers: {"X-CSRFToken": getCookie("csrftoken")}
+            });
+        });
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %}
+</html>

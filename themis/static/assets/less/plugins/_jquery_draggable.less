@@ -1,0 +1,24 @@
+/* jQuery Draggable */
+
+.row > [class*="col-"].ui-sortable {
+    min-height: 50px;
+}
+.theme-panel .ui-sortable {
+    min-height: 0px;
+}
+.ui-sortable .panel-heading {
+    cursor: move;
+}
+.ui-sortable.ui-sortable-disabled .panel-heading {
+    cursor: default;
+}
+.ui-sortable-placeholder { 
+    border: 1px dashed #82868b !important;
+    visibility: visible !important;
+    background: none;
+    margin: 0 !important;
+}
+.panel.ui-sortable-placeholder {
+    margin: -1px -1px 19px !important;
+    .box-shadow(none) !important;
+}

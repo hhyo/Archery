@@ -1,0 +1,49 @@
+<!-- begin #header -->
+<div id="header" class="header navbar navbar-default navbar-fixed-top">
+    <!-- begin container-fluid -->
+    <div class="container-fluid">
+        <!-- begin mobile sidebar expand / collapse button -->
+        <div class="navbar-header">
+            <a href="/" class="navbar-brand"><span class="navbar-logo"></span> Themis</a>
+            <button type="button" class="navbar-toggle" data-click="sidebar-toggled">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <!-- end mobile sidebar expand / collapse button -->
+        <ul class="nav navbar-nav navbar-left">
+            <li class="navbar-user open">
+                <a href="/themis/" aria-expanded="true">
+                    <span class="hidden-xs">规则编辑</span>
+                </a>
+            </li>
+            <li class="dropdown navbar-user">
+                <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <span class="hidden-xs">规则增加</span>
+                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="/themis/sqlreview/rule/simple/addition">简单规则</a>
+                    </li>
+                    <li>
+                        <a href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="navbar-user open">
+                <a href="/themis/new/version/sql/review/rule/info/index" aria-expanded="true">
+                    <span class="hidden-xs">发布任务</span>
+                </a>
+            </li>
+             <li class="navbar-user open">
+                <a href="/themis/new/version/sql/review/task/index" aria-expanded="true">
+                    <span class="hidden-xs">任务详情</span>
+                </a>
+            </li>
+        </ul>
+        
+    </div>
+    <!-- end container-fluid -->
+</div>
+<!-- end #header -->

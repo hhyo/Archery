@@ -1,0 +1,93 @@
+/* Unlimited Nav Tabs */
+
+.tab-overflow {
+    position: relative;
+    overflow: hidden;
+    .border-radius(2px 2px 0 0);
+    
+    & .nav.nav-tabs {
+        white-space: nowrap;
+        overflow: hidden;
+        display: table;
+        margin: 0;
+        .border-radius(2px 2px 0 0);
+        
+        & > li {
+            display: table-cell;
+            float: none;
+            
+            & > a {
+                margin-left: -1px;
+            }
+        }
+    }
+    
+    
+    & .next-button,
+    & .prev-button {
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 10;
+        display: none !important;
+        opacity: 0;
+        .box-shadow(0 0 15px rgba(0, 0, 0, 0.5));
+        .transition(all .2s linear);
+    }
+    & .prev-button {
+        left: 0;
+        right: auto;
+        .box-shadow(0 0 15px rgba(0, 0, 0, 0.5));
+    }
+    
+    & .nav.nav-tabs.nav-tabs-inverse .next-button,
+    & .nav.nav-tabs.nav-tabs-inverse .prev-button {
+        .box-shadow(0 0 15px #000);
+    }
+    & .nav.nav-tabs.nav-tabs-inverse .prev-button {
+        .box-shadow(0 0 15px #000);
+    }
+    & .next-button a,
+    & .prev-button a {
+        margin: 0;
+        background: #c1ccd1;
+    }
+    & .prev-button > a {
+        .border-radius(3px 0 3px);
+    }
+    
+    &.overflow-right .next-button,
+    &.overflow-left .prev-button {
+        display: block !important;
+        opacity: 1;
+        background: none;
+    }
+    & .nav-tabs > li.prev-button + li.active > a {
+        .border-radius(0 3px 0 0);
+    }
+}
+
+.flat-black .tab-overflow .next-button a,
+.flat-black .tab-overflow .prev-button a {
+    background: #d2d2d2;
+}
+.tab-overflow .nav-tabs-inverse .next-button > a,
+.tab-overflow .nav-tabs-inverse .prev-button > a,
+.nav.nav-tabs.nav-tabs-inverse > li > a,
+.nav.nav-tabs.nav-tabs-inverse > li > a:hover,
+.nav.nav-tabs.nav-tabs-inverse > li > a:focus {
+    background: #242a30;
+}
+.flat-black .tab-overflow .nav-tabs-inverse .next-button > a,
+.flat-black .tab-overflow .nav-tabs-inverse .prev-button > a,
+.flat-black .nav.nav-tabs.nav-tabs-inverse > li > a,
+.flat-black .nav.nav-tabs.nav-tabs-inverse > li > a:hover,
+.flat-black .nav.nav-tabs.nav-tabs-inverse > li > a:focus {
+    background: #2A2A2A;
+}
+.nav.nav-tabs.nav-tabs-inverse > li.active > a,
+.nav.nav-tabs.nav-tabs-inverse > li.active > a:hover,
+.nav.nav-tabs.nav-tabs-inverse > li.active > a:focus {
+    background: #fff;
+    color: #242a30;
+}

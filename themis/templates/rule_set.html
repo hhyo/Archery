@@ -1,0 +1,53 @@
+{% extends 'base/parent.html' %}
+{% load staticfiles %}
+{% block extra_styles %}
+<link href="{% static 'css/navbar.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/dataTables.bootstrap.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/base.css' %}" rel="stylesheet" />
+<style>
+.table_rule {
+        width: 100% !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- begin #content -->
+    <div class="content">
+        <!-- begin page-header -->
+        <h1 class="page-header">规则设置 <small>查看规则与设置规则,支持在表格中进行编辑，编辑完后会在mongo中进行相关保存</small></h1>
+        <!-- end page-header -->
+
+        <!-- begin row -->
+        <div class="row">
+            <!-- begin col-12 -->
+            <div class="col-md-12">
+                <!-- begin panel -->
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                        </div>
+                        <h4 class="panel-title">规则设置详情</h4>
+                    </div>
+                    <div class="panel-body">
+                        <div id="struct">
+                        </div>
+                    </div>
+                </div>
+                <!-- end panel -->
+            </div>
+            <!-- end col-12 -->
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end #content -->
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/jquery.dataTables.js' %}"></script>
+<script src="{% static 'js/dataTables.bootstrap.js' %}"></script>
+<script src="{% static 'js/jquery.jeditable.js' %}"></script>
+<script src="{% static 'js/sql_review/rule_set.js' %}"></script>
+{% endblock %}

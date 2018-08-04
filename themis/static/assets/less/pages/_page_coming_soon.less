@@ -1,0 +1,104 @@
+/* Coming Soon */
+
+.coming-soon {
+    & a {
+        color: @green
+    }
+    & .brand {
+        line-height: 40px;
+        font-size: 28px;
+        font-weight: 300;
+        margin-bottom: 50px;
+        color: #fff;
+        text-align: center;
+        
+        & .logo {
+            border: 16px solid transparent;
+            border-color: #4DCACA #31A3A3 #1D8888;
+            margin-right: 5px;
+            position: relative;
+            width: 0;
+            height: 0;
+            display: inline-block;
+            vertical-align: middle;
+            top: -4px;
+        }
+    }
+    & .coming-soon-header {
+        background: url(../img/coming-soon.jpg);
+        padding: 100px 0 50px;
+        position: relative;
+        
+        &:before {
+            background: #000;
+        }
+        & .desc,
+        & .timer,
+        & .brand {
+            position: relative;
+            z-index: 1020;
+        }
+        & .desc {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 300;
+            color: #fff;
+        }
+        & .timer {
+            margin-bottom: 50px;
+            padding: 10px 0;
+            
+            &:before,
+            &:after {
+                .clearfix();
+            }
+            & .is-countdown {
+                background: none;
+                border: none;
+                width: 980px;
+                margin: 0 auto;
+                
+                & .countdown-section {
+                    padding: 0 10px;
+                    
+                    & + .countdown-section {
+                        border-left: 1px solid #fff;
+                        border-left: 1px solid rgba(255,255,255,0.3);
+                    }
+                }
+            }
+            & .countdown-amount {
+                font-size: 36px;
+                color: #fff;
+            }
+            & .countdown-period {
+                font-size: 14px;
+                color: #999;
+            }
+        }
+        & .bg-cover {
+            background: #000;
+            position: absolute;
+            right: 0;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 0;
+            .opacity(0.6);
+        }
+    }
+    & .coming-soon-content {
+        color: #333;
+        text-align: center;
+        padding: 25px 0;
+        
+        & .desc {
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        & .input-group {
+            width: 480px;
+            margin: 0 auto;
+        }
+    }
+}

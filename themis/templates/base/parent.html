@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en">
+<!--<![endif]-->
+<head>
+    <meta charset="utf-8"/>
+    <title id="page-title">SQL审核平台</title>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <meta content="" name="description"/>
+    <meta content="" name="author"/>
+
+    {% load staticfiles %}
+    <!-- ================== BEGIN BASE CSS STYLE ================== -->
+    <!-- <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" /> -->
+    <link href="{% static 'assets/plugins/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/css/animate.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/css/style.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/css/style-responsive.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'assets/css/theme/default.css' %}" id="theme" rel="stylesheet"/>
+    <!-- ================== END BASE CSS STYLE ================== -->
+
+    <!-- ================== BEGIN BASE JS ================== -->
+    <script src="{% static 'assets/plugins/pace/pace.min.js' %}"></script>
+    <!-- ================== END BASE JS ================== -->
+    {% block extra_styles %}
+    {% endblock %}
+
+</head>
+<body>
+<!-- begin #page-loader -->
+<div id="page-loader" class="fade in"><span class="spinner"></span></div>
+<!-- end #page-loader -->
+
+<!-- begin #page-container -->
+<div id="page-container" class="fade page-sidebar-fixed page-header-fixed">
+    {% include 'base/head.html' %}
+    {% block content %}
+    {% endblock %}
+    {% include 'base/footer.html' %}
+    <!-- begin scroll to top btn -->
+    <a href="javascript:;" class="btn btn-icon btn-circle btn-success btn-scroll-to-top fade" data-click="scroll-top"><i
+            class="fa fa-angle-up"></i></a>
+    <!-- end scroll to top btn -->
+</div>
+<!-- end page container -->
+
+<!-- ================== BEGIN BASE JS ================== -->
+<script src="{% static 'assets/plugins/jquery/jquery-1.9.1.min.js' %}"></script>
+<script src="{% static 'assets/plugins/jquery/jquery-migrate-1.1.0.min.js' %}"></script>
+<script src="{% static 'assets/plugins/jquery-ui/ui/minified/jquery-ui.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+
+<!--[if lt IE 9]>
+        <script src="{% static 'assets/crossbrowserjs/html5shiv.js' %}"></script>
+        <script src="{% static 'assets/crossbrowserjs/respond.min.js' %}"></script>
+        <script src="{% static 'assets/crossbrowserjs/excanvas.min.js' %}"></script>
+    <![endif]-->
+<!-- ================== END BASE JS ================== -->
+
+<!-- ================== BEGIN PAGE LEVEL JS ================== -->
+<!-- ================== END PAGE LEVEL JS ================== -->
+
+<!-- ================== BEGIN PAGE LEVEL JS ================== -->
+<script src="{% static 'assets/js/apps.js' %}"></script>
+<!-- ================== END PAGE LEVEL JS ================== -->
+<script>
+    <!-- 解决CSRF-->
+    $(function () {
+        $.ajaxSetup({
+            headers: {"X-CSRFToken": getCookie("csrftoken")}
+        });
+    });
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    $(document).ready(function () {
+        App.init();
+    });
+</script>
+{% block extra_scripts %}
+{% endblock %}
+</body>
+</html>

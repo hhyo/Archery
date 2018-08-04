@@ -350,6 +350,7 @@ class Permission(models.Model):
             ('menu_dbdiagnostic', '菜单 会话管理'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
+            ('menu_themis', '菜单 数据库审核'),
             ('sql_submit', '提交SQL上线工单'),
             ('sql_review', '审核SQL上线工单'),
             ('sql_execute', '执行SQL上线工单'),

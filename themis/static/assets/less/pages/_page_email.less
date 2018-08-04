@@ -1,0 +1,69 @@
+/* Email */
+      
+.nav-inbox > li > a {
+    padding: 8px 15px;
+    
+    & i {
+        font-size: 14px;
+    }
+}
+.table.table-email {
+    line-height: 20px;
+    margin-bottom: 0;
+    
+    & .email-header-link {
+        color: #333;
+    }
+    & .email-select {
+        width: 20px;
+        font-size: 14px;
+        
+        & a {
+            color: #999;
+        }
+    }
+    & .email-btn {
+        color: #ccc;
+        font-size: 14px;
+        margin-right: 15px;
+        
+        & + .email-btn {
+            margin-left: -12px;
+        }
+        &:hover,
+        &focus {
+            color: #999;
+        }
+    }
+    & .email-sender {
+        padding-right: 25px;
+    }
+    & tr {
+        &:hover td {
+            background: #fafafa;
+        }
+        &.active td.email-select i:before,
+        &.active th.email-select i:before {
+            content: '\f14a';
+        }
+    }
+    & thead tr.active th {
+        background: none;
+    }
+}
+.email-footer {
+    border-top: 1px solid #ccc;
+    padding: 15px 8px;
+    line-height: 26px;
+}
+.email-btn-row {
+    margin-bottom: 15px;
+    
+    & .btn + .btn {
+        margin-left :5px;
+    }
+}
+.email-content {
+    background: #fff;
+    padding: 15px;
+}

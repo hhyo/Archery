@@ -1,0 +1,102 @@
+{% extends 'base/parent.html' %}
+{% load staticfiles %}
+{% block extra_styles %} 
+<link href="{% static 'assets/plugins/jquery-file-upload/blueimp-gallery/blueimp-gallery.min.css' %}" rel="stylesheet" />
+<link href="{% static 'assets/plugins/jquery-file-upload/css/jquery.fileupload.css' %}" rel="stylesheet" />
+<link href="{% static 'assets/plugins/jquery-file-upload/css/jquery.fileupload-ui.css' %}" rel="stylesheet" />
+<link href="{% static 'css/navbar.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/base.css' %}" rel="stylesheet" />
+<style>
+.input-parms-padding, .output-parms-padding{
+    padding-left: 0px !important;
+}
+.filebutton {
+    margin-bottom: 15px;
+}
+.info {
+    margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- begin #content -->
+    <div class="content">
+        <!-- begin page-header -->
+        <h1 class="page-header">复杂规则增加 <small>动态增加规则</small></h1>
+        <!-- end page-header -->
+        
+        <!-- begin row -->
+        <div class="row">
+            <!-- begin col-12 -->
+            <div class="col-md-12">
+                <!-- begin panel -->
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                        </div>
+                        <h4 class="panel-title">规则增加详情</h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="col-md-12">
+                            <div class="col-md-1 filebutton">
+                                <span class="btn btn-success fileinput-button form-group">
+                                    <i class="icon-plus icon-white"></i>
+                                    <span>文件上传</span>
+                                    <input id="fileupload" type="file" name="pyfile" multiple>
+                                </span>
+                            </div>
+                            <div class="col-md-3 info">
+                                <p class="text-success" id="info"></p>
+                            </div>
+                         </div>
+                        <div class="col-md-12">
+                        <form class="form-horizontal" action="/" method="POST">
+                            <fieldset>
+                            {% include 'base/rule_add_head.html' %}
+                           {% include 'base/rule_add_foot.html' %}
+                           </fieldset>
+                       </form>
+                       </div>
+                    </div>
+                </div>
+                <!-- end panel -->
+            </div>
+            <!-- end col-12 -->
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end #content -->
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'assets/plugins/jquery-file-upload/js/vendor/jquery.ui.widget.js' %}"></script>
+<script src="{% static 'assets/plugins/jquery-file-upload/js/jquery.iframe-transport.js' %}"></script>
+<script src="{% static 'assets/plugins/jquery-file-upload/js/jquery.fileupload.js' %}"></script>
+<script src="{% static 'js/sql_review/rule_add.js' %}"></script>
+<script src="{% static 'js/sql_review/rule_submit.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#fileupload').fileupload({
+            url: "/themis/sqlreview/rule/upload",
+            dataType: 'json',
+            done: function (e, data) {
+                if (data.result.errcode === 80070){
+                    $.each(data.result.files, function (index, file) {
+                        $("#info").text("上传成功")
+                    });
+                }
+                else{
+                    $("#info").text(data.result.message)
+                }
+            },
+            add: function (e, data) {
+                $("#info").text("开始上传")
+                data.submit();
+            }
+        });
+    });
+</script>
+{% endblock %}

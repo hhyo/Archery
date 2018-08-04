@@ -1,0 +1,46 @@
+@import '_variable';
+@import '_mixins';
+@import '_page_setting';
+@import '_header';
+@import '_sidebar';
+@import '_content';
+@import '_footer';
+@import '_helper';
+@import '_component_list';
+@import '_widget_list';
+@import '_plugin_list';
+@import '_page_list';
+@import 'theme/_default';
+@import '_responsive';
+@import '_content_flat_black';
+@import '_pace_loader';
+
+/* Reset and overrides */
+
+body {
+    background: @bg_body;
+    font-size: @body_font_size;
+    font-family: @body_font_family;
+    color: @body_text_color;
+}
+.ie8 body {
+    font-family: @ie8_body_font_family;
+}
+h1, h2, h3, h4, h5, h6{
+    font-weight: 500;
+    color: @heading_text_color;
+}
+h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
+    font-size: 60%;
+    font-weight: 300;
+    color: @heading_small_text_color;
+}
+a {
+    .transition(color 100ms ease-in-out);
+}
+a:focus {
+    outline: none;
+}
+label {
+    color: #242a30;
+}

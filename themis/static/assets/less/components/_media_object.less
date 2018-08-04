@@ -1,0 +1,42 @@
+/* Media Object */
+
+.media {
+    overflow: hidden;
+    zoom: 1;
+    
+    & .media-body {
+        overflow: hidden;
+        zoom: 1;
+    }
+    & .media-object {
+        width: 128px;
+    }
+    &.media-lg .media-object {
+        width: 256px;
+    }
+    &.media-sm .media-object {
+        width: 64px;
+    }
+    &.media-xs .media-object {
+        width: 32px;
+    }
+    & > .pull-left {
+        margin-right: 15px;
+    }
+    & > .pull-right {
+        margin-left: 15px;
+    }
+    & a:hover,
+    & a:focus,
+    & a:hover .media-heading,
+    & a:focus .media-heading,
+    & a.media-heading:hover,
+    & a.media-heading:focus {
+        color: @dark_black;
+        text-decoration: none;
+    }
+}
+.media-list.media-list-with-divider > li + li {
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}

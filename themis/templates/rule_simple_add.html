@@ -1,0 +1,87 @@
+{% extends 'base/parent.html' %}
+{% load staticfiles %}
+{% block extra_styles %} 
+<link href="{% static 'css/navbar.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/dataTables.bootstrap.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/base.css' %}" rel="stylesheet" />
+<style>
+.input-parms-padding, .output-parms-padding{
+    padding-left: 0px !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- begin #content -->
+    <div class="content">
+        <!-- begin page-header -->
+        <h1 class="page-header">简单规则增加 <small>动态增加规则</small></h1>
+        <!-- end page-header -->
+        
+        <!-- begin row -->
+        <div class="row">
+            <!-- begin col-12 -->
+            <div class="col-md-12">
+                <!-- begin panel -->
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                        </div>
+                        <h4 class="panel-title">规则增加详情</h4>
+                    </div>
+                    <div class="panel-body">
+                        <form class="form-horizontal" action="/themis/sqlreview/rule/addition" method="POST">
+                            <fieldset>
+                                <div class="col-md-12">
+                                    <h3>规则增加各字段说明</h3>
+                                    <ul>
+                                        <li>待执行sql语句或mongo语句或正则表达式：必填，适用于简单规则，对于变量使用两个@符修饰。规则类型为OBJ时填写sql，规则类型为SQLPLAN和SQLSTAT时填写mongo语句，规则类型为TEXT时填写正则表达式。
+                                            <ul>
+                                                <li>规则类型为OBJ时举例：SELECT T.TABLE_NAME, COUNT(1) FROM DBA_INDEXES T WHERE T.OWNER = '@username@' GROUP BY T.TABLE_NAME HAVING COUNT(1) > @idx_count@ ORDER BY COUNT(1) DESC，idx_count为变化的输入参数，在输入参数中定义，username为默认传入的参数，可以不用定义
+                                                </li>
+                                                <li>规则类型为SQLPLAN和SQLSTAT时举例：db.@sql@.find({"OPERATION":"INDEX","OPTIONS":"SKIP SCAN","USERNAME":"@username@","ETL_DATE":"@etl_date@"}).forEach(function(x){db.@tmp@.save({"SQL_ID":x.SQL_ID,"PLAN_HASH_VALUE":x.PLAN_HASH_VALUE,"OBJECT_NAME":x.OBJECT_NAME,"ID":x.ID,"COST":x.COST,"COUNT":""});})
+                                                username,etl_date,tmp为默认传入的参数，可以不用定义
+                                                </li>
+                                                <li>规则类型为TEXT时举例：(cross join)|(outer join)
+                                                </li>
+                                            </ul>
+                                        </li>
+                                        <li>数据库类型：必填，当前仅支持mysql</li>
+                                        <li>规则名称：必填，建议所有规则名称使用大写</li>
+                                        <li>规则概要：必填，规则的概括说明</li>
+                                        <li>规则描述：必填，规则的详细说明</li>
+                                        <li>最大扣分：必填，规则违反后最大的扣分，规则权重x违反次数>最大扣分，则分数为最大扣分，否则为规则权重x违反次数</li>
+                                        <li>解决方案：必填，规则的解决方案，每行一条</li>
+                                        <li>规则权重：必填，违反单条规则所扣分数</li>
+                                        <li>扩展字段：可以为空，目前只针对OBJ类型的规则有扩展字段</li>
+                                        <li>输入参数，可以为空</li>
+                                        <li>输出参数，可以为空</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="col-md-11 form-group">
+                                        <label for="rule_cmd">待执行sql或mongo语句</label>
+                                        <textarea id="rule_sql" class="form-control" placeholder="查询语句" rows="5"></textarea>
+                                    </div>
+                                </div>
+                                {% include 'base/rule_add_head.html' %}
+                               {% include 'base/rule_add_foot.html' %}
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+                <!-- end panel -->
+            </div>
+            <!-- end col-12 -->
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end #content -->
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/sql_review/rule_add.js' %}"></script>
+<script src="{% static 'js/sql_review/rule_submit.js' %}"></script>
+{% endblock %}

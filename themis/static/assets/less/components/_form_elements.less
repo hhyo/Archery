@@ -1,0 +1,128 @@
+/* Form Elements */
+
+.form-control {
+    border: 1px solid #ccd0d4;
+    font-size: 12px;
+    .border-radius(3px);
+    .box-shadow(none);
+}
+.form-control.input-white {
+    background: #fff;
+    border-color: #fff;
+}
+.form-control.input-white:focus {
+    .box-shadow(none);
+}
+.form-control[disabled], 
+.form-control[readonly],
+fieldset[disabled] .form-control {
+    background: #e5e9ed;
+    .opacity(0.6);
+}
+.form-control[disabled]:focus, 
+.form-control[readonly]:focus,
+fieldset[disabled] .form-control:focus {
+    .box-shadow(none);
+    border: 1px solid #ccd0d4;
+}
+.form-control:focus {
+    border-color: #9fa2a5;
+    .box-shadow(none);
+}
+.form-horizontal.form-bordered .form-group {
+    border-bottom: 1px solid #eee;
+    margin: 0;
+}
+.form-horizontal.form-bordered .form-group:last-child {
+    border-bottom: 0;
+}
+.form-horizontal.form-bordered .form-group > .control-label {
+    padding: 22px 15px 15px;
+}
+.form-horizontal.form-bordered .form-group > div {
+    padding: 15px;
+}
+.form-horizontal.form-bordered .form-group > div {
+    border-left: 1px solid #eee;
+}
+.form-horizontal.form-bordered .form-group > .control-label {
+    border-right: 1px solid #eee;
+    margin-right: -1px;
+}
+.form-horizontal.form-bordered .has-feedback .form-control-feedback {
+    top: 15px;
+}
+label {
+    font-weight: 500;
+}
+.has-success .form-control,
+.has-success .form-control:focus,
+.has-warning .form-control,
+.has-warning .form-control:focus,
+.has-error .form-control,
+.has-error .form-control:focus {
+    .box-shadow(none);
+}
+.has-success .help-block, 
+.has-success .control-label, 
+.has-success .radio, 
+.has-success .checkbox, 
+.has-success .radio-inline, 
+.has-success .checkbox-inline,
+.has-success .form-control-feedback {
+    color: @green;
+}
+.has-success .form-control {
+    border-color: @green;
+}
+.has-success .form-control:focus {
+    border-color: @dark_green;
+}
+.has-warning .help-block, 
+.has-warning .control-label, 
+.has-warning .radio, 
+.has-warning .checkbox, 
+.has-warning .radio-inline, 
+.has-warning .checkbox-inline,
+.has-warning .form-control-feedback {
+    color: @orange;
+}
+.has-warning .form-control {
+    border-color: @orange;
+}
+.has-warning .form-control:focus {
+    border-color: @dark_orange;
+}
+.has-error .help-block, 
+.has-error .control-label, 
+.has-error .radio, 
+.has-error .checkbox, 
+.has-error .radio-inline, 
+.has-error .checkbox-inline,
+.has-error .form-control-feedback {
+    color: @red;
+}
+.has-error .form-control {
+    border-color: @red;
+}
+.has-error .form-control:focus {
+    border-color: @dark_red;
+}
+.form-control-feedback {
+    line-height: 34px;
+}
+
+select.form-control {
+    border-color: #ccd0d4;
+}
+select[multiple].form-control {
+    border-color: #ccd0d4;
+}
+.input-group-addon {
+    background: #e2e7eb;
+    border: none;
+}
+legend {
+    padding-bottom: 3px;
+    border-bottom: 1px solid #e2e7eb;
+}

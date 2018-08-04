@@ -1,0 +1,56 @@
+/* Mixins */
+
+.border-radius(@radius) {
+  -webkit-border-radius: @radius;
+     -moz-border-radius: @radius;
+          border-radius: @radius;
+}
+.box-shadow(@shadow) {
+  -webkit-box-shadow: @shadow;
+     -moz-box-shadow: @shadow;
+          box-shadow: @shadow;
+}
+.opacity(@opacity) {
+    opacity: @opacity;
+}
+.clearfix() {
+    content: '';
+    clear: both;
+    display: table;
+}
+.transition(@transition) {
+    -webkit-transition: @transition;
+       -moz-transition: @transition;
+        -ms-transition: @transition;
+         -o-transition: @transition;
+            transition: @transition;
+}
+.animation(@animation) {
+    -webkit-animation: @animation;
+       -moz-animation: @animation;
+            animation: @animation;
+}
+.generate-button-styling(@buttonClassName; @defaultColor; @hoverColor;) {
+    .btn.@{buttonClassName} {
+        color: #fff;
+        background: @defaultColor;
+        border-color: @defaultColor;
+        
+        &:hover,
+        &:focus,
+        &:active,
+        &.active {
+            background: @hoverColor;
+            border-color: @hoverColor;
+        }
+        
+    }
+    .open .dropdown-toggle.@{buttonClassName} {
+        background: @hoverColor;
+        border-color: @hoverColor;
+    }
+    .btn-group .btn.@{buttonClassName}:not(.active) + .btn.@{buttonClassName},
+    .input-group-btn .btn.@{buttonClassName}:not(.active) + .btn.@{buttonClassName} {
+        border-left-color: @hoverColor;
+    }
+}

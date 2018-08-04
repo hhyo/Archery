@@ -1,0 +1,64 @@
+/* Bootstrap Wizard */
+    
+.bwizard-steps {
+    font-size: 14px !important;
+    overflow: hidden !important;
+    display: table !important;
+    width: 100% !important;
+    .border-radius(3px) !important;
+}
+.bwizard-steps li:before,
+.bwizard-steps li:after {
+    border: none !important;
+}
+.bwizard-steps li {
+    float: none !important;
+    display: table-cell !important;
+    padding: 15px !important;
+    line-height: 20px !important;
+    background: #f0f3f4 !important;
+    .border-radius(0) !important;
+}
+.bwizard-steps li:hover,
+.bwizard-steps li:focus {
+    background: #d3dadf !important;
+}
+.bwizard-steps.clickable li:hover:not(.active) a,
+.bwizard-steps.clickable li:focus:not(.active) a {
+    color: #333 !important;
+}
+.bwizard-steps li small {
+    font-size: 11px !important;
+    color: #999 !important;
+    display: block !important;
+    line-height: 14px !important;
+}
+.bwizard-steps li a {
+    margin-left: 30px !important;
+    display: block !important;
+    text-decoration: none !important;
+}
+.bwizard-steps li.active small {
+    color: #b2e6e6 !important;
+}
+.bwizard-steps .label {
+    float: left !important;
+    padding: 0 !important;
+    height: 20px !important;
+    width: 20px !important;
+    line-height: 20px !important;
+    text-align: center !important;
+    margin-right: 10px !important;
+    top: 0 !important;
+    background: #6d7479 !important;
+    .border-radius(50%) !important;
+}
+.bwizard-steps li.active,
+.bwizard-steps li.active:hover,
+.bwizard-steps li.active:focus {
+    background: @green !important;
+}
+.bwizard-steps li.active .label {
+    background: url(../img/transparent/black-0.2.png) !important;
+    background: rgba(0,0,0,0.2) !important;
+}

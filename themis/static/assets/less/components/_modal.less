@@ -1,0 +1,38 @@
+/* Modal Setting */
+
+.modal-content {
+    border: none;
+    .box-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+    .border-radius(3px);
+}
+.modal-header {
+    padding: 12px 15px;
+    border-bottom-color: #e2e7eb;
+    
+    & .close {
+        margin-top: 2px;
+    }
+}
+.modal-body {
+    padding: 15px;
+}
+.modal-footer {
+    border-top-color: #e2e7eb;
+    padding: 14px 15px 15px;
+}
+.modal-backdrop.fade.in {
+    .opacity(0.5);
+}
+.modal-message .modal-dialog {
+    width: 100%;
+}
+.modal-message .modal-content {
+    .border-radius(0);
+}
+.modal-message .modal-header,
+.modal-message .modal-body,
+.modal-message .modal-footer {
+    width: 60%;
+    border: none;
+    margin: 0 auto;
+}

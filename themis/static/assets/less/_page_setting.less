@@ -1,0 +1,118 @@
+/* Page Options */
+
+.page-header-fixed {
+    padding-top: 54px;
+}
+.page-without-sidebar .content {
+    margin-left: 0;
+}
+.page-with-right-sidebar .sidebar,
+.page-with-right-sidebar .sidebar-bg {
+    left: auto;
+    right: 0;
+}
+.page-sidebar-fixed .sidebar {
+    position: fixed;
+}
+.page-with-right-sidebar .content {
+    margin-left: 0;
+    margin-right: 220px;
+}
+.page-with-right-sidebar .footer {
+    margin-left: 25px;
+    margin-right: 245px;
+}
+.page-with-two-sidebar.page-sidebar-fixed .sidebar.sidebar-right {
+    position: fixed;
+}
+.page-with-two-sidebar .sidebar.sidebar-right,
+.page-with-two-sidebar .sidebar-bg.sidebar-right {
+    right: 0;
+    left: auto;
+}
+.page-with-two-sidebar .content {
+    margin-right: 220px;
+}
+.page-with-two-sidebar.page-sidebar-minified .sidebar.sidebar-right,
+.page-with-two-sidebar.page-sidebar-minified .sidebar-bg.sidebar-right {
+    width: 220px;
+}
+.page-with-two-sidebar.page-right-sidebar-collapsed .sidebar.sidebar-right,
+.page-with-two-sidebar.page-right-sidebar-collapsed .sidebar-bg.sidebar-right {
+    right: -220px;
+}
+.page-with-two-sidebar.page-right-sidebar-collapsed .content {
+    margin-right: 0;
+}
+
+
+/* Page Loader */
+
+#page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: #E6E8EC;
+}
+#page-loader.fade {
+    display: none;
+}
+#page-loader.fade.in {
+    display: block;
+}
+@-webkit-keyframes rotation {
+   from {-webkit-transform: rotate(0deg);}
+   to {-webkit-transform: rotate(359deg);}
+}
+@-moz-keyframes rotation {
+   from {-moz-transform: rotate(0deg);}
+   to {-moz-transform: rotate(359deg);}
+}
+@-o-keyframes rotation {
+   from {-o-transform: rotate(0deg);}
+   to {-o-transform: rotate(359deg);}
+}
+@keyframes rotation {
+   from {transform: rotate(0deg);}
+   to {transform: rotate(359deg);}
+}
+.spinner, 
+.spinner-small {
+    height: 40px;
+    width: 40px;
+    margin: 0px auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -20px -20px 0 0;
+    border: 2px solid #fff;
+    border-top: 2px solid #24B498;
+    border-radius: 100%;
+}
+.fade.in .spinner, 
+.fade.in .spinner-small {
+    -webkit-animation: rotation .6s infinite linear;
+    -moz-animation: rotation .6s infinite linear;
+    -o-animation: rotation .6s infinite linear;
+    animation: rotation .6s infinite linear;
+}
+.spinner-small {
+    border: 2px solid rgba(0,0,0,0.05);
+    border-top: 2px solid #24B498;
+    height: 30px;
+    width: 30px;
+    margin: -15px -15px 0 0;
+}
+
+
+/* -------------------------------
+   Update - V1.7
+------------------------------- */
+
+/* Navbar Header Brand Without Background Setting */
+
+.navbar-header.navbar-header-without-bg .navbar-brand {
+    background: none !important;
+}

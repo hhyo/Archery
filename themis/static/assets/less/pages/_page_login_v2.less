@@ -1,0 +1,90 @@
+/* Login Page V2 */
+
+.login.login-v2 {
+    background: url(../img/transparent/black-0.4.png);
+    background: rgba(0,0,0,0.4);
+    color: #ccc;
+    width: 450px;
+    margin: 168px auto;
+    position: relative;
+    .border-radius(4px);
+    
+    & label {
+        color: #ccc;
+    }
+    & a {
+        color: #fff;
+    }
+    & .login-content {
+        padding: 40px;
+    }
+    & .login-header {
+        color: #fff;
+        
+        & .icon {
+            .opacity(0.4);
+        }
+    }
+    & .form-control {
+        background: url(../img/transparent/black-0.4.png);
+        background: rgba(0,0,0,0.4);
+        border: none;
+        color: #fff;
+    }
+}
+.login-cover,
+.login-cover-bg,
+.login-cover-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+.login-cover-image img {
+    max-width: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+}
+.login-cover-bg {
+    background: #666666; /* Old browsers */
+    background: -moz-radial-gradient(center, ellipse cover,  #666666 0%, #000000 100%); /* FF3.6+ */
+    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#666666), color-stop(100%,#000000)); /* Chrome,Safari4+ */
+    background: -webkit-radial-gradient(center, ellipse cover,  #666666 0%,#000000 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-radial-gradient(center, ellipse cover,  #666666 0%,#000000 100%); /* Opera 12+ */
+    background: -ms-radial-gradient(center, ellipse cover,  #666666 0%,#000000 100%); /* IE10+ */
+    background: radial-gradient(ellipse at center,  #666666 0%,#000000 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#666666', endColorstr='#000000',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+    .opacity(0.6);
+}
+.login-bg-list {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1020;
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 0 20px;
+    
+    & > li {
+        width: 80px;
+        height: 60px;
+        overflow: hidden;
+        float: left;
+        .transition(all .2s linear);
+        
+        & a {
+            display: block;
+            height: 60px;
+        }
+        &.active {
+            outline: 3px solid #fff;
+            z-index: 1020;
+            position: relative;
+        }
+        & img {
+            max-height: 100%;
+        }
+    }
+}

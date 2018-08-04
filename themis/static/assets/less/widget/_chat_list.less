@@ -1,0 +1,108 @@
+/* Chat List Setting */
+
+.panel-body .chats {
+    padding: 0;
+}
+.slimScrollDiv .chats {
+    padding-right: 15px;
+}
+.chats {
+    list-style-type: none;
+    margin: 0;
+    padding: 12px 15px 15px;
+    
+    & > li {
+        & + li {
+            margin-top: 15px;
+        }
+        &:before,
+        &:after {
+            .clearfix();
+        }
+    }
+    & .name {
+        color: #333;
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        text-decoration: none;
+        
+        & .label {
+            font-size: 8px;
+            padding: 1px 4px 2px;
+            margin-left: 3px;
+            position: relative;
+            top: -1px;
+        }
+    }
+    & .date-time {
+        font-size: 10px;
+        display: block;
+        float: right;
+        color: #999;
+        margin-top: 3px;
+    }
+    & .image {
+        float: left;
+        width: 60px;
+        height: 60px;
+        overflow: hidden;
+        .border-radius(4px);
+        
+        & img {
+            max-width: 100%;
+        }
+        & + .message {
+            margin-left: 75px;
+        }
+    }
+    & .message {
+        border: 1px solid #ccd0d4;
+        padding: 7px 12px;
+        font-size: 12px;
+        position: relative;
+        background: #fff;
+        .border-radius(4px);
+        
+        &:before,
+        &:after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: -14px;
+            border: 7px solid transparent;
+            border-right-color: #ccd0d4;
+        }
+        &:after {
+            left: -13px;
+            border-right-color: #fff;
+        }
+    }
+    & .right {
+        & .name {
+            text-align: right;
+        }
+        & .date-time {
+            float: left;
+        }
+        & .image {
+            float: right;
+            
+            + .message {
+                margin-right: 75px;
+                margin-left: 0;
+            }
+            & .message:before,
+            & .message:after {
+                left: auto;
+                right: -14px;
+                border-right-color: transparent;
+                border-left-color: #ccd0d4;
+            }
+            & .message:after {
+                right: -13px;
+                border-left-color: #fff;
+            }
+        }
+    }
+}

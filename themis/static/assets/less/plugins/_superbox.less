@@ -1,0 +1,52 @@
+/* Superbox Setting */
+
+.superbox {
+    font-size: 0;
+}
+.superbox-list {
+    display: inline-block;
+    width:12.5%;
+    margin: 0;
+    position: relative;
+    
+    &.active:after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        border: 10px solid transparent;
+        border-bottom-color: @black;
+        margin-left: -10px;
+    }
+}
+.superbox-show {
+    text-align: center;
+    position: relative;
+    background: @black;
+    width: 100%;
+    float: left;
+    padding: 25px;
+    display: none;
+}
+.superbox-img {
+    max-width: 100%;
+    width: 100%;
+    cursor: pointer;
+    
+    &:hover {
+        .opacity(0.8);
+    }
+}
+.superbox-current-img {
+    .box-shadow(0 5px 35px rgba(0,0,0,.65));
+}
+.superbox-close {
+    cursor: pointer;
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    background: url(assets/plugins/superbox/img/close.gif) no-repeat center center;
+    width: 35px;
+    height: 35px;
+    .opacity(0.7);
+}

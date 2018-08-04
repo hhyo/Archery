@@ -1,0 +1,56 @@
+/* Login */
+	    
+.login {
+    margin: 168px 0;
+    position: relative;
+    
+    & label {
+        color: #707478;
+    }
+    & .login-header {
+        position: absolute;
+        top: -80px;
+        left: 50%;
+        right: 0;
+        width: 450px;
+        padding: 0 40px;
+        margin-left: -225px;
+        font-weight: 300;
+            
+        & .brand {
+            padding: 0;
+            font-size: 28px;
+            
+            & .logo {
+                border: 14px solid transparent;
+                border-color: #4DCACA #31A3A3 #1D8888;
+                width: 28px;
+                height: 28px;
+                position: relative;
+                font-size: 0;
+                margin-right: 10px;
+                top: -9px;
+            }
+            & small {
+                font-size: 14px;
+                display: block;
+            }
+        }
+        & .icon {
+            position: absolute;
+            right: 40px;
+            top: -2px;
+            .opacity(0.1);
+            
+            & i {
+                font-size: 70px;
+            }
+        }
+    }
+    & .login-content {
+        padding: 30px 40px;
+        color: #999;
+        width: 450px;
+        margin: 0 auto;
+    }
+}

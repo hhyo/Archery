@@ -1,0 +1,71 @@
+/* Gritter Notification */
+
+.gritter-item-wrapper {
+    background: none !important;
+    overflow: hidden !important;
+    .border-radius(3px) !important;
+}
+.gritter-top,
+.gritter-bottom,
+.gritter-item {
+    background: url(../img/transparent/black-0.8.png) !important;
+    background: rgba(0,0,0,0.8) !important;
+}
+.gritter-close,
+.gritter-light .gritter-close {
+    left: auto !important;
+    right: 15px !important;
+    top: 0 !important;
+    background: #ff5b57 !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+    display: block !important;
+}
+.gritter-close:before,
+.gritter-light .gritter-close:before {
+    content: '\f00d' !important;
+    font-family: FontAwesome !important;
+    font-size: 9px !important;
+    width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+    color: #fff !important;
+    text-indent: 0 !important;
+    position: absolute !important;
+    text-align: center !important;
+    right: 0 !important;
+    top: 0 !important;
+}
+.gritter-with-image {
+    width: 210px !important;
+}
+.gritter-image {
+    margin: 2px 10px 0 0 !important;
+    .border-radius(2px) !important;
+}
+.gritter-title {
+    font-size: 12px !important;
+    line-height: 16px !important;
+    padding-bottom: 2px !important;
+    font-weight: 400 !important;
+    color: #fff !important;
+    text-shadow: none !important;
+}
+.gritter-light .gritter-title {
+    color: #333 !important;
+    font-weight: 600 !important;
+}
+.gritter-item {
+    font-family: @body_font_family !important;
+    color: #aaa !important;
+    font-size: 10px !important;
+    padding: 2px 15px 5px !important;
+}
+.gritter-light .gritter-item, 
+.gritter-light .gritter-bottom, 
+.gritter-light .gritter-top {
+    background: url(../img/transparent/white-0.98.png) !important;
+    background: rgba(255,255,255,0.98) !important;
+    color: #999 !important;
+}

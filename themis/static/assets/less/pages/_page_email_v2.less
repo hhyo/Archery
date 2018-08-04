@@ -1,0 +1,137 @@
+/* Email V2 */
+      
+.list-email {
+    margin-bottom: 0;
+    border-top: 1px solid #e2e7eb;
+    border-bottom: 1px solid #e2e7eb;
+    
+    & > li.list-group-item {
+        .border-radius(0);
+        border: none;
+    }
+    & > li.list-group-item {
+        padding: 15px 15px 15px 20px;
+        position: relative;
+    }
+    & > li.list-group-item + li.list-group-item {
+        border-top: 1px solid #e2e7eb;
+    }
+    & > li.list-group-item:before,
+    & > li.list-group-item:after {
+        .clearfix();
+    }
+    
+    & > li.list-group-item:before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 5px;
+        background: #fff;
+    }
+    & > li.list-group-item.success:before {
+        background: #00acac;
+    }
+    & > li.list-group-item.info:before {
+        background-color: #49b6d6;
+    }
+    & > li.list-group-item.danger:before {
+        background-color: #ff5b57;
+    }
+    & > li.list-group-item.primary:before {
+        background-color: #348fe2;
+    }
+    & > li.list-group-item.inverse:before {
+        background-color: #242a30;
+    }
+    & > li.list-group-item.warning:before {
+        background-color: #f59c1a;
+    }
+    & > li.list-group-item.purple:before {
+        background-color: #727cb6;
+    }
+    & > li.list-group-item.default:before {
+        background-color: #b6c2c9;
+    }
+    
+    
+    & .email-user {
+        float: left;
+        width: 50px;
+        height: 50px;
+        border-radius: 50px;
+        overflow: hidden;
+        font-size: 24px;
+        line-height: 50px;
+        text-align: center;
+        color: #6e7179;
+        background: #f4f6f7;
+    
+        & img {
+            max-width: 100%;
+            display: block;
+        }
+    }
+    & .email-user + .email-info {
+        margin-left: 65px;
+    }
+    & .email-checkbox + .email-user + .email-info {
+        margin-left: 95px;
+    }
+    & .email-checkbox + .email-info {
+        margin-left: 35px;
+    }
+    & .email-title {
+        margin-top: 3px;
+        margin-bottom: 3px;
+        line-height: 20px;
+        
+        & .label {
+            position: relative;
+            top: -1px;
+        }
+    }
+    & .email-title,
+    & .email-title a {
+        color: #242a30;
+    }
+    & .email-time {
+        float: right;
+        font-size: 11px;
+        color: #C8CCCF;
+        margin-left: 10px;
+    }
+    & .email-checkbox {
+        float: left;
+        width: 20px;
+        margin-right: 10px;
+        height: 50px;
+        line-height: 50px;
+    
+        & label {
+            color: #e2e7eb;
+            display: block;
+            cursor: pointer;
+            
+            & input[type=checkbox] {
+                display: none;
+            }
+            & .fa {
+                font-size: 18px;
+                .transition(all .2s linear);
+            }
+            &.active {
+                color: #707478;
+                
+                & .fa:before {
+                    content: '\f046';
+                }
+            }
+        }
+    }
+    & > li.selected {
+        background: #F2FFFB;
+    }
+}

@@ -1,0 +1,112 @@
+/* Bootstrap Calendar Setting */
+
+.bootstrap-calendar .calendar {
+    background: #fff;
+    border: none;
+    border-radius: 0;
+    padding: 10px 0;
+    
+    & td {
+        border: none !important;
+    }
+    & .table td {
+        padding: 3px 5px;
+    }
+    & a {
+        line-height: 24px;
+    }
+    & .week_days td {
+        background: none;
+        color: #a9acae;
+    }
+    & .visualmonthyear {
+        color: #707478;
+    }
+    & .table.header {
+        margin-bottom: 5px;
+        & td {
+            color: #707478;
+            vertical-align: middle;
+            
+            &.year {
+                font-size: 18px;
+                font-weight: 300;
+            }
+        }
+        & .year {
+            width: 72%;
+        }
+    }
+    & .table.header
+    & .icon-arrow-right,
+    & .icon-arrow-left { 
+        cursor: pointer;
+        display: inline-block;
+        font-family: FontAwesome;
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-size: 14px;
+    }
+    & .icon-arrow-right:hover,
+    & .icon-arrow-left:hover,
+    & .icon-arrow-right:focus,
+    & .icon-arrow-left:focus {
+        color: #2d353c;
+    }
+    & .icon-arrow-left:before {
+        content: '\f060';
+    }
+    & .icon-arrow-right:before {
+        content: '\f061';
+    }
+    
+    & .table {
+        margin-bottom: 0;
+    }
+    & .event a {
+        display: block;
+        border-radius: 30px;
+        background: #fff;
+        color: #fff;
+        margin: 0 auto;
+    }
+    & .event .popover a {
+        color: #428bca;
+        
+        &:hover,
+        &:focus {
+            color: #2a6496;
+            text-decoration: underline;
+        }
+    }
+    & .event,
+    & .event:hover,
+    & .event:focus,
+    & .event a:hover,
+    & .event a:focus {
+        text-shadow: none;
+        color: @black;
+        box-shadow: none;
+        font-weight: normal;
+    }
+    & .event a:hover,
+    & .event a:focus {
+        color: #fff;
+        .opacity(0.8);
+    }
+    & .event,
+    & .event:hover,
+    & .event:focus {
+        background: none;
+        text-align: center;
+    }
+    & .fa-circle {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+}
+

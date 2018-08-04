@@ -1,0 +1,95 @@
+/* Invoice */
+.invoice {
+    background: #fff;
+    padding: 20px;                
+          
+    & > div:not(.invoice-footer) {
+        margin-bottom: 20px;
+    }
+    & .invoice-company {
+        font-size: 20px;
+    }
+    & .invoice-header {
+        margin: 0 -20px;
+        background: #f0f3f4;
+        padding: 20px;
+    }
+    & .invoice-from,
+    & .invoice-to {
+        padding-right: 20px;
+    }
+    & .invoice-from,
+    & .invoice-to,
+    & .invoice-date {
+        display: table-cell;
+        width: 1%;
+    }
+    & .invoice-from strong,
+    & .invoice-to strong,
+    & .invoice-date .date {
+        font-size: 16px;
+        font-weight: 600;
+    }
+    & .invoice-date {
+        text-align: right;
+        padding-left: 20px;
+    }
+    & .invoice-price {
+        background: #f0f3f4;
+        display: table;
+        width: 100%;
+        
+        & .invoice-price-left,
+        & .invoice-price-right {
+            display: table-cell;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            width: 75%;
+            position: relative;
+            vertical-align: middle;
+        }
+        & .invoice-price-left .sub-price {
+            display: table-cell;
+            vertical-align: middle;
+            padding: 0 20px;
+        }
+        & small {
+            font-size: 12px;
+            font-weight: normal;
+            display: block;
+        }
+        & .invoice-price-row {
+            display: table;
+            float: left;
+        }
+        .invoice-price-right {
+            width: 25%;
+            background: @black;
+            color: #fff;
+            font-size: 28px;
+            text-align: right;
+            vertical-align: bottom;
+            font-weight: 300;
+            
+            & small {
+                display: block;
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                font-size: 12px;
+                .opacity(0.6);
+            }
+        }
+    }
+    & .invoice-footer {
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+        font-size: 10px;
+    }
+    & .invoice-note {
+        color: #999;
+        margin-top: 80px;
+        font-size: 85%;
+    }
+}

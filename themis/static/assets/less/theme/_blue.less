@@ -1,0 +1,65 @@
+/* Blue Theme */
+
+.navbar-logo,
+.coming-soon .brand .logo,
+.login .login-header .brand .logo {
+    border-color: #2F83CF #2a72b5 #1f5688;
+}
+.navbar.navbar-inverse .navbar-brand,
+.sidebar .nav > li.active > a, 
+.sidebar .nav > li.active > a:focus, 
+.sidebar .nav > li.active > a:hover,
+.page-sidebar-minified .sidebar .nav > li.has-sub.active:focus > a, 
+.page-sidebar-minified .sidebar .nav > li.has-sub.active:hover > a, 
+.page-sidebar-minified .sidebar .nav > li.has-sub.active > a,
+.label.label-theme,
+.btn.btn-scroll-to-top {
+    background: @blue;
+}
+.navbar.navbar-inverse .navbar-brand {
+    color: #fff !important;
+}
+.text-theme,
+.sidebar .sub-menu > li.active > a:before {
+    color: @blue;
+}
+@media (max-width: 767px) {
+    .navbar-inverse .navbar-header {
+        background: @blue;
+    }
+}
+
+
+/* Added in v1.5 */
+
+.gradient-enabled .navbar.navbar-inverse .navbar-brand,
+.gradient-enabled .sidebar .nav > li.active > a, 
+.gradient-enabled .sidebar .nav > li.active > a:focus, 
+.gradient-enabled .sidebar .nav > li.active > a:hover,
+.gradient-enabled.page-sidebar-minified .sidebar .nav > li.has-sub.active:focus > a, 
+.gradient-enabled.page-sidebar-minified .sidebar .nav > li.has-sub.active:hover > a, 
+.gradient-enabled.page-sidebar-minified .sidebar .nav > li.has-sub.active > a,
+.gradient-enabled .label.label-theme,
+.gradient-enabled .btn.btn-scroll-to-top {
+    background: rgb(103,176,240); /* Old browsers */
+    /* IE9 SVG, needs conditional override of 'filter' to 'none' */
+    background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzY3YjBmMCIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMzNDhmZTIiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+    background: -moz-linear-gradient(top,  rgba(103,176,240,1) 0%, rgba(52,143,226,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(103,176,240,1)), color-stop(100%,rgba(52,143,226,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  rgba(103,176,240,1) 0%,rgba(52,143,226,1) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  rgba(103,176,240,1) 0%,rgba(52,143,226,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  rgba(103,176,240,1) 0%,rgba(52,143,226,1) 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  rgba(103,176,240,1) 0%,rgba(52,143,226,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#67b0f0', endColorstr='#348fe2',GradientType=0 ); /* IE6-8 */
+}
+
+
+/* Added in v1.7 */
+
+.page-with-light-sidebar .sidebar .nav > li.active > a > i {
+    color: @blue;
+}
+.page-with-light-sidebar .sidebar .nav > li.active > a .badge,
+.page-with-light-sidebar .sidebar .nav > li.active > a .label.label-theme {
+    background: @blue;
+}

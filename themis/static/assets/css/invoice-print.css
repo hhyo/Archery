@@ -1,0 +1,78 @@
+/*
+Template Name: Color Admin - Responsive Admin Dashboard Template build with Twitter Bootstrap 3.3.4
+Version: 1.7.0
+Author: Sean Ngu
+Website: http://www.seantheme.com/color-admin-v1.7/admin/
+*/	
+
+@media print {
+    body,
+    .content,
+    .page-header-fixed {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .sidebar,
+    .header,
+    .theme-panel {
+        display: none !important;
+    }
+    .invoice-company {
+        border-bottom: 1px solid #e2e7eb !important;
+        margin-bottom: 20px !important;
+    }
+    .invoice .invoice-from, 
+    .invoice .invoice-to {
+        float: left !important;
+        display: inline !important;
+        width: 25% !important;
+        margin: 0 !important;
+    }
+    .invoice .invoice-date {
+        float: right !important;
+        margin: 0 !important;
+        width: 25% !important;
+        display: inline !important;
+        text-align: right !important;
+    }
+    .invoice-header {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .table-responsive {
+        border: none !important;
+        display: block !important;
+        float: left !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+    .invoice-price {
+        margin-top: 20px !important;
+        border: 1px solid #e2e7eb !important;
+        float: left !important;
+        width: 100% !important;
+        display: block !important;
+    }
+    .invoice .invoice-price .invoice-price-left,
+    .invoice .invoice-price .invoice-price-right {
+        display: block !important;
+        float: left !important;
+        width: 75% !important;
+    }
+    .invoice .invoice-price .invoice-price-right {
+        width: 25% !important;
+    }
+    .invoice-price .invoice-price-right {
+        text-align: right !important;
+    }
+    .invoice-price .invoice-price-left .sub-price {
+        float: left !important;
+        display: block !important;
+        margin-top: 5px;
+    }
+    .invoice-note,
+    .invoice-footer {
+        float: left !important;
+        width: 100% !important;
+    }
+}

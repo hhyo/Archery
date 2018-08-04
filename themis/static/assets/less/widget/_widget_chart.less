@@ -1,0 +1,76 @@
+/* Widget Chart Setting */
+
+.widget-chart {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    .border-radius(4px);
+    
+    & .chart-title {
+        font-size: 18px !important;
+        color: #fff;
+        font-weight: 300 !important;
+        margin: 2px 5px 7px;
+        
+        & small {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #616D72;
+            color: rgba(255,255,255,0.3);
+        }
+    }
+    & .widget-chart-content {
+        padding: 15px;
+        margin-right: 230px;
+    }
+    & .widget-chart-sidebar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 230px;
+        padding: 15px;
+        
+        & .chart-number {
+            font-size: 24px;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 10px;
+            
+            small {
+                font-size: 12px;
+                color: #616D72;
+                color: rgba(255,255,255,0.3);
+                display: block;
+            }
+        }
+        & .chart-legend {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            font-weight: 300;
+            position: absolute;
+            bottom: 10px;
+            
+            & > li {
+                margin-bottom: 5px;
+                color: #fff;
+                
+                & span {
+                    color: #616D72;
+                    color: rgba(255,255,255,0.3);
+                }
+            }
+        }
+    }
+}
+
+.morris-inverse .morris-hover {
+    background: url('../img/transparent/black-0.4.png');
+    background: rgba(0,0,0,0.4) !important;
+    border: none !important;
+    padding: 8px !important;
+    color: #ccc !important;
+}

@@ -1,0 +1,109 @@
+/* Theme Panel */
+
+.theme-panel {
+    position: fixed;
+    right: -175px;
+    top: 150px;
+    z-index: 1020;
+    background: #fff;
+    padding: 15px;
+    width: 175px;
+    .box-shadow(0 0 2px rgba(0,0,0,0.4));
+    .transition(right .2s linear);
+    
+    &.active {
+        right: 0;
+        
+        & .theme-collapse-btn .fa:before {
+            content: '\f00d';
+        }
+    }
+    & .theme-list {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        
+        & + .theme-list {
+            margin-top: 10px;
+        }
+        & > li {
+            float: left;
+            
+            & + li {
+                margin-left: 5px;
+            }
+            & > a {
+                text-decoration: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 3px;
+                display: block;
+                .transition(all .2s linear);
+                .border-radius(3px);
+                
+                &:hover,
+                &:focus {
+                    .opacity(0.6);
+                }
+            }
+            &.active > a {
+                position: relative;
+                
+                &:before {
+                    content: '\f00c';
+                    font-family: FontAwesome;
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    font-size: 14px;
+                    color: #fff;
+                    text-align: center;
+                    .opacity(0.4);
+                }
+                &.bg-white:before {
+                    color: #666;
+                }
+            }
+        }
+        & a.bg-white {
+            border: 1px solid #e2e7eb;
+        }       
+    }
+    
+    & .theme-collapse-btn {
+        position: absolute;
+        left: -30px;
+        top: 10%;
+        margin-top: -15px;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        color: #333;
+        background: #fff;
+        text-align: center;
+        .border-radius(4px 0 0 4px);
+        .box-shadow(-1px 0px 3px -1px rgba(0,0,0,0.4));
+    }
+    & .theme-panel-content {
+        margin: -15px;
+        padding: 15px;
+        background: #fff;
+        position: relative;
+        z-index: 1020;
+    }
+    & .control-label {
+        line-height: 30px;
+        
+        &.double-line {
+            line-height: 15px;
+        }
+    }
+    & .divider {
+        height: 1px;
+        margin: 15px 0;
+        background: #f2f2f2;
+    }
+} 

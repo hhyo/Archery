@@ -1,0 +1,97 @@
+/* Search Result */
+ 
+.result-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    
+    &:before,
+    &:after,
+    & > li:before,
+    & > li:after {
+        .clearfix();
+    }
+    & > li {
+        background: #fff;
+        box-shadow: 0 1px #ccc;
+        overflow: hidden;
+        .border-radius(3px);
+    }
+    & > li + li {
+        margin-top: 10px;
+    }
+    & > li > div {
+        display: table-cell;
+        vertical-align: top;
+        padding: 20px;
+        position: relative;
+    }
+    & .result-image {
+        width: 240px;
+        padding: 0;
+        overflow: hidden;
+        background: @black;
+        vertical-align: middle;
+        
+        & a {
+            display: block;
+            
+            &:hover,
+            &:focus {
+                .opacity(0.8);
+            }
+        }
+        & img {
+            width: 100%;
+        }
+    }
+    & .title {
+        margin: 0 0 8px;
+        font-size: 20px;
+        line-height: 24px;
+        & a {
+            color: #333;
+        }
+    }
+    & .location {
+        color: #999;
+    }
+    & .desc {
+        margin-bottom: 20px;
+        max-height: 32px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 16px;
+    }
+    & .btn-row a {
+        color: #666;
+        font-size: 20px;
+        line-height: 14px;
+        .opacity(0.2);
+        
+        &:hover,
+        &:focus {
+            .opacity(1.0);
+        }
+        & + a {
+            margin-left: 10px;
+        }
+    }
+    & .result-price {
+        width: 240px;
+        font-size: 28px;
+        text-align: center;
+        border-left: 1px dashed #ddd;
+        padding-top: 30px;
+        
+        & small {
+            display: block;
+            font-size: 12px;
+            color: #999;
+        }
+        & .btn {
+            margin-top: 30px;
+        }
+    }
+}

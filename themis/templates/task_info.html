@@ -1,0 +1,130 @@
+{% extends 'base/parent.html' %}
+{% load staticfiles %}
+{% block extra_styles %}
+<link href="{% static 'assets/plugins/bootstrap-datepicker/css/datepicker.css' %}" rel="stylesheet">
+<link href="{% static 'css/navbar.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/dataTables.bootstrap.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/dataTableStyle.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/jquery.treegrid.css' %}" rel="stylesheet" media="screen">
+<link href="{% static 'css/base.css' %}" rel="stylesheet" media="screen">
+<style>
+    #table_data, .table_rule{
+        width: 100% !important;
+    }
+    .task_rule_detail{
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<!-- begin #content -->
+        <div class="content">
+            <!-- begin page-header -->
+            <h1 class="page-header">任务查询 <small>对任务进行查询 </small></h1>
+            <!-- end page-header -->
+            <!-- begin row -->
+            <div class="row">
+                <div class="panel panel-inverse" data-sortable-id="form-plugins-3">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success" data-click="panel-reload"><i class="fa fa-repeat"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                        <h4 class="panel-title">连接信息</h4>
+                    </div>
+                    <div class="panel-body panel-form">
+                        <div class="form-horizontal form-bordered">
+                            <div class="form-group">
+                            <p id="alert_info"></p>
+                                <div class="col-md-12">
+                                    <div class="col-md-2">
+                                    <input type="text" class="form-control" placeholder="用户名" id="username"/>
+                                    </div>
+                                    <div class="col-md-2">
+                                    <input type="text" class="form-control" placeholder="操作用户" id="operuser"/>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select id="status" class="form-control">
+                                            <option value="1">成功</option>
+                                            <option value="2">正在运行</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-daterange" data-date-format="yyyy-mm-dd" id="datepicker">
+                                        <input type="text" class="form-control" name="start" placeholder="开始日期" />
+                                        <span class="input-group-addon">到</span>
+                                        <input type="text" class="form-control" name="end" placeholder="结束日期" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-inverse m-r-5 m-b-5" id="search_data">查询</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <!-- begin panel -->
+            <div class="panel panel-inverse">
+                <div class="panel-heading">
+                    <div class="panel-heading-btn">
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success" data-click="panel-reload"><i class="fa fa-repeat"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                        <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+                    </div>
+                    <h4 class="panel-title">查询结果</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="col-md-12">
+                            <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered table-hover" id="table_data">
+                            <thead>
+                            <tr>
+                                <th>操作用户</th>
+                                <th>审核对象</th>
+                                <th>创建时间</th>
+                                <th>状态</th>
+                                <th>类型</th>
+                                <th>开始日期</th>
+                                <th>结束日期</th>
+                                <th>选择</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="base">
+            </div>
+            <div id="rule_detail">
+            </div>
+            <div id="text_detail">
+            </div>
+            <div id="plan_detail">
+            </div>
+            <div id="stat_detail">
+            </div>
+            <div id="obj_detail">
+            </div>
+            <!-- end panel -->
+            </div>
+            <!-- end row -->
+        </div>
+        <!-- end #content -->
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/jquery.dataTables.js' %}"></script>
+<script src="{% static 'js/dataTables.bootstrap.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js' %}"></script>
+<script src="{% static 'js/echarts-all.js' %}"></script>
+<script src="{% static 'js/jquery.treegrid.js' %}"></script>
+<script src="{% static 'js/jquery.treegrid.bootstrap3.js' %}"></script>
+<script src="{% static 'js/base.js' %}"></script>
+<script src="{% static 'js/sql_review/task_info.js' %}"></script>
+{% endblock %}

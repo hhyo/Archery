@@ -1,0 +1,47 @@
+/* Email Detail */
+
+.attached-document {
+    list-style-type: none;
+    margin: 15px 0 0;
+    padding: 0;
+    
+    & > li {
+        width: 180px;
+        float: left;
+        background: #e2e7eb;
+        color: #707478;
+        position: relative;
+        margin-right: 15px;
+        margin-bottom: 15px;
+        
+        &:before {
+            content: '\f0c6';
+            font-family: FontAwesome;
+            position: absolute;
+            top: -10px;
+            right: 5px;
+            font-size: 18px;
+        }
+        & img {
+            max-width: 100%;
+        }
+        & .document-name {
+            padding: 5px 10px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+    & .document-file {
+        height: 70px;
+        background: rgba(0,0,0,0.1);
+        overflow: hidden;
+        text-align: center;
+        line-height: 70px;
+        font-size: 32px;
+    }
+    & .document-name a {
+        color: #2d353c;
+    }
+}
