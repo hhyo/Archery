@@ -78,7 +78,7 @@ class MailSender(object):
         main_msg['Subject'] = Header(strTitle, "utf-8").encode()
         main_msg['Date'] = email.utils.formatdate()
 
-        if self.MAIL_SSL:
+        if self.MAIL_SSL == 'true':
             server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认SSL端口是465
         else:
             server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25

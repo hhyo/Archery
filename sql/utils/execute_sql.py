@@ -183,7 +183,7 @@ def send_msg(workflowDetail, url):
                 break
 
         if send == 1:
-            # Ding消息内容通知
+            # 消息内容通知
             msg_title = '[Archer]有新的DDL语句执行完成#{}'.format(audit_id)
             msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
                 Users.objects.get(username=workflowDetail.engineer).display,
