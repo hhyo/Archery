@@ -93,6 +93,7 @@
                 //采取异步请求
                 //初始化table
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/process/",
@@ -204,6 +205,7 @@
             if ($("#instance_name").val()) {
                 //初始化table
                 $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/db_diagnostic/tablesapce/",
@@ -307,6 +309,7 @@
                             if (result['Error']) {
                                 alertStyle = "alert-danger";
                                 $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     columns: [{
                                         field: 'error',
                                         title: 'Error'
@@ -327,6 +330,7 @@
                                 });
                                 //初始化查询结果
                                 $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     data: result['rows'],
                                     columns: columns,
                                     striped: true,                      //是否显示行间隔色

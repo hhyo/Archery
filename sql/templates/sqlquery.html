@@ -97,6 +97,7 @@
             //采取异步请求
             //初始化table
             $('#sql-log').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/querylog/",
@@ -395,6 +396,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -414,6 +416,7 @@
                             errer_info = errer_info.replace(/\s/g, "&nbsp;");
                             alertStyle = "alert-danger";
                             $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -430,10 +433,10 @@
                                     "field": i,
                                     "title": column,
                                     "sortable": true,
-                                    "formatter": function (value, row, index) {
+                                    /*"formatter": function (value, row, index) {
                                         //return value;
                                         return $('<div/>').text(value).html();
-                                    }
+                                    }*/
                                 });
                             });
                             /*//插入选择框
@@ -445,6 +448,7 @@
                             if (sqlContent.match(/^show\s+create\s+table/)) {
                                 //初始化表结构显示
                                 $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                                        escape: true,
                                         data: result['rows'],
                                         columns: [{
                                             title: 'Create Table',
@@ -468,6 +472,7 @@
                             else {
                                 //初始化查询结果
                                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     data: result['rows'],
                                     columns: columns,
                                     showExport: true,

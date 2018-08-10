@@ -191,6 +191,7 @@
             //采取异步请求
             //初始化table
             $('#dbauthapply-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/applylist/",

@@ -29,6 +29,7 @@
             //采取异步请求
             //初始化table
             $('#group-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/group/group/",

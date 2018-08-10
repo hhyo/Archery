@@ -83,6 +83,7 @@
         function queryuserprivileges() {
             //初始化table
             $('#privileges-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/userprivileges/",

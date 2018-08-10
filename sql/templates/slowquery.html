@@ -248,6 +248,7 @@
             if (instance_name) {
                 //初始化table
                 $('#slowsql-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/slowquery/review/",
@@ -364,6 +365,7 @@
             if (instance_name) {
                 //初始化table
                 $('#slowsqlinfo-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
                     url: "/slowquery/review_history/",

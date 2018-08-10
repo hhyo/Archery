@@ -379,6 +379,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -403,6 +404,7 @@
                             });
                             //初始化查询结果
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['rows'],
                                 columns: columns,
                                 showColumns: true,
@@ -454,6 +456,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -479,6 +482,7 @@
                             });
                             //初始化查询结果
                             $('#tb_sys_parameter').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['sys_parameter']['rows'],
                                 columns: columns
                             });
@@ -497,6 +501,7 @@
                             });
                             //初始化查询结果
                             $('#tb_optimizer_switch').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['optimizer_switch']['rows'],
                                 columns: columns
                             });
@@ -512,6 +517,7 @@
                             });
                             //初始化查询结果
                             $('#tb_plan').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['plan']['rows'],
                                 columns: columns
                             });
@@ -538,6 +544,7 @@
                             });
                             //初始化查询结果
                             $('#tb_optimizer_rewrite_sql').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['optimizer_rewrite_sql']['rows'],
                                 columns: columns
                             });
@@ -563,6 +570,7 @@
                             });
                             //初始化查询结果
                             $('#tb_object_statistics_tableistructure').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['object_statistics_tableistructure']['rows'],
                                 columns: columns
                             });
@@ -577,6 +585,7 @@
                             });
                             //初始化查询结果
                             $('#tb_object_statistics_tableinfo').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['object_statistics_tableinfo']['rows'],
                                 columns: columns
                             });
@@ -591,6 +600,7 @@
                             });
                             //初始化查询结果
                             $('#tb_object_statistics_indexinfo').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['object_statistics_indexinfo']['rows'],
                                 columns: columns
                             });
@@ -608,6 +618,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_session_status').bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     data: result['session_status']['SESSION_STATUS(DIFFERENT)']['rows'],
                                     columns: columns
                                 });
@@ -623,6 +634,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_sql_profiling_detail').bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     data: result['session_status']['PROFILING_DETAIL']['rows'],
                                     columns: columns
                                 });
@@ -638,6 +650,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_sql_profiling_summary').bootstrapTable('destroy').bootstrapTable({
+                                    escape: true,
                                     data: result['session_status']['PROFILING_SUMMARY']['rows'],
                                     columns: columns
                                 });
