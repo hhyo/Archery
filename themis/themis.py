@@ -236,8 +236,8 @@ class Themis(object):
         """
         args = {
             "operator_user": self.create_user,
-            "start_date": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            "stop_date": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "start_date": self.start_date,
+            "stop_date": self.stop_date,
             "instance_name": self.username,
             "task_ip": self.instance_info.host,
             "task_port": self.instance_info.port

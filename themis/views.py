@@ -77,7 +77,7 @@ class RuleAddition(BaseHandler):
             if record:
                 return {"errcode": 30062, "message": u"规则已经存在"}
             argument["rule_name"] = argument["rule_name"].upper()
-            argument["rule_solution"] = argument["rule_solution"].split("\n")
+            argument["solution"] = argument["rule_solution"].split("\n")
             argument["max_score"] = float(argument["max_score"])
             argument["weight"] = float(argument["weight"])
             if argument["input_parms"]:

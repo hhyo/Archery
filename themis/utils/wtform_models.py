@@ -84,7 +84,7 @@ class BaseForm(Form):
 
 class SimpleForm(BaseForm):
     rule_cmd = StringField(
-        "rule_cmd", [DataRequired(message=u"命令不能为空"), Length(max=1024)])
+        "rule_cmd", [DataRequired(message=u"命令不能为空")])
 
     def validate_rule_cmd(form, field):
         db_key = ("\b(exec|execute|insert|select|delete|update|alter|create|"
