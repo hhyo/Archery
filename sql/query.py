@@ -252,7 +252,7 @@ def applyforprivileges(request):
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user,'slave').get(instance_name=instance_name)
+        user_instances(request.user, 'slave').get(instance_name=instance_name)
     except Exception:
         context = {'errMsg': '你所在组未关联该从库！'}
         return render(request, 'error.html', context)
@@ -279,7 +279,8 @@ def applyforprivileges(request):
     elif int(priv_type) == 2:
         table_list = table_list.split(',')
         # 检查申请账号是否已拥有该表的查询权限
-        own_tables = QueryPrivileges.objects.filter(instance_name=instance_name, user_name=user.username, db_name=db_name,
+        own_tables = QueryPrivileges.objects.filter(instance_name=instance_name, user_name=user.username,
+                                                    db_name=db_name,
                                                     table_name__in=table_list, valid_date__gte=datetime.datetime.now(),
                                                     priv_type=2, is_deleted=0).values('table_name')
         own_table_list = [table_info['table_name'] for table_info in own_tables]
@@ -423,14 +424,16 @@ def modifyqueryprivileges(request):
 def queryprivaudit(request):
     # 获取用户信息
     user = request.user
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
     apply_id = int(request.POST['apply_id'])
     audit_status = int(request.POST['audit_status'])
     audit_remark = request.POST.get('audit_remark')
 
     if audit_remark is None:
         audit_remark = ''
+
+    if Workflow.can_review(request.user, apply_id, 1) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
 
     # 使用事务保持数据一致性
     try:
@@ -575,8 +578,12 @@ def query(request):
             query_log.save()
 
     # 返回查询结果
-    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')
+    try:
+        return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
+                            content_type='application/json')
+    except Exception:
+        return HttpResponse(json.dumps(finalResult, default=str, bigint_as_string=True),
+                            content_type='application/json')
 
 
 # 获取sql查询记录
