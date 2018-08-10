@@ -21,7 +21,6 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 
 
 # 获取SQL慢日志统计
-@csrf_exempt
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review(request):
     instance_name = request.POST.get('instance_name')
@@ -133,7 +132,6 @@ def slowquery_review(request):
 
 
 # 获取SQL慢日志明细
-@csrf_exempt
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery_review_history(request):
     instance_name = request.POST.get('instance_name')

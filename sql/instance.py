@@ -14,7 +14,6 @@ prpCryptor = Prpcrypt()
 
 
 # 获取实例列表
-@csrf_exempt
 def lists(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -38,7 +37,6 @@ def lists(request):
 
 
 # 获取实例用户列表
-@csrf_exempt
 def users(request):
     instance_id = request.POST.get('instance_id')
     instance_name = Instance.objects.get(id=instance_id).instance_name
@@ -60,7 +58,6 @@ def users(request):
 
 
 # 获取实例里面的数据库集合
-@csrf_exempt
 def getdbNameList(request):
     instance_name = request.POST.get('instance_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -78,7 +75,6 @@ def getdbNameList(request):
 
 
 # 获取数据库的表集合
-@csrf_exempt
 def getTableNameList(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
@@ -97,7 +93,6 @@ def getTableNameList(request):
 
 
 # 获取表里面的字段集合
-@csrf_exempt
 def getColumnNameList(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')

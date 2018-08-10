@@ -159,7 +159,6 @@ def kill_session(request):
 
 
 # 问题诊断--空间列表
-@csrf_exempt
 def sapce_status(request):
     instance_name = request.POST.get('instance_name')
 

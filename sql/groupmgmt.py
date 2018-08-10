@@ -18,7 +18,6 @@ logger = logging.getLogger('default')
 
 
 # 获取组列表
-@csrf_exempt
 @superuser_required
 def group(request):
     limit = int(request.POST.get('limit'))
@@ -46,7 +45,6 @@ def group(request):
 
 
 # 获取组已关联对象信息
-@csrf_exempt
 def associated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
@@ -68,7 +66,6 @@ def associated_objects(request):
 
 
 # 获取组未关联对象信息
-@csrf_exempt
 def unassociated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
@@ -100,7 +97,6 @@ def unassociated_objects(request):
 
 
 # 获取组关联实例列表
-@csrf_exempt
 def instances(request):
     group_name = request.POST.get('group_name')
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
@@ -117,7 +113,6 @@ def instances(request):
 
 
 # 添加组关联对象
-@csrf_exempt
 @superuser_required
 def addrelation(request):
     '''
@@ -141,7 +136,6 @@ def addrelation(request):
 
 
 # 获取组的审批流程
-@csrf_exempt
 def auditors(request):
     group_name = request.POST.get('group_name')
     workflow_type = request.POST['workflow_type']
@@ -173,7 +167,6 @@ def auditors(request):
 
 
 # 组审批流程配置
-@csrf_exempt
 @superuser_required
 def changeauditors(request):
     auth_groups = request.POST.get('audit_auth_groups')

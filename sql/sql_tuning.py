@@ -19,7 +19,6 @@ from sqlparse.sql import IdentifierList, Identifier
 from sqlparse.tokens import Keyword, DML
 
 
-@csrf_exempt
 @permission_required('sql.optimize_sqltuning', raise_exception=True)
 def tuning(request):
     instance_name = request.POST.get('instance_name')

@@ -16,7 +16,6 @@ if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':
 
 
 # 问题诊断--进程列表
-@csrf_exempt
 @permission_required('sql.process_view', raise_exception=True)
 def process(request):
     instance_name = request.POST.get('instance_name')
@@ -52,7 +51,6 @@ def process(request):
 
 
 # 问题诊断--通过进程id构建请求
-@csrf_exempt
 @permission_required('sql.process_kill', raise_exception=True)
 def create_kill_session(request):
     instance_name = request.POST.get('instance_name')
@@ -79,7 +77,6 @@ def create_kill_session(request):
 
 
 # 问题诊断--终止会话
-@csrf_exempt
 @permission_required('sql.process_kill', raise_exception=True)
 def kill_session(request):
     instance_name = request.POST.get('instance_name')
@@ -102,7 +99,6 @@ def kill_session(request):
 
 
 # 问题诊断--表空间信息
-@csrf_exempt
 @permission_required('sql.tablespace_view', raise_exception=True)
 def tablesapce(request):
     instance_name = request.POST.get('instance_name')
@@ -146,7 +142,6 @@ def tablesapce(request):
 
 
 # 问题诊断--锁等待
-@csrf_exempt
 @permission_required('sql.trxandlocks_view', raise_exception=True)
 def trxandlocks(request):
     instance_name = request.POST.get('instance_name')
