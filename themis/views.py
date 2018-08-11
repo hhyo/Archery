@@ -7,6 +7,8 @@ import json
 import sqlparse
 import wtforms_json
 import os
+
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.shortcuts import render
 from pymongo import DESCENDING
 from django.views import View
@@ -24,7 +26,9 @@ import logging
 logger = logging.getLogger('default')
 
 
-class BaseHandler(View):
+class BaseHandler(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'sql.menu_themis'
+    raise_exception = True
 
     @property
     def mongo_client(self):
