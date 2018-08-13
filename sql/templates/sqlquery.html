@@ -448,7 +448,6 @@
                             if (sqlContent.match(/^show\s+create\s+table/)) {
                                 //初始化表结构显示
                                 $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
-                                        escape: true,
                                         data: result['rows'],
                                         columns: [{
                                             title: 'Create Table',
@@ -477,7 +476,7 @@
                                     columns: columns,
                                     showExport: true,
                                     exportDataType: "all",
-                                    //exportTypes: ['sql'],
+                                    exportTypes: ['json','sql','csv','txt','xml'],
                                     exportOptions: {
                                         //ignoreColumn: [0],  //忽略某些列的索引数组
                                         fileName: 'export_result'  //文件名称设置
