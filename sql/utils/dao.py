@@ -37,7 +37,7 @@ class Dao(object):
             sql = "show databases"
             cursor.execute(sql)
             db_list = [row[0] for row in cursor.fetchall()
-                       if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test')]
+                       if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
         except MySQLdb.Warning as w:
             logger.error(traceback.format_exc())
             raise Exception(w)
