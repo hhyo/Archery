@@ -641,4 +641,4 @@ def instance(request):
 # 实例用户管理
 @superuser_required
 def instanceuser(request, instance_id):
-    return render(request, 'instanceuser.html', {'instance_id': instance_id})
+    return render(request, 'instanceuser.html', {'instance_id': instance_id}) 
