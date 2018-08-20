@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.html import escape
 
 from sql.utils.inception import InceptionDao
 from sql.utils.aes_decryptor import Prpcrypt
@@ -104,15 +105,15 @@ def submitSql(request):
 # 提交SQL给inception进行解析
 @permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
-    workflowid = request.POST.get('workflowid')
-    sqlContent = request.POST['sql_content']
-    workflowName = request.POST['workflow_name']
-    group_name = request.POST['group_name']
+    workflowid = escape(request.POST.get('workflowid', ''))
+    sqlContent = escape(request.POST['sql_content'])
+    workflowName = escape(request.POST['workflow_name'])
+    group_name = escape(request.POST['group_name'])
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
-    instance_name = request.POST['instance_name']
-    db_name = request.POST.get('db_name')
-    isBackup = request.POST['is_backup']
-    notify_users = request.POST.getlist('notify_users')
+    instance_name = escape(request.POST['instance_name'])
+    db_name = escape(request.POST.get('db_name'))
+    isBackup = escape(request.POST['is_backup'])
+    notify_users = escape(request.POST.getlist('notify_users'))
 
     # 服务器端参数验证
     if sqlContent is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
