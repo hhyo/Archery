@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.hashers import make_password
+from django.utils.html import escape
 
 from sql.utils.group import user_instances, user_groups
 from sql.models import Config
@@ -225,9 +226,9 @@ def sqlworkflowlist(request):
 # 提交SQL给inception进行自动审核
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
-    sqlContent = request.POST.get('sql_content')
-    instance_name = request.POST.get('instance_name')
-    db_name = request.POST.get('db_name')
+    sqlContent = escape(request.POST.get('sql_content'))
+    instance_name = escape(request.POST.get('instance_name'))
+    db_name = escape(request.POST.get('db_name'))
 
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
