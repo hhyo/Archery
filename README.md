@@ -47,7 +47,7 @@ inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475a
 Python=3.6.5    
 Django=2.0.7  
 MySQL>=5.6
-Inception审核工具：https://github.com/mysql-inception/inception)
+Inception审核工具：https://github.com/mysql-inception/inception
 ```
 
 ```
