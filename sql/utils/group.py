@@ -26,7 +26,10 @@ def user_instances(user, type):
         instance_ids = [group['object_id'] for group in
                         GroupRelations.objects.filter(group_id__in=group_ids, object_type=1).values('object_id')]
     # 获取实例信息
-    instances = Instance.objects.filter(pk__in=instance_ids, type=type)
+    if type == 'all':
+        instances = Instance.objects.filter(pk__in=instance_ids)
+    else:
+        instances = Instance.objects.filter(pk__in=instance_ids, type=type)
     return instances
 
 

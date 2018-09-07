@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*- 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 
 
 # display字段为展示的中文名。
@@ -145,8 +145,8 @@ class WorkflowAudit(models.Model):
         managed = True
         db_table = 'workflow_audit'
         unique_together = ('workflow_id', 'workflow_type')
-        verbose_name = u'工作流列表'
-        verbose_name_plural = u'工作流列表'
+        verbose_name = u'工作流审批列表'
+        verbose_name_plural = u'工作流审批列表'
 
 
 # 审批明细表
@@ -188,6 +188,27 @@ class WorkflowAuditSetting(models.Model):
         unique_together = ('group_id', 'workflow_type')
         verbose_name = u'审批流程配置'
         verbose_name_plural = u'审批流程配置'
+
+
+# 工作流日志表
+class WorkflowLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    audit_id = models.IntegerField('工单审批id', db_index=True)
+    operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
+    operation_type_desc = models.CharField('操作类型描述', max_length=10)
+    operation_info = models.CharField('操作信息', max_length=200)
+    operator = models.CharField('操作人', max_length=30)
+    operator_display = models.CharField('操作人中文名', max_length=50, default='')
+    operation_time = models.DateTimeField(auto_now_add=True)
+
+    def __int__(self):
+        return self.audit_id
+
+    class Meta:
+        managed = True
+        db_table = 'workflow_log'
+        verbose_name = u'工作流日志表'
+        verbose_name_plural = u'工作流日志表'
 
 
 # 查询权限申请记录表

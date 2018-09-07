@@ -3,7 +3,7 @@
 import MySQLdb
 import traceback
 
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
 import logging
 

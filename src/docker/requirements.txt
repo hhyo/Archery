@@ -15,3 +15,4 @@ aliyun-python-sdk-rds==2.1.1
 python-dateutil==2.7.3
 pymongo==3.7.1
 wtforms_json==0.3.3
+mysql-replication==0.13

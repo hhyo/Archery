@@ -3,8 +3,7 @@
 import simplejson as json
 import datetime
 
-from django.views.decorators.csrf import csrf_exempt
-from sql.utils.aliyun_sdk import Aliyun
+from common.utils.aliyun_sdk import Aliyun
 from .models import AliyunRdsConfig
 
 aliyun = Aliyun()

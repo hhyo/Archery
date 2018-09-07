@@ -74,7 +74,7 @@
                 <ul class="nav" id="side-menu">
                     {% if perms.sql.menu_dashboard %}
                         <li>
-                            <a href="/charts/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                            <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_sqlworkflow %}
@@ -115,11 +115,6 @@
                                         <a href="/slowquery/">慢查日志</a>
                                     </li>
                                 {% endif %}
-                                {% if perms.sql.menu_dbdiagnostic %}
-                                    <li>
-                                        <a href="/dbdiagnostic/">会话管理</a>
-                                    </li>
-                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
@@ -153,15 +148,35 @@
                             <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
+                    {% if perms.sql.menu_instance %}
+                        <li>
+                            <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_instance %}
+                                    <li>
+                                        <a href="/instance/">实例列表</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_dbdiagnostic %}
+                                    <li>
+                                        <a href="/dbdiagnostic/">会话管理</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_binlog2sql %}
+                                    <li>
+                                        <a href="/binlog2sql/">Binlog2SQL</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
                     {% if perms.sql.menu_system %}
                         <li>
                             <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
                                     <a href="/config/">配置项管理</a>
-                                </li>
-                                <li>
-                                    <a href="/instance/">实例管理</a>
                                 </li>
                                 <li>
                                     <a href="/group/">资源组管理</a>
@@ -210,6 +225,8 @@
             <br>
             {% block content %}
             {% endblock content %}
+            <!--底部部分 -->
+            <hr>
         </div>
     </div>
     <!-- /#page-wrapper -->

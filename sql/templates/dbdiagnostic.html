@@ -21,7 +21,7 @@
                 <select id=instance_name class="form-control selectpicker" name="instance_name_list"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for instance_name in instance_name_list %}
+                    {% for instance_name in instances %}
                         <option value="{{ instance_name }}">{{ instance_name }}</option>
                     {% endfor %}
                 </select>
@@ -90,7 +90,6 @@
         // 问题诊断--进程列表
         function get_process_list() {
             if ($("#instance_name").val()) {
-                //采取异步请求
                 //初始化table
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
                     escape: true,

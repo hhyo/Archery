@@ -1,12 +1,11 @@
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
 from sql.utils.dao import Dao
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.utils.config import SysConfig
+from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.config import SysConfig
 from .models import AliyunRdsConfig
 
 if SysConfig().sys_config.get('aliyun_rds_manage') == 'true':

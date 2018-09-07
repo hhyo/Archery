@@ -29,6 +29,27 @@
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
+    <!-- 日志信息-->
+    <div class="modal fade" id="logs">
+        <div class="modal-dialog">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">工单日志</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="log-list" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 {% block js %}
     {% load staticfiles %}
@@ -122,6 +143,12 @@
                 }, {
                     title: '组',
                     field: 'group_name'
+                }, {
+                    title: '操作',
+                    field: 'operation',
+                    formatter: function (value, row, index) {
+                        return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
+                    }
                 }],
                 onLoadSuccess: function () {
                 },
@@ -138,6 +165,72 @@
                 }
             });
 
+        }
+
+        // 获取操作日志
+        function getLog(obj) {
+            var workflow_id = $(obj).attr("workflow_id");
+            var workflow_type = 2;
+            $.ajax({
+                type: "post",
+                url: "/workflow/log/",
+                dataType: "json",
+                data: {
+                    workflow_id: workflow_id,
+                    workflow_type: workflow_type,
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    //初始化table
+                    $('#logs').modal('show');
+                    $('#log-list').bootstrapTable('destroy').bootstrapTable({
+                        escape: true,
+                        striped: true,                      //是否显示行间隔色
+                        cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                        pagination: false,                   //是否显示分页（*）
+                        sortable: false,                     //是否启用排序
+                        sortOrder: "asc",                   //排序方式
+                        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                        pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                        pageSize: 14,                     //每页的记录行数（*）
+                        pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                        search: false,                      //是否显示表格搜索
+                        strictSearch: false,                //是否全匹配搜索
+                        showColumns: false,                  //是否显示所有的列（选择显示的列）
+                        showRefresh: false,                  //是否显示刷新按钮
+                        minimumCountColumns: 2,             //最少允许的列数
+                        clickToSelect: false,                //是否启用点击选中行
+                        uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                        showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                        cardView: false,                    //是否显示详细视图
+                        detailView: false,                  //是否显示父子表
+                        locale: 'zh-CN',                    //本地化
+                        data: data.rows,
+                        columns: [{
+                            title: '操作',
+                            field: 'operation_type_desc'
+                        }, {
+                            title: '操作人',
+                            field: 'operator_display'
+                        }, {
+                            title: '操作时间',
+                            field: 'operation_time'
+                        }, {
+                            title: '操作信息',
+                            field: 'operation_info'
+                        }],
+                        onLoadSuccess: function () {
+                        },
+                        onLoadError: function () {
+                            alert("数据加载失败！请检查接口返回信息和错误日志！");
+                        }
+                    });
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
         }
 
         //状态筛选变动自动刷新

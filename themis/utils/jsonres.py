@@ -2,7 +2,7 @@
 from django.http import HttpResponse
 import simplejson as json
 
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 from themis.utils.raiseerr import APIError
 
 

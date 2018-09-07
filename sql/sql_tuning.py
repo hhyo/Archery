@@ -7,13 +7,10 @@ import simplejson as json
 from MySQLdb.connections import numeric_part
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.models import Instance
+from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.const import SQLTuning
 from sql.utils.dao import Dao
-from .const import SQLTuning
-from sql.utils.aes_decryptor import Prpcrypt
 import sqlparse
 from sqlparse.sql import IdentifierList, Identifier
 from sqlparse.tokens import Keyword, DML
@@ -24,38 +21,31 @@ def tuning(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     sqltext = request.POST.get('sql_content')
-    ses_status = request.POST.get('ses_status')
+    option = request.POST.getlist('option[]')
 
     sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
-
-    basic_information = sql_tunning.basic_information()
-    sys_parameter = sql_tunning.sys_parameter()
-    optimizer_switch = sql_tunning.optimizer_switch()
-    plan, optimizer_rewrite_sql = sql_tunning.sqlplan()
-    object_statistics_tableistructure, object_statistics_tableinfo, object_statistics_indexinfo = sql_tunning.object_statistics()
-    if ses_status == '1':
-        session_status = sql_tunning.exec_sql()
-    else:
-        session_status = {"EXECUTE_TIME": '',
-                          "BEFORE_STATUS": {'column_list': [], 'rows': []},
-                          "AFTER_STATUS": {'column_list': [], 'rows': []},
-                          "SESSION_STATUS(DIFFERENT)": {'column_list': ['status_name', 'before', 'after', 'diff'],
-                                                        'rows': []},
-                          "PROFILING_DETAIL": {'column_list': [], 'rows': []},
-                          "PROFILING_SUMMARY": {'column_list': [], 'rows': []}
-                          }
-
     result = {'status': 0, 'msg': 'ok', 'data': {}}
-    result['data']['basic_information'] = basic_information
+    if 'sys_parm' in option:
+        basic_information = sql_tunning.basic_information()
+        sys_parameter = sql_tunning.sys_parameter()
+        optimizer_switch = sql_tunning.optimizer_switch()
+        result['data']['basic_information'] = basic_information
+        result['data']['sys_parameter'] = sys_parameter
+        result['data']['optimizer_switch'] = optimizer_switch
+    if 'sql_plan' in option:
+        plan, optimizer_rewrite_sql = sql_tunning.sqlplan()
+        result['data']['optimizer_rewrite_sql'] = optimizer_rewrite_sql
+        result['data']['plan'] = plan
+    if 'obj_stat' in option:
+        object_statistics_tableistructure, object_statistics_tableinfo, object_statistics_indexinfo = sql_tunning.object_statistics()
+        result['data']['object_statistics_tableistructure'] = object_statistics_tableistructure
+        result['data']['object_statistics_tableinfo'] = object_statistics_tableinfo
+        result['data']['object_statistics_indexinfo'] = object_statistics_indexinfo
+    if 'sql_profile' in option:
+        session_status = sql_tunning.exec_sql()
+        result['data']['session_status'] = session_status
+
     result['data']['sqltext'] = sqltext
-    result['data']['sys_parameter'] = sys_parameter
-    result['data']['optimizer_switch'] = optimizer_switch
-    result['data']['plan'] = plan
-    result['data']['optimizer_rewrite_sql'] = optimizer_rewrite_sql
-    result['data']['object_statistics_tableistructure'] = object_statistics_tableistructure
-    result['data']['object_statistics_tableinfo'] = object_statistics_tableinfo
-    result['data']['object_statistics_indexinfo'] = object_statistics_indexinfo
-    result['data']['session_status'] = session_status
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 

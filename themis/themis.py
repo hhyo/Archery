@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-import time
 
 from django.db import connection
 
 from sql.models import Instance
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 from themis.rule_analysis.db.db_operat import DbOperat
 from themis.rule_analysis.db.mongo_operat import MongoOperat
 from themis.rule_analysis.libs.mysql_plan_stat.plan_stat import MysqlPlanOrStat

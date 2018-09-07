@@ -7,8 +7,8 @@ import traceback
 from django.db import connection
 
 from sql.models import Instance, SqlWorkflow
-from sql.utils.aes_decryptor import Prpcrypt
-from sql.utils.config import SysConfig
+from common.utils.aes_decryptor import Prpcrypt
+from common.config import SysConfig
 from sql.utils.dao import Dao
 import logging
 

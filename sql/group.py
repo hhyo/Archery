@@ -4,20 +4,19 @@ import simplejson as json
 from django.contrib.auth.models import Group
 
 from django.db.models import F
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
 from sql.models import SqlGroup, GroupRelations, Users, Instance
-from sql.utils.permission import superuser_required
+from common.utils.permission import superuser_required
 
 import logging
 from sql.utils.workflow import Workflow
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
 
 
-# 获取组列表
+# 获取资源组列表
 @superuser_required
 def group(request):
     limit = int(request.POST.get('limit'))
@@ -44,7 +43,7 @@ def group(request):
                         content_type='application/json')
 
 
-# 获取组已关联对象信息
+# 获取资源组已关联对象信息
 def associated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
@@ -65,7 +64,7 @@ def associated_objects(request):
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
 
 
-# 获取组未关联对象信息
+# 获取资源组未关联对象信息
 def unassociated_objects(request):
     '''
     type：(0, '用户'), (1, '实例')
@@ -96,7 +95,7 @@ def unassociated_objects(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取组关联实例列表
+# 获取资源组关联实例列表
 def instances(request):
     group_name = request.POST.get('group_name')
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
@@ -112,7 +111,7 @@ def instances(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 添加组关联对象
+# 添加资源组关联对象
 @superuser_required
 def addrelation(request):
     '''
@@ -135,7 +134,7 @@ def addrelation(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取组的审批流程
+# 获取资源组的审批流程
 def auditors(request):
     group_name = request.POST.get('group_name')
     workflow_type = request.POST['workflow_type']
@@ -166,7 +165,7 @@ def auditors(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 组审批流程配置
+# 资源组审批流程配置
 @superuser_required
 def changeauditors(request):
     auth_groups = request.POST.get('audit_auth_groups')

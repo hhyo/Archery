@@ -5,7 +5,7 @@ from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlow
     RequestServiceOfCloudDBARequest
 import simplejson as json
 from sql.models import AliyunAccessKey
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 import logging
 
 logger = logging.getLogger('default')

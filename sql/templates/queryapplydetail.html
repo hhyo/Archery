@@ -113,7 +113,7 @@
     {% if workflowDetail.status == 0 %}
         {% if is_can_review %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
-                      placeholder="请填写驳回原因" rows=3></textarea>
+                      placeholder="请填写审核备注" rows=3></textarea>
             <br>
             <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
@@ -156,7 +156,7 @@
                 formCancel.submit();
             }
             else {
-                alert('请填写驳回原因')
+                alert('请填写审核备注')
             }
         })
     </script>

@@ -1,19 +1,19 @@
 # -*- coding: UTF-8 -*-
 import simplejson as json
-from django.db.models import F
+from django.contrib.auth.decorators import permission_required
 
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance
 
 prpCryptor = Prpcrypt()
 
 
 # 获取实例列表
+@permission_required('sql.menu_instance', raise_exception=True)
 def lists(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
@@ -37,6 +37,7 @@ def lists(request):
 
 
 # 获取实例用户列表
+@permission_required('sql.menu_instance', raise_exception=True)
 def users(request):
     instance_id = request.POST.get('instance_id')
     instance_name = Instance.objects.get(id=instance_id).instance_name

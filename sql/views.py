@@ -1,32 +1,25 @@
 # -*- coding: UTF-8 -*-
-import re
 
 import simplejson as json
-from threading import Thread
-import datetime
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
-from django.core.exceptions import PermissionDenied
-from django.db import connection, transaction
-from django.utils import timezone
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import escape
 
 from sql.utils.inception import InceptionDao
-from sql.utils.aes_decryptor import Prpcrypt
-from sql.utils.permission import superuser_required
-from sql.utils.jobs import job_info, del_sqlcronjob, add_sqlcronjob
+from common.utils.aes_decryptor import Prpcrypt
+from common.utils.permission import superuser_required
+from sql.utils.jobs import job_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, SqlGroup, \
     QueryPrivilegesApply, Config
 from sql.utils.workflow import Workflow
-from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
-from sql.utils.sql_review import getDetailUrl, can_execute, can_timingtask, can_cancel
-from .const import Const, WorkflowDict
+from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
+from common.utils.const import Const, WorkflowDict
 from sql.utils.group import user_groups, user_instances
 
 import logging
@@ -46,40 +39,6 @@ def login(request):
 def sign_out(request):
     logout(request)
     return HttpResponseRedirect(reverse('sql:login'))
-
-
-# 注册用户
-def sign_up(request):
-    username = request.POST.get('username')
-    password = request.POST.get('password')
-    password2 = request.POST.get('password2')
-    display = request.POST.get('display')
-    email = request.POST.get('email')
-
-    if username is None or password is None:
-        context = {'errMsg': '用户名和密码不能为空'}
-        return render(request, 'error.html', context)
-    if len(Users.objects.filter(username=username)) > 0:
-        context = {'errMsg': '用户名已存在'}
-        return render(request, 'error.html', context)
-    if password != password2:
-        context = {'errMsg': '两次输入密码不一致'}
-        return render(request, 'error.html', context)
-
-    # 添加用户并且添加到默认组
-    Users.objects.create_user(username=username,
-                              password=password,
-                              display=display,
-                              email=email,
-                              is_active=1,
-                              is_staff=1)
-    try:
-        user = Users.objects.get(username=username)
-        group = Group.objects.get(id=1)
-        user.groups.add(group)
-    except Exception:
-        logger.error('无id=1的权限组，无法默认添加')
-    return render(request, 'login.html')
 
 
 # SQL上线工单页面
@@ -294,192 +253,6 @@ def detail(request, workflowId):
     return render(request, 'detail.html', context)
 
 
-# 审核通过，不执行
-@permission_required('sql.sql_review', raise_exception=True)
-def passed(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
-        return render(request, 'error.html', context)
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-
-    user = request.user
-    if Workflow.can_review(request.user, workflowId, 2) is False:
-        context = {'errMsg': '你无权操作当前工单！'}
-        return render(request, 'error.html', context)
-
-    # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 调用工作流接口审核
-            # 获取audit_id
-            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
-                                                   user.username, '')
-
-            # 按照审核结果更新业务表审核状态
-            if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
-                # 将流程状态修改为审核通过，并更新reviewok_time字段
-                workflowDetail.status = Const.workflowStatus['pass']
-                workflowDetail.reviewok_time = timezone.now()
-                workflowDetail.audit_remark = ''
-                workflowDetail.save()
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
-
-# 仅执行SQL
-@permission_required('sql.sql_execute', raise_exception=True)
-def execute(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
-        return render(request, 'error.html', context)
-
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    instance_name = workflowDetail.instance_name
-    db_name = workflowDetail.db_name
-    url = getDetailUrl(request, workflowId)
-
-    if can_execute(request.user, workflowId) is False:
-        context = {'errMsg': '你无权操作当前工单！'}
-        return render(request, 'error.html', context)
-
-    # 将流程状态修改为执行中，并更新reviewok_time字段
-    workflowDetail.status = Const.workflowStatus['executing']
-    workflowDetail.reviewok_time = timezone.now()
-    workflowDetail.save()
-
-    # 判断是通过inception执行还是直接执行，is_manual=0则通过inception执行，is_manual=1代表inception审核不通过，需要直接执行
-    if workflowDetail.is_manual == 0:
-        # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-        try:
-            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name,
-                                                             db_name,
-                                                             isSplit='yes')
-        except Exception as msg:
-            context = {'errMsg': msg}
-            return render(request, 'error.html', context)
-        workflowDetail.review_content = json.dumps(splitReviewResult)
-        try:
-            workflowDetail.save()
-        except Exception:
-            # 关闭后重新获取连接，防止超时
-            connection.close()
-            workflowDetail.save()
-
-        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
-        t.start()
-    else:
-        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_skipinc_call_back,
-                   args=(workflowId, instance_name, db_name, workflowDetail.sql_content, url))
-        t.start()
-    # 删除定时执行job
-    if workflowDetail.status == Const.workflowStatus['timingtask']:
-        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
-        del_sqlcronjob(job_id)
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
-
-# 定时执行SQL
-@permission_required('sql.sql_execute', raise_exception=True)
-def timingtask(request):
-    workflowId = request.POST.get('workflowid')
-    run_date = request.POST.get('run_date')
-    if run_date is None or workflowId is None:
-        context = {'errMsg': '时间不能为空'}
-        return render(request, 'error.html', context)
-    elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-        context = {'errMsg': '时间不能小于当前时间'}
-        return render(request, 'error.html', context)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-
-    if can_timingtask(request.user, workflowId) is False:
-        context = {'errMsg': '你无权操作当前工单！'}
-        return render(request, 'error.html', context)
-
-    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = getDetailUrl(request, workflowId)
-    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
-
-    # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 将流程状态修改为定时执行
-            workflowDetail.status = Const.workflowStatus['timingtask']
-            workflowDetail.save()
-            # 调用添加定时任务
-            add_sqlcronjob(job_id, run_date, workflowId, url)
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
-
-# 终止流程
-def cancel(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
-        return render(request, 'error.html', context)
-
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    audit_remark = request.POST.get('audit_remark')
-    if audit_remark is None:
-        context = {'errMsg': '终止原因不能为空'}
-        return render(request, 'error.html', context)
-
-    user = request.user
-    if can_cancel(request.user, workflowId) is False:
-        context = {'errMsg': '你无权操作当前工单！'}
-        return render(request, 'error.html', context)
-
-    # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 调用工作流接口取消或者驳回
-            # 获取audit_id
-            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflowDetail.status != Const.workflowStatus['manreviewing']:
-                pass
-            else:
-                if user.username == workflowDetail.engineer:
-                    workflowOb.auditworkflow(request, audit_id,
-                                             WorkflowDict.workflow_status['audit_abort'],
-                                             user.username, audit_remark)
-                # 非提交人需要校验审核权限
-                elif user.has_perm('sql.sql_review'):
-                    workflowOb.auditworkflow(request, audit_id,
-                                             WorkflowDict.workflow_status['audit_reject'],
-                                             user.username, audit_remark)
-                else:
-                    raise PermissionDenied
-
-            # 删除定时执行job
-            if workflowDetail.status == Const.workflowStatus['timingtask']:
-                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
-                del_sqlcronjob(job_id)
-            # 将流程状态修改为人工终止流程
-            workflowDetail.status = Const.workflowStatus['abort']
-            workflowDetail.audit_remark = audit_remark
-            workflowDetail.save()
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
-
-
 # 展示回滚的SQL
 def rollback(request):
     workflowId = request.GET['workflowid']
@@ -508,37 +281,37 @@ def dbaprinciples(request):
 
 # 图表展示
 @permission_required('sql.menu_dashboard', raise_exception=True)
-def charts(request):
-    return render(request, 'charts.html')
+def dashboard(request):
+    return render(request, 'dashboard.html')
 
 
 # SQL在线查询
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联从库列表
-    listAllClusterName = [slave.instance_name for slave in user_instances(request.user, 'slave')]
+    instances = [slave.instance_name for slave in user_instances(request.user, 'slave')]
 
-    context = {'listAllClusterName': listAllClusterName}
+    context = {'instances': instances}
     return render(request, 'sqlquery.html', context)
 
 
 # SQL慢日志
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
-    # 获取用户关联主库列表
-    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
+    # 获取用户关联实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
 
-    context = {'tab': 'slowquery', 'instance_name_list': instance_name_list}
+    context = {'tab': 'slowquery', 'instances': instances}
     return render(request, 'slowquery.html', context)
 
 
 # SQL优化工具
 @permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
-    # 获取用户关联主库列表
-    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
+    # 获取用户关联实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
 
-    context = {'listAllClusterName': instance_name_list}
+    context = {'instances': instances}
     return render(request, 'sqladvisor.html', context)
 
 
@@ -578,10 +351,10 @@ def queryuserprivileges(request):
 # 问题诊断--进程
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
-    # 获取用户关联主库列表
-    instance_name_list = [master.instance_name for master in user_instances(request.user, 'master')]
+    # 获取用户关联实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
 
-    context = {'tab': 'process', 'instance_name_list': instance_name_list}
+    context = {'tab': 'process', 'instances': instances}
     return render(request, 'dbdiagnostic.html', context)
 
 
@@ -619,13 +392,13 @@ def config(request):
     return render(request, 'config.html', context)
 
 
-# 组管理
+# 资源组管理
 @superuser_required
 def group(request):
     return render(request, 'group.html')
 
 
-# 组关系管理
+# 资源组组关系管理
 @superuser_required
 def groupmgmt(request, group_id):
     group = SqlGroup.objects.get(group_id=group_id)
@@ -633,12 +406,20 @@ def groupmgmt(request, group_id):
 
 
 # 实例管理
-@superuser_required
+@permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
     return render(request, 'instance.html')
 
 
 # 实例用户管理
-@superuser_required
+@permission_required('sql.menu_instance', raise_exception=True)
 def instanceuser(request, instance_id):
-    return render(request, 'instanceuser.html', {'instance_id': instance_id}) 
+    return render(request, 'instanceuser.html', {'instance_id': instance_id})
+
+
+# binlog2sql
+@permission_required('sql.menu_binlog2sql', raise_exception=True)
+def binlog2sql(request):
+    # 获取实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    return render(request, 'binlog2sql.html', {'instances': instances})

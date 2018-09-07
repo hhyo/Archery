@@ -5,13 +5,17 @@ from django.utils import timezone
 from sql.utils.group import user_groups, auth_group_users
 from sql.utils.sql_review import is_autoreview
 from sql.notify import send_msg
-from sql.const import WorkflowDict
-from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, SqlGroup, SqlWorkflow, \
+from common.utils.const import WorkflowDict
+from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting,WorkflowLog,SqlGroup, SqlWorkflow, \
     QueryPrivilegesApply
-from sql.utils.config import SysConfig
+from common.config import SysConfig
 
 
 class Workflow(object):
+    def __init__(self, audit_id=None):
+        if audit_id:
+            self.audit_id = audit_id
+
     # 新增业务审核
     def addworkflowaudit(self, request, workflow_type, workflow_id, **kwargs):
         result = {'status': 0, 'msg': '', 'data': []}
@@ -80,6 +84,14 @@ class Workflow(object):
             auditInfo.save()
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
+            # 增加工单日志
+            self.add_workflow_log(audit_id=auditInfo.audit_id,
+                                  operation_type=0,
+                                  operation_type_desc='提交',
+                                  operation_info='无需审批，系统直接审核通过',
+                                  operator=auditInfo.create_user,
+                                  operator_display=auditInfo.create_user_display
+                                  )
         else:
             # 向审核主表插入待审核数据
             auditInfo = WorkflowAudit()
@@ -102,6 +114,15 @@ class Workflow(object):
             auditInfo.create_user_display = request.user.display
             auditInfo.save()
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_wait']}
+            # 增加工单日志
+            audit_auth_group, current_audit_auth_group = self.review_info(workflow_id, workflow_type)
+            self.add_workflow_log(audit_id=auditInfo.audit_id,
+                                  operation_type=0,
+                                  operation_type_desc='提交',
+                                  operation_info='等待审批，审批流程：{}'.format(audit_auth_group),
+                                  operator=auditInfo.create_user,
+                                  operator_display=auditInfo.create_user_display
+                                  )
 
         # 消息通知
         workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), auditInfo.audit_id)
@@ -157,6 +178,16 @@ class Workflow(object):
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
+            # 增加工单日志
+            audit_auth_group, current_audit_auth_group = self.review_info(auditInfo.workflow_id,
+                                                                          auditInfo.workflow_type)
+            self.add_workflow_log(audit_id=audit_id,
+                                  operation_type=1,
+                                  operation_type_desc='审批通过',
+                                  operation_info="审批备注：{}，下级审批：{}".format(audit_remark, current_audit_auth_group),
+                                  operator=request.user.username,
+                                  operator_display=request.user.display
+                                  )
         elif audit_status == WorkflowDict.workflow_status['audit_reject']:
             # 判断当前工单是否为待审核状态
             if auditInfo.current_status != WorkflowDict.workflow_status['audit_wait']:
@@ -179,6 +210,14 @@ class Workflow(object):
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
+            # 增加工单日志
+            self.add_workflow_log(audit_id=audit_id,
+                                  operation_type=2,
+                                  operation_type_desc='审批不通过',
+                                  operation_info="审批备注：{}".format(audit_remark),
+                                  operator=request.user.username,
+                                  operator_display=request.user.display
+                                  )
         elif audit_status == WorkflowDict.workflow_status['audit_abort']:
             # 判断当前工单是否为待审核/审核通过状态
             if auditInfo.current_status != WorkflowDict.workflow_status['audit_wait'] and \
@@ -200,6 +239,15 @@ class Workflow(object):
             audit_detail_result.audit_time = timezone.now()
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
+
+            # 增加工单日志
+            self.add_workflow_log(audit_id=audit_id,
+                                  operation_type=3,
+                                  operation_type_desc='审批取消',
+                                  operation_info="取消原因：{}".format(audit_remark),
+                                  operator=request.user.username,
+                                  operator_display=request.user.display
+                                  )
         else:
             result['msg'] = '审核异常'
             raise Exception(result['msg'])
@@ -211,9 +259,8 @@ class Workflow(object):
         result['data'] = {'workflow_status': auditresult.current_status}
         return result
 
-    # 获取审核列表
-    def auditlist(self, user, workflow_type, offset=0, limit=14, search=''):
-        result = {'status': 0, 'msg': '', 'data': []}
+    # 获取用户待办数量
+    def audit_todo(self, user):
         # 先获取用户所在资源组列表
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
@@ -223,48 +270,10 @@ class Workflow(object):
         else:
             auth_group_ids = [group.id for group in Group.objects.filter(user=user)]
 
-        # 只返回当前待自己审核的数据
-        if workflow_type == 0:
-            auditlist = WorkflowAudit.objects.filter(
-                workflow_title__contains=search,
-                current_status=WorkflowDict.workflow_status['audit_wait'],
-                group_id__in=group_ids,
-                current_audit__in=auth_group_ids
-            ).order_by('-audit_id')[offset:limit].values(
-                'audit_id', 'workflow_type', 'workflow_title', 'create_user_display',
-                'create_time', 'current_status', 'audit_auth_groups',
-                'current_audit',
-                'group_name')
-            auditlistCount = WorkflowAudit.objects.filter(
-                workflow_title__contains=search,
-                current_status=WorkflowDict.workflow_status['audit_wait'],
-                group_id__in=group_ids,
-                current_audit__in=auth_group_ids
-            ).count()
-        else:
-            auditlist = WorkflowAudit.objects.filter(
-                workflow_title__contains=search,
-                workflow_type=workflow_type,
-                current_status=WorkflowDict.workflow_status['audit_wait'],
-                group_id__in=group_ids,
-                current_audit__in=auth_group_ids
-            ).order_by('-audit_id')[offset:limit].values(
-                'audit_id', 'workflow_type',
-                'workflow_title', 'create_user_display',
-                'create_time', 'current_status',
-                'audit_auth_groups',
-                'current_audit',
-                'group_name')
-            auditlistCount = WorkflowAudit.objects.filter(
-                workflow_title__contains=search,
-                workflow_type=workflow_type,
-                current_status=WorkflowDict.workflow_status['audit_wait'],
-                group_id__in=group_ids,
-                current_audit__in=auth_group_ids
-            ).count()
-
-        result['data'] = {'auditlist': auditlist, 'auditlistCount': auditlistCount}
-        return result
+        return WorkflowAudit.objects.filter(
+            current_status=WorkflowDict.workflow_status['audit_wait'],
+            group_id__in=group_ids,
+            current_audit__in=auth_group_ids).count()
 
     # 通过审核id获取审核信息
     @staticmethod
@@ -348,3 +357,14 @@ class Workflow(object):
             except Exception:
                 current_audit_auth_group = audit_info.current_audit
         return audit_auth_group, current_audit_auth_group
+
+    # 新增工单日志
+    @staticmethod
+    def add_workflow_log(audit_id, operation_type, operation_type_desc, operation_info, operator, operator_display):
+        WorkflowLog(audit_id=audit_id,
+                    operation_type=operation_type,
+                    operation_type_desc=operation_type_desc,
+                    operation_info=operation_info,
+                    operator=operator,
+                    operator_display=operator_display
+                    ).save()

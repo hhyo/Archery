@@ -15,10 +15,10 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group">
-                <select id=instance_name class="form-control selectpicker" name="instance_name_list"
+                <select id=instance_name class="form-control selectpicker" name="instances"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for instance_name in instance_name_list %}
+                    {% for instance_name in instances %}
                         <option value="{{ instance_name }}">{{ instance_name }}</option>
                     {% endfor %}
                 </select>
@@ -323,8 +323,8 @@
                                 }
                             },
                         formatter: function (value, row, index) {
-                            if (value.length > 500) {
-                                var sql = value.substr(0, 500) + '...';
+                            if (value.length > 100) {
+                                var sql = value.substr(0, 100) + '...';
                                 return sql;
                             }
                             else {
@@ -448,16 +448,22 @@
                             }
                         }
                     }, {
-                        title: '执行时长(秒)',
+                        title: '执行总次数',
+                        field: 'TotalExecutionCounts'
+                    }, {
+                        title: '执行时长(95%)',
+                        field: 'QueryTimePct95'
+                    }, {
+                        title: '执行总时长(秒)',
                         field: 'QueryTimes'
                     }, {
-                        title: '锁定时长(秒)',
+                        title: '锁定总时长(秒)',
                         field: 'LockTimes'
                     }, {
-                        title: '解析行数',
+                        title: '解析总行数',
                         field: 'ParseRowCounts'
                     }, {
-                        title: '返回行数',
+                        title: '返回总行数',
                         field: 'ReturnRowCounts'
                     }],
                     singleSelect: true,

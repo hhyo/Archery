@@ -7,7 +7,6 @@ from django.urls import reverse
 
 from django.db.models import Q, Min
 from django.db import connection
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
@@ -15,14 +14,14 @@ from django.db import transaction
 import datetime
 import time
 
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
-from .const import WorkflowDict
+from common.utils.const import WorkflowDict
 from .models import Instance, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
-from sql.utils.config import SysConfig
+from common.config import SysConfig
 from sql.utils.group import user_instances, user_groups
 
 prpCryptor = Prpcrypt()
@@ -603,15 +602,15 @@ def querylog(request):
 
     # 查询个人记录，超管查看所有数据
     if user.is_superuser:
-        sql_log_count = QueryLog.objects.all().filter(Q(sqllog__contains=search) | Q(username__contains=search)).count()
+        sql_log_count = QueryLog.objects.all().filter(
+            Q(sqllog__contains=search) | Q(user_display__contains=search)).count()
         sql_log_list = QueryLog.objects.all().filter(
-            Q(sqllog__contains=search) | Q(username__contains=search)).order_by(
+            Q(sqllog__contains=search) | Q(user_display__contains=search)).order_by(
             '-id')[offset:limit]
     else:
-        sql_log_count = QueryLog.objects.filter(username=user.username).filter(
-            Q(sqllog__contains=search) | Q(username__contains=search)).count()
-        sql_log_list = QueryLog.objects.filter(username=user.username).filter(
-            Q(sqllog__contains=search) | Q(username__contains=search)).order_by('-id')[offset:limit]
+        sql_log_count = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search).count()
+        sql_log_list = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search).order_by('-id')[
+                       offset:limit]
 
     # QuerySet 序列化
     sql_log_list = serializers.serialize("json", sql_log_list)

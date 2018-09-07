@@ -10,10 +10,10 @@ from django.db import connection
 from django.utils import timezone
 
 from sql.utils.group import auth_group_users
-from sql.utils.config import SysConfig
+from common.config import SysConfig
 from sql.utils.dao import Dao
-from sql.const import Const, WorkflowDict
-from sql.utils.sendmsg import MailSender
+from common.utils.const import Const, WorkflowDict
+from common.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.models import Users, SqlWorkflow, SqlGroup
 from sql.utils.sql_review import getMasterConnStr
@@ -52,6 +52,18 @@ def execute_skipinc_call_back(workflowId, instance_name, db_name, sql_content, u
     except Exception as e:
         logger.error(e)
 
+    # 增加工单日志
+    # 获取audit_id
+    audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Workflow.add_workflow_log(audit_id=audit_id,
+                              operation_type=6,
+                              operation_type_desc='执行结束',
+                              operation_info='执行结果：{}'.format(workflowDetail.status),
+                              operator='',
+                              operator_display='系统'
+                              )
+
     # 发送消息
     send_msg(workflowDetail, url)
 
@@ -77,6 +89,18 @@ def execute_call_back(workflowId, instance_name, url):
         workflowDetail.save()
     except Exception as e:
         logger.error(e)
+
+    # 增加工单日志
+    # 获取audit_id
+    audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Workflow.add_workflow_log(audit_id=audit_id,
+                              operation_type=6,
+                              operation_type_desc='执行结束',
+                              operation_info='执行结果：{}'.format(workflowDetail.status),
+                              operator='',
+                              operator_display='系统'
+                              )
 
     # 发送消息
     send_msg(workflowDetail, url)
@@ -119,6 +143,18 @@ def execute_job(workflowId, url):
     t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
     t.start()
 
+    # 增加工单日志
+    # 获取audit_id
+    audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Workflow.add_workflow_log(audit_id=audit_id,
+                              operation_type=5,
+                              operation_type_desc='执行工单',
+                              operation_info='系统定时执行',
+                              operator='',
+                              operator_display='系统'
+                              )
+
 
 # 执行结果通知
 def send_msg(workflowDetail, url):
@@ -131,7 +167,7 @@ def send_msg(workflowDetail, url):
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status, audit_id)
     msg_content = '''发起人：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
         workflowDetail.engineer_display, audit_auth_group, workflowDetail.workflow_name, url,
-        workflowDetail.sql_content[0:500])
+        re.sub('[\r\n\f]{2,}', '\n', workflowDetail.sql_content[0:500].replace('\r', '')))
 
     if sys_config.get('mail') == 'true':
         # 邮件通知申请人，审核人，抄送DBA

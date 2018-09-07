@@ -1,125 +1,36 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
+import datetime
+import re
+from threading import Thread
 
 import simplejson as json
-import datetime
 
-import subprocess
-
-from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.models import Group
-from django.db import transaction
+from django.core.exceptions import PermissionDenied
+from django.db import transaction, connection
 from django.db.models import Q
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth.hashers import make_password
-from django.utils.html import escape
-
-from sql.utils.group import user_instances, user_groups
-from sql.models import Config
-from sql.utils.permission import superuser_required
-from sql.utils.dao import Dao
-from .const import Const
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
+from sql.models import SqlGroup, Users
+from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
+from sql.utils.group import user_groups, user_instances
+from common.utils.const import Const, WorkflowDict
 from sql.utils.inception import InceptionDao
-from sql.utils.aes_decryptor import Prpcrypt
-from .models import Users, Instance, SqlWorkflow
-from sql.utils.sendmsg import MailSender
+from common.utils.aes_decryptor import Prpcrypt
+from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
+from sql.utils.sql_review import can_timingtask, getDetailUrl, can_cancel, can_execute
+from .models import SqlWorkflow
 import logging
 from sql.utils.workflow import Workflow
-from sql.utils.config import SysConfig
-from sql.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
 prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
-
-
-# ajax接口，登录页面调用，用来验证用户名密码
-def loginAuthenticate(username, password):
-    """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
-    sys_config = SysConfig().sys_config
-    if sys_config.get('lock_cnt_threshold'):
-        lockCntThreshold = int(sys_config.get('lock_cnt_threshold'))
-    else:
-        lockCntThreshold = 5
-    if sys_config.get('lock_time_threshold'):
-        lockTimeThreshold = int(sys_config.get('lock_time_threshold'))
-    else:
-        lockTimeThreshold = 300
-
-    # 服务端二次验证参数
-    if username == "" or password == "" or username is None or password is None:
-        result = {'status': 2, 'msg': '登录用户名或密码为空，请重新输入!', 'data': ''}
-    elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
-            datetime.datetime.now() - login_failure_counter[username][
-        "last_failure_time"]).seconds <= lockTimeThreshold:
-        result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
-    else:
-        # 登录
-        user = authenticate(username=username, password=password)
-        # 登录成功
-        if user:
-            # 如果登录失败计数器中存在该用户名，则清除之
-            if username in login_failure_counter:
-                login_failure_counter.pop(username)
-            result = {'status': 0, 'msg': 'ok', 'data': user}
-        # 登录失败
-        else:
-            if username not in login_failure_counter:
-                # 第一次登录失败，登录失败计数器中不存在该用户，则创建一个该用户的计数器
-                login_failure_counter[username] = {"cnt": 1, "last_failure_time": datetime.datetime.now()}
-            else:
-                if (datetime.datetime.now() - login_failure_counter[username][
-                    "last_failure_time"]).seconds <= lockTimeThreshold:
-                    login_failure_counter[username]["cnt"] += 1
-                else:
-                    # 上一次登录失败时间早于5分钟前，则重新计数。以达到超过5分钟自动解锁的目的。
-                    login_failure_counter[username]["cnt"] = 1
-                login_failure_counter[username]["last_failure_time"] = datetime.datetime.now()
-            result = {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
-    return result
-
-
-# ajax接口，登录页面调用，用来验证用户名密码
-def authenticateEntry(request):
-    """接收http请求，然后把请求中的用户名密码传给loginAuthenticate去验证"""
-    username = request.POST.get('username')
-    password = request.POST.get('password')
-
-    result = loginAuthenticate(username, password)
-    if result['status'] == 0:
-        # 开启LDAP的认证通过后更新用户密码
-        if settings.ENABLE_LDAP:
-            try:
-                Users.objects.get(username=username)
-            except Exception:
-                insert_info = Users()
-                insert_info.password = make_password(password)
-                insert_info.save()
-            else:
-                replace_info = Users.objects.get(username=username)
-                replace_info.password = make_password(password)
-                replace_info.save()
-        # 添加到默认组
-        try:
-            user = Users.objects.get(username=username)
-            group = Group.objects.get(id=1)
-            user.groups.add(group)
-        except Exception:
-            logger.error('无id=1的权限组，无法默认添加')
-
-        # 调用了django内置登录方法，防止管理后台二次登录
-        user = authenticate(username=username, password=password)
-        if user:
-            login(request, user)
-
-        result = {'status': 0, 'msg': 'ok', 'data': None}
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 获取审核列表
@@ -226,9 +137,9 @@ def sqlworkflowlist(request):
 # 提交SQL给inception进行自动审核
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
-    sqlContent = escape(request.POST.get('sql_content'))
-    instance_name = escape(request.POST.get('instance_name'))
-    db_name = escape(request.POST.get('db_name'))
+    sqlContent = request.POST.get('sql_content')
+    instance_name = request.POST.get('instance_name')
+    db_name = request.POST.get('db_name')
 
     finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
@@ -293,6 +204,307 @@ def simplecheck(request):
     finalResult['data']['CheckErrorCount'] = CheckErrorCount
 
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
+
+
+# 提交SQL给inception进行解析
+@permission_required('sql.sql_submit', raise_exception=True)
+def autoreview(request):
+    workflowid = request.POST.get('workflowid')
+    sqlContent = request.POST['sql_content']
+    workflowName = request.POST['workflow_name']
+    group_name = request.POST['group_name']
+    group_id = SqlGroup.objects.get(group_name=group_name).group_id
+    instance_name = request.POST['instance_name']
+    db_name = request.POST.get('db_name')
+    isBackup = request.POST['is_backup']
+    notify_users = request.POST.getlist('notify_users')
+
+    # 服务器端参数验证
+    if sqlContent is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
+        context = {'errMsg': '页面提交参数可能为空'}
+        return render(request, 'error.html', context)
+
+    # 验证组权限（用户是否在该组、该组是否有指定实例）
+    try:
+        user_instances(request.user, 'master').get(instance_name=instance_name)
+    except Exception:
+        context = {'errMsg': '你所在组未关联该主库！'}
+        return render(request, 'error.html', context)
+
+    # # 删除注释语句
+    # sqlContent = ''.join(
+    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
+    #         sqlContent.splitlines(1))).strip()
+    # # 去除空行
+    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+
+    sqlContent = sqlContent.strip()
+
+    if sqlContent[-1] != ";":
+        context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
+        return render(request, 'error.html', context)
+
+    # 交给inception进行自动审核
+    try:
+        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+
+    if result is None or len(result) == 0:
+        context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
+        return render(request, 'error.html', context)
+    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+    jsonResult = json.dumps(result)
+
+    # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则需要设置is_manual = 0，跳过inception直接执行
+    workflowStatus = Const.workflowStatus['manreviewing']
+    # inception审核不通过的工单，标记手动执行标签
+    is_manual = 0
+    for row in result:
+        if row[2] == 2:
+            is_manual = 1
+            break
+        elif re.match(r"\w*comments\w*", row[4]):
+            is_manual = 1
+            break
+
+    # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
+    sql_syntax = 2
+    for row in sqlContent.strip(';').split(';'):
+        if re.match(r"^alter|^create|^drop|^truncate|^rename", row.strip().lower()):
+            sql_syntax = 1
+            break
+
+    # 调用工作流生成工单
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 存进数据库里
+            engineer = request.user.username
+            if not workflowid:
+                sql_workflow = SqlWorkflow()
+                sql_workflow.create_time = timezone.now()
+            else:
+                sql_workflow = SqlWorkflow.objects.get(id=int(workflowid))
+            sql_workflow.workflow_name = workflowName
+            sql_workflow.group_id = group_id
+            sql_workflow.group_name = group_name
+            sql_workflow.engineer = engineer
+            sql_workflow.engineer_display = request.user.display
+            sql_workflow.audit_auth_groups = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
+            sql_workflow.status = workflowStatus
+            sql_workflow.is_backup = isBackup
+            sql_workflow.review_content = jsonResult
+            sql_workflow.instance_name = instance_name
+            sql_workflow.db_name = db_name
+            sql_workflow.sql_content = sqlContent
+            sql_workflow.execute_result = ''
+            sql_workflow.is_manual = is_manual
+            sql_workflow.audit_remark = ''
+            sql_workflow.sql_syntax = sql_syntax
+            sql_workflow.save()
+            workflowId = sql_workflow.id
+            # 自动审核通过了，才调用工作流
+            if workflowStatus == Const.workflowStatus['manreviewing']:
+                # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+                # 抄送通知人
+                listCcAddr = [email['email'] for email in
+                              Users.objects.filter(username__in=notify_users).values('email')]
+                workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflowId,
+                                            listCcAddr=listCcAddr)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+
+
+# 审核通过，不执行
+@permission_required('sql.sql_review', raise_exception=True)
+def passed(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+    workflowId = int(workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    audit_remark = request.POST.get('audit_remark', '')
+
+    user = request.user
+    if Workflow.can_review(request.user, workflowId, 2) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 调用工作流接口审核
+            # 获取audit_id
+            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
+                                                   user.username, audit_remark)
+
+            # 按照审核结果更新业务表审核状态
+            if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
+                # 将流程状态修改为审核通过，并更新reviewok_time字段
+                workflowDetail.status = Const.workflowStatus['pass']
+                workflowDetail.reviewok_time = timezone.now()
+                workflowDetail.audit_remark = audit_remark
+                workflowDetail.save()
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+
+
+# 仅执行SQL
+@permission_required('sql.sql_execute', raise_exception=True)
+def execute(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+
+    workflowId = int(workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    instance_name = workflowDetail.instance_name
+    db_name = workflowDetail.db_name
+    url = getDetailUrl(request, workflowId)
+
+    if can_execute(request.user, workflowId) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    # 将流程状态修改为执行中，并更新reviewok_time字段
+    workflowDetail.status = Const.workflowStatus['executing']
+    workflowDetail.reviewok_time = timezone.now()
+    workflowDetail.save()
+
+    # 判断是通过inception执行还是直接执行，is_manual=0则通过inception执行，is_manual=1代表inception审核不通过，需要直接执行
+    if workflowDetail.is_manual == 0:
+        # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+        try:
+            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name,
+                                                             db_name,
+                                                             isSplit='yes')
+        except Exception as msg:
+            context = {'errMsg': msg}
+            return render(request, 'error.html', context)
+        workflowDetail.review_content = json.dumps(splitReviewResult)
+        try:
+            workflowDetail.save()
+        except Exception:
+            # 关闭后重新获取连接，防止超时
+            connection.close()
+            workflowDetail.save()
+
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
+        t.start()
+    else:
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=execute_skipinc_call_back,
+                   args=(workflowId, instance_name, db_name, workflowDetail.sql_content, url))
+        t.start()
+    # 删除定时执行job
+    if workflowDetail.status == Const.workflowStatus['timingtask']:
+        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+        del_sqlcronjob(job_id)
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+
+
+# 定时执行SQL
+@permission_required('sql.sql_execute', raise_exception=True)
+def timingtask(request):
+    workflowId = request.POST.get('workflowid')
+    run_date = request.POST.get('run_date')
+    if run_date is None or workflowId is None:
+        context = {'errMsg': '时间不能为空'}
+        return render(request, 'error.html', context)
+    elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+        context = {'errMsg': '时间不能小于当前时间'}
+        return render(request, 'error.html', context)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+
+    if can_timingtask(request.user, workflowId) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
+    url = getDetailUrl(request, workflowId)
+    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 将流程状态修改为定时执行
+            workflowDetail.status = Const.workflowStatus['timingtask']
+            workflowDetail.save()
+            # 调用添加定时任务
+            add_sqlcronjob(job_id, run_date, workflowId, url)
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+
+
+# 终止流程
+def cancel(request):
+    workflowId = request.POST['workflowid']
+    if workflowId == '' or workflowId is None:
+        context = {'errMsg': 'workflowId参数为空.'}
+        return render(request, 'error.html', context)
+
+    workflowId = int(workflowId)
+    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    audit_remark = request.POST.get('cancel_remark')
+    if audit_remark is None:
+        context = {'errMsg': '终止原因不能为空'}
+        return render(request, 'error.html', context)
+
+    user = request.user
+    if can_cancel(request.user, workflowId) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    # 使用事务保持数据一致性
+    try:
+        with transaction.atomic():
+            # 调用工作流接口取消或者驳回
+            # 获取audit_id
+            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            # 仅待审核的需要调用工作流，审核通过的不需要
+            if workflowDetail.status != Const.workflowStatus['manreviewing']:
+                pass
+            else:
+                if user.username == workflowDetail.engineer:
+                    workflowOb.auditworkflow(request, audit_id,
+                                             WorkflowDict.workflow_status['audit_abort'],
+                                             user.username, audit_remark)
+                # 非提交人需要校验审核权限
+                elif user.has_perm('sql.sql_review'):
+                    workflowOb.auditworkflow(request, audit_id,
+                                             WorkflowDict.workflow_status['audit_reject'],
+                                             user.username, audit_remark)
+                else:
+                    raise PermissionDenied
+
+            # 删除定时执行job
+            if workflowDetail.status == Const.workflowStatus['timingtask']:
+                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+                del_sqlcronjob(job_id)
+            # 将流程状态修改为人工终止流程
+            workflowDetail.status = Const.workflowStatus['abort']
+            workflowDetail.audit_remark = audit_remark
+            workflowDetail.save()
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
 def getSqlSHA1(workflowId):
@@ -418,55 +630,6 @@ def stopOscProgress(request):
     return HttpResponse(json.dumps(optResult), content_type='application/json')
 
 
-# 获取SQLAdvisor的优化结果
-@permission_required('sql.optimize_sqladvisor', raise_exception=True)
-def sqladvisorcheck(request):
-    sqlContent = request.POST.get('sql_content')
-    instance_name = request.POST.get('instance_name')
-    dbName = request.POST.get('db_name')
-    verbose = request.POST.get('verbose')
-    finalResult = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # 服务器端参数验证
-    if sqlContent is None or instance_name is None:
-        finalResult['status'] = 1
-        finalResult['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
-    sqlContent = sqlContent.strip()
-    if sqlContent[-1] != ";":
-        finalResult['status'] = 1
-        finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
-    try:
-        user_instances(request.user, 'master').get(instance_name=instance_name)
-    except Exception:
-        finalResult['status'] = 1
-        finalResult['msg'] = '你所在组未关联该主库！'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
-    if verbose is None or verbose == '':
-        verbose = 1
-
-    # 取出主库的连接信息
-    instance_info = Instance.objects.get(instance_name=instance_name)
-
-    # 提交给sqladvisor获取审核结果
-    sqladvisor_path = SysConfig().sys_config.get('sqladvisor')
-    sqlContent = sqlContent.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
-    try:
-        p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
-            str(instance_info.host), str(instance_info.port), str(instance_info.user),
-            str(prpCryptor.decrypt(instance_info.password), ), str(dbName), verbose, sqlContent),
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
-        stdout, stderr = p.communicate()
-        finalResult['data'] = stdout
-    except Exception:
-        finalResult['data'] = 'sqladvisor运行报错，请联系管理员'
-    return HttpResponse(json.dumps(finalResult), content_type='application/json')
-
-
 # 获取审核列表
 def workflowlist(request):
     # 获取用户信息
@@ -494,23 +657,3 @@ def workflowlist(request):
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
-
-
-# 修改系统配置
-@superuser_required
-def changeconfig(request):
-    configs = request.POST.get('configs')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # 清空并替换
-    try:
-        with transaction.atomic():
-            Config.objects.all().delete()
-            Config.objects.bulk_create(
-                [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
-    except Exception as e:
-        result['status'] = 1
-        result['msg'] = str(e)
-
-    # 返回结果
-    return HttpResponse(json.dumps(result), content_type='application/json')

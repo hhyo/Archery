@@ -1,110 +1,108 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="container-fluid">
-        <div class="row clearfix">
+    <div class="row clearfix">
 
-            <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
-                {% csrf_token %}
-                <input type="hidden" id="workflowid" name="workflowid"/>
-                <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                       data-placeholder="请配置审批流程" required>
-                <div class="col-md-9 column">
-                    <pre id="sql_content_editor" style="min-height:450px"></pre>
-                </div>
-                <div style="display: none" class="col-md-8 column">
+        <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
+            {% csrf_token %}
+            <input type="hidden" id="workflowid" name="workflowid"/>
+            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                   data-placeholder="请配置审批流程" required>
+            <div class="col-md-9 column">
+                <pre id="sql_content_editor" style="min-height:450px"></pre>
+            </div>
+            <div style="display: none" class="col-md-8 column">
                     <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
                               placeholder="请在此提交SQL，请以分号结尾。" rows=20
                               required></textarea>
+            </div>
+            <div class="col-md-3 column">
+                <div class="form-group">
+                    <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
                 </div>
-                <div class="col-md-3 column">
-                    <div class="form-group">
-                        <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
-                    </div>
-                    <div class="form-group">
-                        <input id="workflow_name" type="text" name="workflow_name" class="form-control"
-                               data-name="上线单名称" data-placeholder="请输入上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表"
-                               required>
-                    </div>
-                    <div class="form-group">
-                        <select id="group_name" name="group_name"
-                                class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="组" data-placeholder="请选择组" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择组:</option>
-                            {% for group in group_list %}
-                                <option value="{{ group.group_name }}">{{ group.group_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select id="instance_name" name="instance_name"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
-                                data-live-search="true" data-placeholder="请选择实例" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                                data-live-search="true" data-placeholder="请选择数据库" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select id="is_backup" name="is_backup"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
-                                data-placeholder="请选择是否要备份" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
-                            <option value="是">是</option>
-                            <option value="否">否</option>
-                        </select>
-                    </div>
-                    <!--增加通知人-->
-                    <div class="form-group">
-                        <select id="notify_users" name="notify_users"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-name="通知人"
-                                data-live-search="true" data-placeholder="可选择通知人(邮件抄送)">
-                            <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
-                            {% for user_info in active_user %}
-                                <option value="{{ user_info.username }}">{{ user_info.display }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <!--审批流程-->
-                    <div id="div-workflow_auditors" class="form-group" style="display: none">
-                        <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
-                    </div>
-                    <!--button-->
-                    <div class="form-group">
-                        <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                        <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
-                        {#<button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
-                        <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
-                    </div>
+                <div class="form-group">
+                    <input id="workflow_name" type="text" name="workflow_name" class="form-control"
+                           data-name="上线单名称" data-placeholder="请输入上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                           required>
                 </div>
-            </form>
-        </div>
-        <!-- 审核结果 -->
-        <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
-               style="display: none"></table>
-        <!-- 审核信息确认 -->
-        <div class="modal fade" id="submitComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header ">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                aria-hidden="true">×</span></button>
-                        <h4 class="modal-title text-danger">提交信息确认</h4>
-                    </div>
-                    <div class="modal-body">
-                        <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
-                                color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
-                            Inception不支持的语句在执行时将不会备份数据，如果有备份需求请提前联系DBA操作！<br>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                        <button id="submitsqlcomfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <select id="group_name" name="group_name"
+                            class="selectpicker show-tick form-control bs-select-hidden"
+                            data-name="组" data-placeholder="请选择组" data-live-search="true" required>
+                        <option value="is-empty" disabled="" selected="selected">请选择组:</option>
+                        {% for group in group_list %}
+                            <option value="{{ group.group_name }}">{{ group.group_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="instance_name" name="instance_name"
+                            class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
+                            data-live-search="true" data-placeholder="请选择实例" required>
+                        <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
+                            data-live-search="true" data-placeholder="请选择数据库" required>
+                        <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="is_backup" name="is_backup"
+                            class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
+                            data-placeholder="请选择是否要备份" required>
+                        <option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
+                        <option value="是">是</option>
+                        <option value="否">否</option>
+                    </select>
+                </div>
+                <!--增加通知人-->
+                <div class="form-group">
+                    <select id="notify_users" name="notify_users"
+                            class="selectpicker show-tick form-control bs-select-hidden" data-name="通知人"
+                            data-live-search="true" data-placeholder="可选择通知人(邮件抄送)">
+                        <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
+                        {% for user_info in active_user %}
+                            <option value="{{ user_info.username }}">{{ user_info.display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!--审批流程-->
+                <div id="div-workflow_auditors" class="form-group" style="display: none">
+                    <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                </div>
+                <!--button-->
+                <div class="form-group">
+                    <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                    <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
+                    {#<button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
+                    <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- 审核结果 -->
+    <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
+           style="display: none"></table>
+    <!-- 审核信息确认 -->
+    <div class="modal fade" id="submitComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">提交信息确认</h4>
+                </div>
+                <div class="modal-body">
+                    <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
+                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
+                        Inception不支持的语句在执行时将不会备份数据，如果有备份需求请提前联系DBA操作！<br>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button id="submitsqlcomfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    </button>
                 </div>
             </div>
         </div>
@@ -132,6 +130,7 @@
             countSelectedText: "已选中{0}项",
             selectedTextFormat: "count > 3"
         });
+
         //初始化上传控件
         function init_upload() {
             $("#sql-upload").fileinput({

@@ -70,7 +70,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'sql.utils.global_info.global_info',
+                'common.utils.global_info.global_info',
             ],
         },
     },
@@ -118,6 +118,10 @@ DATABASES = {
         'PASSWORD': '',
         'HOST': '127.0.0.1',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8'
+        },
         'TEST': {
             'NAME': 'test_archer',
             'CHARSET': 'utf8',

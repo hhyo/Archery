@@ -9,7 +9,7 @@ from email.utils import parseaddr, formataddr
 import smtplib
 import requests
 
-from sql.utils.config import SysConfig
+from common.config import SysConfig
 import logging
 
 logger = logging.getLogger('default')

@@ -11,3 +11,4 @@ python-dateutil==2.7.3
 django-auth-ldap==1.7.0
 pymongo==3.7.1
 wtforms_json==0.3.3
+mysql-replication==0.13

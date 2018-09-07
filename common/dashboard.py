@@ -4,7 +4,7 @@ from django.shortcuts import render
 from pyecharts import Pie, Bar, Line
 from pyecharts import Page
 from sql.utils.inception import InceptionDao
-from sql.utils.chart_dao import ChartDao
+from common.utils.chart_dao import ChartDao
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -101,4 +101,4 @@ def pyecharts(request):
     myechart = page.render_embed()  # 渲染配置
     host = 'https://pyecharts.github.io/assets/js'  # js文件源地址
     script_list = page.get_js_dependencies()  # 获取依赖的js文件名称（只获取当前视图需要的js）
-    return render(request, "charts.html", {"myechart": myechart, "host": host, "script_list": script_list})
+    return render(request, "dashboard.html", {"myechart": myechart, "host": host, "script_list": script_list})

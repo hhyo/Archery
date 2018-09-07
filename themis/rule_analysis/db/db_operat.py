@@ -2,7 +2,7 @@
 import MySQLdb
 
 from sql.models import Instance
-from sql.utils.aes_decryptor import Prpcrypt
+from common.utils.aes_decryptor import Prpcrypt
 
 prpCryptor = Prpcrypt()
 

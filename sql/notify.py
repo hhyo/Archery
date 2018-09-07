@@ -5,11 +5,11 @@ from threading import Thread
 
 from django.contrib.auth.models import Group
 
-from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup, WorkflowAudit
-from sql.utils.config import SysConfig
+from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup, WorkflowAudit, WorkflowAuditDetail
+from common.config import SysConfig
 from sql.utils.group import auth_group_users
-from sql.utils.sendmsg import MailSender
-from .const import WorkflowDict
+from common.utils.sendmsg import MailSender
+from common.utils.const import WorkflowDict
 import logging
 
 logger = logging.getLogger('default')
@@ -49,7 +49,10 @@ def _send(audit_id, msg_type, **kwargs):
     if workflow_type == WorkflowDict.workflow_type['query']:
         workflow_type_display = WorkflowDict.workflow_type['query_display']
         workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
-        workflow_audit_remark = ''
+        try:
+            workflow_audit_remark = WorkflowAuditDetail.objects.filter(audit_id=audit_id).latest('audit_time').remark
+        except Exception:
+            workflow_audit_remark = ''
         if workflow_detail.priv_type == 1:
             workflow_content = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
                 workflow_detail.db_list,
@@ -65,7 +68,7 @@ def _send(audit_id, msg_type, **kwargs):
         workflow_type_display = WorkflowDict.workflow_type['sqlreview_display']
         workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
         workflow_audit_remark = workflow_detail.audit_remark
-        workflow_content = workflow_detail.sql_content
+        workflow_content = re.sub('[\r\n\f]{2,}', '\n', workflow_detail.sql_content[0:500].replace('\r', ''))
     else:
         raise Exception('工单类型不正确')
 

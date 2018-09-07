@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    操作选项
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <h5 class="control-label text-bold">选择实例：</h5>
+                        <div class="form-group">
+                            <select id="instance_name" name="instance_name"
+                                    class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                    data-placeholder="请选择实例:" required>
+                                <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                {% for instance_name in instances %}
+                                    <option value="{{ instance_name }}">{{ instance_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <h5 class="control-label text-bold">解析模式：</h5>
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input id="no_pk" type="checkbox">
+                                    --no-primary-key
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input id="flashback" type="checkbox">
+                                    --flashback
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <h5 class="control-label text-bold">解析范围控制：</h5>
+                        <div class="form-group">
+                            <select id="start_file" class="selectpicker form-control" required>
+                                <option value="is-empty" disabled="">起始解析文件:</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" class="form-control" id="start_pos" placeholder="起始解析位置(可选)"
+                                   onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
+                        </div>
+                        <div class="form-group">
+                            <select id="end_file" class="selectpicker form-control" required>
+                                <option value="is-empty" disabled="">终止解析文件(可选):</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" class="form-control" id="end_pos" placeholder="终止解析位置(可选)"
+                                   onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control form_datetime" id="start_time"
+                                   placeholder="起始解析时间(可选)">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control form_datetime" id="stop_time"
+                                   placeholder="终止解析时间(可选)">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <h5 class="control-label text-bold">对象过滤：</h5>
+                        <div class="checkbox">
+                            <label>
+                                <input id="only_dml" type="checkbox">
+                                --only-dml
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <select id="only_schemas" class="selectpicker form-control "
+                                    data-live-search="true" required>
+                                <option value="is-empty" disabled="" selected="selected">数据库过滤(可选):</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <select id="only_tables" class="selectpicker form-control "
+                                    data-live-search="true" multiple="multiple" required>
+                                <option value="is-empty" disabled="" selected>表过滤(可选):</option>
+                            </select>
+                        </div>
+                        <select id="sql_type" class="selectpicker form-control "
+                                data-live-search="true" multiple="multiple" required>
+                            <option value="is-empty" disabled="">类型过滤(可选):</option>
+                            <option value="INSERT">INSERT</option>
+                            <option value="UPDATE">UPDATE</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button id="binlog2sql" class="btn btn-danger">获取SQL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL语句
+                </div>
+                <div class="panel-body">
+                    <h5 class="control-label text-bold" style="color: red">
+                        <b>页面仅展示5000条，完整的SQL文件会保存到项目downloads目录，<a href="https://github.com/danfengcao/binlog2sql">项目地址</a></b>
+                    </h5>
+                    <br>
+                    <table id="tb-binlog2sql" data-toggle="table" class="table table-condensed"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <script>
+        $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
+
+        //实例变更获取数据库\BINLOG
+        $("#instance_name").change(function () {
+            //获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/getdbNameList/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#only_schemas").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#only_schemas").append(name);
+                        }
+                        $("#only_schemas").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">数据库过滤(可选):</option>");
+                        $('#only_schemas').selectpicker('render');
+                        $('#only_schemas').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                }
+            });
+            //获取binlog
+            $.ajax({
+                type: "post",
+                url: "/binlog2sql/binlog_list/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#start_file").empty();
+                        $("#end_file").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i]['Log_name'] + "\">" + result[i]['Log_name'] + "</option>";
+                            $("#start_file").append(name);
+                            $("#end_file").append(name);
+                        }
+                        $("#start_file").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">起始解析文件:</option>");
+                        $('#start_file').selectpicker('render');
+                        $('#start_file').selectpicker('refresh');
+                        $("#end_file").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">终止解析文件(可选):</option>");
+                        $('#end_file').selectpicker('render');
+                        $('#end_file').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                }
+            });
+        });
+
+        //数据库变更获取表名称
+        $("#only_schemas").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/getTableNameList/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#only_schemas").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#only_tables").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option>" + result[i] + "</option>";
+                            $("#only_tables").append(name);
+                        }
+                        $("#only_tables").prepend("<option value=\"is-empty\" disabled=\"\">表过滤(可选):</option>");
+                        $('#only_tables').selectpicker('render');
+                        $('#only_tables').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                }
+            });
+        });
+
+        //获取语句
+        $("#binlog2sql").click(function () {
+            if ($("#instance_name").val() && $("#start_file").val()) {
+                $(this).addClass('disabled');
+                $(this).prop('disabled', true);
+                alert('请耐心等待结果，不要刷新页面!');
+                $.ajax({
+                    type: "post",
+                    url: "/binlog2sql/sql/",
+                    dataType: "json",
+                    data: {
+                        instance_name: $("#instance_name").val(),
+                        no_pk: document.getElementById("no_pk").checked,
+                        flashback: document.getElementById("flashback").checked,
+                        start_file: $("#start_file").val(),
+                        start_pos: $("#start_pos").val(),
+                        end_file: $("#end_file").val(),
+                        end_pos: $("#end_pos").val(),
+                        stop_time: $("#stop_time").val(),
+                        start_time: $("#start_time").val(),
+                        only_schemas: $("#only_schemas").val(),
+                        only_tables: $("#only_tables").val(),
+                        only_dml: document.getElementById("only_dml").checked,
+                        sql_type: $("#sql_type").val(),
+                    },
+                    complete: function () {
+                        $("#binlog2sql").removeClass('disabled');
+                        $("#binlog2sql").prop('disabled', false);
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#tb-binlog2sql').bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
+                                striped: true,                      //是否显示行间隔色
+                                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                                pagination: true,                   //是否显示分页（*）
+                                sortable: true,                     //是否启用排序
+                                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                                pageSize: 100,                       //每页的记录行数（*）
+                                pageList: [100, 500, 1000],   //可供选择的每页的行数（*）
+                                search: false,                       //是否显示表格搜索
+                                strictSearch: false,                //是否全匹配搜索
+                                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                                showRefresh: false,                  //是否显示刷新按钮
+                                showExport: true,
+                                exportDataType: "all",
+                                minimumCountColumns: 1,             //最少允许的列数
+                                clickToSelect: false,                //是否启用点击选中行
+                                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                                cardView: false,                    //是否显示详细视图
+                                locale: 'zh-CN',                    //本地化
+                                data: data.data,
+                                columns: [{
+                                    title: 'BINLOG_INFO',
+                                    field: 'binlog_info'
+                                }, {
+                                    title: 'SQL',
+                                    field: 'sql'
+                                }],
+                                onLoadSuccess: function () {
+                                },
+                                onLoadError: function () {
+                                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                                }
+                            });
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        }
+                    }
+                });
+            }
+            else {
+                alert("请选择实例和起始解析文件！")
+            }
+
+        })
+
+
+    </script>
+{% endblock %}
