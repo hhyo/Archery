@@ -18,11 +18,10 @@
 |  DBA| dba | archer |
 
 ### Docker
+archer镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.14.58c75aaaaSPjnX&repoId=142147  
+inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
 ```bash
-#使用初始化脚本初始化数据库
-https://github.com/hhyo/archer/tree/master/src/script/init_sql
-
 #新建Docker网络(inception直接通过容器名连接)
 docker network create -d bridge archer-net
 
@@ -32,13 +31,15 @@ docker run --name inception --network archer-net -v /your_path/inc.cnf:/etc/inc.
 #准备settings.py文件，启动archer，tag对应release版本，如1.3.0
 docker run --name archer --network archer-net -v /your_path/:/opt/archer/downloads -v /your_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
 
-#启动日志查看和问题排查
+#数据库初始化
 docker exec -ti archer /bin/bash
+python3 manage.py makemigrations sql  
+python3 manage.py migrate 
+
+#启动日志查看和问题排查
 cat /tmp/archer.log
 cat /tmp/archer.err
 ```
-archer镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.14.58c75aaaaSPjnX&repoId=142147  
-inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
 手动安装
 ===============
