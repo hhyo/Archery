@@ -2,12 +2,9 @@
 
 from django.urls import path
 
-import common.auth
-import common.config
-import common.workflow
+from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, group, \
     sql_advisor, binlog2sql
-from common import dashboard
 from sql.utils import jobs
 
 urlpatterns = [
@@ -15,7 +12,7 @@ urlpatterns = [
     path('index/', views.sqlworkflow),
     path('login/', views.login, name='login'),
     path('logout/', views.sign_out),
-    path('signup/', common.auth.sign_up),
+    path('signup/', auth.sign_up),
     path('sqlworkflow/', views.sqlworkflow),
     path('submitsql/', views.submitSql),
     path('editsql/', views.submitSql),
@@ -46,7 +43,7 @@ urlpatterns = [
     path('binlog2sql/', views.binlog2sql),
     path('config/', views.config),
 
-    path('authenticate/', common.auth.authenticateEntry),
+    path('authenticate/', auth.authenticateEntry),
     path('sqlworkflowlist/', sql_workflow.sqlworkflowlist),
     path('simplecheck/', sql_workflow.simplecheck),
     path('getOscPercent/', sql_workflow.getOscPercent),
@@ -54,9 +51,14 @@ urlpatterns = [
     path('stopOscProgress/', sql_workflow.stopOscProgress),
     path('del_sqlcronjob/', jobs.del_sqlcronjob),
 
-    path('workflow/list/', common.workflow.lists),
-    path('workflow/log/', common.workflow.log),
-    path('config/change/', common.config.changeconfig),
+    path('workflow/list/', workflow.lists),
+    path('workflow/log/', workflow.log),
+    path('config/change/', config.changeconfig),
+
+    path('check/inception/', check.inception),
+    path('check/email/', check.email),
+    path('check/ding/', check.ding),
+    path('check/instance/', check.instance),
 
     path('group/group/', group.group),
     path('group/addrelation/', group.addrelation),

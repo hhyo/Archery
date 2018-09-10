@@ -17,16 +17,21 @@ prpCryptor = Prpcrypt()
 def lists(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
+    type = request.POST.get('type')
     limit = offset + limit
 
     # 获取搜索参数
     search = request.POST.get('search')
     if search is None:
         search = ''
-
-    instances = Instance.objects.filter(instance_name__contains=search)[offset:limit] \
-        .values("id", "instance_name", "db_type", "type", "host", "port", "user", "create_time")
-    count = Instance.objects.filter(instance_name__contains=search).count()
+    if type:
+        instances = Instance.objects.filter(instance_name__contains=search, type=type)[offset:limit] \
+            .values("id", "instance_name", "db_type", "type", "host", "port", "user")
+        count = Instance.objects.filter(instance_name__contains=search, type=type).count()
+    else:
+        instances = Instance.objects.filter(instance_name__contains=search)[offset:limit] \
+            .values("id", "instance_name", "db_type", "type", "host", "port", "user")
+        count = Instance.objects.filter(instance_name__contains=search).count()
 
     # QuerySet 序列化
     rows = [row for row in instances]
