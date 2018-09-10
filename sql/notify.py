@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import datetime
+import re
 import traceback
 from threading import Thread
 
@@ -130,20 +131,15 @@ def _send(audit_id, msg_type, **kwargs):
         msg_email_cc = [msg_email_cc]
 
     # 判断是发送钉钉还是发送邮件
-    try:
-        if msg_type == 0:
-            if sys_config.get('mail') == 'true':
-                msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-            if sys_config.get('ding') == 'true':
-                msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-        if msg_type == 1:
-            if sys_config.get('mail') == 'true':
-                msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-        elif msg_type == 2:
-            if sys_config.get('ding') == 'true':
-                msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-    except Exception:
-        logger.error(traceback.format_exc())
+    if msg_type == 0:
+        if sys_config.get('mail') == 'true':
+            msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+        if sys_config.get('ding') == 'true':
+            msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    if msg_type == 1 and sys_config.get('mail') == 'true':
+        msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+    elif msg_type == 2 and sys_config.get('ding') == 'true':
+        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
 
 # 异步调用

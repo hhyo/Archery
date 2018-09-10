@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import email
+import traceback
 from email import encoders
 from email.header import Header
 from email.mime.text import MIMEText
@@ -48,58 +49,64 @@ class MailSender(object):
         '''
             发送邮件
         '''
-        if listToAddr is None or listToAddr == ['']:
-            logger.error('收件人为空，无法发送邮件')
-            return
+        try:
+            if listToAddr is None or listToAddr == ['']:
+                logger.error('收件人为空，无法发送邮件')
+                return
 
-        # 构造MIMEMultipart对象做为根容器
-        main_msg = email.mime.multipart.MIMEMultipart()
+            # 构造MIMEMultipart对象做为根容器
+            main_msg = email.mime.multipart.MIMEMultipart()
 
-        # 添加文本内容
-        text_msg = email.mime.text.MIMEText(strContent, 'plain', 'utf-8')
-        main_msg.attach(text_msg)
+            # 添加文本内容
+            text_msg = email.mime.text.MIMEText(strContent, 'plain', 'utf-8')
+            main_msg.attach(text_msg)
 
-        # 添加附件
-        filename_list = kwargs.get('filename_list')
-        if filename_list:
-            for filename in kwargs['filename_list']:
-                file_msg = self._add_attachment(filename)
-                main_msg.attach(file_msg)
+            # 添加附件
+            filename_list = kwargs.get('filename_list')
+            if filename_list:
+                for filename in kwargs['filename_list']:
+                    file_msg = self._add_attachment(filename)
+                    main_msg.attach(file_msg)
 
-        # 收发件人地址和邮件标题:
-        main_msg['From'] = formataddr(["archer 通知", self.MAIL_REVIEW_FROM_ADDR])
-        main_msg['To'] = ','.join(listToAddr)
-        listCcAddr = kwargs.get('listCcAddr')
-        if listCcAddr:
-            main_msg['Cc'] = ', '.join(kwargs['listCcAddr'])
-            listAddr = listToAddr + listCcAddr
-        else:
-            listAddr = listToAddr
-        main_msg['Subject'] = Header(strTitle, "utf-8").encode()
-        main_msg['Date'] = email.utils.formatdate()
+            # 收发件人地址和邮件标题:
+            main_msg['From'] = formataddr(["archer 通知", self.MAIL_REVIEW_FROM_ADDR])
+            main_msg['To'] = ','.join(listToAddr)
+            listCcAddr = kwargs.get('listCcAddr')
+            if listCcAddr:
+                main_msg['Cc'] = ', '.join(kwargs['listCcAddr'])
+                listAddr = listToAddr + listCcAddr
+            else:
+                listAddr = listToAddr
+            main_msg['Subject'] = Header(strTitle, "utf-8").encode()
+            main_msg['Date'] = email.utils.formatdate()
 
-        if self.MAIL_SSL == 'true':
-            server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认SSL端口是465
-        else:
-            server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
+            if self.MAIL_SSL == 'true':
+                server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认SSL端口是465
+            else:
+                server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
 
-        # 如果提供的密码为空，则不需要登录SMTP server
-        if self.MAIL_REVIEW_FROM_PASSWORD != '':
-            server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
-        server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
-        server.quit()
-        logger.debug('邮件推送成功')
+            # 如果提供的密码为空，则不需要登录SMTP server
+            if self.MAIL_REVIEW_FROM_PASSWORD != '':
+                server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
+            server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
+            server.quit()
+            logger.debug('邮件推送成功')
+        except Exception:
+            logger.error(traceback.format_exc())
 
     @staticmethod
     def send_ding(url, content):
         '''
         发送钉钉消息
         '''
-        data = {
-            "msgtype": "text",
-            "text": {
-                "content": "{}".format(content)
-            },
-        }
-        requests.post(url=url, json=data)
-        logger.debug('钉钉推送成功')
+        try:
+            data = {
+                "msgtype": "text",
+                "text": {
+                    "content": "{}".format(content)
+                },
+            }
+            requests.post(url=url, json=data)
+            logger.debug('钉钉推送成功')
+        except Exception:
+            logger.error(traceback.format_exc())
