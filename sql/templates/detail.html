@@ -353,6 +353,18 @@
             }
         });
 
+        //审核通过
+        $("#btnPass").click(function () {
+            //获取form对象，判断输入，通过则提交
+            $("#audit_remark").val($("#remark").val());
+            var formPassed = $("#from-passed");
+            $(this).button('loading').delay(2500).queue(function () {
+                $(this).button('reset');
+                $(this).dequeue();
+            });
+            formPassed.submit();
+        });
+
         // 审核不通过
         $("#btnCancel").click(function () {
             //获取form对象，判断输入，通过则提交
