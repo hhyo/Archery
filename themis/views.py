@@ -68,7 +68,7 @@ class RuleAddition(BaseHandler):
             elif argument["rule_complexity"] == "complex":
                 form = ComplexForm.from_json(argument, skip_unknown_keys=False)
             if not form.validate():
-                message = form.errors.values()[0][0]
+                message = list(form.errors.values())[0][0]
                 return {"errcode": 30061, "message": message}
             if argument["rule_complexity"] == "complex":
                 filename = argument["rule_name"].lower() + ".py"

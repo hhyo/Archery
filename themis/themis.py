@@ -48,7 +48,7 @@ class Themis(object):
         if self.db_type == "mysql" and self.rule_type == "OBJ":
             self.db_client = DbOperat(instance_name=instance_name, db_name=self.username)
         elif self.db_type == "mysql" and self.rule_type in ["SQLPLAN", "SQLSTAT"]:
-            self.db_client = DbOperat(instance_name=instance_name, db_name=self.username, flag=False)
+            self.db_client = DbOperat(instance_name=instance_name, db_name=self.username)
             self.mys = MysqlPlanOrStat(self.db_client, self.mongo_client, self.rule_type)
         elif self.db_type == "mysql" and self.rule_type == "TEXT":
             self.sql_text = SqlText(self.mongo_client, self.start_date,
