@@ -57,7 +57,6 @@ urlpatterns = [
 
     path('check/inception/', check.inception),
     path('check/email/', check.email),
-    path('check/ding/', check.ding),
     path('check/instance/', check.instance),
 
     path('group/group/', group.group),
