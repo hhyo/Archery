@@ -479,7 +479,23 @@ def cancel(request):
                                                        workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
             if workflowDetail.status != Const.workflowStatus['manreviewing']:
-                pass
+                # 增加工单日志
+                if user.username == workflowDetail.engineer:
+                    workflowOb.add_workflow_log(audit_id=audit_id,
+                                                operation_type=3,
+                                                operation_type_desc='取消执行',
+                                                operation_info="取消原因：{}".format(audit_remark),
+                                                operator=request.user.username,
+                                                operator_display=request.user.display
+                                                )
+                else:
+                    workflowOb.add_workflow_log(audit_id=audit_id,
+                                                operation_type=2,
+                                                operation_type_desc='审批不通过',
+                                                operation_info="审批备注：{}".format(audit_remark),
+                                                operator=request.user.username,
+                                                operator_display=request.user.display
+                                                )
             else:
                 if user.username == workflowDetail.engineer:
                     workflowOb.auditworkflow(request, audit_id,
