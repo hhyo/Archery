@@ -31,12 +31,15 @@ docker run --name inception --network archer-net -v /your_path/inc.cnf:/etc/inc.
 #准备settings.py文件，启动archer，tag对应release版本，如1.3.1
 docker run --name archer --network archer-net -v /your_path/:/opt/archer/downloads -v /your_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
 
-#数据库初始化
+#表结构初始化
 docker exec -ti archer /bin/bash
-cd /opt
-source /opt/venv4archer/bin/activate
+cd /opt/archer
+virtualenv venv4archer --python=python3
 python3 manage.py makemigrations sql  
 python3 manage.py migrate 
+
+#创建管理用户
+python3 manage.py createsuperuser
 
 #启动日志查看和问题排查
 cat /tmp/archer.log
