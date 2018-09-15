@@ -34,7 +34,7 @@ docker run --name archer --network archer-net -v /your_path/:/opt/archer/downloa
 #表结构初始化
 docker exec -ti archer /bin/bash
 cd /opt/archer
-virtualenv venv4archer --python=python3
+source /opt/venv4archer/bin/activate
 python3 manage.py makemigrations sql  
 python3 manage.py migrate 
 
