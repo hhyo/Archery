@@ -36,7 +36,7 @@ def email(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     mail_sender = MailSender()
     try:
-        if mail_sender.MAIL_SSL:
+        if mail_sender.MAIL_SSL == 'true':
             server = smtplib.SMTP_SSL(mail_sender.MAIL_REVIEW_SMTP_SERVER,
                                       mail_sender.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认SSL端口是465
         else:
