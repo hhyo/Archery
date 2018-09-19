@@ -16,7 +16,6 @@ from common.utils.const import Const, WorkflowDict
 from common.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.models import Users, SqlWorkflow, SqlGroup
-from sql.utils.sql_review import getMasterConnStr
 from sql.utils.workflow import Workflow
 import logging
 
@@ -71,10 +70,9 @@ def execute_skipinc_call_back(workflowId, instance_name, db_name, sql_content, u
 # SQL工单执行回调
 def execute_call_back(workflowId, instance_name, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    dictConn = getMasterConnStr(instance_name)
     try:
         # 交给inception先split，再执行
-        (finalStatus, finalList) = InceptionDao().executeFinal(workflowDetail, dictConn)
+        (finalStatus, finalList) = InceptionDao().executeFinal(workflowDetail, instance_name)
 
         # 封装成JSON格式存进数据库字段里
         strJsonResult = json.dumps(finalList)

@@ -2,11 +2,12 @@ import datetime
 
 import simplejson as json
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 
 from common.config import SysConfig
 from sql.models import Users
@@ -131,3 +132,9 @@ def sign_up(request):
     except Exception:
         logger.error('无name={}的权限组，无法默认添加'.format(default_auth_group))
     return render(request, 'login.html')
+
+
+# 退出登录
+def sign_out(request):
+    logout(request)
+    return HttpResponseRedirect(reverse('sql:login'))

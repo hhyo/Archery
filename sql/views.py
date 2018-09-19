@@ -2,13 +2,11 @@
 
 import simplejson as json
 
-from django.contrib.auth import logout
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.html import escape
 
 from sql.utils.inception import InceptionDao
 from common.utils.aes_decryptor import Prpcrypt
@@ -27,21 +25,14 @@ import logging
 logger = logging.getLogger('default')
 
 prpCryptor = Prpcrypt()
-workflowOb = Workflow()
 
 
-# 登录
+# 登录页面
 def login(request):
     return render(request, 'login.html')
 
 
-# 退出登录
-def sign_out(request):
-    logout(request)
-    return HttpResponseRedirect(reverse('sql:login'))
-
-
-# SQL上线工单页面
+# SQL上线工单列表页面
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sqlworkflow(request):
     return render(request, 'sqlworkflow.html')
@@ -59,120 +50,6 @@ def submitSql(request):
 
     context = {'active_user': active_user, 'group_list': group_list}
     return render(request, 'submitSql.html', context)
-
-
-# 提交SQL给inception进行解析
-@permission_required('sql.sql_submit', raise_exception=True)
-def autoreview(request):
-    workflowid = escape(request.POST.get('workflowid', ''))
-    sqlContent = escape(request.POST['sql_content'])
-    workflowName = escape(request.POST['workflow_name'])
-    group_name = escape(request.POST['group_name'])
-    group_id = SqlGroup.objects.get(group_name=group_name).group_id
-    instance_name = escape(request.POST['instance_name'])
-    db_name = escape(request.POST.get('db_name'))
-    isBackup = escape(request.POST['is_backup'])
-    notify_users = escape(request.POST.getlist('notify_users'))
-
-    # 服务器端参数验证
-    if sqlContent is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
-        context = {'errMsg': '页面提交参数可能为空'}
-        return render(request, 'error.html', context)
-
-    # 验证组权限（用户是否在该组、该组是否有指定实例）
-    try:
-        user_instances(request.user, 'master').get(instance_name=instance_name)
-    except Exception:
-        context = {'errMsg': '你所在组未关联该主库！'}
-        return render(request, 'error.html', context)
-
-    # # 删除注释语句
-    # sqlContent = ''.join(
-    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-    #         sqlContent.splitlines(1))).strip()
-    # # 去除空行
-    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
-
-    sqlContent = sqlContent.strip()
-
-    if sqlContent[-1] != ";":
-        context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
-        return render(request, 'error.html', context)
-
-    # 交给inception进行自动审核
-    try:
-        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-
-    if result is None or len(result) == 0:
-        context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
-        return render(request, 'error.html', context)
-    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    jsonResult = json.dumps(result)
-
-    # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则需要设置is_manual = 0，跳过inception直接执行
-    workflowStatus = Const.workflowStatus['manreviewing']
-    # inception审核不通过的工单，标记手动执行标签
-    is_manual = 0
-    for row in result:
-        if row[2] == 2:
-            is_manual = 1
-            break
-        elif re.match(r"\w*comments\w*", row[4]):
-            is_manual = 1
-            break
-
-    # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
-    sql_syntax = 2
-    for row in sqlContent.strip(';').split(';'):
-        if re.match(r"^alter|^create|^drop|^truncate|^rename", row.strip().lower()):
-            sql_syntax = 1
-            break
-
-    # 调用工作流生成工单
-    # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 存进数据库里
-            engineer = request.user.username
-            if not workflowid:
-                sql_workflow = SqlWorkflow()
-                sql_workflow.create_time = timezone.now()
-            else:
-                sql_workflow = SqlWorkflow.objects.get(id=int(workflowid))
-            sql_workflow.workflow_name = workflowName
-            sql_workflow.group_id = group_id
-            sql_workflow.group_name = group_name
-            sql_workflow.engineer = engineer
-            sql_workflow.engineer_display = request.user.display
-            sql_workflow.audit_auth_groups = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
-            sql_workflow.status = workflowStatus
-            sql_workflow.is_backup = isBackup
-            sql_workflow.review_content = jsonResult
-            sql_workflow.instance_name = instance_name
-            sql_workflow.db_name = db_name
-            sql_workflow.sql_content = sqlContent
-            sql_workflow.execute_result = ''
-            sql_workflow.is_manual = is_manual
-            sql_workflow.audit_remark = ''
-            sql_workflow.sql_syntax = sql_syntax
-            sql_workflow.save()
-            workflowId = sql_workflow.id
-            # 自动审核通过了，才调用工作流
-            if workflowStatus == Const.workflowStatus['manreviewing']:
-                # 调用工作流插入审核信息, 查询权限申请workflow_type=2
-                # 抄送通知人
-                listCcAddr = [email['email'] for email in
-                              Users.objects.filter(username__in=notify_users).values('email')]
-                workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflowId,
-                                            listCcAddr=listCcAddr)
-    except Exception as msg:
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
 # 展示SQL工单详细页面
@@ -253,7 +130,7 @@ def detail(request, workflowId):
     return render(request, 'detail.html', context)
 
 
-# 展示回滚的SQL
+# 展示回滚的SQL页面
 def rollback(request):
     workflowId = request.GET['workflowid']
     if workflowId == '' or workflowId is None:
@@ -273,19 +150,19 @@ def rollback(request):
     return render(request, 'rollback.html', context)
 
 
-# SQL审核必读
+# SQL文档页面
 @permission_required('sql.menu_document', raise_exception=True)
 def dbaprinciples(request):
     return render(request, 'dbaprinciples.html')
 
 
-# 图表展示
+# dashboard页面
 @permission_required('sql.menu_dashboard', raise_exception=True)
 def dashboard(request):
     return render(request, 'dashboard.html')
 
 
-# SQL在线查询
+# SQL在线查询页面
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联从库列表
@@ -295,7 +172,7 @@ def sqlquery(request):
     return render(request, 'sqlquery.html', context)
 
 
-# SQL慢日志
+# SQL慢日志页面
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
     # 获取用户关联实例列表
@@ -305,7 +182,7 @@ def slowquery(request):
     return render(request, 'slowquery.html', context)
 
 
-# SQL优化工具
+# SQL优化工具页面
 @permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
     # 获取用户关联实例列表
@@ -315,7 +192,7 @@ def sqladvisor(request):
     return render(request, 'sqladvisor.html', context)
 
 
-# 查询权限申请列表
+# 查询权限申请列表页面
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
 def queryapplylist(request):
     user = request.user
@@ -326,7 +203,7 @@ def queryapplylist(request):
     return render(request, 'queryapplylist.html', context)
 
 
-# 查询权限申请详情
+# 查询权限申请详情页面
 def queryapplydetail(request, apply_id):
     workflowDetail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     # 获取当前审批和审批流程
@@ -340,7 +217,7 @@ def queryapplydetail(request, apply_id):
     return render(request, 'queryapplydetail.html', context)
 
 
-# 用户的查询权限管理
+# 用户的查询权限管理页面
 def queryuserprivileges(request):
     # 获取所有用户
     user_list = QueryPrivileges.objects.filter(is_deleted=0).values('user_name').distinct()
@@ -348,7 +225,7 @@ def queryuserprivileges(request):
     return render(request, 'queryuserprivileges.html', context)
 
 
-# 问题诊断--进程
+# 会话管理页面
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
     # 获取用户关联实例列表
@@ -358,12 +235,12 @@ def dbdiagnostic(request):
     return render(request, 'dbdiagnostic.html', context)
 
 
-# 获取工作流审核列表
+# 工作流审核列表页面
 def workflows(request):
     return render(request, "workflow.html")
 
 
-# 工作流审核详情
+# 工作流审核详情页面
 def workflowsdetail(request, audit_id):
     # 按照不同的workflow_type返回不同的详情
     auditInfo = Workflow.auditinfo(audit_id)
@@ -373,7 +250,7 @@ def workflowsdetail(request, audit_id):
         return HttpResponseRedirect(reverse('sql:detail', args=(auditInfo.workflow_id,)))
 
 
-# 配置管理
+# 配置管理页面
 @superuser_required
 def config(request):
     # 获取所有项目组名称
@@ -392,32 +269,32 @@ def config(request):
     return render(request, 'config.html', context)
 
 
-# 资源组管理
+# 资源组管理页面
 @superuser_required
 def group(request):
     return render(request, 'group.html')
 
 
-# 资源组组关系管理
+# 资源组组关系管理页面
 @superuser_required
 def groupmgmt(request, group_id):
     group = SqlGroup.objects.get(group_id=group_id)
     return render(request, 'groupmgmt.html', {'group': group})
 
 
-# 实例管理
+# 实例管理页面
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
     return render(request, 'instance.html')
 
 
-# 实例用户管理
+# 实例用户管理页面
 @permission_required('sql.menu_instance', raise_exception=True)
 def instanceuser(request, instance_id):
     return render(request, 'instanceuser.html', {'instance_id': instance_id})
 
 
-# binlog2sql
+# binlog2sql页面
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):
     # 获取实例列表

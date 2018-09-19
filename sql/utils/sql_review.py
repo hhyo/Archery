@@ -1,8 +1,7 @@
 import re
 
 from common.utils.const import Const
-from sql.models import Instance, SqlWorkflow
-from common.utils.aes_decryptor import Prpcrypt
+from sql.models import SqlWorkflow
 from common.config import SysConfig
 from sql.utils.group import user_groups
 from sql.utils.inception import InceptionDao
@@ -15,19 +14,6 @@ def getDetailUrl(request, workflow_id):
     from sql.utils.workflow import Workflow
     audit_id = Workflow.auditinfobyworkflow_id(workflow_id, 2).audit_id
     return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
-
-
-# 根据实例名获取主库连接字符串，并封装成一个dict
-def getMasterConnStr(instance_name):
-    listMasters = Instance.objects.filter(instance_name=instance_name)
-
-    masterHost = listMasters[0].host
-    masterPort = listMasters[0].port
-    masterUser = listMasters[0].user
-    masterPassword = Prpcrypt().decrypt(listMasters[0].password)
-    dictConn = {'masterHost': masterHost, 'masterPort': masterPort, 'masterUser': masterUser,
-                'masterPassword': masterPassword}
-    return dictConn
 
 
 # 判断SQL上线是否无需审批

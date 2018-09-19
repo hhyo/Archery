@@ -11,7 +11,7 @@ urlpatterns = [
     path('', views.sqlworkflow),
     path('index/', views.sqlworkflow),
     path('login/', views.login, name='login'),
-    path('logout/', views.sign_out),
+    path('logout/', auth.sign_out),
     path('signup/', auth.sign_up),
     path('sqlworkflow/', views.sqlworkflow),
     path('submitsql/', views.submitSql),

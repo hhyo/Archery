@@ -134,7 +134,7 @@ def sqlworkflowlist(request):
                         content_type='application/json')
 
 
-# 提交SQL给inception进行自动审核
+# SQL检测
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
     sqlContent = request.POST.get('sql_content')
@@ -206,7 +206,7 @@ def simplecheck(request):
     return HttpResponse(json.dumps(finalResult), content_type='application/json')
 
 
-# 提交SQL给inception进行解析
+# SQL提交
 @permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
     workflowid = request.POST.get('workflowid')
@@ -644,32 +644,3 @@ def stopOscProgress(request):
     else:
         optResult = {"status": 4, "msg": "不是由pt-OSC执行的", "data": ""}
     return HttpResponse(json.dumps(optResult), content_type='application/json')
-
-
-# 获取审核列表
-def workflowlist(request):
-    # 获取用户信息
-    user = request.user
-
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
-    workflow_type = int(request.POST.get('workflow_type'))
-    limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
-
-    # 调用工作流接口获取审核列表
-    result = workflowOb.auditlist(user, workflow_type, offset, limit, search)
-    auditlist = result['data']['auditlist']
-    auditlistCount = result['data']['auditlistCount']
-
-    # QuerySet 序列化
-    rows = [row for row in auditlist]
-
-    result = {"total": auditlistCount, "rows": rows}
-    # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')

@@ -85,11 +85,7 @@ class InceptionDao(object):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''
-        listMasters = Instance.objects.filter(instance_name=instance_name)
-        masterHost = listMasters[0].host
-        masterPort = listMasters[0].port
-        masterUser = listMasters[0].user
-        masterPassword = self.prpCryptor.decrypt(listMasters[0].password)
+        instance_info = Instance.objects.get(instance_name=instance_name)
 
         # 高危SQL检查
         if self.sys_config.get('critical_ddl_regex', '') != '':
@@ -114,7 +110,12 @@ class InceptionDao(object):
                          use %s;\
                          %s\
                          inception_magic_commit;" % (
-                        masterUser, masterPassword, masterHost, str(masterPort), db_name, sqlContent)
+                        instance_info.user,
+                        self.prpCryptor.decrypt(instance_info.password),
+                        instance_info.host,
+                        str(instance_info.port),
+                        db_name,
+                        sqlContent)
                     splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
                     tmpList = []
                     for splitRow in splitResult:
@@ -123,7 +124,11 @@ class InceptionDao(object):
                                 inception_magic_start;\
                                 %s\
                                 inception_magic_commit;" % (
-                            masterUser, masterPassword, masterHost, str(masterPort), sqlTmp)
+                            instance_info.user,
+                            self.prpCryptor.decrypt(instance_info.password),
+                            instance_info.host,
+                            str(instance_info.port),
+                            sqlTmp)
                         reviewResult = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
                         tmpList.append(reviewResult)
 
@@ -140,19 +145,25 @@ class InceptionDao(object):
                       use %s;\
                       %s\
                       inception_magic_commit;" % (
-                        masterUser, masterPassword, masterHost, str(masterPort), db_name, sqlContent)
+                        instance_info.user,
+                        self.prpCryptor.decrypt(instance_info.password),
+                        instance_info.host,
+                        str(instance_info.port),
+                        db_name,
+                        sqlContent)
                     result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
-    def executeFinal(self, workflowDetail, dictConn):
+    def executeFinal(self, workflowDetail, instance_name):
         '''
         将sql交给inception进行最终执行，并返回执行结果。
         '''
-        strBackup = ""
         if workflowDetail.is_backup == '是':
             strBackup = "--enable-remote-backup;"
         else:
             strBackup = "--disable-remote-backup;"
+
+        instance_info = Instance.objects.get(instance_name=instance_name)
 
         # 根据inception的要求，执行之前最好先split一下
         sqlSplit = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%s; --enable-ignore-warnings;--enable-split;*/\
@@ -160,7 +171,10 @@ class InceptionDao(object):
              use %s;\
              %s\
              inception_magic_commit;" % (
-            dictConn['masterUser'], dictConn['masterPassword'], dictConn['masterHost'], str(dictConn['masterPort']),
+            instance_info.user,
+            self.prpCryptor.decrypt(instance_info.password),
+            instance_info.host,
+            str(instance_info.port),
             workflowDetail.db_name, workflowDetail.sql_content)
         splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
 
@@ -172,8 +186,12 @@ class InceptionDao(object):
                     inception_magic_start;\
                     %s\
                     inception_magic_commit;" % (
-                dictConn['masterUser'], dictConn['masterPassword'], dictConn['masterHost'], str(dictConn['masterPort']),
-                strBackup, sqlTmp)
+                instance_info.user,
+                self.prpCryptor.decrypt(instance_info.password),
+                instance_info.host,
+                str(instance_info.port),
+                strBackup,
+                sqlTmp)
 
             executeResult = self._fetchall(sqlExecute, self.inception_host, self.inception_port, '', '', '')
             for sqlRow in executeResult:
@@ -278,18 +296,18 @@ class InceptionDao(object):
         将sql交给inception打印语法树。
         '''
         instance_info = Instance.objects.get(instance_name=instance_name)
-        Host = instance_info.host
-        Port = instance_info.port
-        User = instance_info.user
-        Password = self.prpCryptor.decrypt(instance_info.password)
-
         # 工单审核使用
         sql = "/*--user=%s;--password=%s;--host=%s;--port=%s;--enable-query-print;*/\
                           inception_magic_start;\
                           use %s;\
                           %s\
                           inception_magic_commit;" % (
-            User, Password, Host, str(Port), dbName, sqlContent)
+            instance_info.user,
+            self.prpCryptor.decrypt(instance_info.password),
+            instance_info.host,
+            str(instance_info.port),
+            dbName,
+            sqlContent)
         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
