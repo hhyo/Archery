@@ -2,7 +2,6 @@
 
 import time
 
-import MySQLdb
 import simplejson as json
 from MySQLdb.connections import numeric_part
 from django.contrib.auth.decorators import permission_required
@@ -44,7 +43,8 @@ def tuning(request):
     if 'sql_profile' in option:
         session_status = sql_tunning.exec_sql()
         result['data']['session_status'] = session_status
-
+    # 关闭连接
+    sql_tunning.dao.close()
     result['data']['sqltext'] = sqltext
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
@@ -52,7 +52,7 @@ def tuning(request):
 
 class SqlTuning(object):
     def __init__(self, instance_name, db_name, sqltext):
-        self.dao = Dao(instance_name=instance_name)
+        self.dao = Dao(instance_name=instance_name, flag=True)
         self.db_name = db_name
         self.sqltext = sqltext
         self.sql_variable = '''
@@ -138,7 +138,7 @@ class SqlTuning(object):
         return list(self.__extract_table_identifiers(stream))
 
     def basic_information(self):
-        return self.dao.mysql_query(self.db_name, "select @@version")
+        return self.dao.mysql_query(sql="select @@version")
 
     def sys_parameter(self):
         # 获取mysql版本信息
@@ -148,7 +148,7 @@ class SqlTuning(object):
             sql = self.sql_variable.replace('performance_schema', 'information_schema')
         else:
             sql = self.sql_variable
-        return self.dao.mysql_query(self.db_name, sql)
+        return self.dao.mysql_query(sql=sql)
 
     def optimizer_switch(self):
         # 获取mysql版本信息
@@ -157,63 +157,29 @@ class SqlTuning(object):
         if server_version < (5, 7):
             sql = self.sql_optimizer_switch.replace('performance_schema', 'information_schema')
         else:
-            sql = self.sql_variable
-        return self.dao.mysql_query(self.db_name, sql)
+            sql = self.sql_optimizer_switch
+        return self.dao.mysql_query(sql=sql)
 
     def sqlplan(self):
-        conn = MySQLdb.connect(host=self.dao.host,
-                               port=self.dao.port,
-                               user=self.dao.user,
-                               passwd=self.dao.password,
-                               db=self.db_name, charset='utf8')
-        cursor = conn.cursor()
-        effect_row = cursor.execute("explain extended " + self.sqltext)
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        plan = {}
-        plan['column_list'] = column_list
-        plan['rows'] = rows
-        plan['effect_row'] = effect_row
-
-        effect_row = cursor.execute("show warnings")
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        optimizer_rewrite_sql = {}
-        optimizer_rewrite_sql['column_list'] = column_list
-        optimizer_rewrite_sql['rows'] = rows
-        optimizer_rewrite_sql['effect_row'] = effect_row
-        cursor.close()
-        conn.close()
+        plan = self.dao.mysql_query(self.db_name, "explain extended " + self.sqltext)
+        optimizer_rewrite_sql = self.dao.mysql_query(sql="show warnings")
         return plan, optimizer_rewrite_sql
 
+    # 获取关联表信息存在缺陷，只能获取到一张表
     def object_statistics(self):
-        all_tableistructure = {'column_list': [], 'rows': []}
-        all_tableinfo = {'column_list': [], 'rows': []}
-        all_indexinfo = {'column_list': [], 'rows': []}
+        tableistructure = {'column_list': [], 'rows': []}
+        tableinfo = {'column_list': [], 'rows': []}
+        indexinfo = {'column_list': [], 'rows': []}
         for index, table_name in enumerate(self.__extract_tables(self.sqltext)):
-            tableistructure = self.dao.mysql_query(self.db_name,
-                                                   "show create table {};".format(table_name.replace('`', '').lower()))
-            all_tableistructure['column_list'] = tableistructure['column_list']
-            all_tableistructure['rows'] = tableistructure['rows']
+            tableistructure = self.dao.mysql_query(
+                sql="show create table {};".format(table_name.replace('`', '').lower()))
 
-            tableinfo = self.dao.mysql_query(self.db_name,
-                                             self.sql_table_info % (self.db_name, table_name.replace('`', '').lower()))
-            all_tableinfo['column_list'] = tableinfo['column_list']
-            all_tableinfo['rows'].extend(tableinfo['rows'])
+            tableinfo = self.dao.mysql_query(
+                sql=self.sql_table_info % (self.db_name, table_name.replace('`', '').lower()))
 
-            indexinfo = self.dao.mysql_query(self.db_name,
-                                             self.sql_table_index % (self.db_name, table_name.replace('`', '').lower()))
-            all_indexinfo['column_list'] = indexinfo['column_list']
-            all_indexinfo['rows'].extend(indexinfo['rows'])
-        return all_tableistructure, all_tableinfo, all_indexinfo
+            indexinfo = self.dao.mysql_query(
+                sql=self.sql_table_index % (self.db_name, table_name.replace('`', '').lower()))
+        return tableistructure, tableinfo, indexinfo
 
     def exec_sql(self):
         result = {"EXECUTE_TIME": 0,
@@ -232,72 +198,30 @@ class SqlTuning(object):
             sql = sql_profiling.replace('performance_schema', 'information_schema')
         else:
             sql = sql_profiling
-        conn = MySQLdb.connect(host=self.dao.host,
-                               port=self.dao.port,
-                               user=self.dao.user,
-                               passwd=self.dao.password,
-                               db=self.db_name, charset='utf8')
-        cursor = conn.cursor()
-
-        cursor.execute("set profiling=1")
-        cursor.execute("select ifnull(max(query_id),0) from INFORMATION_SCHEMA.PROFILING")
-        records = cursor.fetchall()
-        query_id = records[0][0] + 3  # skip next sql
-
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        result['BEFORE_STATUS']['column_list'] = column_list
-        result['BEFORE_STATUS']['rows'] = rows
+        self.dao.mysql_query(sql="set profiling=1")
+        records = self.dao.mysql_query(sql="select ifnull(max(query_id),0) from INFORMATION_SCHEMA.PROFILING")
+        query_id = records['rows'][0][0] + 3  # skip next sql
+        # 获取执行前信息
+        result['BEFORE_STATUS'] = self.dao.mysql_query(sql=sql)
 
         # 执行查询语句,统计执行时间
         t_start = time.time()
-        cursor.execute(self.sqltext)
+        self.dao.mysql_query(sql=self.sqltext)
         t_end = time.time()
         cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
         result['EXECUTE_TIME'] = cost_time
 
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        result['AFTER_STATUS']['column_list'] = column_list
-        result['AFTER_STATUS']['rows'] = rows
+        # 获取执行后信息
+        result['AFTER_STATUS'] = self.dao.mysql_query(sql=sql)
 
-        cursor.execute(
-            "select STATE,DURATION,CPU_USER,CPU_SYSTEM,BLOCK_OPS_IN,BLOCK_OPS_OUT ,MESSAGES_SENT ,MESSAGES_RECEIVED ,PAGE_FAULTS_MAJOR ,PAGE_FAULTS_MINOR ,SWAPS from INFORMATION_SCHEMA.PROFILING where query_id=" + str(
+        # 获取PROFILING_DETAIL信息
+        result['PROFILING_DETAIL'] = self.dao.mysql_query(
+            sql="select STATE,DURATION,CPU_USER,CPU_SYSTEM,BLOCK_OPS_IN,BLOCK_OPS_OUT ,MESSAGES_SENT ,MESSAGES_RECEIVED ,PAGE_FAULTS_MAJOR ,PAGE_FAULTS_MINOR ,SWAPS from INFORMATION_SCHEMA.PROFILING where query_id=" + str(
                 query_id) + " order by seq")
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        result['PROFILING_DETAIL']['column_list'] = column_list
-        result['PROFILING_DETAIL']['rows'] = rows
-
-        cursor.execute(
-            "SELECT STATE,SUM(DURATION) AS Total_R,ROUND(100*SUM(DURATION)/(SELECT SUM(DURATION) FROM INFORMATION_SCHEMA.PROFILING WHERE QUERY_ID=" + str(
+        result['PROFILING_SUMMARY'] = self.dao.mysql_query(
+            sql="SELECT STATE,SUM(DURATION) AS Total_R,ROUND(100*SUM(DURATION)/(SELECT SUM(DURATION) FROM INFORMATION_SCHEMA.PROFILING WHERE QUERY_ID=" + str(
                 query_id) + "),2) AS Pct_R,COUNT(*) AS Calls,SUM(DURATION)/COUNT(*) AS R_Call FROM INFORMATION_SCHEMA.PROFILING WHERE QUERY_ID=" + str(
                 query_id) + " GROUP BY STATE ORDER BY Total_R DESC")
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        result['PROFILING_SUMMARY']['column_list'] = column_list
-        result['PROFILING_SUMMARY']['rows'] = rows
-
-        cursor.close()
-        conn.close()
 
         # 处理执行前后对比信息
         before_status_rows = [list(item) for item in result['BEFORE_STATUS']['rows']]

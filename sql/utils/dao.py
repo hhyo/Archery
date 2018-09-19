@@ -13,7 +13,8 @@ logger = logging.getLogger('default')
 
 
 class Dao(object):
-    def __init__(self, instance_name=None, **kwargs):
+    def __init__(self, instance_name=None, flag=False):
+        self.flag = flag
         if instance_name:
             try:
                 instance_info = Instance.objects.get(instance_name=instance_name)
@@ -21,13 +22,16 @@ class Dao(object):
                 self.port = int(instance_info.port)
                 self.user = instance_info.user
                 self.password = prpCryptor.decrypt(instance_info.password)
+                if self.flag:
+                    self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
+                                                charset='utf8')
+                    self.cursor = self.conn.cursor()
             except Exception:
                 raise Exception('找不到对应的实例配置信息，请配置')
-        else:
-            self.host = kwargs.get('host', '')
-            self.port = kwargs.get('port', 0)
-            self.user = kwargs.get('user', '')
-            self.password = kwargs.get('password', '')
+
+    def close(self):
+        self.cursor.close()
+        self.conn.close()
 
     # 连进指定的mysql实例里，读取所有databases并返回
     def getAlldbByCluster(self):
@@ -91,12 +95,18 @@ class Dao(object):
         return col_list
 
     # 连进指定的mysql实例里，执行sql并返回
-    def mysql_query(self, db_name, sql, limit_num=0):
+    def mysql_query(self, db_name=None, sql='', limit_num=0):
         result = {'column_list': [], 'rows': [], 'effect_row': 0}
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
-                                   charset='utf8')
-            cursor = conn.cursor()
+            if self.flag:
+                conn = self.conn
+                cursor = self.cursor
+                if db_name:
+                    cursor.execute('use {}'.format(db_name))
+            else:
+                conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+                                       charset='utf8')
+                cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
@@ -119,8 +129,13 @@ class Dao(object):
             logger.error(traceback.format_exc())
             result['Error'] = str(e)
         else:
-            conn.rollback()
-            conn.close()
+            if self.flag:
+                # 结束后手动close
+                pass
+            else:
+                conn.rollback()
+                cursor.close()
+                conn.close()
         return result
 
     # 连进指定的mysql实例里，执行sql并返回

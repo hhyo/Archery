@@ -47,7 +47,7 @@ def users(request):
     instance_id = request.POST.get('instance_id')
     instance_name = Instance.objects.get(id=instance_id).instance_name
     sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
-    dao = Dao(instance_name=instance_name)
+    dao = Dao(instance_name=instance_name, flag=True)
     db_users = dao.mysql_query('mysql', sql_get_user)['rows']
     # 获取用户权限信息
     data = []
@@ -57,7 +57,8 @@ def users(request):
         user_info['user'] = db_user[0]
         user_info['privileges'] = user_priv
         data.append(user_info)
-
+    # 关闭连接
+    dao.close()
     result = {'status': 0, 'msg': 'ok', 'data': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
