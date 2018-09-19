@@ -37,7 +37,7 @@ RUN yum -y install epel-release \
     && rm -rf /opt/SQLAdvisor/
 #archer
 RUN cd /opt \
-    && yum -y install openldap-devel nginx \
+    && yum -y install oppipenldap-devel nginx \
     && git clone https://github.com/hhyo/archer.git \
     && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
