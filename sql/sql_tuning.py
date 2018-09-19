@@ -242,7 +242,7 @@ class SqlTuning(object):
         cursor.execute("set profiling=1")
         cursor.execute("select ifnull(max(query_id),0) from INFORMATION_SCHEMA.PROFILING")
         records = cursor.fetchall()
-        query_id = records[0][0] + 2  # skip next sql
+        query_id = records[0][0] + 3  # skip next sql
 
         cursor.execute(sql)
         rows = cursor.fetchall()
