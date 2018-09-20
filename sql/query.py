@@ -2,17 +2,19 @@
 import re
 
 import simplejson as json
+import traceback
+import datetime
+import time
+import logging
+
 from django.contrib.auth.decorators import permission_required
 from django.urls import reverse
-
 from django.db.models import Q, Min
 from django.db import connection
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.db import transaction
-import datetime
-import time
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.aes_decryptor import Prpcrypt
@@ -23,6 +25,8 @@ from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from common.config import SysConfig
 from sql.utils.group import user_instances, user_groups
+
+logger = logging.getLogger('default')
 
 prpCryptor = Prpcrypt()
 datamasking = Masking()
@@ -61,39 +65,37 @@ def query_audit_call_back(workflow_id, workflow_status):
 
 
 # 查询权限校验
-def query_priv_check(user, instance_name, dbName, sqlContent, limit_num):
-    finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
+def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
+    result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 0}}
+
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
         if SysConfig().sys_config.get('admin_query_limit'):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
             user_limit_num = 0
-        if int(limit_num) == 0:
-            limit_num = int(user_limit_num)
-        else:
-            limit_num = min(int(limit_num), int(user_limit_num))
-        pass
+        limit_num = min(int(limit_num), int(user_limit_num))
+
     # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过不做校验
-    elif re.match(r"^show\s+create\s+table", sqlContent.lower()):
-        tb_name = re.sub('^show\s+create\s+table', '', sqlContent, count=1, flags=0).strip()
+    elif re.match(r"^show\s+create\s+table", sql_content.lower()):
+        tb_name = re.sub('^show\s+create\s+table', '', sql_content, count=1, flags=0).strip()
         # 先判断是否有整库权限
         db_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
-                                                       db_name=dbName, priv_type=1,
+                                                       db_name=db_name, priv_type=1,
                                                        valid_date__gte=datetime.datetime.now(), is_deleted=0)
         # 无整库权限再验证表权限
         if len(db_privileges) == 0:
             tb_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
-                                                           db_name=dbName, table_name=tb_name, priv_type=2,
+                                                           db_name=db_name, table_name=tb_name, priv_type=2,
                                                            valid_date__gte=datetime.datetime.now(), is_deleted=0)
             if len(tb_privileges) == 0:
-                finalResult['status'] = 1
-                finalResult['msg'] = '你无' + dbName + '.' + tb_name + '表的查询权限！请先到查询权限管理进行申请'
-                return finalResult
+                result['status'] = 1
+                result['msg'] = '你无' + db_name + '.' + tb_name + '表的查询权限！请先到查询权限管理进行申请'
+                return result
     # sql查询, 可以校验到表级权限
     else:
         # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = datamasking.query_table_ref(sqlContent + ';', instance_name, dbName)
+        table_ref_result = datamasking.query_table_ref(sql_content + ';', instance_name, db_name)
 
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:
@@ -110,26 +112,26 @@ def query_priv_check(user, instance_name, dbName, sqlContent, limit_num):
                     tb_privileges = QueryPrivilegesOb.filter(db_name=table['db'], table_name=table['table'],
                                                              valid_date__gte=datetime.datetime.now(), is_deleted=0)
                     if len(tb_privileges) == 0:
-                        finalResult['status'] = 1
-                        finalResult['msg'] = '你无' + table['db'] + '.' + table['table'] + '表的查询权限！请先到查询权限管理进行申请'
-                        return finalResult
+                        result['status'] = 1
+                        result['msg'] = '你无' + table['db'] + '.' + table['table'] + '表的查询权限！请先到查询权限管理进行申请'
+                        return result
 
         # 获取表数据报错，检查配置文件是否允许继续执行，并进行库权限校验
         else:
             table_ref = None
             # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
             privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
-                                                        db_name=dbName,
+                                                        db_name=db_name,
                                                         valid_date__gte=datetime.datetime.now(),
                                                         is_deleted=0)
             if len(privileges) == 0:
-                finalResult['status'] = 1
-                finalResult['msg'] = '你无' + dbName + '数据库的查询权限！请先到查询权限管理进行申请'
-                return finalResult
-            if SysConfig().sys_config.get('query_check') == 'true':
+                result['status'] = 1
+                result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
+                return result
+            if SysConfig().sys_config.get('query_check'):
                 return table_ref_result
             else:
-                pass
+                result['data']['priv_check'] = False
 
         # 获取查询涉及表的最小limit限制
         if table_ref:
@@ -145,23 +147,19 @@ def query_priv_check(user, instance_name, dbName, sqlContent, limit_num):
                 # 如果表没获取到则获取涉及库的最小limit限制
                 user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                                 instance_name=instance_name,
-                                                                db_name=dbName,
-                                                                valid_date__gte=datetime.datetime.now(),
-                                                                is_deleted=0).aggregate(Min('limit_num'))[
-                    'limit_num__min']
+                                                                db_name=db_name,
+                                                                valid_date__gte=datetime.datetime.now(), is_deleted=0
+                                                                ).aggregate(Min('limit_num'))['limit_num__min']
         else:
             # 如果表没获取到则获取涉及库的最小limit限制
             user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                             instance_name=instance_name,
-                                                            db_name=dbName,
+                                                            db_name=db_name,
                                                             valid_date__gte=datetime.datetime.now(),
                                                             is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
-        if int(limit_num) == 0:
-            limit_num = user_limit_num
-        else:
-            limit_num = min(int(limit_num), user_limit_num)
-    finalResult['data'] = limit_num
-    return finalResult
+        limit_num = min(int(limit_num), int(user_limit_num))
+    result['data']['limit_num'] = limit_num
+    return result
 
 
 # 获取查询权限申请列表
@@ -461,127 +459,139 @@ def queryprivaudit(request):
 @permission_required('sql.query_submit', raise_exception=True)
 def query(request):
     instance_name = request.POST.get('instance_name')
-    sqlContent = request.POST.get('sql_content')
-    dbName = request.POST.get('db_name')
+    sql_content = request.POST.get('sql_content')
+    db_name = request.POST.get('db_name')
     limit_num = request.POST.get('limit_num')
 
-    finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
+    result = {'status': 0, 'msg': 'ok', 'data': {}}
 
     # 服务器端参数验证
-    if sqlContent is None or dbName is None or instance_name is None or limit_num is None:
-        finalResult['status'] = 1
-        finalResult['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    if sql_content is None or db_name is None or instance_name is None or limit_num is None:
+        result['status'] = 1
+        result['msg'] = '页面提交参数可能为空'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
-    sqlContent = sqlContent.strip()
-    if sqlContent[-1] != ";":
-        finalResult['status'] = 1
-        finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    sql_content = sql_content.strip()
+    if sql_content[-1] != ";":
+        result['status'] = 1
+        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 获取用户信息
     user = request.user
 
     # 过滤注释语句和非查询的语句
-    sqlContent = ''.join(
+    sql_content = ''.join(
         map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-            sqlContent.splitlines(1))).strip()
+            sql_content.splitlines(1))).strip()
     # 去除空行
-    sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+    sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
-    sql_list = sqlContent.strip().split('\n')
+    sql_list = sql_content.strip().split('\n')
     for sql in sql_list:
         if re.match(r"^select|^show|^explain", sql.lower()):
             break
         else:
-            finalResult['status'] = 1
-            finalResult['msg'] = '仅支持^select|^show|^explain语法，请联系管理员！'
-            return HttpResponse(json.dumps(finalResult), content_type='application/json')
+            result['status'] = 1
+            result['msg'] = '仅支持^select|^show|^explain语法，请联系管理员！'
+            return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 取出该实例的连接方式,查询只读账号,按照分号截取第一条有效sql执行
-    slave_info = Instance.objects.get(instance_name=instance_name)
-    sqlContent = sqlContent.strip().split(';')[0]
+    # 按照分号截取第一条有效sql执行
+    sql_content = sql_content.strip().split(';')[0]
 
-    # 查询权限校验
-    priv_check_info = query_priv_check(user, instance_name, dbName, sqlContent, limit_num)
+    try:
+        # 查询权限校验
+        priv_check_info = query_priv_check(user, instance_name, db_name, sql_content, limit_num)
 
-    if priv_check_info['status'] == 0:
-        limit_num = priv_check_info['data']
-    else:
-        return HttpResponse(json.dumps(priv_check_info), content_type='application/json')
-
-    if re.match(r"^explain", sqlContent.lower()):
-        limit_num = 0
-
-    # 对查询sql增加limit限制
-    if re.match(r"^select", sqlContent.lower()):
-        if re.search(r"limit\s+(\d+)$", sqlContent.lower()) is None:
-            if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sqlContent.lower()) is None:
-                sqlContent = sqlContent + ' limit ' + str(limit_num)
-
-    sqlContent = sqlContent + ';'
-
-    # 执行查询语句,统计执行时间
-    t_start = time.time()
-    sql_result = Dao(instance_name=instance_name).mysql_query(str(dbName), sqlContent, limit_num)
-    t_end = time.time()
-    cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
-
-    sql_result['cost_time'] = cost_time
-
-    # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
-    t_start = time.time()
-    if SysConfig().sys_config.get('data_masking') == 'true':
-        # 仅对查询语句进行脱敏
-        if re.match(r"^select", sqlContent.lower()):
-            try:
-                masking_result = datamasking.data_masking(instance_name, dbName, sqlContent, sql_result)
-            except Exception:
-                if SysConfig().sys_config.get('query_check') == 'true':
-                    finalResult['status'] = 1
-                    finalResult['msg'] = '脱敏数据报错,请联系管理员'
-                    return HttpResponse(json.dumps(finalResult), content_type='application/json')
-            else:
-                if masking_result['status'] != 0:
-                    if SysConfig().sys_config.get('query_check') == 'true':
-                        return HttpResponse(json.dumps(masking_result), content_type='application/json')
-
-    t_end = time.time()
-    masking_cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
-
-    sql_result['masking_cost_time'] = masking_cost_time
-
-    finalResult['data'] = sql_result
-
-    # 成功的查询语句记录存入数据库
-    if sql_result.get('Error'):
-        pass
-    else:
-        query_log = QueryLog()
-        query_log.username = user.username
-        query_log.user_display = user.display
-        query_log.db_name = dbName
-        query_log.instance_name = instance_name
-        query_log.sqllog = sqlContent
-        if int(limit_num) == 0:
-            limit_num = int(sql_result['effect_row'])
+        if priv_check_info['status'] == 0:
+            limit_num = priv_check_info['data']['limit_num']
+            priv_check = priv_check_info['data']['priv_check']
         else:
-            limit_num = min(int(limit_num), int(sql_result['effect_row']))
-        query_log.effect_row = limit_num
-        query_log.cost_time = cost_time
-        # 防止查询超时
-        try:
-            query_log.save()
-        except:
-            connection.close()
-            query_log.save()
+            return HttpResponse(json.dumps(priv_check_info), content_type='application/json')
+
+        if re.match(r"^explain", sql_content.lower()):
+            limit_num = 0
+
+        # 对查询sql增加limit限制
+        if re.match(r"^select", sql_content.lower()):
+            if re.search(r"limit\s+(\d+)$", sql_content.lower()) is None:
+                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_content.lower()) is None:
+                    sql_content = sql_content + ' limit ' + str(limit_num)
+
+        sql_content = sql_content + ';'
+
+        # 执行查询语句,统计执行时间
+        t_start = time.time()
+        sql_result = Dao(instance_name=instance_name).mysql_query(str(db_name), sql_content, limit_num)
+        t_end = time.time()
+        cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
+
+        sql_result['cost_time'] = cost_time
+
+        # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
+        hit_rule = 0  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
+        masking = 2  # 查询结果是否正常脱敏，1, '是', 2, '否'
+        t_start = time.time()
+        # 仅对查询语句进行脱敏
+        if SysConfig().sys_config.get('data_masking') and re.match(r"^select", sql_content.lower()):
+            try:
+                masking_result = datamasking.data_masking(instance_name, db_name, sql_content, sql_result)
+                if masking_result['status'] != 0 and SysConfig().sys_config.get('query_check'):
+                    return HttpResponse(json.dumps(masking_result), content_type='application/json')
+                else:
+                    hit_rule = masking_result['data']['hit_rule']
+                    masking = 1 if hit_rule == 1 else 2
+            except Exception:
+                hit_rule = 0
+                masking = 2
+                if SysConfig().sys_config.get('query_check'):
+                    result['status'] = 1
+                    result['msg'] = '脱敏数据报错,请联系管理员'
+                    return HttpResponse(json.dumps(result), content_type='application/json')
+
+        t_end = time.time()
+        masking_cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
+
+        sql_result['masking_cost_time'] = masking_cost_time
+
+        result['data'] = sql_result
+
+        # 成功的查询语句记录存入数据库
+        if sql_result.get('Error'):
+            pass
+        else:
+            query_log = QueryLog()
+            query_log.username = user.username
+            query_log.user_display = user.display
+            query_log.db_name = db_name
+            query_log.instance_name = instance_name
+            query_log.sqllog = sql_content
+            if int(limit_num) == 0:
+                limit_num = int(sql_result['effect_row'])
+            else:
+                limit_num = min(int(limit_num), int(sql_result['effect_row']))
+            query_log.effect_row = limit_num
+            query_log.cost_time = cost_time
+            query_log.priv_check = priv_check
+            query_log.hit_rule = hit_rule
+            query_log.masking = masking
+            # 防止查询超时
+            try:
+                query_log.save()
+            except:
+                connection.close()
+                query_log.save()
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        result['status'] = 1
+        result['msg'] = str(e)
 
     # 返回查询结果
     try:
-        return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                             content_type='application/json')
     except Exception:
-        return HttpResponse(json.dumps(finalResult, default=str, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, default=str, bigint_as_string=True),
                             content_type='application/json')
 
 
@@ -625,40 +635,39 @@ def querylog(request):
 # 获取SQL执行计划
 @permission_required('sql.optimize_sqladvisor', raise_exception=True)
 def explain(request):
-    sqlContent = request.POST.get('sql_content')
+    sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
-    dbName = request.POST.get('db_name')
-    finalResult = {'status': 0, 'msg': 'ok', 'data': []}
+    db_name = request.POST.get('db_name')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
-    if sqlContent is None or instance_name is None:
-        finalResult['status'] = 1
-        finalResult['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    if sql_content is None or instance_name is None:
+        result['status'] = 1
+        result['msg'] = '页面提交参数可能为空'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
-    sqlContent = sqlContent.strip()
-    if sqlContent[-1] != ";":
-        finalResult['status'] = 1
-        finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    sql_content = sql_content.strip()
+    if sql_content[-1] != ";":
+        result['status'] = 1
+        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 过滤非查询的语句
-    if re.match(r"^explain", sqlContent.lower()):
+    if re.match(r"^explain", sql_content.lower()):
         pass
     else:
-        finalResult['status'] = 1
-        finalResult['msg'] = '仅支持explain开头的语句，请检查'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+        result['status'] = 1
+        result['msg'] = '仅支持explain开头的语句，请检查'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 取出该实例的连接方式,按照分号截取第一条有效sql执行
-    masterInfo = Instance.objects.get(instance_name=instance_name)
-    sqlContent = sqlContent.strip().split(';')[0]
+    # 按照分号截取第一条有效sql执行
+    sql_content = sql_content.strip().split(';')[0]
 
     # 执行获取执行计划语句
-    sql_result = Dao(instance_name=instance_name).mysql_query(str(dbName), sqlContent)
+    sql_result = Dao(instance_name=instance_name).mysql_query(str(db_name), sql_content)
 
-    finalResult['data'] = sql_result
+    result['data'] = sql_result
 
     # 返回查询结果
-    return HttpResponse(json.dumps(finalResult, cls=ExtendJSONEncoder, bigint_as_string=True),
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')

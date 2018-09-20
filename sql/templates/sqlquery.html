@@ -496,6 +496,9 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
                     }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
                 }
             });
         }
@@ -539,6 +542,10 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
+                },
+
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
                 }
             });
         });
@@ -573,6 +580,9 @@
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
                 }
             });
         });
