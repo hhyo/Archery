@@ -13,7 +13,7 @@ logger = logging.getLogger('default')
 
 
 class Dao(object):
-    def __init__(self, instance_name=None, flag=False):
+    def __init__(self, instance_name=None, flag=False, **kwargs):
         self.flag = flag
         if instance_name:
             try:
@@ -28,6 +28,12 @@ class Dao(object):
                     self.cursor = self.conn.cursor()
             except Exception:
                 raise Exception('找不到对应的实例配置信息，请配置')
+        else:
+            self.host = kwargs.get('host', '')
+            self.port = kwargs.get('port', 0)
+            self.user = kwargs.get('user', '')
+            self.password = kwargs.get('password', '')
+
 
     def close(self):
         self.cursor.close()
