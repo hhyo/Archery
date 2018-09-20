@@ -66,7 +66,7 @@ def query_audit_call_back(workflow_id, workflow_status):
 
 # 查询权限校验
 def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
-    result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 0}}
+    result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 0}}
 
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
@@ -131,7 +131,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
             if SysConfig().sys_config.get('query_check'):
                 return table_ref_result
             else:
-                result['data']['priv_check'] = False
+                result['data']['priv_check'] = 2
 
         # 获取查询涉及表的最小limit限制
         if table_ref:
