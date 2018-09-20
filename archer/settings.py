@@ -120,7 +120,7 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8'
+            'charset': 'utf8mb4'
         },
         'TEST': {
             'NAME': 'test_archer',
@@ -138,6 +138,14 @@ MONGODB_DATABASES = {
         "HOST": '127.0.0.1',
         "PORT": 27017,
     },
+}
+
+# 缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, "archer"),
+    }
 }
 
 # LDAP
