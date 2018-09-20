@@ -167,7 +167,7 @@ def send_msg(workflowDetail, url):
         workflowDetail.engineer_display, audit_auth_group, workflowDetail.workflow_name, url,
         re.sub('[\r\n\f]{2,}', '\n', workflowDetail.sql_content[0:500].replace('\r', '')))
 
-    if sys_config.get('mail') == 'true':
+    if sys_config.get('mail'):
         # 邮件通知申请人，审核人，抄送DBA
         notify_users = workflowDetail.audit_auth_groups.split(',')
         notify_users.append(workflowDetail.engineer)
@@ -175,12 +175,12 @@ def send_msg(workflowDetail, url):
         listCcAddr = [email['email'] for email in
                       auth_group_users(auth_group_names=['DBA'], group_id=workflowDetail.group_id).values('email')]
         mailSender.send_email(msg_title, msg_content, listToAddr, listCcAddr=listCcAddr)
-    if sys_config.get('ding') == 'true':
+    if sys_config.get('ding'):
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = SqlGroup.objects.get(group_id=workflowDetail.group_id).ding_webhook
         MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
-    if sys_config.get('mail') == 'true' and sys_config.get('ddl_notify_auth_group', None) \
+    if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group', None) \
             and workflowDetail.status == '已正常结束':
         # 判断上线语句是否存在DDL，存在则通知相关人员
         sql_content = workflowDetail.sql_content

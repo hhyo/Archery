@@ -56,7 +56,7 @@ class Workflow(object):
             audit_auth_groups_list = audit_auth_groups.split(',')
 
         # 判断是否无需审核,并且修改审批人为空
-        if SysConfig().sys_config.get('auto_review', False) == 'true':
+        if SysConfig().sys_config.get('auto_review', False):
             if workflow_type == WorkflowDict.workflow_type['sqlreview']:
                 if is_autoreview(workflow_id):
                     Workflow = SqlWorkflow.objects.get(id=int(workflow_id))

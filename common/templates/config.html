@@ -32,11 +32,11 @@
                                     {{ WorkflowDict.workflow_type.query_display }}</option>
                             </select>
                         </div>
-                            <h5 class="control-label text-bold">组：</h5>
+                        <h5 class="control-label text-bold">组：</h5>
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
+                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                                 {% for group in group_list %}
                                     <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                 {% endfor %}
@@ -116,7 +116,7 @@
                                 <label for="inception_remote_backup_password"
                                        class="col-sm-4 control-label">REMOTE_BACKUP_PASSWORD</label>
                                 <div class="col-sm-5">
-                                        <input type="password" class="form-control"
+                                    <input type="password" class="form-control"
                                            id="inception_remote_backup_password"
                                            key="inception_remote_backup_password"
                                            value="{{ config.inception_remote_backup_password }}"
@@ -176,7 +176,7 @@
                                                id="auto_review_max_update_rows"
                                                key="auto_review_max_update_rows"
                                                value="{{ config.auto_review_max_update_rows }}"
-                                                   placeholder="自动审批允许工单最大更新行数">
+                                               placeholder="自动审批允许工单最大更新行数">
                                     </div>
                                 </div>
                             </div>
@@ -319,24 +319,24 @@
                                     <label for="mail_smtp_password"
                                            class="col-sm-4 control-label">MAIL_SMTP_PASSWORD</label>
                                     <div class="col-sm-5">
-                                            <input type="password" class="form-control"
+                                        <input type="password" class="form-control"
                                                id="mail_smtp_password"
                                                key="mail_smtp_password"
                                                value="{{ config.mail_smtp_password }}"
                                                placeholder="邮箱账号密码">
                                     </div>
                                 </div>
-                                    <div class="form-group">
-                                        <label for="ddl_notify_auth_group"
-                                               class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
-                                        <div class="col-sm-5">
-                                            <input type="text" class="form-control"
-                                                   id="ddl_notify_auth_group"
-                                                   key="ddl_notify_auth_group"
-                                                   value="{{ config.ddl_notify_auth_group }}"
-                                                   placeholder="DDL工单通知权限组名，为空则不通知">
-                                        </div>
+                                <div class="form-group">
+                                    <label for="ddl_notify_auth_group"
+                                           class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="ddl_notify_auth_group"
+                                               key="ddl_notify_auth_group"
+                                               value="{{ config.ddl_notify_auth_group }}"
+                                               placeholder="DDL工单通知权限组名，为空则不通知">
                                     </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="ding"
@@ -345,7 +345,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="ding" key="ding" value="{{ config.ding }}"
-                                                       type="checkbox"> 是否开启钉钉通知
+                                                   type="checkbox"> 是否开启钉钉通知
                                         </label>
                                     </div>
                                 </div>
@@ -369,14 +369,14 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                    <label for="default_auth_group"
-                                           class="col-sm-4 control-label">DEFAULT_AUTH_GROUP</label>
+                                <label for="default_auth_group"
+                                       class="col-sm-4 control-label">DEFAULT_AUTH_GROUP</label>
                                 <div class="col-sm-5">
                                     <input type="text" class="form-control"
-                                               id="default_auth_group"
-                                               key="default_auth_group"
-                                               value="{{ config.default_auth_group }}"
-                                               placeholder="默认权限组名，每次用户登录会自动关联">
+                                           id="default_auth_group"
+                                           key="default_auth_group"
+                                           value="{{ config.default_auth_group }}"
+                                           placeholder="默认权限组名，每次用户登录会自动关联">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -637,12 +637,16 @@
 
         // 检测inception
         $("#check_incption").click(function () {
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
             $.ajax({
                 type: "get",
                 url: "/check/inception/",
                 dataType: "json",
                 data: {},
                 complete: function () {
+                    $("#check_incption").removeClass('disabled');
+                    $("#check_incption").prop('disabled', false);
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -659,12 +663,16 @@
 
         // 检测邮件
         $("#check_email").click(function () {
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
             $.ajax({
                 type: "get",
                 url: "/check/email/",
                 dataType: "json",
                 data: {},
                 complete: function () {
+                    $("#check_email").removeClass('disabled');
+                    $("#check_email").prop('disabled', false);
                 },
                 success: function (data) {
                     if (data.status === 0) {

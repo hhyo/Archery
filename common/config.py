@@ -5,26 +5,33 @@ from django.http import HttpResponse
 from common.utils.permission import superuser_required
 from sql.models import Config
 from django.db import connection, transaction
+from django.core.cache import cache
 
 
 class SysConfig(object):
     def __init__(self):
-        try:
-            # 获取系统配置信息
-            all_config = Config.objects.all().values('item', 'value')
-            sys_config = {}
+        if cache.get('sys_config'):
+            self.sys_config = cache.get('sys_config')
+        else:
             try:
-                for items in all_config:
-                    sys_config[items['item']] = items['value'].strip()
-            except Exception:
                 # 关闭后重新获取连接，防止超时
                 connection.close()
+                # 获取系统配置信息
+                all_config = Config.objects.all().values('item', 'value')
+                sys_config = {}
                 for items in all_config:
-                    sys_config[items['item']] = items['value'].strip()
-        except Exception:
-            self.sys_config = {}
-        else:
-            self.sys_config = sys_config
+                    if items['value'] == 'true':
+                        items['value'] = True
+                    elif items['value'] == 'false':
+                        items['value'] = False
+                    else:
+                        pass
+                    sys_config[items['item']] = items['value']
+                self.sys_config = sys_config
+                # 增加缓存
+                cache.add('sys_config', self.sys_config, timeout=None)
+            except Exception:
+                self.sys_config = {}
 
 
 # 修改系统配置
@@ -42,6 +49,10 @@ def changeconfig(request):
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
+    else:
+        # 删除并更新缓存
+        cache.delete('sys_config')
+        SysConfig()
 
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')

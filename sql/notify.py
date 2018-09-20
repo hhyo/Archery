@@ -132,13 +132,13 @@ def _send(audit_id, msg_type, **kwargs):
 
     # 判断是发送钉钉还是发送邮件
     if msg_type == 0:
-        if sys_config.get('mail') == 'true':
+        if sys_config.get('mail'):
             msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-        if sys_config.get('ding') == 'true':
+        if sys_config.get('ding'):
             msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-    if msg_type == 1 and sys_config.get('mail') == 'true':
+    if msg_type == 1 and sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-    elif msg_type == 2 and sys_config.get('ding') == 'true':
+    elif msg_type == 2 and sys_config.get('ding'):
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
 
