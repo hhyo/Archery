@@ -227,6 +227,32 @@
                 }
             });
         });
+        //数据库变更获取表名称补全提示
+        $("#db_name").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/getTableNameList/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        //自动补全提示
+                        setTablesCompleteData(data.data)
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
     </script>
     <!--validate -->
     <script>
