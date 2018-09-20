@@ -394,7 +394,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
+                                escape: false,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -414,7 +414,7 @@
                             errer_info = errer_info.replace(/\s/g, "&nbsp;");
                             alertStyle = "alert-danger";
                             $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
+                                escape:,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
