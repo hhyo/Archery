@@ -137,43 +137,43 @@ def sqlworkflowlist(request):
 # SQL检测
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
-    sqlContent = request.POST.get('sql_content')
+    sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
 
-    finalResult = {'status': 0, 'msg': 'ok', 'data': {}}
+    result = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
-    if sqlContent is None or instance_name is None or db_name is None:
-        finalResult['status'] = 1
-        finalResult['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    if sql_content is None or instance_name is None or db_name is None:
+        result['status'] = 1
+        result['msg'] = '页面提交参数可能为空'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # # 删除注释语句
-    # sqlContent = ''.join(
+    # sql_content = ''.join(
     #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-    #         sqlContent.splitlines(1))).strip()
+    #         sql_content.splitlines(1))).strip()
     # # 去除空行
-    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+    # sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
-    sqlContent = sqlContent.strip()
+    sql_content = sql_content.strip()
 
-    if sqlContent[-1] != ";":
-        finalResult['status'] = 1
-        finalResult['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    if sql_content[-1] != ";":
+        result['status'] = 1
+        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
+        result = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
     except Exception as e:
-        finalResult['status'] = 1
-        finalResult['msg'] = str(e)
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+        result['status'] = 1
+        result['msg'] = str(e)
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     if result is None or len(result) == 0:
-        finalResult['status'] = 1
-        finalResult['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
-        return HttpResponse(json.dumps(finalResult), content_type='application/json')
+        result['status'] = 1
+        result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
+        return HttpResponse(json.dumps(result), content_type='application/json')
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
     column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
@@ -198,19 +198,19 @@ def simplecheck(request):
         row['execute_time'] = row_item[9]
         # row['sqlsha1'] = row_item[10]
         rows.append(row)
-    finalResult['data']['rows'] = rows
-    finalResult['data']['column_list'] = column_list
-    finalResult['data']['CheckWarningCount'] = CheckWarningCount
-    finalResult['data']['CheckErrorCount'] = CheckErrorCount
+    result['data']['rows'] = rows
+    result['data']['column_list'] = column_list
+    result['data']['CheckWarningCount'] = CheckWarningCount
+    result['data']['CheckErrorCount'] = CheckErrorCount
 
-    return HttpResponse(json.dumps(finalResult), content_type='application/json')
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # SQL提交
 @permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
     workflowid = request.POST.get('workflowid')
-    sqlContent = request.POST['sql_content']
+    sql_content = request.POST['sql_content']
     workflowName = request.POST['workflow_name']
     group_name = request.POST['group_name']
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
@@ -220,7 +220,7 @@ def autoreview(request):
     notify_users = request.POST.getlist('notify_users')
 
     # 服务器端参数验证
-    if sqlContent is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
+    if sql_content is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
@@ -232,21 +232,21 @@ def autoreview(request):
         return render(request, 'error.html', context)
 
     # # 删除注释语句
-    # sqlContent = ''.join(
+    # sql_content = ''.join(
     #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-    #         sqlContent.splitlines(1))).strip()
+    #         sql_content.splitlines(1))).strip()
     # # 去除空行
-    # sqlContent = re.sub('[\r\n\f]{2,}', '\n', sqlContent)
+    # sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
-    sqlContent = sqlContent.strip()
+    sql_content = sql_content.strip()
 
-    if sqlContent[-1] != ";":
+    if sql_content[-1] != ";":
         context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
         return render(request, 'error.html', context)
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sqlContent, instance_name, db_name)
+        result = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
@@ -271,7 +271,7 @@ def autoreview(request):
 
     # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
     sql_syntax = 2
-    for row in sqlContent.strip(';').split(';'):
+    for row in sql_content.strip(';').split(';'):
         if re.match(r"^alter|^create|^drop|^truncate|^rename", row.strip().lower()):
             sql_syntax = 1
             break
@@ -298,7 +298,7 @@ def autoreview(request):
             sql_workflow.review_content = jsonResult
             sql_workflow.instance_name = instance_name
             sql_workflow.db_name = db_name
-            sql_workflow.sql_content = sqlContent
+            sql_workflow.sql_content = sql_content
             sql_workflow.execute_result = ''
             sql_workflow.is_manual = is_manual
             sql_workflow.audit_remark = ''

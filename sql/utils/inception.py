@@ -33,7 +33,7 @@ class InceptionDao(object):
         self.inception_remote_backup_password = self.sys_config.get('inception_remote_backup_password')
         self.prpCryptor = Prpcrypt()
 
-    def criticalDDL(self, sqlContent):
+    def criticalDDL(self, sql_content):
         '''
         识别DROP DATABASE, DROP TABLE, TRUNCATE PARTITION, TRUNCATE TABLE等高危DDL操作，因为对于这些操作，inception在备份时只能备份METADATA，而不会备份数据！
         如果识别到包含高危操作，则返回“审核不通过”
@@ -43,11 +43,11 @@ class InceptionDao(object):
         critical_ddl_regex = self.sys_config.get('critical_ddl_regex')
         p = re.compile(critical_ddl_regex)
         # 删除注释语句
-        sqlContent = ''.join(
+        sql_content = ''.join(
             map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-                sqlContent.splitlines(1))).strip()
+                sql_content.splitlines(1))).strip()
 
-        for row in sqlContent.rstrip(';').split(';'):
+        for row in sql_content.rstrip(';').split(';'):
             if p.match(row.strip().lower()):
                 result = (
                     '', '', 2, '驳回高危SQL', '禁止提交匹配' + critical_ddl_regex + '条件的语句！',
@@ -62,13 +62,13 @@ class InceptionDao(object):
         else:
             return None
 
-    def preCheck(self, sqlContent):
+    def preCheck(self, sql_content):
         '''
         在提交给inception之前，预先识别一些Inception不能正确审核的SQL,比如"alter table t1;"或"alter table test.t1;" 以免导致inception core dump
         '''
         resultList = []
         syntaxErrorSqlFound = 0
-        for row in sqlContent.rstrip(';').split(';'):
+        for row in sql_content.rstrip(';').split(';'):
             if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
                         row.lower() + ";"):
                 result = ('', '', 2, 'SQL语法错误', 'ALTER TABLE 必须带有选项', row, '', '', '', '')
@@ -81,7 +81,7 @@ class InceptionDao(object):
         else:
             return None
 
-    def sqlautoReview(self, sqlContent, instance_name, db_name, isSplit="no"):
+    def sqlautoReview(self, sql_content, instance_name, db_name, isSplit="no"):
         '''
         将sql交给inception进行自动审核，并返回审核结果。
         '''
@@ -89,14 +89,14 @@ class InceptionDao(object):
 
         # 高危SQL检查
         if self.sys_config.get('critical_ddl_regex', '') != '':
-            criticalDDL_check = self.criticalDDL(sqlContent)
+            criticalDDL_check = self.criticalDDL(sql_content)
         else:
             criticalDDL_check = None
 
         if criticalDDL_check is not None:
             result = criticalDDL_check
         else:
-            preCheckResult = self.preCheck(sqlContent)
+            preCheckResult = self.preCheck(sql_content)
             if preCheckResult is not None:
                 result = preCheckResult
             else:
@@ -115,7 +115,7 @@ class InceptionDao(object):
                         instance_info.host,
                         str(instance_info.port),
                         db_name,
-                        sqlContent)
+                        sql_content)
                     splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
                     tmpList = []
                     for splitRow in splitResult:
@@ -150,7 +150,7 @@ class InceptionDao(object):
                         instance_info.host,
                         str(instance_info.port),
                         db_name,
-                        sqlContent)
+                        sql_content)
                     result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
@@ -291,7 +291,7 @@ class InceptionDao(object):
             optResult = {"status": 1, "msg": "ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data": ""}
         return optResult
 
-    def query_print(self, sqlContent, instance_name, dbName):
+    def query_print(self, sql_content, instance_name, dbName):
         '''
         将sql交给inception打印语法树。
         '''
@@ -307,7 +307,7 @@ class InceptionDao(object):
             instance_info.host,
             str(instance_info.port),
             dbName,
-            sqlContent)
+            sql_content)
         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
