@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
+import logging
 import smtplib
+import traceback
 
 import MySQLdb
 import simplejson as json
@@ -11,6 +13,8 @@ from sql.utils.inception import InceptionDao
 from sql.utils.dao import Dao
 from sql.models import Instance
 
+logger = logging.getLogger('default')
+
 
 # 检测inception配置
 @superuser_required
@@ -21,6 +25,7 @@ def inception(request):
         conn = MySQLdb.connect(host=inception.inception_host, port=inception.inception_port, charset='utf8')
         cur = conn.cursor()
     except Exception as e:
+        logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = '无法连接inception,\n{}'.format(str(e))
     else:
@@ -46,6 +51,7 @@ def email(request):
         if mail_sender.MAIL_REVIEW_FROM_PASSWORD != '':
             server.login(mail_sender.MAIL_REVIEW_FROM_ADDR, mail_sender.MAIL_REVIEW_FROM_PASSWORD)
     except Exception as e:
+        logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = '邮件服务配置不正确,\n{}'.format(str(e))
     # 返回结果

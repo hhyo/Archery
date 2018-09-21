@@ -1,8 +1,13 @@
 # -*- coding:utf-8 -*-
+import logging
+import traceback
+
 from sql.utils.inception import InceptionDao
 from sql.models import DataMaskingRules, DataMaskingColumns
 import simplejson as json
 import re
+
+logger = logging.getLogger('default')
 
 
 class Masking(object):
@@ -13,6 +18,7 @@ class Masking(object):
         try:
             print_info = self.query_tree(sql, instance_name, db_name)
         except Exception as msg:
+            logger.error(traceback.format_exc())
             result['status'] = 1
             result['msg'] = str(msg)
             return result
@@ -30,6 +36,7 @@ class Masking(object):
                 table_hit_columns, hit_columns = self.analy_query_tree(query_tree, instance_name)
                 result['data']['hit_rule'] = 1 if table_hit_columns or hit_columns else 2
             except Exception as msg:
+                logger.error(traceback.format_exc())
                 result['status'] = 2
                 result['msg'] = '解析inception语法树获取表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
                 return result
@@ -93,6 +100,7 @@ class Masking(object):
         try:
             print_info = self.query_tree(sql_content, instance_name, db_name)
         except Exception as msg:
+            logger.error(traceback.format_exc())
             result['status'] = 1
             result['msg'] = str(msg)
             return result
@@ -107,6 +115,7 @@ class Masking(object):
             try:
                 table_ref = json.loads(print_info['query_tree'])['table_ref']
             except Exception:
+                logger.error(traceback.format_exc())
                 try:
                     # 处理JSONDecodeError: Expecting property name enclosed in double quotes
                     # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
@@ -117,6 +126,7 @@ class Masking(object):
                     query_tree_str = query_tree_str.replace("'", "\"")
                     table_ref = json.loads(query_tree_str)['table_ref']
                 except Exception as msg:
+                    logger.error(traceback.format_exc())
                     result['status'] = 2
                     result['msg'] = 'inception语法树解析表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
                     table_ref = ''
@@ -306,6 +316,7 @@ class Masking(object):
                     masking_str = masking_str + group
                 return masking_str
             except Exception:
+                logger.error(traceback.format_exc())
                 return value
         else:
             return value

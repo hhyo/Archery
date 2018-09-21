@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import re
+import traceback
 from threading import Thread
 
 import simplejson as json
@@ -13,6 +14,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
+
+from common.config import SysConfig
 from sql.models import SqlGroup, Users
 from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
 from sql.utils.group import user_groups, user_instances
@@ -164,6 +167,7 @@ def simplecheck(request):
     try:
         inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
     except Exception as e:
+        logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -312,6 +316,7 @@ def autoreview(request):
                 workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflowId,
                                             listCcAddr=listCcAddr)
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
@@ -352,6 +357,7 @@ def passed(request):
                 workflowDetail.audit_remark = audit_remark
                 workflowDetail.save()
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
@@ -376,6 +382,12 @@ def execute(request):
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
+    # 判断是否高危SQL，禁止执行
+    if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
+        if InceptionDao().criticalDDL(workflowDetail.sql_content):
+            context = {'errMsg': '高危语句，禁止执行！'}
+            return render(request, 'error.html', context)
+
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = timezone.now()
@@ -389,6 +401,7 @@ def execute(request):
                                                                                         db_name,
                                                                                         isSplit='yes')
         except Exception as msg:
+            logger.error(traceback.format_exc())
             context = {'errMsg': msg}
             return render(request, 'error.html', context)
         workflowDetail.review_content = json.dumps(splitReviewResult)
@@ -431,6 +444,12 @@ def timingtask(request):
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
+    # 判断是否高危SQL，禁止执行
+    if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
+        if InceptionDao().criticalDDL(workflowDetail.sql_content):
+            context = {'errMsg': '高危语句，禁止执行！'}
+            return render(request, 'error.html', context)
+
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
     url = getDetailUrl(request, workflowId)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
@@ -444,6 +463,7 @@ def timingtask(request):
             # 调用添加定时任务
             add_sqlcronjob(job_id, run_date, workflowId, url)
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -516,6 +536,7 @@ def cancel(request):
             workflowDetail.audit_remark = audit_remark
             workflowDetail.save()
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
@@ -563,6 +584,7 @@ def getOscPercent(request):
         try:
             result = InceptionDao().getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
         except Exception as msg:
+            logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -637,6 +659,7 @@ def stopOscProgress(request):
         try:
             optResult = InceptionDao().stopOscProgress(sqlSHA1)
         except Exception as msg:
+            logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
     else:

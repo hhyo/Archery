@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 import datetime
+import traceback
+
 from aliyunsdkcore import client
 from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlowLogRecordsRequest, \
     RequestServiceOfCloudDBARequest
@@ -19,6 +21,7 @@ class Aliyun(object):
             ak = prpCryptor.decrypt(auth[0].ak)
             secret = prpCryptor.decrypt(auth[0].secret)
         except Exception:
+            logger.error(traceback.format_exc())
             logger.error('没有找到有效的ak信息！')
         else:
             self.clt = client.AcsClient(

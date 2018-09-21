@@ -320,6 +320,7 @@ def applyforprivileges(request):
                 # 更新业务表审核状态,判断是否插入权限信息
                 query_audit_call_back(apply_id, auditresult['data']['workflow_status'])
     except Exception as msg:
+        logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = str(msg)
     else:
@@ -447,6 +448,7 @@ def queryprivaudit(request):
                 query_audit_call_back(auditInfo.workflow_id, auditresult['data']['workflow_status'])
 
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
@@ -527,7 +529,7 @@ def query(request):
         sql_result['cost_time'] = cost_time
 
         # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
-        hit_rule = 0  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
+        hit_rule = 0 if re.match(r"^select", sql_content.lower()) else 2  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
         masking = 2  # 查询结果是否正常脱敏，1, '是', 2, '否'
         t_start = time.time()
         # 仅对查询语句进行脱敏
@@ -540,6 +542,7 @@ def query(request):
                     hit_rule = masking_result['data']['hit_rule']
                     masking = 1 if hit_rule == 1 else 2
             except Exception:
+                logger.error(traceback.format_exc())
                 hit_rule = 0
                 masking = 2
                 if SysConfig().sys_config.get('query_check'):

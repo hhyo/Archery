@@ -1,4 +1,7 @@
+# -*- coding: UTF-8 -*-
+import logging
 import subprocess
+import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -7,6 +10,8 @@ from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
 from sql.models import Instance
 from sql.utils.group import user_instances
+
+logger = logging.getLogger('default')
 
 
 # 获取SQLAdvisor的优化结果
@@ -54,5 +59,6 @@ def sqladvisorcheck(request):
         stdout, stderr = p.communicate()
         result['data'] = stdout
     except Exception:
+        logger.error(traceback.format_exc())
         result['data'] = 'sqladvisor运行报错，请联系管理员'
     return HttpResponse(json.dumps(result), content_type='application/json')

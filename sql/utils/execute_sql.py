@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import re
+import traceback
 
 import simplejson as json
 
@@ -48,8 +49,8 @@ def execute_skipinc_call_back(workflowId, instance_name, db_name, sql_content, u
         # 关闭后重新获取连接，防止超时
         connection.close()
         workflowDetail.save()
-    except Exception as e:
-        logger.error(e)
+    except Exception:
+        logger.error(traceback.format_exc())
 
     # 增加工单日志
     # 获取audit_id
@@ -85,8 +86,8 @@ def execute_call_back(workflowId, instance_name, url):
         # 关闭后重新获取连接，防止超时
         connection.close()
         workflowDetail.save()
-    except Exception as e:
-        logger.error(e)
+    except Exception:
+        logger.error(traceback.format_exc())
 
     # 增加工单日志
     # 获取audit_id

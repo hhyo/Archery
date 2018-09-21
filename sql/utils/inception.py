@@ -248,6 +248,7 @@ class InceptionDao(object):
                     block_rollback_sql_list.append(block_rollback_sql)
                     listBackupSql.append(block_rollback_sql_list)
             except Exception as e:
+                logger.error(traceback.format_exc())
                 raise Exception(e)
         return listBackupSql
 
@@ -338,4 +339,5 @@ class InceptionDao(object):
                        port=self.inception_remote_backup_port,
                        password=self.inception_remote_backup_password).mysql_query('inception', sql)
         except Exception:
+            logger.error(traceback.format_exc())
             return {'column_list': [], 'rows': [], 'effect_row': 0}

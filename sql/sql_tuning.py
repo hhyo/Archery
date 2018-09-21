@@ -171,8 +171,8 @@ class SqlTuning(object):
         tableinfo = {'column_list': [], 'rows': []}
         indexinfo = {'column_list': [], 'rows': []}
         for index, table_name in enumerate(self.__extract_tables(self.sqltext)):
-            tableistructure = self.dao.mysql_query(
-                sql="show create table {};".format(table_name.replace('`', '').lower()))
+            tableistructure = self.dao.mysql_query(db_name=self.db_name, sql="show create table {};".format(
+                table_name.replace('`', '').lower()))
 
             tableinfo = self.dao.mysql_query(
                 sql=self.sql_table_info % (self.db_name, table_name.replace('`', '').lower()))

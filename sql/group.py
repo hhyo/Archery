@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import traceback
 
 import simplejson as json
 from django.contrib.auth.models import Group
@@ -130,6 +131,7 @@ def addrelation(request):
                             group_name=group_name) for object in object_list])
         result = {'status': 0, 'msg': 'ok'}
     except Exception as e:
+        logger.error(traceback.format_exc())
         result = {'status': 1, 'msg': str(e)}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -179,6 +181,7 @@ def changeauditors(request):
     try:
         Workflow.changesettings(group_id, workflow_type, ','.join(audit_auth_groups))
     except Exception as msg:
+        logger.error(traceback.format_exc())
         result['msg'] = str(msg)
         result['status'] = 1
 

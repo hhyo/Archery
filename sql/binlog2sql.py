@@ -76,6 +76,7 @@ def binlog2sql(request):
                 row_info['sql'] = row.split('; #')[0] + ";"
                 row_info['binlog_info'] = row.split('; #')[1].rstrip('\"')
             except Exception:
+                logger.error(traceback.format_exc())
                 row_info['sql'] = row
                 row_info['binlog_info'] = None
             rows.append(row_info)
