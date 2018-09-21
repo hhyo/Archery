@@ -88,10 +88,12 @@ def can_timingtask(user, workflow_id):
 def can_cancel(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
-    # 结束的工单不可终止，执行前提交人可终止、审核人可打回
-    if workflow_detail.status in [Const.workflowStatus['manreviewing'], Const.workflowStatus['pass'],
-                                  Const.workflowStatus['timingtask']]:
+    # 审核中的工单，审核人和提交人可终止
+    if workflow_detail.status == Const.workflowStatus['manreviewing']:
         from sql.utils.workflow import Workflow
         if Workflow.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
             result = True
+    # 审核通过但未执行的工单，执行人可以打回
+    if workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:
+        result = True if can_execute(user, workflow_id) else False
     return result

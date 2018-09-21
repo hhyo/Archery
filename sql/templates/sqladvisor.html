@@ -21,9 +21,7 @@
                             data-placeholder="请选择实例:" required>
                         <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                         {% for instance_name in instances %}
-                            {% if instance_name != 'mycat' %}
-                                <option value="{{ instance_name }}">{{ instance_name }}</option>
-                            {% endif %}
+                            <option value="{{ instance_name }}">{{ instance_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
