@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    操作选项
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <select id="instance_name" name="instance_name"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                title="请选择源实例:"
+                                data-placeholder="请选择实例:" required>
+                            {% for instance in instances %}
+                                <option value="{{ instance }}">{{ instance }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
+                                title="请选择源数据库:"
+                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="target_instance_name" name="instance_name"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                title="请选择目标实例:"
+                                data-placeholder="请选择目标实例:" required>
+                            {% for instance in instances %}
+                                <option value="{{ instance }}">{{ instance }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="target_db_name" name="db_name"
+                                class="form-control selectpicker show-tick bs-select-hidden"
+                                title="请选择目标数据库:"
+                                data-live-search="true" data-placeholder="请选择对应数据库:" required>
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <h5 class="control-label text-bold">DIFF选项：</h5>
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input id="sync-auto-inc" type="checkbox">
+                                    --sync-auto-inc
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input id="sync-comments" type="checkbox">
+                                    --sync-comments
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input id="btn-SchemaSync" type="button" class="btn btn-danger" value="Schema对比"
+                               onclick="schemasync()"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL语句
+                </div>
+                <div class="panel-body">
+                    <h5 class="control-label text-bold" style="color: red">
+                        <b>页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录，<a
+                                href="https://github.com/hhyo/SchemaSync">项目地址</a></b></h5>
+                    <br>
+                    <div id="schemadiff-result" style="display:none;" class="row clearfix">
+                        <div id="schemadiff-result-col" class="col-md-12"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <!-- 选择同步数据 -->
+    <script>
+        //获取源数据库名称
+        $("#instance_name").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/getdbNameList/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name option:selected").text()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option>" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $("#db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择源数据库:</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        //获取目标数据库名称
+        $("#target_instance_name").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/getdbNameList/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#target_instance_name option:selected").text()
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#target_db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option>" + result[i] + "</option>";
+                            $("#target_db_name").append(name);
+                        }
+                        $("#target_db_name").prepend("<option value=\"all\">全部</option>");
+                        $("#target_db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择目标数据库:</option>");
+                        $('#target_db_name').selectpicker('render');
+                        $('#target_db_name').selectpicker('refresh');
+                    } else {
+                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+    </script>
+    <!-- 执行对比 -->
+    <script>
+        function schemasync() {
+            var instance_name = $('#instance_name').val();
+            var db_name = $('#db_name').val();
+            var target_instance_name = $('#target_instance_name').val();
+            var target_db_name = $('#target_db_name').val();
+            if (instance_name && db_name && target_instance_name && target_db_name) {
+                $('#btn-SchemaSync').addClass('disabled');
+                $('#btn-SchemaSync').prop('disabled', true);
+                $("#schemadiff-result").hide();
+                alert('请耐心等待对比结果，可在对应目录获取生成的SQL文件');
+                $.ajax({
+                    type: "post",
+                    url: "/instance/schemasync/",
+                    dataType: "json",
+                    data: {
+                        instance_name: instance_name,
+                        db_name: db_name,
+                        target_instance_name: target_instance_name,
+                        target_db_name: target_db_name,
+                        sync_auto_inc: document.getElementById("sync-auto-inc").checked,
+                        sync_comments: document.getElementById("sync-comments").checked
+                    },
+                    complete: function () {
+                        $('#btn-SchemaSync').removeClass('disabled');
+                        $('#btn-SchemaSync').prop('disabled', false);
+                    },
+                    success: function (data) {
+                        var result = data.data;
+                        if (data.status === 0) {
+                            var diff_stdout = result['diff_stdout'].replace(/\n/g, '<br>');
+                            var patch_stdout = result['patch_stdout'].replace(/\n/g, '<br>');
+                            var revert_stdout = result['revert_stdout'].replace(/\n/g, '<br>');
+                            alertStyle = "alert-success";
+                            finalHtml = "<table class='table' width='100%' style='table-layout:fixed;'> " +
+                                "<thead><tr><th>DIFFLOG</th></tr></thead>" +
+                                "</table>";
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + diff_stdout + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
+                                "<thead><tr><th>PATCHSQL</th></tr></thead>" +
+                                "</table>";
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + patch_stdout + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            finalHtml += "<table class='table' width='100%' style='table-layout:fixed;'> " +
+                                "<thead><tr><th>REVERTSQL</th></tr></thead>" +
+                                "</table>";
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + revert_stdout + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            $("#schemadiff-result-col").html(finalHtml);
+                            //填充内容后展现出来
+                            $("#schemadiff-result").show();
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.data);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+            else {
+                alert('请选择完整！')
+            }
+        }
+    </script>
+{% endblock %}
+

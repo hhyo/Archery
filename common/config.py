@@ -1,4 +1,7 @@
 # -*- coding: UTF-8 -*-
+import logging
+import traceback
+
 import simplejson as json
 from django.http import HttpResponse
 
@@ -6,6 +9,8 @@ from common.utils.permission import superuser_required
 from sql.models import Config
 from django.db import connection, transaction
 from django.core.cache import cache
+
+logger = logging.getLogger('default')
 
 
 class SysConfig(object):
@@ -47,6 +52,7 @@ def changeconfig(request):
             Config.objects.bulk_create(
                 [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
     except Exception as e:
+        logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = str(e)
     else:

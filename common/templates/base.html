@@ -167,6 +167,11 @@
                                         <a href="/binlog2sql/">Binlog2SQL</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_schemasync %}
+                                    <li>
+                                        <a href="/schemasync/">SchemaSync</a>
+                                    </li>
+                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>

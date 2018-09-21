@@ -35,6 +35,17 @@ RUN yum -y install epel-release \
     && make \
     && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
     && rm -rf /opt/SQLAdvisor/
+#schemasync
+RUN cd /opt \
+    && virtualenv venv4schemasync  --python=python2 \
+    && source venv4schemasync/bin/activate \
+    && git clone https://github.com/hhyo/SchemaSync.git \
+    && git clone https://github.com/hhyo/SchemaObject.git \
+    && cd SchemaObject && python setup.py install \
+    && cd ../SchemaSync && python setup.py install \
+    && cd /opt && rm -rf /opt/SchemaObject/ && rm -rf /opt/SchemaSync/ \
+    && yum install -y python-devel \
+    && pip install mysql-python
 #archer
 RUN cd /opt \
     && yum -y install openldap-devel nginx \

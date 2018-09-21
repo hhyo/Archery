@@ -41,6 +41,7 @@ urlpatterns = [
     path('instance/', views.instance),
     path('instanceuser/<int:instance_id>/', views.instanceuser),
     path('binlog2sql/', views.binlog2sql),
+    path('schemasync/', views.schemasync),
     path('config/', views.config),
 
     path('authenticate/', auth.authenticateEntry),
@@ -69,6 +70,7 @@ urlpatterns = [
 
     path('instance/list/', instance.lists),
     path('instance/users/', instance.users),
+    path('instance/schemasync/', instance.schemasync),
     path('instance/getdbNameList/', instance.getdbNameList),
     path('instance/getTableNameList/', instance.getTableNameList),
     path('instance/getColumnNameList/', instance.getColumnNameList),

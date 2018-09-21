@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import traceback
 
 import simplejson as json
 
@@ -137,6 +138,7 @@ def rollback(request):
     try:
         listBackupSql = InceptionDao().getRollbackSqlList(workflowId)
     except Exception as msg:
+        logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
@@ -297,3 +299,11 @@ def binlog2sql(request):
     # 获取实例列表
     instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
     return render(request, 'binlog2sql.html', {'instances': instances})
+
+
+# 数据库差异对比页面
+@permission_required('sql.menu_schemasync', raise_exception=True)
+def schemasync(request):
+    # 获取实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'master')]
+    return render(request, 'schemasync.html', {'instances': instances})
