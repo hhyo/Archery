@@ -72,7 +72,7 @@ def execute_call_back(workflowId, instance_name, url):
     workflowDetail = SqlWorkflow.objects.get(id=workflowId)
     try:
         # 交给inception先split，再执行
-        (finalStatus, finalList) = InceptionDao().executeFinal(workflowDetail, instance_name)
+        (finalStatus, finalList) = InceptionDao(instance_name=instance_name).executeFinal(workflowDetail)
 
         # 封装成JSON格式存进数据库字段里
         strJsonResult = json.dumps(finalList)
@@ -127,8 +127,9 @@ def execute_job(workflowId, url):
         workflowDetail.save()
     logger.debug('execute_job:' + job_id + ' executing')
     # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name, db_name,
-                                                     isSplit='yes')
+    splitReviewResult = InceptionDao(instance_name=instance_name).sqlautoReview(workflowDetail.sql_content,
+                                                                                db_name,
+                                                                                isSplit='yes')
     workflowDetail.review_content = json.dumps(splitReviewResult)
     try:
         workflowDetail.save()

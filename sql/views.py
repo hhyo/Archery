@@ -9,7 +9,6 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from sql.utils.inception import InceptionDao
-from common.utils.aes_decryptor import Prpcrypt
 from common.utils.permission import superuser_required
 from sql.utils.jobs import job_info
 
@@ -23,8 +22,6 @@ from sql.utils.group import user_groups, user_instances
 import logging
 
 logger = logging.getLogger('default')
-
-prpCryptor = Prpcrypt()
 
 
 # 登录页面

@@ -67,7 +67,7 @@ class Masking(object):
 
     # 通过inception获取语法树
     def query_tree(self, sql_content, instance_name, db_name):
-        print_info = InceptionDao().query_print(sql_content, instance_name, db_name)
+        print_info = InceptionDao(instance_name=instance_name).query_print(sql_content, db_name)
         if print_info:
             id = print_info[0][0]
             statement = print_info[0][1]

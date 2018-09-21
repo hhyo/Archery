@@ -1,15 +1,10 @@
 # -*- coding: UTF-8 -*-
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-
 from django.http import HttpResponse
-
-from common.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance
-
-prpCryptor = Prpcrypt()
 
 
 # 获取实例列表

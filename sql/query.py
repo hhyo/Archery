@@ -17,10 +17,9 @@ from django.core import serializers
 from django.db import transaction
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from common.utils.aes_decryptor import Prpcrypt
 from sql.utils.dao import Dao
 from common.utils.const import WorkflowDict
-from .models import Instance, QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
+from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 from sql.utils.data_masking import Masking
 from sql.utils.workflow import Workflow
 from common.config import SysConfig
@@ -28,7 +27,6 @@ from sql.utils.group import user_instances, user_groups
 
 logger = logging.getLogger('default')
 
-prpCryptor = Prpcrypt()
 datamasking = Masking()
 workflowOb = Workflow()
 

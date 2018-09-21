@@ -7,8 +7,6 @@ from common.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
 import logging
 
-prpCryptor = Prpcrypt()
-
 logger = logging.getLogger('default')
 
 
@@ -21,7 +19,7 @@ class Dao(object):
                 self.host = instance_info.host
                 self.port = int(instance_info.port)
                 self.user = instance_info.user
-                self.password = prpCryptor.decrypt(instance_info.password)
+                self.password = Prpcrypt().decrypt(instance_info.password)
                 if self.flag:
                     self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                                 charset='utf8')
@@ -33,7 +31,6 @@ class Dao(object):
             self.port = kwargs.get('port', 0)
             self.user = kwargs.get('user', '')
             self.password = kwargs.get('password', '')
-
 
     def close(self):
         self.cursor.close()

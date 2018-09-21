@@ -18,7 +18,6 @@ from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
 from sql.utils.group import user_groups, user_instances
 from common.utils.const import Const, WorkflowDict
 from sql.utils.inception import InceptionDao
-from common.utils.aes_decryptor import Prpcrypt
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
 from sql.utils.sql_review import can_timingtask, getDetailUrl, can_cancel, can_execute
 from .models import SqlWorkflow
@@ -27,7 +26,6 @@ from sql.utils.workflow import Workflow
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 
 logger = logging.getLogger('default')
-prpCryptor = Prpcrypt()
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
@@ -164,13 +162,13 @@ def simplecheck(request):
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
+        inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    if result is None or len(result) == 0:
+    if inception_result is None or len(inception_result) == 0:
         result['status'] = 1
         result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -180,7 +178,7 @@ def simplecheck(request):
     rows = []
     CheckWarningCount = 0
     CheckErrorCount = 0
-    for row_index, row_item in enumerate(result):
+    for row_index, row_item in enumerate(inception_result):
         row = {}
         row['ID'] = row_item[0]
         row['stage'] = row_item[1]
@@ -246,22 +244,22 @@ def autoreview(request):
 
     # 交给inception进行自动审核
     try:
-        result = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
+        inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
-    if result is None or len(result) == 0:
+    if inception_result is None or len(inception_result) == 0:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    jsonResult = json.dumps(result)
+    jsonResult = json.dumps(inception_result)
 
     # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则需要设置is_manual = 0，跳过inception直接执行
     workflowStatus = Const.workflowStatus['manreviewing']
     # inception审核不通过的工单，标记手动执行标签
     is_manual = 0
-    for row in result:
+    for row in inception_result:
         if row[2] == 2:
             is_manual = 1
             break
@@ -387,9 +385,9 @@ def execute(request):
     if workflowDetail.is_manual == 0:
         # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
         try:
-            splitReviewResult = InceptionDao().sqlautoReview(workflowDetail.sql_content, workflowDetail.instance_name,
-                                                             db_name,
-                                                             isSplit='yes')
+            splitReviewResult = InceptionDao(instance_name=instance_name).sqlautoReview(workflowDetail.sql_content,
+                                                                                        db_name,
+                                                                                        isSplit='yes')
         except Exception as msg:
             context = {'errMsg': msg}
             return render(request, 'error.html', context)

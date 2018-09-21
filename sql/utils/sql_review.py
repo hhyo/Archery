@@ -42,7 +42,7 @@ def is_autoreview(workflowid):
             break
         if is_autoreview:
             # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
-            inception_review = InceptionDao().sqlautoReview(sql_content, instance_name, db_name)
+            inception_review = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
             all_affected_rows = 0
             for review_result in inception_review:
                 SQL = review_result[5]

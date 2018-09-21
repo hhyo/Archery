@@ -3,11 +3,10 @@ import subprocess
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-
+from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
 from sql.models import Instance
 from sql.utils.group import user_instances
-from sql.sql_workflow import prpCryptor
 
 
 # 获取SQLAdvisor的优化结果
@@ -49,7 +48,7 @@ def sqladvisorcheck(request):
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
             str(instance_info.host), str(instance_info.port), str(instance_info.user),
-            str(prpCryptor.decrypt(instance_info.password), ), str(dbName), verbose, sql_content),
+            str(Prpcrypt().decrypt(instance_info.password), ), str(dbName), verbose, sql_content),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         stdout, stderr = p.communicate()
