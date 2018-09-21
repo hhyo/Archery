@@ -42,8 +42,8 @@ python3 manage.py migrate
 python3 manage.py createsuperuser
 
 #启动日志查看和问题排查
+docker logs archer
 cat /tmp/archer.log
-cat /tmp/archer.err
 ```
 
 手动安装
@@ -58,3 +58,4 @@ cat /tmp/archer.err
 - [binlog2sql](https://github.com/danfengcao/binlog2sql)
 - [aquila_v2](https://github.com/thinkdb/aquila_v2)
 - [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
+- [SchemaSync](https://github.com/seanlook/SchemaSync)
