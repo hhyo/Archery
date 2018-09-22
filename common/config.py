@@ -7,7 +7,7 @@ from django.http import HttpResponse
 
 from common.utils.permission import superuser_required
 from sql.models import Config
-from django.db import connection, transaction
+from django.db import transaction
 from django.core.cache import cache
 
 logger = logging.getLogger('default')
@@ -19,8 +19,6 @@ class SysConfig(object):
             self.sys_config = cache.get('sys_config')
         else:
             try:
-                # 关闭后重新获取连接，防止超时
-                connection.close()
                 # 获取系统配置信息
                 all_config = Config.objects.all().values('item', 'value')
                 sys_config = {}

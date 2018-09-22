@@ -140,6 +140,14 @@ MONGODB_DATABASES = {
     },
 }
 
+# 缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, "archer"),
+    }
+}
+
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
