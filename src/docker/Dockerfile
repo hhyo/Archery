@@ -49,7 +49,7 @@ RUN cd /opt \
 #archer
 RUN cd /opt \
     && yum -y install openldap-devel nginx \
-    && git clone https://github.com/hhyo/archer.git \
+    && git clone https://github.com/hhyo/archer.git && cd archer && git checkout v1.3.2 \
     && source /opt/venv4archer/bin/activate \
     && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archer/src/docker/connections.py /opt/venv4archer/lib/python3.6/site-packages/MySQLdb/connections.py \
