@@ -1,29 +1,28 @@
 # -*- coding: UTF-8 -*-
+import datetime
+import logging
 import re
+import time
+import traceback
 
 import simplejson as json
-import traceback
-import datetime
-import time
-import logging
-
 from django.contrib.auth.decorators import permission_required
-from django.urls import reverse
-from django.db.models import Q, Min
-from django.db import connection
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
+from django.db import connection
 from django.db import transaction
+from django.db.models import Q, Min
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
 
+from common.config import SysConfig
+from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.dao import Dao
-from common.utils.const import WorkflowDict
-from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 from sql.utils.data_masking import Masking
-from sql.utils.workflow import Workflow
-from common.config import SysConfig
 from sql.utils.group import user_instances, user_groups
+from sql.utils.workflow import Workflow
+from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
 
 logger = logging.getLogger('default')
 
@@ -72,7 +71,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
             user_limit_num = 0
-        limit_num = min(int(limit_num), int(user_limit_num))
+        limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
 
     # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过不做校验
     elif re.match(r"^show\s+create\s+table", sql_content.lower()):
@@ -155,7 +154,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
                                                             db_name=db_name,
                                                             valid_date__gte=datetime.datetime.now(),
                                                             is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
-        limit_num = min(int(limit_num), int(user_limit_num))
+        limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
     result['data']['limit_num'] = limit_num
     return result
 

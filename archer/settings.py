@@ -31,8 +31,10 @@ ALLOWED_HOSTS = ['*']
 # 解决nginx部署跳转404
 USE_X_FORWARDED_HOST = True
 
-# Application definition
+# 请求限制
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
 
+# Application definition
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',

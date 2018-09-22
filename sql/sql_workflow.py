@@ -424,6 +424,17 @@ def execute(request):
     if workflowDetail.status == Const.workflowStatus['timingtask']:
         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
         del_sqlcronjob(job_id)
+    # 增加工单日志
+    # 获取audit_id
+    audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    workflowOb.add_workflow_log(audit_id=audit_id,
+                                operation_type=5,
+                                operation_type_desc='执行工单',
+                                operation_info="人工操作执行",
+                                operator=request.user.username,
+                                operator_display=request.user.display
+                                )
     return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
 
 
@@ -462,6 +473,17 @@ def timingtask(request):
             workflowDetail.save()
             # 调用添加定时任务
             add_sqlcronjob(job_id, run_date, workflowId, url)
+            # 增加工单日志
+            # 获取audit_id
+            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            workflowOb.add_workflow_log(audit_id=audit_id,
+                                        operation_type=4,
+                                        operation_type_desc='定时执行',
+                                        operation_info="定时执行时间：{}".format(run_date),
+                                        operator=request.user.username,
+                                        operator_display=request.user.display
+                                        )
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
