@@ -39,6 +39,7 @@ class SqlText(object):
             schema=self.schema,
             hostname=self.hostname
         )
+        connection.close()
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import MySQLdb
+from django.db import connection
 
-from sql.models import Instance
 from common.utils.aes_decryptor import Prpcrypt
+from sql.models import Instance
 
 prpCryptor = Prpcrypt()
 
@@ -13,7 +14,11 @@ class DbOperat(object):
     """
 
     def __init__(self, instance_name, db_name, flag=True, charset="utf8"):
-        instance_info = Instance.objects.get(instance_name=instance_name)
+        try:
+            instance_info = Instance.objects.get(instance_name=instance_name)
+        except Exception:
+            connection.close()
+            instance_info = Instance.objects.get(instance_name=instance_name)
         self.host = instance_info.host
         self.port = int(instance_info.port)
         self.user = instance_info.user

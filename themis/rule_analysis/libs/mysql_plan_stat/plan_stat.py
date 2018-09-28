@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import json
-from themis.rule_analysis.libs.mysql_plan_stat.json_plan_parse import json_plan_item
+
 from django.db import connection
+
+from themis.rule_analysis.libs.mysql_plan_stat.json_plan_parse import json_plan_item
 
 
 class MysqlPlanOrStat(object):
@@ -76,6 +78,7 @@ class MysqlPlanOrStat(object):
             schema=schema,
             hostname=hostname
         )
+        connection.close()
         cursor = connection.cursor()
         cursor.execute(sql)
         result = cursor.fetchall()
