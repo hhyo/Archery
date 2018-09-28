@@ -2,19 +2,19 @@
 DIR="$( cd "$( dirname "$0"  )" && pwd  )"
 cd $DIR
 
-#配置archer数据库的连接地址
+#配置archery数据库的连接地址
 monitor_db_host="127.0.0.1"
 monitor_db_port=3306
 monitor_db_user="root"
 monitor_db_password="123456"
-monitor_db_database="archer"
+monitor_db_database="archery"
 
 #被监控机慢日志位置
 slowquery_file="/home/mysql/log_slow.log"
 pt_query_digest="/usr/bin/pt-query-digest"
 
 #被监控机连接信息
-hostname="mysql_host:mysql_port" # 被监控机连接信息，和archer主库配置内容保持一致，用于archer做筛选
+hostname="mysql_host:mysql_port" # 被监控机连接信息，和archery主库配置内容保持一致，用于archery做筛选
 
 #获取上次分析时间，初始化时请删除last_analysis_time_$hostname文件，可分析全部日志数据
 if [ -s last_analysis_time_$hostname ]; then

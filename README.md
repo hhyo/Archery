@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/hhyo/archer.svg?branch=master)](https://travis-ci.org/hhyo/archer)
+[![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
 
 介绍
 ============
-项目基于archer，不定期更新，有问题请提交issues，[查看开发计划](https://github.com/hhyo/archer/projects/1)  
-- [文档](https://github.com/hhyo/archer/wiki)
-- [release版本](https://github.com/hhyo/archer/releases/)
+项目基于[archer](https://github.com/jly8866/archer)，不定期更新，有问题请提交issues
+- [文档](https://github.com/hhyo/archery/wiki)
+- [release版本](https://github.com/hhyo/archery/releases/)
 
 快速开始
 ===============
@@ -18,33 +18,8 @@
 |  DBA| dba | archer |
 
 ### Docker
-archer镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.14.58c75aaaaSPjnX&repoId=142147  
+archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
-#### 单个容器启动
-```bash
-#新建Docker网络(inception直接通过容器名连接)
-docker network create -d bridge archer-net
-
-#准备inc.cnf文件，启动inception
-docker run --name inception --network archer-net -v /your_path/inc.cnf:/etc/inc.cnf  -p 6669:6669 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/inception
-
-#准备settings.py文件，启动archer，tag对应release版本，如1.3.2
-docker run --name archer --network archer-net -v /your_path/:/opt/archer/downloads -v /your_path/settings.py:/opt/archer/archer/settings.py  -e NGINX_PORT=9123 -p 9123:9123 -dti registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:tag
-
-#表结构初始化
-docker exec -ti archer /bin/bash
-cd /opt/archer
-source /opt/venv4archer/bin/activate
-python3 manage.py makemigrations sql  
-python3 manage.py migrate 
-
-#创建管理用户
-python3 manage.py createsuperuser
-
-#启动日志查看和问题排查
-docker logs archer
-cat /tmp/archer.log
-```
 
 #### docker-compose
 
@@ -85,26 +60,38 @@ services:
     volumes:
       - "./inception/inc.cnf:/etc/inc.cnf"
 
-  archer:
-    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archer:1.3.2
-    container_name: archer
+  archery:
+    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery:1.3.3
+    container_name: archery
     restart: always
     ports:
       - "9123:9123"
     volumes:
-      - "./archer/settings.py:/opt/archer/archer/settings.py"
-      - "./archer/downloads:/opt/archer/downloads"
-    command: ["bash","/opt/archer/src/docker/startup.sh"]
+      - "./archery/settings.py:/opt/archery/archer/settings.py"
+      - "./archery/downloads:/opt/archery/downloads"
+    command: ["bash","/opt/archery/src/docker/startup.sh"]
     environment:
       NGINX_PORT: 9123
 
 ```
+```bash
+#表结构初始化
+docker exec -ti archery /bin/bash
+cd /opt/archery
+source /opt/venv4archery/bin/activate
+python3 manage.py makemigrations sql  
+python3 manage.py migrate 
 
+#创建管理用户
+python3 manage.py createsuperuser
+
+#启动日志查看和问题排查
+docker logs archery
+```
 
 手动安装
 ===============
-[部署说明](https://github.com/hhyo/archer/wiki/%E9%83%A8%E7%BD%B2)
-
+[部署说明](https://github.com/hhyo/archery/wiki/%E9%83%A8%E7%BD%B2)
 
 依赖或引用项目
 ===============

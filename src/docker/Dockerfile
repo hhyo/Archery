@@ -13,7 +13,7 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
     && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cd /opt \
     && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
-    && virtualenv venv4archer --python=python3 \
+    && virtualenv venv4archery --python=python3 \
     && rm -rf Python-3.6.5 \
     && rm -rf Python-3.6.5.tar.xz \
 #修改中文支持
@@ -46,20 +46,20 @@ RUN cd /opt \
     && cd /opt && rm -rf /opt/SchemaObject/ && rm -rf /opt/SchemaSync/ \
     && yum install -y python-devel \
     && pip install mysql-python
-#archer
+#archery
 RUN cd /opt \
     && yum -y install openldap-devel nginx \
-    && git clone https://github.com/hhyo/archer.git && cd archer && git checkout v1.3.2 \
-    && source /opt/venv4archer/bin/activate \
-    && pip3 install -r /opt/archer/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && cp /opt/archer/src/docker/connections.py /opt/venv4archer/lib/python3.6/site-packages/MySQLdb/connections.py \
-    && cp /opt/archer/src/docker/nginx.conf /etc/nginx/
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.3.3 \
+    && source /opt/venv4archery/bin/activate \
+    && pip3 install -r /opt/archery/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && cp /opt/archery/src/docker/connections.py /opt/venv4archery/lib/python3.6/site-packages/MySQLdb/connections.py \
+    && cp /opt/archery/src/docker/nginx.conf /etc/nginx/
 
 ENV LANG en_US.UTF-8
-ENV LC_ALL zh_CN.utf8 
+ENV LC_ALL zh_CN.utf8
 
 #port
 EXPOSE 9123
 
 #start service
-ENTRYPOINT bash /opt/archer/src/docker/startup.sh && bash
+ENTRYPOINT bash /opt/archery/src/docker/startup.sh && bash

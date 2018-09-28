@@ -6,7 +6,7 @@ from django.db import connection
 
 
 class ChartDao(object):
-    # 直接在archer数据库查询数据，用于报表
+    # 直接在archery数据库查询数据，用于报表
     def __query(self, sql):
         cursor = connection.cursor()
         effect_row = cursor.execute(sql)

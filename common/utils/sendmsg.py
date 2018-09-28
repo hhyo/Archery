@@ -69,7 +69,7 @@ class MailSender(object):
                     main_msg.attach(file_msg)
 
             # 收发件人地址和邮件标题:
-            main_msg['From'] = formataddr(["archer 通知", self.MAIL_REVIEW_FROM_ADDR])
+            main_msg['From'] = formataddr(["archery 通知", self.MAIL_REVIEW_FROM_ADDR])
             main_msg['To'] = ','.join(listToAddr)
             listCcAddr = kwargs.get('listCcAddr')
             if listCcAddr:

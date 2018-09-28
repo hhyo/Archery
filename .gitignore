@@ -4,7 +4,7 @@
 *.log
 .idea/
 .DS_Store
-archer/settings.py.github
-archer/settings.py.dev
+archery/settings.py.github
+archery/settings.py.dev
 sql/migrations/
 venv
