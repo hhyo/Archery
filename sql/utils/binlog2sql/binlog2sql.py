@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import datetime
+import sys
+
 import pymysql
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
+
 from .binlog2sql_util import command_line_args, concat_sql_from_binlog_event, create_unique_file, temp_open, \
     reversed_lines, is_dml_event, event_type
 
@@ -61,8 +63,7 @@ class Binlog2sql(object):
             if not self.server_id:
                 raise ValueError('missing server_id in %s:%s' % (self.conn_setting['host'], self.conn_setting['port']))
 
-    def process_binlog(self):
-        sql_list = []
+    def process_binlog(self, filename):
         stream = BinLogStreamReader(connection_settings=self.conn_setting, server_id=self.server_id,
                                     log_file=self.start_file, log_pos=self.start_pos, only_schemas=self.only_schemas,
                                     only_tables=self.only_tables, resume_stream=True)
@@ -71,7 +72,8 @@ class Binlog2sql(object):
         e_start_pos, last_pos = stream.log_pos, stream.log_pos
         # to simplify code, we do not use flock for tmp_file.
         tmp_file = create_unique_file('%s.%s' % (self.conn_setting['host'], self.conn_setting['port']))
-        with temp_open(tmp_file, "w") as f_tmp, self.connection as cursor:
+        save_file = create_unique_file(filename)
+        with temp_open(tmp_file, "w") as f_tmp, open(save_file, "w") as f, self.connection as cursor:
             for binlog_event in stream:
                 if not self.stop_never:
                     try:
@@ -102,7 +104,7 @@ class Binlog2sql(object):
                                                        flashback=self.flashback, no_pk=self.no_pk)
                     if sql:
                         # print(sql)
-                        sql_list.append(sql)
+                        f.write(sql + '\n')
                 elif is_dml_event(binlog_event) and event_type(binlog_event) in self.sql_type:
                     for row in binlog_event.rows:
                         sql = concat_sql_from_binlog_event(cursor=cursor, binlog_event=binlog_event, no_pk=self.no_pk,
@@ -111,7 +113,7 @@ class Binlog2sql(object):
                             f_tmp.write(sql + '\n')
                         else:
                             # print(sql)
-                            sql_list.append(sql)
+                            f.write(sql + '\n')
 
                 if not (isinstance(binlog_event, RotateEvent) or isinstance(binlog_event, FormatDescriptionEvent)):
                     last_pos = binlog_event.packet.log_pos
@@ -121,23 +123,23 @@ class Binlog2sql(object):
             stream.close()
             f_tmp.close()
             if self.flashback:
-                sql_list = self.print_rollback_sql(filename=tmp_file)
-        # return True
-        return sql_list
+                self.print_rollback_sql(tmp_filename=tmp_file, filename=save_file)
+        return True
 
-    def print_rollback_sql(self, filename):
+    def print_rollback_sql(self, tmp_filename, filename):
         """print rollback sql from tmp_file"""
         sql_list = []
-        with open(filename, "rb") as f_tmp:
+        with open(tmp_filename, "rb") as f_tmp, open(filename, "w") as f:
             batch_size = 1000
             i = 0
             for line in reversed_lines(f_tmp):
                 # print(line.rstrip())
-                sql_list.append(line.rstrip())
+                f.write(line.rstrip() + '\n')
                 if i >= batch_size:
                     i = 0
                     if self.back_interval:
-                        print('SELECT SLEEP(%s);' % self.back_interval)
+                        # print('SELECT SLEEP(%s);' % self.back_interval)
+                        f.write('SELECT SLEEP(%s);' % self.back_interval + '\n')
                 else:
                     i += 1
         return sql_list

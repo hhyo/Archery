@@ -227,7 +227,7 @@
             if ($("#instance_name").val() && $("#start_file").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
-                alert('请耐心等待结果，不要刷新页面!');
+                alert('请耐心等待结果，可在对应目录获取生成的SQL文件');
                 $.ajax({
                     type: "post",
                     url: "/binlog2sql/sql/",

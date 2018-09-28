@@ -1,18 +1,20 @@
 # -*- coding: UTF-8 -*-
+import logging
 import os
 import time
-
-import simplejson as json
-import logging
 import traceback
+
+import pymysql
+import simplejson as json
+from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from sql.utils.dao import Dao
-from sql.utils.binlog2sql.binlog2sql import Binlog2sql
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+
 from common.utils.aes_decryptor import Prpcrypt
+from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.utils.binlog2sql.binlog2sql import Binlog2sql
+from sql.utils.dao import Dao
 from .models import Instance
-from django.conf import settings
 
 logger = logging.getLogger('default')
 
@@ -68,31 +70,39 @@ def binlog2sql(request):
                                 only_tables=' '.join(only_tables),
                                 no_pk=no_pk, flashback=flashback, stop_never=False,
                                 back_interval=1.0, only_dml=only_dml, sql_type=sql_type)
-        sql_list = binlog2sql.process_binlog()
+        timestamp = int(time.time())
+        path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
+        if flashback:
+            filename = os.path.join(path, 'flashback_{}_{}_{}.sql'.format(conn_setting['host'],
+                                                                          conn_setting['port'],
+                                                                          timestamp))
+        else:
+            filename = os.path.join(path, '{}_{}_{}.sql'.format(conn_setting['host'],
+                                                                conn_setting['port'],
+                                                                timestamp))
+        # 获取sql语句，忽略wait_timeout的错误
+        try:
+            binlog2sql.process_binlog(filename)
+        except pymysql.err.OperationalError:
+            logger.error(traceback.format_exc())
+
+        # 读取前5000行
         rows = []
-        for row in sql_list:
-            row_info = {}
-            try:
-                row_info['sql'] = row.split('; #')[0] + ";"
-                row_info['binlog_info'] = row.split('; #')[1].rstrip('\"')
-            except Exception:
-                logger.error(traceback.format_exc())
-                row_info['sql'] = row
-                row_info['binlog_info'] = None
-            rows.append(row_info)
-        result['data'] = rows[0:5000]
-        # 保存文件
-        if len(sql_list) > 0:
-            timestamp = int(time.time())
-            path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
-            if flashback:
-                with open(os.path.join(path, 'rollback_{}.sql'.format(timestamp)), 'w') as f:
-                    for sql in sql_list:
-                        f.write(sql + '\n')
-            else:
-                with open(os.path.join(path, 'do_{}.sql'.format(timestamp)), 'w') as f:
-                    for sql in sql_list:
-                        f.write(sql + '\n')
+        n = 1
+        with open(filename) as f:
+            for row in f:
+                if n <= 5000:
+                    row_info = {}
+                    try:
+                        row_info['sql'] = row.split('; #')[0] + ";"
+                        row_info['binlog_info'] = row.split('; #')[1].rstrip('\"')
+                    except Exception:
+                        logger.error(traceback.format_exc())
+                        row_info['sql'] = row
+                        row_info['binlog_info'] = None
+                    rows.append(row_info)
+                    n = n + 1
+        result['data'] = rows
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
