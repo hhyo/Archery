@@ -4,14 +4,15 @@ import subprocess
 import time
 
 import simplejson as json
+from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from django.conf import settings
-from sql.utils.dao import Dao
-from .models import Instance
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+
 from common.config import SysConfig
 from common.utils.aes_decryptor import Prpcrypt
+from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.utils.dao import Dao
+from .models import Instance
 
 
 # 获取实例列表
@@ -21,11 +22,8 @@ def lists(request):
     offset = int(request.POST.get('offset'))
     type = request.POST.get('type')
     limit = offset + limit
+    search = request.POST.get('search', '')
 
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
     if type:
         instances = Instance.objects.filter(instance_name__contains=search, type=type)[offset:limit] \
             .values("id", "instance_name", "db_type", "type", "host", "port", "user")

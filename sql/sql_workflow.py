@@ -1,32 +1,31 @@
 # -*- coding: UTF-8 -*-
 import datetime
+import logging
 import re
 import traceback
 from threading import Thread
 
 import simplejson as json
-
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, connection
 from django.db.models import Q
-from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 
 from common.config import SysConfig
+from common.utils.const import Const, WorkflowDict
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import SqlGroup, Users
 from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
 from sql.utils.group import user_groups, user_instances
-from common.utils.const import Const, WorkflowDict
 from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
 from sql.utils.sql_review import can_timingtask, getDetailUrl, can_cancel, can_execute
-from .models import SqlWorkflow
-import logging
 from sql.utils.workflow import Workflow
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+from .models import SqlWorkflow
 
 logger = logging.getLogger('default')
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
@@ -43,11 +42,7 @@ def sqlworkflowlist(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 获取筛选参数
     navStatus = request.POST.get('navStatus')

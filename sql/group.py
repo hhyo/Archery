@@ -1,18 +1,16 @@
 # -*- coding: UTF-8 -*-
+import logging
 import traceback
 
 import simplejson as json
 from django.contrib.auth.models import Group
-
 from django.db.models import F
 from django.http import HttpResponse
 
-from sql.models import SqlGroup, GroupRelations, Users, Instance
-from common.utils.permission import superuser_required
-
-import logging
-from sql.utils.workflow import Workflow
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.permission import superuser_required
+from sql.models import SqlGroup, GroupRelations, Users, Instance
+from sql.utils.workflow import Workflow
 
 logger = logging.getLogger('default')
 
@@ -23,11 +21,7 @@ def group(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 全部工单里面包含搜索条件
     group_list = SqlGroup.objects.filter(group_name__contains=search)[offset:limit].values("group_id",

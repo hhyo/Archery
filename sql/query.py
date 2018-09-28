@@ -168,11 +168,7 @@ def getqueryapplylist(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
     if user.is_superuser:
@@ -333,11 +329,7 @@ def getuserprivileges(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 判断权限，除了管理员外其他人只能查看自己的权限信息，
     user = request.user
@@ -604,11 +596,7 @@ def querylog(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 查询个人记录，超管查看所有数据
     if user.is_superuser:

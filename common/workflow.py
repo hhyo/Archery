@@ -3,9 +3,8 @@ from django.contrib.auth.models import Group
 from django.http import HttpResponse
 
 from common.utils.const import WorkflowDict
-from sql.models import WorkflowAudit, WorkflowLog
-
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.models import WorkflowAudit, WorkflowLog
 from sql.utils.group import user_groups
 
 
@@ -18,11 +17,7 @@ def lists(request):
     offset = int(request.POST.get('offset'))
     workflow_type = int(request.POST.get('workflow_type'))
     limit = offset + limit
-
-    # 获取搜索参数
-    search = request.POST.get('search')
-    if search is None:
-        search = ''
+    search = request.POST.get('search', '')
 
     # 先获取用户所在资源组列表
     group_list = user_groups(user)
