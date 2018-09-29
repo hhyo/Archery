@@ -2,7 +2,7 @@
 
 介绍
 ============
-项目基于[archer](https://github.com/jly8866/archer)，不定期更新，有问题请提交issues
+项目基于[archer](https://github.com/jly8866/archer)，有问题请提交issue
 - [文档](https://github.com/hhyo/archery/wiki)
 - [release版本](https://github.com/hhyo/archery/releases/)
 
@@ -67,7 +67,7 @@ services:
     ports:
       - "9123:9123"
     volumes:
-      - "./archery/settings.py:/opt/archery/archer/settings.py"
+      - "./archery/settings.py:/opt/archery/archery/settings.py"
       - "./archery/downloads:/opt/archery/downloads"
     command: ["bash","/opt/archery/src/docker/startup.sh"]
     environment:
