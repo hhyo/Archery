@@ -21,7 +21,8 @@
 archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
-#### docker-compose
+准备配置文件以及docker-compose.yml，mysql和mongo可按需选择
+#### docker-compose.yml
 
 ```yaml
 version: '3'
@@ -44,7 +45,7 @@ services:
     container_name: mongo
     restart: always
     volumes:
-      - "./mongo:/etc/mongo"
+      - "./mongo/datadir:/data/db"
     ports:
       - 27017:27017
     environment:
@@ -74,7 +75,13 @@ services:
       NGINX_PORT: 9123
 
 ```
+
+#### 启动
+
 ```bash
+#启动
+docker-compose -f docker-compose.yml up -d
+
 #表结构初始化
 docker exec -ti archery /bin/bash
 cd /opt/archery
@@ -85,7 +92,7 @@ python3 manage.py migrate
 #创建管理用户
 python3 manage.py createsuperuser
 
-#启动日志查看和问题排查
+#日志查看和问题排查
 docker logs archery
 ```
 
