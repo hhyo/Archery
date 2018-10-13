@@ -3,10 +3,11 @@ import datetime
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
 from django.urls import reverse
 
 from common.config import SysConfig
@@ -87,7 +88,7 @@ def authenticateEntry(request):
             group = Group.objects.get(name=default_auth_group)
             user.groups.add(group)
         except Exception:
-            logger.error('无name={}的权限组，无法默认添加'.format(default_auth_group))
+            logger.error('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
 
         # 调用了django内置登录方法，防止管理后台二次登录
         user = authenticate(username=username, password=password)
@@ -106,32 +107,40 @@ def sign_up(request):
     password2 = request.POST.get('password2')
     display = request.POST.get('display')
     email = request.POST.get('email')
+    result = {'status': 0, 'msg': 'ok', 'data': None}
 
-    if username is None or password is None:
-        context = {'errMsg': '用户名和密码不能为空'}
-        return render(request, 'error.html', context)
-    if len(Users.objects.filter(username=username)) > 0:
-        context = {'errMsg': '用户名已存在'}
-        return render(request, 'error.html', context)
-    if password != password2:
-        context = {'errMsg': '两次输入密码不一致'}
-        return render(request, 'error.html', context)
-
-    # 添加用户并且添加到默认组
-    Users.objects.create_user(username=username,
-                              password=password,
-                              display=display,
-                              email=email,
-                              is_active=1,
-                              is_staff=1)
-    default_auth_group = SysConfig().sys_config.get('default_auth_group', '')
-    try:
-        user = Users.objects.get(username=username)
-        group = Group.objects.get(name=default_auth_group)
-        user.groups.add(group)
-    except Exception:
-        logger.error('无name={}的权限组，无法默认添加'.format(default_auth_group))
-    return render(request, 'login.html')
+    if not (username and password):
+        result['status'] = 1
+        result['msg'] = '用户名和密码不能为空'
+    elif len(Users.objects.filter(username=username)) > 0:
+        result['status'] = 1
+        result['msg'] = '用户名已存在'
+    elif password != password2:
+        result['status'] = 1
+        result['msg'] = '两次输入密码不一致'
+    else:
+        # 验证密码
+        try:
+            validate_password(password)
+        except ValidationError as msg:
+            result['status'] = 1
+            result['msg'] = str(msg)
+        else:
+            # 添加用户并且添加到默认权限组
+            Users.objects.create_user(username=username,
+                                      password=password,
+                                      display=display,
+                                      email=email,
+                                      is_active=1,
+                                      is_staff=1)
+            default_auth_group = SysConfig().sys_config.get('default_auth_group', '')
+            try:
+                user = Users.objects.get(username=username)
+                group = Group.objects.get(name=default_auth_group)
+                user.groups.add(group)
+            except Exception:
+                logger.error('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 退出登录

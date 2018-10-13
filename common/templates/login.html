@@ -40,44 +40,41 @@
 </div>
 
 <!-- 注册模态框-->
-<form id="from-sign-up" action="/signup/" method="post" style="display:inline-block;">
-    {% csrf_token %}
-    <div class="modal fade" id="sign-up" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">注册账号</h4>
+<div class="modal fade" id="sign-up" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">注册账号</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="username" placeholder="用户名">
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="username" placeholder="用户名">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="display" placeholder="昵称">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="email" placeholder="邮箱">
-                    </div>
-                    <div class="form-group">
-                        <input type="password" class="form-control" name="password" placeholder="密码">
-                    </div>
-                    <div class="form-group">
-                        <input type="password" class="form-control" name="password2" placeholder="密码确认">
-                    </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="display" placeholder="昵称">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" id="email" placeholder="邮箱">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-control" id="password" placeholder="密码">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-control" id="password2" placeholder="密码确认">
+                </div>
 
-                    <div class="form-group">
-                    </div>
+                <div class="form-group">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-success">确认提交</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="btnSign" type="submit" class="btn btn-success">确认提交</button>
             </div>
         </div>
     </div>
-</form>
+</div>
 
 
 <!-- 模态框（Modal） -->
@@ -111,8 +108,8 @@
 <!-- 包括所有已编译的插件 -->
 <script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
 </body>
+<!-- 解决CSRF-->
 <script>
-    <!-- 解决CSRF-->
     $(function () {
         $.ajaxSetup({
             headers: {"X-CSRFToken": getCookie("csrftoken")}
@@ -156,19 +153,54 @@
     $('#btnLogin').click(function () {
         $('#btnLogin').addClass('disabled');
         $('#btnLogin').prop('disabled', true);
-        authenticateUser();
+        username = $('#inputUsername').val();
+        password = $('#inputPassword').val();
+        authenticateUser(username, password);
     });
 
-    function authenticateUser() {
-        var inputUsername = $('#inputUsername');
-        var inputPassword = $('#inputPassword');
+    $('#btnSign').click(function () {
+        $('#btnSign').addClass('disabled');
+        $('#btnSign').prop('disabled', true);
+        $.ajax({
+            type: "post",
+            url: "/signup/",
+            dataType: "json",
+            data: {
+                username: $("#username").val(),
+                password: $("#password").val(),
+                password2: $("#password2").val(),
+                display: $("#display").val(),
+                email: $("#email").val(),
+            },
+            complete: function () {
+                $('#btnSign').removeClass('disabled');
+                $('#btnSign').prop('disabled', false);
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    $("#sign-up").modal('hide');
+                    alert('注册成功!');
+                    var username = $("#username").val();
+                    var password = $("#password").val();
+                    authenticateUser(username, password)
+                } else {
+                    alert("status: " + data.status + "\nmsg: ");
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+    });
+
+    function authenticateUser(username, password) {
         $.ajax({
             type: "post",
             url: "/authenticate/",
             dataType: "json",
             data: {
-                username: inputUsername.val(),
-                password: inputPassword.val()
+                username: username,
+                password: password
             },
             complete: function () {
                 $('#btnLogin').removeClass('disabled');
