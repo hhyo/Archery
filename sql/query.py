@@ -463,10 +463,6 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_content = sql_content.strip()
-    if sql_content[-1] != ";":
-        result['status'] = 1
-        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 获取用户信息
     user = request.user
@@ -635,10 +631,6 @@ def explain(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_content = sql_content.strip()
-    if sql_content[-1] != ";":
-        result['status'] = 1
-        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 过滤非查询的语句
     if re.match(r"^explain", sql_content.lower()):

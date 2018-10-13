@@ -30,10 +30,7 @@ def sqladvisorcheck(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_content = sql_content.strip()
-    if sql_content[-1] != ";":
-        result['status'] = 1
-        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
+
     try:
         user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:

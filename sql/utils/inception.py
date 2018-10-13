@@ -222,6 +222,13 @@ class InceptionDao(object):
         # 回滚数据倒序展示
         listExecuteResult.reverse()
         listBackupSql = []
+        # 创建连接
+        conn = MySQLdb.connect(host=self.inception_remote_backup_host,
+                               user=self.inception_remote_backup_user,
+                               passwd=self.inception_remote_backup_password,
+                               port=self.inception_remote_backup_port,
+                               charset='utf8')
+        cur = conn.cursor()
         for row in listExecuteResult:
             try:
                 # 获取backup_dbname
@@ -233,16 +240,14 @@ class InceptionDao(object):
                 opidTime = sequence.replace("'", "")
                 sqlTable = "select tablename from %s.$_$Inception_backup_information$_$ where opid_time='%s';" % (
                     backupDbName, opidTime)
-                listTables = self._fetchall(sqlTable, self.inception_remote_backup_host,
-                                            self.inception_remote_backup_port, self.inception_remote_backup_user,
-                                            self.inception_remote_backup_password, '')
+                cur.execute(sqlTable)
+                listTables = cur.fetchall()
                 if listTables:
                     tableName = listTables[0][0]
                     sqlBack = "select rollback_statement from %s.%s where opid_time='%s'" % (
                         backupDbName, tableName, opidTime)
-                    listBackup = self._fetchall(sqlBack, self.inception_remote_backup_host,
-                                                self.inception_remote_backup_port, self.inception_remote_backup_user,
-                                                self.inception_remote_backup_password, '')
+                    cur.execute(sqlBack)
+                    listBackup = cur.fetchall()
                     block_rollback_sql_list = [sql]
                     block_rollback_sql = '\n'.join([back_info[0] for back_info in listBackup])
                     block_rollback_sql_list.append(block_rollback_sql)

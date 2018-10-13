@@ -153,11 +153,6 @@ def simplecheck(request):
 
     sql_content = sql_content.strip()
 
-    if sql_content[-1] != ";":
-        result['status'] = 1
-        result['msg'] = 'SQL语句结尾没有以;结尾，请重新修改并提交！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
     # 交给inception进行自动审核
     try:
         inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
