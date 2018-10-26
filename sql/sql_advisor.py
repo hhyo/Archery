@@ -16,7 +16,7 @@ logger = logging.getLogger('default')
 
 # 获取SQLAdvisor的优化结果
 @permission_required('sql.optimize_sqladvisor', raise_exception=True)
-def sqladvisorcheck(request):
+def sqladvisor(request):
     sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
     dbName = request.POST.get('db_name')
@@ -57,5 +57,5 @@ def sqladvisorcheck(request):
         result['data'] = stdout
     except Exception:
         logger.error(traceback.format_exc())
-        result['data'] = 'sqladvisor运行报错，请联系管理员'
+        result['data'] = 'sqladvisor运行报错，请检查日志'
     return HttpResponse(json.dumps(result), content_type='application/json')

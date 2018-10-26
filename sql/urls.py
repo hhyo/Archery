@@ -4,7 +4,7 @@ from django.urls import path
 
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, group, \
-    sql_advisor, binlog2sql
+    sql_advisor, binlog2sql, soar
 from sql.utils import jobs
 
 urlpatterns = [
@@ -89,8 +89,9 @@ urlpatterns = [
 
     path('slowquery/review/', slowlog.slowquery_review),
     path('slowquery/review_history/', slowlog.slowquery_review_history),
-    path('slowquery/sqladvisor/', sql_advisor.sqladvisorcheck),
+    path('slowquery/sqladvisor/', sql_advisor.sqladvisor),
     path('slowquery/sqltuning/', sql_tuning.tuning),
+    path('slowquery/soar/', soar.soar),
 
     path('db_diagnostic/process/', db_diagnostic.process),
     path('db_diagnostic/create_kill_session/', db_diagnostic.create_kill_session),

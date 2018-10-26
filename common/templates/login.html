@@ -184,7 +184,7 @@
                     var password = $("#password").val();
                     authenticateUser(username, password)
                 } else {
-                    alert("status: " + data.status + "\nmsg: ");
+                    alert("status: " + data.status + "\nmsg: " + data.msg);
                 }
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
