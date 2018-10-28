@@ -21,7 +21,6 @@
 archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
-准备配置文件以及docker-compose.yml，mysql和mongo可按需选择
 #### docker-compose.yml
 
 ```yaml
@@ -62,7 +61,7 @@ services:
       - "./inception/inc.cnf:/etc/inc.cnf"
 
   archery:
-    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery:1.3.3
+    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery:1.3.5
     container_name: archery
     restart: always
     ports:
@@ -102,7 +101,7 @@ docker logs archery
 
 依赖或引用项目
 ===============
-- [inception](https://github.com/mysql-inception/inception)
+- [inception](https://github.com/hhyo/inception)
 - [Themis](https://github.com/CreditEaseDBA/Themis)
 - [binlog2sql](https://github.com/danfengcao/binlog2sql)
 - [aquila_v2](https://github.com/thinkdb/aquila_v2)

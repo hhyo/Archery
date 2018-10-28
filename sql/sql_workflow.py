@@ -28,7 +28,6 @@ from sql.utils.workflow import Workflow
 from .models import SqlWorkflow
 
 logger = logging.getLogger('default')
-login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 workflowOb = Workflow()
 

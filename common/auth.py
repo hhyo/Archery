@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import simplejson as json
 from django.conf import settings
@@ -12,8 +13,9 @@ from django.urls import reverse
 
 from common.config import SysConfig
 from sql.models import Users
-from sql.views import logger
-from sql.sql_workflow import login_failure_counter, logger
+
+logger = logging.getLogger('default')
+login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 
 
 def loginAuthenticate(username, password):
