@@ -4,6 +4,7 @@ import subprocess
 import traceback
 
 import simplejson as json
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponse
 from common.config import SysConfig
@@ -15,7 +16,7 @@ logger = logging.getLogger('default')
 
 
 class Soar(PermissionRequiredMixin):
-    permission_required = 'sql.soar'
+    permission_required = 'sql.optimize_soar'
     raise_exception = True
 
     def __init__(self):
@@ -24,6 +25,7 @@ class Soar(PermissionRequiredMixin):
 
 
 # 获取soar的处理结果
+@permission_required('sql.optimize_soar', raise_exception=True)
 def soar(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
@@ -51,8 +53,9 @@ def soar(request):
                                                           port=instance_info.port,
                                                           db=db_name)
     # 获取测试实例的连接信息和soar程序路径
-    test_dsn = Soar().soar_test_dsn
-    soar_path = Soar().soar_path
+    soar_cfg = Soar()
+    test_dsn = soar_cfg.soar_test_dsn
+    soar_path = soar_cfg.soar_path
     if not (soar_path and test_dsn):
         result['status'] = 1
         result['msg'] = '请配置soar_path和test_dsn！'

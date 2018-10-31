@@ -372,6 +372,7 @@
                         $("#sqladvisor-result").show();
                         $("#explain_result").hide();
                         $("#tuning_result").hide();
+                        $("#soar-result").hide();
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
                     }
@@ -443,9 +444,10 @@
                                 locale: 'zh-CN'
                             });
                         }
-                        $("#sqladvisor-result").hide();
                         $("#explain_result").show();
+                        $("#sqladvisor-result").hide();
                         $("#tuning_result").hide();
+                        $("#soar-result").hide();
 
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
@@ -770,9 +772,10 @@
                                 $("#div_sql_profile").hide();
                             }
                         }
+                        $("#tuning_result").show();
                         $("#sqladvisor-result").hide();
                         $("#explain_result").hide();
-                        $("#tuning_result").show();
+                        $("#soar-result").hide();
 
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
