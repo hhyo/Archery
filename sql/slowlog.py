@@ -2,7 +2,7 @@
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 
-from django.db.models import F, Sum, Value as V
+from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
 from django.http import HttpResponse
 import datetime
@@ -55,15 +55,11 @@ def slowquery_review(request):
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
+                slowqueryhistory__ts_min__range=(StartTime, EndTime)
+            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
+                CreateTime=Max('slowqueryhistory__ts_max'),
+                DBName=Max('slowqueryhistory__db_max'),  # 数据库
+                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
                 MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
                 MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
                 ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
@@ -73,15 +69,11 @@ def slowquery_review(request):
             slowsql_obj_count = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
+                slowqueryhistory__ts_min__range=(StartTime, EndTime)
+            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
+                CreateTime=Max('slowqueryhistory__ts_max'),
+                DBName=Max('slowqueryhistory__db_max'),  # 数据库
+                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
                 MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
                 MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
                 ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
@@ -92,14 +84,10 @@ def slowquery_review(request):
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
+            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
+                CreateTime=Max('slowqueryhistory__ts_max'),
+                DBName=Max('slowqueryhistory__db_max'),  # 数据库
+                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
                 MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
                 MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
                 ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
@@ -109,14 +97,10 @@ def slowquery_review(request):
             slowsql_obj_count = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__ts_min__range=(StartTime, EndTime),
-                last_seen__range=(StartTime, EndTime)
-            ).annotate(CreateTime=F('last_seen'),
-                       SQLId=F('checksum'),
-                       DBName=F('slowqueryhistory__db_max'),  # 数据库
-                       SQLText=F('fingerprint'),  # SQL语句
-                       ).values(
-                'CreateTime', 'SQLId', 'DBName', 'SQLText'
-            ).annotate(
+            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
+                CreateTime=Max('slowqueryhistory__ts_max'),
+                DBName=Max('slowqueryhistory__db_max'),  # 数据库
+                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
                 MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
                 MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
                 ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数

@@ -116,15 +116,8 @@
         //实例变动自动获取数据库
         $("#instance_name").change(function () {
             sessionStorage.setItem('slow_query_instance_name', $("#instance_name").val());
+            sessionStorage.removeItem('slow_query_db_name');
             sessionStorage.removeItem('SQLId');
-            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-            if (slowsql_active_li_id === 'slowsql_tab') {
-                slowquery_review()
-            }
-            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                slowquery_review_history()
-
-            }
             get_db_list();
 
         });
@@ -140,6 +133,22 @@
                     instance_name: $("#instance_name option:selected").text()
                 },
                 complete: function () {
+                    if (sessionStorage.getItem('slow_query_db_name')) {
+                        $("#db_name").selectpicker();
+                        var myObject = {};
+                        myObject.db_name = sessionStorage.getItem('slow_query_db_name');
+                        $("#db_name").selectpicker('val', myObject.db_name).trigger("change");;
+                    }
+                    else {
+                        var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+                        if (slowsql_active_li_id === 'slowsql_tab') {
+                            slowquery_review()
+                        }
+                        else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                            slowquery_review_history()
+
+                        }
+                    }
                 },
                 success: function (data) {
                     if (data.status == 0) {
@@ -164,6 +173,7 @@
 
         //数据库变动自动获取日志
         $("#db_name").change(function () {
+            sessionStorage.setItem('slow_query_db_name', $("#db_name").val());
             sessionStorage.removeItem('SQLId');
             var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
             if (slowsql_active_li_id === 'slowsql_tab') {
@@ -180,15 +190,15 @@
             sessionStorage.removeItem('SQLId');
             sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
             if (sessionStorage.getItem('slow_query_instance_name')) {
-                $("#instance_name").val(sessionStorage.getItem('slow_query_instance_name'));
-                get_db_list();
+                var instance_name = sessionStorage.getItem('slow_query_instance_name');
                 var start_date = sessionStorage.getItem('start_date');
                 var end_date = sessionStorage.getItem('end_date');
+                $("#instance_name").val(instance_name);
                 if (start_date && end_date) {
                     $('#reservation').data('daterangepicker').setStartDate(start_date);
                     $('#reservation').data('daterangepicker').setEndDate(end_date);
                 }
-                slowquery_review()
+                get_db_list();
             }
         });
 
