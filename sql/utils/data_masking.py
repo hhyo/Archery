@@ -170,7 +170,7 @@ class Masking(object):
                 if select_item['type'] not in ('FIELD_ITEM', 'aggregate'):
                     raise Exception('不支持该查询语句脱敏！')
                 if select_item['type'] == 'aggregate':
-                    if select_item['aggregate'].get('type') != 'FIELD_ITEM':
+                    if select_item['aggregate'].get('type') not in ('FIELD_ITEM', 'INT_ITEM'):
                         raise Exception('不支持该查询语句脱敏！')
 
             # 获取select信息的规则，仅处理type为FIELD_ITEM和aggregate类型的select信息，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*],
