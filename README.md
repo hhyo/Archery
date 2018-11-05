@@ -61,7 +61,7 @@ services:
       - "./inception/inc.cnf:/etc/inc.cnf"
 
   archery:
-    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery:1.3.5
+    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery
     container_name: archery
     restart: always
     ports:
