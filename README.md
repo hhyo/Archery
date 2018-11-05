@@ -101,9 +101,11 @@ docker logs archery
 
 依赖或引用项目
 ===============
+- [archer](https://github.com/jly8866/archer)
 - [inception](https://github.com/hhyo/inception)
 - [Themis](https://github.com/CreditEaseDBA/Themis)
 - [binlog2sql](https://github.com/danfengcao/binlog2sql)
-- [aquila_v2](https://github.com/thinkdb/aquila_v2)
 - [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
+- [SOAR](https://github.com/XiaoMi/soar)
 - [SchemaSync](https://github.com/seanlook/SchemaSync)
+- [aquila_v2](https://github.com/thinkdb/aquila_v2)
