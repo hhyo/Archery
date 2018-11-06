@@ -383,6 +383,7 @@ class Permission(models.Model):
             ('sql_execute', '执行SQL上线工单'),
             ('optimize_sqladvisor', '执行SQLAdvisor'),
             ('optimize_sqltuning', '执行SQLTuning'),
+            ('optimize_soar', '执行SOAR'),
             ('query_applypriv', '申请查询权限'),
             ('query_mgtpriv', '管理查询权限'),
             ('query_review', '审核查询权限'),
