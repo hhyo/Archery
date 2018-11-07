@@ -56,8 +56,9 @@ RUN cd /opt \
     && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.3.6 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
-    && cp /opt/archery/src/docker/connections.py /opt/venv4archery/lib/python3.6/site-packages/MySQLdb/connections.py \
-    && cp /opt/archery/src/docker/nginx.conf /etc/nginx/
+    && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
+    && cp /opt/archery/src/docker/soar.yaml /etc/
+
 
 ENV LANG en_US.UTF-8
 ENV LC_ALL zh_CN.utf8

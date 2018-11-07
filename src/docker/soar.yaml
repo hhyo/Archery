@@ -1,0 +1,46 @@
+# 是否允许测试环境与线上环境配置相同
+allow-online-as-test: false
+# 是否清理测试时产生的临时文件
+drop-test-temporary: true
+# 语法检查小工具
+only-syntax-check: false
+sampling-data-factor: 100
+sampling: true
+sampling-statistic-target: 100
+profiling: false
+trace: false
+# 日志级别，[0:Emergency, 1:Alert, 2:Critical, 3:Error, 4:Warning, 5:Notice, 6:Informational, 7:Debug]
+log-level: 7
+log-output: /opt/archery/downloads/log/soar.log
+# 优化建议输出格式
+report-type: markdown
+ignore-rules:
+- ""
+# 启发式算法相关配置
+max-join-table-count: 5
+max-group-by-cols-count: 5
+max-distinct-count: 5
+max-index-cols-count: 5
+max-total-rows: 9999999
+spaghetti-query-length: 2048
+allow-drop-index: false
+# EXPLAIN相关配置
+explain-sql-report-type: pretty
+explain-type: extended
+explain-format: traditional
+explain-warn-select-type:
+- ""
+explain-warn-access-type:
+- ALL
+explain-max-keys: 3
+explain-min-keys: 0
+explain-max-rows: 10000
+explain-warn-extra:
+- ""
+explain-max-filtered: 100
+explain-warn-scalability:
+- O(n)
+query: ""
+list-heuristic-rules: false
+list-test-sqls: false
+verbose: true
