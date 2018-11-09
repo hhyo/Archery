@@ -17,16 +17,18 @@ class Aliyun(object):
     def __init__(self):
         prpCryptor = Prpcrypt()
         try:
-            auth = AliyunAccessKey.objects.filter(is_enable=1)
-            ak = prpCryptor.decrypt(auth[0].ak)
-            secret = prpCryptor.decrypt(auth[0].secret)
+            auth = AliyunAccessKey.objects.get(is_enable=1)
+            ak = prpCryptor.decrypt(auth.ak)
+            secret = prpCryptor.decrypt(auth.secret)
+            region_id = prpCryptor.decrypt(auth.region_id)
         except Exception:
             logger.error(traceback.format_exc())
             logger.error('没有找到有效的ak信息！')
         else:
             self.clt = client.AcsClient(
                 ak=ak,
-                secret=secret)
+                secret=secret,
+                region_id=region_id)
 
     def request_api(self, request, *values):
         if values:

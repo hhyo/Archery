@@ -22,7 +22,7 @@ def process(request):
 
     base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage'):
             result = aliyun_process_status(request)
         else:
@@ -57,7 +57,7 @@ def create_kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage'):
             result = aliyun_create_kill_session(request)
         else:
@@ -83,7 +83,7 @@ def kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage'):
             result = aliyun_kill_session(request)
         else:
@@ -103,7 +103,7 @@ def tablesapce(request):
     instance_name = request.POST.get('instance_name')
 
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
         if SysConfig().sys_config.get('aliyun_rds_manage'):
             result = aliyun_sapce_status(request)
         else:
