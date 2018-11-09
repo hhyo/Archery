@@ -40,7 +40,7 @@ services:
       MYSQL_ROOT_PASSWORD: xxx
 
   mongo:
-    image: mongo
+    image: mongo:3.6
     container_name: mongo
     restart: always
     volumes:
@@ -75,9 +75,13 @@ services:
 
 ```
 
+#### 准备构建配置
+具体可参考：https://github.com/hhyo/archery/raw/master/src/docker/install.zip
+
 #### 启动
 
 ```bash
+
 #启动
 docker-compose -f docker-compose.yml up -d
 
