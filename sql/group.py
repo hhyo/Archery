@@ -45,15 +45,21 @@ def associated_objects(request):
     '''
     group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('type')
+    limit = int(request.POST.get('limit'))
+    offset = int(request.POST.get('offset'))
+    limit = offset + limit
+    search = request.POST.get('search', '')
 
     if object_type:
-        rows = GroupRelations.objects.filter(group_id=group_id, object_type=object_type).values(
-            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = GroupRelations.objects.filter(group_id=group_id, object_type=object_type).count()
+        rows = GroupRelations.objects.filter(group_id=group_id, object_type=object_type, object_name__contains=search)[
+               offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
+                                    'create_time')
+        count = GroupRelations.objects.filter(group_id=group_id, object_type=object_type,
+                                              object_name__contains=search).count()
     else:
-        rows = GroupRelations.objects.filter(group_id=group_id).values(
+        rows = GroupRelations.objects.filter(group_id=group_id, object_name__contains=search)[offset:limit].values(
             'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = GroupRelations.objects.filter(group_id=group_id).count()
+        count = GroupRelations.objects.filter(group_id=group_id, object_name__contains=search).count()
     rows = [row for row in rows]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
