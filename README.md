@@ -21,67 +21,12 @@
 archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
 inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
 
-#### docker-compose.yml
-
-```yaml
-version: '3'
-
-services:
-  mysql:
-    image: mysql:5.7
-    container_name: mysql
-    restart: always
-    ports:
-      - "3306:3306"
-    volumes:
-      - "./mysql/my.cnf:/etc/mysql/my.cnf"
-      - "./mysql/datadir:/var/lib/mysql"
-    environment:
-      MYSQL_ROOT_PASSWORD: xxx
-
-  mongo:
-    image: mongo:3.6
-    container_name: mongo
-    restart: always
-    volumes:
-      - "./mongo/datadir:/data/db"
-    ports:
-      - 27017:27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: xxx
-      MONGO_INITDB_ROOT_PASSWORD: xxx
-
-  inception:
-    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/inception
-    container_name: inception
-    restart: always
-    ports:
-      - "6669:6669"
-    volumes:
-      - "./inception/inc.cnf:/etc/inc.cnf"
-
-  archery:
-    image: registry.cn-hangzhou.aliyuncs.com/lihuanhuan/archery
-    container_name: archery
-    restart: always
-    ports:
-      - "9123:9123"
-    volumes:
-      - "./archery/settings.py:/opt/archery/archery/settings.py"
-      - "./archery/downloads:/opt/archery/downloads"
-    command: ["bash","/opt/archery/src/docker/startup.sh"]
-    environment:
-      NGINX_PORT: 9123
-
-```
-
 #### 准备构建配置
 具体可参考：https://github.com/hhyo/archery/raw/master/src/docker/install.zip
 
 #### 启动
 
 ```bash
-
 #启动
 docker-compose -f docker-compose.yml up -d
 
@@ -98,6 +43,9 @@ python3 manage.py createsuperuser
 #日志查看和问题排查
 docker logs archery
 ```
+
+#### 访问
+http://127.0.0.1:9123/
 
 手动安装
 ===============
