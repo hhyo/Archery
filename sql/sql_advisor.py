@@ -35,13 +35,13 @@ def sqladvisor(request):
         user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
         result['status'] = 1
-        result['msg'] = '你所在组未关联该主库！'
+        result['msg'] = '你所在组未关联该实例！'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     if verbose is None or verbose == '':
         verbose = 1
 
-    # 取出主库的连接信息
+    # 取出实例的连接信息
     instance_info = Instance.objects.get(instance_name=instance_name)
 
     # 提交给sqladvisor获取审核结果

@@ -76,7 +76,7 @@ def _send(audit_id, msg_type, **kwargs):
     # 准备消息格式
     if status == WorkflowDict.workflow_status['audit_wait']:  # 申请阶段
         msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
-        # 接收人，发送给该项目组内对应权限组所有的用户
+        # 接收人，发送给该资源组内对应权限组所有的用户
         auth_group_names = Group.objects.get(id=audit_info.current_audit).name
         msg_email_reciver = [user.email for user in
                              auth_group_users([auth_group_names], audit_info.group_id)]
@@ -113,7 +113,7 @@ def _send(audit_id, msg_type, **kwargs):
             workflow_audit_remark)
     elif status == WorkflowDict.workflow_status['audit_abort']:  # 审核取消，通知所有审核人
         msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
-        # 接收人，发送给该项目组内对应权限组所有的用户
+        # 接收人，发送给该资源组内对应权限组所有的用户
         auth_group_names = [Group.objects.get(id=auth_group_id).name for auth_group_id in
                             audit_info.audit_auth_groups.split(',')]
         msg_email_reciver = [user.email for user in auth_group_users(auth_group_names, audit_info.group_id)]

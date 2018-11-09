@@ -244,7 +244,7 @@ def applyforprivileges(request):
     try:
         user_instances(request.user, 'slave').get(instance_name=instance_name)
     except Exception:
-        context = {'errMsg': '你所在组未关联该从库！'}
+        context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
     # 判断是否需要限制到表级别的权限

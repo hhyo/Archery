@@ -116,7 +116,7 @@ def instances(request):
 @superuser_required
 def addrelation(request):
     '''
-    type：(0, '用户'), (1, '角色'), (2, '主库'), (3, '从库')
+    type：(0, '用户'), (1, '实例')
     '''
     group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('object_type')

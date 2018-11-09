@@ -28,7 +28,7 @@ def slowquery_review(request):
     try:
         user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
-        result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
@@ -123,7 +123,7 @@ def slowquery_review_history(request):
     try:
         user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
-        result = {'status': 1, 'msg': '你所在组未关联该主库', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例

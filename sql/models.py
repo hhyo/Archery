@@ -40,7 +40,7 @@ class SqlGroup(models.Model):
         verbose_name_plural = u'资源组管理'
 
 
-# 组关系表（用户与组、主库与组等）
+# 组关系表（用户与组、实例与组等）
 class GroupRelations(models.Model):
     object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
     object_id = models.IntegerField('关联对象主键ID', )
@@ -61,7 +61,7 @@ class GroupRelations(models.Model):
 # 各个线上实例配置
 class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
-    type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
+    type = models.CharField('实例类型', max_length=6, choices=(('master', '实例'), ('slave', '实例')))
     db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=3306)
@@ -398,7 +398,7 @@ class Permission(models.Model):
 # 阿里云rds配置信息
 class AliyunRdsConfig(models.Model):
     rds_dbinstanceid = models.CharField('阿里云RDS实例ID', max_length=100, unique=True)
-    instance_name = models.CharField('对应主库实例名称', max_length=50, unique=True)
+    instance_name = models.CharField('对应实例实例名称', max_length=50, unique=True)
 
     def __int__(self):
         return self.rds_dbinstanceid

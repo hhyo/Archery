@@ -219,7 +219,7 @@ def autoreview(request):
     try:
         user_instances(request.user, 'master').get(instance_name=instance_name)
     except Exception:
-        context = {'errMsg': '你所在组未关联该主库！'}
+        context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
     # # 删除注释语句

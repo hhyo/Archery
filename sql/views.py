@@ -164,7 +164,7 @@ def dashboard(request):
 # SQL在线查询页面
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
-    # 获取用户关联从库列表
+    # 获取用户关联实例列表
     instances = [slave.instance_name for slave in user_instances(request.user, 'slave')]
 
     context = {'instances': instances}
@@ -195,7 +195,7 @@ def sqladvisor(request):
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
 def queryapplylist(request):
     user = request.user
-    # 获取项目组
+    # 获取资源组
     group_list = user_groups(user)
 
     context = {'group_list': group_list}
@@ -252,7 +252,7 @@ def workflowsdetail(request, audit_id):
 # 配置管理页面
 @superuser_required
 def config(request):
-    # 获取所有项目组名称
+    # 获取所有资源组名称
     group_list = SqlGroup.objects.all()
 
     # 获取所有权限组

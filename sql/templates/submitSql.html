@@ -339,7 +339,7 @@
     </script>
     <!--group -->
     <script>
-        // 获取主库信息和审批流程
+        // 获取实例信息和审批流程
         $("#group_name").change(function () {
             $.ajax({
                 type: "post",
@@ -352,7 +352,7 @@
                 complete: function () {
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
-                        //填充主库信息
+                        //填充实例信息
                         $('#instance_name').selectpicker();
                         var myObject = {};
                         myObject.instance_name = sessionStorage.getItem('editClustername');
