@@ -40,7 +40,8 @@ class Aliyun(object):
         return json.dumps(json.loads(result.decode('utf-8')), indent=4, sort_keys=False, ensure_ascii=False)
 
     # 阿里云2017-12-10T16:00:00Z时间加上8小时时区显示
-    def aliyun_time_format(self, str_time):
+    @staticmethod
+    def aliyun_time_format(str_time):
         if 'T' in str_time:
             Ymd = str_time.split('T')[0]
             HMS = str_time.split('T')[1].split('Z')[0]

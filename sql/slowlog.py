@@ -15,9 +15,8 @@ import logging
 
 logger = logging.getLogger('default')
 
-if SysConfig().sys_config.get('aliyun_rds_manage'):
-    from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
-        slowquery_review_history as aliyun_rds_slowquery_review_history
+from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
+    slowquery_review_history as aliyun_rds_slowquery_review_history
 
 
 # 获取SQL慢日志统计
@@ -34,11 +33,8 @@ def slowquery_review(request):
     # 判断是RDS还是其他实例
     instance_info = Instance.objects.get(instance_name=instance_name)
     if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
-        if SysConfig().sys_config.get('aliyun_rds_manage'):
-            # 调用阿里云慢日志接口
-            result = aliyun_rds_slowquery_review(request)
-        else:
-            raise Exception('未开启rds管理，无法查看rds数据！')
+        # 调用阿里云慢日志接口
+        result = aliyun_rds_slowquery_review(request)
     else:
         StartTime = request.POST.get('StartTime')
         EndTime = request.POST.get('EndTime')
@@ -129,11 +125,8 @@ def slowquery_review_history(request):
     # 判断是RDS还是其他实例
     instance_info = Instance.objects.get(instance_name=instance_name)
     if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
-        if SysConfig().sys_config.get('aliyun_rds_manage'):
-            # 调用阿里云慢日志接口
-            result = aliyun_rds_slowquery_review_history(request)
-        else:
-            raise Exception('未开启rds管理，无法查看rds数据！')
+        # 调用阿里云慢日志接口
+        result = aliyun_rds_slowquery_review_history(request)
     else:
         StartTime = request.POST.get('StartTime')
         EndTime = request.POST.get('EndTime')
