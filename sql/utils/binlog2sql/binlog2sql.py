@@ -4,7 +4,7 @@
 import datetime
 import sys
 
-import pymysql
+import MySQLdb
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
@@ -45,7 +45,7 @@ class Binlog2sql(object):
         self.sql_type = [t.upper() for t in sql_type] if sql_type else []
 
         self.binlogList = []
-        self.connection = pymysql.connect(**self.conn_setting)
+        self.connection = MySQLdb.connect(**self.conn_setting)
         with self.connection as cursor:
             cursor.execute("SHOW MASTER STATUS")
             self.eof_file, self.eof_pos = cursor.fetchone()[:2]
