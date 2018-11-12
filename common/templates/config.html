@@ -673,17 +673,24 @@
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "/check/inception/",
                 dataType: "json",
-                data: {},
+                data: {
+                    inception_host:$("#inception_host").val(),
+                    inception_port:$("#inception_port").val(),
+                    inception_remote_backup_host:$("#inception_remote_backup_host").val(),
+                    inception_remote_backup_port:$("#inception_remote_backup_port").val(),
+                    inception_remote_backup_user:$("#inception_remote_backup_user").val(),
+                    inception_remote_backup_password:$("#inception_remote_backup_password").val(),
+                },
                 complete: function () {
                     $("#check_incption").removeClass('disabled');
                     $("#check_incption").prop('disabled', false);
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('连接成功')
+                        alert('inception和备份库测试连接成功，请点击保存生效！')
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
                     }
@@ -699,17 +706,24 @@
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "/check/email/",
                 dataType: "json",
-                data: {},
+                data: {
+                    mail:$("#mail").val(),
+                    mail_ssl:$("#mail_ssl").val(),
+                    mail_smtp_server:$("#mail_smtp_server").val(),
+                    mail_smtp_port:$("#mail_smtp_port").val(),
+                    mail_smtp_user:$("#mail_smtp_user").val(),
+                    mail_smtp_password:$("#mail_smtp_password").val(),
+                },
                 complete: function () {
                     $("#check_email").removeClass('disabled');
                     $("#check_email").prop('disabled', false);
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('连接成功')
+                        alert('发送成功，注意查收，请点击保存生效！')
                     } else {
                         alert("status: " + data.status + "\nmsg: " + data.msg);
                     }
