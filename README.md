@@ -30,11 +30,11 @@ inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475a
 #启动
 docker-compose -f docker-compose.yml up -d
 
-#表结构初始化
+#表结构初始化（先创建数据库archery，字符集utf8）
 docker exec -ti archery /bin/bash
 cd /opt/archery
 source /opt/venv4archery/bin/activate
-python3 manage.py makemigrations sql  
+python3 manage.py makemigrations sql  #这一步如果遇到报错可忽略
 python3 manage.py migrate 
 
 #创建管理用户
@@ -42,6 +42,7 @@ python3 manage.py createsuperuser
 
 #日志查看和问题排查
 docker logs archery
+/downloads/log/archery.log
 ```
 
 #### 访问
@@ -50,6 +51,10 @@ http://127.0.0.1:9123/
 手动安装
 ===============
 [部署说明](https://github.com/hhyo/archery/wiki/%E9%83%A8%E7%BD%B2)
+
+FAQ(欢迎补充)
+===============
+https://github.com/hhyo/archery/wiki/FAQ
 
 依赖或引用项目
 ===============
