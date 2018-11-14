@@ -4,7 +4,7 @@ import os
 import time
 import traceback
 
-import MySQLdb
+import pymysql
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
@@ -83,7 +83,7 @@ def binlog2sql(request):
         # 获取sql语句，忽略wait_timeout的错误
         try:
             binlog2sql.process_binlog(filename)
-        except MySQLdb.Error:
+        except pymysql.err.OperationalError:
             logger.error(traceback.format_exc())
 
         # 读取前5000行
