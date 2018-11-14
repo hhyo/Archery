@@ -92,7 +92,7 @@ class MailSender(object):
             server.quit()
             logger.debug('邮件推送成功')
         except Exception:
-            logger.error(traceback.format_exc())
+            logger.error('邮件推送失败\n{}'.format(traceback.format_exc()))
 
     @staticmethod
     def send_ding(url, content):
@@ -109,4 +109,4 @@ class MailSender(object):
             requests.post(url=url, json=data)
             logger.debug('钉钉推送成功')
         except Exception:
-            logger.error(traceback.format_exc())
+            logger.error('钉钉推送成功\n{}'.format(traceback.format_exc()))

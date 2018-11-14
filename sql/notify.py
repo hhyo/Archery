@@ -26,6 +26,7 @@ def _send(audit_id, msg_type, **kwargs):
     status = audit_info.current_status
     workflow_title = audit_info.workflow_title
     workflow_from = audit_info.create_user_display
+    group_name = audit_info.group_name
     workflow_url = kwargs.get('workflow_url')
     webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
@@ -65,6 +66,8 @@ def _send(audit_id, msg_type, **kwargs):
                 workflow_detail.table_list,
                 datetime.datetime.strftime(workflow_detail.valid_date, '%Y-%m-%d %H:%M:%S'),
                 workflow_detail.limit_num)
+        else:
+            workflow_content = ''
     elif workflow_type == WorkflowDict.workflow_type['sqlreview']:
         workflow_type_display = WorkflowDict.workflow_type['sqlreview_display']
         workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
@@ -83,8 +86,9 @@ def _send(audit_id, msg_type, **kwargs):
         # 抄送对象
         email_cc = kwargs.get('email_cc', [])
         msg_email_cc = email_cc
-        msg_content = '''发起人：{}\n审批流程：{}\n当前审批：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n当前审批：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
             workflow_from,
+            group_name,
             workflow_auditors,
             current_workflow_auditors,
             workflow_title,
@@ -96,8 +100,9 @@ def _send(audit_id, msg_type, **kwargs):
         msg_email_reciver = [Users.objects.get(username=audit_info.create_user).email]
         # 抄送对象
         msg_email_cc = kwargs.get('email_cc', [])
-        msg_content = '''发起人：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
             workflow_from,
+            group_name,
             workflow_auditors,
             workflow_title,
             workflow_url,
@@ -118,8 +123,9 @@ def _send(audit_id, msg_type, **kwargs):
                             audit_info.audit_auth_groups.split(',')]
         msg_email_reciver = [user.email for user in auth_group_users(auth_group_names, audit_info.group_id)]
         msg_email_cc = []
-        msg_content = '''发起人：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(
+        msg_content = '''发起人：{}\n组：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(
             workflow_from,
+            group_name,
             workflow_title,
             workflow_url)
     else:
@@ -131,6 +137,7 @@ def _send(audit_id, msg_type, **kwargs):
         msg_email_cc = [msg_email_cc]
 
     # 判断是发送钉钉还是发送邮件
+    logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
     if msg_type == 0:
         if sys_config.get('mail'):
             msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
@@ -144,6 +151,6 @@ def _send(audit_id, msg_type, **kwargs):
 
 # 异步调用
 def send_msg(audit_id, msg_type, **kwargs):
-    logger.debug('异步发送消息通知')
+    logger.debug('异步发送消息通知，消息audit_id={}，msg_type={}'.format(audit_id, msg_type))
     p = Thread(target=_send, args=(audit_id, msg_type), kwargs=kwargs)
     p.start()
