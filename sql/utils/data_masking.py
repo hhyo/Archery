@@ -25,10 +25,10 @@ class Masking(object):
 
         if print_info is None:
             result['status'] = 1
-            result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
+            result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误，无法完成脱敏校验，如果需要继续查询请关闭校验'
         elif print_info['errlevel'] != 0:
             result['status'] = 2
-            result['msg'] = 'inception返回异常：\n' + print_info['errmsg']
+            result['msg'] = 'inception返回异常，无法完成脱敏校验，如果需要继续查询请关闭校验：\n' + print_info['errmsg']
         else:
             query_tree = print_info['query_tree']
             # 获取命中脱敏规则的列数据
@@ -38,7 +38,7 @@ class Masking(object):
             except Exception as msg:
                 logger.error(traceback.format_exc())
                 result['status'] = 2
-                result['msg'] = '解析inception语法树获取表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
+                result['msg'] = '解析inception语法树获取表信息出错，无法完成脱敏校验，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg), print_info)
                 return result
 
             # 存在select * 的查询,遍历column_list,获取命中列的index,添加到hit_columns
@@ -107,10 +107,10 @@ class Masking(object):
 
         if print_info is None:
             result['status'] = 1
-            result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
+            result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误，无法校验表权限，如果需要继续查询请关闭校验'
         elif print_info['errlevel'] != 0:
             result['status'] = 2
-            result['msg'] = 'inception返回异常：\n' + print_info['errmsg']
+            result['msg'] = 'inception返回异常，无法校验表权限，如果需要继续查询请关闭校验：\n' + print_info['errmsg']
         else:
             try:
                 table_ref = json.loads(print_info['query_tree'])['table_ref']
@@ -128,7 +128,7 @@ class Masking(object):
                 except Exception as msg:
                     logger.error(traceback.format_exc())
                     result['status'] = 2
-                    result['msg'] = 'inception语法树解析表信息出错：{}\nquery_tree：{}'.format(str(msg), print_info)
+                    result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg), print_info)
                     table_ref = ''
             result['data'] = table_ref
         return result
