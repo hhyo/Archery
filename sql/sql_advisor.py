@@ -32,7 +32,7 @@ def sqladvisor(request):
     sql_content = sql_content.strip()
 
     try:
-        user_instances(request.user, 'master').get(instance_name=instance_name)
+        user_instances(request.user, 'all').get(instance_name=instance_name)
     except Exception:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例！'
