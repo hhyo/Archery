@@ -9,12 +9,12 @@ monitor_db_user="root"
 monitor_db_password="123456"
 monitor_db_database="archery"
 
-#被监控机慢日志位置
+#实例慢日志位置
 slowquery_file="/home/mysql/log_slow.log"
-pt_query_digest="/usr/bin/pt-query-digest"
+pt_query_digest="/usr/bin/pt-query-digest"ƒ
 
-#被监控机连接信息
-hostname="mysql_host:mysql_port" # 被监控机连接信息，和archery主库配置内容保持一致，用于archery做筛选
+#实例连接信息
+hostname="mysql_host:mysql_port" # 和archery实例配置内容保持一致，用于archery做筛选
 
 #获取上次分析时间，初始化时请删除last_analysis_time_$hostname文件，可分析全部日志数据
 if [ -s last_analysis_time_$hostname ]; then
