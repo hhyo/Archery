@@ -165,8 +165,8 @@ class WorkflowAuditDetail(models.Model):
     class Meta:
         managed = True
         db_table = 'workflow_audit_detail'
-        verbose_name = u'工作流审批明细表'
-        verbose_name_plural = u'工作流审批明细表'
+        verbose_name = u'工作流审批明细'
+        verbose_name_plural = u'工作流审批明细'
 
 
 # 审批配置表
@@ -207,8 +207,8 @@ class WorkflowLog(models.Model):
     class Meta:
         managed = True
         db_table = 'workflow_log'
-        verbose_name = u'工作流日志表'
-        verbose_name_plural = u'工作流日志表'
+        verbose_name = u'工作流日志'
+        verbose_name_plural = u'工作流日志'
 
 
 # 查询权限申请记录表
@@ -261,8 +261,8 @@ class QueryPrivileges(models.Model):
     class Meta:
         managed = True
         db_table = 'query_privileges'
-        verbose_name = u'查询权限记录表'
-        verbose_name_plural = u'查询权限记录表'
+        verbose_name = u'查询权限记录'
+        verbose_name_plural = u'查询权限记录'
 
 
 # 记录在线查询sql的日志
@@ -273,7 +273,7 @@ class QueryLog(models.Model):
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
     username = models.CharField('操作人', max_length=30)
-    user_display = models.CharField('申请人中文名', max_length=50, default='')
+    user_display = models.CharField('操作人中文名', max_length=50, default='')
     priv_check = models.IntegerField('查询权限是否正常校验', choices=((1, ' 正常'), (2, '跳过'),), default=0)
     hit_rule = models.IntegerField('查询是否命中脱敏规则', choices=((0, '未知'), (1, '命中'), (2, '未命中'),), default=0)
     masking = models.IntegerField('查询结果是否正常脱敏', choices=((1, '是'), (2, '否'),), default=0)
@@ -283,8 +283,8 @@ class QueryLog(models.Model):
     class Meta:
         managed = True
         db_table = 'query_log'
-        verbose_name = u'sql查询日志'
-        verbose_name_plural = u'sql查询日志'
+        verbose_name = u'查询日志'
+        verbose_name_plural = u'查询日志'
 
 
 # 脱敏字段配置
@@ -342,7 +342,6 @@ class Config(models.Model):
 class AliyunAccessKey(models.Model):
     ak = models.CharField(max_length=50)
     secret = models.CharField(max_length=100)
-    region_id = models.CharField(max_length=100)
     is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
     remark = models.CharField(max_length=50, default='', blank=True)
 
@@ -357,6 +356,23 @@ class AliyunAccessKey(models.Model):
         self.ak = pc.encrypt(self.ak)
         self.secret = pc.encrypt(self.secret)
         super(AliyunAccessKey, self).save(*args, **kwargs)
+
+
+# 阿里云rds配置信息
+class AliyunRdsConfig(models.Model):
+    instance_name = models.OneToOneField(Instance, on_delete=True, db_constraint=False, to_field='instance_name',
+                                         db_column='instance_name', verbose_name='实例名称', unique=True)
+    rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
+    is_enable = models.IntegerField('是否启用', choices=((1, '启用'), (2, '禁用')))
+
+    def __int__(self):
+        return self.rds_dbinstanceid
+
+    class Meta:
+        managed = True
+        db_table = 'aliyun_rds_config'
+        verbose_name = u'阿里云rds配置'
+        verbose_name_plural = u'阿里云rds配置'
 
 
 # 自定义权限定义
@@ -394,22 +410,6 @@ class Permission(models.Model):
             ('tablespace_view', '查看表空间'),
             ('trxandlocks_view', '查看锁信息'),
         )
-
-
-# 阿里云rds配置信息
-class AliyunRdsConfig(models.Model):
-    instance_name = models.CharField('实例名称', max_length=50, unique=True)
-    rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
-    is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
-
-    def __int__(self):
-        return self.rds_dbinstanceid
-
-    class Meta:
-        managed = True
-        db_table = 'aliyun_rds_config'
-        verbose_name = u'阿里云rds配置'
-        verbose_name_plural = u'阿里云rds配置'
 
 
 # SlowQuery
