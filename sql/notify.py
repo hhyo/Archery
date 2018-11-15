@@ -1,13 +1,12 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import re
-import traceback
 from threading import Thread
 
 from django.contrib.auth.models import Group
+from django.db import connection
 
 from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup, WorkflowAudit, WorkflowAuditDetail
-from common.config import SysConfig
 from sql.utils.group import auth_group_users
 from common.utils.sendmsg import MailSender
 from common.utils.const import WorkflowDict
@@ -18,9 +17,12 @@ logger = logging.getLogger('default')
 
 # 邮件消息通知,0.all,1.email,2.dingding
 def _send(audit_id, msg_type, **kwargs):
-    msg_sender = MailSender()
-    sys_config = SysConfig().sys_config
-    audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
+    try:
+        audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
+    except Exception:
+        logger.error('工单信息获取错误,尝试关闭连接重新获取,audit_id={}'.format(audit_id))
+        connection.close()
+        audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
     workflow_id = audit_info.workflow_id
     workflow_type = audit_info.workflow_type
     status = audit_info.current_status
@@ -30,7 +32,7 @@ def _send(audit_id, msg_type, **kwargs):
     workflow_url = kwargs.get('workflow_url')
     webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
-    audit_info = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
+    # 获取审批流程
     if audit_info.audit_auth_groups == '':
         workflow_auditors = '无需审批'
     else:
@@ -39,6 +41,7 @@ def _send(audit_id, msg_type, **kwargs):
                                            audit_info.audit_auth_groups.split(',')])
         except Exception:
             workflow_auditors = audit_info.audit_auth_groups
+    # 获取当前审批节点
     if audit_info.current_audit == '-1':
         current_workflow_auditors = None
     else:
@@ -137,15 +140,14 @@ def _send(audit_id, msg_type, **kwargs):
         msg_email_cc = [msg_email_cc]
 
     # 判断是发送钉钉还是发送邮件
+    msg_sender = MailSender()
     logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
     if msg_type == 0:
-        if sys_config.get('mail'):
-            msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-        if sys_config.get('ding'):
-            msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-    if msg_type == 1 and sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-    elif msg_type == 2 and sys_config.get('ding'):
+        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    elif msg_type == 1:
+        msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+    elif msg_type == 2:
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
 

@@ -165,8 +165,8 @@ def send_msg(workflowDetail, url):
     audit_id = Workflow.auditinfobyworkflow_id(workflowDetail.id, 2).audit_id
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflowDetail.status, audit_id)
-    msg_content = '''发起人：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
-        workflowDetail.engineer_display, audit_auth_group, workflowDetail.workflow_name, url,
+    msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        workflowDetail.engineer_display, workflowDetail.group_name, audit_auth_group, workflowDetail.workflow_name, url,
         re.sub('[\r\n\f]{2,}', '\n', workflowDetail.sql_content[0:500].replace('\r', '')))
 
     if sys_config.get('mail'):

@@ -6,7 +6,7 @@ from sql.utils.group import user_groups, auth_group_users
 from sql.utils.sql_review import is_autoreview
 from sql.notify import send_msg
 from common.utils.const import WorkflowDict
-from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting,WorkflowLog,SqlGroup, SqlWorkflow, \
+from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, SqlGroup, SqlWorkflow, \
     QueryPrivilegesApply
 from common.config import SysConfig
 
@@ -125,9 +125,11 @@ class Workflow(object):
                                   )
 
         # 消息通知
-        workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), auditInfo.audit_id)
-        email_cc = kwargs.get('listCcAddr', [])
-        send_msg(auditInfo.audit_id, 0, workflow_url=workflow_url, email_cc=email_cc)
+        sys_config = SysConfig().sys_config
+        if sys_config.get('mail') or sys_config.get('ding'):
+            workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), auditInfo.audit_id)
+            email_cc = kwargs.get('listCcAddr', [])
+            send_msg(auditInfo.audit_id, 0, workflow_url=workflow_url, email_cc=email_cc)
         # 返回添加结果
         return result
 
@@ -253,8 +255,10 @@ class Workflow(object):
             raise Exception(result['msg'])
 
         # 消息通知
-        workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), auditInfo.audit_id)
-        send_msg(auditInfo.audit_id, 0, workflow_url=workflow_url)
+        sys_config = SysConfig().sys_config
+        if sys_config.get('mail') or sys_config.get('ding'):
+            workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), auditInfo.audit_id)
+            send_msg(auditInfo.audit_id, 0, workflow_url=workflow_url)
         # 返回审核结果
         result['data'] = {'workflow_status': auditresult.current_status}
         return result
