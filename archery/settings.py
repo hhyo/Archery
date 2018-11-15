@@ -202,7 +202,7 @@ LOGGING = {
         },
         'django_apscheduler': {  # django_apscheduler模块相关日志
             'handlers': ['default'],
-            'level': 'DEBUG',
+            'level': 'ERROR',
         },
         # 'django.db': {  # 打印SQL语句到console，方便开发
         #     'handlers': ['console'],
