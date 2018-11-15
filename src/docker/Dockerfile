@@ -48,7 +48,7 @@ RUN cd /opt \
     && pip install mysql-python
 #soar
 RUN cd /opt \
-    && wget https://github.com/XiaoMi/soar/releases/download/v0.8.1/soar.linux-amd64 -O soar \
+    && wget https://github.com/XiaoMi/soar/releases/download/v0.9.0/soar.linux-amd64 -O soar \
     && chmod a+x soar
 #archery
 RUN cd /opt \
