@@ -45,12 +45,12 @@ class MailSender(object):
 
         return file_msg
 
-    def send_email(self, strTitle, strContent, listToAddr, **kwargs):
+    def send_email(self, strTitle, strContent, list_to_addr, **kwargs):
         '''
             发送邮件
         '''
         try:
-            if listToAddr is None or listToAddr == ['']:
+            if list_to_addr is None or list_to_addr == ['']:
                 logger.error('收件人为空，无法发送邮件')
                 return
 
@@ -70,13 +70,13 @@ class MailSender(object):
 
             # 收发件人地址和邮件标题:
             main_msg['From'] = formataddr(["archery 通知", self.MAIL_REVIEW_FROM_ADDR])
-            main_msg['To'] = ','.join(listToAddr)
-            listCcAddr = kwargs.get('listCcAddr')
-            if listCcAddr:
-                main_msg['Cc'] = ', '.join(kwargs['listCcAddr'])
-                listAddr = listToAddr + listCcAddr
+            main_msg['To'] = ','.join(list_to_addr)
+            list_cc_addr = kwargs.get('list_cc_addr')
+            if list_cc_addr:
+                main_msg['Cc'] = ', '.join(kwargs['list_cc_addr'])
+                listAddr = list_to_addr + list_cc_addr
             else:
-                listAddr = listToAddr
+                listAddr = list_to_addr
             main_msg['Subject'] = Header(strTitle, "utf-8").encode()
             main_msg['Date'] = email.utils.formatdate()
 

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h4 style="display: inline;">单子名称：<span>{{ workflowDetail.workflow_name }}</span></h4>
+    <h4 style="display: inline;">单子名称：<span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
-    {% if user.username == workflowDetail.engineer %}
+    {% if user.username == workflow_detail.engineer %}
         <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
     {% endif %}
     {% if is_can_review or user.is_superuser %}
         <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
-    <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
+    <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
     <table data-toggle="table" class="table table-striped table-hover">
         <thead>
@@ -54,7 +54,7 @@
         <tbody>
         <tr class="success">
             <td>
-                {{ workflowDetail.engineer_display }}
+                {{ workflow_detail.engineer_display }}
             </td>
             <td>
                 {{ audit_auth_group }}
@@ -63,35 +63,35 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflowDetail.instance_name }}
+                {{ workflow_detail.instance_name }}
             </td>
             <td>
-                {{ workflowDetail.db_name }}
+                {{ workflow_detail.db_name }}
             </td>
             <td>
-                {{ workflowDetail.create_time }}
+                {{ workflow_detail.create_time }}
             </td>
             <td>
-                {{ workflowDetail.finish_time }}
+                {{ workflow_detail.finish_time }}
             </td>
             <td>
-                {{ workflowDetail.is_backup }}
+                {{ workflow_detail.is_backup }}
             </td>
             <td>
-                {% if workflowDetail.status == "已正常结束" %}
+                {% if workflow_detail.status == "已正常结束" %}
                     <font color="green">
                 {% else %}
                     <font color="red">
                 {% endif %}
-                <B id="workflowDetail_status">{{ workflowDetail.status }}</B></font>
+                <B id="workflow_detail_status">{{ workflow_detail.status }}</B></font>
             </td>
             <td>
-                {{ workflowDetail.group_name }}
+                {{ workflow_detail.group_name }}
             </td>
             <td>
-                {% if workflowDetail.sql_syntax == 1 %}
+                {% if workflow_detail.sql_syntax == 1 %}
                     DDL
-                {% elif workflowDetail.sql_syntax == 2 %}
+                {% elif workflow_detail.sql_syntax == 2 %}
                     DML
                 {% endif %}
             </td>
@@ -101,7 +101,7 @@
     <br>
     <table id="tb-detail" data-toggle="table" class="table table-condensed"></table>
 
-    {% if workflowDetail.is_manual == 1 and workflowDetail.execute_result %}
+    {% if workflow_detail.is_manual == 1 and workflow_detail.execute_result %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
@@ -113,14 +113,14 @@
             <tbody>
             <tr>
                 <td>
-                    {{ workflowDetail.execute_result }}
+                    {{ workflow_detail.execute_result }}
                 </td>
             </tr>
             </tbody>
         </table>
         <br>
     {% endif %}
-    {% if workflowDetail.audit_remark %}
+    {% if workflow_detail.audit_remark %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
@@ -132,14 +132,14 @@
             <tbody>
             <tr>
                 <td>
-                    {{ workflowDetail.audit_remark }}
+                    {{ workflow_detail.audit_remark }}
                 </td>
             </tr>
             </tbody>
         </table>
         <br>
     {% endif %}
-    {% if workflowDetail.status == '定时执行' %}
+    {% if workflow_detail.status == '定时执行' %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
@@ -169,7 +169,7 @@
     {% if is_can_review %}
         <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
             {% csrf_token %}
-            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="audit_remark" name="audit_remark" value="">
             <input type="button" id="btnPass" class="btn btn-success" value="审核通过"/>
         </form>
@@ -178,16 +178,16 @@
     {% if is_can_execute %}
         <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
             {% csrf_token %}
-            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" id="btnExecuteOnly" class="btn btn-danger"
                    value="立即执行"/>
         </form>
     {% endif %}
     <!--定时执行按钮-->
     {% if is_can_timingtask %}
-        {% if workflowDetail.status == '审核通过' %}
+        {% if workflow_detail.status == '审核通过' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
-        {% elif workflowDetail.status == '定时执行' %}
+        {% elif workflow_detail.status == '定时执行' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
         {% endif %}
     {% endif %}
@@ -195,25 +195,25 @@
     {% if is_can_review or is_can_cancel %}
         <form id="form-cancel" action="/cancel/" method="post" style="display:inline-block;">
             {% csrf_token %}
-            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
             <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
         </form>
     {% endif %}
     <!--查看回滚按钮-->
-    {% if workflowDetail.is_backup == '是' %}
-        {% if  workflowDetail.status == '已正常结束' or  workflowDetail.status == '执行有异常' %}
+    {% if workflow_detail.is_backup == '是' %}
+        {% if  workflow_detail.status == '已正常结束' or  workflow_detail.status == '执行有异常' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
-                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                 <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
                        value="查看回滚SQL"/>
             </form>
         {% endif %}
     {% endif %}
     <!--重新修改按钮-->
-    {% if workflowDetail.status == '自动审核不通过' or workflowDetail.status == '人工终止流程' or workflowDetail.status == '执行有异常' %}
-        {% if user.username == workflowDetail.engineer %}
+    {% if workflow_detail.status == '自动审核不通过' or workflow_detail.status == '人工终止流程' or workflow_detail.status == '执行有异常' %}
+        {% if user.username == workflow_detail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}
             <a type='button' id="btnEditSql" onclick="loading(this)" class='btn btn-default'
@@ -237,7 +237,7 @@
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
                     <form action="/execute_skipinc/" method="post" style="display:inline-block;">
                         {% csrf_token %}
-                        <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                         <input type="submit" id="btnExecuteSkipinc" onclick="loading(this)"
                                class="btn btn-danger" value="确认执行"/>
                     </form>
@@ -258,7 +258,7 @@
                     {% csrf_token %}
                     <div class="modal-body">
                         <div class="form-group">
-                            <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                             <input type="text" class="form-control" id="run_date" name="run_date"
                                    data-format="yyyy-MM-dd hh:mm:ss"
                                    placeholder="请输入执行时间">
@@ -267,7 +267,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
 
-                        <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                         <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="确认提交"/>
                     </div>
 
@@ -305,12 +305,12 @@
     </script>
     <!--按钮控制 -->
     <script>
-        var editWorkflowNname = "{{ workflowDetail.workflow_name }}";
+        var editWorkflowNname = "{{ workflow_detail.workflow_name }}";
         var editSqlContent = $("#editSqlContent").val();
-        var editGroup = "{{ workflowDetail.group_name }}";
-        var editClustername = "{{ workflowDetail.instance_name }}";
-        var editDbname = "{{ workflowDetail.db_name }}";
-        var editIsbackup = "{{ workflowDetail.is_backup }}";
+        var editGroup = "{{ workflow_detail.group_name }}";
+        var editClustername = "{{ workflow_detail.instance_name }}";
+        var editDbname = "{{ workflow_detail.db_name }}";
+        var editIsbackup = "{{ workflow_detail.is_backup }}";
 
         $("#btnEditSql").click(function () {
             sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
@@ -338,7 +338,7 @@
 
         // 执行确认
         $("#btnExecuteOnly").click(function () {
-            if ({{ workflowDetail.is_manual }}) {
+            if ({{ workflow_detail.is_manual }}) {
                 var isContinue = confirm("平台不支持该语句备份，将不会自动备份数据，请确认是否立即执行？");
             }
             else {
@@ -408,7 +408,7 @@
     </script>
     <!--osc控制 -->
     <script>
-        var workflowid = "{{ workflowDetail.id }}";
+        var workflow_id = "{{ workflow_detail.id }}";
         var sqlMaxRowNumber = parseInt($("#sqlMaxRowNumber").val());
         var wfStatus = -1;
         var itemIndex = 1;
@@ -522,17 +522,17 @@
                 }
             });
 
-            var status = $("#workflowDetail_status").text();
+            var status = $("#workflow_detail_status").text();
             var isDetail = window.location.pathname.indexOf("detail");
             if (isDetail != -1 && status === "执行中") {
-                get_pct(workflowid, itemIndex);
+                get_pct(workflow_id, itemIndex);
 
                 $("button").click(function () {
                     var isContinue = confirm("请确认是否中止pt-OSC进程？");
                     if (isContinue) {
                         var element = $(this);
                         var sqlNum = element.val();
-                        stopOsc(workflowid, sqlNum);
+                        stopOsc(workflow_id, sqlNum);
                     }
                 });
             }
@@ -546,7 +546,7 @@
                     window.location.reload(true);
                 }
                 else {
-                    document.getElementById("workflowDetail_status").innerHTML = "确认中...";
+                    document.getElementById("workflow_detail_status").innerHTML = "确认中...";
                     if (retryCnt <= 120) {
                         clearTimeout(key);
                         key = setTimeout(function () {
@@ -573,7 +573,7 @@
                     url: "/getOscPercent/",
                     dataType: "json",
                     data: {
-                        workflowid: wid,
+                        workflow_id: wid,
                         sqlID: sqlNum
                     },
                     complete: function () {
@@ -658,7 +658,7 @@
                     url: "/stopOscProgress/",
                     dataType: "json",
                     data: {
-                        workflowid: wid,
+                        workflow_id: wid,
                         sqlID: sqlNum
                     },
                     complete: function () {
@@ -688,7 +688,7 @@
                     url: "/getWorkflowStatus/",
                     dataType: "json",
                     data: {
-                        workflowid: wid
+                        workflow_id: wid
                     },
                     complete: function () {
                     },

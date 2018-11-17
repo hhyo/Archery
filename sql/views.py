@@ -47,33 +47,33 @@ def submitSql(request):
     active_user = Users.objects.filter(is_active=1)
 
     context = {'active_user': active_user, 'group_list': group_list}
-    return render(request, 'submitSql.html', context)
+    return render(request, 'sqlsubmit.html', context)
 
 
 # 展示SQL工单详细页面
-def detail(request, workflowId):
-    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
-    if workflowDetail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
-            and workflowDetail.is_manual == 0:
-        listContent = json.loads(workflowDetail.execute_result)
+def detail(request, workflow_id):
+    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    if workflow_detail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
+            and workflow_detail.is_manual == 0:
+        listContent = json.loads(workflow_detail.execute_result)
     else:
-        listContent = json.loads(workflowDetail.review_content)
+        listContent = json.loads(workflow_detail.review_content)
 
     # 获取当前审批和审批流程
-    audit_auth_group, current_audit_auth_group = Workflow.review_info(workflowId, 2)
+    audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_id, 2)
 
     # 是否可审核
-    is_can_review = Workflow.can_review(request.user, workflowId, 2)
+    is_can_review = Workflow.can_review(request.user, workflow_id, 2)
     # 是否可执行
-    is_can_execute = can_execute(request.user, workflowId)
+    is_can_execute = can_execute(request.user, workflow_id)
     # 是否可定时执行
-    is_can_timingtask = can_timingtask(request.user, workflowId)
+    is_can_timingtask = can_timingtask(request.user, workflow_id)
     # 是否可取消
-    is_can_cancel = can_cancel(request.user, workflowId)
+    is_can_cancel = can_cancel(request.user, workflow_id)
 
     # 获取定时执行任务信息
-    if workflowDetail.status == Const.workflowStatus['timingtask']:
-        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+    if workflow_detail.status == Const.workflowStatus['timingtask']:
+        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
         job = job_info(job_id)
         if job:
             run_date = job.next_run_time
@@ -101,7 +101,7 @@ def detail(request, workflowId):
         # row['sqlsha1'] = row_item[10]
         rows.append(row)
 
-        if workflowDetail.status == '执行中':
+        if workflow_detail.status == '执行中':
             row['stagestatus'] = ''.join(
                 ["<div id=\"td_" + str(row['ID']) + "\" class=\"form-inline\">",
                  "   <div class=\"progress form-group\" style=\"width: 80%; height: 18px; float: left;\">",
@@ -113,7 +113,7 @@ def detail(request, workflowId):
                  "   </div>",
                  "   <div class=\"form-group\" style=\"width: 10%; height: 18px; float: right;\">",
                  "       <form method=\"post\">",
-                 "           <input type=\"hidden\" name=\"workflowid\" value=\"" + str(workflowDetail.id) + "\">",
+                 "           <input type=\"hidden\" name=\"workflow_id\" value=\"" + str(workflow_detail.id) + "\">",
                  "           <button id=\"btnstop_" + str(row['ID']) + "\" value=\"" + str(row['ID']) + "\"",
                  "                   type=\"button\" class=\"close\" style=\"display: none\" title=\"停止pt-OSC进程\">",
                  "               <span class=\"glyphicons glyphicons-stop\">&times;</span>",
@@ -121,7 +121,7 @@ def detail(request, workflowId):
                  "       </form>",
                  "   </div>",
                  "</div>"])
-    context = {'workflowDetail': workflowDetail, 'column_list': column_list, 'rows': rows,
+    context = {'workflow_detail': workflow_detail, 'column_list': column_list, 'rows': rows,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
@@ -130,21 +130,21 @@ def detail(request, workflowId):
 
 # 展示回滚的SQL页面
 def rollback(request):
-    workflowId = request.GET['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
+    workflow_id = request.GET['workflow_id']
+    if workflow_id == '' or workflow_id is None:
+        context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-    workflowId = int(workflowId)
+    workflow_id = int(workflow_id)
     try:
-        listBackupSql = InceptionDao().getRollbackSqlList(workflowId)
+        listBackupSql = InceptionDao().getRollbackSqlList(workflow_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    workflowName = workflowDetail.workflow_name
-    rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflowId, workflowName)
-    context = {'listBackupSql': listBackupSql, 'workflowDetail': workflowDetail,
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    workflow_title = workflow_detail.workflow_name
+    rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
+    context = {'listBackupSql': listBackupSql, 'workflow_detail': workflow_detail,
                'rollbackWorkflowName': rollbackWorkflowName}
     return render(request, 'rollback.html', context)
 
@@ -204,14 +204,14 @@ def queryapplylist(request):
 
 # 查询权限申请详情页面
 def queryapplydetail(request, apply_id):
-    workflowDetail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+    workflow_detail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     # 获取当前审批和审批流程
     audit_auth_group, current_audit_auth_group = Workflow.review_info(apply_id, 1)
 
     # 是否可审核
     is_can_review = Workflow.can_review(request.user, apply_id, 1)
 
-    context = {'workflowDetail': workflowDetail, 'audit_auth_group': audit_auth_group,
+    context = {'workflow_detail': workflow_detail, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'is_can_review': is_can_review}
     return render(request, 'queryapplydetail.html', context)
 
@@ -242,11 +242,11 @@ def workflows(request):
 # 工作流审核详情页面
 def workflowsdetail(request, audit_id):
     # 按照不同的workflow_type返回不同的详情
-    auditInfo = Workflow.auditinfo(audit_id)
-    if auditInfo.workflow_type == WorkflowDict.workflow_type['query']:
-        return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(auditInfo.workflow_id,)))
-    elif auditInfo.workflow_type == WorkflowDict.workflow_type['sqlreview']:
-        return HttpResponseRedirect(reverse('sql:detail', args=(auditInfo.workflow_id,)))
+    audit_detail = Workflow.audit_detail(audit_id)
+    if audit_detail.workflow_type == WorkflowDict.workflow_type['query']:
+        return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
+    elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:
+        return HttpResponseRedirect(reverse('sql:detail', args=(audit_detail.workflow_id,)))
 
 
 # 配置管理页面

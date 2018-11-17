@@ -34,10 +34,7 @@ workflowOb = Workflow()
 
 # 获取审核列表
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
-def sqlworkflowlist(request):
-    # 获取用户信息
-    user = request.user
-
+def sqlworkflow_list(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
@@ -52,7 +49,7 @@ def sqlworkflowlist(request):
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
         if user.is_superuser == 1:
-            workflowlist = SqlWorkflow.objects.filter(
+            workflow_list = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
@@ -63,7 +60,7 @@ def sqlworkflowlist(request):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
-            workflowlist = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
+            workflow_list = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
@@ -72,7 +69,7 @@ def sqlworkflowlist(request):
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).count()
         else:
-            workflowlist = SqlWorkflow.objects.filter(engineer=user.username).filter(
+            workflow_list = SqlWorkflow.objects.filter(engineer=user.username).filter(
                 workflow_name__contains=search
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
@@ -81,7 +78,7 @@ def sqlworkflowlist(request):
                 workflow_name__contains=search).count()
     elif navStatus in Const.workflowStatus.keys():
         if user.is_superuser == 1:
-            workflowlist = SqlWorkflow.objects.filter(
+            workflow_list = SqlWorkflow.objects.filter(
                 status=Const.workflowStatus[navStatus]
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
@@ -91,37 +88,37 @@ def sqlworkflowlist(request):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
-            workflowlist = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids
-                                                      ).order_by('-create_time')[offset:limit].values("id",
-                                                                                                      "workflow_name",
-                                                                                                      "engineer_display",
-                                                                                                      "status",
-                                                                                                      "is_backup",
-                                                                                                      "create_time",
-                                                                                                      "instance_name",
-                                                                                                      "db_name",
-                                                                                                      "group_name",
-                                                                                                      "sql_syntax")
+            workflow_list = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids
+                                                       ).order_by('-create_time')[offset:limit].values("id",
+                                                                                                       "workflow_name",
+                                                                                                       "engineer_display",
+                                                                                                       "status",
+                                                                                                       "is_backup",
+                                                                                                       "create_time",
+                                                                                                       "instance_name",
+                                                                                                       "db_name",
+                                                                                                       "group_name",
+                                                                                                       "sql_syntax")
             count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids).count()
         else:
-            workflowlist = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username
-                                                      ).order_by('-create_time')[offset:limit].values("id",
-                                                                                                      "workflow_name",
-                                                                                                      "engineer_display",
-                                                                                                      "status",
-                                                                                                      "is_backup",
-                                                                                                      "create_time",
-                                                                                                      "instance_name",
-                                                                                                      "db_name",
-                                                                                                      "group_name",
-                                                                                                      "sql_syntax")
+            workflow_list = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username
+                                                       ).order_by('-create_time')[offset:limit].values("id",
+                                                                                                       "workflow_name",
+                                                                                                       "engineer_display",
+                                                                                                       "status",
+                                                                                                       "is_backup",
+                                                                                                       "create_time",
+                                                                                                       "instance_name",
+                                                                                                       "db_name",
+                                                                                                       "group_name",
+                                                                                                       "sql_syntax")
             count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username).count()
     else:
         context = {'errMsg': '传入的navStatus参数有误！'}
         return render(request, 'error.html', context)
 
     # QuerySet 序列化
-    rows = [row for row in workflowlist]
+    rows = [row for row in workflow_list]
 
     result = {"total": count, "rows": rows}
     # 返回查询结果
@@ -200,18 +197,18 @@ def simplecheck(request):
 # SQL提交
 @permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
-    workflowid = request.POST.get('workflowid')
+    workflow_id = request.POST.get('workflow_id')
     sql_content = request.POST['sql_content']
-    workflowName = request.POST['workflow_name']
+    workflow_title = request.POST['workflow_name']
     group_name = request.POST['group_name']
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
     db_name = request.POST.get('db_name')
-    isBackup = request.POST['is_backup']
+    is_backup = request.POST['is_backup']
     notify_users = request.POST.getlist('notify_users')
 
     # 服务器端参数验证
-    if sql_content is None or workflowName is None or instance_name is None or db_name is None or isBackup is None:
+    if sql_content is None or workflow_title is None or instance_name is None or db_name is None or is_backup is None:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
@@ -273,19 +270,19 @@ def autoreview(request):
         with transaction.atomic():
             # 存进数据库里
             engineer = request.user.username
-            if not workflowid:
+            if not workflow_id:
                 sql_workflow = SqlWorkflow()
                 sql_workflow.create_time = timezone.now()
             else:
-                sql_workflow = SqlWorkflow.objects.get(id=int(workflowid))
-            sql_workflow.workflow_name = workflowName
+                sql_workflow = SqlWorkflow.objects.get(id=int(workflow_id))
+            sql_workflow.workflow_name = workflow_title
             sql_workflow.group_id = group_id
             sql_workflow.group_name = group_name
             sql_workflow.engineer = engineer
             sql_workflow.engineer_display = request.user.display
-            sql_workflow.audit_auth_groups = Workflow.auditsettings(group_id, WorkflowDict.workflow_type['sqlreview'])
+            sql_workflow.audit_auth_groups = Workflow.audit_settings(group_id, WorkflowDict.workflow_type['sqlreview'])
             sql_workflow.status = workflowStatus
-            sql_workflow.is_backup = isBackup
+            sql_workflow.is_backup = is_backup
             sql_workflow.review_content = jsonResult
             sql_workflow.instance_name = instance_name
             sql_workflow.db_name = db_name
@@ -295,36 +292,36 @@ def autoreview(request):
             sql_workflow.audit_remark = ''
             sql_workflow.sql_syntax = sql_syntax
             sql_workflow.save()
-            workflowId = sql_workflow.id
+            workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流
             if workflowStatus == Const.workflowStatus['manreviewing']:
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
                 # 抄送通知人
-                listCcAddr = [email['email'] for email in
-                              Users.objects.filter(username__in=notify_users).values('email')]
-                workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflowId,
-                                            listCcAddr=listCcAddr)
+                list_cc_addr = [email['email'] for email in
+                                Users.objects.filter(username__in=notify_users).values('email')]
+                workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflow_id,
+                                            list_cc_addr=list_cc_addr)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
 # 审核通过，不执行
 @permission_required('sql.sql_review', raise_exception=True)
 def passed(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
+    workflow_id = request.POST['workflow_id']
+    if workflow_id == '' or workflow_id is None:
+        context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    workflow_id = int(workflow_id)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get('audit_remark', '')
 
     user = request.user
-    if Workflow.can_review(request.user, workflowId, 2) is False:
+    if Workflow.can_review(request.user, workflow_id, 2) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
@@ -333,90 +330,90 @@ def passed(request):
         with transaction.atomic():
             # 调用工作流接口审核
             # 获取audit_id
-            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            auditresult = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
+            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
+                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            audit_result = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
                                                    user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
-            if auditresult['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
+            if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
                 # 将流程状态修改为审核通过，并更新reviewok_time字段
-                workflowDetail.status = Const.workflowStatus['pass']
-                workflowDetail.reviewok_time = timezone.now()
-                workflowDetail.audit_remark = audit_remark
-                workflowDetail.save()
+                workflow_detail.status = Const.workflowStatus['pass']
+                workflow_detail.reviewok_time = timezone.now()
+                workflow_detail.audit_remark = audit_remark
+                workflow_detail.save()
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
 # 仅执行SQL
 @permission_required('sql.sql_execute', raise_exception=True)
 def execute(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
+    workflow_id = request.POST['workflow_id']
+    if workflow_id == '' or workflow_id is None:
+        context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
 
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-    instance_name = workflowDetail.instance_name
-    db_name = workflowDetail.db_name
-    url = getDetailUrl(request, workflowId)
+    workflow_id = int(workflow_id)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    instance_name = workflow_detail.instance_name
+    db_name = workflow_detail.db_name
+    url = getDetailUrl(request, workflow_id)
 
-    if can_execute(request.user, workflowId) is False:
+    if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
     # 判断是否高危SQL，禁止执行
     if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().criticalDDL(workflowDetail.sql_content):
+        if InceptionDao().criticalDDL(workflow_detail.sql_content):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
-    workflowDetail.status = Const.workflowStatus['executing']
-    workflowDetail.reviewok_time = timezone.now()
-    workflowDetail.save()
+    workflow_detail.status = Const.workflowStatus['executing']
+    workflow_detail.reviewok_time = timezone.now()
+    workflow_detail.save()
 
     # 判断是通过inception执行还是直接执行，is_manual=0则通过inception执行，is_manual=1代表inception审核不通过，需要直接执行
-    if workflowDetail.is_manual == 0:
+    if workflow_detail.is_manual == 0:
         # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
         try:
-            splitReviewResult = InceptionDao(instance_name=instance_name).sqlautoReview(workflowDetail.sql_content,
-                                                                                        db_name,
-                                                                                        isSplit='yes')
+            split_review_result = InceptionDao(instance_name=instance_name).sqlautoReview(workflow_detail.sql_content,
+                                                                                          db_name,
+                                                                                          isSplit='yes')
         except Exception as msg:
             logger.error(traceback.format_exc())
             context = {'errMsg': msg}
             return render(request, 'error.html', context)
-        workflowDetail.review_content = json.dumps(splitReviewResult)
+        workflow_detail.review_content = json.dumps(split_review_result)
         try:
-            workflowDetail.save()
+            workflow_detail.save()
         except Exception:
             # 关闭后重新获取连接，防止超时
             connection.close()
-            workflowDetail.save()
+            workflow_detail.save()
 
         # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_call_back, args=(workflowId, instance_name, url))
+        t = Thread(target=execute_call_back, args=(workflow_id, instance_name, url))
         t.start()
     else:
         # 采取异步回调的方式执行语句，防止出现持续执行中的异常
         t = Thread(target=execute_skipinc_call_back,
-                   args=(workflowId, instance_name, db_name, workflowDetail.sql_content, url))
+                   args=(workflow_id, instance_name, db_name, workflow_detail.sql_content, url))
         t.start()
     # 删除定时执行job
-    if workflowDetail.status == Const.workflowStatus['timingtask']:
-        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+    if workflow_detail.status == Const.workflowStatus['timingtask']:
+        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
         del_sqlcronjob(job_id)
     # 增加工单日志
     # 获取audit_id
-    audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
+                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     workflowOb.add_workflow_log(audit_id=audit_id,
                                 operation_type=5,
                                 operation_type_desc='执行工单',
@@ -424,48 +421,48 @@ def execute(request):
                                 operator=request.user.username,
                                 operator_display=request.user.display
                                 )
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
 # 定时执行SQL
 @permission_required('sql.sql_execute', raise_exception=True)
 def timingtask(request):
-    workflowId = request.POST.get('workflowid')
+    workflow_id = request.POST.get('workflow_id')
     run_date = request.POST.get('run_date')
-    if run_date is None or workflowId is None:
+    if run_date is None or workflow_id is None:
         context = {'errMsg': '时间不能为空'}
         return render(request, 'error.html', context)
     elif run_date < datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
         context = {'errMsg': '时间不能小于当前时间'}
         return render(request, 'error.html', context)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
 
-    if can_timingtask(request.user, workflowId) is False:
+    if can_timingtask(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
     # 判断是否高危SQL，禁止执行
     if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().criticalDDL(workflowDetail.sql_content):
+        if InceptionDao().criticalDDL(workflow_detail.sql_content):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = getDetailUrl(request, workflowId)
-    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+    url = getDetailUrl(request, workflow_id)
+    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
 
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
             # 将流程状态修改为定时执行
-            workflowDetail.status = Const.workflowStatus['timingtask']
-            workflowDetail.save()
+            workflow_detail.status = Const.workflowStatus['timingtask']
+            workflow_detail.save()
             # 调用添加定时任务
-            add_sqlcronjob(job_id, run_date, workflowId, url)
+            add_sqlcronjob(job_id, run_date, workflow_id, url)
             # 增加工单日志
             # 获取audit_id
-            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
+                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             workflowOb.add_workflow_log(audit_id=audit_id,
                                         operation_type=4,
                                         operation_type_desc='定时执行',
@@ -477,25 +474,25 @@ def timingtask(request):
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
 # 终止流程
 def cancel(request):
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {'errMsg': 'workflowId参数为空.'}
+    workflow_id = request.POST['workflow_id']
+    if workflow_id == '' or workflow_id is None:
+        context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
 
-    workflowId = int(workflowId)
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    workflow_id = int(workflow_id)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get('cancel_remark')
     if audit_remark is None:
         context = {'errMsg': '终止原因不能为空'}
         return render(request, 'error.html', context)
 
     user = request.user
-    if can_cancel(request.user, workflowId) is False:
+    if can_cancel(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
@@ -504,12 +501,12 @@ def cancel(request):
         with transaction.atomic():
             # 调用工作流接口取消或者驳回
             # 获取audit_id
-            audit_id = Workflow.auditinfobyworkflow_id(workflow_id=workflowId,
-                                                       workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
+                                                          workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflowDetail.status != Const.workflowStatus['manreviewing']:
+            if workflow_detail.status != Const.workflowStatus['manreviewing']:
                 # 增加工单日志
-                if user.username == workflowDetail.engineer:
+                if user.username == workflow_detail.engineer:
                     workflowOb.add_workflow_log(audit_id=audit_id,
                                                 operation_type=3,
                                                 operation_type_desc='取消执行',
@@ -526,7 +523,7 @@ def cancel(request):
                                                 operator_display=request.user.display
                                                 )
             else:
-                if user.username == workflowDetail.engineer:
+                if user.username == workflow_detail.engineer:
                     workflowOb.auditworkflow(request, audit_id,
                                              WorkflowDict.workflow_status['audit_abort'],
                                              user.username, audit_remark)
@@ -539,26 +536,26 @@ def cancel(request):
                     raise PermissionDenied
 
             # 删除定时执行job
-            if workflowDetail.status == Const.workflowStatus['timingtask']:
-                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflowId)
+            if workflow_detail.status == Const.workflowStatus['timingtask']:
+                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
                 del_sqlcronjob(job_id)
             # 将流程状态修改为人工终止流程
-            workflowDetail.status = Const.workflowStatus['abort']
-            workflowDetail.audit_remark = audit_remark
-            workflowDetail.save()
+            workflow_detail.status = Const.workflowStatus['abort']
+            workflow_detail.audit_remark = audit_remark
+            workflow_detail.save()
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflowId,)))
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-def getSqlSHA1(workflowId):
+def getSqlSHA1(workflow_id):
     """调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值"""
-    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
+    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     dictSHA1 = {}
     # 使用json.loads方法，把review_content从str转成list,
-    listReCheckResult = json.loads(workflowDetail.review_content)
+    listReCheckResult = json.loads(workflow_detail.review_content)
 
     for rownum in range(len(listReCheckResult)):
         id = rownum + 1
@@ -569,26 +566,26 @@ def getSqlSHA1(workflowId):
     if dictSHA1 != {}:
         # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。
         # 因为使用OSC执行的SQL占较少数，所以不设置缓存过期时间
-        sqlSHA1_cache[workflowId] = dictSHA1
+        sqlSHA1_cache[workflow_id] = dictSHA1
     return dictSHA1
 
 
 def getOscPercent(request):
     """获取该SQL的pt-OSC执行进度和剩余时间"""
-    workflowId = request.POST['workflowid']
+    workflow_id = request.POST['workflow_id']
     sqlID = request.POST['sqlID']
-    if workflowId == '' or workflowId is None or sqlID == '' or sqlID is None:
-        context = {"status": -1, 'msg': 'workflowId或sqlID参数为空.', "data": ""}
+    if workflow_id == '' or workflow_id is None or sqlID == '' or sqlID is None:
+        context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    workflowId = int(workflowId)
+    workflow_id = int(workflow_id)
     sqlID = int(sqlID)
     dictSHA1 = {}
-    if workflowId in sqlSHA1_cache:
-        dictSHA1 = sqlSHA1_cache[workflowId]
+    if workflow_id in sqlSHA1_cache:
+        dictSHA1 = sqlSHA1_cache[workflow_id]
         # cachehit = "已命中"
     else:
-        dictSHA1 = getSqlSHA1(workflowId)
+        dictSHA1 = getSqlSHA1(workflow_id)
 
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
@@ -604,7 +601,7 @@ def getOscPercent(request):
             pctResult = result
         else:
             # result["status"] == 1, 未获取到进度值,需要与workflow.execute_result对比，来判断是已经执行过了，还是还未执行
-            execute_result = SqlWorkflow.objects.get(id=workflowId).execute_result
+            execute_result = SqlWorkflow.objects.get(id=workflow_id).execute_result
             try:
                 listExecResult = json.loads(execute_result)
             except ValueError:
@@ -625,46 +622,46 @@ def getOscPercent(request):
 
 def getWorkflowStatus(request):
     """获取某个工单的当前状态"""
-    workflowId = request.POST['workflowid']
-    if workflowId == '' or workflowId is None:
-        context = {"status": -1, 'msg': 'workflowId参数为空.', "data": ""}
+    workflow_id = request.POST['workflow_id']
+    if workflow_id == '' or workflow_id is None:
+        context = {"status": -1, 'msg': 'workflow_id参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    workflowId = int(workflowId)
-    workflowDetail = get_object_or_404(SqlWorkflow, pk=workflowId)
-    workflowStatus = workflowDetail.status
+    workflow_id = int(workflow_id)
+    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    workflowStatus = workflow_detail.status
     result = {"status": workflowStatus, "msg": "", "data": ""}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 def stopOscProgress(request):
     """中止该SQL的pt-OSC进程"""
-    workflowId = request.POST['workflowid']
+    workflow_id = request.POST['workflow_id']
     sqlID = request.POST['sqlID']
-    if workflowId == '' or workflowId is None or sqlID == '' or sqlID is None:
-        context = {"status": -1, 'msg': 'workflowId或sqlID参数为空.', "data": ""}
+    if workflow_id == '' or workflow_id is None or sqlID == '' or sqlID is None:
+        context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     user = request.user
-    workflowDetail = SqlWorkflow.objects.get(id=workflowId)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     try:
-        reviewMan = json.loads(workflowDetail.audit_auth_groups)
+        reviewMan = json.loads(workflow_detail.audit_auth_groups)
     except ValueError:
-        reviewMan = (workflowDetail.audit_auth_groups,)
+        reviewMan = (workflow_detail.audit_auth_groups,)
     # 服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
-    if workflowDetail.status != Const.workflowStatus['executing']:
+    if workflow_detail.status != Const.workflowStatus['executing']:
         context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
     if user.username is None or user.username not in reviewMan:
         context = {"status": -1, 'msg': '当前登录用户不是审核人，请重新登录.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    workflowId = int(workflowId)
+    workflow_id = int(workflow_id)
     sqlID = int(sqlID)
-    if workflowId in sqlSHA1_cache:
-        dictSHA1 = sqlSHA1_cache[workflowId]
+    if workflow_id in sqlSHA1_cache:
+        dictSHA1 = sqlSHA1_cache[workflow_id]
     else:
-        dictSHA1 = getSqlSHA1(workflowId)
+        dictSHA1 = getSqlSHA1(workflow_id)
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
         try:

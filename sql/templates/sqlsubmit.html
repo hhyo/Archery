@@ -5,7 +5,7 @@
 
         <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
             {% csrf_token %}
-            <input type="hidden" id="workflowid" name="workflowid"/>
+            <input type="hidden" id="workflow_id" name="workflow_id"/>
             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
                    data-placeholder="请配置审批流程" required>
             <div class="col-md-9 column">
@@ -439,7 +439,7 @@
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
-                $("#workflowid").val(sessionStorage.getItem('editWorkflowDetailId'));
+                $("#workflow_id").val(sessionStorage.getItem('editWorkflowDetailId'));
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));

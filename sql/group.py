@@ -143,7 +143,7 @@ def auditors(request):
     result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
     if group_name:
         group_id = SqlGroup.objects.get(group_name=group_name).group_id
-        audit_auth_groups = Workflow.auditsettings(group_id=group_id, workflow_type=workflow_type)
+        audit_auth_groups = Workflow.audit_settings(group_id=group_id, workflow_type=workflow_type)
     else:
         result['status'] = 1
         result['msg'] = '参数错误'
@@ -179,7 +179,7 @@ def changeauditors(request):
     group_id = SqlGroup.objects.get(group_name=group_name).group_id
     audit_auth_groups = [str(Group.objects.get(name=auth_group).id) for auth_group in auth_groups.split(',')]
     try:
-        Workflow.changesettings(group_id, workflow_type, ','.join(audit_auth_groups))
+        Workflow.change_settings(group_id, workflow_type, ','.join(audit_auth_groups))
     except Exception as msg:
         logger.error(traceback.format_exc())
         result['msg'] = str(msg)

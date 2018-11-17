@@ -8,7 +8,7 @@ def global_info(request):
     if user:
         # 获取待办数量
         try:
-            todo = Workflow().audit_todo(user)
+            todo = Workflow.audit_todo(user)
         except Exception:
             todo = 0
     else:

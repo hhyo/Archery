@@ -12,17 +12,17 @@ def getDetailUrl(request, workflow_id):
     scheme = request.scheme
     host = request.META['HTTP_HOST']
     from sql.utils.workflow import Workflow
-    audit_id = Workflow.auditinfobyworkflow_id(workflow_id, 2).audit_id
+    audit_id = Workflow.audit_info_by_workflow_id(workflow_id, 2).audit_id
     return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
 
 
 # 判断SQL上线是否无需审批
-def is_autoreview(workflowid):
-    workflowDetail = SqlWorkflow.objects.get(id=workflowid)
-    sql_content = workflowDetail.sql_content
-    instance_name = workflowDetail.instance_name
-    db_name = workflowDetail.db_name
-    is_manual = workflowDetail.is_manual
+def is_autoreview(workflow_id):
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    sql_content = workflow_detail.sql_content
+    instance_name = workflow_detail.instance_name
+    db_name = workflow_detail.db_name
+    is_manual = workflow_detail.is_manual
 
     # 删除注释语句
     sql_content = ''.join(

@@ -101,10 +101,10 @@
                     });
                     var editWorkflowNname = "{{ rollbackWorkflowName }}";
                     var editSqlContent = $("#editSqlContent").val();
-                    var editGroup = "{{ workflowDetail.group_name }}";
-                    var editClustername = "{{ workflowDetail.instance_name }}";
-                    var editDbname = "{{ workflowDetail.db_name }}";
-                    var editIsbackup = "{{ workflowDetail.is_backup }}";
+                    var editGroup = "{{ workflow_detail.group_name }}";
+                    var editClustername = "{{ workflow_detail.instance_name }}";
+                    var editDbname = "{{ workflow_detail.db_name }}";
+                    var editIsbackup = "{{ workflow_detail.is_backup }}";
                     sessionStorage.removeItem('editWorkflowDetailId');
                     sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
                     sessionStorage.setItem('editSqlContent', editSqlContent);

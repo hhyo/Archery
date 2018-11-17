@@ -146,11 +146,11 @@ def _send(audit_id, msg_type, **kwargs):
     if msg_type == 0:
         sys_config = SysConfig().sys_config
         if sys_config.get('mail'):
-            msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+            msg_sender.send_email(msg_title, msg_content, msg_email_reciver, list_cc_addr=msg_email_cc)
         if sys_config.get('ding'):
             msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
     elif msg_type == 1:
-        msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+        msg_sender.send_email(msg_title, msg_content, msg_email_reciver, list_cc_addr=msg_email_cc)
     elif msg_type == 2:
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 

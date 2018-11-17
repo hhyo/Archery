@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load format_tags %}
 {% block content %}
-    <h4 style="display: inline;">工单名称：<span>{{ workflowDetail.title }}</span></h4>
+    <h4 style="display: inline;">工单名称：<span>{{ workflow_detail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
-    {% if user.username == workflowDetail.engineer %}
+    {% if user.username == workflow_detail.engineer %}
         <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
-    <input type="hidden" id="editSqlContent" value="{{ workflowDetail.sql_content }}"/>
+    <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
     <table data-toggle="table" class="table table-striped table-hover">
         <thead>
@@ -48,7 +48,7 @@
         <tbody>
         <tr class="success">
             <td>
-                {{ workflowDetail.user_display }}
+                {{ workflow_detail.user_display }}
             </td>
             <td>
                 {{ audit_auth_group }}
@@ -57,37 +57,37 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflowDetail.instance_name }}
+                {{ workflow_detail.instance_name }}
             </td>
             <td>
-                {% if workflowDetail.priv_type == 1 %}
+                {% if workflow_detail.priv_type == 1 %}
                     DATABASE
-                {% elif workflowDetail.priv_type == 2 %}
+                {% elif workflow_detail.priv_type == 2 %}
                     TABLE
                 {% endif %}
             </td>
             <td>
-                {{ workflowDetail.limit_num }}
+                {{ workflow_detail.limit_num }}
             </td>
             <td>
-                {{ workflowDetail.valid_date }}
+                {{ workflow_detail.valid_date }}
             </td>
             <td>
-                {{ workflowDetail.create_time }}
+                {{ workflow_detail.create_time }}
             </td>
             <td>
-                {% if workflowDetail.status == 0 %}
+                {% if workflow_detail.status == 0 %}
                     <b style="color: red">待审核</b>
-                {% elif workflowDetail.status == 1 %}
+                {% elif workflow_detail.status == 1 %}
                     <b style="color: green">审核通过</b>
-                {% elif workflowDetail.status == 2 %}
+                {% elif workflow_detail.status == 2 %}
                     <b style="color: red">审核不通过</b>
-                {% elif workflowDetail.status == 3 %}
+                {% elif workflow_detail.status == 3 %}
                     <b style="color: red">审核取消</b>
                 {% endif %}
             </td>
             <td>
-                {{ workflowDetail.group_name }}
+                {{ workflow_detail.group_name }}
             </td>
         </tr>
         </tbody>
@@ -95,36 +95,36 @@
     <br>
     <div class="panel panel-default">
         <div class="panel-heading">
-            {% if workflowDetail.priv_type == 1 %}
+            {% if workflow_detail.priv_type == 1 %}
                 数据库清单
-            {% elif workflowDetail.priv_type == 2 %}
+            {% elif workflow_detail.priv_type == 2 %}
                 表清单
             {% endif %}
         </div>
         <div class="panel-body">
-            {% if workflowDetail.priv_type == 1 %}
-                {% format_str workflowDetail.db_list %}
-            {% elif workflowDetail.priv_type == 2 %}
-                {% format_str workflowDetail.table_list %}
+            {% if workflow_detail.priv_type == 1 %}
+                {% format_str workflow_detail.db_list %}
+            {% elif workflow_detail.priv_type == 2 %}
+                {% format_str workflow_detail.table_list %}
             {% endif %}
         </div>
     </div>
     <br>
-    {% if workflowDetail.status == 0 %}
+    {% if workflow_detail.status == 0 %}
         {% if is_can_review %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                       placeholder="请填写审核备注" rows=3></textarea>
             <br>
             <form action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
-                <input type="hidden" name="apply_id" value="{{ workflowDetail.apply_id }}">
+                <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="1">
                 <input type="submit" id="btnPass" onclick="loading(this)" class="btn btn-success" value="审核通过"/>
             </form>
 
             <form id="form-cancel" action="/query/privaudit/" method="post" style="display:inline-block;">
                 {% csrf_token %}
-                <input type="hidden" name="apply_id" value="{{ workflowDetail.apply_id }}">
+                <input type="hidden" name="apply_id" value="{{ workflow_detail.apply_id }}">
                 <input type="hidden" id="audit_status" name="audit_status" value="2">
                 <input type="hidden" id="audit_remark" name="audit_remark" value="">
                 <input type="button" id="btnReject" class="btn btn-default" value="终止流程"/>

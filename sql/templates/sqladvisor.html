@@ -334,7 +334,7 @@
             $('input[type=button]').prop('disabled', true);
             var sqlContent = editor.getValue();
             var instance_name = $("#instance_name").val();
-            var dbName = $("#db_name").val();
+            var db_name= $("#db_name").val();
             var verbose = $("#verbose").val();
 
             //将数据通过ajax提交给后端进行检查
@@ -345,7 +345,7 @@
                 data: {
                     sql_content: sqlContent,
                     instance_name: instance_name,
-                    db_name: dbName,
+                    db_name: db_name,
                     verbose: verbose
 
                 },
@@ -466,7 +466,7 @@
             $('input[type=button]').prop('disabled', true);
             var sqlContent = editor.getValue();
             var instance_name = $("#instance_name").val();
-            var dbName = $("#db_name").val();
+            var db_name= $("#db_name").val();
 
             //将数据通过ajax提交给后端进行检查
             $.ajax({
@@ -475,7 +475,7 @@
                 dataType: "json",
                 data: {
                     instance_name: instance_name,
-                    db_name: dbName,
+                    db_name: db_name,
                     sql: sqlContent
                 },
                 complete: function () {

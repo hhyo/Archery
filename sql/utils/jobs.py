@@ -20,10 +20,10 @@ except SchedulerAlreadyRunningError:
 
 
 # 添加/修改sql执行任务
-def add_sqlcronjob(job_id, run_date, workflowId, url):
+def add_sqlcronjob(job_id, run_date, workflow_id, url):
     scheduler = BackgroundScheduler()
     scheduler.add_jobstore(DjangoJobStore(), "default")
-    scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflowId, url], id=job_id, replace_existing=True)
+    scheduler.add_job(execute_job, 'date', run_date=run_date, args=[workflow_id, url], id=job_id, replace_existing=True)
     register_events(scheduler)
     try:
         scheduler.start()

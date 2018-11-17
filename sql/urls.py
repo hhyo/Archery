@@ -17,7 +17,7 @@ urlpatterns = [
     path('submitsql/', views.submitSql),
     path('editsql/', views.submitSql),
     path('submitotherinstance/', views.submitSql),
-    path('detail/<int:workflowId>/', views.detail, name='detail'),
+    path('detail/<int:workflow_id>/', views.detail, name='detail'),
     path('autoreview/', sql_workflow.autoreview),
     path('passed/', sql_workflow.passed),
     path('execute/', sql_workflow.execute),
@@ -45,7 +45,7 @@ urlpatterns = [
     path('config/', views.config),
 
     path('authenticate/', auth.authenticateEntry),
-    path('sqlworkflowlist/', sql_workflow.sqlworkflowlist),
+    path('sqlworkflow_list/', sql_workflow.sqlworkflow_list),
     path('simplecheck/', sql_workflow.simplecheck),
     path('getOscPercent/', sql_workflow.getOscPercent),
     path('getWorkflowStatus/', sql_workflow.getWorkflowStatus),

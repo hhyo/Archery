@@ -156,11 +156,11 @@ class InceptionDao(object):
                     result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
 
-    def executeFinal(self, workflowDetail):
+    def executeFinal(self, workflow_detail):
         '''
         将sql交给inception进行最终执行，并返回执行结果。
         '''
-        if workflowDetail.is_backup == '是':
+        if workflow_detail.is_backup == '是':
             strBackup = "--enable-remote-backup;"
         else:
             strBackup = "--disable-remote-backup;"
@@ -175,7 +175,7 @@ class InceptionDao(object):
             self.password,
             self.host,
             self.port,
-            workflowDetail.db_name, workflowDetail.sql_content)
+            workflow_detail.db_name, workflow_detail.sql_content)
         splitResult = self._fetchall(sqlSplit, self.inception_host, self.inception_port, '', '', '')
 
         tmpList = []
@@ -197,13 +197,13 @@ class InceptionDao(object):
             for sqlRow in executeResult:
                 tmpList.append(sqlRow)
             # 每执行一次，就将执行结果更新到工单的execute_result，便于获取osc进度时对比
-            workflowDetail.execute_result = json.dumps(tmpList)
+            workflow_detail.execute_result = json.dumps(tmpList)
             try:
-                workflowDetail.save()
+                workflow_detail.save()
             except Exception:
                 # 关闭后重新获取连接，防止超时
                 connection.close()
-                workflowDetail.save()
+                workflow_detail.save()
 
         # 二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
         finalStatus = "已正常结束"
@@ -216,9 +216,9 @@ class InceptionDao(object):
 
         return (finalStatus, finalList)
 
-    def getRollbackSqlList(self, workflowId):
-        workflowDetail = SqlWorkflow.objects.get(id=workflowId)
-        listExecuteResult = json.loads(workflowDetail.execute_result)
+    def getRollbackSqlList(self, workflow_id):
+        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+        listExecuteResult = json.loads(workflow_detail.execute_result)
         # 回滚数据倒序展示
         listExecuteResult.reverse()
         listBackupSql = []
@@ -297,7 +297,7 @@ class InceptionDao(object):
             optResult = {"status": 1, "msg": "ERROR 2624 (HY000):未找到OSC执行进程，可能已经执行完成", "data": ""}
         return optResult
 
-    def query_print(self, sql_content, dbName):
+    def query_print(self, sql_content, db_name):
         '''
         将sql交给inception打印语法树。
         '''
@@ -311,7 +311,7 @@ class InceptionDao(object):
             self.password,
             self.host,
             self.port,
-            dbName,
+            db_name,
             sql_content)
         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
