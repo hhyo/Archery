@@ -579,7 +579,7 @@ def query(request):
         return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                             content_type='application/json')
     except Exception:
-        return HttpResponse(json.dumps(result, default=str, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, default=str, bigint_as_string=True, encoding='latin1'),
                             content_type='application/json')
 
 
