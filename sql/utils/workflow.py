@@ -129,7 +129,8 @@ class Workflow(object):
         if sys_config.get('mail') or sys_config.get('ding'):
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
             email_cc = kwargs.get('list_cc_addr', [])
-            send_msg(audit_detail.audit_id, 0, workflow_url=workflow_url, email_cc=email_cc)
+            send_msg(audit_id=audit_detail.audit_id, msg_type=0, audit_info=audit_detail, workflow_url=workflow_url,
+                     email_cc=email_cc)
         # 返回添加结果
         return result
 
@@ -258,7 +259,7 @@ class Workflow(object):
         sys_config = SysConfig().sys_config
         if sys_config.get('mail') or sys_config.get('ding'):
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
-            send_msg(audit_detail.audit_id, 0, workflow_url=workflow_url)
+            send_msg(audit_id=audit_detail.audit_id, msg_type=0, audit_info=audit_detail, workflow_url=workflow_url)
         # 返回审核结果
         result['data'] = {'workflow_status': audit_result.current_status}
         return result

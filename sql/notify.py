@@ -18,11 +18,9 @@ logger = logging.getLogger('default')
 
 # 邮件消息通知,0.all,1.email,2.dingding
 def _send(audit_id, msg_type, **kwargs):
-    try:
-        audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
-    except Exception:
-        logger.error('工单信息获取错误,尝试关闭连接重新获取,audit_id={}'.format(audit_id))
-        connection.close()
+    if kwargs.get('audit_info'):
+        audit_info = kwargs.get('audit_info')
+    else:
         audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
     workflow_id = audit_info.workflow_id
     workflow_type = audit_info.workflow_type
@@ -88,8 +86,8 @@ def _send(audit_id, msg_type, **kwargs):
         msg_email_reciver = [user.email for user in
                              auth_group_users([auth_group_names], audit_info.group_id)]
         # 抄送对象
-        email_cc = kwargs.get('email_cc', [])
-        msg_email_cc = email_cc
+        msg_email_cc = kwargs.get('email_cc', [])
+        # 消息内容
         msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n当前审批：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
             workflow_from,
             group_name,
@@ -103,7 +101,8 @@ def _send(audit_id, msg_type, **kwargs):
         # 接收人
         msg_email_reciver = [Users.objects.get(username=audit_info.create_user).email]
         # 抄送对象
-        msg_email_cc = kwargs.get('email_cc', [])
+        msg_email_cc = []
+        # 消息内容
         msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
             workflow_from,
             group_name,
@@ -116,6 +115,7 @@ def _send(audit_id, msg_type, **kwargs):
         # 接收人
         msg_email_reciver = [Users.objects.get(username=audit_info.create_user).email]
         msg_email_cc = []
+        # 消息内容
         msg_content = '''工单名称：{}\n工单地址：{}\n驳回原因：{}\n提醒：此工单被审核不通过，请按照驳回原因进行修改！'''.format(
             workflow_title,
             workflow_url,
@@ -127,6 +127,7 @@ def _send(audit_id, msg_type, **kwargs):
                             audit_info.audit_auth_groups.split(',')]
         msg_email_reciver = [user.email for user in auth_group_users(auth_group_names, audit_info.group_id)]
         msg_email_cc = []
+        # 消息内容
         msg_content = '''发起人：{}\n组：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(
             workflow_from,
             group_name,
