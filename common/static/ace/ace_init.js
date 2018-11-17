@@ -93,7 +93,7 @@ function setDbsCompleteData(result) {
                         setCompleteData(dbs)
                     }
                 } else {
-                    alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    alert(data.msg);
                 }
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -145,7 +145,7 @@ function setTablesCompleteData(result) {
                     }
                     setCompleteData(tables);
                 } else {
-                    alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    alert(data.msg);
                 }
             }
             ,
@@ -199,7 +199,7 @@ function setColumnsCompleteData(result) {
                     }
                     setCompleteData(columns);
                 } else {
-                    alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    alert(data.msg);
                 }
             }
         });

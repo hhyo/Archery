@@ -155,7 +155,7 @@ def simplecheck(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = str(e)
+        result['msg'] = 'Inception审核报错，请检查Inception配置，错误信息：\n{}'.format(str(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     if inception_result is None or len(inception_result) == 0:

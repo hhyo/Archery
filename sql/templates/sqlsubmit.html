@@ -219,7 +219,7 @@
                         //自动补全提示
                         setCompleteData(dbs)
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -245,7 +245,7 @@
                         //自动补全提示
                         setTablesCompleteData(data.data)
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -390,7 +390,7 @@
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -414,7 +414,7 @@
                         $("#workflow_auditors_display").text(result['auditors_display']);
                         $("#div-workflow_auditors").show();
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -429,7 +429,7 @@
             // 初始化上传控件
             init_upload();
             // 提示信息
-            //editor.setValue("请在此提交SQL，请以分号结尾。");
+            editor.setValue("请在此提交SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。");
             //editor.clearSelection();
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');

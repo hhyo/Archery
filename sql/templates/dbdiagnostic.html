@@ -348,7 +348,7 @@
 
                             }
                         } else {
-                            alert("status: " + data.status + "\nmsg: " + data.msg);
+                            alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -394,7 +394,7 @@
                                 $("#killComfirm").modal();
                             }
                             else {
-                                alert("status: " + data.status + "\nmsg: " + data.msg);
+                                alert(data.msg);
                             }
                         }
                     })

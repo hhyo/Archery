@@ -319,7 +319,7 @@
                         }
 
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -374,7 +374,7 @@
                         $("#tuning_result").hide();
                         $("#soar-result").hide();
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -450,7 +450,7 @@
                         $("#soar-result").hide();
 
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -508,7 +508,7 @@
                         $("#explain_result").hide();
                         $("#tuning_result").hide();
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -778,7 +778,7 @@
                         $("#soar-result").hide();
 
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {

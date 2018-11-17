@@ -563,7 +563,7 @@
                     if (data.status === 0) {
                         window.location.reload()
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -618,7 +618,7 @@
                             var result = data.data;
                             $("#workflow_auditors").text(result['auditors_display']);
                         } else {
-                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                            alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -652,7 +652,7 @@
                             //alert('修改成功');
                             $("#workflow_type").trigger("change")
                         } else {
-                            alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                            alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -690,7 +690,7 @@
                     if (data.status === 0) {
                         alert('inception和备份库测试连接成功，请点击保存生效！')
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -723,7 +723,7 @@
                     if (data.status === 0) {
                         alert('测试邮件已成功发送给当前用户，注意查收，请点击保存生效！')
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {

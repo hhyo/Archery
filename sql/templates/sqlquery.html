@@ -494,7 +494,7 @@
                             $("#" + ('masking_time') + n).text(result['masking_cost_time'] + ' sec');
                         }
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -540,7 +540,7 @@
                         //自动补全提示
                         setCompleteData(dbs)
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
 
@@ -578,7 +578,7 @@
                         //自动补全提示
                         setTablesCompleteData(result)
                     } else {
-                        alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                        alert(data.msg);
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {

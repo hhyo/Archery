@@ -9,7 +9,7 @@ function validate() {
     } else if (instance_name === null || instance_name == $("#instance_name").attr("data-placeholder")) {
         alert("请选择实例！");
         return result = false;
-    }else if(db_name  === null || db_name == $("#db_name").attr("data-placeholder")){
+    } else if (db_name === null || db_name == $("#db_name").attr("data-placeholder")) {
         alert("请选择数据库");
         return result = false;
     }
@@ -158,7 +158,7 @@ function autoreview() {
                 $('input[type=button]').removeClass('disabled');
                 $('input[type=button]').prop('disabled', false);
             } else {
-                alert("status: " + data.status + "\nmsg: " + data.msg);
+                alert(data.msg);
             }
         },
         error: function (XMLHttpRequest, textStatus, errorThrown) {

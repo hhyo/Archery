@@ -44,7 +44,7 @@ $(document).ready(function () {
                     }
                     $("#objname").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择审核对象:</option>");
                 } else {
-                    alert("status: " + data.status + "\nmsg: " + data.msg + data.data);
+                    alert(data.msg);
                 }
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
