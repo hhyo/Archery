@@ -6,6 +6,7 @@ from threading import Thread
 from django.contrib.auth.models import Group
 from django.db import connection
 
+from common.config import SysConfig
 from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup, WorkflowAudit, WorkflowAuditDetail
 from sql.utils.group import auth_group_users
 from common.utils.sendmsg import MailSender
@@ -143,8 +144,11 @@ def _send(audit_id, msg_type, **kwargs):
     msg_sender = MailSender()
     logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
     if msg_type == 0:
-        msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
-        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+        sys_config = SysConfig().sys_config
+        if sys_config.get('mail'):
+            msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
+        if sys_config.get('ding'):
+            msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
     elif msg_type == 1:
         msg_sender.send_email(msg_title, msg_content, msg_email_reciver, listCcAddr=msg_email_cc)
     elif msg_type == 2:

@@ -109,4 +109,4 @@ class MailSender(object):
             requests.post(url=url, json=data)
             logger.debug('钉钉推送成功')
         except Exception:
-            logger.error('钉钉推送成功\n{}'.format(traceback.format_exc()))
+            logger.error('钉钉推送失败\n{}'.format(traceback.format_exc()))
