@@ -148,9 +148,8 @@ class Dao(object):
             conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
             cursor = conn.cursor()
-            effect_row = cursor.execute(sql)
-            # result = {}
-            # result['effect_row'] = effect_row
+            for row in sql.strip(';').split(';'):
+                cursor.execute(row)
             conn.commit()
         except MySQLdb.Warning as w:
             logger.error(traceback.format_exc())
