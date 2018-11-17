@@ -81,13 +81,17 @@ def lists(request):
 def log(request):
     workflow_id = request.POST.get('workflow_id')
     workflow_type = request.POST.get('workflow_type')
-    audit_id = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type).audit_id
-    workflow_logs = WorkflowLog.objects.filter(audit_id=audit_id).order_by('-id').values(
-        'operation_type_desc',
-        'operation_info',
-        'operator_display',
-        'operation_time')
-    count = WorkflowLog.objects.filter(audit_id=audit_id).count()
+    try:
+        audit_id = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type).audit_id
+        workflow_logs = WorkflowLog.objects.filter(audit_id=audit_id).order_by('-id').values(
+            'operation_type_desc',
+            'operation_info',
+            'operator_display',
+            'operation_time')
+        count = WorkflowLog.objects.filter(audit_id=audit_id).count()
+    except Exception:
+        workflow_logs = []
+        count = 0
 
     # QuerySet 序列化
     rows = [row for row in workflow_logs]
