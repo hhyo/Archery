@@ -142,6 +142,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="auto_review_wrong"
+                                       class="col-sm-4 control-label">AUTO_REVIEW_WRONG</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="auto_review_wrong"
+                                           key="auto_review_wrong"
+                                           value="{{ config.auto_review_wrong }}"
+                                           placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="auto_review"
                                        class="col-sm-4 control-label">AUTO_REVIEW</label>
                                 <div class="col-sm-8">
@@ -664,12 +675,12 @@
                 url: "/check/inception/",
                 dataType: "json",
                 data: {
-                    inception_host:$("#inception_host").val(),
-                    inception_port:$("#inception_port").val(),
-                    inception_remote_backup_host:$("#inception_remote_backup_host").val(),
-                    inception_remote_backup_port:$("#inception_remote_backup_port").val(),
-                    inception_remote_backup_user:$("#inception_remote_backup_user").val(),
-                    inception_remote_backup_password:$("#inception_remote_backup_password").val(),
+                    inception_host: $("#inception_host").val(),
+                    inception_port: $("#inception_port").val(),
+                    inception_remote_backup_host: $("#inception_remote_backup_host").val(),
+                    inception_remote_backup_port: $("#inception_remote_backup_port").val(),
+                    inception_remote_backup_user: $("#inception_remote_backup_user").val(),
+                    inception_remote_backup_password: $("#inception_remote_backup_password").val(),
                 },
                 complete: function () {
                     $("#check_incption").removeClass('disabled');
@@ -697,12 +708,12 @@
                 url: "/check/email/",
                 dataType: "json",
                 data: {
-                    mail:$("#mail").val(),
-                    mail_ssl:$("#mail_ssl").val(),
-                    mail_smtp_server:$("#mail_smtp_server").val(),
-                    mail_smtp_port:$("#mail_smtp_port").val(),
-                    mail_smtp_user:$("#mail_smtp_user").val(),
-                    mail_smtp_password:$("#mail_smtp_password").val(),
+                    mail: $("#mail").val(),
+                    mail_ssl: $("#mail_ssl").val(),
+                    mail_smtp_server: $("#mail_smtp_server").val(),
+                    mail_smtp_port: $("#mail_smtp_port").val(),
+                    mail_smtp_user: $("#mail_smtp_user").val(),
+                    mail_smtp_password: $("#mail_smtp_password").val(),
                 },
                 complete: function () {
                     $("#check_email").removeClass('disabled');

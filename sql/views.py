@@ -59,17 +59,26 @@ def detail(request, workflow_id):
     else:
         listContent = json.loads(workflow_detail.review_content)
 
-    # 获取当前审批和审批流程
-    audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_id, 2)
+    # 自动审批不通过的不需要获取下列信息
+    if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
+        # 获取当前审批和审批流程
+        audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_id, 2)
 
-    # 是否可审核
-    is_can_review = Workflow.can_review(request.user, workflow_id, 2)
-    # 是否可执行
-    is_can_execute = can_execute(request.user, workflow_id)
-    # 是否可定时执行
-    is_can_timingtask = can_timingtask(request.user, workflow_id)
-    # 是否可取消
-    is_can_cancel = can_cancel(request.user, workflow_id)
+        # 是否可审核
+        is_can_review = Workflow.can_review(request.user, workflow_id, 2)
+        # 是否可执行
+        is_can_execute = can_execute(request.user, workflow_id)
+        # 是否可定时执行
+        is_can_timingtask = can_timingtask(request.user, workflow_id)
+        # 是否可取消
+        is_can_cancel = can_cancel(request.user, workflow_id)
+    else:
+        audit_auth_group = '系统自动驳回'
+        current_audit_auth_group = '系统自动驳回'
+        is_can_review = False
+        is_can_execute = False
+        is_can_timingtask = False
+        is_can_cancel = False
 
     # 获取定时执行任务信息
     if workflow_detail.status == Const.workflowStatus['timingtask']:
