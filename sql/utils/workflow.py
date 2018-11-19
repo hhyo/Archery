@@ -127,10 +127,12 @@ class Workflow(object):
         # 消息通知
         sys_config = SysConfig().sys_config
         if sys_config.get('mail') or sys_config.get('ding'):
+            # 再次获取审核信息
+            audit_info = WorkflowAudit.objects.get(audit_id=audit_detail.audit_id)
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
             email_cc = kwargs.get('list_cc_addr', [])
-            send_msg(audit_id=audit_detail.audit_id, msg_type=0, audit_info=audit_detail, workflow_url=workflow_url,
-                     email_cc=email_cc)
+            send_msg(audit_info=audit_info, workflow_url=workflow_url, email_cc=email_cc)
+
         # 返回添加结果
         return result
 
@@ -258,8 +260,10 @@ class Workflow(object):
         # 消息通知
         sys_config = SysConfig().sys_config
         if sys_config.get('mail') or sys_config.get('ding'):
+            # 再次获取审核信息
+            audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
-            send_msg(audit_id=audit_detail.audit_id, msg_type=0, audit_info=audit_detail, workflow_url=workflow_url)
+            send_msg(audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark)
         # 返回审核结果
         result['data'] = {'workflow_status': audit_result.current_status}
         return result
