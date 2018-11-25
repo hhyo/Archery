@@ -630,7 +630,7 @@
 
         // 变更组工单审批流程
         $("#btn-workflow-config").click(function () {
-            if ($("#group").val() && $("#workflow_type").val()) {
+            if ($("#group").val() && $("#workflow_type").val() && $("#workflow_auditors_text").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
                 var audit_auth_groups = $("#workflow_auditors_text").val().replace(/->/g, ",");
@@ -661,7 +661,7 @@
                 });
             }
             else {
-                alert('请选择项目和工单类型！')
+                alert('请选择组、工单类型和审批流程！')
             }
 
         });
