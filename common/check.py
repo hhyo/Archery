@@ -34,6 +34,7 @@ def inception(request):
         logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = '无法连接inception\n{}'.format(str(e))
+        return HttpResponse(json.dumps(result), content_type='application/json')
     else:
         cur.close()
         conn.close()
