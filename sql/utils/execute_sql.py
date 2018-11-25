@@ -171,10 +171,9 @@ def send_msg(workflow_detail, url):
         re.sub('[\r\n\f]{2,}', '\n', workflow_detail.sql_content[0:500].replace('\r', '')))
 
     if sys_config.get('mail'):
-        # 邮件通知申请人，审核人，抄送DBA
-        notify_users = workflow_detail.audit_auth_groups.split(',')
-        notify_users.append(workflow_detail.engineer)
-        list_to_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+        # 邮件通知申请人，抄送DBA
+        list_to_addr = [email['email'] for email in
+                        Users.objects.filter(username=workflow_detail.engineer).values('email')]
         list_cc_addr = [email['email'] for email in
                         auth_group_users(auth_group_names=['DBA'], group_id=workflow_detail.group_id).values('email')]
         logger.debug('发送执行结果通知，消息audit_id={}'.format(audit_id))
