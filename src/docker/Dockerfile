@@ -1,4 +1,4 @@
-FROM docker.io/centos7
+FROM docker.io/centos:7
 
 #python3.6
 RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
