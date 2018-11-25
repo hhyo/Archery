@@ -6,7 +6,7 @@ import traceback
 from email import encoders
 from email.header import Header
 from email.mime.text import MIMEText
-from email.utils import parseaddr, formataddr
+from email.utils import formataddr
 import smtplib
 import requests
 
@@ -29,14 +29,13 @@ class MailSender(object):
         self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
         self.MAIL_SSL = sys_config.get('mail_ssl')
 
-    def _format_addr(self, s):
-        name, addr = parseaddr(s)
-        return formataddr((Header(name, 'utf-8').encode(), addr))
-
-    def _add_attachment(self, filename):
-        '''''
-            添加附件
-        '''
+    @staticmethod
+    def _add_attachment(filename):
+        """
+        添加附件
+        :param filename:
+        :return:
+        """
         file_msg = email.mime.base.MIMEBase('application', 'octet-stream')
         file_msg.set_payload(open(filename, 'rb').read())
         # 附件如果有中文会出现乱码问题，加入gbk
@@ -45,20 +44,27 @@ class MailSender(object):
 
         return file_msg
 
-    def send_email(self, strTitle, strContent, list_to_addr, **kwargs):
-        '''
-            发送邮件
-        '''
+    def send_email(self, subject, body, to, **kwargs):
+        """
+        发送邮件
+        :param subject:
+        :param body:
+        :param to:
+        :param kwargs:
+        :return:
+        """
+
         try:
-            if list_to_addr is None or list_to_addr == ['']:
+            if to is None or to == ['']:
                 logger.error('收件人为空，无法发送邮件')
                 return
+            list_cc = kwargs.get('list_cc_addr', [])
 
             # 构造MIMEMultipart对象做为根容器
             main_msg = email.mime.multipart.MIMEMultipart()
 
             # 添加文本内容
-            text_msg = email.mime.text.MIMEText(strContent, 'plain', 'utf-8')
+            text_msg = email.mime.text.MIMEText(body, 'plain', 'utf-8')
             main_msg.attach(text_msg)
 
             # 添加附件
@@ -68,27 +74,22 @@ class MailSender(object):
                     file_msg = self._add_attachment(filename)
                     main_msg.attach(file_msg)
 
-            # 收发件人地址和邮件标题:
+            # 消息内容:
+            main_msg['Subject'] = Header(subject, "utf-8").encode()
             main_msg['From'] = formataddr(["archery 通知", self.MAIL_REVIEW_FROM_ADDR])
-            main_msg['To'] = ','.join(list_to_addr)
-            list_cc_addr = kwargs.get('list_cc_addr')
-            if list_cc_addr:
-                main_msg['Cc'] = ', '.join(kwargs['list_cc_addr'])
-                listAddr = list_to_addr + list_cc_addr
-            else:
-                listAddr = list_to_addr
-            main_msg['Subject'] = Header(strTitle, "utf-8").encode()
+            main_msg['To'] = ','.join(to)
+            main_msg['Cc'] = ', '.join(str(cc) for cc in list_cc)
             main_msg['Date'] = email.utils.formatdate()
 
             if self.MAIL_SSL:
-                server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认SSL端口是465
+                server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # 默认SSL端口是465
             else:
-                server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
+                server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # 默认端口是25
 
-            # 如果提供的密码为空，则不需要登录SMTP server
+            # 如果提供的密码为空，则不需要登录
             if self.MAIL_REVIEW_FROM_PASSWORD != '':
                 server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
-            server.sendmail(self.MAIL_REVIEW_FROM_ADDR, listAddr, main_msg.as_string())
+            server.sendmail(self.MAIL_REVIEW_FROM_ADDR, to + list_cc, main_msg.as_string())
             server.quit()
             logger.debug('邮件推送成功')
         except Exception:
@@ -96,9 +97,12 @@ class MailSender(object):
 
     @staticmethod
     def send_ding(url, content):
-        '''
+        """
         发送钉钉消息
-        '''
+        :param url:
+        :param content:
+        :return:
+        """
         try:
             data = {
                 "msgtype": "text",
