@@ -1,9 +1,12 @@
 [![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
+
 
 介绍
 ============
 项目基于[archer](https://github.com/jly8866/archer)，有问题请提交issue
 - [文档](https://github.com/hhyo/archery/wiki)
+- [FAQ](https://github.com/hhyo/archery/wiki/FAQ)
 - [release版本](https://github.com/hhyo/archery/releases/)
 
 快速开始
