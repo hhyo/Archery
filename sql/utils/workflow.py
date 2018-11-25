@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from sql.utils.group import user_groups, auth_group_users
 from sql.utils.sql_review import is_autoreview
-from sql.notify import send_msg
+from sql.notify import notify
 from common.utils.const import WorkflowDict
 from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, SqlGroup, SqlWorkflow, \
     QueryPrivilegesApply
@@ -131,7 +131,7 @@ class Workflow(object):
             audit_info = WorkflowAudit.objects.get(audit_id=audit_detail.audit_id)
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
             email_cc = kwargs.get('list_cc_addr', [])
-            send_msg(audit_info=audit_info, workflow_url=workflow_url, email_cc=email_cc)
+            notify(audit_info=audit_info, workflow_url=workflow_url, email_cc=email_cc)
 
         # 返回添加结果
         return result
@@ -263,7 +263,7 @@ class Workflow(object):
             # 再次获取审核信息
             audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
             workflow_url = "{}://{}/workflow/{}".format(request.scheme, request.get_host(), audit_detail.audit_id)
-            send_msg(audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark)
+            notify(audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark)
         # 返回审核结果
         result['data'] = {'workflow_status': audit_result.current_status}
         return result

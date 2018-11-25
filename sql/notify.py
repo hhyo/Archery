@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import re
-from threading import Thread
-
 from django.contrib.auth.models import Group
 from common.config import SysConfig
 from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup
@@ -16,7 +14,7 @@ logger = logging.getLogger('default')
 
 
 # 邮件消息通知,0.all,1.email,2.dingding
-def _send(audit_info, msg_type=0, **kwargs):
+def notify(audit_info, msg_type=0, **kwargs):
     audit_id = audit_info.audit_id
     workflow_audit_remark = kwargs.get('audit_remark', '')
     workflow_url = kwargs.get('workflow_url', '')
@@ -112,6 +110,7 @@ def _send(audit_info, msg_type=0, **kwargs):
 
     # 判断是发送钉钉还是发送邮件
     msg_sender = MailSender()
+    logger.debug('发送消息通知，消息audit_id={}'.format(audit_id))
     logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
     if msg_type == 0:
         sys_config = SysConfig().sys_config
@@ -123,11 +122,3 @@ def _send(audit_info, msg_type=0, **kwargs):
         msg_sender.send_email(msg_title, msg_content, msg_email_reciver, list_cc_addr=msg_email_cc)
     elif msg_type == 2:
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-
-
-# 异步调用
-def send_msg(audit_info, msg_type=0, **kwargs):
-    audit_id = audit_info.audit_id
-    logger.debug('异步发送消息通知，消息audit_id={}'.format(audit_id))
-    p = Thread(target=_send, args=(audit_info, msg_type), kwargs=kwargs)
-    p.start()

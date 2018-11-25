@@ -1,17 +1,16 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 import email
+import smtplib
+import requests
+import logging
 import traceback
+from threading import Thread
 from email import encoders
 from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import formataddr
-import smtplib
-import requests
-
 from common.config import SysConfig
-import logging
 
 logger = logging.getLogger('default')
 
@@ -44,7 +43,7 @@ class MailSender(object):
 
         return file_msg
 
-    def send_email(self, subject, body, to, **kwargs):
+    def _send_email(self, subject, body, to, **kwargs):
         """
         发送邮件
         :param subject:
@@ -114,3 +113,7 @@ class MailSender(object):
             logger.debug('钉钉推送成功')
         except Exception:
             logger.error('钉钉推送失败\n{}'.format(traceback.format_exc()))
+
+    def send_email(self, subject, body, to, **kwargs):
+        p = Thread(target=self._send_email, args=(subject, body, to), kwargs=kwargs)
+        p.start()

@@ -177,6 +177,8 @@ def send_msg(workflow_detail, url):
         list_to_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
         list_cc_addr = [email['email'] for email in
                         auth_group_users(auth_group_names=['DBA'], group_id=workflow_detail.group_id).values('email')]
+        logger.debug('发送执行结果通知，消息audit_id={}'.format(audit_id))
+        logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, list_to_addr + list_cc_addr, msg_content))
         mail_sender.send_email(msg_title, msg_content, list_to_addr, list_cc_addr=list_cc_addr)
     if sys_config.get('ding'):
         # 钉钉通知申请人，审核人，抄送DBA
@@ -235,4 +237,6 @@ def send_msg(workflow_detail, url):
                       Users.objects.filter(groups__name=sys_config.get('ddl_notify_auth_group')).values('email')]
 
             # 发送
+            logger.debug('发送DDL通知，消息audit_id={}'.format(audit_id))
+            logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_to, msg_content))
             mail_sender.send_email(msg_title, msg_content, msg_to)
