@@ -112,11 +112,11 @@ class ChartDao(object):
     def querylog_effect_row_by_user(self, cycle):
         sql = '''
         select 
-          username,
+          user_display,
           sum(effect_row)
         from query_log
         where create_time >= date_add(now(), interval -{} month)
-        group by username
+        group by user_display
         order by sum(effect_row) desc
         limit 10;'''.format(cycle)
         return self.__query(sql)
