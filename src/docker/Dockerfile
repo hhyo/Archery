@@ -1,4 +1,4 @@
-FROM docker.io/centos
+FROM docker.io/centos7
 
 #python3.6
 RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
@@ -53,7 +53,7 @@ RUN cd /opt \
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.3.7 \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.3.8 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/src/docker/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
