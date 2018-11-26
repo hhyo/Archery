@@ -37,7 +37,7 @@ class Dao(object):
         self.conn.close()
 
     # 连进指定的mysql实例里，读取所有databases并返回
-    def getAlldbByCluster(self):
+    def get_alldb_by_cluster(self):
         try:
             conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, charset='utf8')
             cursor = conn.cursor()
@@ -45,10 +45,7 @@ class Dao(object):
             cursor.execute(sql)
             db_list = [row[0] for row in cursor.fetchall()
                        if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
-        except MySQLdb.Warning as w:
-            logger.error(traceback.format_exc())
-            raise Exception(w)
-        except MySQLdb.Error as e:
+        except Exception as e:
             logger.error(traceback.format_exc())
             raise Exception(e)
         else:
@@ -57,7 +54,7 @@ class Dao(object):
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
-    def getAllTableByDb(self, db_name):
+    def get_all_table_by_db(self, db_name):
         try:
             conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
@@ -65,10 +62,7 @@ class Dao(object):
             sql = "show tables"
             cursor.execute(sql)
             tb_list = [row[0] for row in cursor.fetchall() if row[0] not in ['test']]
-        except MySQLdb.Warning as w:
-            logger.error(traceback.format_exc())
-            raise Exception(w)
-        except MySQLdb.Error as e:
+        except Exception as e:
             logger.error(traceback.format_exc())
             raise Exception(e)
         else:
@@ -77,7 +71,7 @@ class Dao(object):
         return tb_list
 
     # 连进指定的mysql实例里，读取所有Columns并返回
-    def getAllColumnsByTb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         try:
             conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
                                    charset='utf8')
@@ -86,10 +80,7 @@ class Dao(object):
                 db_name, tb_name)
             cursor.execute(sql)
             col_list = [row[0] for row in cursor.fetchall()]
-        except MySQLdb.Warning as w:
-            logger.error(traceback.format_exc())
-            raise Exception(w)
-        except MySQLdb.Error as e:
+        except Exception as e:
             logger.error(traceback.format_exc())
             raise Exception(e)
         else:
@@ -124,11 +115,7 @@ class Dao(object):
             result['column_list'] = column_list
             result['rows'] = rows
             result['effect_row'] = effect_row
-
-        except MySQLdb.Warning as w:
-            logger.error(traceback.format_exc())
-            result['Warning'] = str(w)
-        except MySQLdb.Error as e:
+        except Exception as e:
             logger.error(traceback.format_exc())
             result['Error'] = str(e)
         else:
@@ -151,13 +138,11 @@ class Dao(object):
             for row in sql.strip(';').split(';'):
                 cursor.execute(row)
             conn.commit()
-        except MySQLdb.Warning as w:
-            logger.error(traceback.format_exc())
-            result['Warning'] = str(w)
-        except MySQLdb.Error as e:
+        except Exception as e:
             logger.error(traceback.format_exc())
             result['Error'] = str(e)
         else:
+
             cursor.close()
             conn.close()
         return result

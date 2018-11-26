@@ -145,16 +145,16 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflow_id = int(workflow_id)
     try:
-        listBackupSql = InceptionDao().getRollbackSqlList(workflow_id)
+        listBackupSql = InceptionDao().get_rollback_sql_list(workflow_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     workflow_title = workflow_detail.workflow_name
-    rollbackWorkflowName = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
+    rollback_workflow_name = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
     context = {'listBackupSql': listBackupSql, 'workflow_detail': workflow_detail,
-               'rollbackWorkflowName': rollbackWorkflowName}
+               'rollback_workflow_name': rollback_workflow_name}
     return render(request, 'rollback.html', context)
 
 

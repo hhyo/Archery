@@ -38,7 +38,8 @@ class Masking(object):
             except Exception as msg:
                 logger.error(traceback.format_exc())
                 result['status'] = 2
-                result['msg'] = '解析inception语法树获取表信息出错，无法完成脱敏校验，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg), print_info)
+                result['msg'] = '解析inception语法树获取表信息出错，无法完成脱敏校验，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg),
+                                                                                                        print_info)
                 return result
 
             # 存在select * 的查询,遍历column_list,获取命中列的index,添加到hit_columns
@@ -128,7 +129,8 @@ class Masking(object):
                 except Exception as msg:
                     logger.error(traceback.format_exc())
                     result['status'] = 2
-                    result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg), print_info)
+                    result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg),
+                                                                                                           print_info)
                     table_ref = ''
             result['data'] = table_ref
         return result
@@ -153,10 +155,10 @@ class Masking(object):
         # 判断语句涉及的表是否存在脱敏字段配置
         is_exist = False
         for table in table_ref:
-            if DataMaskingColumns.objects.filter(instance_name=instance_name,
-                                                 table_schema=table['db'],
-                                                 table_name=table['table'],
-                                                 active=1).exists():
+            if masking_columns.filter(instance_name=instance_name,
+                                      table_schema=table['db'],
+                                      table_name=table['table'],
+                                      active=1).exists():
                 is_exist = True
         # 不存在脱敏字段则直接跳过规则解析
         if is_exist:

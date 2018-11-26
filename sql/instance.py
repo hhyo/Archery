@@ -137,7 +137,7 @@ def getdbNameList(request):
 
     try:
         # 取出该实例的连接方式，为了后面连进去获取所有databases
-        db_list = Dao(instance_name=instance_name).getAlldbByCluster()
+        db_list = Dao(instance_name=instance_name).get_alldb_by_cluster()
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = db_list
     except Exception as msg:
@@ -155,7 +155,7 @@ def getTableNameList(request):
 
     try:
         # 取出该实例实例的连接方式，为了后面连进去获取所有的表
-        tb_list = Dao(instance_name=instance_name).getAllTableByDb(db_name)
+        tb_list = Dao(instance_name=instance_name).get_all_table_by_db(db_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = tb_list
     except Exception as msg:
@@ -174,7 +174,7 @@ def getColumnNameList(request):
 
     try:
         # 取出该实例的连接方式，为了后面连进去获取表的所有字段
-        col_list = Dao(instance_name=instance_name).getAllColumnsByTb(db_name, tb_name)
+        col_list = Dao(instance_name=instance_name).get_all_columns_by_tb(db_name, tb_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = col_list
     except Exception as msg:

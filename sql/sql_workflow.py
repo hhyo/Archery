@@ -151,7 +151,7 @@ def simplecheck(request):
 
     # 交给inception进行自动审核
     try:
-        inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
+        inception_result = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -234,7 +234,7 @@ def autoreview(request):
 
     # 交给inception进行自动审核
     try:
-        inception_result = InceptionDao(instance_name=instance_name).sqlautoReview(sql_content, db_name)
+        inception_result = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
@@ -380,7 +380,7 @@ def execute(request):
 
     # 判断是否高危SQL，禁止执行
     if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().criticalDDL(workflow_detail.sql_content):
+        if InceptionDao().critical_ddl(workflow_detail.sql_content):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
@@ -393,9 +393,9 @@ def execute(request):
     if workflow_detail.is_manual == 0:
         # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
         try:
-            split_review_result = InceptionDao(instance_name=instance_name).sqlautoReview(workflow_detail.sql_content,
-                                                                                          db_name,
-                                                                                          isSplit='yes')
+            split_review_result = InceptionDao(instance_name=instance_name).sqlauto_review(workflow_detail.sql_content,
+                                                                                           db_name,
+                                                                                           is_split='yes')
         except Exception as msg:
             logger.error(traceback.format_exc())
             context = {'errMsg': msg}
@@ -453,7 +453,7 @@ def timingtask(request):
 
     # 判断是否高危SQL，禁止执行
     if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().criticalDDL(workflow_detail.sql_content):
+        if InceptionDao().critical_ddl(workflow_detail.sql_content):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
@@ -602,7 +602,7 @@ def getOscPercent(request):
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
         try:
-            result = InceptionDao().getOscPercent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
+            result = InceptionDao().get_osc_percent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
         except Exception as msg:
             logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
@@ -677,7 +677,7 @@ def stopOscProgress(request):
     if dictSHA1 != {} and sqlID in dictSHA1:
         sqlSHA1 = dictSHA1[sqlID]
         try:
-            optResult = InceptionDao().stopOscProgress(sqlSHA1)
+            optResult = InceptionDao().stop_osc_progress(sqlSHA1)
         except Exception as msg:
             logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
