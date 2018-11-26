@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
+[![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
+[![version](https://img.shields.io/badge/django-2.0.8-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 
 
@@ -7,7 +9,7 @@
 项目基于[archer](https://github.com/jly8866/archer)，有问题请提交issue
 - [文档](https://github.com/hhyo/archery/wiki)
 - [FAQ](https://github.com/hhyo/archery/wiki/FAQ)
-- [release版本](https://github.com/hhyo/archery/releases/)
+- [Releases](https://github.com/hhyo/archery/releases/)
 
 快速开始
 ===============
@@ -17,8 +19,6 @@
 |  权限组 | 账号 | 密码 |
 | --- | --- | --- |
 |  管理员| archer | archer |
-|  工程师| engineer | archer |
-|  DBA| dba | archer |
 
 ### Docker
 archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
