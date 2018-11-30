@@ -6,8 +6,8 @@
 
 介绍
 ============
-项目基于[archer](https://github.com/jly8866/archer)，有问题请提交issue
-- [文档](https://github.com/hhyo/archery/wiki)
+项目基于[archer](https://github.com/jly8866/archer)，优化了工作流、权限、项目、配置管理等一系列模块，不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
+- [文档](https://github.com/hhyo/archery/wiki)(开放编辑，欢迎补充和完善)
 - [FAQ](https://github.com/hhyo/archery/wiki/FAQ)
 - [Releases](https://github.com/hhyo/archery/releases/)
 
@@ -16,15 +16,12 @@
 ### 系统体验
 [在线体验](http://139.199.0.191/) 
   
-|  权限组 | 账号 | 密码 |
-| --- | --- | --- |
-|  管理员| archer | archer |
+| 账号 | 密码 |
+| --- | --- |
+| archer | archer |
 
 ### Docker
-archery镜像：https://dev.aliyun.com/detail.html?spm=5176.1972343.2.2.58c75aaa3iK1Sb&repoId=244140    
-inception镜像: https://dev.aliyun.com/detail.html?spm=5176.1972343.2.12.7b475aaaLiCfMf&repoId=142093
-
-#### 准备构建配置
+#### 准备运行配置
 具体可参考：https://github.com/hhyo/archery/raw/master/src/docker/install.zip
 
 #### 启动
@@ -59,7 +56,7 @@ FAQ(欢迎补充)
 ===============
 https://github.com/hhyo/archery/wiki/FAQ
 
-依赖或引用项目
+主要依赖或引用项目
 ===============
 - [archer](https://github.com/jly8866/archer)
 - [inception](https://github.com/hhyo/inception)
