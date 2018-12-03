@@ -71,7 +71,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 
 详细存储大小参加下图：
 
-![MySQL数据类型存储大小](https://github.com/kylexlau/archery/raw/master/sql/static/pics/mysql_datatype.png)
+![MySQL数据类型存储大小](https://github.com/hhyo/archery/raw/master/sql/static/pics/mysql_datatype.png)
 
 ### 2.1.4 索引设计
 

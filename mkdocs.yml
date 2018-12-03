@@ -1,0 +1,11 @@
+site_name: archery使用文档
+nav:
+    - 介绍: index.md
+    - 安装说明: installation.md
+    - 快速上手: quickstart.md
+    - 使用指南: user_guide.md
+    - 配置说明: config.md
+    - 常见问题: FAQ.md
+    - MySQL数据库设计规范: mysql_db_design_guide.md
+    - 相关资料: related_docs.md
+theme: readthedocs
