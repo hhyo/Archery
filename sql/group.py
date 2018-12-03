@@ -67,9 +67,9 @@ def associated_objects(request):
 
 # 获取资源组未关联对象信息
 def unassociated_objects(request):
-    '''
+    """
     type：(0, '用户'), (1, '实例')
-    '''
+    """
     group_id = int(request.POST.get('group_id'))
     object_type = int(request.POST.get('object_type'))
 
@@ -115,9 +115,9 @@ def instances(request):
 # 添加资源组关联对象
 @superuser_required
 def addrelation(request):
-    '''
+    """
     type：(0, '用户'), (1, '实例')
-    '''
+    """
     group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('object_type')
     object_list = json.loads(request.POST.get('object_info'))

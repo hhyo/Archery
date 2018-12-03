@@ -257,7 +257,8 @@ class InceptionDao(object):
                 raise Exception(e)
         return list_backup_sql
 
-    def _fetchall(self, sql, param_host, param_port, param_user, param_passwd, param_db):
+    @staticmethod
+    def _fetchall(sql, param_host, param_port, param_user, param_passwd, param_db):
         """
         封装mysql连接和获取结果集方法
         """
@@ -265,7 +266,7 @@ class InceptionDao(object):
             conn = MySQLdb.connect(host=param_host, user=param_user, passwd=param_passwd, db=param_db, port=param_port,
                                    charset='utf8')
             cur = conn.cursor()
-            ret = cur.execute(sql)
+            cur.execute(sql)
             result = cur.fetchall()
         except Exception as e:
             logger.error(traceback.format_exc())
@@ -276,7 +277,9 @@ class InceptionDao(object):
         return result
 
     def get_osc_percent(self, sql_sha1):
-        """已知SHA1值，去inception里查看OSC进度"""
+        """
+        已知SHA1值，去inception里查看OSC进度
+        """
         sql_str = "inception get osc_percent '%s'" % sql_sha1
         result = self._fetchall(sql_str, self.inception_host, self.inception_port, '', '', '')
         if len(result) > 0:
@@ -284,7 +287,8 @@ class InceptionDao(object):
             time_remained = result[0][4]
             pct_result = {"status": 0, "msg": "ok", "data": {"percent": percent, "time_remained": time_remained}}
         else:
-            pct_result = {"status": 1, "msg": "没找到该SQL的进度信息，是否已经执行完毕？", "data": {"percent": -100, "time_remained": -100}}
+            pct_result = {"status": 1, "msg": "没找到该SQL的进度信息，是否已经执行完毕？",
+                          "data": {"percent": -100, "time_remained": -100}}
         return pct_result
 
     def stop_osc_progress(self, sql_sha1):

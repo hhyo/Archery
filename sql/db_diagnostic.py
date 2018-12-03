@@ -47,15 +47,15 @@ def process(request):
 @permission_required('sql.process_kill', raise_exception=True)
 def create_kill_session(request):
     instance_name = request.POST.get('instance_name')
-    ThreadIDs = request.POST.get('ThreadIDs')
+    thread_ids = request.POST.get('ThreadIDs')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
     if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
         result = aliyun_create_kill_session(request)
     else:
-        ThreadIDs = ThreadIDs.replace('[', '').replace(']', '')
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(ThreadIDs)
+        thread_ids = thread_ids.replace('[', '').replace(']', '')
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(thread_ids)
         all_kill_sql = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
         kill_sql = ''
         for row in all_kill_sql['rows']:

@@ -36,22 +36,22 @@ def slowquery_review(request):
         # 调用阿里云慢日志接口
         result = aliyun_rds_slowquery_review(request)
     else:
-        StartTime = request.POST.get('StartTime')
-        EndTime = request.POST.get('EndTime')
-        DBName = request.POST.get('db_name')
+        start_time = request.POST.get('StartTime')
+        end_time = request.POST.get('EndTime')
+        db_name = request.POST.get('db_name')
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
         limit = offset + limit
 
         # 时间处理
-        EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
+        end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
         # DBName非必传
-        if DBName:
+        if db_name:
             # 获取慢查数据
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime)
+                slowqueryhistory__db_max=db_name,
+                slowqueryhistory__ts_min__range=(start_time, end_time)
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -64,8 +64,8 @@ def slowquery_review(request):
 
             slowsql_obj_count = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__db_max=DBName,
-                slowqueryhistory__ts_min__range=(StartTime, EndTime)
+                slowqueryhistory__db_max=db_name,
+                slowqueryhistory__ts_min__range=(start_time, end_time)
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -79,7 +79,7 @@ def slowquery_review(request):
             # 获取慢查数据
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
+                slowqueryhistory__ts_min__range=(start_time, end_time),
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -92,7 +92,7 @@ def slowquery_review(request):
 
             slowsql_obj_count = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__ts_min__range=(StartTime, EndTime),
+                slowqueryhistory__ts_min__range=(start_time, end_time),
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -103,8 +103,8 @@ def slowquery_review(request):
                 ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
             ).count()
         # QuerySet 序列化
-        SQLSlowLog = [SlowLog for SlowLog in slowsql_obj]
-        result = {"total": slowsql_obj_count, "rows": SQLSlowLog}
+        sql_slow_log = [SlowLog for SlowLog in slowsql_obj]
+        result = {"total": slowsql_obj_count, "rows": sql_slow_log}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -128,23 +128,23 @@ def slowquery_review_history(request):
         # 调用阿里云慢日志接口
         result = aliyun_rds_slowquery_review_history(request)
     else:
-        StartTime = request.POST.get('StartTime')
-        EndTime = request.POST.get('EndTime')
-        DBName = request.POST.get('db_name')
-        SQLId = request.POST.get('SQLId')
+        start_time = request.POST.get('StartTime')
+        end_time = request.POST.get('EndTime')
+        db_name = request.POST.get('db_name')
+        sql_id = request.POST.get('SQLId')
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
 
         # 时间处理
-        EndTime = datetime.datetime.strptime(EndTime, '%Y-%m-%d') + datetime.timedelta(days=1)
+        end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
         limit = offset + limit
         # SQLId、DBName非必传
-        if SQLId:
+        if sql_id:
             # 获取慢查明细数据
             slowsql_record_obj = SlowQueryHistory.objects.filter(
                 hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                checksum=SQLId,
-                ts_min__range=(StartTime, EndTime)
+                checksum=sql_id,
+                ts_min__range=(start_time, end_time)
             ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                        DBName=F('db_max'),  # 数据库名
                        HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),  # 用户名
@@ -162,16 +162,16 @@ def slowquery_review_history(request):
 
             slowsql_obj_count = SlowQueryHistory.objects.filter(
                 hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                checksum=SQLId,
-                ts_min__range=(StartTime, EndTime)
+                checksum=sql_id,
+                ts_min__range=(start_time, end_time)
             ).count()
         else:
-            if DBName:
+            if db_name:
                 # 获取慢查明细数据
                 slowsql_record_obj = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    db_max=DBName,
-                    ts_min__range=(StartTime, EndTime)
+                    db_max=db_name,
+                    ts_min__range=(start_time, end_time)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                            DBName=F('db_max'),  # 数据库名
                            HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),
@@ -190,14 +190,14 @@ def slowquery_review_history(request):
 
                 slowsql_obj_count = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    db_max=DBName,
-                    ts_min__range=(StartTime, EndTime)
+                    db_max=db_name,
+                    ts_min__range=(start_time, end_time)
                 ).count()
             else:
                 # 获取慢查明细数据
                 slowsql_record_obj = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    ts_min__range=(StartTime, EndTime)
+                    ts_min__range=(start_time, end_time)
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                            DBName=F('db_max'),  # 数据库名
                            HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),
@@ -216,11 +216,11 @@ def slowquery_review_history(request):
 
                 slowsql_obj_count = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    ts_min__range=(StartTime, EndTime)
+                    ts_min__range=(start_time, end_time)
                 ).count()
         # QuerySet 序列化
-        SQLSlowRecord = [SlowRecord for SlowRecord in slowsql_record_obj]
-        result = {"total": slowsql_obj_count, "rows": SQLSlowRecord}
+        sql_slow_record = [SlowRecord for SlowRecord in slowsql_record_obj]
+        result = {"total": slowsql_obj_count, "rows": sql_slow_record}
 
         # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),

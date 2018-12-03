@@ -23,7 +23,7 @@ from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
 from sql.utils.group import user_groups, user_instances
 from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
-from sql.utils.sql_review import can_timingtask, getDetailUrl, can_cancel, can_execute
+from sql.utils.sql_review import can_timingtask, get_detail_url, can_cancel, can_execute
 from sql.utils.workflow import Workflow
 from .models import SqlWorkflow
 
@@ -166,17 +166,17 @@ def simplecheck(request):
     column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
     rows = []
-    CheckWarningCount = 0
-    CheckErrorCount = 0
+    check_warning_count = 0
+    check_error_count = 0
     for row_index, row_item in enumerate(inception_result):
         row = {}
         row['ID'] = row_item[0]
         row['stage'] = row_item[1]
         row['errlevel'] = row_item[2]
         if row['errlevel'] == 1:
-            CheckWarningCount = CheckWarningCount + 1
+            check_warning_count = check_warning_count + 1
         elif row['errlevel'] == 2:
-            CheckErrorCount = CheckErrorCount + 1
+            check_error_count = check_error_count + 1
         row['stagestatus'] = row_item[3]
         row['errormessage'] = row_item[4]
         row['SQL'] = row_item[5]
@@ -188,8 +188,8 @@ def simplecheck(request):
         rows.append(row)
     result['data']['rows'] = rows
     result['data']['column_list'] = column_list
-    result['data']['CheckWarningCount'] = CheckWarningCount
-    result['data']['CheckErrorCount'] = CheckErrorCount
+    result['data']['CheckWarningCount'] = check_warning_count
+    result['data']['CheckErrorCount'] = check_error_count
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -372,7 +372,7 @@ def execute(request):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     instance_name = workflow_detail.instance_name
     db_name = workflow_detail.db_name
-    url = getDetailUrl(request, workflow_id)
+    url = get_detail_url(request, workflow_id)
 
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
@@ -458,7 +458,7 @@ def timingtask(request):
             return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
-    url = getDetailUrl(request, workflow_id)
+    url = get_detail_url(request, workflow_id)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
 
     # 使用事务保持数据一致性
@@ -562,47 +562,51 @@ def cancel(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-def getSqlSHA1(workflow_id):
-    """调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值"""
+def get_sql_sha1(workflow_id):
+    """
+    调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值
+    """
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    dictSHA1 = {}
+    dict_sha1 = {}
     # 使用json.loads方法，把review_content从str转成list,
-    listReCheckResult = json.loads(workflow_detail.review_content)
+    list_re_check_result = json.loads(workflow_detail.review_content)
 
-    for rownum in range(len(listReCheckResult)):
+    for rownum in range(len(list_re_check_result)):
         id = rownum + 1
-        sqlSHA1 = listReCheckResult[rownum][10]
-        if sqlSHA1 != '':
-            dictSHA1[id] = sqlSHA1
+        sql_sha1 = list_re_check_result[rownum][10]
+        if sql_sha1 != '':
+            dict_sha1[id] = sql_sha1
 
-    if dictSHA1 != {}:
+    if dict_sha1 != {}:
         # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。
         # 因为使用OSC执行的SQL占较少数，所以不设置缓存过期时间
-        sqlSHA1_cache[workflow_id] = dictSHA1
-    return dictSHA1
+        sqlSHA1_cache[workflow_id] = dict_sha1
+    return dict_sha1
 
 
-def getOscPercent(request):
-    """获取该SQL的pt-OSC执行进度和剩余时间"""
+def get_osc_percent(request):
+    """
+    获取该SQL的pt-OSC执行进度和剩余时间
+    """
     workflow_id = request.POST['workflow_id']
-    sqlID = request.POST['sqlID']
-    if workflow_id == '' or workflow_id is None or sqlID == '' or sqlID is None:
+    sql_id = request.POST['sqlID']
+    if workflow_id == '' or workflow_id is None or sql_id == '' or sql_id is None:
         context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     workflow_id = int(workflow_id)
-    sqlID = int(sqlID)
-    dictSHA1 = {}
+    sql_id = int(sql_id)
+    dict_sha1 = {}
     if workflow_id in sqlSHA1_cache:
-        dictSHA1 = sqlSHA1_cache[workflow_id]
+        dict_sha1 = sqlSHA1_cache[workflow_id]
         # cachehit = "已命中"
     else:
-        dictSHA1 = getSqlSHA1(workflow_id)
+        dict_sha1 = get_sql_sha1(workflow_id)
 
-    if dictSHA1 != {} and sqlID in dictSHA1:
-        sqlSHA1 = dictSHA1[sqlID]
+    if dict_sha1 != {} and sql_id in dict_sha1:
+        sql_sha1 = dict_sha1[sql_id]
         try:
-            result = InceptionDao().get_osc_percent(sqlSHA1)  # 成功获取到SHA1值，去inception里面查询进度
+            result = InceptionDao().get_osc_percent(sql_sha1)  # 成功获取到SHA1值，去inception里面查询进度
         except Exception as msg:
             logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
@@ -610,30 +614,32 @@ def getOscPercent(request):
 
         if result["status"] == 0:
             # 获取到进度值
-            pctResult = result
+            pct_result = result
         else:
             # result["status"] == 1, 未获取到进度值,需要与workflow.execute_result对比，来判断是已经执行过了，还是还未执行
             execute_result = SqlWorkflow.objects.get(id=workflow_id).execute_result
             try:
-                listExecResult = json.loads(execute_result)
+                list_exec_result = json.loads(execute_result)
             except ValueError:
-                listExecResult = execute_result
-            if type(listExecResult) == list and len(listExecResult) >= sqlID - 1:
-                if dictSHA1[sqlID] in listExecResult[sqlID - 1][10]:
+                list_exec_result = execute_result
+            if type(list_exec_result) == list and len(list_exec_result) >= sql_id - 1:
+                if dict_sha1[sql_id] in list_exec_result[sql_id - 1][10]:
                     # 已经执行完毕，进度值置为100
-                    pctResult = {"status": 0, "msg": "ok", "data": {"percent": 100, "timeRemained": ""}}
+                    pct_result = {"status": 0, "msg": "ok", "data": {"percent": 100, "timeRemained": ""}}
             else:
                 # 可能因为前一条SQL是DML，正在执行中；或者还没执行到这一行。但是status返回的是4，而当前SQL实际上还未开始执行。这里建议前端进行重试
-                pctResult = {"status": -3, "msg": "进度未知", "data": {"percent": -100, "timeRemained": ""}}
-    elif dictSHA1 != {} and sqlID not in dictSHA1:
-        pctResult = {"status": 4, "msg": "该行SQL不是由pt-OSC执行的", "data": ""}
+                pct_result = {"status": -3, "msg": "进度未知", "data": {"percent": -100, "timeRemained": ""}}
+    elif dict_sha1 != {} and sql_id not in dict_sha1:
+        pct_result = {"status": 4, "msg": "该行SQL不是由pt-OSC执行的", "data": ""}
     else:
-        pctResult = {"status": -2, "msg": "整个工单不由pt-OSC执行", "data": ""}
-    return HttpResponse(json.dumps(pctResult), content_type='application/json')
+        pct_result = {"status": -2, "msg": "整个工单不由pt-OSC执行", "data": ""}
+    return HttpResponse(json.dumps(pct_result), content_type='application/json')
 
 
-def getWorkflowStatus(request):
-    """获取某个工单的当前状态"""
+def get_workflow_status(request):
+    """
+    获取某个工单的当前状态
+    """
     workflow_id = request.POST['workflow_id']
     if workflow_id == '' or workflow_id is None:
         context = {"status": -1, 'msg': 'workflow_id参数为空.', "data": ""}
@@ -641,47 +647,49 @@ def getWorkflowStatus(request):
 
     workflow_id = int(workflow_id)
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    workflowStatus = workflow_detail.status
-    result = {"status": workflowStatus, "msg": "", "data": ""}
+    workflow_status = workflow_detail.status
+    result = {"status": workflow_status, "msg": "", "data": ""}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-def stopOscProgress(request):
-    """中止该SQL的pt-OSC进程"""
+def stop_osc_progress(request):
+    """
+    中止该SQL的pt-OSC进程
+    """
     workflow_id = request.POST['workflow_id']
-    sqlID = request.POST['sqlID']
-    if workflow_id == '' or workflow_id is None or sqlID == '' or sqlID is None:
+    sql_id = request.POST['sqlID']
+    if workflow_id == '' or workflow_id is None or sql_id == '' or sql_id is None:
         context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     user = request.user
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     try:
-        reviewMan = json.loads(workflow_detail.audit_auth_groups)
+        review_man = json.loads(workflow_detail.audit_auth_groups)
     except ValueError:
-        reviewMan = (workflow_detail.audit_auth_groups,)
+        review_man = (workflow_detail.audit_auth_groups,)
     # 服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     if workflow_detail.status != Const.workflowStatus['executing']:
         context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
-    if user.username is None or user.username not in reviewMan:
+    if user.username is None or user.username not in review_man:
         context = {"status": -1, 'msg': '当前登录用户不是审核人，请重新登录.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     workflow_id = int(workflow_id)
-    sqlID = int(sqlID)
+    sql_id = int(sql_id)
     if workflow_id in sqlSHA1_cache:
-        dictSHA1 = sqlSHA1_cache[workflow_id]
+        dict_sha1 = sqlSHA1_cache[workflow_id]
     else:
-        dictSHA1 = getSqlSHA1(workflow_id)
-    if dictSHA1 != {} and sqlID in dictSHA1:
-        sqlSHA1 = dictSHA1[sqlID]
+        dict_sha1 = get_sql_sha1(workflow_id)
+    if dict_sha1 != {} and sql_id in dict_sha1:
+        sql_sha1 = dict_sha1[sql_id]
         try:
-            optResult = InceptionDao().stop_osc_progress(sqlSHA1)
+            opt_result = InceptionDao().stop_osc_progress(sql_sha1)
         except Exception as msg:
             logger.error(traceback.format_exc())
             result = {'status': 1, 'msg': msg, 'data': ''}
             return HttpResponse(json.dumps(result), content_type='application/json')
     else:
-        optResult = {"status": 4, "msg": "不是由pt-OSC执行的", "data": ""}
-    return HttpResponse(json.dumps(optResult), content_type='application/json')
+        opt_result = {"status": 4, "msg": "不是由pt-OSC执行的", "data": ""}
+    return HttpResponse(json.dumps(opt_result), content_type='application/json')

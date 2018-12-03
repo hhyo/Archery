@@ -8,7 +8,7 @@ from sql.utils.inception import InceptionDao
 
 
 # 获取工单地址
-def getDetailUrl(request, workflow_id):
+def get_detail_url(request, workflow_id):
     scheme = request.scheme
     host = request.META['HTTP_HOST']
     from sql.utils.workflow import Workflow
@@ -17,7 +17,7 @@ def getDetailUrl(request, workflow_id):
 
 
 # 判断SQL上线是否无需审批
-def is_autoreview(workflow_id):
+def is_auto_review(workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     sql_content = workflow_detail.sql_content
     instance_name = workflow_detail.instance_name
@@ -46,9 +46,9 @@ def is_autoreview(workflow_id):
             all_affected_rows = 0
             for review_result in inception_review:
                 SQL = review_result[5]
-                Affected_rows = review_result[6]
+                affected_rows = review_result[6]
                 if re.match(r"^update", SQL.strip().lower()):
-                    all_affected_rows = all_affected_rows + int(Affected_rows)
+                    all_affected_rows = all_affected_rows + int(affected_rows)
             if int(all_affected_rows) > int(SysConfig().sys_config.get('auto_review_max_update_rows', 50)):
                 is_autoreview = False
 

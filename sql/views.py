@@ -38,7 +38,7 @@ def sqlworkflow(request):
 
 # 提交SQL的页面
 @permission_required('sql.sql_submit', raise_exception=True)
-def submitSql(request):
+def submit_sql(request):
     user = request.user
     # 获取组信息
     group_list = user_groups(user)
@@ -55,9 +55,9 @@ def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     if workflow_detail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
             and workflow_detail.is_manual == 0:
-        listContent = json.loads(workflow_detail.execute_result)
+        list_content = json.loads(workflow_detail.execute_result)
     else:
-        listContent = json.loads(workflow_detail.review_content)
+        list_content = json.loads(workflow_detail.review_content)
 
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
@@ -95,7 +95,7 @@ def detail(request, workflow_id):
     column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
     rows = []
-    for row_index, row_item in enumerate(listContent):
+    for row_index, row_item in enumerate(list_content):
         row = {}
         row['ID'] = row_index + 1
         row['stage'] = row_item[1]
@@ -145,7 +145,7 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflow_id = int(workflow_id)
     try:
-        listBackupSql = InceptionDao().get_rollback_sql_list(workflow_id)
+        list_backup_sql = InceptionDao().get_rollback_sql_list(workflow_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -153,7 +153,7 @@ def rollback(request):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     workflow_title = workflow_detail.workflow_name
     rollback_workflow_name = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
-    context = {'listBackupSql': listBackupSql, 'workflow_detail': workflow_detail,
+    context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow_detail,
                'rollback_workflow_name': rollback_workflow_name}
     return render(request, 'rollback.html', context)
 

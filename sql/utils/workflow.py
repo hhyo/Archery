@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 
 from sql.utils.group import user_groups, auth_group_users
-from sql.utils.sql_review import is_autoreview
+from sql.utils.sql_review import is_auto_review
 from sql.notify import notify
 from common.utils.const import WorkflowDict
 from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, SqlGroup, SqlWorkflow, \
@@ -58,7 +58,7 @@ class Workflow(object):
         # 判断是否无需审核,并且修改审批人为空
         if SysConfig().sys_config.get('auto_review', False):
             if workflow_type == WorkflowDict.workflow_type['sqlreview']:
-                if is_autoreview(workflow_id):
+                if is_auto_review(workflow_id):
                     Workflow = SqlWorkflow.objects.get(id=int(workflow_id))
                     Workflow.audit_auth_groups = '无需审批'
                     Workflow.status = '审核通过'

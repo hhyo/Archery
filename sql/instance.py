@@ -131,7 +131,7 @@ def schemasync(request):
 
 
 # 获取实例里面的数据库集合
-def getdbNameList(request):
+def get_db_name_list(request):
     instance_name = request.POST.get('instance_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
@@ -148,7 +148,7 @@ def getdbNameList(request):
 
 
 # 获取数据库的表集合
-def getTableNameList(request):
+def get_table_name_list(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -166,7 +166,7 @@ def getTableNameList(request):
 
 
 # 获取表里面的字段集合
-def getColumnNameList(request):
+def get_column_name_list(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     tb_name = request.POST.get('tb_name')

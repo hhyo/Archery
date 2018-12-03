@@ -18,24 +18,26 @@ logger = logging.getLogger('default')
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
 
 
-def loginAuthenticate(username, password):
-    """登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟"""
+def login_authenticate(username, password):
+    """
+    登录认证，包含一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟
+    """
     sys_config = SysConfig().sys_config
     if sys_config.get('lock_cnt_threshold'):
-        lockCntThreshold = int(sys_config.get('lock_cnt_threshold'))
+        lock_cnt_threshold = int(sys_config.get('lock_cnt_threshold'))
     else:
-        lockCntThreshold = 5
+        lock_cnt_threshold = 5
     if sys_config.get('lock_time_threshold'):
-        lockTimeThreshold = int(sys_config.get('lock_time_threshold'))
+        lock_time_threshold = int(sys_config.get('lock_time_threshold'))
     else:
-        lockTimeThreshold = 300
+        lock_time_threshold = 300
 
     # 服务端二次验证参数
     if username == "" or password == "" or username is None or password is None:
         result = {'status': 2, 'msg': '登录用户名或密码为空，请重新输入!', 'data': ''}
-    elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lockCntThreshold and (
+    elif username in login_failure_counter and login_failure_counter[username]["cnt"] >= lock_cnt_threshold and (
             datetime.datetime.now() - login_failure_counter[username][
-        "last_failure_time"]).seconds <= lockTimeThreshold:
+        "last_failure_time"]).seconds <= lock_time_threshold:
         result = {'status': 3, 'msg': '登录失败超过5次，该账号已被锁定5分钟!', 'data': ''}
     else:
         # 登录
@@ -53,7 +55,7 @@ def loginAuthenticate(username, password):
                 login_failure_counter[username] = {"cnt": 1, "last_failure_time": datetime.datetime.now()}
             else:
                 if (datetime.datetime.now() - login_failure_counter[username][
-                    "last_failure_time"]).seconds <= lockTimeThreshold:
+                    "last_failure_time"]).seconds <= lock_time_threshold:
                     login_failure_counter[username]["cnt"] += 1
                 else:
                     # 上一次登录失败时间早于5分钟前，则重新计数。以达到超过5分钟自动解锁的目的。
@@ -64,12 +66,12 @@ def loginAuthenticate(username, password):
 
 
 # ajax接口，登录页面调用，用来验证用户名密码
-def authenticateEntry(request):
+def authenticate_entry(request):
     """接收http请求，然后把请求中的用户名密码传给loginAuthenticate去验证"""
     username = request.POST.get('username')
     password = request.POST.get('password')
 
-    result = loginAuthenticate(username, password)
+    result = login_authenticate(username, password)
     if result['status'] == 0:
         # 开启LDAP的认证通过后更新用户密码
         if settings.ENABLE_LDAP:

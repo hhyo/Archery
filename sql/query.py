@@ -219,10 +219,6 @@ def applyforprivileges(request):
     db_name = request.POST['db_name']
     valid_date = request.POST['valid_date']
     limit_num = request.POST['limit_num']
-    try:
-        workflow_remark = request.POST['apply_remark']
-    except Exception:
-        workflow_remark = ''
 
     # 获取用户信息
     user = request.user
@@ -337,45 +333,45 @@ def getuserprivileges(request):
     # 获取用户的权限数据
     if user.is_superuser:
         if user_name != 'all':
-            privilegeslist = QueryPrivileges.objects.all().filter(user_name=user_name,
-                                                                  is_deleted=0,
-                                                                  table_name__contains=search,
-                                                                  valid_date__gte=datetime.datetime.now()
-                                                                  ).order_by('-privilege_id')[offset:limit]
-            privilegeslistCount = QueryPrivileges.objects.all().filter(user_name=user_name,
-                                                                       is_deleted=0,
-                                                                       table_name__contains=search,
-                                                                       valid_date__gte=datetime.datetime.now()).count()
+            privileges_list = QueryPrivileges.objects.all().filter(user_name=user_name,
+                                                                   is_deleted=0,
+                                                                   table_name__contains=search,
+                                                                   valid_date__gte=datetime.datetime.now()
+                                                                   ).order_by('-privilege_id')[offset:limit]
+            privileges_count = QueryPrivileges.objects.all().filter(user_name=user_name,
+                                                                    is_deleted=0,
+                                                                    table_name__contains=search,
+                                                                    valid_date__gte=datetime.datetime.now()).count()
         else:
-            privilegeslist = QueryPrivileges.objects.all().filter(is_deleted=0,
-                                                                  table_name__contains=search,
-                                                                  valid_date__gte=datetime.datetime.now()
-                                                                  ).order_by('-privilege_id')[offset:limit]
-            privilegeslistCount = QueryPrivileges.objects.all().filter(is_deleted=0,
-                                                                       table_name__contains=search,
-                                                                       valid_date__gte=datetime.datetime.now()
-                                                                       ).count()
+            privileges_list = QueryPrivileges.objects.all().filter(is_deleted=0,
+                                                                   table_name__contains=search,
+                                                                   valid_date__gte=datetime.datetime.now()
+                                                                   ).order_by('-privilege_id')[offset:limit]
+            privileges_count = QueryPrivileges.objects.all().filter(is_deleted=0,
+                                                                    table_name__contains=search,
+                                                                    valid_date__gte=datetime.datetime.now()
+                                                                    ).count()
     else:
-        privilegeslist = QueryPrivileges.objects.filter(user_name=user.username,
-                                                        table_name__contains=search,
-                                                        is_deleted=0,
-                                                        valid_date__gte=datetime.datetime.now()
-                                                        ).order_by('-privilege_id')[offset:limit]
-        privilegeslistCount = QueryPrivileges.objects.filter(user_name=user.username,
-                                                             table_name__contains=search,
-                                                             is_deleted=0,
-                                                             valid_date__gte=datetime.datetime.now()
-                                                             ).count()
+        privileges_list = QueryPrivileges.objects.filter(user_name=user.username,
+                                                         table_name__contains=search,
+                                                         is_deleted=0,
+                                                         valid_date__gte=datetime.datetime.now()
+                                                         ).order_by('-privilege_id')[offset:limit]
+        privileges_count = QueryPrivileges.objects.filter(user_name=user.username,
+                                                          table_name__contains=search,
+                                                          is_deleted=0,
+                                                          valid_date__gte=datetime.datetime.now()
+                                                          ).count()
 
     # QuerySet 序列化
-    privilegeslist = serializers.serialize("json", privilegeslist)
-    privilegeslist = json.loads(privilegeslist)
+    privileges_list = serializers.serialize("json", privileges_list)
+    privileges_list = json.loads(privileges_list)
     privilegeslist_result = []
-    for i in range(len(privilegeslist)):
-        privilegeslist[i]['fields']['id'] = privilegeslist[i]['pk']
-        privilegeslist_result.append(privilegeslist[i]['fields'])
+    for i in range(len(privileges_list)):
+        privileges_list[i]['fields']['id'] = privileges_list[i]['pk']
+        privilegeslist_result.append(privileges_list[i]['fields'])
 
-    result = {"total": privilegeslistCount, "rows": privilegeslist_result}
+    result = {"total": privileges_count, "rows": privilegeslist_result}
     # 返回查询结果
     return HttpResponse(json.dumps(result), content_type='application/json')
 
