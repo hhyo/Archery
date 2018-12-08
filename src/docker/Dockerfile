@@ -26,7 +26,7 @@ RUN yum -y install epel-release \
     && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
     && yum -y install Percona-Server-devel-56.x86_64  Percona-Server-shared-56.x86_64  Percona-Server-client-56.x86_64 \
     && cd /opt \
-    && git clone https://github.com/Meituan-Dianping/SQLAdvisor.git \
+    && git clone https://github.com/hhyo/SQLAdvisor.git \
     && cd /opt/SQLAdvisor/ \
     && cmake -DBUILD_CONFIG=mysql_release -DCMAKE_BUILD_TYPE=debug -DCMAKE_INSTALL_PREFIX=/usr/local/sqlparser ./ \
     && make && make install \
@@ -48,7 +48,7 @@ RUN cd /opt \
     && pip install mysql-python
 #soar
 RUN cd /opt \
-    && wget https://github.com/XiaoMi/soar/releases/download/0.9.0/soar.linux-amd64 -O soar \
+    && wget https://github.com/XiaoMi/soar/releases/download/0.10.0/soar.linux-amd64 -O soar \
     && chmod a+x soar
 #archery
 RUN cd /opt \
