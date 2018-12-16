@@ -75,25 +75,29 @@ class Masking(object):
 
     # 通过inception获取语法树
     def query_tree(self, sql_content, instance_name, db_name):
-        print_info = InceptionDao(instance_name=instance_name).query_print(sql_content, db_name)
-        if print_info:
-            id = print_info[0][0]
-            statement = print_info[0][1]
-            # 返回值为非0的情况下，说明是有错的，1表示警告，不影响执行，2表示严重错误，必须修改
-            errlevel = print_info[0][2]
-            query_tree = print_info[0][3]
-            errmsg = print_info[0][4]
-            # 提交给inception语法错误的情况
-            if errmsg == 'Global environment':
-                errlevel = 2
-                errmsg = 'Global environment: ' + query_tree
-            if errlevel == 0:
-                pass
-                # print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
-            return {'id': id, 'statement': statement, 'errlevel': errlevel, 'query_tree': query_tree,
-                    'errmsg': errmsg}
+        try:
+            print_info = InceptionDao(instance_name=instance_name).query_print(sql_content, db_name)
+        except Exception as e:
+            raise Exception('通过inception获取语法树异常，请检查inception配置，确保inception可以访问实例：' + str(e))
         else:
-            return None
+            if print_info:
+                id = print_info[0][0]
+                statement = print_info[0][1]
+                # 返回值为非0的情况下，说明是有错的，1表示警告，不影响执行，2表示严重错误，必须修改
+                errlevel = print_info[0][2]
+                query_tree = print_info[0][3]
+                errmsg = print_info[0][4]
+                # 提交给inception语法错误的情况
+                if errmsg == 'Global environment':
+                    errlevel = 2
+                    errmsg = 'Global environment: ' + query_tree
+                if errlevel == 0:
+                    pass
+                    # print(json.dumps(json.loads(query_tree), indent=4, sort_keys=False, ensure_ascii=False))
+                return {'id': id, 'statement': statement, 'errlevel': errlevel, 'query_tree': query_tree,
+                        'errmsg': errmsg}
+            else:
+                return None
 
     # 解析语法树，获取语句涉及的表，用于查询权限限制
     def query_table_ref(self, sql_content, instance_name, db_name):
