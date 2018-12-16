@@ -3,13 +3,12 @@
 [![version](https://img.shields.io/badge/django-2.0.8-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 
+[文档](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
 
 介绍
 ============
 项目基于[archer](https://github.com/jly8866/archer)，优化了工作流、权限、项目、配置管理等一系列模块，不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
-- [文档](https://github.com/hhyo/archery/wiki)(开放编辑，欢迎补充和完善)
-- [FAQ](https://github.com/hhyo/archery/wiki/FAQ)
-- [Releases](https://github.com/hhyo/archery/releases/)
+
 
 快速开始
 ===============
@@ -52,9 +51,6 @@ http://127.0.0.1:9123/
 ===============
 [部署说明](https://github.com/hhyo/archery/wiki/%E9%83%A8%E7%BD%B2)
 
-FAQ(欢迎补充)
-===============
-https://github.com/hhyo/archery/wiki/FAQ
 
 主要依赖或引用项目
 ===============
