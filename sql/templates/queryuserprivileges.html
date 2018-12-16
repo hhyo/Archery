@@ -46,7 +46,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="modifyqueryprivileges(2)">确定修改</button>
+                    <button type="button" class="btn btn-danger" onclick="modifyqueryprivileges(2)">确定修改</button>
                 </div>
             </div>
         </div>
@@ -162,9 +162,11 @@
                     formatter: function (value, row, index) {
                         {% if perms.sql.query_mgtpriv %}
                             return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.id + "\"\n" +
+                                "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#modify_privileges\">变更\n" + "</button>\n" +
                                 "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.id + "\"\n" +
+                                "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
                         {% endif %}
@@ -195,6 +197,8 @@
         //给modal赋值
         function setInfo(obj) {
             $("#privilege_id").val($(obj).attr("privilege_id"));
+            $("#limit_num").val($(obj).attr("limit_num"));
+            $("#valid_date").val($(obj).attr("valid_date"));
         }
 
         //变更权限
