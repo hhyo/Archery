@@ -196,56 +196,41 @@
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="query"
-                                       class="col-sm-4 control-label">QUERY</label>
+                                <label for="query_check"
+                                       class="col-sm-4 control-label">QUERY_CHECK</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
-                                            <input id="query" key="query"
-                                                   value="{{ config.query }}"
-                                                   type="checkbox"> 是否开启SQL查询功能
+                                            <input id="query_check"
+                                                   key="query_check"
+                                                   value="{{ config.query_check }}" type="checkbox">
+                                            是否开启Inception检测(表权限和脱敏校验)
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                            <div id="div-query-config" style="display: none">
-                                <div class="form-group">
-                                    <label for="query_check"
-                                           class="col-sm-4 control-label">QUERY_CHECK</label>
-                                    <div class="col-sm-8">
-                                        <div class="switch switch-small">
-                                            <label>
-                                                <input id="query_check"
-                                                       key="query_check"
-                                                       value="{{ config.query_check }}" type="checkbox">
-                                                是否强制开启Inception检测
-                                            </label>
-                                        </div>
+                            <div class="form-group">
+                                <label for="data_masking"
+                                       class="col-sm-4 control-label">DATA_MASKING</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="data_masking"
+                                                   key="data_masking"
+                                                   value="{{ config.data_masking }}" type="checkbox">
+                                            是否开启动态脱敏
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="data_masking"
-                                           class="col-sm-4 control-label">DATA_MASKING</label>
-                                    <div class="col-sm-8">
-                                        <div class="switch switch-small">
-                                            <label>
-                                                <input id="data_masking"
-                                                       key="data_masking"
-                                                       value="{{ config.data_masking }}" type="checkbox">
-                                                是否开启动态脱敏
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="admin_query_limit"
-                                           class="col-sm-4 control-label">ADMIN_QUERY_LIMIT</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control" id="admin_query_limit"
-                                               key="admin_query_limit"
-                                               value="{{ config.admin_query_limit }}"
-                                               placeholder="管理员/DBA查询结果集限制">
-                                    </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin_query_limit"
+                                       class="col-sm-4 control-label">ADMIN_QUERY_LIMIT</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="admin_query_limit"
+                                           key="admin_query_limit"
+                                           value="{{ config.admin_query_limit }}"
+                                           placeholder="管理员/DBA查询结果集限制">
                                 </div>
                             </div>
                             <h5 style="color: darkgrey"><b>SQL优化</b></h5>
@@ -507,10 +492,7 @@
         $('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function (event, state) {
             if (state) {
                 $(this).val(true);
-                if ($(this).attr("id") === 'query') {
-                    $("#div-query-config").show();
-                }
-                else if ($(this).attr("id") === 'mail') {
+                if ($(this).attr("id") === 'mail') {
                     $("#div-mail-config").show();
                 }
                 else if ($(this).attr("id") === 'auto_review') {
@@ -519,13 +501,7 @@
             }
             else {
                 $(this).val(false);
-                if ($(this).attr("id") === 'query') {
-                    $("#query_check").val(false);
-                    $("#data_masking").val(false);
-                    $("#admin_query_limit").val(0);
-                    $("#div-query-config").hide();
-                }
-                else if ($(this).attr("id") === 'mail') {
+                if ($(this).attr("id") === 'mail') {
                     $("#mail_ssl").val(false);
                     $("#div-mail-config").hide();
                 }
