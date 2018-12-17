@@ -1,5 +1,6 @@
 import datetime
 import logging
+import traceback
 
 import simplejson as json
 from django.conf import settings
@@ -12,7 +13,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
-from sql.models import Users
+from sql.models import Users, SqlGroup, GroupRelations
 
 logger = logging.getLogger('default')
 login_failure_counter = {}  # 登录失败锁定计数器，给loginAuthenticate用的
@@ -92,8 +93,22 @@ def authenticate_entry(request):
             group = Group.objects.get(name=default_auth_group)
             user.groups.add(group)
         except Exception:
+            logger.error(traceback.format_exc())
             logger.error('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
-
+        # 添加到默认资源组
+        default_resource_group = SysConfig().sys_config.get('default_resource_group', '')
+        if default_resource_group:
+            try:
+                new_relation = GroupRelations(
+                    object_type=0,
+                    object_id = user.id,
+                    object_name = str(user),
+                    group_id = SqlGroup.objects.get(group_name=default_resource_group).group_id,
+                    group_name = default_resource_group)
+                new_relation.save()
+            except Exception:
+                logger.error(traceback.format_exc())
+                logger.error('无name为{}的资源组，无法默认关联，请到系统设置进行配置'.format(default_resource_group))
         # 调用了django内置登录方法，防止管理后台二次登录
         user = authenticate(username=username, password=password)
         if user:
