@@ -9,6 +9,8 @@ class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, blank=True)
 
     def __str__(self):
+        if self.display:
+            return self.display
         return self.username
 
     class Meta:
