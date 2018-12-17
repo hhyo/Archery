@@ -51,7 +51,6 @@ http://127.0.0.1:9123/
 ===============
 [部署说明](https://github.com/hhyo/archery/wiki/%E9%83%A8%E7%BD%B2)
 
-
 主要依赖或引用项目
 ===============
 - [archer](https://github.com/jly8866/archer)
@@ -62,3 +61,7 @@ http://127.0.0.1:9123/
 - [SOAR](https://github.com/XiaoMi/soar)
 - [SchemaSync](https://github.com/seanlook/SchemaSync)
 - [aquila_v2](https://github.com/thinkdb/aquila_v2)
+
+贡献者
+===============
+[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/0)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/0)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/1)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/1)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/2)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/2)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/3)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/3)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/4)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/4)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/5)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/5)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/6)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/6)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/7)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/7)
