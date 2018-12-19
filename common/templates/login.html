@@ -181,10 +181,7 @@
             success: function (data) {
                 if (data.status === 0) {
                     $("#sign-up").modal('hide');
-                    alert('注册成功!');
-                    var username = $("#username").val();
-                    var password = $("#password").val();
-                    authenticateUser(username, password)
+                    alert('注册成功, 请输入密码登录!');
                 } else {
                     alert(data.msg);
                 }
