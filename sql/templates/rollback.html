@@ -4,7 +4,7 @@
     <div>
         <div style="width: 80%; float: left">
             {% csrf_token %}
-            <input type="hidden" id="editSqlContent" value="{% for sql in listBackupSql %}{{ sql.1 }}
+            <input type="hidden" id="editSqlContent" value="{% for sql in list_backup_sql %}{{ sql.1 }}
 {% endfor %}">
         </div>
     </div>
@@ -99,7 +99,7 @@
                         $(this).button('reset');
                         $(this).dequeue();
                     });
-                    var editWorkflowNname = "{{ rollbackWorkflowName }}";
+                    var editWorkflowNname = "{{ rollback_workflow_name }}";
                     var editSqlContent = $("#editSqlContent").val();
                     var editGroup = "{{ workflow_detail.group_name }}";
                     var editClustername = "{{ workflow_detail.instance_name }}";

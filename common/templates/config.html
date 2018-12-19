@@ -72,7 +72,7 @@
                                 <label for="inception_port"
                                        class="col-sm-4 control-label">INCEPTION_PORT</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
+                                    <input type="number" class="form-control"
                                            id="inception_port"
                                            key="inception_port"
                                            value="{{ config.inception_port }}"
@@ -94,7 +94,7 @@
                                 <label for="inception_remote_backup_port"
                                        class="col-sm-4 control-label">REMOTE_BACKUP_PORT</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
+                                    <input type="number" class="form-control"
                                            id="inception_remote_backup_port"
                                            key="inception_remote_backup_port"
                                            value="{{ config.inception_remote_backup_port }}"
@@ -145,7 +145,7 @@
                                 <label for="auto_review_wrong"
                                        class="col-sm-4 control-label">AUTO_REVIEW_WRONG</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
+                                    <input type="number" class="form-control"
                                            id="auto_review_wrong"
                                            key="auto_review_wrong"
                                            value="{{ config.auto_review_wrong }}"
@@ -183,7 +183,7 @@
                                     <label for="auto_review_max_update_rows"
                                            class="col-sm-4 control-label">MAX_UPDATE_ROWS</label>
                                     <div class="col-sm-5">
-                                        <input type="text" class="form-control"
+                                        <input type="number" class="form-control"
                                                id="auto_review_max_update_rows"
                                                key="auto_review_max_update_rows"
                                                value="{{ config.auto_review_max_update_rows }}"
@@ -227,7 +227,7 @@
                                 <label for="admin_query_limit"
                                        class="col-sm-4 control-label">ADMIN_QUERY_LIMIT</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control" id="admin_query_limit"
+                                    <input type="number" class="form-control" id="admin_query_limit"
                                            key="admin_query_limit"
                                            value="{{ config.admin_query_limit }}"
                                            placeholder="管理员/DBA查询结果集限制">
@@ -315,7 +315,7 @@
                                     <label for="mail_smtp_port"
                                            class="col-sm-4 control-label">MAIL_SMTP_PORT</label>
                                     <div class="col-sm-5">
-                                        <input type="text" class="form-control"
+                                        <input type="number" class="form-control"
                                                id="mail_smtp_port"
                                                key="mail_smtp_port"
                                                value="{{ config.mail_smtp_port }}"
@@ -410,7 +410,7 @@
                                 <label for="lock_time_threshold"
                                        class="col-sm-4 control-label">LOCK_TIME_THRESHOLD</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
+                                    <input type="number" class="form-control"
                                            id="lock_time_threshold"
                                            key="lock_time_threshold"
                                            value="{{ config.lock_time_threshold }}"
@@ -421,7 +421,7 @@
                                 <label for="lock_cnt_threshold"
                                        class="col-sm-4 control-label">LOCK_CNT_THRESHOLD</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
+                                    <input type="number" class="form-control"
                                            id="lock_cnt_threshold"
                                            key="lock_cnt_threshold"
                                            value="{{ config.lock_cnt_threshold }}"
@@ -435,7 +435,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="sign_up_enabled" key="sign_up_enabled" value="{{ config.sign_up_enabled }}"
-                                                   type="checkbox"> 是否开启钉钉通知
+                                                   type="checkbox"> 是否开启注册功能
                                         </label>
                                     </div>
                                 </div>
