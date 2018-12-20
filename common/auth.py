@@ -50,14 +50,10 @@ class ArcherAuth(object):
         user = authenticate(username=username, password=password)
         # 登录成功
         if user:
-            # 如果登录失败计数器中存在该用户名，则清除之
-            if user.failed_login_count > 0:
-                user.failed_login_count = 0
-                user.save()
+            # 如果登录成功, 登录失败次数重置为0
+            user.failed_login_count = 0
+            user.save()
             return user
-        user.failed_login_count += 1
-        user.last_login_failed_at = datetime.datetime.now()
-        user.save()
     def authenticate(self):
         username = self.request.POST.get('username')
         password = self.request.POST.get('password')
@@ -94,12 +90,19 @@ class ArcherAuth(object):
                 now = datetime.datetime.now()
                 if user.last_login_failed_at + datetime.timedelta(seconds=lock_time) > now:
                     return {'status': 3, 'msg': '登录失败超过限制，该账号已被锁定!请等候大约{}秒再试'.format(lock_time), 'data': ''}
+                else:
+                    # 如果锁已超时, 重置失败次数
+                    user.failed_login_count = 0
+                    user.save()
         authenticated_user = self.challenge(username=username, password=password)
         if authenticated_user:
             if not authenticated_user.last_login:
                 init_user(authenticated_user)
             login(self.request, authenticated_user)
             return {'status': 0, 'msg': 'ok', 'data': authenticated_user}
+        user.failed_login_count += 1
+        user.last_login_failed_at = datetime.datetime.now()
+        user.save()
         return {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
 
 # ajax接口，登录页面调用，用来验证用户名密码
@@ -115,7 +118,7 @@ def authenticate_entry(request):
 
 # 注册用户
 def sign_up(request):
-    sign_up_enabled = SysConfig().sys_config.get('sign_up_enabled', '')
+    sign_up_enabled = SysConfig().get('sign_up_enabled', False)
     if not sign_up_enabled :
         result = {'status': 1, 'msg': '注册未启用,请联系管理员开启', 'data': None}
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -142,12 +145,12 @@ def sign_up(request):
         except ValidationError as msg:
             result['status'] = 1
             result['msg'] = str(msg)
-    new_user = Users.objects.create_user(username=username,
+        new_user = Users.objects.create_user(username=username,
                                       password=password,
                                       display=display,
                                       email=email,
                                       is_active=1)
-    init_user(new_user)
+        init_user(new_user)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
