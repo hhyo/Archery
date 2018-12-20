@@ -6,7 +6,7 @@ from common.utils.aes_decryptor import Prpcrypt
 
 # display字段为展示的中文名。
 class Users(AbstractUser):
-    display = models.CharField('显示的中文名', max_length=50, blank=True)
+    display = models.CharField('显示的中文名', max_length=50, blank=True, null=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
     def __str__(self):
