@@ -68,6 +68,8 @@ class ArcherAuth(object):
                 init_user(authenticated_user)
                 login(self.request, authenticated_user)
                 return {'status': 0, 'msg': 'ok', 'data': authenticated_user}
+            else:
+                return {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
 
         except:
             logger.error('验证用户密码时报错')
