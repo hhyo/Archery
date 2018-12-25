@@ -11,7 +11,7 @@ monitor_db_database="archery"
 
 #实例慢日志位置
 slowquery_file="/home/mysql/log_slow.log"
-pt_query_digest="/usr/bin/pt-query-digest"ƒ
+pt_query_digest="/usr/bin/pt-query-digest"
 
 #实例连接信息
 hostname="mysql_host:mysql_port" # 和archery实例配置内容保持一致，用于archery做筛选
