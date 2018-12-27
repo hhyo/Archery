@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     'django_apscheduler',
     'sql',
     'themis',
+    'django_q',
 )
 
 MIDDLEWARE = (
