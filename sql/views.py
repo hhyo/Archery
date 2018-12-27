@@ -85,7 +85,7 @@ def detail(request, workflow_id):
         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
         job = job_info(job_id)
         if job:
-            run_date = job.next_run_time
+            run_date = job.next_run
         else:
             run_date = ''
     else:
