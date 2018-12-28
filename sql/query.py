@@ -459,7 +459,12 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_content = sql_content.strip()
-
+    archer_config = SysConfig()
+    if archer_config.get('disable_star'):
+        if '*' in sql_content:
+            result['status'] = 1
+            result['msg'] = '不允许 * 标记, 请指定具体字段名.'
+            return HttpResponse(json.dumps(result), content_type='application/json')
     # 获取用户信息
     user = request.user
 
