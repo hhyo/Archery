@@ -2,11 +2,11 @@
 from django.contrib.auth.models import Group
 from django.utils import timezone
 
-from sql.utils.group import user_groups, auth_group_users
+from sql.utils.resource_group import user_groups, auth_group_users
 from sql.utils.sql_review import is_auto_review
 from sql.notify import notify
 from common.utils.const import WorkflowDict
-from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, SqlGroup, SqlWorkflow, \
+from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, ResourceGroup, SqlWorkflow, \
     QueryPrivilegesApply
 from common.config import SysConfig
 
@@ -320,7 +320,7 @@ class Workflow(object):
         except Exception:
             inset = WorkflowAuditSetting()
             inset.group_id = group_id
-            inset.group_name = SqlGroup.objects.get(group_id=group_id).group_name
+            inset.group_name = ResourceGroup.objects.get(group_id=group_id).group_name
             inset.audit_auth_groups = audit_auth_groups
             inset.workflow_type = workflow_type
             inset.save()

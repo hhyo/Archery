@@ -3,8 +3,8 @@ import datetime
 import re
 from django.contrib.auth.models import Group
 from common.config import SysConfig
-from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, SqlGroup
-from sql.utils.group import auth_group_users
+from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, ResourceGroup
+from sql.utils.resource_group import auth_group_users
 from common.utils.sendmsg import MailSender
 from common.utils.const import WorkflowDict
 
@@ -25,7 +25,7 @@ def notify(audit_info, msg_type=0, **kwargs):
     workflow_title = audit_info.workflow_title
     workflow_from = audit_info.create_user_display
     group_name = audit_info.group_name
-    webhook_url = SqlGroup.objects.get(group_id=audit_info.group_id).ding_webhook
+    webhook_url = ResourceGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
     # 获取当前审批和审批流程
     from sql.utils.workflow import Workflow

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
 from sql.models import Instance
-from sql.utils.group import user_instances
+from sql.utils.resource_group import user_instances
 
 logger = logging.getLogger('default')
 
@@ -46,7 +46,7 @@ def sqladvisor(request):
 
     # 提交给sqladvisor获取审核结果
     sqladvisor_path = SysConfig().sys_config.get('sqladvisor')
-    sql_content = sql_content.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
+    sql_content = sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
             str(instance_info.host), str(instance_info.port), str(instance_info.user),

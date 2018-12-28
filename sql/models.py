@@ -4,11 +4,12 @@ from django.contrib.auth.models import AbstractUser
 from common.utils.aes_decryptor import Prpcrypt
 
 
-# display字段为展示的中文名。
+# 用户信息扩展
 class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, blank=True, null=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
+
     def __str__(self):
         if self.display:
             return self.display
@@ -21,8 +22,8 @@ class Users(AbstractUser):
         verbose_name_plural = u'用户管理'
 
 
-# 组
-class SqlGroup(models.Model):
+# 资源组
+class ResourceGroup(models.Model):
     group_id = models.AutoField('组ID', primary_key=True)
     group_name = models.CharField('组名称', max_length=100, unique=True)
     group_parent_id = models.BigIntegerField('父级id', default=0)
@@ -38,13 +39,13 @@ class SqlGroup(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sql_group'
+        db_table = 'resource_group'
         verbose_name = u'资源组管理'
         verbose_name_plural = u'资源组管理'
 
 
-# 组关系表（用户与组、实例与组等）
-class GroupRelations(models.Model):
+# 资源组关系表（用户与组、实例与组等）
+class ResourceGroupRelations(models.Model):
     object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
     object_id = models.IntegerField('关联对象主键ID', )
     object_name = models.CharField('关联对象描述，用户名、实例名', max_length=100)
@@ -55,7 +56,7 @@ class GroupRelations(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sql_group_relations'
+        db_table = 'resource_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
         verbose_name = u'资源组对象管理'
         verbose_name_plural = u'资源组对象管理'

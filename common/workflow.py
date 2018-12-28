@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import WorkflowAudit, WorkflowLog
-from sql.utils.group import user_groups
+from sql.utils.resource_group import user_groups
 
 
 # 获取审核列表

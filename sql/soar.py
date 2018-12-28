@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
-from sql.utils.group import user_instances
+from sql.utils.resource_group import user_instances
 
 logger = logging.getLogger('default')
 
@@ -44,7 +44,7 @@ def soar(request):
         result['msg'] = '你所在组未关联该实例'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    sql = sql.strip().replace('"', '\\"').replace('`', '\`').replace('\n', ' ')
+    sql = sql.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
     # 目标实例的连接信息
     instance_info = Instance.objects.get(instance_name=instance_name)
     online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
