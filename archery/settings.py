@@ -28,10 +28,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_apscheduler',
+    'django_q',
     'sql',
     'themis',
-    'django_q',
 )
 
 MIDDLEWARE = (
@@ -89,6 +88,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.users"
 
+# 密码校验
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -140,27 +140,28 @@ MONGODB_DATABASES = {
     },
 }
 
+# Django-Q
 Q_CLUSTER = {
     'name': 'archery',
-    'workers': 8,
+    'workers': 4,
     'recycle': 500,
     'timeout': 60,
     'compress': True,
     'cpu_affinity': 1,
-    'save_limit': 250,
-    'queue_limit': 500,
+    'save_limit': 0,
+    'queue_limit': 50,
     'label': 'Django Q',
-    'redis': {
-        'host': '127.0.0.1',
-        'port': 6379,
-        'db': 0, }
+    'django_redis': 'default'
 }
 
 # 缓存配置
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(BASE_DIR, "archery"),
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -216,10 +217,6 @@ LOGGING = {
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
             'handlers': ['default'],
             'level': 'DEBUG',
-        },
-        'django_apscheduler': {  # django_apscheduler模块相关日志
-            'handlers': ['default'],
-            'level': 'ERROR',
         },
         # 'django.db': {  # 打印SQL语句到console，方便开发
         #     'handlers': ['console'],

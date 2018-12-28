@@ -452,7 +452,7 @@ def timingtask(request):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
-    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
+    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
     url = get_detail_url(request, workflow_id)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
 
