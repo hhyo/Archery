@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     'django_apscheduler',
     'sql',
     'themis',
+    'django_q',
 )
 
 MIDDLEWARE = (
@@ -137,6 +138,22 @@ MONGODB_DATABASES = {
         "HOST": '127.0.0.1',
         "PORT": 27017,
     },
+}
+
+Q_CLUSTER = {
+    'name': 'archery',
+    'workers': 8,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'cpu_affinity': 1,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'label': 'Django Q',
+    'redis': {
+        'host': '127.0.0.1',
+        'port': 6379,
+        'db': 0, }
 }
 
 # 缓存配置
