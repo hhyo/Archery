@@ -6,6 +6,7 @@ import traceback
 from threading import Thread
 
 import simplejson as json
+import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, connection
@@ -263,8 +264,10 @@ def autoreview(request):
 
     # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
     sql_syntax = 2
-    for row in sql_content.strip(';').split(';'):
-        if re.match(r"^alter|^create|^drop|^truncate|^rename", row.strip().lower()):
+    for stmt in sqlparse.split(sql_content):
+        statement = sqlparse.parse(stmt)[0]
+        syntax_type = statement.token_first().ttype.__str__()
+        if syntax_type == 'Token.Keyword.DDL':
             sql_syntax = 1
             break
 

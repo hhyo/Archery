@@ -6,6 +6,7 @@ import time
 import traceback
 
 import simplejson as json
+import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.core import serializers
 from django.db import connection
@@ -67,10 +68,10 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
 
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
-        if SysConfig().sys_config.get('admin_query_limit'):
+        if SysConfig().sys_config.get('admin_query_limit', 5000):
             user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
         else:
-            user_limit_num = 0
+            user_limit_num = 5000
         limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
 
     # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过不做校验
@@ -479,8 +480,8 @@ def query(request):
             result['msg'] = '仅支持^select|^show|^explain语法，请联系管理员！'
             return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 按照分号截取第一条有效sql执行
-    sql_content = sql_content.strip().split(';')[0]
+    # 执行第一条有效sql
+    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
 
     try:
         # 查询权限校验
@@ -636,8 +637,8 @@ def explain(request):
         result['msg'] = '仅支持explain开头的语句，请检查'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 按照分号截取第一条有效sql执行
-    sql_content = sql_content.strip().split(';')[0]
+    # 执行第一条有效sql
+    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
 
     # 执行获取执行计划语句
     sql_result = Dao(instance_name=instance_name).mysql_query(str(db_name), sql_content)

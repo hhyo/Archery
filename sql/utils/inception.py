@@ -4,6 +4,7 @@ import re
 import simplejson as json
 import MySQLdb
 import traceback
+import sqlparse
 from django.db import connection
 
 from sql.models import Instance, SqlWorkflow
@@ -51,15 +52,15 @@ class InceptionDao(object):
             map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
                 sql_content.splitlines(1))).strip()
 
-        for row in sql_content.rstrip(';').split(';'):
-            if p.match(row.strip().lower()):
+        for statement in sqlparse.split(sql_content):
+            if p.match(statement.strip().lower()):
                 result = (
                     '', '', 2, '驳回高危SQL', '禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                    row,
+                    statement,
                     '', '', '', '')
                 critical_sql_found = 1
             else:
-                result = ('', '', 0, '', 'None', row, '', '', '', '')
+                result = ('', '', 0, '', 'None', statement, '', '', '', '')
             result_list.append(result)
         if critical_sql_found == 1:
             return result_list
@@ -70,15 +71,20 @@ class InceptionDao(object):
         """
         在提交给inception之前，预先识别一些Inception不能正确审核的SQL,比如"alter table t1;"或"alter table test.t1;" 以免导致inception core dump
         """
+        # 删除注释语句
+        sql_content = ''.join(
+            map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
+                sql_content.splitlines(1))).strip()
         result_list = []
         syntax_error_sql_found = 0
-        for row in sql_content.rstrip(';').split(';'):
+        for statement in sqlparse.split(sql_content):
+            # 注释不检测
             if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
-                        row.lower() + ";"):
-                result = ('', '', 2, 'SQL语法错误', 'ALTER TABLE 必须带有选项', row, '', '', '', '')
+                        statement.lower() + ";"):
+                result = ('', '', 2, 'SQL语法错误', 'ALTER TABLE 必须带有选项', statement, '', '', '', '')
                 syntax_error_sql_found = 1
             else:
-                result = ('', '', 0, '', 'None', row, '', '', '', '')
+                result = ('', '', 0, '', 'None', statement, '', '', '', '')
             result_list.append(result)
         if syntax_error_sql_found == 1:
             return result_list
