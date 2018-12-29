@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunAccessKey, AliyunRdsConfig, SqlGroup, GroupRelations, QueryPrivileges, WorkflowAudit, WorkflowLog
+    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivileges, WorkflowAudit, WorkflowLog
 
 
 # 用户管理
@@ -33,15 +33,15 @@ class UsersAdmin(UserAdmin):
 
 
 # 资源组管理
-@admin.register(SqlGroup)
-class GroupAdmin(admin.ModelAdmin):
+@admin.register(ResourceGroup)
+class ResourceGroupAdmin(admin.ModelAdmin):
     list_display = ('group_id', 'group_name', 'ding_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
 # 资源组关系管理
-@admin.register(GroupRelations)
-class GroupRelationsAdmin(admin.ModelAdmin):
+@admin.register(ResourceGroupRelations)
+class ResourceGroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 

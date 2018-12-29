@@ -13,12 +13,12 @@ from sql.utils.inception import InceptionDao
 from common.utils.permission import superuser_required
 from sql.utils.jobs import job_info
 
-from .models import Users, SqlWorkflow, QueryPrivileges, SqlGroup, \
+from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
     QueryPrivilegesApply, Config
 from sql.utils.workflow import Workflow
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
-from sql.utils.group import user_groups, user_instances
+from sql.utils.resource_group import user_groups, user_instances
 
 import logging
 
@@ -262,7 +262,7 @@ def workflowsdetail(request, audit_id):
 @superuser_required
 def config(request):
     # 获取所有资源组名称
-    group_list = SqlGroup.objects.all()
+    group_list = ResourceGroup.objects.all()
 
     # 获取所有权限组
     auth_group_list = Group.objects.all()
@@ -286,7 +286,7 @@ def group(request):
 # 资源组组关系管理页面
 @superuser_required
 def groupmgmt(request, group_id):
-    group = SqlGroup.objects.get(group_id=group_id)
+    group = ResourceGroup.objects.get(group_id=group_id)
     return render(request, 'groupmgmt.html', {'group': group})
 
 

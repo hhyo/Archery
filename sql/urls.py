@@ -3,7 +3,7 @@
 from django.urls import path
 
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, group, \
+from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, resource_group, \
     sql_advisor, binlog2sql, soar
 from sql.utils import jobs
 
@@ -60,13 +60,13 @@ urlpatterns = [
     path('check/email/', check.email),
     path('check/instance/', check.instance),
 
-    path('group/group/', group.group),
-    path('group/addrelation/', group.addrelation),
-    path('group/relations/', group.associated_objects),
-    path('group/instances/', group.instances),
-    path('group/unassociated/', group.unassociated_objects),
-    path('group/auditors/', group.auditors),
-    path('group/changeauditors/', group.changeauditors),
+    path('group/group/', resource_group.group),
+    path('group/addrelation/', resource_group.addrelation),
+    path('group/relations/', resource_group.associated_objects),
+    path('group/instances/', resource_group.instances),
+    path('group/unassociated/', resource_group.unassociated_objects),
+    path('group/auditors/', resource_group.auditors),
+    path('group/changeauditors/', resource_group.changeauditors),
 
     path('instance/list/', instance.lists),
     path('instance/users/', instance.users),

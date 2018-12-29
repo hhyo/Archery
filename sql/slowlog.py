@@ -1,22 +1,20 @@
 # -*- coding: UTF-8 -*-
 import simplejson as json
+import datetime
 from django.contrib.auth.decorators import permission_required
-
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
 from django.http import HttpResponse
-import datetime
-
-from sql.utils.group import user_instances
+from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
-from common.config import SysConfig
-import logging
-
-logger = logging.getLogger('default')
 
 from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
     slowquery_review_history as aliyun_rds_slowquery_review_history
+
+import logging
+
+logger = logging.getLogger('default')
 
 
 # 获取SQL慢日志统计

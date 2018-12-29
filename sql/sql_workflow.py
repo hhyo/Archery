@@ -18,9 +18,9 @@ from django.utils import timezone
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.models import SqlGroup, Users
+from sql.models import ResourceGroup, Users
 from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
-from sql.utils.group import user_groups, user_instances
+from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
 from sql.utils.sql_review import can_timingtask, get_detail_url, can_cancel, can_execute
@@ -29,7 +29,6 @@ from .models import SqlWorkflow
 
 logger = logging.getLogger('default')
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
-workflowOb = Workflow()
 
 
 # 获取审核列表
@@ -201,7 +200,7 @@ def autoreview(request):
     sql_content = request.POST['sql_content']
     workflow_title = request.POST['workflow_name']
     group_name = request.POST['group_name']
-    group_id = SqlGroup.objects.get(group_name=group_name).group_id
+    group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
     db_name = request.POST.get('db_name')
     is_backup = request.POST['is_backup']
@@ -227,10 +226,6 @@ def autoreview(request):
     # sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
     sql_content = sql_content.strip()
-
-    if sql_content[-1] != ";":
-        context = {'errMsg': "SQL语句结尾没有以;结尾，请后退重新修改并提交！"}
-        return render(request, 'error.html', context)
 
     # 交给inception进行自动审核
     try:
@@ -308,7 +303,7 @@ def autoreview(request):
                 # 抄送通知人
                 list_cc_addr = [email['email'] for email in
                                 Users.objects.filter(username__in=notify_users).values('email')]
-                workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflow_id,
+                Workflow().addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflow_id,
                                             list_cc_addr=list_cc_addr)
     except Exception as msg:
         logger.error(traceback.format_exc())
@@ -342,7 +337,7 @@ def passed(request):
             audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
                                                           workflow_type=WorkflowDict.workflow_type[
                                                               'sqlreview']).audit_id
-            audit_result = workflowOb.auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
+            audit_result = Workflow().auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
                                                     user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
@@ -424,7 +419,7 @@ def execute(request):
     # 获取audit_id
     audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    workflowOb.add_workflow_log(audit_id=audit_id,
+    Workflow().add_workflow_log(audit_id=audit_id,
                                 operation_type=5,
                                 operation_type_desc='执行工单',
                                 operation_info="人工操作执行",
@@ -457,7 +452,7 @@ def timingtask(request):
             context = {'errMsg': '高危语句，禁止执行！'}
             return render(request, 'error.html', context)
 
-    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M:%S")
+    run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
     url = get_detail_url(request, workflow_id)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
 
@@ -474,7 +469,7 @@ def timingtask(request):
             audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
                                                           workflow_type=WorkflowDict.workflow_type[
                                                               'sqlreview']).audit_id
-            workflowOb.add_workflow_log(audit_id=audit_id,
+            Workflow().add_workflow_log(audit_id=audit_id,
                                         operation_type=4,
                                         operation_type_desc='定时执行',
                                         operation_info="定时执行时间：{}".format(run_date),
@@ -519,7 +514,7 @@ def cancel(request):
             if workflow_detail.status != Const.workflowStatus['manreviewing']:
                 # 增加工单日志
                 if user.username == workflow_detail.engineer:
-                    workflowOb.add_workflow_log(audit_id=audit_id,
+                    Workflow().add_workflow_log(audit_id=audit_id,
                                                 operation_type=3,
                                                 operation_type_desc='取消执行',
                                                 operation_info="取消原因：{}".format(audit_remark),
@@ -527,7 +522,7 @@ def cancel(request):
                                                 operator_display=request.user.display
                                                 )
                 else:
-                    workflowOb.add_workflow_log(audit_id=audit_id,
+                    Workflow().add_workflow_log(audit_id=audit_id,
                                                 operation_type=2,
                                                 operation_type_desc='审批不通过',
                                                 operation_info="审批备注：{}".format(audit_remark),
@@ -536,12 +531,12 @@ def cancel(request):
                                                 )
             else:
                 if user.username == workflow_detail.engineer:
-                    workflowOb.auditworkflow(request, audit_id,
+                    Workflow().auditworkflow(request, audit_id,
                                              WorkflowDict.workflow_status['audit_abort'],
                                              user.username, audit_remark)
                 # 非提交人需要校验审核权限
                 elif user.has_perm('sql.sql_review'):
-                    workflowOb.auditworkflow(request, audit_id,
+                    Workflow().auditworkflow(request, audit_id,
                                              WorkflowDict.workflow_status['audit_reject'],
                                              user.username, audit_remark)
                 else:
@@ -662,18 +657,13 @@ def stop_osc_progress(request):
         context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
-    user = request.user
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    try:
-        review_man = json.loads(workflow_detail.audit_auth_groups)
-    except ValueError:
-        review_man = (workflow_detail.audit_auth_groups,)
     # 服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
     if workflow_detail.status != Const.workflowStatus['executing']:
         context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
-    if user.username is None or user.username not in review_man:
-        context = {"status": -1, 'msg': '当前登录用户不是审核人，请重新登录.', "data": ""}
+    if can_execute(request.user, workflow_id) is False:
+        context = {"status": -1, "msg": '你无权操作当前工单，请刷新当前页面！', "data": ""}
         return HttpResponse(json.dumps(context), content_type='application/json')
 
     workflow_id = int(workflow_id)

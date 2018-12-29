@@ -20,9 +20,9 @@ from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.dao import Dao
 from sql.utils.data_masking import Masking
-from sql.utils.group import user_instances, user_groups
+from sql.utils.resource_group import user_instances, user_groups
 from sql.utils.workflow import Workflow
-from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, SqlGroup
+from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, ResourceGroup
 
 logger = logging.getLogger('default')
 
@@ -214,7 +214,7 @@ def applyforprivileges(request):
     title = request.POST['title']
     instance_name = request.POST['instance_name']
     group_name = request.POST['group_name']
-    group_id = SqlGroup.objects.get(group_name=group_name).group_id
+    group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     priv_type = request.POST['priv_type']
     db_name = request.POST['db_name']
     valid_date = request.POST['valid_date']

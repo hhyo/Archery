@@ -259,9 +259,10 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                            <input type="text" class="form-control" id="run_date" name="run_date"
-                                   data-format="yyyy-MM-dd hh:mm:ss"
-                                   placeholder="请输入执行时间">
+                            <div class='input-group date' id='datetimepicker'>
+                                <input id="run_date" name="run_date" type='text' autocomplete="off" class="form-control" placeholder="请选择执行时间"/>
+                                <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -288,19 +289,18 @@
     <!--初始化时间控件 -->
     <script>
         var date = new Date();
-        $("#run_date").datetimepicker({
-            format: "yyyy-mm-dd hh:ii:ss",
+        $("#datetimepicker").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
             autoclose: true,
             todayBtn: true,
-            todayHighlight: true,
-            showMeridian: false,
             pickerPosition: "bottom-left",
             language: 'zh-CN',//中文，需要引用zh-CN.js包
-            startView: 2,//月视图
-            minView: 1,//日期时间选择器所能够提供的最精确的时间选择视图
+            startView: 1,//天视图
+            minView: 0,//分钟
             startDate: date,
             inline: true,
-            sideBySide: true
+            sideBySide: true,
+            minuteStep: 5,
         })
     </script>
     <!--按钮控制 -->

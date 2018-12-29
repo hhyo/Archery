@@ -3,7 +3,7 @@ import re
 from common.utils.const import Const
 from sql.models import SqlWorkflow
 from common.config import SysConfig
-from sql.utils.group import user_groups
+from sql.utils.resource_group import user_groups
 from sql.utils.inception import InceptionDao
 
 

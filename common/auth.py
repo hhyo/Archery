@@ -3,17 +3,15 @@ import logging
 import traceback
 
 import simplejson as json
-from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
-from sql.models import Users, SqlGroup, GroupRelations
+from sql.models import Users, ResourceGroup, ResourceGroupRelations
 
 logger = logging.getLogger('default')
 
@@ -30,11 +28,11 @@ def init_user(user):
     default_resource_group = SysConfig().sys_config.get('default_resource_group', '')
     if default_resource_group:
         try:
-            new_relation = GroupRelations(
+            new_relation = ResourceGroupRelations(
                 object_type=0,
                 object_id = user.id,
                 object_name = str(user),
-                group_id = SqlGroup.objects.get(group_name=default_resource_group).group_id,
+                group_id = ResourceGroup.objects.get(group_name=default_resource_group).group_id,
                 group_name = default_resource_group)
             new_relation.save()
         except Exception:

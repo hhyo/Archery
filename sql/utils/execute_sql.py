@@ -10,13 +10,13 @@ from threading import Thread
 from django.db import connection
 from django.utils import timezone
 
-from sql.utils.group import auth_group_users
+from sql.utils.resource_group import auth_group_users
 from common.config import SysConfig
 from sql.utils.dao import Dao
 from common.utils.const import Const, WorkflowDict
 from common.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
-from sql.models import Users, SqlWorkflow, SqlGroup
+from sql.models import Users, SqlWorkflow, ResourceGroup
 from sql.utils.workflow import Workflow
 import logging
 
@@ -181,7 +181,7 @@ def send_msg(workflow_detail, url):
         mail_sender.send_email(msg_title, msg_content, list_to_addr, list_cc_addr=list_cc_addr)
     if sys_config.get('ding'):
         # 钉钉通知申请人，审核人，抄送DBA
-        webhook_url = SqlGroup.objects.get(group_id=workflow_detail.group_id).ding_webhook
+        webhook_url = ResourceGroup.objects.get(group_id=workflow_detail.group_id).ding_webhook
         MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group', None) \
