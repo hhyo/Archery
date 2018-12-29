@@ -1,4 +1,5 @@
 import re
+import sqlparse
 
 from common.utils.const import Const
 from sql.models import SqlWorkflow
@@ -36,8 +37,8 @@ def is_auto_review(workflow_id):
 
     # 判断是否匹配到需要手动审核的语句
     is_autoreview = True
-    for row in sql_content.strip(';').split(';'):
-        if p.match(row.strip().lower()):
+    for statement in sqlparse.split(sql_content):
+        if p.match(statement.strip().lower()):
             is_autoreview = False
             break
         if is_autoreview:

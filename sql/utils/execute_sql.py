@@ -6,7 +6,7 @@ import simplejson as json
 
 import time
 from threading import Thread
-
+import sqlparse
 from django.db import connection
 from django.utils import timezone
 
@@ -197,26 +197,26 @@ def send_msg(workflow_detail, url):
 
         # 匹配DDL语句CREATE、ALTER（排除索引变更）、DROP、TRUNCATE、RENAME
         send = 0
-        for row in sql_content.strip(';').split(';'):
+        for statement in sqlparse.split(sql_content):
             # alter语法
             if re.match(r"^alter\s+table\s+\S+\s+(add|alter|change|drop|rename|modify)\s+(?!.*(index|key|unique))",
-                        row.strip().lower()):
+                        statement.strip().lower()):
                 send = 1
                 break
             # create语法
-            elif re.match(r"^create\s+(temporary\s+)?(database|schema|table)", row.strip().lower()):
+            elif re.match(r"^create\s+(temporary\s+)?(database|schema|table)", statement.strip().lower()):
                 send = 1
                 break
             # drop语法
-            elif re.match(r"^drop", row.strip().lower()):
+            elif re.match(r"^drop|^rename|^truncate", statement.strip().lower()):
                 send = 1
                 break
             # rename语法
-            elif re.match(r"^rename", row.strip().lower()):
+            elif re.match(r"", statement.strip().lower()):
                 send = 1
                 break
             # truncate语法
-            elif re.match(r"^truncate", row.strip().lower()):
+            elif re.match(r"", statement.strip().lower()):
                 send = 1
                 break
 
