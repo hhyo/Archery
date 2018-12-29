@@ -74,8 +74,6 @@
 <li>【建议】文本数据尽量用<code>varchar</code>存储。因为<code>varchar</code>是变长存储，比<code>char</code>更省空间。MySQL server层规定一行所有文本最多存65535字节，因此在utf8字符集下最多存21844个字符，超过会自动转换为<code>mediumtext</code>字段。而<code>text</code>在utf8字符集下最多存21844个字符，<code>mediumtext</code>最多存2^24/3个字符，<code>longtext</code>最多存2^32个字符。一般建议用<code>varchar</code>类型，字符数不要超过2700。</li>
 <li>【建议】时间类型尽量选取<code>timestamp</code>。因为<code>datetime</code>占用8字节，<code>timestamp</code>仅占用4字节，但是范围为<code>1970-01-01 00:00:01</code>到<code>2038-01-01 00:00:00</code>。更为高阶的方法，选用<code>int</code>来存储时间，使用SQL函数<code>unix_timestamp()</code>和<code>from_unixtime()</code>来进行转换。</li>
 </ol>
-<p>详细存储大小参加下图：</p>
-<p><img alt="MySQL数据类型存储大小" src="/static/pics/mysql_datatype.png" /></p>
 <h3 id="214"><a name="user-content-214" href="#214" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>2.1.4 索引设计</h3>
 <ol>
 <li>【强制】InnoDB表必须主键为<code>id int/bigint auto_increment</code>,且主键值禁止被更新。</li>
