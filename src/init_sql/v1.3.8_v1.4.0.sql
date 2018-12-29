@@ -8,6 +8,5 @@ rename table sql_group to resource_group;
 rename table sql_group_relations to resource_group_relations;
 
 -- 使用django_q替换django_apscheduler
-drop table django_apscheduler_djangojob;
 drop table django_apscheduler_djangojobexecution;
-
+drop table django_apscheduler_djangojob;
