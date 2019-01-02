@@ -18,12 +18,59 @@ from common.utils.sendmsg import MailSender
 from sql.utils.inception import InceptionDao
 from sql.models import Users, SqlWorkflow, ResourceGroup
 from sql.utils.workflow import Workflow
+from sql.engines import get_engine
+from django_q.tasks import async_task, result
 import logging
 
 logger = logging.getLogger('default')
 
+def execute(workflow_id):
+    """为延时或异步任务准备的execute, 传入工单ID即可"""
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    execute_engine = get_engine(workflow=workflow_detail)
+    return execute_engine.execute()
+def execute_callback(task):
+    """异步任务的回调, 将结果填入数据库等等
+    使用django-q的hook, 传入参数为整个task
+    task.result 是真正的结果
+    """
+    workflow_id = task.args[0]
+    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    workflow.finish_time = task.stopped
+    execute_result = {}
+    
+    if not task.success:
+        # 不成功会返回字符串
+        workflow.status = Const.workflowStatus['exception']
+        execute_result['Error'] = task.result
+    elif task.result.get('Warning') or task.result.get('Error'):
+        workflow.status = Const.workflowStatus['exception']
+        execute_result = task.result
+    else:
+        workflow.status = Const.workflowStatus['finish']
+        execute_result = task.result
+    execute_result['execute_time'] = '{:.4f} sec'.format(task.time_taken())
+    workflow.execute_result = json.dumps(execute_result)
+    workflow.audit_remark = ''
+    workflow.is_backup = '否'
+    workflow.save()
 
-# SQL工单跳过inception执行回调
+    # 增加工单日志
+    # 获取audit_id
+    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
+                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Workflow.add_workflow_log(audit_id=audit_id,
+                              operation_type=6,
+                              operation_type_desc='执行结束',
+                              operation_info='执行结果：{}'.format(workflow.status),
+                              operator='',
+                              operator_display='系统'
+                              )
+
+    # 发送消息
+    send_msg(workflow_detail, url)
+
+# SQL工单跳过inception执行
 def execute_skipinc_call_back(workflow_id, instance_name, db_name, sql_content, url):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     try:
@@ -68,7 +115,7 @@ def execute_skipinc_call_back(workflow_id, instance_name, db_name, sql_content, 
     send_msg(workflow_detail, url)
 
 
-# SQL工单执行回调
+# SQL工单执行
 def execute_call_back(workflow_id, instance_name, url):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     try:

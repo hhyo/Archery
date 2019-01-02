@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, connection
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -26,7 +26,10 @@ from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
 from sql.utils.sql_review import can_timingtask, get_detail_url, can_cancel, can_execute
 from sql.utils.workflow import Workflow
-from .models import SqlWorkflow
+from .models import SqlWorkflow, Instance
+from django_q.tasks import async_task, result
+
+from sql.engines import get_engine
 
 logger = logging.getLogger('default')
 sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
@@ -129,8 +132,10 @@ def sqlworkflow_list(request):
 # SQL检测
 @permission_required('sql.sql_submit', raise_exception=True)
 def simplecheck(request):
+    """SQL检测按钮, 此处没有产生工单"""
     sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
+    instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
 
     result = {'status': 0, 'msg': 'ok', 'data': {}}
@@ -151,42 +156,29 @@ def simplecheck(request):
 
     # 交给inception进行自动审核
     try:
-        inception_result = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
+        check_engine = get_engine(instance=instance)
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content)
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = 'Inception审核报错，请检查Inception配置，错误信息：\n{}'.format(str(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    if inception_result is None or len(inception_result) == 0:
+    if not check_result:
         result['status'] = 1
         result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
-        return HttpResponse(json.dumps(result), content_type='application/json')
+        return JsonResponse(result)
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
+    column_list = ['id', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'sql', 'affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
-    rows = []
     check_warning_count = 0
     check_error_count = 0
-    for row_index, row_item in enumerate(inception_result):
-        row = {}
-        row['ID'] = row_item[0]
-        row['stage'] = row_item[1]
-        row['errlevel'] = row_item[2]
-        if row['errlevel'] == 1:
+    for row_item in check_result.rows:
+        if row_item.errlevel == 1:
             check_warning_count = check_warning_count + 1
-        elif row['errlevel'] == 2:
+        elif row_item.errlevel == 2:
             check_error_count = check_error_count + 1
-        row['stagestatus'] = row_item[3]
-        row['errormessage'] = row_item[4]
-        row['SQL'] = row_item[5]
-        row['Affected_rows'] = row_item[6]
-        row['sequence'] = row_item[7]
-        row['backup_dbname'] = row_item[8]
-        row['execute_time'] = row_item[9]
-        # row['sqlsha1'] = row_item[10]
-        rows.append(row)
-    result['data']['rows'] = rows
+    result['data']['rows'] = [ r.__dict__ for r in check_result.rows]
     result['data']['column_list'] = column_list
     result['data']['CheckWarningCount'] = check_warning_count
     result['data']['CheckErrorCount'] = check_error_count
@@ -197,12 +189,14 @@ def simplecheck(request):
 # SQL提交
 @permission_required('sql.sql_submit', raise_exception=True)
 def autoreview(request):
+    """正式提交SQL, 此处生成工单"""
     workflow_id = request.POST.get('workflow_id')
     sql_content = request.POST['sql_content']
     workflow_title = request.POST['workflow_name']
     group_name = request.POST['group_name']
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
+    instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
     is_backup = request.POST['is_backup']
     notify_users = request.POST.getlist('notify_users')
@@ -228,24 +222,25 @@ def autoreview(request):
 
     sql_content = sql_content.strip()
 
-    # 交给inception进行自动审核
+    # 审核
     try:
-        inception_result = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
+        check_engine = get_engine(instance)
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content)
     except Exception as msg:
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
 
-    if inception_result is None or len(inception_result) == 0:
+    if not check_result:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    json_result = json.dumps(inception_result)
+    json_result = json.dumps(check_result)
 
     # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内跳过inception直接执行
     sys_config = SysConfig().sys_config
     is_manual = 0
     workflow_status = Const.workflowStatus['manreviewing']
-    for row in inception_result:
+    for row in check_result:
         # 1表示警告，不影响执行
         if row[2] == 1 and sys_config.get('auto_review_wrong', '') == '1':
             workflow_status = Const.workflowStatus['autoreviewwrong']
@@ -385,50 +380,8 @@ def execute(request):
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflow_detail.status = Const.workflowStatus['executing']
     workflow_detail.reviewok_time = timezone.now()
-    workflow_detail.save()
-
-    # 判断是通过inception执行还是直接执行，is_manual=0则通过inception执行，is_manual=1代表inception审核不通过，需要直接执行
-    if workflow_detail.is_manual == 0:
-        # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-        try:
-            split_review_result = InceptionDao(instance_name=instance_name).sqlauto_review(workflow_detail.sql_content,
-                                                                                           db_name,
-                                                                                           is_split='yes')
-        except Exception as msg:
-            logger.error(traceback.format_exc())
-            context = {'errMsg': msg}
-            return render(request, 'error.html', context)
-        workflow_detail.review_content = json.dumps(split_review_result)
-        try:
-            workflow_detail.save()
-        except Exception:
-            # 关闭后重新获取连接，防止超时
-            connection.close()
-            workflow_detail.save()
-
-        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_call_back, args=(workflow_id, instance_name, url))
-        t.start()
-    else:
-        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_skipinc_call_back,
-                   args=(workflow_id, instance_name, db_name, workflow_detail.sql_content, url))
-        t.start()
-    # 删除定时执行job
-    if workflow_detail.status == Const.workflowStatus['timingtask']:
-        job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
-        del_sqlcronjob(job_id)
-    # 增加工单日志
-    # 获取audit_id
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Workflow().add_workflow_log(audit_id=audit_id,
-                                operation_type=5,
-                                operation_type_desc='执行工单',
-                                operation_info="人工操作执行",
-                                operator=request.user.username,
-                                operator_display=request.user.display
-                                )
+    workflow_detail.save() 
+    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

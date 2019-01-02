@@ -54,6 +54,8 @@ class SysConfig(object):
             return False
         if value == 'true' or value == 'True':
             return True
+        if value.strip() == '':
+            return default_value
         return value
 
     def set(self, key, value):

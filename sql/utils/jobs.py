@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from django_q.tasks import async_task, result, schedule
+from django_q.tasks import schedule
 from django_q.models import Schedule
 
 import logging
