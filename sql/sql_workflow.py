@@ -266,7 +266,7 @@ def autoreview(request):
     sql_syntax = 2
     for stmt in sqlparse.split(sql_content):
         statement = sqlparse.parse(stmt)[0]
-        syntax_type = statement.token_first().ttype.__str__()
+        syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
         if syntax_type == 'Token.Keyword.DDL':
             sql_syntax = 1
             break
