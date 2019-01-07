@@ -37,22 +37,18 @@ def execute_callback(task):
     workflow_id = task.args[0]
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
-    execute_result = {}
     
     if not task.success:
         # 不成功会返回字符串
         workflow.status = Const.workflowStatus['exception']
-        execute_result['Error'] = task.result
-    elif task.result.get('Warning') or task.result.get('Error'):
+    elif task.result.warning or task.result.error:
         workflow.status = Const.workflowStatus['exception']
         execute_result = task.result
     else:
         workflow.status = Const.workflowStatus['finish']
         execute_result = task.result
-    execute_result['execute_time'] = '{:.4f} sec'.format(task.time_taken())
-    workflow.execute_result = json.dumps(execute_result)
+    workflow.execute_result = execute_result.json()
     workflow.audit_remark = ''
-    workflow.is_backup = '否'
     workflow.save()
 
     # 增加工单日志
@@ -68,7 +64,7 @@ def execute_callback(task):
                               )
 
     # 发送消息
-    send_msg(workflow_detail, url)
+    send_msg(workflow)
 
 # SQL工单跳过inception执行
 def execute_skipinc_call_back(workflow_id, instance_name, db_name, sql_content, url):
@@ -204,10 +200,13 @@ def execute_job(workflow_id, url):
 
 
 # 执行结果通知
-def send_msg(workflow_detail, url):
+def send_msg(workflow_detail):
     mail_sender = MailSender()
     sys_config = SysConfig().sys_config
     # 获取当前审批和审批流程
+    BASE_URL = sys_config.get('archery_base_url','http://127.0.0.1:8000')
+    BASE_URL = BASE_URL.rstrip('/') # 防止填写类似 http://127.0.0.1:8000/ 的地址
+    url = '{0}/detail/{1}/'.format(BASE_URL, workflow_detail.id)
     audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_detail.id, 2)
     audit_id = Workflow.audit_info_by_workflow_id(workflow_detail.id, 2).audit_id
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子

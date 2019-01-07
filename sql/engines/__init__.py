@@ -52,4 +52,4 @@ def get_engine(instance=None, workflow=None):
         instance = Instance.objects.get(instance_name=workflow.instance_name)
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
-        return MysqlEngine(instance=instance)
+        return MysqlEngine(workflow=workflow, instance=instance)

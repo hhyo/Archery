@@ -20,7 +20,7 @@ from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import ResourceGroup, Users
-from sql.utils.execute_sql import execute_call_back, execute_skipinc_call_back
+from sql.utils import execute_sql
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
@@ -234,24 +234,23 @@ def autoreview(request):
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    json_result = json.dumps(check_result)
 
     # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内跳过inception直接执行
     sys_config = SysConfig().sys_config
     is_manual = 0
     workflow_status = Const.workflowStatus['manreviewing']
-    for row in check_result:
+    for row in check_result.rows:
         # 1表示警告，不影响执行
-        if row[2] == 1 and sys_config.get('auto_review_wrong', '') == '1':
+        if row.errlevel == 1 and sys_config.get('auto_review_wrong', '') == '1':
             workflow_status = Const.workflowStatus['autoreviewwrong']
             break
         # 2表示严重错误，或者inception不支持的语法，标记手工执行，可以跳过inception直接执行
-        elif row[2] == 2:
+        elif row.errlevel == 2:
             is_manual = 1
             if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
                 workflow_status = Const.workflowStatus['autoreviewwrong']
             break
-        elif re.match(r"\w*comments\w*", row[4]):
+        elif re.match(r"\w*comments\w*", row.errormessage):
             is_manual = 1
             if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
                 workflow_status = Const.workflowStatus['autoreviewwrong']
@@ -285,7 +284,7 @@ def autoreview(request):
             sql_workflow.audit_auth_groups = Workflow.audit_settings(group_id, WorkflowDict.workflow_type['sqlreview'])
             sql_workflow.status = workflow_status
             sql_workflow.is_backup = is_backup
-            sql_workflow.review_content = json_result
+            sql_workflow.review_content = check_result.json()
             sql_workflow.instance_name = instance_name
             sql_workflow.db_name = db_name
             sql_workflow.sql_content = sql_content
@@ -524,7 +523,7 @@ def get_sql_sha1(workflow_id):
 
     for rownum in range(len(list_re_check_result)):
         id = rownum + 1
-        sql_sha1 = list_re_check_result[rownum][10]
+        sql_sha1 = list_re_check_result[rownum]['sqlsha1']
         if sql_sha1 != '':
             dict_sha1[id] = sql_sha1
 

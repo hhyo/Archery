@@ -23,8 +23,8 @@ from sql.utils.dao import Dao
 from sql.utils.data_masking import Masking
 from sql.utils.resource_group import user_instances, user_groups
 from sql.utils.workflow import Workflow
-from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, ResourceGroup
-
+from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, ResourceGroup, Instance
+from sql.engines import get_engine
 logger = logging.getLogger('default')
 
 datamasking = Masking()
@@ -452,7 +452,12 @@ def query(request):
     limit_num = request.POST.get('limit_num')
 
     result = {'status': 0, 'msg': 'ok', 'data': {}}
-
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result['status'] = 1
+        result['msg'] = '实例不存在'
+        return result
     # 服务器端参数验证
     if sql_content is None or db_name is None or instance_name is None or limit_num is None:
         result['status'] = 1
@@ -511,10 +516,11 @@ def query(request):
 
         # 执行查询语句,统计执行时间
         t_start = time.time()
-        sql_result = Dao(instance_name=instance_name).mysql_query(str(db_name), sql_content, limit_num)
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.query(db_name=str(db_name), sql=sql_content, limit_num=limit_num)
         t_end = time.time()
         cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
-
+        sql_result = query_result.__dict__
         sql_result['cost_time'] = cost_time
 
         # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
@@ -557,9 +563,9 @@ def query(request):
             query_log.instance_name = instance_name
             query_log.sqllog = sql_content
             if int(limit_num) == 0:
-                limit_num = int(sql_result['effect_row'])
+                limit_num = int(sql_result['affected_rows'])
             else:
-                limit_num = min(int(limit_num), int(sql_result['effect_row']))
+                limit_num = min(int(limit_num), int(sql_result['affected_rows']))
             query_log.effect_row = limit_num
             query_log.cost_time = cost_time
             query_log.priv_check = priv_check

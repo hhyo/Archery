@@ -440,7 +440,7 @@
                 detailFormatter: function (index, row) {
                     var html = [];
                     $.each(row, function (key, value) {
-                        if (key === 'SQL') {
+                        if (key === 'sql') {
                             var sql = value;
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
@@ -456,11 +456,11 @@
                 data:{{ rows|safe }},
                 columns: [{
                     title: 'ID',
-                    field: 'ID',
+                    field: 'id',
                     sortable: true
                 }, {
                     title: 'SQL内容',
-                    field: 'SQL',
+                    field: 'sql',
                     formatter: function (value, row, index) {
                         if (value.length > 80) {
                             return value.substr(0, 80) + '...';
@@ -494,7 +494,7 @@
                     sortable: true
                 }, {
                     title: '扫描/影响行数',
-                    field: 'Affected_rows',
+                    field: 'affected_rows',
                     sortable: true
                 }, {
                     title: '执行耗时',
