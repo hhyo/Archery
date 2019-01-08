@@ -42,11 +42,29 @@ class MysqlEngine(EngineBase):
     # 连进指定的mysql实例里，读取所有Columns并返回
     def get_all_columns_by_tb(self, db_name, tb_name):
         """return list [columns]"""
-        sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='%s' AND TABLE_NAME='%s';" % (
+        result = self.descibe_table(db_name, tb_name)
+        column_list = [row[0] for row in result.rows]
+        return column_list
+    def descibe_table(self, db_name, tb_name):
+        """return ResultSet 类似查询"""
+        sql = """SELECT 
+    COLUMN_NAME,
+    COLUMN_TYPE,
+    CHARACTER_SET_NAME,
+    COLUMN_TYPE,
+    IS_NULLABLE,
+    COLUMN_KEY,
+    EXTRA,
+    COLUMN_COMMENT
+FROM
+    information_schema.COLUMNS
+WHERE
+    TABLE_SCHEMA = '{0}'
+        AND TABLE_NAME = '{1}'
+ORDER BY ORDINAL_POSITION;""".format(
                 db_name, tb_name)
         result = self.query(sql=sql)
-        col_list = [row[0] for row in result.rows]
-        return col_list
+        return result
 
     def query(self, db_name=None, sql='', limit_num=0):
         """返回 ResultSet """
@@ -77,10 +95,16 @@ class MysqlEngine(EngineBase):
             conn.close()
         return result_set
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         if '*' in sql:
             return {'bad_query':True}
+        # 对查询sql增加limit限制
+        if re.match(r"^select", sql.lower()):
+            if re.search(r"limit\s+(\d+)$", sql.lower()) is None:
+                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql.lower()) is None:
+                    sql = sql + ' limit ' + str(limit_num)
+        return {'filtered_sql': sql}
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""

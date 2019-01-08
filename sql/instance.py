@@ -201,3 +201,25 @@ def get_column_name_list(request):
         result['status'] = 1
         result['msg'] = str(msg)
     return HttpResponse(json.dumps(result), content_type='application/json')
+
+def describe(request):
+    instance_name = request.POST.get('instance_name')
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    db_name = request.POST.get('db_name')
+    tb_name = request.POST.get('tb_name')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    try:
+        # 取出该实例的连接方式，为了后面连进去获取表的所有字段
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.descibe_table(db_name, tb_name)
+        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+        result['data'] = query_result.__dict__
+    except Exception as msg:
+        result['status'] = 1
+        result['msg'] = str(msg)
+    return HttpResponse(json.dumps(result), content_type='application/json')

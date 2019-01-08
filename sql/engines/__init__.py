@@ -32,14 +32,16 @@ class EngineBase:
         """获取table 列表, 返回一个list"""
     def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个list"""
-    def query_check(self, db_name=None, sql=''):
-        """查询语句的检查"""
+    def descibe_table(self, db_name, tb_name):
+        """获取表结构, 返回一个 ResultSet"""
+    def query_check(self, db_name=None, sql='',limit_num=10):
+        """查询语句的检查, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
     def query(self, db_name=None, sql='', limit_num=0):
-        """实际查询"""
+        """实际查询 返回一个ResultSet"""
     def execute_check(self, db_name=None, sql=''):
-        """执行语句的检查"""
+        """执行语句的检查 返回一个ReviewSet"""
     def execute(self):
-        """执行语句"""
+        """执行语句 返回一个ReviewSet"""
     def get_execute_percentage(self):
         """获取执行进度"""
     def get_rollback(self):
@@ -53,3 +55,6 @@ def get_engine(instance=None, workflow=None):
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
         return MysqlEngine(workflow=workflow, instance=instance)
+    elif instance.db_type == 'mssql':
+        from .mssql import MssqlEngine
+        return MssqlEngine(workflow=workflow, instance=instance)

@@ -74,6 +74,7 @@ urlpatterns = [
     path('instance/getdbNameList/', instance.get_db_name_list),
     path('instance/getTableNameList/', instance.get_table_name_list),
     path('instance/getColumnNameList/', instance.get_column_name_list),
+    path('instance/describetable/', instance.describe),
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),

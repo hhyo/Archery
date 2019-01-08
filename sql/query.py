@@ -505,18 +505,16 @@ def query(request):
 
         if re.match(r"^explain", sql_content.lower()):
             limit_num = 0
-
-        # 对查询sql增加limit限制
-        if re.match(r"^select", sql_content.lower()):
-            if re.search(r"limit\s+(\d+)$", sql_content.lower()) is None:
-                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_content.lower()) is None:
-                    sql_content = sql_content + ' limit ' + str(limit_num)
-
+        query_engine = get_engine(instance=instance)
+        filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
+        if filter_result.get('bad_query'):
+            pass
+        else:
+            sql_content = filter_result['filtered_sql']
         sql_content = sql_content + ';'
 
         # 执行查询语句,统计执行时间
         t_start = time.time()
-        query_engine = get_engine(instance=instance)
         query_result = query_engine.query(db_name=str(db_name), sql=sql_content, limit_num=limit_num)
         t_end = time.time()
         cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
