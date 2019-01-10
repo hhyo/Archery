@@ -508,7 +508,9 @@ def query(request):
         query_engine = get_engine(instance=instance)
         filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
         if filter_result.get('bad_query'):
-            pass
+            result['status'] = 1
+            result['msg'] = filter_result.get('msg')
+            return HttpResponse(json.dumps(result), content_type='application/json')
         else:
             sql_content = filter_result['filtered_sql']
         sql_content = sql_content + ';'
@@ -517,26 +519,28 @@ def query(request):
         t_start = time.time()
         query_result = query_engine.query(db_name=str(db_name), sql=sql_content, limit_num=limit_num)
         t_end = time.time()
-        cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
-        sql_result = query_result.__dict__
-        sql_result['cost_time'] = cost_time
+        query_result.query_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
         # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
         hit_rule = 0 if re.match(r"^select", sql_content.lower()) else 2  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
         masking = 2  # 查询结果是否正常脱敏，1, '是', 2, '否'
         t_start = time.time()
         # 仅对查询语句进行脱敏
+
         if SysConfig().sys_config.get('data_masking') and re.match(r"^select", sql_content.lower()):
             try:
-                masking_result = datamasking.data_masking(instance_name, db_name, sql_content, sql_result)
-                if masking_result['status'] != 0 and SysConfig().sys_config.get('query_check'):
+                query_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
+                if SysConfig().sys_config.get('query_check') and query_result.is_critical == True:
                     return HttpResponse(json.dumps(masking_result), content_type='application/json')
                 else:
-                    hit_rule = masking_result['data']['hit_rule']
-                    masking = 1 if hit_rule == 1 else 2
+                      # 实际未命中, 则显示为未做脱敏
+                    if query_result.is_masked:
+                        masking = 1
+                        hit_rule = 1
             except Exception:
                 logger.error(traceback.format_exc())
-                hit_rule = 0
+                # 报错, 未脱敏, 未命中
+                hit_rule = 2
                 masking = 2
                 if SysConfig().sys_config.get('query_check'):
                     result['status'] = 1
@@ -544,14 +548,15 @@ def query(request):
                     return HttpResponse(json.dumps(result), content_type='application/json')
 
         t_end = time.time()
-        masking_cost_time = "%5s" % "{:.4f}".format(t_end - t_start)
-
-        sql_result['masking_cost_time'] = masking_cost_time
+        query_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
+        sql_result = query_result.__dict__
+        sql_result['masking_cost_time'] = query_result.mask_time
+        sql_result['cost_time'] = query_result.query_time
 
         result['data'] = sql_result
 
         # 成功的查询语句记录存入数据库
-        if sql_result.get('Error'):
+        if sql_result.get('error'):
             pass
         else:
             query_log = QueryLog()
@@ -565,7 +570,7 @@ def query(request):
             else:
                 limit_num = min(int(limit_num), int(sql_result['affected_rows']))
             query_log.effect_row = limit_num
-            query_log.cost_time = cost_time
+            query_log.cost_time = query_result.query_time
             query_log.priv_check = priv_check
             query_log.hit_rule = hit_rule
             query_log.masking = masking

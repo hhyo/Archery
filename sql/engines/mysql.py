@@ -9,6 +9,7 @@ from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
 from sql.utils.inception import InceptionDao
+from sql.utils.data_masking import Masking
 from common.config import SysConfig
 logger = logging.getLogger('default')
 
@@ -106,6 +107,22 @@ ORDER BY ORDINAL_POSITION;""".format(
                     sql = sql + ' limit ' + str(limit_num)
         return {'filtered_sql': sql}
 
+    def query_masking(self, db_name=None, sql='', resultset=None):
+        """传入 sql语句, db名, 结果集,
+        返回一个脱敏后的结果集"""
+        # 解析语法树
+        mask_tool = Masking()
+        resultset_dict = resultset.__dict__
+        inception_mask_result = mask_tool.data_masking(self.instance_name, db_name, sql, resultset_dict)
+        # 传参进去之后, 就已经被处理
+        resultset.rows = resultset_dict['rows']
+        hit_rule = inception_mask_result['data']['hit_rule']
+        if hit_rule == 1:
+            resultset.is_masked = True
+        if inception_mask_result['status'] != 0:
+            resultset.is_critical = True
+        return resultset
+
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
         archer_config = SysConfig()
@@ -122,8 +139,8 @@ ORDER BY ORDINAL_POSITION;""".format(
             line = 1
             for statement in sqlparse.split(sql):
                 if p.match(statement.strip().lower()):
-                    result = ReviewResult (
-                        id=line, errlevel=2, stagestatus = '驳回高危SQL', 
+                    result = ReviewResult (id=line, errlevel=2, 
+                        stagestatus = '驳回高危SQL', 
                         errormessage = '禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                         sql=statement)
                     check_result.is_critical = True

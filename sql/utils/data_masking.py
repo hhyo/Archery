@@ -3,6 +3,7 @@ import logging
 import traceback
 
 from sql.utils.inception import InceptionDao
+from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import simplejson as json
 import re
@@ -326,3 +327,28 @@ class Masking(object):
                 return value
         else:
             return value
+
+def brute_mask(sql_result):
+    """输入的是一个resultset 
+    sql_result.full_sql
+    sql_result.rows 查询结果列表 List , list内的item为tuple
+
+    返回同样结构的sql_result , error 中写入脱敏时产生的错误.
+    """
+    # 读取所有的脱敏表达
+    masking_rules = DataMaskingRules.objects.all()
+    for reg in masking_rules:
+        compiled_r = re.compile(reg.rule_regex)
+        replace_pattern = r""
+        for i in range(1, compiled_r.groups + 1):
+            if i == int(reg.hide_group):
+                replace_pattern += r"****"
+            else:
+                replace_pattern += r"\{}".format(i)
+        for i in range(len(sql_result.rows)):
+            temp_value_list = []
+            for j in range(len(sql_result.rows[i])):
+                # 进行正则替换
+                temp_value_list += [compiled_r.sub(replace_pattern, sql_result.rows[i][j])]
+            sql_result.rows[i] = tuple(temp_value_list)
+    return sql_result

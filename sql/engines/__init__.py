@@ -13,7 +13,7 @@ class EngineBase:
             self.host = instance.host
             self.port = int(instance.port)
             self.user = instance.user
-            self.password = Prpcrypt().decrypt(instance.password)
+            self.password = instance.raw_password
     
     @property
     def Connection(self):
@@ -38,6 +38,10 @@ class EngineBase:
         """查询语句的检查, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
     def query(self, db_name=None, sql='', limit_num=0):
         """实际查询 返回一个ResultSet"""
+    def query_masking(self, db_name=None, sql='', resultset=None):
+        """传入 sql语句, db名, 结果集,
+        返回一个脱敏后的结果集"""
+        return resultset
     def execute_check(self, db_name=None, sql=''):
         """执行语句的检查 返回一个ReviewSet"""
     def execute(self):

@@ -59,11 +59,15 @@ class ReviewSet:
 
 class ResultSet:
     """查询的结果集, rows 内只有值, column_list 中的是key"""
-    def __init__(self, full_sql='', rows=[], status=None,
+    def __init__(self, full_sql='', rows=None, status=None,
                     affected_rows=0, column_list = None, **kwargs):
         self.full_sql = full_sql
         self.is_execute = False
         self.checked = None
+        self.is_masked = False
+        self.query_time = ''
+        self.mask_rule_hit = None
+        self.mask_time = ''
         self.warning = None
         self.error = None
         self.is_critical = False

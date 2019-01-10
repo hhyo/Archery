@@ -1,11 +1,11 @@
 import logging
 import traceback
 import re
-
+import time
 from . import EngineBase
 import pyodbc
 from .models import ResultSet, ReviewResult, ReviewSet
-
+from sql.utils.data_masking import brute_mask
 logger = logging.getLogger('default')
 
 class MssqlEngine(EngineBase):
@@ -65,13 +65,33 @@ order by o.name,c.colid""".format(db_name, tb_name)
     
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
-        if '*' in sql:
-            return {'bad_query':True}
+        sql_lower = sql.lower()
+        result = {'msg':'', 'bad_query':False, 'filtered_sql': ''}
+        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format", "left", 
+        "len", "nchar", "patindex", "quotename", "replace", "replicate", 
+        "reverse", "right", "soundex", "space", "str", "string_agg", 
+        "string_escape", "string_split", "stuff", "substring", "trim", "unicode", 
+        "abs", "acos", "asin", "atan", "atn2", "ceiling", "cos", "cot", "degrees", 
+        "exp", "floor", "log", "log10", "pi", "power", "radians", "rand", "round", 
+        "sign", "sin", "sqrt", "square", "tan", 
+        "cast", "convert"]
+        keyword_warning = ''
+        star_patter = r"(^|,| )\*( |\(|$)"
+        if re.search(star_patter, sql_lower) is not None:
+            keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
+            result['bad_query'] = True
+        for keyword in banned_keywords:
+            pattern = r"(^|,| ){}( |\(|$)".format(keyword)
+            if re.search(pattern, sql_lower) is not None:
+                keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
+                result['bad_query'] = True
+        if result.get('bad_query'):
+            result['msg'] = keyword_warning
+            return result
         # 对查询sql增加limit限制
-        if re.match(r"^select", sql.lower()):
-            if re.search(r"top\s+(\d+)$", sql.lower()) is None:
-                if re.search(r"top\s+\d+\s*,\s*(\d+)$", sql.lower()) is None:
-                    sql = sql.replace("select", "select top {}".format(limit_num))
+        if re.match(r"^select", sql_lower):
+            if sql_lower.find(' top ') == -1:
+                sql = sql_lower.replace('select', 'select top {}'.format(limit_num))
         return {'filtered_sql': sql}
     
     def query(self, db_name=None, sql='', limit_num=0):
@@ -102,3 +122,9 @@ order by o.name,c.colid""".format(db_name, tb_name)
         finally:
             conn.close()
         return result_set
+    def query_masking(self, db_name=None, sql='', resultset=None):
+        """传入 sql语句, db名, 结果集,
+        返回一个脱敏后的结果集"""
+        filtered_result = brute_mask(resultset)
+        filtered_result.is_masked = True
+        return filtered_result

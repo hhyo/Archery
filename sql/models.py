@@ -74,6 +74,12 @@ class Instance(models.Model):
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
+    @property
+    def raw_password(self):
+        """ 返回明文密码 str """
+        pc = Prpcrypt()  # 初始化
+        return  pc.decrypt(self.password)
+
     def __str__(self):
         return self.instance_name
 
