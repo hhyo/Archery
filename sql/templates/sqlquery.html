@@ -350,7 +350,7 @@
 
                 var result = data.data;
                 //查询报错失败
-                if (result['Error']) {
+                if (result['error']) {
                     alertStyle = "alert-danger";
                     $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                         escape: false,
@@ -359,7 +359,7 @@
                             title: 'Error'
                         }],
                         data: [{
-                            error: 'mysql返回异常：' + result['Error']
+                            error: '数据库返回异常：' + result['error']
                         }]
                     })
                 }

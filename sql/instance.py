@@ -151,6 +151,9 @@ def get_db_name_list(request):
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
+    if not db_list:
+        result['status'] = 1
+        result['msg'] = '数据库列表为空, 可能是权限或配置有误'
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -172,6 +175,9 @@ def get_table_name_list(request):
         table_list = query_engine.get_all_tables(db_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = table_list
+        if not table_list:
+            result['status'] = 1
+            result['msg'] = '表列表为空, 可能是权限或配置有误, 请再次确认库名'
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
@@ -197,6 +203,9 @@ def get_column_name_list(request):
         col_list = query_engine.get_all_columns_by_tb(db_name, tb_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = col_list
+        if not db_list:
+            result['status'] = 1
+            result['msg'] = '字段列表为空, 可能是权限或配置有误'
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
