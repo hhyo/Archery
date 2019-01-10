@@ -54,6 +54,9 @@ class SysConfig(object):
             return False
         if value == 'true' or value == 'True':
             return True
+        # 是字符串的话, 如果是空, 或者全是空格, 返回默认值
+        if isinstance(value, str) and value.strip() == '':
+            return default_value
         return value
 
     def set(self, key, value):

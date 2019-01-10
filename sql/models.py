@@ -66,7 +66,7 @@ class ResourceGroupRelations(models.Model):
 class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),))
+    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),('mssql','MsSQL')))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=3306)
     user = models.CharField('用户名', max_length=100)

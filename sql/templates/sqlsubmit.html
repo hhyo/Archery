@@ -401,11 +401,11 @@
                                 data: result['rows'],
                                 columns: [{
                                     title: 'ID',
-                                    field: 'ID',
+                                    field: 'id',
                                     sortable: true
                                 }, {
                                     title: 'SQL语句',
-                                    field: 'SQL',
+                                    field: 'sql',
                                     formatter: function (value, row, index) {
                                         var sql = value.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
                                         if (value.length > 50) {
@@ -417,7 +417,7 @@
                                     }
                                 }, {
                                     title: '扫描/影响行数',
-                                    field: 'Affected_rows',
+                                    field: 'affected_rows',
                                     sortable: true
                                 }, {
                                     title: '审核状态',
@@ -438,6 +438,9 @@
                                     title: '审核信息',
                                     field: 'errormessage',
                                     formatter: function (value, row, index) {
+                                        if (value === null) {
+                                            return value
+                                        }
                                         return value.replace(/\n/g, '<br>');
                                     }
                                 }],
@@ -468,7 +471,7 @@
                                 showExport: true,
                                 exportDataType: "all",
                                 minimumCountColumns: 2,             //最少允许的列数
-                                uniqueId: "ID",                     //每一行的唯一标识，一般为主键列
+                                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                                 cardView: false,                    //是否显示详细视图
                                 detailView: true,                  //是否显示父子表
@@ -476,7 +479,7 @@
                                 detailFormatter: function (index, row) {
                                     var html = [];
                                     $.each(row, function (key, value) {
-                                        if (key === 'SQL') {
+                                        if (key === 'sql') {
                                             var sql = value;
                                             //替换所有的换行符
                                             sql = sql.replace(/\r\n/g, "<br>");

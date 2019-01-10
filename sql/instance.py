@@ -11,7 +11,9 @@ from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.aes_decryptor import Prpcrypt
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines import get_engine
 from sql.utils.dao import Dao
+
 from .models import Instance
 
 
@@ -133,16 +135,25 @@ def schemasync(request):
 # 获取实例里面的数据库集合
 def get_db_name_list(request):
     instance_name = request.POST.get('instance_name')
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
         # 取出该实例的连接方式，为了后面连进去获取所有databases
-        db_list = Dao(instance_name=instance_name).get_alldb_by_cluster()
+        query_engine = get_engine(instance=instance)
+        db_list = query_engine.get_all_databases()
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = db_list
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
+    if not db_list:
+        result['status'] = 1
+        result['msg'] = '数据库列表为空, 可能是权限或配置有误'
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -150,14 +161,23 @@ def get_db_name_list(request):
 # 获取数据库的表集合
 def get_table_name_list(request):
     instance_name = request.POST.get('instance_name')
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
     db_name = request.POST.get('db_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
         # 取出该实例实例的连接方式，为了后面连进去获取所有的表
-        tb_list = Dao(instance_name=instance_name).get_all_table_by_db(db_name)
+        query_engine = get_engine(instance=instance)
+        table_list = query_engine.get_all_tables(db_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-        result['data'] = tb_list
+        result['data'] = table_list
+        if not table_list:
+            result['status'] = 1
+            result['msg'] = '表列表为空, 可能是权限或配置有误, 请再次确认库名'
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
@@ -168,15 +188,46 @@ def get_table_name_list(request):
 # 获取表里面的字段集合
 def get_column_name_list(request):
     instance_name = request.POST.get('instance_name')
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
     db_name = request.POST.get('db_name')
     tb_name = request.POST.get('tb_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
         # 取出该实例的连接方式，为了后面连进去获取表的所有字段
-        col_list = Dao(instance_name=instance_name).get_all_columns_by_tb(db_name, tb_name)
+        query_engine = get_engine(instance=instance)
+        col_list = query_engine.get_all_columns_by_tb(db_name, tb_name)
         # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = col_list
+        if not db_list:
+            result['status'] = 1
+            result['msg'] = '字段列表为空, 可能是权限或配置有误'
+    except Exception as msg:
+        result['status'] = 1
+        result['msg'] = str(msg)
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+def describe(request):
+    instance_name = request.POST.get('instance_name')
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    db_name = request.POST.get('db_name')
+    tb_name = request.POST.get('tb_name')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    try:
+        # 取出该实例的连接方式，为了后面连进去获取表的所有字段
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.descibe_table(db_name, tb_name)
+        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
+        result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)

@@ -55,10 +55,10 @@ def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     if workflow_detail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
             and workflow_detail.is_manual == 0:
-        list_content = json.loads(workflow_detail.execute_result)
+        rows = workflow_detail.execute_result
     else:
-        list_content = json.loads(workflow_detail.review_content)
-
+        rows = workflow_detail.review_content
+    list_content = json.loads(rows)
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
         # 获取当前审批和审批流程
@@ -94,43 +94,7 @@ def detail(request, workflow_id):
     # sql结果
     column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                    'backup_dbname', 'execute_time', 'sqlsha1']
-    rows = []
-    for row_index, row_item in enumerate(list_content):
-        row = {}
-        row['ID'] = row_index + 1
-        row['stage'] = row_item[1]
-        row['errlevel'] = row_item[2]
-        row['stagestatus'] = row_item[3]
-        row['errormessage'] = row_item[4]
-        row['SQL'] = row_item[5]
-        row['Affected_rows'] = row_item[6]
-        row['sequence'] = row_item[7]
-        row['backup_dbname'] = row_item[8]
-        row['execute_time'] = row_item[9]
-        # row['sqlsha1'] = row_item[10]
-        rows.append(row)
-
-        if workflow_detail.status == '执行中':
-            row['stagestatus'] = ''.join(
-                ["<div id=\"td_" + str(row['ID']) + "\" class=\"form-inline\">",
-                 "   <div class=\"progress form-group\" style=\"width: 80%; height: 18px; float: left;\">",
-                 "       <div id=\"div_" + str(row['ID']) + "\" class=\"progress-bar\" role=\"progressbar\"",
-                 "            aria-valuenow=\"60\"",
-                 "            aria-valuemin=\"0\" aria-valuemax=\"100\">",
-                 "           <span id=\"span_" + str(row['ID']) + "\"></span>",
-                 "       </div>",
-                 "   </div>",
-                 "   <div class=\"form-group\" style=\"width: 10%; height: 18px; float: right;\">",
-                 "       <form method=\"post\">",
-                 "           <input type=\"hidden\" name=\"workflow_id\" value=\"" + str(workflow_detail.id) + "\">",
-                 "           <button id=\"btnstop_" + str(row['ID']) + "\" value=\"" + str(row['ID']) + "\"",
-                 "                   type=\"button\" class=\"close\" style=\"display: none\" title=\"停止pt-OSC进程\">",
-                 "               <span class=\"glyphicons glyphicons-stop\">&times;</span>",
-                 "           </button>",
-                 "       </form>",
-                 "   </div>",
-                 "</div>"])
-    context = {'workflow_detail': workflow_detail, 'column_list': column_list, 'rows': rows,
+    context = {'workflow_detail': workflow_detail, 'column_list': column_list, 'rows':rows,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
