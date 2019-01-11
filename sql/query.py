@@ -65,7 +65,7 @@ def query_audit_call_back(workflow_id, workflow_status):
 # 查询权限校验
 def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 0}}
-
+    instance = Instance.objects.get(instance_name=instance_name)
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
         if SysConfig().sys_config.get('admin_query_limit', 5000):
@@ -91,7 +91,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
                 result['msg'] = '你无' + db_name + '.' + tb_name + '表的查询权限！请先到查询权限管理进行申请'
                 return result
     # sql查询, 可以校验到表级权限
-    else:
+    elif instance.db_type == 'mysql':
         # 首先使用inception的语法树打印获取查询涉及的的表
         table_ref_result = datamasking.query_table_ref(sql_content + ';', instance_name, db_name)
 
@@ -115,47 +115,47 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
                         return result
 
         # 获取表数据报错，检查配置文件是否允许继续执行，并进行库权限校验
-        else:
-            table_ref = None
-            # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
-            privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
-                                                        db_name=db_name,
-                                                        valid_date__gte=datetime.datetime.now(),
-                                                        is_deleted=0)
-            if len(privileges) == 0:
-                result['status'] = 1
-                result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
-                return result
-            if SysConfig().sys_config.get('query_check'):
-                return table_ref_result
-            else:
-                result['data']['priv_check'] = 2
+        
+    table_ref = None
+    # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
+    privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
+                                                db_name=db_name,
+                                                valid_date__gte=datetime.datetime.now(),
+                                                is_deleted=0)
+    if len(privileges) == 0:
+        result['status'] = 1
+        result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
+        return result
+    if SysConfig().sys_config.get('query_check'):
+        return table_ref_result
+    else:
+        result['data']['priv_check'] = 2
 
-        # 获取查询涉及表的最小limit限制
-        if table_ref:
-            db_list = [table_info['db'] for table_info in table_ref]
-            table_list = [table_info['table'] for table_info in table_ref]
-            user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
-                                                            instance_name=instance_name,
-                                                            db_name__in=db_list,
-                                                            table_name__in=table_list,
-                                                            valid_date__gte=datetime.datetime.now(),
-                                                            is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
-            if user_limit_num is None:
-                # 如果表没获取到则获取涉及库的最小limit限制
-                user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
-                                                                instance_name=instance_name,
-                                                                db_name=db_name,
-                                                                valid_date__gte=datetime.datetime.now(), is_deleted=0
-                                                                ).aggregate(Min('limit_num'))['limit_num__min']
-        else:
+    # 获取查询涉及表的最小limit限制
+    if table_ref:
+        db_list = [table_info['db'] for table_info in table_ref]
+        table_list = [table_info['table'] for table_info in table_ref]
+        user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
+                                                        instance_name=instance_name,
+                                                        db_name__in=db_list,
+                                                        table_name__in=table_list,
+                                                        valid_date__gte=datetime.datetime.now(),
+                                                        is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
+        if user_limit_num is None:
             # 如果表没获取到则获取涉及库的最小limit限制
             user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
                                                             instance_name=instance_name,
                                                             db_name=db_name,
-                                                            valid_date__gte=datetime.datetime.now(),
-                                                            is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
-        limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
+                                                            valid_date__gte=datetime.datetime.now(), is_deleted=0
+                                                            ).aggregate(Min('limit_num'))['limit_num__min']
+    else:
+        # 如果表没获取到则获取涉及库的最小limit限制
+        user_limit_num = QueryPrivileges.objects.filter(user_name=user.username,
+                                                        instance_name=instance_name,
+                                                        db_name=db_name,
+                                                        valid_date__gte=datetime.datetime.now(),
+                                                        is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
+    limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
     result['data']['limit_num'] = limit_num
     return result
 

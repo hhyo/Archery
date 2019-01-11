@@ -349,6 +349,6 @@ def brute_mask(sql_result):
             temp_value_list = []
             for j in range(len(sql_result.rows[i])):
                 # 进行正则替换
-                temp_value_list += [compiled_r.sub(replace_pattern, sql_result.rows[i][j])]
+                temp_value_list += [compiled_r.sub(replace_pattern, str(sql_result.rows[i][j]))]
             sql_result.rows[i] = tuple(temp_value_list)
     return sql_result
