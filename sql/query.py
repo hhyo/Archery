@@ -73,6 +73,8 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
         else:
             user_limit_num = 5000
         limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
+        result['data']['limit_num'] = limit_num
+        return result
 
     # 查看表结构和执行计划，inception会报错，故单独处理，explain直接跳过不做校验
     elif re.match(r"^show\s+create\s+table", sql_content.lower()):
