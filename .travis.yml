@@ -6,9 +6,14 @@ services:
   - redis-server
 install:
   - pip install -r requirements.txt
+  - pip install coverage
+  - pip install codecov
 before_script:
   - mysql -e "CREATE DATABASE archery CHARSET UTF8;"
   - python manage.py makemigrations
   - python manage.py makemigrations sql
 script:
-  - python manage.py test sql -v 3
+  - coverage run manage.py test sql -v 3
+
+after_success:
+  - codecov
