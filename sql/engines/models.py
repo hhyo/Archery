@@ -1,5 +1,7 @@
+"""engine 结果集定义"""
 import json
 class ReviewResult:
+    """审核的单条结果"""
     def __init__(self, inception_result=[], **kwargs):
         if inception_result:
             column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
@@ -86,3 +88,16 @@ class ResultSet:
         for r in self.rows:
             tmp_list += [dict(zip(self.column_list, r))]
         return tmp_list
+
+class Node:
+    def __init__(self, *args, **kwargs):
+        self.original_name = original_name
+        self.alias = alias
+        self.type = type
+        if children:
+            self.children = children
+        else:
+            self.children = []
+    
+    def __str__(self):
+        return "<Node: {}>".format(original_name)

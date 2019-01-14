@@ -15,8 +15,7 @@ class EngineBase:
             self.user = instance.user
             self.password = instance.raw_password
     
-    @property
-    def Connection(self):
+    def get_connection(self, db_name=None):
         """返回一个conn实例"""
     @property
     def name(self):

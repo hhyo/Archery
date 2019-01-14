@@ -9,8 +9,7 @@ from sql.utils.data_masking import brute_mask
 logger = logging.getLogger('default')
 
 class MssqlEngine(EngineBase):
-    @property
-    def Connection(self):
+    def get_connection(self, db_name=None):
         connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0};PORT={1};UID={2};PWD={3};
 client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
                                                                   self.port, self.user, self.password)
@@ -80,6 +79,9 @@ order by o.name,c.colid""".format(db_name, tb_name)
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
             result['bad_query'] = True
+        if '+' in sql_lower:
+            keyword_warning += '禁止使用 + 关键词\n'
+            result['bad_query'] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| ){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
@@ -98,7 +100,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.Connection
+            conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
                 cursor.execute('use {}'.format(db_name))

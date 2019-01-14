@@ -15,8 +15,7 @@ logger = logging.getLogger('default')
 
 
 class MysqlEngine(EngineBase):
-    @property
-    def Connection(self):
+    def get_connection(self, db_name=None):
         return MySQLdb.connect(host=self.host,
                                     port=self.port, user=self.user, passwd=self.password, charset='utf8')
     @property
@@ -71,7 +70,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.Connection
+            conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
                 cursor.execute('use {}'.format(db_name))
@@ -270,7 +269,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         return ExecuteEngine.get_rollback_sql_list(self.workflow.id)
     def _execute(self, db_name=None, sql=''):
         result = ResultSet(full_sql=sql)
-        conn = self.Connection
+        conn = self.get_connection()
         try:
             cursor = conn.cursor()
             for row in sql.strip(';').split(';'):

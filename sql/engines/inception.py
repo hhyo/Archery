@@ -20,8 +20,7 @@ from .models import ResultSet
 logger = logging.getLogger('default')
 
 class InceptionEngine(EngineBase):
-    @property
-    def Connection(self):
+    def get_connection(self, db_name=None):
         archer_config = SysConfig()
         inception_host = archer_config.get('inception_host')
         inception_port = int(archer_config.get('inception_port',6669))
@@ -31,7 +30,7 @@ class InceptionEngine(EngineBase):
     def query(self, db_name=None, sql='', limit_num=0):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
-        conn = self.Connection
+        conn = self.get_connection()
         with conn.cursor() as cursor: 
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
