@@ -379,8 +379,8 @@ def execute(request):
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflow_detail.status = Const.workflowStatus['executing']
     workflow_detail.reviewok_time = timezone.now()
-    workflow_detail.save() 
-    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback')
+    workflow_detail.save()
+    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback', timeout=-1)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

@@ -460,8 +460,11 @@
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
-                                            <input id="archery_base_url" key="archery_base_url" value="{{ config.archery_base_url }}"
-                                                   type="checkbox"> 系统首页地址, 用于钉钉和邮件发送链接使用, 如 http://archery.com
+                                            <input type="text" class="form-control"
+                                                id="archery_base_url"
+                                                key="archery_base_url"
+                                                value="{{ config.archery_base_url }}"
+                                                placeholder="http://archery.com">系统首页地址, 用于钉钉和邮件发送链接使用
                                         </label>
                                     </div>
                                 </div>

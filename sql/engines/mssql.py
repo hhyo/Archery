@@ -77,7 +77,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
         if re.search(star_patter, sql_lower) is not None:
-            keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
+            keyword_warning += '禁止使用 * 关键词\n'
             result['bad_query'] = True
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'

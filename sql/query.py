@@ -533,6 +533,8 @@ def query(request):
             try:
                 query_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
                 if SysConfig().sys_config.get('query_check') and query_result.is_critical == True:
+                    masking_result = query_result.__dict__
+                    masking_result['status'] = 1
                     return HttpResponse(json.dumps(masking_result), content_type='application/json')
                 else:
                       # 实际未命中, 则显示为未做脱敏
