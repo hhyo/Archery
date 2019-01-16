@@ -7,6 +7,7 @@ from common.utils.aes_decryptor import Prpcrypt
 # 用户信息扩展
 class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, blank=True, null=True)
+    ding_user_id = models.CharField('钉钉UserID', max_length=50, blank=True, null=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
 
@@ -16,7 +17,6 @@ class Users(AbstractUser):
         return self.username
 
     class Meta:
-        managed = True
         db_table = 'sql_users'
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
@@ -38,7 +38,6 @@ class ResourceGroup(models.Model):
         return self.group_name
 
     class Meta:
-        managed = True
         db_table = 'resource_group'
         verbose_name = u'资源组管理'
         verbose_name_plural = u'资源组管理'
@@ -55,7 +54,6 @@ class ResourceGroupRelations(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = True
         db_table = 'resource_group_relations'
         unique_together = ('object_id', 'group_id', 'object_type')
         verbose_name = u'资源组对象管理'
@@ -64,13 +62,24 @@ class ResourceGroupRelations(models.Model):
 
 # 各个线上实例配置
 class Instance(models.Model):
+    INSTANCE_TYPE = (
+        ('mysql', 'MySQL'), ('mssql', 'MsSQL'), ('pgsql', 'PgSQL'), ('oracle', 'Oracle'),
+        ('redis', 'Redis')
+    )
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),('mssql','MsSQL')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=INSTANCE_TYPE, default='mysql')
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=3306)
     user = models.CharField('用户名', max_length=100)
     password = models.CharField('密码', max_length=300)
+    osn = models.CharField('oracle service name', max_length=50, null=True, blank=True)
+    bin_path = models.CharField('Bin文件安装路径', max_length=50, null=True, blank=True)
+    conf_path = models.CharField('配置文件路径', max_length=50, null=True, blank=True)
+    data_path = models.CharField('数据目录', max_length=50, null=True, blank=True)
+    err_log_path = models.CharField('错误日志目录', max_length=50, null=True, blank=True)
+    slow_log_path = models.CharField('慢日志目录', max_length=50, null=True, blank=True)
+    parent = models.ManyToManyField("self", symmetrical=False, blank=True, null=True, related_name="children")
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
@@ -78,13 +87,12 @@ class Instance(models.Model):
     def raw_password(self):
         """ 返回明文密码 str """
         pc = Prpcrypt()  # 初始化
-        return  pc.decrypt(self.password)
+        return pc.decrypt(self.password)
 
     def __str__(self):
         return self.instance_name
 
     class Meta:
-        managed = True
         db_table = 'sql_instance'
         verbose_name = u'实例配置'
         verbose_name_plural = u'实例配置'
@@ -123,7 +131,6 @@ class SqlWorkflow(models.Model):
         return self.workflow_name
 
     class Meta:
-        managed = True
         db_table = 'sql_workflow'
         verbose_name = u'SQL工单管理'
         verbose_name_plural = u'SQL工单管理'
@@ -152,7 +159,6 @@ class WorkflowAudit(models.Model):
         return self.audit_id
 
     class Meta:
-        managed = True
         db_table = 'workflow_audit'
         unique_together = ('workflow_id', 'workflow_type')
         verbose_name = u'工作流审批列表'
@@ -173,7 +179,6 @@ class WorkflowAuditDetail(models.Model):
         return self.audit_detail_id
 
     class Meta:
-        managed = True
         db_table = 'workflow_audit_detail'
         verbose_name = u'工作流审批明细'
         verbose_name_plural = u'工作流审批明细'
@@ -193,7 +198,6 @@ class WorkflowAuditSetting(models.Model):
         return self.audit_setting_id
 
     class Meta:
-        managed = True
         db_table = 'workflow_audit_setting'
         unique_together = ('group_id', 'workflow_type')
         verbose_name = u'审批流程配置'
@@ -215,7 +219,6 @@ class WorkflowLog(models.Model):
         return self.audit_id
 
     class Meta:
-        managed = True
         db_table = 'workflow_log'
         verbose_name = u'工作流日志'
         verbose_name_plural = u'工作流日志'
@@ -244,7 +247,6 @@ class QueryPrivilegesApply(models.Model):
         return self.apply_id
 
     class Meta:
-        managed = True
         db_table = 'query_privileges_apply'
         verbose_name = u'查询权限申请记录表'
         verbose_name_plural = u'查询权限申请记录表'
@@ -269,7 +271,6 @@ class QueryPrivileges(models.Model):
         return self.privilege_id
 
     class Meta:
-        managed = True
         db_table = 'query_privileges'
         verbose_name = u'查询权限记录'
         verbose_name_plural = u'查询权限记录'
@@ -291,10 +292,25 @@ class QueryLog(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = True
         db_table = 'query_log'
         verbose_name = u'查询日志'
         verbose_name_plural = u'查询日志'
+
+
+class ExportQuery(models.Model):
+    query_log = models.ForeignKey(QueryLog, on_delete=models.CASCADE)
+    auditor = models.ForeignKey(Users, on_delete=models.CASCADE)
+    result_file = models.CharField('结果文件的存放路径', max_length=255, default='')
+    error_msg = models.CharField('SQL执行错误信息', max_length=255, default='')
+    reason = models.CharField('申请人导出数据原因', max_length=255, default='')
+    audit_msg = models.CharField('审核人审核理由', max_length=255, default='')
+    status = models.IntegerField('执行状态', choices=((0, '执行中'), (1, '执行失败'), (2, '待审核'),
+                                                  (3, '审核通过'), (4, '审核不通过')))
+
+    class Meta:
+        db_table = 'export_query'
+        verbose_name = u'导出查询表'
+        verbose_name_plural = u'导出查询表'
 
 
 # 脱敏字段配置
@@ -312,7 +328,6 @@ class DataMaskingColumns(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = True
         db_table = 'data_masking_columns'
         verbose_name = u'脱敏字段配置'
         verbose_name_plural = u'脱敏字段配置'
@@ -329,10 +344,60 @@ class DataMaskingRules(models.Model):
     sys_time = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = True
         db_table = 'data_masking_rules'
         verbose_name = u'脱敏规则配置'
         verbose_name_plural = u'脱敏规则配置'
+
+
+class ParamTemp(models.Model):
+    db_type = models.CharField(max_length=6, choices=(('mysql', 'MySQL'), ('pgsql', 'PgSQL')))
+    param = models.CharField('参数', max_length=100)
+    default_var = models.CharField('默认值', max_length=256)
+    is_reboot = models.SmallIntegerField('是否重启生效')
+    available_var = models.CharField('可修改参数值', max_length=256)
+    description = models.CharField('参数描述', max_length=254)
+
+    class Meta:
+        db_table = 'sql_param_temp'
+        verbose_name = u'参数模板表'
+        verbose_name_plural = u'参数模板表'
+
+
+class ParamHistory(models.Model):
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    param = models.CharField('参数', max_length=50)
+    old_var = models.CharField('默认值', max_length=32)
+    new_var = models.CharField('可修改参数值', max_length=32)
+    is_active = models.SmallIntegerField('是否生效', blank=True, null=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-create_time']
+        db_table = 'sql_param_history'
+        verbose_name = u'参数修改历史表'
+        verbose_name_plural = u'参数修改历史表'
+
+
+class RedisApply(models.Model):
+    """
+    status: 0待审核，1审核通过，执行完毕，2审核拒绝，3主动放弃，4申请已过期
+    """
+    redis = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    db = models.PositiveSmallIntegerField(default=0)
+    command = models.CharField(max_length=50, null=True, blank=True)
+    applicant = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="applicant")
+    auditor = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="auditor", null=True, blank=True)
+    audit_msg = models.CharField(max_length=50, null=True, blank=True)
+    comment = models.CharField(max_length=50, null=True, blank=True)
+    status = models.PositiveSmallIntegerField(default=0)
+    result = models.TextField(null=True, blank=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-create_time']
+        db_table = 'sql_redis_apply'
+        verbose_name = u'Redis更变申请记录表'
+        verbose_name_plural = u'Redis更变申请记录表'
 
 
 # 配置信息表
@@ -342,7 +407,6 @@ class Config(models.Model):
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:
-        managed = True
         db_table = 'sql_config'
         verbose_name = u'系统配置'
         verbose_name_plural = u'系统配置'
@@ -356,7 +420,6 @@ class AliyunAccessKey(models.Model):
     remark = models.CharField(max_length=50, default='', blank=True)
 
     class Meta:
-        managed = True
         db_table = 'aliyun_access_key'
         verbose_name = u'阿里云认证信息'
         verbose_name_plural = u'阿里云认证信息'
@@ -379,7 +442,6 @@ class AliyunRdsConfig(models.Model):
         return self.rds_dbinstanceid
 
     class Meta:
-        managed = True
         db_table = 'aliyun_rds_config'
         verbose_name = u'阿里云rds配置'
         verbose_name_plural = u'阿里云rds配置'
@@ -388,12 +450,12 @@ class AliyunRdsConfig(models.Model):
 # 自定义权限定义
 class Permission(models.Model):
     class Meta:
-        managed = True
         permissions = (
             ('menu_dashboard', '菜单 Dashboard'),
             ('menu_sqlworkflow', '菜单 SQL上线'),
             ('menu_query', '菜单 SQL查询'),
             ('menu_sqlquery', '菜单 MySQL查询'),
+            ('menu_export_query', '菜单 导出查询'),
             ('menu_queryapplylist', '菜单 查询权限申请'),
             ('menu_sqloptimize', '菜单 SQL优化'),
             ('menu_sqladvisor', '菜单 优化工具'),
@@ -403,6 +465,7 @@ class Permission(models.Model):
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
             ('menu_instance', '菜单 实例管理'),
+            ('menu_param', '菜单 参数管理'),
             ('menu_document', '菜单 相关文档'),
             ('menu_themis', '菜单 数据库审核'),
             ('sql_submit', '提交SQL上线工单'),
@@ -414,11 +477,16 @@ class Permission(models.Model):
             ('query_applypriv', '申请查询权限'),
             ('query_mgtpriv', '管理查询权限'),
             ('query_review', '审核查询权限'),
+            ('export_query_review', '审核导出查询权限'),
             ('query_submit', '提交SQL查询'),
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
             ('trxandlocks_view', '查看锁信息'),
+            ('param_view', '查看数据库参数'),
+            ('param_edit', '编辑数据库参数'),
+            ('redis_view', '查看Redis'),
+            ('redis_edit', '审核Redis操作'),
         )
 
 
@@ -434,7 +502,6 @@ class SlowQuery(models.Model):
     comments = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'mysql_slow_query_review'
         verbose_name = u'慢日志统计'
         verbose_name_plural = u'慢日志统计'

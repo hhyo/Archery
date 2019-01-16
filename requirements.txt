@@ -17,3 +17,4 @@ wtforms_json==0.3.3
 mysql-replication==0.18
 django-q==1.0.1
 django-redis==4.10.0
+openpyxl==2.5.12

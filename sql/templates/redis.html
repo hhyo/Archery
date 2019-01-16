@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+            <div class="panel-body">
+                <form id="queryForm" class="form-horizontal  nice-validator n-yellow" novalidate="novalidate">
+
+                    <div class="form-group">
+                        <label for="redis" class="col-sm-2 control-label">Redis实例</label>
+                        <div class="col-sm-4">
+                            <select id="redis" class="dropdown-menu-left selectpicker width100" data-live-search="true">
+                                <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                                {% for redis in redis_list %}
+                                    <option value="{{ redis.id }}">{{ redis.hostname }}:{{ redis.port }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <select id="db" class="dropdown-menu-left selectpicker width150px" data-live-search="true">
+                                <option value="is-empty" disabled="" selected="selected">请选择数据库</option>
+                                {% for db in db_list %}
+                                    <option value="{{ db }}">db{{ db }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="operate" class="col-sm-2 control-label">指令帮助文档</label>
+                        <div class="col-sm-8">
+                            <div class="radio i-checks">
+                                <label> <input type="radio" value="key" name="operate" checked
+                                               onclick="show(this)"> <i> Key操作 </i></label>
+                                <label> <input type="radio" value="string" name="operate"
+                                               onclick="show(this)"> <i> String </i></label>
+                                <label> <input type="radio" value="hash" name="operate"
+                                               onclick="show(this)"> <i> Hash </i></label>
+                                <label> <input type="radio" value="set" name="operate"
+                                               onclick="show(this)"> <i> Set </i></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="args" class="col-sm-2 control-label">指令</label>
+                        <div class="col-sm-6">
+                            <input id="command" name="command" value="GET KEY" class="form-control">
+                        </div>
+                    </div>
+
+                    <div id="cmt" class="form-group" style="display: none">
+                        <label for="comment" class="col-sm-2 control-label">申请理由</label>
+                        <div class="col-sm-6">
+                            <input id="comment" name="comment" placeholder="非查询语句要填写申请理由，管理员审核后才会执行！" class="form-control">
+                        </div>
+                    </div>
+
+                    <div id="keyHelp" class="alert alert-info" style="margin: 0 30% 0 10%;display: block">
+                        <button class="close" data-dismiss="alert">
+                            <i class="ace-icon fa fa-times"></i>
+                        </button>
+                        <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                        <i> 1、exists key　检查key是否存在，若key存在返回1，否则返回0</i></br>
+                        <i> 2、keys pattern 查找所有符合给定模式的key，通常用于查找key</i></br>
+                        <i> 3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除</i></br>
+                        <i> 4、ttl key 以秒为单位返回key的剩余生存时间（time to live），当key不存在时返回-2，当key存在未设置生存时间时返回-1</i></br>
+                        <i> 5、pttl key 这个命令和ttl类似，它以毫秒为单位返回key的剩余生存时间</i></br>
+                        <i> 6、move key db 将key移动到指定数据库中</i></br>
+                        <i> 7、type key 返回key存储的值的类型，返回none（不存在）、string（字符串）、list（列表）、set（集合）、zset（有序集合）、hash（哈希表）</i>
+                    </div>
+
+                    <div id="stringHelp" class="alert alert-info" style="margin: 0 30% 0 10%;display: none">
+                        <button class="close" data-dismiss="alert">
+                            <i class="ace-icon fa fa-times"></i>
+                        </button>
+                        <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                        <i> 1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误</i></br>
+                        <i> 2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil</i></br>
+                        <i> 3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误</i></br>
+                        <i> 4、append key value 将指定的值追加到key末尾，若key不存在，则创建并赋值，返回追加后的字符串长度</i></br>
+                        <i> 5、set key value [ex seconds] [px milliseconds] [nx|xx] 为key设置值,ex和px均为设置过期时间只不过单位不同，nx表示只有key不存在时才进行操作，xx表示只有key存在时才进行操作</i></br>
+                        <i> 6、setex key seconds value 设置带生存时间的key的值，以秒为单位</i></br>
+                        <i> 7、setnx key value 为key设置值，若key已存在则不进行任何操作</i></br>
+                        <i> 8、mset key value [key value...] 为一组或多组key设置值，该操作为原子操作，要么一组都设置成功，要么一组都设置失败</i></br>
+                        <i> 9、msetnx key value [key value...] 与mset不同的是msetnx中的key必须是不存在的，若有一个已存在则会整体失败</i>
+                    </div>
+
+                    <div id="hashHelp" class="alert alert-info" style="margin: 0 30% 0 10%;display: none">
+                        <button class="close" data-dismiss="alert">
+                            <i class="ace-icon fa fa-times"></i>
+                        </button>
+                        <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                        <i> 1、hgetall key 获取hash表中所有field的值</i></br>
+                        <i> 2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0</i></br>
+                        <i> 3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil</i></br>
+                        <i> 4、hmget key field[field...] 获取hash表中多个指定field的值，若key不存在返回空，若field不存在返回nil</i></br>
+                        <i> 5、hkeys key 返回hash表中的所有field，若key不存在返回空</i></br>
+                        <i> 6、hvals key 返回hash表中的所有val，若key不存在返回空</i></br>
+                        <i> 7、hdel key field[field...]   删除hash表中指定field，若key或field不存在则会忽略</i></br>
+                        <i> 8、hset key field value 将field-value设置到hash表中，若key不存在会新建hash表再赋值，若field已存在则会覆盖现有值</i></br>
+                        <i> 9、hsetnx key field value 和hset类似，但是hsetnx要求field不存在才能进行此操作，否则会返回0</i>
+                    </div>
+
+                    <div id="setHelp" class="alert alert-info" style="margin: 0 30% 0 10%;display: none">
+                        <button class="close" data-dismiss="alert">
+                            <i class="ace-icon fa fa-times"></i>
+                        </button>
+                        <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                        <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                        <i> 2、scard key 返回集合key中元素的个数</i></br>
+                        <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
+                        <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
+                        <i> 5、spop key 移除并返回集合中的一个随机元素，当key不存在时返回NULL</i></br>
+                        <i> 6、sismember key member 判断member在key中是否已存在返回0或1</i></br>
+                        <i> 7、sadd key member[member...] 将一个或多个member元素加入到集合key中，若member已存在那么会忽略此元素</i></br>
+                        <i> 8、smove source destination member 将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作</i></br>
+                        <i> 9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略</i>
+                    </div>
+
+                    <div class="form-group" style="margin: 0 30% 0 10%;">
+                        <div class="modal-footer" style="text-align: left;">
+                            <button id="submit" type="button" class="btn btn-primary" onclick="mySubmit()">查询</button>
+                        </div>
+                    </div>
+                 </form>
+            </div>
+    </div>
+
+    <div class="row clearfix">
+            <div class="panel-body">
+                <div class="form-group" style="margin-left: 10%;">
+                    <div class="col-sm-8">
+                        <textarea id="result" name="result" class="form-control"
+                        style="resize: none" rows="20" placeholder="看我，我是执行结果。"></textarea>
+                    </div>
+                </div>
+            </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    <script>
+        $(document).ready(function () {
+            $("#command").bind("input propertychange", function () {
+                if ($(this).val().search(/^exists|^m?get|^hm?get|^keys|^p?ttl|^smembers|^sismember/i)) {
+                    $('#submit').text("提交审核");
+                    document.getElementById("cmt").style.display = "block";
+                } else {
+                    $('#submit').text("查询");
+                    document.getElementById("cmt").style.display = "none";
+                }
+            });
+        });
+        function show(o) {
+            if (o.value == "key") {
+                document.getElementById("keyHelp").style.display = "block";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+                document.getElementById("command").value = "GET KEY";
+            } else if (o.value == "string") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "block";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+                document.getElementById("command").value = "GET KEY";
+            } else if (o.value == "hash") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "block";
+                document.getElementById("setHelp").style.display = "none";
+                document.getElementById("command").value = "HGETALL KEY";
+            } else if (o.value == "set") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "block";
+                document.getElementById("command").value = "SMEMBERS KEY";
+            }
+        }
+        function mySubmit() {
+            var id = $('#redis').val();
+            var db = $('#db').val();
+            var command = $('#command').val();
+            var comment = $('#comment').val();
+            console.log(id, db, command);
+            if (id === null || db === null || command =="") {
+                alert("请检查必填项是否填写！");
+                return
+            }
+            $('#submit').attr("disabled", true);
+            $.ajax({
+                url: "/redis_query/",
+                type: "post",
+                data: {"redis_id": id, "db": db, "cmd": command, "comment": comment},
+                success: function (res) {
+                    if (res.code == 0) {
+                        alert("查询完毕");
+                        $('#submit').attr("disabled", false);
+                        $('#result').val(res.result);
+                    } else {
+                        $('#result').val(res.errmsg);
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

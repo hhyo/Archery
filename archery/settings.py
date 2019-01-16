@@ -28,8 +28,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_q',
     'sql',
+    'django_q',
     'themis',
 )
 
@@ -86,7 +86,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
-AUTH_USER_MODEL = "sql.users"
+AUTH_USER_MODEL = "sql.Users"
 
 # 密码校验
 AUTH_PASSWORD_VALIDATORS = [
@@ -115,7 +115,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'archery',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'root',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
@@ -168,8 +168,6 @@ CACHES = {
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
-    import ldap
-    from django_auth_ldap.config import LDAPSearch
 
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式

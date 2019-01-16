@@ -4,7 +4,7 @@ from django.urls import path
 
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, resource_group, \
-    sql_advisor, binlog2sql, soar
+    sql_advisor, binlog2sql, soar, redis
 from sql.utils import jobs
 
 urlpatterns = [
@@ -25,9 +25,13 @@ urlpatterns = [
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),
     path('sqlquery/', views.sqlquery),
+    path('export_query/', views.export_query),
     path('slowquery/', views.slowquery),
     path('sqladvisor/', views.sqladvisor),
     path('slowquery_advisor/', views.sqladvisor),
+    path('redis/', views.redis),
+    path('redis_apply/', views.redis_apply),
+    path('param/', views.param),
     path('queryapplylist/', views.queryapplylist),
     path('queryapplydetail/<int:apply_id>/', views.queryapplydetail, name='queryapplydetail'),
     path('queryuserprivileges/', views.queryuserprivileges),
@@ -85,6 +89,15 @@ urlpatterns = [
     path('query/modifyprivileges/', query.modifyqueryprivileges),
     path('query/privaudit/', query.queryprivaudit),
 
+    path('add_async_query/', query.add_async_query),
+    path('export_query/result', query.export_query_result),
+    path('export_query/audit/', query.export_query_audit),
+    path('export_query/log/', query.export_query_log),
+
+    path('param/list/', instance.param_list),
+    path('param/history/', instance.param_history),
+    path('param/save/', instance.param_save),
+
     path('binlog2sql/sql/', binlog2sql.binlog2sql),
     path('binlog2sql/binlog_list/', binlog2sql.binlog_list),
 
@@ -99,4 +112,8 @@ urlpatterns = [
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
+
+    path('redis_query/', redis.redis_query),
+    path('redis_apply_list/', redis.redis_apply_list),
+    path('redis_apply_audit/', redis.redis_apply_audit),
 ]

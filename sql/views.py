@@ -1,10 +1,10 @@
 # -*- coding: UTF-8 -*-
 import traceback
-
+import datetime
 import simplejson as json
 
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -13,8 +13,8 @@ from sql.utils.inception import InceptionDao
 from common.utils.permission import superuser_required
 from sql.utils.jobs import job_info
 
-from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config
+from .models import Users, Instance, SqlWorkflow, QueryPrivileges, ResourceGroup, \
+    QueryPrivilegesApply, Config, RedisApply
 from sql.utils.workflow import Workflow
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -144,6 +144,21 @@ def sqlquery(request):
     return render(request, 'sqlquery.html', context)
 
 
+# SQL导出查询（大数据异步查询）
+@permission_required('sql.menu_export_query', raise_exception=True)
+def export_query(request):
+    # 获取用户关联从库列表
+    # listAllClusterName = [slave.instance_name for slave in user_instances(request.user, 'slave')]
+    listAllClusterName = [slave.instance_name for slave in Instance.objects.filter(type='slave')]
+    # 获取导出查询审核人
+    auditors = list()
+    for p in Permission.objects.filter(codename='export_query_review'):
+        for g in p.group_set.all():
+            auditors.extend(g.user_set.all())
+    context = {'listAllClusterName': listAllClusterName, 'auditors': auditors}
+    return render(request, 'export_query.html', context)
+
+
 # SQL慢日志页面
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
@@ -162,6 +177,32 @@ def sqladvisor(request):
 
     context = {'instances': instances}
     return render(request, 'sqladvisor.html', context)
+
+
+@permission_required('sql.menu_redis', raise_exception=True)
+def redis(request):
+    # 获取用户关联实例列表
+    redis_list = Instance.objects.filter(db_type='redis').order_by('hostname')
+    return render(request, 'redis.html', {'redis_list': redis_list, 'db_list': range(0, 16)})
+
+
+@permission_required('sql.menu_redis', raise_exception=True)
+def redis_apply(request):
+    # 超过24H 未审核的申请设置为过期状态
+    one_day_before = (datetime.datetime.now() + datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
+    RedisApply.objects.filter(create_time__lte=one_day_before).filter(status=0).update(status=4)
+    redis_list = Instance.objects.filter(db_type='redis').order_by('hostname')
+    return render(request, 'redis_apply.html', {'redis_list': redis_list})
+
+
+# 参数管理
+@permission_required('sql.menu_param', raise_exception=True)
+def param(request):
+    # 获取用户关联实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+
+    context = {'tab': 'param_tab', 'instances': instances}
+    return render(request, 'param_setting.html', context)
 
 
 # 查询权限申请列表页面

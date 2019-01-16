@@ -6,7 +6,8 @@ import time
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, QueryDict
 
 from common.config import SysConfig
 from common.utils.aes_decryptor import Prpcrypt
@@ -14,7 +15,7 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.utils.dao import Dao
 
-from .models import Instance
+from .models import Instance, ParamTemp, ParamHistory
 
 
 # 获取实例列表
@@ -154,7 +155,6 @@ def get_db_name_list(request):
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
-    
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -212,6 +212,7 @@ def get_column_name_list(request):
         result['msg'] = str(msg)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
+
 def describe(request):
     instance_name = request.POST.get('instance_name')
     try:
@@ -233,3 +234,85 @@ def describe(request):
         result['status'] = 1
         result['msg'] = str(msg)
     return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+@permission_required('sql.param_view', raise_exception=True)
+def param_list(request):
+    instance_name = request.POST.get('instance_name')
+    search = request.POST.get('search', '')
+    try:
+        ins = Instance.objects.get(instance_name=instance_name)
+        params = dict()
+        for p in ParamTemp.objects.filter(db_type=ins.db_type, param__contains=search):
+            params[p.param] = [p.default_var, p.is_reboot, p.available_var, p.description]
+        p_list = list(params.keys())
+        sql = "SELECT * FROM `information_schema`.`GLOBAL_VARIABLES` WHERE VARIABLE_NAME in ('{}');".format("','".join(p_list))
+        col_list = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
+        print(sql, col_list)
+        res = list()
+        for idx, val in col_list['rows']:
+            res.append({
+                'p': idx,
+                'd_v': params[idx][0],
+                'rb': '是' if params[idx][1] == 1 else '否',
+                'a_v': params[idx][2],
+                'desc': params[idx][3],
+                'r_v': val
+            })
+    except Instance.DoesNotExist:
+        print('Instance.DoesNotExist')
+    except Exception as e:
+        print(e)
+    return HttpResponse(json.dumps(res, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
+
+
+@permission_required('sql.param_view', raise_exception=True)
+def param_history(request):
+    limit = int(request.POST.get('limit'))
+    offset = int(request.POST.get('offset'))
+    limit = offset + limit
+    instance_name = request.POST.get('instance_name')
+    search = request.POST.get('search', '')
+    if search:
+        phs = ParamHistory.objects.filter(instance__instance_name=instance_name)[offset:limit]
+    else:
+        phs = ParamHistory.objects.filter(instance__instance_name=instance_name, param__contains=search)[offset:limit]
+    res = list()
+    for r in phs:
+        is_active = '是' if r.is_active == 1 else '否'
+        res.append({"id": r.id, "p": r.param, "old_v": r.old_var, "new_v": r.new_var, "act": is_active, "t": r.create_time})
+    result = {'total': len(res), 'rows': res}
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
+
+
+@csrf_exempt
+@permission_required('sql.param_edit', raise_exception=True)
+def param_save(request):
+    post_data = QueryDict(request.body).dict()
+    instance_name = post_data['instance_name']
+    param = post_data['p']
+    run_v = post_data['r_v']
+
+    try:
+        sql = "SELECT * FROM `information_schema`.`GLOBAL_VARIABLES` WHERE VARIABLE_NAME='{}';".format(param)
+        col_list = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
+        p = col_list['rows'][0]
+        if p[0] == run_v:
+            return HttpResponse(json.dumps({'status': 1, 'msg': '参数与实际一致，未调整！'}), content_type='application/json')
+        else:
+            ph = ParamHistory.objects.create(instance=Instance.objects.get(instance_name=instance_name), param=param,
+                                             old_var=p[1], new_var=run_v)
+            sql = "UPDATE GLOBAL_VARIABLES SET VARIABLE_VALUE ='{}' WHERE VARIABLE_NAME='{}';".format(run_v, param)
+            col_list = Dao(instance_name=instance_name).mysql_query('information_schema', sql)
+            if 'Error' in col_list:
+                ph.is_active = 1
+                res = {'status': 1, 'msg': col_list['Error']}
+            else:
+                ph.is_active = 0
+                res = {'status': 0, 'msg': '更新成功！'}
+            ph.save()
+    except Exception as e:
+        res = {'status': 1, 'msg': str(e)}
+    return HttpResponse(json.dumps(res), content_type='application/json')
