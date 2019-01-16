@@ -16,8 +16,11 @@ logger = logging.getLogger('default')
 
 class MysqlEngine(EngineBase):
     def get_connection(self, db_name=None):
-        return MySQLdb.connect(host=self.host,
+        if self.conn:
+            return self.conn
+        self.conn = MySQLdb.connect(host=self.host,
                                     port=self.port, user=self.user, passwd=self.password, charset='utf8')
+        return self.conn
     @property
     def name(self):
         return 'MySQL'
@@ -66,7 +69,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         result = self.query(sql=sql)
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
@@ -92,7 +95,8 @@ ORDER BY ORDINAL_POSITION;""".format(
             logger.error(traceback.format_exc())
             result_set.error = str(e)
         finally:
-            conn.close()
+            if close_conn:
+                self.close()
         return result_set
 
     def query_check(self, db_name=None, sql='', limit_num=10):
@@ -267,7 +271,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         """获取回滚语句列表"""
         ExecuteEngine = InceptionDao(instance_name=self.instance_name)
         return ExecuteEngine.get_rollback_sql_list(self.workflow.id)
-    def _execute(self, db_name=None, sql=''):
+    def execute(self, db_name=None, sql='', close_conn=True):
         result = ResultSet(full_sql=sql)
         conn = self.get_connection()
         try:
@@ -279,5 +283,10 @@ ORDER BY ORDINAL_POSITION;""".format(
         except Exception as e:
             logger.error(traceback.format_exc())
             result.error = str(e)
-        conn.close()
+        if close_conn:
+            self.close()
         return result
+    def close(self):
+        if self.conn:
+            self.conn.close()
+            self.conn = None

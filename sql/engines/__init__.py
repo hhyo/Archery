@@ -4,6 +4,7 @@ from common.utils.aes_decryptor import Prpcrypt
 class EngineBase:
     """enginebase 只定义了init函数和若干方法的名字, 具体实现用mysql.py pg.py等实现"""
     def __init__(self, instance=None, workflow=None):
+        self.conn = None
         if workflow:
             self.workflow = workflow
             instance = Instance.objects.get(instance_name=self.workflow.instance_name)
@@ -35,7 +36,7 @@ class EngineBase:
         """获取表结构, 返回一个 ResultSet"""
     def query_check(self, db_name=None, sql='',limit_num=10):
         """查询语句的检查, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
-    def query(self, db_name=None, sql='', limit_num=0):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """实际查询 返回一个ResultSet"""
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -61,3 +62,4 @@ def get_engine(instance=None, workflow=None):
     elif instance.db_type == 'mssql':
         from .mssql import MssqlEngine
         return MssqlEngine(workflow=workflow, instance=instance)
+

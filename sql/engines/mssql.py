@@ -96,7 +96,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
                 sql = sql_lower.replace('select', 'select top {}'.format(limit_num))
         return {'filtered_sql': sql}
     
-    def query(self, db_name=None, sql='', limit_num=0):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
