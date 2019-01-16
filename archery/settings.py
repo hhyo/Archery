@@ -30,7 +30,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_q',
     'sql',
+    'sql_api',
     'themis',
+    'rest_framework',
 )
 
 MIDDLEWARE = (
