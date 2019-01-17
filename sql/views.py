@@ -9,8 +9,9 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from sql.utils.inception import InceptionDao
+from sql.engines import get_engine
 from common.utils.permission import superuser_required
+from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.jobs import job_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
@@ -58,7 +59,6 @@ def detail(request, workflow_id):
         rows = workflow_detail.execute_result
     else:
         rows = workflow_detail.review_content
-    list_content = json.loads(rows)
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
         # 获取当前审批和审批流程
@@ -91,10 +91,14 @@ def detail(request, workflow_id):
     else:
         run_date = ''
 
-    # sql结果
-    column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
-                   'backup_dbname', 'execute_time', 'sqlsha1']
-    context = {'workflow_detail': workflow_detail, 'column_list': column_list, 'rows':rows,
+    #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+    if isinstance(json.loads(rows)[0], list):
+        review_result = ReviewSet()
+        for r in json.loads(rows):
+            review_result.rows += [ReviewResult(inception_result=r)]
+        rows = review_result.json()
+
+    context = {'workflow_detail': workflow_detail, 'rows': rows,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
@@ -108,8 +112,11 @@ def rollback(request):
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
     workflow_id = int(workflow_id)
+    workflow = SqlWorkflow.objects.get(id=workflow_id)
+
     try:
-        list_backup_sql = InceptionDao().get_rollback_sql_list(workflow_id)
+        query_engine = get_engine(workflow=workflow)
+        list_backup_sql = query_engine.get_rollback()
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}

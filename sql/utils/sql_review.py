@@ -2,10 +2,10 @@ import re
 import sqlparse
 
 from common.utils.const import Const
-from sql.models import SqlWorkflow
+from sql.models import SqlWorkflow, Instance
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
-from sql.utils.inception import InceptionDao
+from sql.engines import get_engine
 
 
 # 获取工单地址
@@ -43,12 +43,14 @@ def is_auto_review(workflow_id):
             break
         if is_autoreview:
             # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
-            inception_review = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
+            instance = Instance.objects.get(instance_name=instance_name)
+            review_engine = get_engine(instance=instance)
+            inception_review = review_engine.execute_check(db_name=db_name, sql=sql_content).to_dict()
             all_affected_rows = 0
             for review_result in inception_review:
-                SQL = review_result[5]
+                sql = review_result[5]
                 affected_rows = review_result[6]
-                if re.match(r"^update", SQL.strip().lower()):
+                if re.match(r"^update", sql.strip().lower()):
                     all_affected_rows = all_affected_rows + int(affected_rows)
             if int(all_affected_rows) > int(SysConfig().sys_config.get('auto_review_max_update_rows', 50)):
                 is_autoreview = False

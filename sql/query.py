@@ -94,7 +94,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     # sql查询, 可以校验到表级权限
     elif instance.db_type == 'mysql':
         # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = Masking().query_table_ref(sql_content + ';', instance_name, db_name)
+        table_ref_result = Masking().query_table_ref(sql_content + ';', db_name)
 
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:
@@ -308,7 +308,7 @@ def applyforprivileges(request):
             apply_id = applyinfo.apply_id
 
             # 调用工作流插入审核信息,查询权限申请workflow_type=1
-            audit_result = Audit.add(request, WorkflowDict.workflow_type['query'], apply_id)
+            audit_result = Audit.add(WorkflowDict.workflow_type['query'], apply_id)
             if audit_result['status'] == 0:
                 # 更新业务表审核状态,判断是否插入权限信息
                 query_audit_call_back(apply_id, audit_result['data']['workflow_status'])
@@ -423,12 +423,11 @@ def queryprivaudit(request):
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
-            # 获取audit_id
             audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
                                                    workflow_type=WorkflowDict.workflow_type['query']).audit_id
 
             # 调用工作流接口审核
-            audit_result = Audit.audit(request, audit_id, audit_status, user.username, audit_remark)
+            audit_result = Audit.audit(audit_id, audit_status, user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
             audit_detail = Audit.detail(audit_id)

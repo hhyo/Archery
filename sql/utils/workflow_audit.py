@@ -189,7 +189,7 @@ class Audit(object):
                          operation_type_desc='审批通过',
                          operation_info="审批备注：{}，下级审批：{}".format(audit_remark, current_audit_auth_group),
                          operator=audit_user,
-                         operator_display=Users.objects.get(ussename=audit_user).display
+                         operator_display=Users.objects.get(username=audit_user).display
                          )
         elif audit_status == WorkflowDict.workflow_status['audit_reject']:
             # 判断当前工单是否为待审核状态
@@ -219,7 +219,7 @@ class Audit(object):
                          operation_type_desc='审批不通过',
                          operation_info="审批备注：{}".format(audit_remark),
                          operator=audit_user,
-                         operator_display=Users.objects.get(ussename=audit_user).display
+                         operator_display=Users.objects.get(username=audit_user).display
                          )
         elif audit_status == WorkflowDict.workflow_status['audit_abort']:
             # 判断当前工单是否为待审核/审核通过状态
@@ -249,7 +249,7 @@ class Audit(object):
                          operation_type_desc='审批取消',
                          operation_info="取消原因：{}".format(audit_remark),
                          operator=audit_user,
-                         operator_display=Users.objects.get(ussename=audit_user).display
+                         operator_display=Users.objects.get(username=audit_user).display
                          )
         else:
             result['msg'] = '审核异常'

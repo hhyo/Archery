@@ -16,8 +16,19 @@ logger = logging.getLogger('default')
 def execute(workflow_id):
     """为延时或异步任务准备的execute, 传入工单ID即可"""
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    # 给定时执行的工单增加执行日志
+    if workflow_detail.status == Const.workflowStatus['timingtask']:
+        audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+        Audit.add_log(audit_id=audit_id,
+                      operation_type=5,
+                      operation_type_desc='执行工单',
+                      operation_info='系统定时执行',
+                      operator='',
+                      operator_display='系统'
+                      )
     execute_engine = get_engine(workflow=workflow_detail)
-    return execute_engine.execute()
+    return execute_engine.execute_workflow()
 
 
 def execute_callback(task):
@@ -43,7 +54,6 @@ def execute_callback(task):
     workflow.save()
 
     # 增加工单日志
-    # 获取audit_id
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,

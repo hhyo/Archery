@@ -7,7 +7,6 @@ import sqlparse
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
-from sql.utils.inception import InceptionDao
 from sql.utils.data_masking import Masking
 from common.config import SysConfig
 
@@ -257,8 +256,11 @@ ORDER BY ORDINAL_POSITION;""".format(
                     execute_time=sqlRow['execute_time'],
                     sqlsha1=sqlRow['sqlsha1']))
 
-            # 每执行一次，就将执行结果更新到工单的execute_result，便于获取osc进度时对比
+            # 每执行一次，就将执行结果更新到工单的execute_result
             workflow_detail.execute_result = execute_result.json()
+            from django.db import connection
+            if connection.connection is not None:
+                connection.close()
             workflow_detail.save()
 
         # 二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
@@ -274,16 +276,16 @@ ORDER BY ORDINAL_POSITION;""".format(
 
     def get_rollback(self):
         """获取回滚语句列表"""
-        ExecuteEngine = InceptionDao(instance_name=self.instance_name)
-        return ExecuteEngine.get_rollback_sql_list(self.workflow.id)
+        inception_engine = InceptionEngine()
+        return inception_engine.get_rollback_list(self.workflow.id)
 
     def execute(self, db_name=None, sql='', close_conn=True):
         result = ResultSet(full_sql=sql)
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
-            for row in sql.strip(';').split(';'):
-                cursor.execute(row)
+            for statement in sqlparse.split(sql):
+                cursor.execute(statement)
             conn.commit()
             cursor.close()
         except Exception as e:

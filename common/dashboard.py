@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from pyecharts import Pie, Bar, Line
 from pyecharts import Page
-from sql.utils.inception import InceptionDao
 from common.utils.chart_dao import ChartDao
 from datetime import date
 from dateutil.relativedelta import relativedelta
