@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from sql.engines.inception import InceptionEngine
-from sql.models import DataMaskingRules, DataMaskingColumns
+from sql.models import DataMaskingRules, DataMaskingColumns, Instance
 import simplejson as json
 import re
 
@@ -16,7 +16,7 @@ class Masking(object):
         result = {'status': 0, 'msg': 'ok', 'data': {'hit_rule': 0}}
         # 通过inception获取语法树,并进行解析
         try:
-            print_info = self.query_tree(sql, db_name)
+            print_info = self.query_tree(sql, instance_name, db_name)
         except Exception as msg:
             logger.error(traceback.format_exc())
             result['status'] = 1
@@ -74,10 +74,11 @@ class Masking(object):
         return result
 
     # 通过inception获取语法树
-    def query_tree(self, sql_content, db_name):
+    def query_tree(self, sql_content, instance_name, db_name):
         try:
             inception_engine = InceptionEngine()
-            print_info = inception_engine.query_print(db_name=db_name, sql=sql_content).rows
+            instance = Instance.objects.get(instance_name=instance_name)
+            print_info = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql_content).rows
         except Exception as e:
             raise Exception('通过inception获取语法树异常，请检查inception配置，确保inception可以访问实例：' + str(e))
         else:
@@ -101,10 +102,10 @@ class Masking(object):
                 return None
 
     # 解析语法树，获取语句涉及的表，用于查询权限限制
-    def query_table_ref(self, sql_content, db_name):
+    def query_table_ref(self, sql_content, instance_name, db_name):
         result = {'status': 0, 'msg': 'ok', 'data': []}
         try:
-            print_info = self.query_tree(sql_content, db_name)
+            print_info = self.query_tree(sql_content, instance_name, db_name)
         except Exception as msg:
             logger.error(traceback.format_exc())
             result['status'] = 1

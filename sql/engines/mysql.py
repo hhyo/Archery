@@ -105,7 +105,7 @@ ORDER BY ORDINAL_POSITION;""".format(
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         if '*' in sql:
-            return {'bad_query': True}
+            return {'bad_query': True, 'msg': '禁止执行select *语句！'}
         # 对查询sql增加limit限制
         if re.match(r"^select", sql.lower()):
             if re.search(r"limit\s+(\d+)$", sql.lower()) is None:

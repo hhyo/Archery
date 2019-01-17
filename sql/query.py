@@ -94,7 +94,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     # sql查询, 可以校验到表级权限
     elif instance.db_type == 'mysql':
         # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = Masking().query_table_ref(sql_content + ';', db_name)
+        table_ref_result = Masking().query_table_ref(sql_content + ';', instance_name, db_name)
 
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:

@@ -54,7 +54,7 @@ class InceptionEngine(EngineBase):
         conn.close()
         return result_set
 
-    def query_print(self, db_name=None, sql=''):
+    def query_print(self, instance, db_name=None, sql=''):
         """
         将sql交给inception打印语法树。
         """
@@ -62,10 +62,10 @@ class InceptionEngine(EngineBase):
                           inception_magic_start;\
                           use %s;\
                           %s\
-                          inception_magic_commit;" % (self.user,
-                                                      self.password,
-                                                      self.host,
-                                                      self.port,
+                          inception_magic_commit;" % (instance.user,
+                                                      instance.raw_password,
+                                                      instance.host,
+                                                      instance.port,
                                                       db_name,
                                                       sql)
         return self.query(db_name=db_name, sql=sql)
