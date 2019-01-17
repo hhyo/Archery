@@ -1,4 +1,4 @@
-from sql.models import SqlWorkflow
+from sql.models import SqlWorkflow, Instance
 from rest_framework import serializers
 
 class SqlWorkflowListSerilizer(serializers.ModelSerializer):
@@ -12,3 +12,8 @@ class SqlWorkflowDetailSerilizer(serializers.ModelSerializer):
     class Meta:
         model = SqlWorkflow
         fields = ('__all__')
+
+class InstanceSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = Instance
+        fields = ('id', 'instance_name', 'type', 'db_type')
