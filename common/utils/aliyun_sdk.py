@@ -7,7 +7,6 @@ from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlow
     RequestServiceOfCloudDBARequest
 import simplejson as json
 from sql.models import AliyunAccessKey
-from common.utils.aes_decryptor import Prpcrypt
 import logging
 
 logger = logging.getLogger('default')
@@ -15,11 +14,10 @@ logger = logging.getLogger('default')
 
 class Aliyun(object):
     def __init__(self):
-        prpCryptor = Prpcrypt()
         try:
             auth = AliyunAccessKey.objects.get(is_enable=1)
-            ak = prpCryptor.decrypt(auth.ak)
-            secret = prpCryptor.decrypt(auth.secret)
+            ak = auth.raw_ak
+            secret = auth.raw_secret
         except Exception:
             logger.error(traceback.format_exc())
             logger.error('没有找到有效的ak信息！')

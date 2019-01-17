@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 
 from common.config import SysConfig
-from common.utils.aes_decryptor import Prpcrypt
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from .models import Instance
@@ -102,12 +101,12 @@ def schemasync(request):
                                                                output_directory,
                                                                timestamp,
                                                                instance_info.user,
-                                                               Prpcrypt().decrypt(instance_info.password),
+                                                               instance_info.raw_password,
                                                                instance_info.host,
                                                                instance_info.port,
                                                                db_name,
                                                                target_instance_info.user,
-                                                               Prpcrypt().decrypt(target_instance_info.password),
+                                                               target_instance_info.raw_password,
                                                                target_instance_info.host,
                                                                target_instance_info.port,
                                                                target_db_name)

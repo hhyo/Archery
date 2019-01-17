@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 
-from common.utils.aes_decryptor import Prpcrypt
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.utils.binlog2sql.binlog2sql import Binlog2sql
@@ -51,7 +50,7 @@ def binlog2sql(request):
     instance_name = request.POST.get('instance_name')
     instance = Instance.objects.get(instance_name=instance_name)
     conn_setting = {'host': instance.host, 'port': int(instance.port), 'user': instance.user,
-                    'passwd': Prpcrypt().decrypt(instance.password), 'charset': 'utf8'}
+                    'passwd': instance.raw_password, 'charset': 'utf8'}
     no_pk = True if request.POST.get('no_pk') == 'true' else False
     flashback = True if request.POST.get('flashback') == 'true' else False
     start_file = request.POST.get('start_file')

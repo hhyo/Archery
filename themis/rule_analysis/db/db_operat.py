@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 import MySQLdb
 from django.db import connection
-
-from common.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
-
-prpCryptor = Prpcrypt()
 
 
 class DbOperat(object):
@@ -22,7 +18,7 @@ class DbOperat(object):
         self.host = instance_info.host
         self.port = int(instance_info.port)
         self.user = instance_info.user
-        self.password = prpCryptor.decrypt(instance_info.password)
+        self.password = instance_info.raw_password
         if flag:
             self.conn = MySQLdb.connect(host=self.host,
                                         port=int(self.port),

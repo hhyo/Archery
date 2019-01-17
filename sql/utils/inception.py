@@ -8,7 +8,6 @@ import sqlparse
 from django.db import connection
 
 from sql.models import Instance, SqlWorkflow
-from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
 import logging
 
@@ -33,7 +32,7 @@ class InceptionDao(object):
                 self.host = instance_info.host
                 self.port = int(instance_info.port)
                 self.user = instance_info.user
-                self.password = Prpcrypt().decrypt(instance_info.password)
+                self.password = instance_info.raw_password
             except Exception:
                 raise Exception('找不到对应的实例配置信息，请配置')
 

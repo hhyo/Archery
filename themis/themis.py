@@ -5,14 +5,11 @@ import re
 from django.db import connection
 
 from sql.models import Instance
-from common.utils.aes_decryptor import Prpcrypt
 from themis.rule_analysis.db.db_operat import DbOperat
 from themis.rule_analysis.db.mongo_operat import MongoOperat
 from themis.rule_analysis.libs.mysql_plan_stat.plan_stat import MysqlPlanOrStat
 from themis.rule_analysis.review_result.rule_result import ReviewResult
 from themis.rule_analysis.libs.text.sql_text import SqlText
-
-prpCryptor = Prpcrypt()
 
 
 class Themis(object):
@@ -208,7 +205,7 @@ class Themis(object):
             input_parms = value["input_parms"]
             if self.db_type == "mysql" and self.rule_type in ["SQLPLAN", "SQLSTAT"]:
                 user = self.instance_info.user
-                passwd = prpCryptor.decrypt(self.instance_info.password)
+                passwd = self.instance_info.raw_password
                 result, scores = self.m_rule_parse(key, rule_complexity, rule_cmd,
                                                    weight, max_score, input_parms,
                                                    self.hostname, user, passwd)
