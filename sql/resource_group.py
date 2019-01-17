@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
 from sql.models import ResourceGroup, ResourceGroupRelations, Users, Instance
-from sql.utils.workflow import Workflow
+from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
 
@@ -143,7 +143,7 @@ def auditors(request):
     result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
     if group_name:
         group_id = ResourceGroup.objects.get(group_name=group_name).group_id
-        audit_auth_groups = Workflow.audit_settings(group_id=group_id, workflow_type=workflow_type)
+        audit_auth_groups = Audit.settings(group_id=group_id, workflow_type=workflow_type)
     else:
         result['status'] = 1
         result['msg'] = '参数错误'
@@ -179,7 +179,7 @@ def changeauditors(request):
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     audit_auth_groups = [str(Group.objects.get(name=auth_group).id) for auth_group in auth_groups.split(',')]
     try:
-        Workflow.change_settings(group_id, workflow_type, ','.join(audit_auth_groups))
+        Audit.change_settings(group_id, workflow_type, ','.join(audit_auth_groups))
     except Exception as msg:
         logger.error(traceback.format_exc())
         result['msg'] = str(msg)

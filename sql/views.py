@@ -15,7 +15,7 @@ from sql.utils.jobs import job_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
     QueryPrivilegesApply, Config
-from sql.utils.workflow import Workflow
+from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
 from sql.utils.resource_group import user_groups, user_instances
@@ -62,10 +62,10 @@ def detail(request, workflow_id):
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
         # 获取当前审批和审批流程
-        audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_id, 2)
+        audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, 2)
 
         # 是否可审核
-        is_can_review = Workflow.can_review(request.user, workflow_id, 2)
+        is_can_review = Audit.can_review(request.user, workflow_id, 2)
         # 是否可执行
         is_can_execute = can_execute(request.user, workflow_id)
         # 是否可定时执行
@@ -179,10 +179,10 @@ def queryapplylist(request):
 def queryapplydetail(request, apply_id):
     workflow_detail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     # 获取当前审批和审批流程
-    audit_auth_group, current_audit_auth_group = Workflow.review_info(apply_id, 1)
+    audit_auth_group, current_audit_auth_group = Audit.review_info(apply_id, 1)
 
     # 是否可审核
-    is_can_review = Workflow.can_review(request.user, apply_id, 1)
+    is_can_review = Audit.can_review(request.user, apply_id, 1)
 
     context = {'workflow_detail': workflow_detail, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'is_can_review': is_can_review}
@@ -215,7 +215,7 @@ def workflows(request):
 # 工作流审核详情页面
 def workflowsdetail(request, audit_id):
     # 按照不同的workflow_type返回不同的详情
-    audit_detail = Workflow.audit_detail(audit_id)
+    audit_detail = Audit.detail(audit_id)
     if audit_detail.workflow_type == WorkflowDict.workflow_type['query']:
         return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
     elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:

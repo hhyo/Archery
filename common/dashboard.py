@@ -45,16 +45,6 @@ def pyecharts(request):
     value = [row[1] for row in data['rows']]
     pie2.add("", attr, value, is_label_show=True)
 
-    # SQL执行情况统计
-    pie3 = Pie("SQL上线工单统计(Inception)", width="100%")
-    data = InceptionDao().statistic()
-    attr = data['column_list']
-    if data['column_list']:
-        value = [int(row) for row in data['rows'][0]]
-    else:
-        value = []
-    pie3.add("", attr, value, is_legend_show=False, is_label_show=True)
-
     # SQL查询统计(每日检索行数)
     line1 = Line("SQL查询统计", width="100%")
     begin_date = (date.today() - relativedelta(months=+1)).strftime("%Y-%m-%d")
@@ -94,7 +84,6 @@ def pyecharts(request):
     page.add(pie1)
     page.add(bar2)
     page.add(pie2)
-    page.add(pie3)
     page.add(line1)
     page.add(pie4)
     page.add(pie5)

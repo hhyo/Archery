@@ -10,7 +10,6 @@ from django.db import connection
 from sql.models import Instance, SqlWorkflow
 from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
-from sql.utils.dao import Dao
 import logging
 
 logger = logging.getLogger('default')
@@ -327,34 +326,3 @@ class InceptionDao(object):
             sql_content)
         result = self._fetchall(sql, self.inception_host, self.inception_port, '', '', '')
         return result
-
-    # inception执行情况统计
-    def statistic(self):
-        sql = '''
-             select
-                 sum(deleting)     deleting,
-                 sum(inserting)    inserting,
-                 sum(updating)     updating,
-                 sum(selecting)    selecting,
-                 sum(altertable)   altertable,
-                 sum(renaming)     renaming,
-                 sum(createindex)  createindex,
-                 sum(dropindex)    dropindex,
-                 sum(addcolumn)    addcolumn,
-                 sum(dropcolumn)   dropcolumn,
-                 sum(changecolumn) changecolumn,
-                 sum(alteroption)  alteroption,
-                 sum(alterconvert) alterconvert,
-                 sum(createtable)  createtable,
-                 sum(droptable)    droptable,
-                 sum(createdb)     createdb,
-                 sum(truncating)   truncating
-               from statistic;'''
-        try:
-            return Dao(host=self.inception_remote_backup_host,
-                       user=self.inception_remote_backup_user,
-                       port=self.inception_remote_backup_port,
-                       password=self.inception_remote_backup_password).mysql_query('inception', sql)
-        except Exception:
-            logger.error(traceback.format_exc())
-            return {'column_list': [], 'rows': [], 'effect_row': 0}

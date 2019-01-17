@@ -1,6 +1,5 @@
 import logging
 import traceback
-import json
 import MySQLdb
 import re
 import sqlparse
@@ -11,6 +10,7 @@ from .inception import InceptionEngine
 from sql.utils.inception import InceptionDao
 from sql.utils.data_masking import Masking
 from common.config import SysConfig
+
 logger = logging.getLogger('default')
 
 
@@ -21,18 +21,21 @@ class MysqlEngine(EngineBase):
         self.conn = MySQLdb.connect(host=self.host,
                                     port=self.port, user=self.user, passwd=self.password, charset='utf8')
         return self.conn
+
     @property
     def name(self):
         return 'MySQL'
+
     @property
     def info(self):
         return 'MySQL engine'
+
     # 连进指定的mysql实例里，读取所有databases并返回
     def get_all_databases(self):
         sql = "show databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
-                       if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+                   if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
@@ -48,6 +51,7 @@ class MysqlEngine(EngineBase):
         result = self.descibe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
+
     def descibe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
         sql = """SELECT 
@@ -65,7 +69,7 @@ WHERE
     TABLE_SCHEMA = '{0}'
         AND TABLE_NAME = '{1}'
 ORDER BY ORDINAL_POSITION;""".format(
-                db_name, tb_name)
+            db_name, tb_name)
         result = self.query(sql=sql)
         return result
 
@@ -102,7 +106,7 @@ ORDER BY ORDINAL_POSITION;""".format(
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         if '*' in sql:
-            return {'bad_query':True}
+            return {'bad_query': True}
         # 对查询sql增加limit限制
         if re.match(r"^select", sql.lower()):
             if re.search(r"limit\s+(\d+)$", sql.lower()) is None:
@@ -142,41 +146,41 @@ ORDER BY ORDINAL_POSITION;""".format(
             line = 1
             for statement in sqlparse.split(sql):
                 if p.match(statement.strip().lower()):
-                    result = ReviewResult (id=line, errlevel=2, 
-                        stagestatus = '驳回高危SQL', 
-                        errormessage = '禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                        sql=statement)
+                    result = ReviewResult(id=line, errlevel=2,
+                                          stagestatus='驳回高危SQL',
+                                          errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
+                                          sql=statement)
                     check_result.is_critical = True
                 else:
-                    result = ReviewResult(id=line,errlevel= 0, sql=statement)
+                    result = ReviewResult(id=line, errlevel=0, sql=statement)
                 check_result.rows += [result]
                 line += 1
             if check_result.is_critical:
                 return check_result
-        
+
         # 检查 inception 不支持的函数
         # 删除注释语句
         sql = ''.join(
             map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
                 sql.splitlines(1))).strip()
         check_result.rows = []
-        line = 1 
+        line = 1
         for statement in sqlparse.split(sql):
             # 注释不检测
             if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
                         statement.lower() + ";"):
-                result = ReviewSet (
-                        id=line, errlevel=2, stagestatus = 'SQL语法错误', 
-                        errormessage = 'ALTER TABLE 必须带有选项',
-                        sql=statement)
+                result = ReviewSet(
+                    id=line, errlevel=2, stagestatus='SQL语法错误',
+                    errormessage='ALTER TABLE 必须带有选项',
+                    sql=statement)
                 check_result.is_critical = True
             else:
-                result = ReviewSet(id=line,errlevel= 0, sql=statement)
+                result = ReviewSet(id=line, errlevel=0, sql=statement)
             check_result.rows += [result]
             line += 1
         if check_result.is_critical:
             return check_result
-        
+
         # inception 校验
         check_result.rows = []
         inception_sql = "/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%d;*/\
@@ -197,11 +201,11 @@ ORDER BY ORDINAL_POSITION;""".format(
         check_result.column_list = inception_result.column_list
         return check_result
 
-    def execute(self, manual=False):
+    def execute_workflow(self, manual=False):
         """执行上线单"""
         workflow_detail = self.workflow
         if workflow_detail.is_manual == 1:
-            return self._execute(db_name=workflow_detail.db_name, sql=workflow_detail.sql_content)
+            return self.execute(db_name=workflow_detail.db_name, sql=workflow_detail.sql_content)
         execute_result = ReviewSet(full_sql=workflow_detail.sql_content)
         inception_engine = InceptionEngine()
         if workflow_detail.is_backup == '是':
@@ -252,7 +256,7 @@ ORDER BY ORDINAL_POSITION;""".format(
                     backup_dbname=sqlRow['backup_dbname'],
                     execute_time=sqlRow['execute_time'],
                     sqlsha1=sqlRow['sqlsha1']))
-                
+
             # 每执行一次，就将执行结果更新到工单的execute_result，便于获取osc进度时对比
             workflow_detail.execute_result = execute_result.json()
             workflow_detail.save()
@@ -261,7 +265,8 @@ ORDER BY ORDINAL_POSITION;""".format(
         execute_result.status = "已正常结束"
         for sqlRow in execute_result.rows:
             # 如果发现任何一个行执行结果里有errLevel为1或2，并且stagestatus列没有包含Execute Successfully字样，则判断最终执行结果为有异常.
-            if (sqlRow.errlevel == 1 or sqlRow.errlevel == 2) and re.match(r"\w*Execute Successfully\w*", sqlRow.stagestatus) is None:
+            if (sqlRow.errlevel == 1 or sqlRow.errlevel == 2) and re.match(r"\w*Execute Successfully\w*",
+                                                                           sqlRow.stagestatus) is None:
                 execute_result.status = "执行有异常"
                 execute_result.error = "Line {0} has error/warning: {1}".format(sqlRow.id, sqlRow.errormessage)
 
@@ -271,6 +276,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         """获取回滚语句列表"""
         ExecuteEngine = InceptionDao(instance_name=self.instance_name)
         return ExecuteEngine.get_rollback_sql_list(self.workflow.id)
+
     def execute(self, db_name=None, sql='', close_conn=True):
         result = ResultSet(full_sql=sql)
         conn = self.get_connection()
@@ -286,6 +292,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         if close_conn:
             self.close()
         return result
+
     def close(self):
         if self.conn:
             self.conn.close()

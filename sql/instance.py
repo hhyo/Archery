@@ -12,8 +12,6 @@ from common.config import SysConfig
 from common.utils.aes_decryptor import Prpcrypt
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
-from sql.utils.dao import Dao
-
 from .models import Instance
 
 
@@ -47,20 +45,25 @@ def lists(request):
 @permission_required('sql.menu_instance', raise_exception=True)
 def users(request):
     instance_id = request.POST.get('instance_id')
-    instance_name = Instance.objects.get(id=instance_id).instance_name
+    try:
+        instance = Instance.objects.get(id=instance_id)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
     sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
-    dao = Dao(instance_name=instance_name, flag=True)
-    db_users = dao.mysql_query('mysql', sql_get_user)['rows']
+    query_engine = get_engine(instance=instance)
+    db_users = query_engine.query('mysql', sql_get_user).rows
     # 获取用户权限信息
     data = []
     for db_user in db_users:
         user_info = {}
-        user_priv = dao.mysql_query('mysql', 'show grants for {};'.format(db_user[0]))['rows']
+        user_priv = query_engine.query('mysql', 'show grants for {};'.format(db_user[0]), close_conn=False).rows
         user_info['user'] = db_user[0]
         user_info['privileges'] = user_priv
         data.append(user_info)
     # 关闭连接
-    dao.close()
+    query_engine.close()
     result = {'status': 0, 'msg': 'ok', 'data': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
@@ -154,7 +157,6 @@ def get_db_name_list(request):
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
-    
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
@@ -211,6 +213,7 @@ def get_column_name_list(request):
         result['status'] = 1
         result['msg'] = str(msg)
     return HttpResponse(json.dumps(result), content_type='application/json')
+
 
 def describe(request):
     instance_name = request.POST.get('instance_name')

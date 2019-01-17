@@ -1,37 +1,28 @@
 # -*-coding: utf-8-*-
 
 import logging
-import re
-import traceback
-
 import MySQLdb
-import simplejson as json
-import sqlparse
-from django.db import connection
-
 from common.config import SysConfig
-from common.utils.aes_decryptor import Prpcrypt
-from sql.models import Instance, SqlWorkflow
-from sql.utils.dao import Dao
 
 from . import EngineBase
 from .models import ResultSet
 
 logger = logging.getLogger('default')
 
+
 class InceptionEngine(EngineBase):
     def get_connection(self, db_name=None):
         archer_config = SysConfig()
         inception_host = archer_config.get('inception_host')
-        inception_port = int(archer_config.get('inception_port',6669))
+        inception_port = int(archer_config.get('inception_port', 6669))
         conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8')
         return conn
-    
-    def query(self, db_name=None, sql='', limit_num=0):
+
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()
-        with conn.cursor() as cursor: 
+        with conn.cursor() as cursor:
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))

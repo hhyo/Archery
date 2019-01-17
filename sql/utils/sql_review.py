@@ -12,8 +12,8 @@ from sql.utils.inception import InceptionDao
 def get_detail_url(request, workflow_id):
     scheme = request.scheme
     host = request.META['HTTP_HOST']
-    from sql.utils.workflow import Workflow
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id, 2).audit_id
+    from sql.utils.workflow_audit import Audit
+    audit_id = Audit.detail_by_workflow_id(workflow_id, 2).audit_id
     return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
 
 
@@ -91,8 +91,8 @@ def can_cancel(user, workflow_id):
     result = False
     # 审核中的工单，审核人和提交人可终止
     if workflow_detail.status == Const.workflowStatus['manreviewing']:
-        from sql.utils.workflow import Workflow
-        if Workflow.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
+        from sql.utils.workflow_audit import Audit
+        if Audit.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
             result = True
     # 审核通过但未执行的工单，执行人可以打回
     if workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:

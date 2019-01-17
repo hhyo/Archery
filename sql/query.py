@@ -19,16 +19,15 @@ from django.urls import reverse
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.utils.dao import Dao
 from sql.utils.data_masking import Masking
 from sql.utils.resource_group import user_instances, user_groups
-from sql.utils.workflow import Workflow
+from sql.utils.workflow_audit import Audit
 from .models import QueryPrivilegesApply, QueryPrivileges, QueryLog, ResourceGroup, Instance
 from sql.engines import get_engine
+
 logger = logging.getLogger('default')
 
-datamasking = Masking()
-workflowOb = Workflow()
+Audit = Audit()
 
 
 # 查询权限申请用于工作流审核回调
@@ -95,7 +94,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     # sql查询, 可以校验到表级权限
     elif instance.db_type == 'mysql':
         # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = datamasking.query_table_ref(sql_content + ';', instance_name, db_name)
+        table_ref_result = Masking().query_table_ref(sql_content + ';', instance_name, db_name)
 
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:
@@ -117,7 +116,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
                         return result
 
         # 获取表数据报错，检查配置文件是否允许继续执行，并进行库权限校验
-        
+
     table_ref = None
     # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
     privileges = QueryPrivileges.objects.filter(user_name=user.username, instance_name=instance_name,
@@ -290,7 +289,7 @@ def applyforprivileges(request):
             applyinfo.title = title
             applyinfo.group_id = group_id
             applyinfo.group_name = group_name
-            applyinfo.audit_auth_groups = Workflow.audit_settings(group_id, WorkflowDict.workflow_type['query'])
+            applyinfo.audit_auth_groups = Audit.settings(group_id, WorkflowDict.workflow_type['query'])
             applyinfo.user_name = user.username
             applyinfo.user_display = user.display
             applyinfo.instance_name = instance_name
@@ -309,7 +308,7 @@ def applyforprivileges(request):
             apply_id = applyinfo.apply_id
 
             # 调用工作流插入审核信息,查询权限申请workflow_type=1
-            audit_result = workflowOb.addworkflowaudit(request, WorkflowDict.workflow_type['query'], apply_id)
+            audit_result = Audit.add(request, WorkflowDict.workflow_type['query'], apply_id)
             if audit_result['status'] == 0:
                 # 更新业务表审核状态,判断是否插入权限信息
                 query_audit_call_back(apply_id, audit_result['data']['workflow_status'])
@@ -417,7 +416,7 @@ def queryprivaudit(request):
     if audit_remark is None:
         audit_remark = ''
 
-    if Workflow.can_review(request.user, apply_id, 1) is False:
+    if Audit.can_review(request.user, apply_id, 1) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
@@ -425,14 +424,14 @@ def queryprivaudit(request):
     try:
         with transaction.atomic():
             # 获取audit_id
-            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=apply_id,
-                                                          workflow_type=WorkflowDict.workflow_type['query']).audit_id
+            audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
+                                                   workflow_type=WorkflowDict.workflow_type['query']).audit_id
 
             # 调用工作流接口审核
-            audit_result = workflowOb.auditworkflow(request, audit_id, audit_status, user.username, audit_remark)
+            audit_result = Audit.audit(request, audit_id, audit_status, user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
-            audit_detail = Workflow.audit_detail(audit_id)
+            audit_detail = Audit.detail(audit_id)
             if audit_detail.workflow_type == WorkflowDict.workflow_type['query']:
                 # 更新业务表审核状态,插入权限信息
                 query_audit_call_back(audit_detail.workflow_id, audit_result['data']['workflow_status'])
@@ -537,7 +536,7 @@ def query(request):
                     masking_result['status'] = 1
                     return HttpResponse(json.dumps(masking_result), content_type='application/json')
                 else:
-                      # 实际未命中, 则显示为未做脱敏
+                    # 实际未命中, 则显示为未做脱敏
                     if query_result.is_masked:
                         masking = 1
                         hit_rule = 1
@@ -645,6 +644,12 @@ def explain(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
     sql_content = sql_content.strip()
 
     # 过滤非查询的语句
@@ -659,7 +664,8 @@ def explain(request):
     sql_content = sqlparse.split(sql_content)[0].rstrip(';')
 
     # 执行获取执行计划语句
-    sql_result = Dao(instance_name=instance_name).mysql_query(str(db_name), sql_content)
+    query_engine = get_engine(instance=instance)
+    sql_result = query_engine.query(str(db_name), sql_content).to_sep_dict()
 
     result['data'] = sql_result
 
