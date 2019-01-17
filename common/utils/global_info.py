@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-from sql.utils.workflow import Workflow
+from sql.utils.workflow_audit import Audit
 
 
 def global_info(request):
@@ -8,7 +8,7 @@ def global_info(request):
     if user:
         # 获取待办数量
         try:
-            todo = Workflow.audit_todo(user)
+            todo = Audit.todo(user)
         except Exception:
             todo = 0
     else:

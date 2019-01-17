@@ -66,7 +66,7 @@ class ResourceGroupRelations(models.Model):
 class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),('mssql','MsSQL')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'), ('mssql', 'MsSQL')))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=3306)
     user = models.CharField('用户名', max_length=100)
@@ -78,7 +78,7 @@ class Instance(models.Model):
     def raw_password(self):
         """ 返回明文密码 str """
         pc = Prpcrypt()  # 初始化
-        return  pc.decrypt(self.password)
+        return pc.decrypt(self.password)
 
     def __str__(self):
         return self.instance_name
@@ -354,6 +354,18 @@ class AliyunAccessKey(models.Model):
     secret = models.CharField(max_length=100)
     is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
     remark = models.CharField(max_length=50, default='', blank=True)
+
+    @property
+    def raw_ak(self):
+        """ 返回明文ak str """
+        pc = Prpcrypt()  # 初始化
+        return pc.decrypt(self.ak)
+
+    @property
+    def raw_secret(self):
+        """ 返回明文secret str """
+        pc = Prpcrypt()  # 初始化
+        return pc.decrypt(self.secret)
 
     class Meta:
         managed = True

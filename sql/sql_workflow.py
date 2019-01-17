@@ -3,13 +3,12 @@ import datetime
 import logging
 import re
 import traceback
-from threading import Thread
 
 import simplejson as json
 import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
-from django.db import transaction, connection
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -20,19 +19,16 @@ from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import ResourceGroup, Users
-from sql.utils import execute_sql
 from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.inception import InceptionDao
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
-from sql.utils.sql_review import can_timingtask, get_detail_url, can_cancel, can_execute
-from sql.utils.workflow import Workflow
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
+from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, Instance
-from django_q.tasks import async_task, result
+from django_q.tasks import async_task
 
 from sql.engines import get_engine
 
 logger = logging.getLogger('default')
-sqlSHA1_cache = {}  # 存储SQL文本与SHA1值的对应关系，尽量减少与数据库的交互次数,提高效率。格式: {工单ID1:{SQL内容1:sqlSHA1值1, SQL内容2:sqlSHA1值2},}
 
 
 # 获取审核列表
@@ -178,7 +174,7 @@ def simplecheck(request):
             check_warning_count = check_warning_count + 1
         elif row_item.errlevel == 2:
             check_error_count = check_error_count + 1
-    result['data']['rows'] = [ r.__dict__ for r in check_result.rows]
+    result['data']['rows'] = [r.__dict__ for r in check_result.rows]
     result['data']['column_list'] = column_list
     result['data']['CheckWarningCount'] = check_warning_count
     result['data']['CheckErrorCount'] = check_error_count
@@ -281,7 +277,7 @@ def autoreview(request):
             sql_workflow.group_name = group_name
             sql_workflow.engineer = engineer
             sql_workflow.engineer_display = request.user.display
-            sql_workflow.audit_auth_groups = Workflow.audit_settings(group_id, WorkflowDict.workflow_type['sqlreview'])
+            sql_workflow.audit_auth_groups = Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview'])
             sql_workflow.status = workflow_status
             sql_workflow.is_backup = is_backup
             sql_workflow.review_content = check_result.json()
@@ -300,8 +296,7 @@ def autoreview(request):
                 # 抄送通知人
                 list_cc_addr = [email['email'] for email in
                                 Users.objects.filter(username__in=notify_users).values('email')]
-                Workflow().addworkflowaudit(request, WorkflowDict.workflow_type['sqlreview'], workflow_id,
-                                            list_cc_addr=list_cc_addr)
+                Audit().add(WorkflowDict.workflow_type['sqlreview'], workflow_id, list_cc_addr=list_cc_addr)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -322,7 +317,7 @@ def passed(request):
     audit_remark = request.POST.get('audit_remark', '')
 
     user = request.user
-    if Workflow.can_review(request.user, workflow_id, 2) is False:
+    if Audit.can_review(request.user, workflow_id, 2) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
@@ -330,12 +325,11 @@ def passed(request):
     try:
         with transaction.atomic():
             # 调用工作流接口审核
-            # 获取audit_id
-            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                          workflow_type=WorkflowDict.workflow_type[
-                                                              'sqlreview']).audit_id
-            audit_result = Workflow().auditworkflow(request, audit_id, WorkflowDict.workflow_status['audit_success'],
-                                                    user.username, audit_remark)
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type[
+                                                       'sqlreview']).audit_id
+            audit_result = Audit().audit(audit_id, WorkflowDict.workflow_status['audit_success'],
+                                         user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
             if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
@@ -362,25 +356,27 @@ def execute(request):
 
     workflow_id = int(workflow_id)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    instance_name = workflow_detail.instance_name
-    db_name = workflow_detail.db_name
-    url = get_detail_url(request, workflow_id)
 
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
-    # 判断是否高危SQL，禁止执行
-    if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().critical_ddl(workflow_detail.sql_content):
-            context = {'errMsg': '高危语句，禁止执行！'}
-            return render(request, 'error.html', context)
-
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflow_detail.status = Const.workflowStatus['executing']
     workflow_detail.reviewok_time = timezone.now()
     workflow_detail.save()
-    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback', timeout=-1)
+    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback',
+               timeout=-1)
+    # 增加工单日志
+    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Audit().add_log(audit_id=audit_id,
+                    operation_type=5,
+                    operation_type_desc='执行工单',
+                    operation_info="人工操作执行",
+                    operator=request.user.username,
+                    operator_display=request.user.display
+                    )
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
@@ -401,14 +397,7 @@ def timingtask(request):
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
-    # 判断是否高危SQL，禁止执行
-    if SysConfig().sys_config.get('critical_ddl_regex', '') != '':
-        if InceptionDao().critical_ddl(workflow_detail.sql_content):
-            context = {'errMsg': '高危语句，禁止执行！'}
-            return render(request, 'error.html', context)
-
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    url = get_detail_url(request, workflow_id)
     job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
 
     # 使用事务保持数据一致性
@@ -418,19 +407,18 @@ def timingtask(request):
             workflow_detail.status = Const.workflowStatus['timingtask']
             workflow_detail.save()
             # 调用添加定时任务
-            add_sqlcronjob(job_id, run_date, workflow_id, url)
+            add_sqlcronjob(job_id, run_date, workflow_id)
             # 增加工单日志
-            # 获取audit_id
-            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                          workflow_type=WorkflowDict.workflow_type[
-                                                              'sqlreview']).audit_id
-            Workflow().add_workflow_log(audit_id=audit_id,
-                                        operation_type=4,
-                                        operation_type_desc='定时执行',
-                                        operation_info="定时执行时间：{}".format(run_date),
-                                        operator=request.user.username,
-                                        operator_display=request.user.display
-                                        )
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type[
+                                                       'sqlreview']).audit_id
+            Audit().add_log(audit_id=audit_id,
+                            operation_type=4,
+                            operation_type_desc='定时执行',
+                            operation_info="定时执行时间：{}".format(run_date),
+                            operator=request.user.username,
+                            operator_display=request.user.display
+                            )
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -461,39 +449,38 @@ def cancel(request):
     try:
         with transaction.atomic():
             # 调用工作流接口取消或者驳回
-            # 获取audit_id
-            audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                          workflow_type=WorkflowDict.workflow_type[
-                                                              'sqlreview']).audit_id
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type[
+                                                       'sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
             if workflow_detail.status != Const.workflowStatus['manreviewing']:
                 # 增加工单日志
                 if user.username == workflow_detail.engineer:
-                    Workflow().add_workflow_log(audit_id=audit_id,
-                                                operation_type=3,
-                                                operation_type_desc='取消执行',
-                                                operation_info="取消原因：{}".format(audit_remark),
-                                                operator=request.user.username,
-                                                operator_display=request.user.display
-                                                )
+                    Audit().add_log(audit_id=audit_id,
+                                    operation_type=3,
+                                    operation_type_desc='取消执行',
+                                    operation_info="取消原因：{}".format(audit_remark),
+                                    operator=request.user.username,
+                                    operator_display=request.user.display
+                                    )
                 else:
-                    Workflow().add_workflow_log(audit_id=audit_id,
-                                                operation_type=2,
-                                                operation_type_desc='审批不通过',
-                                                operation_info="审批备注：{}".format(audit_remark),
-                                                operator=request.user.username,
-                                                operator_display=request.user.display
-                                                )
+                    Audit().add_log(audit_id=audit_id,
+                                    operation_type=2,
+                                    operation_type_desc='审批不通过',
+                                    operation_info="审批备注：{}".format(audit_remark),
+                                    operator=request.user.username,
+                                    operator_display=request.user.display
+                                    )
             else:
                 if user.username == workflow_detail.engineer:
-                    Workflow().auditworkflow(request, audit_id,
-                                             WorkflowDict.workflow_status['audit_abort'],
-                                             user.username, audit_remark)
+                    Audit().audit(audit_id,
+                                  WorkflowDict.workflow_status['audit_abort'],
+                                  user.username, audit_remark)
                 # 非提交人需要校验审核权限
                 elif user.has_perm('sql.sql_review'):
-                    Workflow().auditworkflow(request, audit_id,
-                                             WorkflowDict.workflow_status['audit_reject'],
-                                             user.username, audit_remark)
+                    Audit().audit(audit_id,
+                                  WorkflowDict.workflow_status['audit_reject'],
+                                  user.username, audit_remark)
                 else:
                     raise PermissionDenied
 
@@ -512,80 +499,6 @@ def cancel(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-def get_sql_sha1(workflow_id):
-    """
-    调用django ORM从数据库里查出review_content，从其中获取sqlSHA1值
-    """
-    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    dict_sha1 = {}
-    # 使用json.loads方法，把review_content从str转成list,
-    list_re_check_result = json.loads(workflow_detail.review_content)
-
-    for rownum in range(len(list_re_check_result)):
-        id = rownum + 1
-        sql_sha1 = list_re_check_result[rownum]['sqlsha1']
-        if sql_sha1 != '':
-            dict_sha1[id] = sql_sha1
-
-    if dict_sha1 != {}:
-        # 如果找到有sqlSHA1值，说明是通过pt-OSC操作的，将其放入缓存。
-        # 因为使用OSC执行的SQL占较少数，所以不设置缓存过期时间
-        sqlSHA1_cache[workflow_id] = dict_sha1
-    return dict_sha1
-
-
-def get_osc_percent(request):
-    """
-    获取该SQL的pt-OSC执行进度和剩余时间
-    """
-    workflow_id = request.POST['workflow_id']
-    sql_id = request.POST['sqlID']
-    if workflow_id == '' or workflow_id is None or sql_id == '' or sql_id is None:
-        context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
-        return HttpResponse(json.dumps(context), content_type='application/json')
-
-    workflow_id = int(workflow_id)
-    sql_id = int(sql_id)
-    dict_sha1 = {}
-    if workflow_id in sqlSHA1_cache:
-        dict_sha1 = sqlSHA1_cache[workflow_id]
-        # cachehit = "已命中"
-    else:
-        dict_sha1 = get_sql_sha1(workflow_id)
-
-    if dict_sha1 != {} and sql_id in dict_sha1:
-        sql_sha1 = dict_sha1[sql_id]
-        try:
-            result = InceptionDao().get_osc_percent(sql_sha1)  # 成功获取到SHA1值，去inception里面查询进度
-        except Exception as msg:
-            logger.error(traceback.format_exc())
-            result = {'status': 1, 'msg': msg, 'data': ''}
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-        if result["status"] == 0:
-            # 获取到进度值
-            pct_result = result
-        else:
-            # result["status"] == 1, 未获取到进度值,需要与workflow.execute_result对比，来判断是已经执行过了，还是还未执行
-            execute_result = SqlWorkflow.objects.get(id=workflow_id).execute_result
-            try:
-                list_exec_result = json.loads(execute_result)
-            except ValueError:
-                list_exec_result = execute_result
-            if type(list_exec_result) == list and len(list_exec_result) >= sql_id - 1:
-                if dict_sha1[sql_id] in list_exec_result[sql_id - 1][10]:
-                    # 已经执行完毕，进度值置为100
-                    pct_result = {"status": 0, "msg": "ok", "data": {"percent": 100, "timeRemained": ""}}
-            else:
-                # 可能因为前一条SQL是DML，正在执行中；或者还没执行到这一行。但是status返回的是4，而当前SQL实际上还未开始执行。这里建议前端进行重试
-                pct_result = {"status": -3, "msg": "进度未知", "data": {"percent": -100, "timeRemained": ""}}
-    elif dict_sha1 != {} and sql_id not in dict_sha1:
-        pct_result = {"status": 4, "msg": "该行SQL不是由pt-OSC执行的", "data": ""}
-    else:
-        pct_result = {"status": -2, "msg": "整个工单不由pt-OSC执行", "data": ""}
-    return HttpResponse(json.dumps(pct_result), content_type='application/json')
-
-
 def get_workflow_status(request):
     """
     获取某个工单的当前状态
@@ -600,41 +513,3 @@ def get_workflow_status(request):
     workflow_status = workflow_detail.status
     result = {"status": workflow_status, "msg": "", "data": ""}
     return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-def stop_osc_progress(request):
-    """
-    中止该SQL的pt-OSC进程
-    """
-    workflow_id = request.POST['workflow_id']
-    sql_id = request.POST['sqlID']
-    if workflow_id == '' or workflow_id is None or sql_id == '' or sql_id is None:
-        context = {"status": -1, 'msg': 'workflow_id或sqlID参数为空.', "data": ""}
-        return HttpResponse(json.dumps(context), content_type='application/json')
-
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    # 服务器端二次验证，当前工单状态必须为等待人工审核,正在执行人工审核动作的当前登录用户必须为审核人. 避免攻击或被接口测试工具强行绕过
-    if workflow_detail.status != Const.workflowStatus['executing']:
-        context = {"status": -1, "msg": '当前工单状态不是"执行中"，请刷新当前页面！', "data": ""}
-        return HttpResponse(json.dumps(context), content_type='application/json')
-    if can_execute(request.user, workflow_id) is False:
-        context = {"status": -1, "msg": '你无权操作当前工单，请刷新当前页面！', "data": ""}
-        return HttpResponse(json.dumps(context), content_type='application/json')
-
-    workflow_id = int(workflow_id)
-    sql_id = int(sql_id)
-    if workflow_id in sqlSHA1_cache:
-        dict_sha1 = sqlSHA1_cache[workflow_id]
-    else:
-        dict_sha1 = get_sql_sha1(workflow_id)
-    if dict_sha1 != {} and sql_id in dict_sha1:
-        sql_sha1 = dict_sha1[sql_id]
-        try:
-            opt_result = InceptionDao().stop_osc_progress(sql_sha1)
-        except Exception as msg:
-            logger.error(traceback.format_exc())
-            result = {'status': 1, 'msg': msg, 'data': ''}
-            return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        opt_result = {"status": 4, "msg": "不是由pt-OSC执行的", "data": ""}
-    return HttpResponse(json.dumps(opt_result), content_type='application/json')

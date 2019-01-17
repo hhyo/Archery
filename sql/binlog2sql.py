@@ -10,10 +10,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 
-from common.utils.aes_decryptor import Prpcrypt
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines import get_engine
 from sql.utils.binlog2sql.binlog2sql import Binlog2sql
-from sql.utils.dao import Dao
 from .models import Instance
 
 logger = logging.getLogger('default')
@@ -23,10 +22,16 @@ logger = logging.getLogger('default')
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog_list(request):
     instance_name = request.POST.get('instance_name')
-    binlog = Dao(instance_name=instance_name).mysql_query('information_schema', 'show binary logs;')
-    column_list = binlog['column_list']
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    query_engine = get_engine(instance=instance)
+    binlog = query_engine.query('information_schema', 'show binary logs;')
+    column_list = binlog.column_list
     rows = []
-    for row in binlog['rows']:
+    for row in binlog.rows:
         row_info = {}
         for row_index, row_item in enumerate(row):
             row_info[column_list[row_index]] = row_item
@@ -45,7 +50,7 @@ def binlog2sql(request):
     instance_name = request.POST.get('instance_name')
     instance = Instance.objects.get(instance_name=instance_name)
     conn_setting = {'host': instance.host, 'port': int(instance.port), 'user': instance.user,
-                    'passwd': Prpcrypt().decrypt(instance.password), 'charset': 'utf8'}
+                    'passwd': instance.raw_password, 'charset': 'utf8'}
     no_pk = True if request.POST.get('no_pk') == 'true' else False
     flashback = True if request.POST.get('flashback') == 'true' else False
     start_file = request.POST.get('start_file')

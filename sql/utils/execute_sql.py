@@ -1,34 +1,36 @@
 # -*- coding: UTF-8 -*-
 import re
-import traceback
-
-import simplejson as json
-
-import time
-from threading import Thread
 import sqlparse
-from django.db import connection
-from django.utils import timezone
-
 from sql.utils.resource_group import auth_group_users
 from common.config import SysConfig
-from sql.utils.dao import Dao
 from common.utils.const import Const, WorkflowDict
 from common.utils.sendmsg import MailSender
-from sql.utils.inception import InceptionDao
 from sql.models import Users, SqlWorkflow, ResourceGroup
-from sql.utils.workflow import Workflow
+from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
-from django_q.tasks import async_task, result
 import logging
 
 logger = logging.getLogger('default')
 
+
 def execute(workflow_id):
     """为延时或异步任务准备的execute, 传入工单ID即可"""
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    # 给定时执行的工单增加执行日志
+    if workflow_detail.status == Const.workflowStatus['timingtask']:
+        audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+        Audit.add_log(audit_id=audit_id,
+                      operation_type=5,
+                      operation_type_desc='执行工单',
+                      operation_info='系统定时执行',
+                      operator='',
+                      operator_display='系统'
+                      )
     execute_engine = get_engine(workflow=workflow_detail)
-    return execute_engine.execute()
+    return execute_engine.execute_workflow()
+
+
 def execute_callback(task):
     """异步任务的回调, 将结果填入数据库等等
     使用django-q的hook, 传入参数为整个task
@@ -37,7 +39,7 @@ def execute_callback(task):
     workflow_id = task.args[0]
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
-    
+
     if not task.success:
         # 不成功会返回字符串
         workflow.status = Const.workflowStatus['exception']
@@ -52,151 +54,18 @@ def execute_callback(task):
     workflow.save()
 
     # 增加工单日志
-    # 获取audit_id
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Workflow.add_workflow_log(audit_id=audit_id,
-                              operation_type=6,
-                              operation_type_desc='执行结束',
-                              operation_info='执行结果：{}'.format(workflow.status),
-                              operator='',
-                              operator_display='系统'
-                              )
+    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Audit.add_log(audit_id=audit_id,
+                  operation_type=6,
+                  operation_type_desc='执行结束',
+                  operation_info='执行结果：{}'.format(workflow.status),
+                  operator='',
+                  operator_display='系统'
+                  )
 
     # 发送消息
     send_msg(workflow)
-
-# SQL工单跳过inception执行
-def execute_skipinc_call_back(workflow_id, instance_name, db_name, sql_content, url):
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    try:
-        # 执行sql
-        t_start = time.time()
-        execute_result = Dao(instance_name=instance_name).mysql_execute(db_name, sql_content)
-        t_end = time.time()
-        execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
-        execute_result['execute_time'] = execute_time + 'sec'
-
-        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-        if execute_result.get('Warning'):
-            workflow_detail.status = Const.workflowStatus['exception']
-        elif execute_result.get('Error'):
-            workflow_detail.status = Const.workflowStatus['exception']
-        else:
-            workflow_detail.status = Const.workflowStatus['finish']
-        workflow_detail.finish_time = timezone.now()
-        workflow_detail.execute_result = json.dumps(execute_result)
-        workflow_detail.is_manual = 1
-        workflow_detail.audit_remark = ''
-        workflow_detail.is_backup = '否'
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflow_detail.save()
-    except Exception:
-        logger.error(traceback.format_exc())
-
-    # 增加工单日志
-    # 获取audit_id
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Workflow.add_workflow_log(audit_id=audit_id,
-                              operation_type=6,
-                              operation_type_desc='执行结束',
-                              operation_info='执行结果：{}'.format(workflow_detail.status),
-                              operator='',
-                              operator_display='系统'
-                              )
-
-    # 发送消息
-    send_msg(workflow_detail, url)
-
-
-# SQL工单执行
-def execute_call_back(workflow_id, instance_name, url):
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    try:
-        # 交给inception先split，再执行
-        (finalStatus, finalList) = InceptionDao(instance_name=instance_name).execute_final(workflow_detail)
-
-        # 封装成JSON格式存进数据库字段里
-        str_json_result = json.dumps(finalList)
-        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-        workflow_detail.execute_result = str_json_result
-        workflow_detail.finish_time = timezone.now()
-        workflow_detail.status = finalStatus
-        workflow_detail.is_manual = 0
-        workflow_detail.audit_remark = ''
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflow_detail.save()
-    except Exception:
-        logger.error(traceback.format_exc())
-
-    # 增加工单日志
-    # 获取audit_id
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Workflow.add_workflow_log(audit_id=audit_id,
-                              operation_type=6,
-                              operation_type_desc='执行结束',
-                              operation_info='执行结果：{}'.format(workflow_detail.status),
-                              operator='',
-                              operator_display='系统'
-                              )
-
-    # 发送消息
-    send_msg(workflow_detail, url)
-
-
-# 给定时任务执行sql
-def execute_job(workflow_id, url):
-    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
-    logger.debug('execute_job:' + job_id + ' start')
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    instance_name = workflow_detail.instance_name
-    db_name = workflow_detail.db_name
-
-    # 服务器端二次验证，当前工单状态必须为定时执行过状态
-    if workflow_detail.status != Const.workflowStatus['timingtask']:
-        raise Exception('工单不是定时执行状态')
-
-    # 将流程状态修改为执行中，并更新reviewok_time字段
-    workflow_detail.status = Const.workflowStatus['executing']
-    workflow_detail.reviewok_time = timezone.now()
-    try:
-        workflow_detail.save()
-    except Exception:
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflow_detail.save()
-    logger.debug('execute_job:' + job_id + ' executing')
-    # 执行之前重新split并check一遍，更新SHA1缓存；因为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    split_review_result = InceptionDao(instance_name=instance_name).sqlauto_review(workflow_detail.sql_content,
-                                                                                   db_name,
-                                                                                   is_split='yes')
-    workflow_detail.review_content = json.dumps(split_review_result)
-    try:
-        workflow_detail.save()
-    except Exception:
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflow_detail.save()
-
-    # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-    t = Thread(target=execute_call_back, args=(workflow_id, instance_name, url))
-    t.start()
-
-    # 增加工单日志
-    # 获取audit_id
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id=workflow_id,
-                                                  workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Workflow.add_workflow_log(audit_id=audit_id,
-                              operation_type=5,
-                              operation_type_desc='执行工单',
-                              operation_info='系统定时执行',
-                              operator='',
-                              operator_display='系统'
-                              )
 
 
 # 执行结果通知
@@ -204,11 +73,11 @@ def send_msg(workflow_detail):
     mail_sender = MailSender()
     sys_config = SysConfig().sys_config
     # 获取当前审批和审批流程
-    BASE_URL = sys_config.get('archery_base_url','http://127.0.0.1:8000')
-    BASE_URL = BASE_URL.rstrip('/') # 防止填写类似 http://127.0.0.1:8000/ 的地址
+    BASE_URL = sys_config.get('archery_base_url', 'http://127.0.0.1:8000')
+    BASE_URL = BASE_URL.rstrip('/')  # 防止填写类似 http://127.0.0.1:8000/ 的地址
     url = '{0}/detail/{1}/'.format(BASE_URL, workflow_detail.id)
-    audit_auth_group, current_audit_auth_group = Workflow.review_info(workflow_detail.id, 2)
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_detail.id, 2).audit_id
+    audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_detail.id, 2)
+    audit_id = Audit.detail_by_workflow_id(workflow_detail.id, 2).audit_id
     # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflow_detail.status, audit_id)
     msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(

@@ -2,18 +2,18 @@ import re
 import sqlparse
 
 from common.utils.const import Const
-from sql.models import SqlWorkflow
+from sql.models import SqlWorkflow, Instance
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
-from sql.utils.inception import InceptionDao
+from sql.engines import get_engine
 
 
 # 获取工单地址
 def get_detail_url(request, workflow_id):
     scheme = request.scheme
     host = request.META['HTTP_HOST']
-    from sql.utils.workflow import Workflow
-    audit_id = Workflow.audit_info_by_workflow_id(workflow_id, 2).audit_id
+    from sql.utils.workflow_audit import Audit
+    audit_id = Audit.detail_by_workflow_id(workflow_id, 2).audit_id
     return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
 
 
@@ -43,12 +43,14 @@ def is_auto_review(workflow_id):
             break
         if is_autoreview:
             # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
-            inception_review = InceptionDao(instance_name=instance_name).sqlauto_review(sql_content, db_name)
+            instance = Instance.objects.get(instance_name=instance_name)
+            review_engine = get_engine(instance=instance)
+            inception_review = review_engine.execute_check(db_name=db_name, sql=sql_content).to_dict()
             all_affected_rows = 0
             for review_result in inception_review:
-                SQL = review_result[5]
+                sql = review_result[5]
                 affected_rows = review_result[6]
-                if re.match(r"^update", SQL.strip().lower()):
+                if re.match(r"^update", sql.strip().lower()):
                     all_affected_rows = all_affected_rows + int(affected_rows)
             if int(all_affected_rows) > int(SysConfig().sys_config.get('auto_review_max_update_rows', 50)):
                 is_autoreview = False
@@ -91,8 +93,8 @@ def can_cancel(user, workflow_id):
     result = False
     # 审核中的工单，审核人和提交人可终止
     if workflow_detail.status == Const.workflowStatus['manreviewing']:
-        from sql.utils.workflow import Workflow
-        if Workflow.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
+        from sql.utils.workflow_audit import Audit
+        if Audit.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
             result = True
     # 审核通过但未执行的工单，执行人可以打回
     if workflow_detail.status in [Const.workflowStatus['pass'], Const.workflowStatus['timingtask']]:

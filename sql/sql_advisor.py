@@ -6,7 +6,6 @@ import traceback
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from common.utils.aes_decryptor import Prpcrypt
 from common.config import SysConfig
 from sql.models import Instance
 from sql.utils.resource_group import user_instances
@@ -19,7 +18,7 @@ logger = logging.getLogger('default')
 def sqladvisor(request):
     sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
-    db_name= request.POST.get('db_name')
+    db_name = request.POST.get('db_name')
     verbose = request.POST.get('verbose')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
@@ -50,7 +49,7 @@ def sqladvisor(request):
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
             str(instance_info.host), str(instance_info.port), str(instance_info.user),
-            str(Prpcrypt().decrypt(instance_info.password), ), str(db_name), verbose, sql_content),
+            str(instance_info.raw_password), str(db_name), verbose, sql_content),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
         stdout, stderr = p.communicate()

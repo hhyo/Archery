@@ -16,19 +16,17 @@ class UsersAdmin(UserAdmin):
         self.search_fields = ('id', 'username', 'display', 'email')
 
     def changelist_view(self, request, extra_context=None):
-        # 这个方法在源码的admin/options.py文件的ModelAdmin这个类中定义，我们要重新定义它，以达到不同权限的用户，返回的表单内容不同
-        if request.user.is_superuser:
-            # 此字段定义UserChangeForm表单中的具体显示内容，并可以分类显示
-            self.fieldsets = (
-                (('认证信息'), {'fields': ('username', 'password')}),
-                (('个人信息'), {'fields': ('display', 'email')}),
-                (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
-                (('其他信息'), {'fields': ('last_login', 'date_joined')}),
-            )
-            # 此字段定义UserCreationForm表单中的具体显示内容
-            self.add_fieldsets = (
-                (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
-            )
+        # 此字段定义UserChangeForm表单中的具体显示内容，并可以分类显示
+        self.fieldsets = (
+            (('认证信息'), {'fields': ('username', 'password')}),
+            (('个人信息'), {'fields': ('display', 'email')}),
+            (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+            (('其他信息'), {'fields': ('last_login', 'date_joined')}),
+        )
+        # 此字段定义UserCreationForm表单中的具体显示内容
+        self.add_fieldsets = (
+            (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
+        )
         return super(UserAdmin, self).changelist_view(request, extra_context)
 
 

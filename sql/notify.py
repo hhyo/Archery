@@ -28,9 +28,9 @@ def notify(audit_info, msg_type=0, **kwargs):
     webhook_url = ResourceGroup.objects.get(group_id=audit_info.group_id).ding_webhook
 
     # 获取当前审批和审批流程
-    from sql.utils.workflow import Workflow
-    workflow_auditors, current_workflow_auditors = Workflow.review_info(audit_info.workflow_id,
-                                                                        audit_info.workflow_type)
+    from sql.utils.workflow_audit import Audit
+    workflow_auditors, current_workflow_auditors = Audit.review_info(audit_info.workflow_id,
+                                                                     audit_info.workflow_type)
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type['query']:

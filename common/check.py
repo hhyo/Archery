@@ -10,8 +10,7 @@ from email.header import Header
 from email.mime.text import MIMEText
 
 from common.utils.permission import superuser_required
-from sql.utils.dao import Dao
-from sql.models import Instance, Users
+from sql.models import Instance
 
 logger = logging.getLogger('default')
 
@@ -105,16 +104,19 @@ def email(request):
 def instance(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     instance_id = request.POST.get('instance_id')
-    instance_name = Instance.objects.get(id=instance_id).instance_name
-    dao = Dao(instance_name=instance_name)
+    instance = Instance.objects.get(id=instance_id)
     try:
-        conn = MySQLdb.connect(host=dao.host, port=dao.port, user=dao.user, passwd=dao.password, charset='utf8')
+        conn = MySQLdb.connect(host=instance.host,
+                               port=instance.port,
+                               user=instance.user,
+                               passwd=instance.raw_password,
+                               charset='utf8')
         cursor = conn.cursor()
         sql = "select 1"
         cursor.execute(sql)
     except Exception as e:
         result['status'] = 1
-        result['msg'] = '无法连接实例{},\n{}'.format(instance_name, str(e))
+        result['msg'] = '无法连接实例,\n{}'.format(str(e))
     else:
         cursor.close()
         conn.close()

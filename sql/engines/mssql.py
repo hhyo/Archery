@@ -1,12 +1,13 @@
 import logging
 import traceback
 import re
-import time
 from . import EngineBase
 import pyodbc
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import brute_mask
+
 logger = logging.getLogger('default')
+
 
 class MssqlEngine(EngineBase):
     def get_connection(self, db_name=None):
@@ -21,7 +22,7 @@ client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
         sql = "SELECT name FROM master.sys.databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
-                       if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+                   if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
@@ -39,7 +40,7 @@ WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
         result = self.descibe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
-    
+
     def descibe_table(self, db_name, tb_name):
         """return ResultSet"""
         sql = r"""select
@@ -61,19 +62,19 @@ and O.name='{1}'
 order by o.name,c.colid""".format(db_name, tb_name)
         result = self.query(sql=sql)
         return result
-    
+
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         sql_lower = sql.lower()
-        result = {'msg':'', 'bad_query':False, 'filtered_sql': ''}
-        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format", "left", 
-        "len", "nchar", "patindex", "quotename", "replace", "replicate", 
-        "reverse", "right", "soundex", "space", "str", "string_agg", 
-        "string_escape", "string_split", "stuff", "substring", "trim", "unicode", 
-        "abs", "acos", "asin", "atan", "atn2", "ceiling", "cos", "cot", "degrees", 
-        "exp", "floor", "log", "log10", "pi", "power", "radians", "rand", "round", 
-        "sign", "sin", "sqrt", "square", "tan", 
-        "cast", "convert"]
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': ''}
+        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format", "left",
+                           "len", "nchar", "patindex", "quotename", "replace", "replicate",
+                           "reverse", "right", "soundex", "space", "str", "string_agg",
+                           "string_escape", "string_split", "stuff", "substring", "trim", "unicode",
+                           "abs", "acos", "asin", "atan", "atn2", "ceiling", "cos", "cot", "degrees",
+                           "exp", "floor", "log", "log10", "pi", "power", "radians", "rand", "round",
+                           "sign", "sin", "sqrt", "square", "tan",
+                           "cast", "convert"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
         if re.search(star_patter, sql_lower) is not None:
@@ -95,7 +96,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
             if sql_lower.find(' top ') == -1:
                 sql = sql_lower.replace('select', 'select top {}'.format(limit_num))
         return {'filtered_sql': sql}
-    
+
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
@@ -124,6 +125,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
         finally:
             conn.close()
         return result_set
+
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""

@@ -8,7 +8,6 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponse
 from common.config import SysConfig
-from common.utils.aes_decryptor import Prpcrypt
 from sql.models import Instance
 from sql.utils.resource_group import user_instances
 
@@ -48,7 +47,7 @@ def soar(request):
     # 目标实例的连接信息
     instance_info = Instance.objects.get(instance_name=instance_name)
     online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
-                                                          pwd=Prpcrypt().decrypt(instance_info.password),
+                                                          pwd=instance_info.raw_password,
                                                           host=instance_info.host,
                                                           port=instance_info.port,
                                                           db=db_name)

@@ -47,9 +47,7 @@ urlpatterns = [
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sqlworkflow_list),
     path('simplecheck/', sql_workflow.simplecheck),
-    path('getOscPercent/', sql_workflow.get_osc_percent),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
-    path('stopOscProgress/', sql_workflow.stop_osc_progress),
     path('del_sqlcronjob/', jobs.del_sqlcronjob),
 
     path('workflow/list/', workflow.lists),

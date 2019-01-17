@@ -1,11 +1,14 @@
 """engine 结果集定义"""
 import json
+
+
 class ReviewResult:
     """审核的单条结果"""
+
     def __init__(self, inception_result=[], **kwargs):
         if inception_result:
             column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
-                   'backup_dbname', 'execute_time', 'sqlsha1']
+                           'backup_dbname', 'execute_time', 'sqlsha1']
             self.id = inception_result[0]
             self.stage = inception_result[1]
             self.errlevel = inception_result[2]
@@ -35,8 +38,9 @@ class ReviewResult:
 
 class ReviewSet:
     """review和执行后的结果集, rows中是review result, 有设定好的字段"""
+
     def __init__(self, full_sql='', rows=[], status=None,
-                    affected_rows=0, column_list = None, **kwargs):
+                 affected_rows=0, column_list=None, **kwargs):
         self.full_sql = full_sql
         self.is_execute = False
         self.checked = None
@@ -48,21 +52,25 @@ class ReviewSet:
         self.column_list = column_list
         self.status = status
         self.affected_rows = affected_rows
+
     def json(self):
         tmp_list = []
         for r in self.rows:
             tmp_list += [r.__dict__]
         return json.dumps(tmp_list)
+
     def to_dict(self):
         tmp_list = []
         for r in self.rows:
             tmp_list += [r.__dict__]
         return tmp_list
 
+
 class ResultSet:
     """查询的结果集, rows 内只有值, column_list 中的是key"""
+
     def __init__(self, full_sql='', rows=[], status=None,
-                    affected_rows=0, column_list = None, **kwargs):
+                 affected_rows=0, column_list=None, **kwargs):
         self.full_sql = full_sql
         self.is_execute = False
         self.checked = None
@@ -78,16 +86,22 @@ class ResultSet:
         self.column_list = column_list
         self.status = status
         self.affected_rows = affected_rows
+
     def json(self):
         tmp_list = []
         for r in self.rows:
             tmp_list += [dict(zip(self.column_list, r))]
         return json.dumps(tmp_list)
+
     def to_dict(self):
         tmp_list = []
         for r in self.rows:
             tmp_list += [dict(zip(self.column_list, r))]
         return tmp_list
+
+    def to_sep_dict(self):
+        return {'column_list': self.column_list, 'rows': self.rows}
+
 
 class Node:
     def __init__(self, *args, **kwargs):
@@ -98,6 +112,6 @@ class Node:
             self.children = children
         else:
             self.children = []
-    
+
     def __str__(self):
         return "<Node: {}>".format(original_name)
