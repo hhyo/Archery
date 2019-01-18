@@ -57,7 +57,6 @@ class MysqlEngine(EngineBase):
     COLUMN_NAME,
     COLUMN_TYPE,
     CHARACTER_SET_NAME,
-    COLUMN_TYPE,
     IS_NULLABLE,
     COLUMN_KEY,
     EXTRA,
@@ -127,6 +126,8 @@ ORDER BY ORDINAL_POSITION;""".format(
             resultset.is_masked = True
         if inception_mask_result['status'] != 0:
             resultset.is_critical = True
+            resultset.error = inception_mask_result['msg']
+        resultset.status = inception_mask_result['status']
         return resultset
 
     def execute_check(self, db_name=None, sql=''):

@@ -225,10 +225,10 @@
             //增加查询结果显示div
             var div =
                 "<div id=\"sqlquery_result" + tab_number + "\" role=\"tabpanel\" class=\"tab-pane fade table-responsive\">\n" +
-                "    <div id=\"cost_time" + tab_number + "\" class=\"navbar-text\" >\n" +
+                "    <div id=\"query_time" + tab_number + "\" class=\"navbar-text\" >\n" +
                 "        <small>查询时间 : <strong id=\"time" + tab_number + "\"> sec </strong></small>\n" +
                 "    </div>\n" +
-                "    <div id=\"masking_cost_time" + tab_number + "\" class=\"navbar-text\" >\n" +
+                "    <div id=\"mask_time" + tab_number + "\" class=\"navbar-text\" >\n" +
                 "        <small>脱敏时间 : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
                 "    </div>\n" +
                 "    <table id=\"query_result" + tab_number + "\" data-toggle=\"table\" class=\"table table-condensed\"\n" +
@@ -328,6 +328,7 @@
                 editor.clearSelection();
             }
         );
+
         function display_data(data) {
             if (data.status === 0 || data.status === 2) {
                 //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
@@ -349,7 +350,7 @@
                 }
 
                 var result = data.data;
-                //查询报错失败
+                //查询报错失败或者inception检测报错
                 if (result['error']) {
                     alertStyle = "alert-danger";
                     $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
@@ -359,27 +360,7 @@
                             title: 'Error'
                         }],
                         data: [{
-                            error: '数据库返回异常：' + result['error']
-                        }]
-                    })
-                }
-                //inception检测报错
-                else if (data.status === 2) {
-                    var errer_info = data.msg;
-                    //替换所有的换行符
-                    errer_info = errer_info.replace(/\r\n/g, "<br>");
-                    errer_info = errer_info.replace(/\n/g, "<br>");
-                    //替换所有的空格
-                    errer_info = errer_info.replace(/\s/g, "&nbsp;");
-                    alertStyle = "alert-danger";
-                    $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                        escape: false,
-                        columns: [{
-                            field: 'error',
-                            title: 'Error'
-                        }],
-                        data: [{
-                            error: errer_info
+                            error: result['error']
                         }]
                     })
                 }
@@ -390,19 +371,9 @@
                         columns.push({
                             "field": i,
                             "title": column,
-                            "sortable": true,
-                            /*"formatter": function (value, row, index) {
-                                //return value;
-                                return $('<div/>').text(value).html();
-                            }*/
+                            "sortable": true
                         });
                     });
-                    /*//插入选择框
-                    columns.unshift({
-                        title: '',
-                        field: 'checkbox',
-                        checkbox: true
-                    });*/
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
@@ -450,16 +421,16 @@
                         });
                     }
                     //执行时间和脱敏时间赋值
-                    $("#" + ('time') + n).text(result['cost_time'] + ' sec');
-                    $("#" + ('masking_time') + n).text(result['masking_cost_time'] + ' sec');
+                    $("#" + ('time') + n).text(result['query_time'] + ' sec');
+                    $("#" + ('masking_time') + n).text(result['mask_time'] + ' sec');
                 }
             } else {
                 alert(data.msg);
             }
         }
+
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
-            var columns = [];
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
@@ -499,7 +470,7 @@
                 },
                 success: function (data) {
                     display_data(data)
-                    },
+                },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
@@ -605,7 +576,7 @@
                     data.is_describe = true;
                     display_data(data);
                 },
-            })
+            });
             //自动补全提示
             setColumnsCompleteData()
         });

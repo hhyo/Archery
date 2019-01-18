@@ -67,10 +67,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     instance = Instance.objects.get(instance_name=instance_name)
     # 检查用户是否有该数据库/表的查询权限
     if user.is_superuser:
-        if SysConfig().sys_config.get('admin_query_limit', 5000):
-            user_limit_num = int(SysConfig().sys_config.get('admin_query_limit'))
-        else:
-            user_limit_num = 5000
+        user_limit_num = int(SysConfig().get('admin_query_limit', 5000))
         limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
         result['data']['limit_num'] = limit_num
         return result
@@ -127,7 +124,7 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
         result['status'] = 1
         result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
         return result
-    if SysConfig().sys_config.get('query_check'):
+    if SysConfig().get('query_check'):
         return table_ref_result
     else:
         result['data']['priv_check'] = 2
@@ -458,6 +455,7 @@ def query(request):
         result['status'] = 1
         result['msg'] = '实例不存在'
         return result
+
     # 服务器端参数验证
     if sql_content is None or db_name is None or instance_name is None or limit_num is None:
         result['status'] = 1
@@ -465,12 +463,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_content = sql_content.strip()
-    archer_config = SysConfig()
-    if archer_config.get('disable_star'):
-        if '*' in sql_content:
-            result['status'] = 1
-            result['msg'] = '不允许 * 标记, 请指定具体字段名.'
-            return HttpResponse(json.dumps(result), content_type='application/json')
+
     # 获取用户信息
     user = request.user
 
@@ -481,7 +474,8 @@ def query(request):
     # 去除空行
     sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
-    sql_list = sql_content.strip().split('\n')
+    # 语法判断
+    sql_list = sqlparse.split(sql_content)
     for sql in sql_list:
         if re.match(r"^select|^show|^explain", sql.lower()):
             break
@@ -491,23 +485,22 @@ def query(request):
             return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 执行第一条有效sql
-    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
+    sql_content = sql_list[0].rstrip(';')
 
     try:
         # 查询权限校验
         priv_check_info = query_priv_check(user, instance_name, db_name, sql_content, limit_num)
-
         if priv_check_info['status'] == 0:
             limit_num = priv_check_info['data']['limit_num']
             priv_check = priv_check_info['data']['priv_check']
         else:
             return HttpResponse(json.dumps(priv_check_info), content_type='application/json')
+        limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
 
-        if re.match(r"^explain", sql_content.lower()):
-            limit_num = 0
+        # 查询检查
         query_engine = get_engine(instance=instance)
         filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
-        if filter_result.get('bad_query'):
+        if filter_result.get('bad_query') and SysConfig().get('disable_star') is True:
             result['status'] = 1
             result['msg'] = filter_result.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')
@@ -525,14 +518,14 @@ def query(request):
         hit_rule = 0 if re.match(r"^select", sql_content.lower()) else 2  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
         masking = 2  # 查询结果是否正常脱敏，1, '是', 2, '否'
         t_start = time.time()
-        # 仅对查询语句进行脱敏
-
-        if SysConfig().sys_config.get('data_masking') and re.match(r"^select", sql_content.lower()):
+        # 仅对正确查询的语句进行脱敏
+        if SysConfig().get('data_masking') and re.match(r"^select", sql_content.lower()) and query_result.error is None:
             try:
                 query_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
-                if SysConfig().sys_config.get('query_check') and query_result.is_critical == True:
-                    masking_result = query_result.__dict__
-                    masking_result['status'] = 1
+                if SysConfig().get('query_check') and query_result.is_critical is True:
+                    masking_result = {'status': query_result.status,
+                                      'msg': query_result.error,
+                                      'data': query_result.__dict__}
                     return HttpResponse(json.dumps(masking_result), content_type='application/json')
                 else:
                     # 实际未命中, 则显示为未做脱敏
@@ -544,7 +537,7 @@ def query(request):
                 # 报错, 未脱敏, 未命中
                 hit_rule = 2
                 masking = 2
-                if SysConfig().sys_config.get('query_check'):
+                if SysConfig().get('query_check'):
                     result['status'] = 1
                     result['msg'] = '脱敏数据报错,请联系管理员'
                     return HttpResponse(json.dumps(result), content_type='application/json')
@@ -552,8 +545,6 @@ def query(request):
         t_end = time.time()
         query_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
         sql_result = query_result.__dict__
-        sql_result['masking_cost_time'] = query_result.mask_time
-        sql_result['cost_time'] = query_result.query_time
 
         result['data'] = sql_result
 
