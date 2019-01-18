@@ -1,11 +1,16 @@
 import json
+from unittest.mock import patch, MagicMock
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.test import TestCase
-from django.test import Client
-from sql.models import Users
+from django.test import Client, TestCase
+from django.contrib.auth.models import Permission
 from common.config import SysConfig
-
+from sql.engines.models import ResultSet
+from sql.models import Instance, ResourceGroup, ResourceGroupRelations
+from sql.engines.mysql import MysqlEngine
+from sql import query
+Users = get_user_model()
 class SignUpTests(TestCase):
     def setUp(self):
         """
@@ -105,3 +110,50 @@ class ConfigOpsTests(TestCase):
         archer_config.set('other_config','testvalue3')
         archer_config.get_all_config()
         self.assertEqual(archer_config.sys_config['other_config'], 'testvalue3')
+
+
+class QueryTest(TestCase):
+    def setUp(self):
+        self.slave1 = Instance(instance_name='test_slave_instance',type='slave', db_type='mysql',
+                        host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.slave1.save()
+        User = get_user_model()
+        self.u1 = User(username='test_user', display ='中文显示', is_active=True)
+        self.u1.save()
+        self.u2 = User(username='test_user2', display ='中文显示', is_active=True)
+        self.u2.save()
+        sql_query_perm = Permission.objects.get(codename='query_submit')
+        self.u2.user_permissions.add(sql_query_perm)
+
+    def testcorrectSQL(self):
+        c = Client()
+        some_sql = 'select some from some_table limit 100;'
+        some_db = 'some_db'
+        some_limit = 100
+        c.force_login(self.u1)
+        r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
+                                    'sql_content': some_sql,
+                                    'db_name':some_db,
+                                    'limit_num': some_limit})
+        self.assertEqual(r.status_code, 403)
+        c.force_login(self.u2)
+        q_result = ResultSet(full_sql=some_sql, rows=['value'])
+        q_result.column_list = ['some']
+        
+        mock_engine = MysqlEngine
+        mock_engine.query = MagicMock(return_value=q_result)
+        mock_engine.query_masking = MagicMock(return_value=q_result)
+        
+        mock_query = query
+        mock_query.query_priv_check = MagicMock(return_value={'status':0, 'data':{'limit_num':100, 'priv_check':1}})
+        r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
+                                    'sql_content': some_sql,
+                                    'db_name':some_db,
+                                    'limit_num': some_limit})
+        mock_engine.query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
+        r_json = r.json()
+        self.assertEqual(r_json['data']['rows'], ['value'])
+        self.assertEqual(r_json['data']['column_list'], ['some'])
+
+    def testMasking(self):
+        pass
