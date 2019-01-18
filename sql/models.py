@@ -66,11 +66,11 @@ class ResourceGroupRelations(models.Model):
 class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'), ('mssql', 'MsSQL')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'MySQL'), ('mssql', 'MsSQL')))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=3306)
     user = models.CharField('用户名', max_length=100)
-    password = models.CharField('密码', max_length=300)
+    password = models.CharField('密码', max_length=300, null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
