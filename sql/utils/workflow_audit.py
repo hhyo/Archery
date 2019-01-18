@@ -1,10 +1,11 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.auth.models import Group
 from django.utils import timezone
+from django_q.tasks import async_task
 
+from sql.notify import notify
 from sql.utils.resource_group import user_groups, auth_group_users
 from sql.utils.sql_review import is_auto_review
-from sql.notify import notify
 from common.utils.const import WorkflowDict
 from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, ResourceGroup, \
     SqlWorkflow, QueryPrivilegesApply, Users
@@ -54,7 +55,7 @@ class Audit(object):
             audit_auth_groups_list = audit_auth_groups.split(',')
 
         # 判断是否无需审核,并且修改审批人为空
-        if SysConfig().sys_config.get('auto_review', False):
+        if SysConfig().get('auto_review', False):
             if workflow_type == WorkflowDict.workflow_type['sqlreview']:
                 if is_auto_review(workflow_id):
                     sql_workflow = SqlWorkflow.objects.get(id=int(workflow_id))
@@ -123,13 +124,17 @@ class Audit(object):
                          )
 
         # 消息通知
-        sys_config = SysConfig().sys_config
+        sys_config = SysConfig()
         if sys_config.get('mail') or sys_config.get('ding'):
             # 再次获取审核信息
             audit_info = WorkflowAudit.objects.get(audit_id=audit_detail.audit_id)
             base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
             workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
-            notify(audit_info=audit_info, workflow_url=workflow_url, email_cc=kwargs.get('list_cc_addr', []))
+            async_task(notify,
+                       audit_info=audit_info,
+                       workflow_url=workflow_url,
+                       email_cc=kwargs.get('list_cc_addr', []),
+                       timeout=60)
 
         # 返回添加结果
         return result
@@ -256,13 +261,13 @@ class Audit(object):
             raise Exception(result['msg'])
 
         # 消息通知
-        sys_config = SysConfig().sys_config
+        sys_config = SysConfig()
         if sys_config.get('mail') or sys_config.get('ding'):
             # 再次获取审核信息
             audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
             base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
             workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
-            notify(audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark)
+            async_task(notify, audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark, timeout=60)
 
         # 返回审核结果
         result['data'] = {'workflow_status': audit_result.current_status}

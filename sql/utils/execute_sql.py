@@ -4,7 +4,7 @@ import sqlparse
 from sql.utils.resource_group import auth_group_users
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
-from common.utils.sendmsg import MailSender
+from common.utils.sendmsg import MsgSender
 from sql.models import Users, SqlWorkflow, ResourceGroup
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
@@ -70,15 +70,13 @@ def execute_callback(task):
 
 # 执行结果通知
 def send_msg(workflow_detail):
-    mail_sender = MailSender()
-    sys_config = SysConfig().sys_config
+    mail_sender = MsgSender()
+    sys_config = SysConfig()
     # 获取当前审批和审批流程
-    BASE_URL = sys_config.get('archery_base_url', 'http://127.0.0.1:8000')
-    BASE_URL = BASE_URL.rstrip('/')  # 防止填写类似 http://127.0.0.1:8000/ 的地址
-    url = '{0}/detail/{1}/'.format(BASE_URL, workflow_detail.id)
+    base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
     audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_detail.id, 2)
     audit_id = Audit.detail_by_workflow_id(workflow_detail.id, 2).audit_id
-    # 如果执行完毕了，则根据配置决定是否给提交者和DBA一封邮件提醒，DBA需要知晓审核并执行过的单子
+    url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_id)
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'], workflow_detail.status, audit_id)
     msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
         workflow_detail.engineer_display, workflow_detail.group_name, audit_auth_group, workflow_detail.workflow_name,
@@ -97,8 +95,9 @@ def send_msg(workflow_detail):
     if sys_config.get('ding'):
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = ResourceGroup.objects.get(group_id=workflow_detail.group_id).ding_webhook
-        MailSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+        MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
+    # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group', None) \
             and workflow_detail.status == '已正常结束':
         # 判断上线语句是否存在DDL，存在则通知相关人员
@@ -124,14 +123,6 @@ def send_msg(workflow_detail):
                 break
             # drop语法
             elif re.match(r"^drop|^rename|^truncate", statement.strip().lower()):
-                send = 1
-                break
-            # rename语法
-            elif re.match(r"", statement.strip().lower()):
-                send = 1
-                break
-            # truncate语法
-            elif re.match(r"", statement.strip().lower()):
                 send = 1
                 break
 

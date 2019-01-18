@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from multiprocessing import Process
-
 import simplejson as json
 import time
 import json
@@ -10,6 +8,7 @@ import os
 
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.shortcuts import render
+from django_q.tasks import async_task
 from pymongo import DESCENDING
 from django.views import View
 from themis.utils.jsonres import temRes
@@ -693,8 +692,7 @@ class SqlReviewTaskPublish(BaseHandler):
             'create_user': request.user.display
         }
 
-        p = Process(target=self.run, kwargs=kwargs)
-        p.start()
+        async_task(self.run, kwargs=kwargs)
 
         context = {
             "errcode": 80058,

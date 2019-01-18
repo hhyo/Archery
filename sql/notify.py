@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from common.config import SysConfig
 from sql.models import QueryPrivilegesApply, Users, SqlWorkflow, ResourceGroup
 from sql.utils.resource_group import auth_group_users
-from common.utils.sendmsg import MailSender
+from common.utils.sendmsg import MsgSender
 from common.utils.const import WorkflowDict
 
 import logging
@@ -109,11 +109,11 @@ def notify(audit_info, msg_type=0, **kwargs):
         raise Exception('工单状态不正确')
 
     # 判断是发送钉钉还是发送邮件
-    msg_sender = MailSender()
+    msg_sender = MsgSender()
     logger.debug('发送消息通知，消息audit_id={}'.format(audit_id))
     logger.debug('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
     if msg_type == 0:
-        sys_config = SysConfig().sys_config
+        sys_config = SysConfig()
         if sys_config.get('mail'):
             msg_sender.send_email(msg_title, msg_content, msg_email_reciver, list_cc_addr=msg_email_cc)
         if sys_config.get('ding'):

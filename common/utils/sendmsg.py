@@ -5,25 +5,22 @@ import smtplib
 import requests
 import logging
 import traceback
-from threading import Thread
 from email import encoders
 from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import formataddr
+
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
 
 
-class MailSender(object):
+class MsgSender(object):
 
     def __init__(self):
-        sys_config = SysConfig().sys_config
+        sys_config = SysConfig()
         self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
-        if sys_config.get('mail_smtp_port'):
-            self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port'))
-        else:
-            self.MAIL_REVIEW_SMTP_PORT = 25
+        self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port', 25))
         self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
         self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
         self.MAIL_SSL = sys_config.get('mail_ssl')
@@ -43,7 +40,7 @@ class MailSender(object):
 
         return file_msg
 
-    def _send_email(self, subject, body, to, **kwargs):
+    def send_email(self, subject, body, to, **kwargs):
         """
         发送邮件
         :param subject:
@@ -113,7 +110,3 @@ class MailSender(object):
             logger.debug('钉钉推送成功')
         except Exception:
             logger.error('钉钉推送失败\n{}'.format(traceback.format_exc()))
-
-    def send_email(self, subject, body, to, **kwargs):
-        p = Thread(target=self._send_email, args=(subject, body, to), kwargs=kwargs)
-        p.start()
