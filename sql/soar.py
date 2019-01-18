@@ -19,8 +19,8 @@ class Soar(PermissionRequiredMixin):
     raise_exception = True
 
     def __init__(self):
-        self.soar_path = SysConfig().sys_config.get('soar')
-        self.soar_test_dsn = SysConfig().sys_config.get('soar_test_dsn')
+        self.soar_path = SysConfig().get('soar')
+        self.soar_test_dsn = SysConfig().get('soar_test_dsn')
 
 
 # 获取soar的处理结果

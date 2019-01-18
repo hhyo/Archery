@@ -15,8 +15,9 @@ from sql.models import Users, ResourceGroup, ResourceGroupRelations
 
 logger = logging.getLogger('default')
 
+
 def init_user(user):
-    default_auth_group = SysConfig().sys_config.get('default_auth_group', '')
+    default_auth_group = SysConfig().get('default_auth_group', '')
     if default_auth_group:
         try:
             group = Group.objects.get(name=default_auth_group)
@@ -25,19 +26,20 @@ def init_user(user):
             logger.error(traceback.format_exc())
             logger.error('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
     # 添加到默认资源组
-    default_resource_group = SysConfig().sys_config.get('default_resource_group', '')
+    default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
         try:
             new_relation = ResourceGroupRelations(
                 object_type=0,
-                object_id = user.id,
-                object_name = str(user),
-                group_id = ResourceGroup.objects.get(group_name=default_resource_group).group_id,
-                group_name = default_resource_group)
+                object_id=user.id,
+                object_name=str(user),
+                group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id,
+                group_name=default_resource_group)
             new_relation.save()
         except Exception:
             logger.error(traceback.format_exc())
             logger.error('无name为{}的资源组，无法默认关联，请到系统设置进行配置'.format(default_resource_group))
+
 
 class ArcherAuth(object):
     def __init__(self, request):
@@ -52,6 +54,7 @@ class ArcherAuth(object):
             user.failed_login_count = 0
             user.save()
             return user
+
     def authenticate(self):
         username = self.request.POST.get('username')
         password = self.request.POST.get('password')
@@ -75,7 +78,7 @@ class ArcherAuth(object):
             return {'status': 1, 'msg': '服务器错误{}'.format(traceback.format_exc()), 'data': ''}
         # 已存在用户, 验证是否在锁期间
         # 读取配置文件
-        sys_config = SysConfig().sys_config
+        sys_config = SysConfig()
         if sys_config.get('lock_cnt_threshold'):
             lock_count = int(sys_config.get('lock_cnt_threshold'))
         else:
@@ -105,6 +108,7 @@ class ArcherAuth(object):
         user.save()
         return {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
 
+
 # ajax接口，登录页面调用，用来验证用户名密码
 def authenticate_entry(request):
     """接收http请求，然后把请求中的用户名密码传给ArcherAuth去验证"""
@@ -119,7 +123,7 @@ def authenticate_entry(request):
 # 注册用户
 def sign_up(request):
     sign_up_enabled = SysConfig().get('sign_up_enabled', False)
-    if not sign_up_enabled :
+    if not sign_up_enabled:
         result = {'status': 1, 'msg': '注册未启用,请联系管理员开启', 'data': None}
         return HttpResponse(json.dumps(result), content_type='application/json')
     username = request.POST.get('username')
@@ -146,10 +150,10 @@ def sign_up(request):
             result['status'] = 1
             result['msg'] = str(msg)
         new_user = Users.objects.create_user(username=username,
-                                      password=password,
-                                      display=display,
-                                      email=email,
-                                      is_active=1)
+                                             password=password,
+                                             display=display,
+                                             email=email,
+                                             is_active=1)
         init_user(new_user)
     return HttpResponse(json.dumps(result), content_type='application/json')
 

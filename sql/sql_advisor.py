@@ -44,7 +44,7 @@ def sqladvisor(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
 
     # 提交给sqladvisor获取审核结果
-    sqladvisor_path = SysConfig().sys_config.get('sqladvisor')
+    sqladvisor_path = SysConfig().get('sqladvisor')
     sql_content = sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
     try:
         p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (

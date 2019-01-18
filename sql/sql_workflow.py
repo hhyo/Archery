@@ -232,7 +232,7 @@ def autoreview(request):
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
 
     # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内跳过inception直接执行
-    sys_config = SysConfig().sys_config
+    sys_config = SysConfig()
     is_manual = 0
     workflow_status = Const.workflowStatus['manreviewing']
     for row in check_result.rows:

@@ -92,7 +92,7 @@ def schemasync(request):
     target_instance_info = Instance.objects.get(instance_name=target_instance_name)
 
     # 获取对比结果文件
-    path = SysConfig().sys_config.get('schemasync', '')
+    path = SysConfig().get('schemasync', '')
     timestamp = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
 
@@ -145,10 +145,8 @@ def get_db_name_list(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
-        # 取出该实例的连接方式，为了后面连进去获取所有databases
         query_engine = get_engine(instance=instance)
         db_list = query_engine.get_all_databases()
-        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = db_list
         if not db_list:
             result['status'] = 1
@@ -172,10 +170,8 @@ def get_table_name_list(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
-        # 取出该实例实例的连接方式，为了后面连进去获取所有的表
         query_engine = get_engine(instance=instance)
         table_list = query_engine.get_all_tables(db_name)
-        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = table_list
         if not table_list:
             result['status'] = 1
@@ -200,10 +196,8 @@ def get_column_name_list(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
-        # 取出该实例的连接方式，为了后面连进去获取表的所有字段
         query_engine = get_engine(instance=instance)
         col_list = query_engine.get_all_columns_by_tb(db_name, tb_name)
-        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = col_list
         if not col_list:
             result['status'] = 1
@@ -226,10 +220,8 @@ def describe(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
-        # 取出该实例的连接方式，为了后面连进去获取表的所有字段
         query_engine = get_engine(instance=instance)
         query_result = query_engine.descibe_table(db_name, tb_name)
-        # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
         result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1

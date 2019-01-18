@@ -31,7 +31,7 @@ def is_auto_review(workflow_id):
             sql_content.splitlines(1))).strip()
 
     # 获取正则表达式
-    auto_review_regex = SysConfig().sys_config.get('auto_review_regex',
+    auto_review_regex = SysConfig().get('auto_review_regex',
                                                    '^alter|^create|^drop|^truncate|^rename|^delete')
     p = re.compile(auto_review_regex)
 
@@ -52,7 +52,7 @@ def is_auto_review(workflow_id):
                 affected_rows = review_result[6]
                 if re.match(r"^update", sql.strip().lower()):
                     all_affected_rows = all_affected_rows + int(affected_rows)
-            if int(all_affected_rows) > int(SysConfig().sys_config.get('auto_review_max_update_rows', 50)):
+            if int(all_affected_rows) > int(SysConfig().get('auto_review_max_update_rows', 50)):
                 is_autoreview = False
 
     # inception不支持语法都需要审批

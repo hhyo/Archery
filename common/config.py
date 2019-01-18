@@ -34,9 +34,9 @@ class SysConfig(object):
                 all_config = Config.objects.all().values('item', 'value')
                 sys_config = {}
                 for items in all_config:
-                    if items['value'] == 'true':
+                    if items['value'] in ('true', 'True'):
                         items['value'] = True
-                    elif items['value'] == 'false':
+                    elif items['value'] in ('false', 'False'):
                         items['value'] = False
                     sys_config[items['item']] = items['value']
                 self.sys_config = sys_config
@@ -50,10 +50,6 @@ class SysConfig(object):
 
     def get(self, key, default_value=None):
         value = self.sys_config.get(key, default_value)
-        if value == 'false' or value == 'False':
-            return False
-        if value == 'true' or value == 'True':
-            return True
         # 是字符串的话, 如果是空, 或者全是空格, 返回默认值
         if isinstance(value, str) and value.strip() == '':
             return default_value
@@ -64,6 +60,9 @@ class SysConfig(object):
             value = 'true'
         elif value is False:
             value = 'false'
+        config_item, created = Config.objects.get_or_create(item=key)
+        config_item.value = value
+        config_item.save()
         # 删除并更新缓存
         try:
             cache.delete('sys_config')
@@ -71,9 +70,6 @@ class SysConfig(object):
             logger.error(traceback.format_exc())
         finally:
             self.get_all_config()
-        config_item, created = Config.objects.get_or_create(item=key)
-        config_item.value = value
-        config_item.save()
 
     def replace(self, configs):
         result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -101,7 +97,7 @@ class SysConfig(object):
 
 # 修改系统配置
 @superuser_required
-def changeconfig(request):
+def change_config(request):
     configs = request.POST.get('configs')
     archer_config = SysConfig()
     result = archer_config.replace(configs)

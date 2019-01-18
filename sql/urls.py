@@ -52,7 +52,7 @@ urlpatterns = [
 
     path('workflow/list/', workflow.lists),
     path('workflow/log/', workflow.log),
-    path('config/change/', config.changeconfig),
+    path('config/change/', config.change_config),
 
     path('check/inception/', check.inception),
     path('check/email/', check.email),
