@@ -5,7 +5,7 @@ from sql.models import Users, Instance, ResourceGroup, ResourceGroupRelations
 
 # 获取用户关联资源组列表
 def user_groups(user):
-    if user.is_superuser == 1:
+    if user.is_superuser:
         group_list = [group for group in ResourceGroup.objects.filter(is_deleted=0)]
     else:
         group_ids = [group['group_id'] for group in

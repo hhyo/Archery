@@ -71,47 +71,6 @@ class SignUpTests(TestCase):
         self.assertTrue(user)
 
 
-class ConfigOpsTests(TestCase):
-    def setUp(self):
-        pass
-    def test_replace_configs(self):
-        archer_config = SysConfig()
-        new_config = json.dumps(
-            [{'key': 'numconfig','value': 1},
-            {'key':'strconfig','value':'strconfig'}, 
-            {'key':'boolconfig','value':'false'}])
-        archer_config.replace(new_config)
-        archer_config.get_all_config()
-        expected_config = {
-            'numconfig': '1',
-            'strconfig': 'strconfig',
-            'boolconfig': False
-            }
-        self.assertEqual(archer_config.sys_config,expected_config)
-    def test_get_bool_transform(self):
-        bool_config = json.dumps([{'key':'boolconfig2','value':'false'}])
-        archer_config = SysConfig()
-        archer_config.replace(bool_config)
-        archer_config.get_all_config()
-        self.assertEqual(archer_config.sys_config['boolconfig2'], False)
-    def test_set_bool_transform(self):
-        archer_config = SysConfig()
-        archer_config.set('boolconfig3', False)
-        archer_config.get_all_config()
-        self.assertEqual(archer_config.sys_config['boolconfig3'], False)
-    def test_get_other_data(self):
-        new_config = json.dumps([{'key':'other_config','value':'testvalue'}])
-        archer_config = SysConfig()
-        archer_config.replace(new_config)
-        archer_config.get_all_config()
-        self.assertEqual(archer_config.sys_config['other_config'], 'testvalue')
-    def test_set_other_data(self):
-        archer_config = SysConfig()
-        archer_config.set('other_config','testvalue3')
-        archer_config.get_all_config()
-        self.assertEqual(archer_config.sys_config['other_config'], 'testvalue3')
-
-
 class QueryTest(TestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance',type='slave', db_type='mysql',
@@ -139,11 +98,11 @@ class QueryTest(TestCase):
         c.force_login(self.u2)
         q_result = ResultSet(full_sql=some_sql, rows=['value'])
         q_result.column_list = ['some']
-        
+
         mock_engine = MysqlEngine
         mock_engine.query = MagicMock(return_value=q_result)
         mock_engine.query_masking = MagicMock(return_value=q_result)
-        
+
         mock_query = query
         mock_query.query_priv_check = MagicMock(return_value={'status':0, 'data':{'limit_num':100, 'priv_check':1}})
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
@@ -157,3 +116,8 @@ class QueryTest(TestCase):
 
     def testMasking(self):
         pass
+    def tearDown(self):
+        self.u1.delete()
+        self.u2.delete()
+        self.slave1.delete()
+

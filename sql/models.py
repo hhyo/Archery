@@ -95,8 +95,10 @@ class Instance(models.Model):
         super(Instance, self).save(*args, **kwargs)
 
 
-# 存放各个SQL上线工单的详细内容，可定期归档或清理历史数据，也可通过alter table workflow row_format=compressed; 来进行压缩
 class SqlWorkflow(models.Model):
+    """存放各个SQL上线工单的详细内容
+    可定期归档或清理历史数据，也可通过``alter table workflow row_format=compressed; ``来进行压缩
+    """
     workflow_name = models.CharField('工单内容', max_length=50)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)

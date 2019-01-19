@@ -41,6 +41,7 @@ def query_audit_call_back(workflow_id, workflow_status):
     if workflow_status == WorkflowDict.workflow_status['audit_success']:
         apply_queryset = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
         # 库权限
+
         if apply_queryset.priv_type == 1:
             insertlist = [QueryPrivileges(
                 user_name=apply_queryset.user_name,

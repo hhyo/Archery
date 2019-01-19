@@ -1,16 +1,14 @@
 # -*- coding: UTF-8 -*-
 import logging
-import smtplib
 import traceback
 
 import MySQLdb
 import simplejson as json
 from django.http import HttpResponse
-from email.header import Header
-from email.mime.text import MIMEText
 
 from common.utils.permission import superuser_required
 from sql.models import Instance
+from common.utils.sendmsg import MailSender
 
 logger = logging.getLogger('default')
 
@@ -67,36 +65,34 @@ def email(request):
     mail_smtp_port = request.POST.get('mail_smtp_port', '')
     mail_smtp_user = request.POST.get('mail_smtp_user', '')
     mail_smtp_password = request.POST.get('mail_smtp_password', '')
-
-    if mail:
-        try:
-            if mail_ssl:
-                server = smtplib.SMTP_SSL(mail_smtp_server, mail_smtp_port)  # SMTP协议默认SSL端口是465
-            else:
-                server = smtplib.SMTP(mail_smtp_server, mail_smtp_port)  # SMTP协议默认端口是25
-            # 如果提供的密码为空，则不需要登录SMTP server
-            if mail_smtp_password:
-                server.login(mail_smtp_user, mail_smtp_password)
-            # 获取当前用户邮箱，发送测试邮件
-            if request.user.email:
-                message = MIMEText('Archery 邮件发送测试...', 'plain', 'utf-8')
-                message['From'] = Header("Archery", 'utf-8')
-                message['To'] = Header("测试", 'utf-8')
-                subject = 'Archery 邮件发送测试...'
-                message['Subject'] = Header(subject, 'utf-8')
-                server.sendmail(mail_smtp_user, request.user.email, message.as_string())
-            else:
-                result['status'] = 1
-                result['msg'] = '请先完善当前用户邮箱信息！'
-        except Exception as e:
-            logger.error(traceback.format_exc())
-            result['status'] = 1
-            result['msg'] = '邮件服务配置不正确,\n{}'.format(str(e))
-    else:
+    if not mail:
         result['status'] = 1
         result['msg'] = '请先开启邮件通知！'
-    # 返回结果
+        # 返回结果
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    try:
+        mail_smtp_port = int(mail_smtp_port)
+        if mail_smtp_port < 0:
+            raise ValueError
+    except ValueError:
+        result['status'] = 1
+        result['msg'] = '端口号只能为正整数'
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    if not request.user.email:
+        result['status'] = 1
+        result['msg'] = '请先完善当前用户邮箱信息！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    bd = 'Archery 邮件发送测试...'
+    subj = 'Archery 邮件发送测试'
+    sender = MailSender(server=mail_smtp_server, port=mail_smtp_port, user=mail_smtp_user,
+                        password=mail_smtp_password, ssl=mail_ssl)
+    sender_response = sender.send_email(subj, bd, [request.user.email])
+    if sender_response != 'success':
+        result['status'] = 1
+        result['msg'] = sender_response
+        return HttpResponse(json.dumps(result), content_type='application/json')
     return HttpResponse(json.dumps(result), content_type='application/json')
+
 
 
 # 检测实例配置

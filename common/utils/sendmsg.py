@@ -17,14 +17,26 @@ logger = logging.getLogger('default')
 
 class MsgSender(object):
 
-    def __init__(self):
-        sys_config = SysConfig()
-        self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
-        self.MAIL_REVIEW_SMTP_PORT = int(sys_config.get('mail_smtp_port', 25))
-        self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
-        self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
-        self.MAIL_SSL = sys_config.get('mail_ssl')
-
+    def __init__(self, **kwargs):
+        if kwargs:
+            self.MAIL_REVIEW_SMTP_SERVER = kwargs.get('server')
+            self.MAIL_REVIEW_SMTP_PORT = kwargs.get('port', 0)
+            self.MAIL_REVIEW_FROM_ADDR = kwargs.get('user')
+            self.MAIL_REVIEW_FROM_PASSWORD = kwargs.get('password')
+            self.MAIL_SSL = kwargs.get('ssl')
+        else:
+            sys_config = SysConfig()
+            self.MAIL_REVIEW_SMTP_SERVER = sys_config.get('mail_smtp_server')
+            self.MAIL_REVIEW_SMTP_PORT = sys_config.get('mail_smtp_port', 0)
+            self.MAIL_SSL = sys_config.get('mail_ssl')
+            self.MAIL_REVIEW_FROM_ADDR = sys_config.get('mail_smtp_user')
+            self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
+        if self.MAIL_REVIEW_SMTP_PORT:
+            self.MAIL_REVIEW_SMTP_PORT = int(self.MAIL_REVIEW_SMTP_PORT)
+        elif self.MAIL_SSL:
+            self.MAIL_REVIEW_SMTP_PORT = 465
+        else:
+            self.MAIL_REVIEW_SMTP_PORT = 25
     @staticmethod
     def _add_attachment(filename):
         """
@@ -47,14 +59,19 @@ class MsgSender(object):
         :param body:
         :param to:
         :param kwargs:
-        :return:
+        :return: str: 成功为 'success'
+                      有异常为 traceback信息
         """
 
         try:
-            if to is None or to == ['']:
+            if not to:
                 logger.error('收件人为空，无法发送邮件')
                 return
+            if not isinstance(to, list):
+                raise TypeError('收件人需要为列表')
             list_cc = kwargs.get('list_cc_addr', [])
+            if not isinstance(list_cc, list):
+                raise TypeError('抄送人需要为列表')
 
             # 构造MIMEMultipart对象做为根容器
             main_msg = email.mime.multipart.MIMEMultipart()
@@ -83,13 +100,16 @@ class MsgSender(object):
                 server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # 默认端口是25
 
             # 如果提供的密码为空，则不需要登录
-            if self.MAIL_REVIEW_FROM_PASSWORD != '':
+            if self.MAIL_REVIEW_FROM_PASSWORD:
                 server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
             server.sendmail(self.MAIL_REVIEW_FROM_ADDR, to + list_cc, main_msg.as_string())
             server.quit()
             logger.debug('邮件推送成功')
+            return 'success'
         except Exception:
-            logger.error('邮件推送失败\n{}'.format(traceback.format_exc()))
+            errmsg = '邮件推送失败\n{}'.format(traceback.format_exc())
+            logger.error(errmsg)
+            return errmsg
 
     @staticmethod
     def send_ding(url, content):
@@ -99,14 +119,19 @@ class MsgSender(object):
         :param content:
         :return:
         """
-        try:
-            data = {
-                "msgtype": "text",
-                "text": {
-                    "content": "{}".format(content)
-                },
-            }
-            requests.post(url=url, json=data)
+        data = {
+            "msgtype": "text",
+            "text": {
+                "content": "{}".format(content)
+            },
+        }
+        r = requests.post(url=url, json=data)
+        r_json = r.json()
+        if r_json['errcode'] == 0:
             logger.debug('钉钉推送成功')
-        except Exception:
-            logger.error('钉钉推送失败\n{}'.format(traceback.format_exc()))
+        else:
+            logger.error("""钉钉推送失败
+错误码:{}
+返回错误信息:{}
+请求url:{}
+请求data:{}""".format(r_json['errcode'], r_json['errmsg'], url, data))

@@ -31,9 +31,9 @@ def login(request):
     return render(request, 'login.html')
 
 
-# SQL上线工单列表页面
-@permission_required('sql.menu_sqlworkflow', raise_exception=True)
+
 def sqlworkflow(request):
+    """SQL上线工单列表页面"""
     return render(request, 'sqlworkflow.html')
 
 
