@@ -13,7 +13,7 @@ before_script:
   - python manage.py makemigrations
   - python manage.py makemigrations sql
 script:
-  - coverage run manage.py test sql -v 3
+  - coverage run manage.py test -v 3
 
 after_success:
   - codecov

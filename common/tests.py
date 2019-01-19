@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from common.config import SysConfig
-from common.utils.sendmsg import MailSender
+from common.utils.sendmsg import MsgSender
 from sql.models import Instance
 User = get_user_model()
 
@@ -67,14 +67,14 @@ class SendMessageTest(TestCase):
         archer_config.set('mail_ssl', self.smtp_ssl)
 
     def testSenderInit(self):
-        sender = MailSender()
+        sender = MsgSender()
         self.assertEqual(sender.MAIL_REVIEW_SMTP_PORT, self.smtp_port)
         archer_config = SysConfig()
         archer_config.set('mail_smtp_port', '')
-        sender = MailSender()
+        sender = MsgSender()
         self.assertEqual(sender.MAIL_REVIEW_SMTP_PORT, 465)
         archer_config.set('mail_ssl', False)
-        sender = MailSender()
+        sender = MsgSender()
         self.assertEqual(sender.MAIL_REVIEW_SMTP_PORT, 25)
 
     @patch.object(smtplib.SMTP, '__init__', return_value=None)
@@ -90,7 +90,7 @@ class SendMessageTest(TestCase):
         archer_config.set('mail_ssl', '')
 
         archer_config.set('mail_smtp_password', '')
-        sender2 = MailSender()
+        sender2 = MsgSender()
         sender2.send_email(some_sub, some_body, some_to)
         login.assert_not_called()
 
@@ -106,7 +106,7 @@ class SendMessageTest(TestCase):
         archer_config = SysConfig()
         archer_config.set('mail_ssl', '')
         archer_config.set('mail_smtp_password', self.smtp_password)
-        sender = MailSender()
+        sender = MsgSender()
         sender.send_email(some_sub, some_body, some_to)
         login.assert_called_once()
         sendmail.assert_called_with(self.smtp_user, some_to, ANY)
@@ -123,7 +123,7 @@ class SendMessageTest(TestCase):
         some_to = ['mail_to']
         archer_config = SysConfig()
         archer_config.set('mail_ssl', True)
-        sender = MailSender()
+        sender = MsgSender()
         sender.send_email(some_sub, some_body, some_to)
         sendmail.assert_called_with(self.smtp_user, some_to, ANY)
         _quit.assert_called_once()
@@ -145,7 +145,7 @@ class DingTest(TestCase):
 
     @patch('requests.post')
     def testDing(self, post):
-        sender = MailSender()
+        sender = MsgSender()
         post.return_value.json.return_value = {'errcode': 0}
         with self.assertLogs('default', level='DEBUG') as lg:
             sender.send_ding(self.url, self.content)
@@ -204,8 +204,8 @@ class CheckTest(TestCase):
     def tearDown(self):
             self.superuser1.delete()
 
-    @patch.object(MailSender, '__init__', return_value=None)
-    @patch.object(MailSender, 'send_email')
+    @patch.object(MsgSender, '__init__', return_value=None)
+    @patch.object(MsgSender, 'send_email')
     def testEmailCheck(self, send_email, mailsender):
         mail_switch = 'true'
         smtp_ssl = 'false'

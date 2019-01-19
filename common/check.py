@@ -8,7 +8,7 @@ from django.http import HttpResponse
 
 from common.utils.permission import superuser_required
 from sql.models import Instance
-from common.utils.sendmsg import MailSender
+from common.utils.sendmsg import MsgSender
 
 logger = logging.getLogger('default')
 
@@ -84,8 +84,8 @@ def email(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     bd = 'Archery 邮件发送测试...'
     subj = 'Archery 邮件发送测试'
-    sender = MailSender(server=mail_smtp_server, port=mail_smtp_port, user=mail_smtp_user,
-                        password=mail_smtp_password, ssl=mail_ssl)
+    sender = MsgSender(server=mail_smtp_server, port=mail_smtp_port, user=mail_smtp_user,
+                       password=mail_smtp_password, ssl=mail_ssl)
     sender_response = sender.send_email(subj, bd, [request.user.email])
     if sender_response != 'success':
         result['status'] = 1

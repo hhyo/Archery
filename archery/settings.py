@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     'django_q',
     'sql',
     'themis',
+    'common',
 )
 
 MIDDLEWARE = (
