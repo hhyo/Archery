@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
-[![codecov](https://codecov.io/gh/LeoQuote/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
+[![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
 [![version](https://img.shields.io/badge/django-2.0.8-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
