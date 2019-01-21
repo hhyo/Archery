@@ -47,7 +47,8 @@ class MsgSender(object):
         file_msg = email.mime.base.MIMEBase('application', 'octet-stream')
         file_msg.set_payload(open(filename, 'rb').read())
         # 附件如果有中文会出现乱码问题，加入gbk
-        file_msg.add_header('Content-Disposition', 'attachment', filename=('gbk', '', filename.split('/')[-1]))
+        file_msg.add_header('Content-Disposition', 'attachment', filename=('gbk', '',
+                            filename.split('/')[-1]))
         encoders.encode_base64(file_msg)
 
         return file_msg

@@ -7,11 +7,14 @@ from django.test import Client, TestCase
 from django.contrib.auth.models import Permission
 from common.config import SysConfig
 from sql.engines.models import ResultSet
-from sql.models import Instance, ResourceGroup, ResourceGroupRelations
+from sql.models import Instance, ResourceGroup, ResourceGroupRelations, SqlWorkflow, QueryLog
 from sql.engines.mysql import MysqlEngine
 from sql import query
-Users = get_user_model()
+User = get_user_model()
+
+
 class SignUpTests(TestCase):
+    """注册测试"""
     def setUp(self):
         """
         创建默认组给注册关联用户, 打开注册
@@ -53,7 +56,7 @@ class SignUpTests(TestCase):
         """
         用户名已存在
         """
-        Users.objects.create(username='test', password='123456')
+        User.objects.create(username='test', password='123456')
         response = self.client.post('/signup/',
                                     data={'username': 'test', 'password': '123456', 'password2': '123456'})
         data = json.loads(response.content)
@@ -67,7 +70,7 @@ class SignUpTests(TestCase):
         self.client.post('/signup/',
                          data={'username': 'test', 'password': '123456test',
                                'password2': '123456test', 'display': 'test', 'email': '123@123.com'})
-        user = Users.objects.get(username='test')
+        user = User.objects.get(username='test')
         self.assertTrue(user)
 
 
@@ -116,6 +119,7 @@ class QueryTest(TestCase):
 
     def testMasking(self):
         pass
+
     def tearDown(self):
         self.u1.delete()
         self.u2.delete()

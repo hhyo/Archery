@@ -1,13 +1,14 @@
 import json
 import smtplib
 from unittest.mock import patch, Mock, MagicMock, ANY
-
+import datetime
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
-from sql.models import Instance
+from sql.models import Instance, SqlWorkflow, QueryLog
+from common.utils.chart_dao import ChartDao
 User = get_user_model()
 
 
@@ -192,6 +193,7 @@ class GlobalInfoTest(TestCase):
         self.u1.delete()
 
 class CheckTest(TestCase):
+    """检查功能测试"""
 
     def setUp(self):
         self.superuser1 = User(username='test_user', display='中文显示', is_active=True, is_superuser=True,
@@ -202,11 +204,12 @@ class CheckTest(TestCase):
         self.slave1.save()
 
     def tearDown(self):
-            self.superuser1.delete()
+        self.superuser1.delete()
 
     @patch.object(MsgSender, '__init__', return_value=None)
     @patch.object(MsgSender, 'send_email')
     def testEmailCheck(self, send_email, mailsender):
+        """邮箱配置检查"""
         mail_switch = 'true'
         smtp_ssl = 'false'
         smtp_server = 'some_server'
@@ -322,5 +325,106 @@ class CheckTest(TestCase):
         self.assertIn('some error', r_json['msg'])
 
 
+class ChartTest(TestCase):
+    """报表测试"""
+    @classmethod
+    def setUpClass(cls):
+        cls.u1 = User(username='some_user',display='用户1')
+        cls.u1.save()
+        cls.u2 = User(username='some_other_user', display='用户2')
+        cls.u2.save()
+        cls.superuser1 = User(username='super1', is_superuser=True)
+        cls.superuser1.save()
+        cls.now = datetime.datetime.now()
+        # 批量创建数据 ddl ,u1 ,g1, yesterday 组, 2 个数据
+        ddl_workflow = [SqlWorkflow(
+            workflow_name='ddl %s' % i,
+            group_id=1,
+            group_name='g1',
+            engineer=cls.u1.username,
+            engineer_display=cls.u1.display,
+            audit_auth_groups='some_group',
+            create_time=cls.now - datetime.timedelta(days=1),
+            status = '已正常结束',
+            is_backup = '是',
+            instance_name='some_instance',
+            db_name='some_db',
+            sql_content='some_sql',
+            sql_syntax=1
+        ) for i in range(2)]
+        # 批量创建数据 dml ,u1 ,g2, the day before yesterday 组, 3 个数据
+        dml_workflow = [SqlWorkflow(
+            workflow_name='Test %s' % i,
+            group_id=2,
+            group_name='g2',
+            engineer=cls.u2.username,
+            engineer_display=cls.u2.display,
+            audit_auth_groups='some_group',
+            create_time=cls.now - datetime.timedelta(days=2),
+            status='已正常结束',
+            is_backup='是',
+            instance_name='some_instance',
+            db_name='some_db',
+            sql_content='some_sql',
+            sql_syntax=2
+        ) for i in range(3)]
+        SqlWorkflow.objects.bulk_create(ddl_workflow + dml_workflow)
+#query_logs = [QueryLog(
+#    instance_name = 'some_instance',
+#
+#) for i in range(20)]
+
+    def testGetDateList(self):
+        dao = ChartDao()
+        end = datetime.date.today()
+        begin = end - datetime.timedelta(days=3)
+        result = dao.get_date_list(begin, end)
+        self.assertEqual(len(result), 4)
+        self.assertEqual(result[0], begin.strftime('%Y-%m-%d'))
+        self.assertEqual(result[-1], end.strftime('%Y-%m-%d'))
+
+    def testSyntaxList(self):
+        """工单以语法类型分组"""
+        dao = ChartDao()
+        expected_rows = (('DDL',2), ('DML',3))
+        result = dao.sql_syntax()
+        self.assertEqual(result['rows'], expected_rows)
+
+    def testWorkflowByDate(self):
+        """TODO 按日分组工单数量统计测试"""
+        dao = ChartDao()
+        result = dao.workflow_by_date(30)
+        self.assertEqual(len(result['rows'][0]),2)
+
+    def testWorkflowByGroup(self):
+        """按组统计测试"""
+        dao = ChartDao()
+        result = dao.workflow_by_group(30)
+        expected_rows = (('g2', 3), ('g1', 2))
+        self.assertEqual(result['rows'], expected_rows)
+
+    def testWorkflowByUser(self):
+        """按用户统计测试"""
+        dao = ChartDao()
+        result = dao.workflow_by_user(30)
+        expected_rows = ((self.u2.display, 3),(self.u1.display, 2))
+        self.assertEqual(result['rows'], expected_rows)
+
+    def testDashboard(self):
+        """Dashboard测试"""
+        # TODO 这部分测试并没有遵循单元测试, 而是某种集成测试, 直接从响应到结果, 并且只检查状态码
+        # TODO 需要具体查看pyecharst有没有被调用, 以及调用的参数
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.get('/dashboard/')
+        self.assertEqual(r.status_code, 200)
+
+    @classmethod
+    def tearDownClass(cls):
+        SqlWorkflow.objects.all().delete()
+        QueryLog.objects.all().delete()
+        cls.u1.delete()
+        cls.u2.delete()
+        cls.superuser1.delete()
 
 
