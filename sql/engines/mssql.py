@@ -84,7 +84,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
             keyword_warning += '禁止使用 + 关键词\n'
             result['bad_query'] = True
         for keyword in banned_keywords:
-            pattern = r"(^|,| ){}( |\(|$)".format(keyword)
+            pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
                 keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
                 result['bad_query'] = True
