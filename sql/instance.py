@@ -96,8 +96,8 @@ def schemasync(request):
     timestamp = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
 
-    command = path + ' %s --output-directory=%s --tag=%s \
-            mysql://%s:%s@%s:%d/%s  mysql://%s:%s@%s:%d/%s' % (options,
+    command = path + " %s --output-directory=%s --tag=%s \
+            mysql://%s:'%s'@%s:%d/%s  mysql://%s:'%s'@%s:%d/%s" % (options,
                                                                output_directory,
                                                                timestamp,
                                                                instance_info.user,
