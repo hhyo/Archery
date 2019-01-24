@@ -32,7 +32,7 @@ class SignUpTests(TestCase):
         response = self.client.post('/signup/', data={})
         data = json.loads(response.content)
         content = {'status': 1, 'msg': '用户名和密码不能为空', 'data': None}
-        self.assertEquals(data, content)
+        self.assertEqual(data, content)
 
     def test_sing_up_not_password(self):
         """
@@ -41,7 +41,7 @@ class SignUpTests(TestCase):
         response = self.client.post('/signup/', data={'username': 'test'})
         data = json.loads(response.content)
         content = {'status': 1, 'msg': '用户名和密码不能为空', 'data': None}
-        self.assertEquals(data, content)
+        self.assertEqual(data, content)
 
     def test_sing_up_2password(self):
         """
@@ -50,7 +50,7 @@ class SignUpTests(TestCase):
         response = self.client.post('/signup/', data={'username': 'test', 'password': '123456', 'password2': '12345'})
         data = json.loads(response.content)
         content = {'status': 1, 'msg': '两次输入密码不一致', 'data': None}
-        self.assertEquals(data, content)
+        self.assertEqual(data, content)
 
     def test_sing_up_duplicate_uesrname(self):
         """
@@ -61,7 +61,7 @@ class SignUpTests(TestCase):
                                     data={'username': 'test', 'password': '123456', 'password2': '123456'})
         data = json.loads(response.content)
         content = {'status': 1, 'msg': '用户名已存在', 'data': None}
-        self.assertEquals(data, content)
+        self.assertEqual(data, content)
 
     def test_sing_up(self):
         """

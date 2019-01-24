@@ -37,11 +37,11 @@ WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
 
     def get_all_columns_by_tb(self, db_name, tb_name):
         """return list [columns]"""
-        result = self.descibe_table(db_name, tb_name)
+        result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
 
-    def descibe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet"""
         sql = r"""select
 c.name ColumnName,

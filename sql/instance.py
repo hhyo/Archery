@@ -221,7 +221,7 @@ def describe(request):
 
     try:
         query_engine = get_engine(instance=instance)
-        query_result = query_engine.descibe_table(db_name, tb_name)
+        query_result = query_engine.describe_table(db_name, tb_name)
         result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1

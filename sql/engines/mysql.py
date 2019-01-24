@@ -47,11 +47,11 @@ class MysqlEngine(EngineBase):
     # 连进指定的mysql实例里，读取所有Columns并返回
     def get_all_columns_by_tb(self, db_name, tb_name):
         """return list [columns]"""
-        result = self.descibe_table(db_name, tb_name)
+        result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
 
-    def descibe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
         sql = """SELECT 
     COLUMN_NAME,
