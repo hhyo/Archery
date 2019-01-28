@@ -1,0 +1,10 @@
+[run]
+include =
+    common*
+    sql*
+omit =
+    docs*
+    src*
+    downloads*
+    sql/migrations/*
+    themis*
