@@ -215,6 +215,10 @@ LOGGING = {
             'handlers': ['default'],
             'level': 'DEBUG',
         },
+        'django-q': {  # django_q模块相关日志
+            'handlers': ['console', 'default'],
+            'level': 'DEBUG',
+        },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
             'handlers': ['default'],
             'level': 'DEBUG',

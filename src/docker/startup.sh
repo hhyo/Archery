@@ -19,7 +19,7 @@ fi
 python3 manage.py collectstatic -v0 --noinput
 
 #启动Django Q cluster
-nohup python3 manage.py qcluster &
+nohup python3 manage.py qcluster >> /opt/archery/downloads/log/qcluster.log 2>&1 &
 
 settings=${1:-"archery.settings"}
 ip=${2:-"127.0.0.1"}

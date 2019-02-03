@@ -1,3 +1,4 @@
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dba-archery/community)
 [![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
@@ -8,8 +9,11 @@
 
 介绍
 ============
-项目基于[archer](https://github.com/jly8866/archer)，优化了工作流、权限、项目、配置管理等一系列模块，不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
+archery是[archer](https://github.com/jly8866/archer)的一个分支项目，主要对工作流、权限、项目、配置管理等模块进行了优化改造，新增了数据库审核、binlog解析、表结构同步、实例用户管理等实用功能。同时对多类型数据库(MsSQL/PostgreSQL/Redis)的支持也在不断完善中。不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
 
+开发计划
+==============
+https://github.com/hhyo/archery/projects   
 
 快速开始
 ===============
@@ -62,8 +66,9 @@ http://127.0.0.1:9123/
 - [binlog2sql](https://github.com/danfengcao/binlog2sql)
 - [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
 - [SOAR](https://github.com/XiaoMi/soar)
-- [SchemaSync](https://github.com/seanlook/SchemaSync)
+- [SchemaSync](https://github.com/hhyo/SchemaSync)
 - [aquila_v2](https://github.com/thinkdb/aquila_v2)
+- [django-q](https://github.com/Koed00/django-q)
 
 贡献者
 ===============

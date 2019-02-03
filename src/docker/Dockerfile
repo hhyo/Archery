@@ -23,8 +23,8 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
 #sqladvisor
 RUN yum -y install epel-release \
     && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel libffi-devel glib2 glib2-devel \
-    && yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm \
-    && yum -y install Percona-Server-devel-56.x86_64  Percona-Server-shared-56.x86_64  Percona-Server-client-56.x86_64 \
+    && yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm \
+    && yum -y install Percona-Server-devel-56 Percona-Server-shared-56  Percona-Server-client-56 \
     && cd /opt \
     && git clone https://github.com/hhyo/SQLAdvisor.git \
     && cd /opt/SQLAdvisor/ \
@@ -39,21 +39,16 @@ RUN yum -y install epel-release \
 RUN cd /opt \
     && virtualenv venv4schemasync  --python=python2 \
     && source venv4schemasync/bin/activate \
-    && git clone https://github.com/hhyo/SchemaSync.git \
-    && git clone https://github.com/hhyo/SchemaObject.git \
-    && cd SchemaObject && python setup.py install \
-    && cd ../SchemaSync && python setup.py install \
-    && cd /opt && rm -rf /opt/SchemaObject/ && rm -rf /opt/SchemaSync/ \
     && yum install -y python-devel \
-    && pip install mysql-python
+    && pip install schema-sync mysql-python
 #soar
 RUN cd /opt \
-    && wget https://github.com/XiaoMi/soar/releases/download/0.10.0/soar.linux-amd64 -O soar \
+    && wget https://github.com/XiaoMi/soar/releases/download/0.11.0/soar.linux-amd64 -O soar \
     && chmod a+x soar
 #archery
 RUN cd /opt \
-    && yum -y install openldap-devel nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.3.8 \
+    && yum -y install openldap-devel unixODBC-devel nginx \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.4.0 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
