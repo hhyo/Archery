@@ -32,7 +32,7 @@ def is_auto_review(workflow_id):
 
     # 获取正则表达式
     auto_review_regex = SysConfig().get('auto_review_regex',
-                                                   '^alter|^create|^drop|^truncate|^rename|^delete')
+                                        '^alter|^create|^drop|^truncate|^rename|^delete')
     p = re.compile(auto_review_regex)
 
     # 判断是否匹配到需要手动审核的语句
@@ -48,8 +48,8 @@ def is_auto_review(workflow_id):
             inception_review = review_engine.execute_check(db_name=db_name, sql=sql_content).to_dict()
             all_affected_rows = 0
             for review_result in inception_review:
-                sql = review_result[5]
-                affected_rows = review_result[6]
+                sql = review_result.get('sql', '')
+                affected_rows = review_result.get('affected_rows', 0)
                 if re.match(r"^update", sql.strip().lower()):
                     all_affected_rows = all_affected_rows + int(affected_rows)
             if int(all_affected_rows) > int(SysConfig().get('auto_review_max_update_rows', 50)):
