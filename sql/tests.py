@@ -125,3 +125,24 @@ class QueryTest(TestCase):
         self.u2.delete()
         self.slave1.delete()
 
+
+class UserTest(TestCase):
+    def setUp(self):
+        self.u1 = User(username='test_user', display='中文显示', is_active=True)
+        self.u1.save()
+
+    def tearDown(self):
+        self.u1.delete()
+
+    def testLogin(self):
+        """login 页面测试"""
+        c = Client()
+        r = c.get('/login/')
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, 'login.html')
+        c.force_login(self.u1)
+        # 登录后直接跳首页
+        r = c.get('/login/', follow=False)
+        self.assertRedirects(r, '/')
+
+

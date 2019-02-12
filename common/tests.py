@@ -9,6 +9,7 @@ from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
 from sql.models import Instance, SqlWorkflow, QueryLog
 from common.utils.chart_dao import ChartDao
+from common.auth import ArcherAuth
 User = get_user_model()
 
 
@@ -428,3 +429,16 @@ class ChartTest(TestCase):
         cls.superuser1.delete()
 
 
+class AuthTest(TestCase):
+
+    def setUp(self):
+        self.username = 'some_user'
+        self.password = 'some_pass'
+        self.u1 = User(username=self.username, password=self.password, display='用户1')
+        self.u1.save()
+
+    def tearDown(self):
+        self.u1.delete()
+
+    def testChallenge(self):
+        pass

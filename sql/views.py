@@ -28,6 +28,8 @@ logger = logging.getLogger('default')
 
 # 登录页面
 def login(request):
+    if request.user and request.user.is_authenticated:
+        return HttpResponseRedirect('/')
     return render(request, 'login.html')
 
 
