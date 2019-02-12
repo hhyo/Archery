@@ -672,6 +672,7 @@ class SqlReviewTaskPublish(BaseHandler):
         执行任务
         :return:
         """
+        kwargs = kwargs.get('kwargs')
         themis = Themis(instance_name=kwargs.get('instance_name'),
                         username=kwargs.get('username'),
                         rule_type=kwargs.get('rule_type').upper(),
