@@ -56,13 +56,13 @@ def submit_sql(request):
 # 展示SQL工单详细页面
 def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    if workflow_detail.status in (Const.workflowStatus['finish'], Const.workflowStatus['exception']) \
+    if workflow_detail.status in ['workflow_finish', 'workflow_exception'] \
             and workflow_detail.is_manual == 0:
         rows = workflow_detail.execute_result
     else:
         rows = workflow_detail.review_content
     # 自动审批不通过的不需要获取下列信息
-    if workflow_detail.status != Const.workflowStatus['autoreviewwrong']:
+    if workflow_detail.status != 'workflow_autoreviewwrong':
         # 获取当前审批和审批流程
         audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, 2)
 
@@ -83,7 +83,7 @@ def detail(request, workflow_id):
         is_can_cancel = False
 
     # 获取定时执行任务信息
-    if workflow_detail.status == Const.workflowStatus['timingtask']:
+    if workflow_detail.status == 'workflow_timingtask':
         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
         job = job_info(job_id)
         if job:

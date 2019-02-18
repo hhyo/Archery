@@ -17,7 +17,7 @@ def execute(workflow_id):
     """为延时或异步任务准备的execute, 传入工单ID即可"""
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     # 给定时执行的工单增加执行日志
-    if workflow_detail.status == Const.workflowStatus['timingtask']:
+    if workflow_detail.status == 'workflow_timingtask':
         audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
         Audit.add_log(audit_id=audit_id,
@@ -42,12 +42,12 @@ def execute_callback(task):
 
     if not task.success:
         # 不成功会返回字符串
-        workflow.status = Const.workflowStatus['exception']
+        workflow.status = 'workflow_exception'
     elif task.result.warning or task.result.error:
-        workflow.status = Const.workflowStatus['exception']
+        workflow.status = 'workflow_exception'
         execute_result = task.result
     else:
-        workflow.status = Const.workflowStatus['finish']
+        workflow.status = 'workflow_finish'
         execute_result = task.result
     workflow.execute_result = execute_result.json()
     workflow.audit_remark = ''

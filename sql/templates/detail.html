@@ -78,12 +78,12 @@
                 {{ workflow_detail.is_backup }}
             </td>
             <td>
-                {% if workflow_detail.status == "已正常结束" %}
+                {% if workflow_detail.status == "workflow_finish" %}
                     <font color="green">
                 {% else %}
                     <font color="red">
                 {% endif %}
-                <B id="workflow_detail_status">{{ workflow_detail.status }}</B></font>
+                <B id="workflow_detail_status">{{ workflow_detail.get_status_display }}</B></font>
             </td>
             <td>
                 {{ workflow_detail.group_name }}
@@ -139,7 +139,7 @@
         </table>
         <br>
     {% endif %}
-    {% if workflow_detail.status == '定时执行' %}
+    {% if workflow_detail.status == 'workflow_timingtask' %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
@@ -185,9 +185,9 @@
     {% endif %}
     <!--定时执行按钮-->
     {% if is_can_timingtask %}
-        {% if workflow_detail.status == '审核通过' %}
+        {% if workflow_detail.status == 'workflow_review_pass' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
-        {% elif workflow_detail.status == '定时执行' %}
+        {% elif workflow_detail.status == 'workflow_timingtask' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
         {% endif %}
     {% endif %}
@@ -202,7 +202,7 @@
     {% endif %}
     <!--查看回滚按钮-->
     {% if workflow_detail.is_backup == '是' %}
-        {% if  workflow_detail.status == '已正常结束' or  workflow_detail.status == '执行有异常' %}
+        {% if  workflow_detail.status == 'workflow_finish' or  workflow_detail.status == 'workflow_exception' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
@@ -212,7 +212,7 @@
         {% endif %}
     {% endif %}
     <!--重新修改按钮-->
-    {% if workflow_detail.status == '自动审核不通过' or workflow_detail.status == '人工终止流程' or workflow_detail.status == '执行有异常' %}
+    {% if workflow_detail.status == 'workflow_autoreviewwrong' or workflow_detail.status == 'workflow_abort' or workflow_detail.status == 'workflow_exception' %}
         {% if user.username == workflow_detail.engineer %}
             <!--只允许发起人修改工单-->
             {% csrf_token %}

@@ -33,10 +33,9 @@ Audit = Audit()
 # 查询权限申请用于工作流审核回调
 def query_audit_call_back(workflow_id, workflow_status):
     # 更新业务表状态
-    apply_info = QueryPrivilegesApply()
-    apply_info.apply_id = workflow_id
+    apply_info = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
     apply_info.status = workflow_status
-    apply_info.save(update_fields=['status'])
+    apply_info.save()
     # 审核通过插入权限信息，批量插入，减少性能消耗
     if workflow_status == WorkflowDict.workflow_status['audit_success']:
         apply_queryset = QueryPrivilegesApply.objects.get(apply_id=workflow_id)

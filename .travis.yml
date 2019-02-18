@@ -12,6 +12,7 @@ before_script:
   - mysql -e "CREATE DATABASE archery CHARSET UTF8;"
   - python manage.py makemigrations
   - python manage.py makemigrations sql
+  - python manage.py compilemessages
 script:
   - coverage run manage.py test -v 3
 

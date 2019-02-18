@@ -25,6 +25,7 @@ from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, Instance
 from django_q.tasks import async_task
+from django.utils.translation import gettext as _
 
 from sql.engines import get_engine
 
@@ -47,14 +48,12 @@ def sqlworkflow_list(request):
 
     # 全部工单里面包含搜索条件
     if navStatus == 'all':
-        if user.is_superuser == 1:
+        if user.is_superuser:
             workflow_list = SqlWorkflow.objects.filter(
                 Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
-            count = SqlWorkflow.objects.filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).count()
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
@@ -64,30 +63,24 @@ def sqlworkflow_list(request):
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
-            count = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
-            ).count()
         else:
             workflow_list = SqlWorkflow.objects.filter(engineer=user.username).filter(
                 workflow_name__contains=search
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
-            count = SqlWorkflow.objects.filter(engineer=user.username).filter(
-                workflow_name__contains=search).count()
-    elif navStatus in Const.workflowStatus.keys():
-        if user.is_superuser == 1:
+    else:
+        if user.is_superuser:
             workflow_list = SqlWorkflow.objects.filter(
-                status=Const.workflowStatus[navStatus]
+                status=navStatus
             ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                             "is_backup", "create_time", "instance_name", "db_name",
                                                             "group_name", "sql_syntax")
-            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus]).count()
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
-            workflow_list = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids
+            workflow_list = SqlWorkflow.objects.filter(status=navStatus, group_id__in=group_ids
                                                        ).order_by('-create_time')[offset:limit].values("id",
                                                                                                        "workflow_name",
                                                                                                        "engineer_display",
@@ -98,9 +91,8 @@ def sqlworkflow_list(request):
                                                                                                        "db_name",
                                                                                                        "group_name",
                                                                                                        "sql_syntax")
-            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], group_id__in=group_ids).count()
         else:
-            workflow_list = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username
+            workflow_list = SqlWorkflow.objects.filter(status=navStatus, engineer=user.username
                                                        ).order_by('-create_time')[offset:limit].values("id",
                                                                                                        "workflow_name",
                                                                                                        "engineer_display",
@@ -111,14 +103,12 @@ def sqlworkflow_list(request):
                                                                                                        "db_name",
                                                                                                        "group_name",
                                                                                                        "sql_syntax")
-            count = SqlWorkflow.objects.filter(status=Const.workflowStatus[navStatus], engineer=user.username).count()
-    else:
-        context = {'errMsg': '传入的navStatus参数有误！'}
-        return render(request, 'error.html', context)
-
+    count = workflow_list.count()
     # QuerySet 序列化
-    rows = [row for row in workflow_list]
-
+    rows = []
+    for r in workflow_list:
+        r['status'] = _(r['status'])
+        rows += [r]
     result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -234,22 +224,22 @@ def autoreview(request):
     # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内跳过inception直接执行
     sys_config = SysConfig()
     is_manual = 0
-    workflow_status = Const.workflowStatus['manreviewing']
+    workflow_status = 'workflow_manreviewing'
     for row in check_result.rows:
         # 1表示警告，不影响执行
         if row.errlevel == 1 and sys_config.get('auto_review_wrong', '') == '1':
-            workflow_status = Const.workflowStatus['autoreviewwrong']
+            workflow_status = 'workflow_autoreviewwrong'
             break
         # 2表示严重错误，或者inception不支持的语法，标记手工执行，可以跳过inception直接执行
         elif row.errlevel == 2:
             is_manual = 1
             if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
-                workflow_status = Const.workflowStatus['autoreviewwrong']
+                workflow_status = 'workflow_autoreviewwrong'
             break
         elif re.match(r"\w*comments\w*", row.errormessage):
             is_manual = 1
             if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
-                workflow_status = Const.workflowStatus['autoreviewwrong']
+                workflow_status = 'workflow_autoreviewwrong'
             break
 
     # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
@@ -291,7 +281,7 @@ def autoreview(request):
             sql_workflow.save()
             workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流
-            if workflow_status == Const.workflowStatus['manreviewing']:
+            if workflow_status == 'workflow_manreviewing':
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
                 # 抄送通知人
                 list_cc_addr = [email['email'] for email in
@@ -308,7 +298,7 @@ def autoreview(request):
 # 审核通过，不执行
 @permission_required('sql.sql_review', raise_exception=True)
 def passed(request):
-    workflow_id = request.POST['workflow_id']
+    workflow_id = request.POST.get('workflow_id')
     if workflow_id == '' or workflow_id is None:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
@@ -334,7 +324,7 @@ def passed(request):
             # 按照审核结果更新业务表审核状态
             if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
                 # 将流程状态修改为审核通过，并更新reviewok_time字段
-                workflow_detail.status = Const.workflowStatus['pass']
+                workflow_detail.status = 'workflow_review_pass'
                 workflow_detail.reviewok_time = timezone.now()
                 workflow_detail.audit_remark = audit_remark
                 workflow_detail.save()
@@ -362,7 +352,7 @@ def execute(request):
         return render(request, 'error.html', context)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
-    workflow_detail.status = Const.workflowStatus['executing']
+    workflow_detail.status = 'workflow_executing'
     workflow_detail.reviewok_time = timezone.now()
     workflow_detail.save()
     async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback',
@@ -404,7 +394,7 @@ def timingtask(request):
     try:
         with transaction.atomic():
             # 将流程状态修改为定时执行
-            workflow_detail.status = Const.workflowStatus['timingtask']
+            workflow_detail.status = 'workflow_timingtask'
             workflow_detail.save()
             # 调用添加定时任务
             add_sqlcronjob(job_id, run_date, workflow_id)
@@ -428,7 +418,7 @@ def timingtask(request):
 
 # 终止流程
 def cancel(request):
-    workflow_id = request.POST['workflow_id']
+    workflow_id = request.POST.get('workflow_id')
     if workflow_id == '' or workflow_id is None:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
@@ -453,7 +443,7 @@ def cancel(request):
                                                    workflow_type=WorkflowDict.workflow_type[
                                                        'sqlreview']).audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflow_detail.status != Const.workflowStatus['manreviewing']:
+            if workflow_detail.status != 'workflow_manreviewing':
                 # 增加工单日志
                 if user.username == workflow_detail.engineer:
                     Audit().add_log(audit_id=audit_id,
@@ -485,11 +475,11 @@ def cancel(request):
                     raise PermissionDenied
 
             # 删除定时执行job
-            if workflow_detail.status == Const.workflowStatus['timingtask']:
+            if workflow_detail.status == 'workflow_timingtask':
                 job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
                 del_sqlcronjob(job_id)
             # 将流程状态修改为人工终止流程
-            workflow_detail.status = Const.workflowStatus['abort']
+            workflow_detail.status = 'workflow_abort'
             workflow_detail.audit_remark = audit_remark
             workflow_detail.save()
     except Exception as msg:
@@ -510,6 +500,7 @@ def get_workflow_status(request):
 
     workflow_id = int(workflow_id)
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    workflow_status = workflow_detail.status
+    workflow_detail.status
+    workflow_status = workflow_detail.get_status_display()
     result = {"status": workflow_status, "msg": "", "data": ""}
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return JsonResponse(result)

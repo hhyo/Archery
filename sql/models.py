@@ -2,7 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from common.utils.aes_decryptor import Prpcrypt
-
+from django.utils.translation import gettext_lazy as _
 
 # 用户信息扩展
 class Users(AbstractUser):
@@ -108,8 +108,15 @@ class SqlWorkflow(models.Model):
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     status = models.CharField(max_length=50, choices=(
-        ('已正常结束', '已正常结束'), ('人工终止流程', '人工终止流程'), ('等待审核人审核', '等待审核人审核'), ('审核通过', '审核通过'),
-        ('定时执行', '定时执行'), ('执行中', '执行中'), ('自动审核不通过', '自动审核不通过'), ('执行有异常', '执行有异常')))
+        ('workflow_finish', _('workflow_finish')),
+        ('workflow_abort', _('workflow_abort')),
+        ('workflow_manreviewing', _('workflow_manreviewing')),
+        ('workflow_review_pass', _('workflow_review_pass')),
+        ('workflow_timingtask', _('workflow_timingtask')),
+        ('workflow_executing', _('workflow_executing')),
+        ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
+        ('workflow_exception', _('workflow_exception')))
+    )
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
     instance_name = models.CharField('实例名称', max_length=50)
@@ -232,8 +239,8 @@ class QueryPrivilegesApply(models.Model):
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
     instance_name = models.CharField('实例名称', max_length=50)
-    db_list = models.TextField('数据库')
-    table_list = models.TextField('表')
+    db_list = models.TextField('数据库')  # 逗号分隔的数据库列表
+    table_list = models.TextField('表')  # 逗号分隔的表列表
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
