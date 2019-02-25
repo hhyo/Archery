@@ -4,7 +4,7 @@
 python3 manage.py collectstatic -v0 --noinput
 
 # 编译翻译文件
-python3 manage.py
+python3 manage.py compilemessages
 
 # 启动Django Q cluster
 nohup python3 manage.py qcluster &
