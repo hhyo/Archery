@@ -29,8 +29,6 @@ from sql.engines import get_engine
 
 logger = logging.getLogger('default')
 
-Audit = Audit()
-
 
 # 查询权限申请用于工作流审核回调
 def query_audit_call_back(workflow_id, workflow_status):

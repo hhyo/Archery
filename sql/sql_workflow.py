@@ -282,7 +282,7 @@ def autoreview(request):
             # 自动审核通过了，才调用工作流
             if workflow_status == 'workflow_manreviewing':
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
-                Audit().add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
+                Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -329,7 +329,7 @@ def passed(request):
             # 调用工作流接口审核
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            audit_result = Audit().audit(audit_id, WorkflowDict.workflow_status['audit_success'],
+            audit_result = Audit.audit(audit_id, WorkflowDict.workflow_status['audit_success'],
                                          user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
@@ -385,7 +385,7 @@ def execute(request):
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Audit().add_log(audit_id=audit_id,
+    Audit.add_log(audit_id=audit_id,
                     operation_type=5,
                     operation_type_desc='执行工单',
                     operation_info="人工操作执行",
@@ -427,7 +427,7 @@ def timingtask(request):
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type[
                                                        'sqlreview']).audit_id
-            Audit().add_log(audit_id=audit_id,
+            Audit.add_log(audit_id=audit_id,
                             operation_type=4,
                             operation_type_desc='定时执行',
                             operation_info="定时执行时间：{}".format(run_date),
@@ -471,7 +471,7 @@ def cancel(request):
             if workflow_detail.status != 'workflow_manreviewing':
                 # 增加工单日志
                 if user.username == workflow_detail.engineer:
-                    Audit().add_log(audit_id=audit_id,
+                    Audit.add_log(audit_id=audit_id,
                                     operation_type=3,
                                     operation_type_desc='取消执行',
                                     operation_info="取消原因：{}".format(audit_remark),
@@ -479,7 +479,7 @@ def cancel(request):
                                     operator_display=request.user.display
                                     )
                 else:
-                    Audit().add_log(audit_id=audit_id,
+                    Audit.add_log(audit_id=audit_id,
                                     operation_type=2,
                                     operation_type_desc='审批不通过',
                                     operation_info="审批备注：{}".format(audit_remark),
@@ -488,12 +488,12 @@ def cancel(request):
                                     )
             else:
                 if user.username == workflow_detail.engineer:
-                    Audit().audit(audit_id,
+                    Audit.audit(audit_id,
                                   WorkflowDict.workflow_status['audit_abort'],
                                   user.username, audit_remark)
                 # 非提交人需要校验审核权限
                 elif user.has_perm('sql.sql_review'):
-                    Audit().audit(audit_id,
+                    Audit.audit(audit_id,
                                   WorkflowDict.workflow_status['audit_reject'],
                                   user.username, audit_remark)
                 else:

@@ -12,7 +12,8 @@ from common.config import SysConfig
 
 class Audit(object):
     # 新增工单审核
-    def add(self, workflow_type, workflow_id):
+    @staticmethod
+    def add(workflow_type, workflow_id):
         result = {'status': 0, 'msg': '', 'data': []}
 
         # 检查是否已存在待审核数据
@@ -82,7 +83,7 @@ class Audit(object):
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_success']}
             result['msg'] = '无审核配置，直接审核通过'
             # 增加工单日志
-            self.add_log(audit_id=audit_detail.audit_id,
+            Audit.add_log(audit_id=audit_detail.audit_id,
                          operation_type=0,
                          operation_type_desc='提交',
                          operation_info='无需审批，系统直接审核通过',
@@ -112,8 +113,8 @@ class Audit(object):
             audit_detail.save()
             result['data'] = {'workflow_status': WorkflowDict.workflow_status['audit_wait']}
             # 增加工单日志
-            audit_auth_group, current_audit_auth_group = self.review_info(workflow_id, workflow_type)
-            self.add_log(audit_id=audit_detail.audit_id,
+            audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, workflow_type)
+            Audit.add_log(audit_id=audit_detail.audit_id,
                          operation_type=0,
                          operation_type_desc='提交',
                          operation_info='等待审批，审批流程：{}'.format(audit_auth_group),
@@ -124,7 +125,8 @@ class Audit(object):
         return result
 
     # 工单审核
-    def audit(self, audit_id, audit_status, audit_user, audit_remark):
+    @staticmethod
+    def audit(audit_id, audit_status, audit_user, audit_remark):
         result = {'status': 0, 'msg': 'ok', 'data': 0}
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
 
@@ -171,9 +173,9 @@ class Audit(object):
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
             # 增加工单日志
-            audit_auth_group, current_audit_auth_group = self.review_info(audit_detail.workflow_id,
+            audit_auth_group, current_audit_auth_group = Audit.review_info(audit_detail.workflow_id,
                                                                           audit_detail.workflow_type)
-            self.add_log(audit_id=audit_id,
+            Audit.add_log(audit_id=audit_id,
                          operation_type=1,
                          operation_type_desc='审批通过',
                          operation_info="审批备注：{}，下级审批：{}".format(audit_remark, current_audit_auth_group),
@@ -203,7 +205,7 @@ class Audit(object):
             audit_detail_result.remark = audit_remark
             audit_detail_result.save()
             # 增加工单日志
-            self.add_log(audit_id=audit_id,
+            Audit.add_log(audit_id=audit_id,
                          operation_type=2,
                          operation_type_desc='审批不通过',
                          operation_info="审批备注：{}".format(audit_remark),
@@ -233,7 +235,7 @@ class Audit(object):
             audit_detail_result.save()
 
             # 增加工单日志
-            self.add_log(audit_id=audit_id,
+            Audit.add_log(audit_id=audit_id,
                          operation_type=3,
                          operation_type_desc='审批取消',
                          operation_info="取消原因：{}".format(audit_remark),
