@@ -1,9 +1,7 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.auth.models import Group
 from django.utils import timezone
-from django_q.tasks import async_task
 
-from sql.notify import notify
 from sql.utils.resource_group import user_groups, auth_group_users
 from sql.utils.sql_review import is_auto_review
 from common.utils.const import WorkflowDict
@@ -14,7 +12,7 @@ from common.config import SysConfig
 
 class Audit(object):
     # 新增工单审核
-    def add(self, workflow_type, workflow_id, **kwargs):
+    def add(self, workflow_type, workflow_id):
         result = {'status': 0, 'msg': '', 'data': []}
 
         # 检查是否已存在待审核数据
@@ -122,20 +120,6 @@ class Audit(object):
                          operator=audit_detail.create_user,
                          operator_display=audit_detail.create_user_display
                          )
-
-        # 消息通知
-        sys_config = SysConfig()
-        if sys_config.get('mail') or sys_config.get('ding'):
-            # 再次获取审核信息
-            audit_info = WorkflowAudit.objects.get(audit_id=audit_detail.audit_id)
-            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
-            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
-            async_task(notify,
-                       audit_info=audit_info,
-                       workflow_url=workflow_url,
-                       email_cc=kwargs.get('list_cc_addr', []),
-                       timeout=60)
-
         # 返回添加结果
         return result
 
@@ -259,15 +243,6 @@ class Audit(object):
         else:
             result['msg'] = '审核异常'
             raise Exception(result['msg'])
-
-        # 消息通知
-        sys_config = SysConfig()
-        if sys_config.get('mail') or sys_config.get('ding'):
-            # 再次获取审核信息
-            audit_info = WorkflowAudit.objects.get(audit_id=audit_id)
-            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
-            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
-            async_task(notify, audit_info=audit_info, workflow_url=workflow_url, audit_remark=audit_remark, timeout=60)
 
         # 返回审核结果
         result['data'] = {'workflow_status': audit_result.current_status}

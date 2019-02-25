@@ -15,10 +15,12 @@ from django.db.models import Q, Min
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django_q.tasks import async_task
 
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.notify import notify
 from sql.utils.data_masking import Masking
 from sql.utils.resource_group import user_instances, user_groups
 from sql.utils.workflow_audit import Audit
@@ -436,6 +438,20 @@ def queryprivaudit(request):
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
+    else:
+        # 消息通知
+        sys_config = SysConfig()
+        if sys_config.get('mail') or sys_config.get('ding'):
+            # 再次获取审核信息
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=apply_id,
+                                                       workflow_type=WorkflowDict.workflow_type['query'])
+            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
+            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
+            async_task(notify,
+                       audit_info=audit_detail,
+                       workflow_url=workflow_url,
+                       audit_remark=audit_remark,
+                       timeout=60)
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 

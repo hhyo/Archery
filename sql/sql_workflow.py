@@ -18,6 +18,7 @@ from django.utils import timezone
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.notify import notify
 from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
@@ -183,6 +184,7 @@ def autoreview(request):
     db_name = request.POST.get('db_name')
     is_backup = request.POST['is_backup']
     notify_users = request.POST.getlist('notify_users')
+    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
 
     # 服务器端参数验证
     if sql_content is None or workflow_title is None or instance_name is None or db_name is None or is_backup is None:
@@ -280,14 +282,27 @@ def autoreview(request):
             # 自动审核通过了，才调用工作流
             if workflow_status == 'workflow_manreviewing':
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
-                # 抄送通知人
-                list_cc_addr = [email['email'] for email in
-                                Users.objects.filter(username__in=notify_users).values('email')]
-                Audit().add(WorkflowDict.workflow_type['sqlreview'], workflow_id, list_cc_addr=list_cc_addr)
+                Audit().add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
+    else:
+        # 自动审核通过了，才调用工作流，进行消息通知
+        if workflow_status == 'workflow_manreviewing':
+            sys_config = SysConfig()
+            if sys_config.get('mail') or sys_config.get('ding'):
+                # 再次获取审核信息
+                audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                           workflow_type=WorkflowDict.workflow_type['sqlreview'])
+                base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
+                workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url,
+                                                                       audit_id=audit_detail.audit_id)
+                async_task(notify,
+                           audit_info=audit_detail,
+                           workflow_url=workflow_url,
+                           email_cc=list_cc_addr,
+                           timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -313,8 +328,7 @@ def passed(request):
         with transaction.atomic():
             # 调用工作流接口审核
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                                   workflow_type=WorkflowDict.workflow_type[
-                                                       'sqlreview']).audit_id
+                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             audit_result = Audit().audit(audit_id, WorkflowDict.workflow_status['audit_success'],
                                          user.username, audit_remark)
 
@@ -329,6 +343,20 @@ def passed(request):
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
+    else:
+        # 消息通知
+        sys_config = SysConfig()
+        if sys_config.get('mail') or sys_config.get('ding'):
+            # 再次获取审核信息
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview'])
+            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
+            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
+            async_task(notify,
+                       audit_info=audit_detail,
+                       workflow_url=workflow_url,
+                       audit_remark=audit_remark,
+                       timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -483,6 +511,20 @@ def cancel(request):
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
+    else:
+        # 消息通知
+        sys_config = SysConfig()
+        if sys_config.get('mail') or sys_config.get('ding'):
+            # 再次获取审核信息
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview'])
+            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
+            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
+            async_task(notify,
+                       audit_info=audit_detail,
+                       workflow_url=workflow_url,
+                       audit_remark=audit_remark,
+                       timeout=60)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
