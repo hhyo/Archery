@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*- 
 
 from django.urls import path
+from django.views.i18n import JavaScriptCatalog
 
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, resource_group, \
@@ -9,6 +10,7 @@ from sql.utils import jobs
 
 urlpatterns = [
     path('', views.sqlworkflow),
+    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     path('index/', views.sqlworkflow),
     path('login/', views.login, name='login'),
     path('logout/', auth.sign_out),

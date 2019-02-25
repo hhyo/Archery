@@ -500,7 +500,13 @@ def query(request):
         # 查询检查
         query_engine = get_engine(instance=instance)
         filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
-        if filter_result.get('bad_query') and SysConfig().get('disable_star') is True:
+        if filter_result.get('bad_query'):
+            # 引擎内部判断为 bad_query
+            result['status'] = 1
+            result['msg'] = filter_result.get('msg')
+            return HttpResponse(json.dumps(result), content_type='application/json')
+        if filter_result.get('has_star') and SysConfig().get('disable_star') is True:
+            # 引擎内部判断为有 * 且禁止 * 选项打开
             result['status'] = 1
             result['msg'] = filter_result.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')

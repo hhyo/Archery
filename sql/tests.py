@@ -9,12 +9,11 @@ from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 
 from common.config import SysConfig
-from sql import query
 from sql.engines.models import ResultSet
 from sql.engines.mysql import MysqlEngine
 from sql import query
 
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow
+from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog
 
 User = get_user_model()
 
@@ -150,6 +149,8 @@ class QueryTest(TestCase):
         self.slave1.delete()
         self.query_apply_1.delete()
         QueryPrivileges.objects.all().delete()
+        archer_config = SysConfig()
+        archer_config.set('disable_star', False)
 
     def testQueryAuditCallback(self):
         """测试权限申请工单回调"""
@@ -212,7 +213,57 @@ class QueryTest(TestCase):
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
 
+    @patch('sql.engines.mysql.MysqlEngine.query')
+    @patch('sql.engines.mysql.MysqlEngine.query_masking')
+    @patch('sql.query.query_priv_check')
+    def testSQLWithoutLimit(self, _priv_check, _query_masking, _query):
+        c = Client()
+        some_limit = 100
+        sql_without_limit = 'select some from some_table'
+        sql_with_limit = 'select some from some_table limit {0};'.format(some_limit)
+        some_db = 'some_db'
+        c.force_login(self.u2)
+        q_result = ResultSet(full_sql=sql_without_limit, rows=['value'])
+        q_result.column_list = ['some']
+        _query.return_value = q_result
+        _query_masking.return_value = q_result
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
+        r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
+                                    'sql_content': sql_without_limit,
+                                    'db_name': some_db,
+                                    'limit_num': some_limit})
+        _query.assert_called_once_with(db_name=some_db, sql=sql_with_limit, limit_num=some_limit)
+        r_json = r.json()
+        self.assertEqual(r_json['data']['rows'], ['value'])
+        self.assertEqual(r_json['data']['column_list'], ['some'])
 
+        # 带 * 且不带 limit 的sql
+        sql_with_star = 'select * from some_table'
+        filtered_sql_with_star = 'select * from some_table limit {0};'.format(some_limit)
+        _query.reset_mock()
+        c.post('/query/', data={'instance_name': self.slave1.instance_name,
+                                    'sql_content': sql_with_star,
+                                    'db_name': some_db,
+                                    'limit_num': some_limit})
+        _query.assert_called_once_with(db_name=some_db, sql=filtered_sql_with_star, limit_num=some_limit)
+
+    @patch('sql.query.query_priv_check')
+    def testStarOptionOn(self, _priv_check):
+        c = Client()
+        c.force_login(self.u2)
+        some_limit = 100
+        sql_with_star = 'select * from some_table'
+        some_db = 'some_db'
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
+        archer_config = SysConfig()
+        archer_config.set('disable_star', True)
+        r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
+                                    'sql_content': sql_with_star,
+                                    'db_name': some_db,
+                                    'limit_num': some_limit})
+        archer_config.set('disable_star', False)
+        r_json = r.json()
+        self.assertEqual(1, r_json['status'])
 
 
 class WorkflowViewTest(TestCase):
@@ -295,7 +346,7 @@ class WorkflowViewTest(TestCase):
         r_json = r.json()
         self.assertEqual(r_json['total'], 2)
         # 列表按创建时间倒序排列, 第二个是wf1 , 是已正常结束
-        self.assertEqual(r_json['rows'][1]['status'], '已正常结束')
+        self.assertEqual(r_json['rows'][1]['status'], 'workflow_finish')
 
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     @patch('sql.utils.workflow_audit.Audit.audit')
@@ -306,7 +357,7 @@ class WorkflowViewTest(TestCase):
         r = c.post('/passed/')
         self.assertContains(r, 'workflow_id参数为空.')
         _can_review.return_value = False
-        r = c.post('/passed/',{'workflow_id':self.wf1.id})
+        r = c.post('/passed/', {'workflow_id':self.wf1.id})
         self.assertContains(r, '你无权操作当前工单！')
         _can_review.return_value = True
         _detail_by_id.return_value.audit_id = 123

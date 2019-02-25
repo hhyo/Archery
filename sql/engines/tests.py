@@ -19,13 +19,13 @@ class TestMssql(TestCase):
     def tearDownClass(cls):
         cls.ins1.delete()
 
-    @patch('pyodbc.connect')
+    @patch('sql.engines.mssql.pyodbc.connect')
     def testGetConnection(self,connect):
         new_engine = MssqlEngine(instance=self.ins1)
         new_engine.get_connection()
         connect.assert_called_once()
 
-    @patch('pyodbc.connect')
+    @patch('sql.engines.mssql.pyodbc.connect')
     def testQuery(self, connect):
         cur = Mock()
         connect.return_value.cursor = cur

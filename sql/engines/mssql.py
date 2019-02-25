@@ -66,20 +66,17 @@ order by o.name,c.colid""".format(db_name, tb_name)
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         sql_lower = sql.lower()
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': ''}
-        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format", "left",
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': '', 'has_star': False}
+        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format",
                            "len", "nchar", "patindex", "quotename", "replace", "replicate",
                            "reverse", "right", "soundex", "space", "str", "string_agg",
-                           "string_escape", "string_split", "stuff", "substring", "trim", "unicode",
-                           "abs", "acos", "asin", "atan", "atn2", "ceiling", "cos", "cot", "degrees",
-                           "exp", "floor", "log", "log10", "pi", "power", "radians", "rand", "round",
-                           "sign", "sin", "sqrt", "square", "tan",
-                           "cast", "convert"]
+                           "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['bad_query'] = True
+            result['has_star'] = True
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'
             result['bad_query'] = True
@@ -104,7 +101,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute('use {}'.format(db_name))
+                cursor.execute('use {};'.format(db_name))
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))

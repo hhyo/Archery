@@ -105,10 +105,7 @@ def sqlworkflow_list(request):
                                                                                                        "sql_syntax")
     count = workflow_list.count()
     # QuerySet 序列化
-    rows = []
-    for r in workflow_list:
-        r['status'] = _(r['status'])
-        rows += [r]
+    rows = [row for row in workflow_list]
     result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -500,7 +497,6 @@ def get_workflow_status(request):
 
     workflow_id = int(workflow_id)
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    workflow_detail.status
     workflow_status = workflow_detail.get_status_display()
     result = {"status": workflow_status, "msg": "", "data": ""}
     return JsonResponse(result)

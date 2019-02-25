@@ -1,9 +1,12 @@
 #!/bin/bash
 
-#收集所有的静态文件到STATIC_ROOT
+# 收集所有的静态文件到STATIC_ROOT
 python3 manage.py collectstatic -v0 --noinput
 
-#启动Django Q cluster
+# 编译翻译文件
+python3 manage.py
+
+# 启动Django Q cluster
 nohup python3 manage.py qcluster &
 
 settings=${1:-"archery.settings"}

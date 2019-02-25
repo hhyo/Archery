@@ -140,6 +140,7 @@ class SqlWorkflow(models.Model):
 
 # 工作流审核主表
 class WorkflowAudit(models.Model):
+    """工作流审核状态表"""
     audit_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)

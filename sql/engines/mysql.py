@@ -103,14 +103,16 @@ ORDER BY ORDINAL_POSITION;""".format(
 
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
+        check_result = {'has_star': False, 'msg': '', 'filtered_sql': sql}
         if '*' in sql:
-            return {'bad_query': True, 'msg': '不允许 * 标记, 请指定具体字段名.', 'filtered_sql': sql}
+            check_result['has_star'] = True
+            check_result['msg'] = 'SQL语句中含有 * '
         # 对查询sql增加limit限制
         if re.match(r"^select", sql.lower()):
             if re.search(r"limit\s+(\d+)$", sql.lower()) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql.lower()) is None:
-                    sql = sql + ' limit ' + str(limit_num)
-        return {'filtered_sql': sql}
+                    check_result['filtered_sql'] = sql + ' limit ' + str(limit_num)
+        return check_result
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
