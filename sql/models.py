@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 # 用户信息扩展
 class Users(AbstractUser):
-    display = models.CharField('显示的中文名', max_length=50, blank=True, null=True)
+    display = models.CharField('显示的中文名', max_length=50, default='', blank=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
 
