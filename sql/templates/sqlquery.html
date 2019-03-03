@@ -111,7 +111,7 @@
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
                     ignoreColumn: [0],  //忽略某些列的索引数组
-                    fileName: 'sqllog'  //文件名称设置
+                    fileName: 'query_log'  //文件名称设置
                 },
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -170,11 +170,14 @@
                         if (value.length > 50) {
                             var sql = value.substr(0, 50) + '...';
                             return sql;
-                        }
-                        else {
+                        } else {
                             return value
                         }
                     }
+                }, {
+                    title: '完整sql语句',
+                    field: 'sqllog',
+                    visible: false // 默认不显示
                 }, {
                     title: '返回行数',
                     field: 'effect_row'
@@ -271,8 +274,7 @@
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 var sqlContent = select_sqlContent
-            }
-            else {
+            } else {
                 var sqlContent = editor.getValue();
 
             }
@@ -318,8 +320,7 @@
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
                     var sqlContent = select_sqlContent
-                }
-                else {
+                } else {
                     var sqlContent = editor.getValue();
 
                 }
@@ -339,12 +340,10 @@
                     if (data.is_describe) {
                         tab_add();
                         n = sessionStorage.getItem('tab_num');
-                    }
-                    else {
+                    } else {
                         var n = active_li_id.split("execute_result_tab")[1];
                     }
-                }
-                else {
+                } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
                 }
@@ -363,8 +362,7 @@
                             error: result['error']
                         }]
                     })
-                }
-                else if (result['column_list']) {
+                } else if (result['column_list']) {
                     //异步获取要动态生成的列
                     var columns = []
                     $.each(result['column_list'], function (i, column) {
@@ -396,8 +394,7 @@
                                 locale: 'zh-CN'
                             }
                         );
-                    }
-                    else {
+                    } else {
                         //初始化查询结果
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
@@ -434,8 +431,7 @@
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
-            }
-            else {
+            } else {
                 var sqlContent = editor.getValue();
 
             }
