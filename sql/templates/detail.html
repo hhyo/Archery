@@ -89,11 +89,7 @@
                 {{ workflow_detail.group_name }}
             </td>
             <td>
-                {% if workflow_detail.sql_syntax == 1 %}
-                    DDL
-                {% elif workflow_detail.sql_syntax == 2 %}
-                    DML
-                {% endif %}
+                {{ workflow_detail.get_sql_syntax_display  }}
             </td>
         </tr>
         </tbody>
@@ -341,8 +337,7 @@
         $("#btnExecuteOnly").click(function () {
             if ({{ workflow_detail.is_manual }}) {
                 var isContinue = confirm("平台不支持该语句备份，将不会自动备份数据，请确认是否立即执行？");
-            }
-            else {
+            } else {
                 var isContinue = confirm("请确认是否立即执行？");
             }
             var formExecuteOnly = $("#from-execute");
@@ -377,8 +372,7 @@
                     $(this).dequeue();
                 });
                 formCancel.submit();
-            }
-            else {
+            } else {
                 alert('请填写终止原因')
             }
         });
@@ -393,8 +387,7 @@
                     $(this).dequeue();
                 });
                 formAddsqlcronjo.submit();
-            }
-            else {
+            } else {
                 alert('请填写定时执行时间')
             }
         });
@@ -457,8 +450,7 @@
                 formatter: function (value, row, index) {
                     if (value.length > 80) {
                         return value.substr(0, 80) + '...';
-                    }
-                    else {
+                    } else {
                         return value
                     }
                 },
@@ -469,11 +461,9 @@
                 formatter: function (value, row, index) {
                     if (value === 0) {
                         return 'pass'
-                    }
-                    else if (value === 1) {
+                    } else if (value === 1) {
                         return 'warning'
-                    }
-                    else if (value === 2) {
+                    } else if (value === 2) {
                         return 'error'
                     }
                 },
@@ -502,8 +492,7 @@
                 var style = "";
                 if (row.errlevel === 1) {
                     style = 'warning';
-                }
-                else if (row.errlevel === 2) {
+                } else if (row.errlevel === 2) {
                     style = 'danger';
                 }
                 return {classes: style}
@@ -535,8 +524,7 @@
                     getWorkflowStatus(workflow_id);
                 }, 1000);
                 retryCnt++;
-            }
-            else {
+            } else {
                 retryCnt = 1;
                 alert("该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面");
             }
@@ -563,8 +551,7 @@
                         alert(errorThrown);
                     }
                 });
-            }
-            else {
+            } else {
                 alter("参数不正确")
             }
         }
