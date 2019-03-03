@@ -59,7 +59,7 @@ class Audit(object):
                 if is_auto_review(workflow_id):
                     sql_workflow = SqlWorkflow.objects.get(id=int(workflow_id))
                     sql_workflow.audit_auth_groups = '无需审批'
-                    sql_workflow.status = '审核通过'
+                    sql_workflow.status = 'workflow_review_pass'
                     sql_workflow.save()
                     audit_auth_groups_list = None
 
