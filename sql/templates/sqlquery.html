@@ -204,7 +204,7 @@
     <!-- 执行结果  -->
     <script>
         //添加执行结果页面
-        function tab_add() {
+        function tab_add(tab_title) {
             var tab_number = sessionStorage.getItem('tab_num');
 
             //增加执行结果tab页
@@ -216,7 +216,12 @@
             href_a.setAttribute("href", "#sqlquery_result" + (Number(tab_number) + 1));
             href_a.setAttribute("role", "tab");
             href_a.setAttribute("data-toggle", "tab");
-            href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+            if (tab_title) {
+                href_a.innerHTML = tab_title; //链接显示文本（相当于标签标题）
+            } else {
+                href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+
+            }
             li.appendChild(href_a);//将a添加到li
             $("#nav-tabs").append(li);//li添加到ul
 
@@ -332,23 +337,32 @@
 
         function display_data(data) {
             if (data.status === 0 || data.status === 2) {
+                var result = data.data;
                 //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
                 var active_li_id = sessionStorage.getItem('active_li_id');
+                var active_li_title = sessionStorage.getItem('active_li_title');
 
-                if (active_li_id.match(/^execute_result_tab*/)) {
-                    //查看表结构默认打开新窗口
+                // 查看表结构默认新增tab，相同表结构获取不新增
+                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe) {
-                        tab_add();
-                        n = sessionStorage.getItem('tab_num');
+                        var tb_name = $("#table_name").val();
                     } else {
-                        var n = active_li_id.split("execute_result_tab")[1];
+                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
+                    if (tb_name !== active_li_title) {
+                        tab_add(tb_name);
+                    }
+                    n = sessionStorage.getItem('tab_num');
+                }
+                // 执行结果页默认不新增
+                else if (active_li_title.match(/^执行结果\d$/)) {
+                    var n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
                 }
 
-                var result = data.data;
+
                 //查询报错失败或者inception检测报错
                 if (result['error']) {
                     alertStyle = "alert-danger";
@@ -441,8 +455,7 @@
             }
             //查看表结构
             else if (sql === 'show create table') {
-                var table_name = $("#table_name").val();
-                sqlContent = "show create table " + table_name + ";"
+                sqlContent = "show create table " + $("#table_name").val() + ";"
             }
             //处理SQL，去除注释、空行等
             sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
@@ -583,6 +596,8 @@
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 //当前激活的标签id
                 sessionStorage.setItem('active_li_id', $(e.target).parents().attr('id'));
+                //当前激活的标签标题
+                sessionStorage.setItem('active_li_title', $(e.target).context.innerText);
                 if ($(e.target).parents().attr('id') === 'sqllog_tab') {
                     get_querylog();
                 }
@@ -595,6 +610,7 @@
             sessionStorage.setItem('tab_num', 0);
             //设置当前激活的标签id
             sessionStorage.setItem('active_li_id', 'sqllog_tab');
+            sessionStorage.setItem('active_li_title', '查询历史');
             //默认获取查询历史
             get_querylog();
 
