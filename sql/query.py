@@ -315,6 +315,10 @@ def applyforprivileges(request):
         result['msg'] = str(msg)
     else:
         result = audit_result
+        # 消息通知
+        audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
+                                               workflow_type=WorkflowDict.workflow_type['query']).audit_id
+        async_task(notify_for_audit, audit_id=audit_id, timeout=60)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
