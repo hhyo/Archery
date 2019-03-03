@@ -51,62 +51,36 @@ def sqlworkflow_list(request):
     if navStatus == 'all':
         if user.is_superuser:
             workflow_list = SqlWorkflow.objects.filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "instance_name", "db_name",
-                                                            "group_name", "sql_syntax")
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
             workflow_list = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "instance_name", "db_name",
-                                                            "group_name", "sql_syntax")
+                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')
         else:
             workflow_list = SqlWorkflow.objects.filter(engineer=user.username).filter(
-                workflow_name__contains=search
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "instance_name", "db_name",
-                                                            "group_name", "sql_syntax")
+                workflow_name__contains=search).order_by('-create_time')
     else:
         if user.is_superuser:
             workflow_list = SqlWorkflow.objects.filter(
                 status=navStatus
-            ).order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                            "is_backup", "create_time", "instance_name", "db_name",
-                                                            "group_name", "sql_syntax")
+            ).order_by('-create_time')
         elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
             # 先获取用户所在资源组列表
             group_list = user_groups(user)
             group_ids = [group.group_id for group in group_list]
-            workflow_list = SqlWorkflow.objects.filter(status=navStatus, group_id__in=group_ids
-                                                       ).order_by('-create_time')[offset:limit].values("id",
-                                                                                                       "workflow_name",
-                                                                                                       "engineer_display",
-                                                                                                       "status",
-                                                                                                       "is_backup",
-                                                                                                       "create_time",
-                                                                                                       "instance_name",
-                                                                                                       "db_name",
-                                                                                                       "group_name",
-                                                                                                       "sql_syntax")
+            workflow_list = SqlWorkflow.objects.filter(status=navStatus,
+                                                       group_id__in=group_ids).order_by('-create_time')
         else:
             workflow_list = SqlWorkflow.objects.filter(status=navStatus, engineer=user.username
-                                                       ).order_by('-create_time')[offset:limit].values("id",
-                                                                                                       "workflow_name",
-                                                                                                       "engineer_display",
-                                                                                                       "status",
-                                                                                                       "is_backup",
-                                                                                                       "create_time",
-                                                                                                       "instance_name",
-                                                                                                       "db_name",
-                                                                                                       "group_name",
-                                                                                                       "sql_syntax")
+                                                       ).order_by('-create_time')
     count = workflow_list.count()
+    workflow = workflow_list[offset:limit].values("id", "workflow_name", "engineer_display", "status",
+                                                  "is_backup", "create_time", "instance_name", "db_name",
+                                                  "group_name", "sql_syntax")
     # QuerySet 序列化
-    rows = [row for row in workflow_list]
+    rows = [row for row in workflow]
     result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -330,7 +304,7 @@ def passed(request):
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             audit_result = Audit.audit(audit_id, WorkflowDict.workflow_status['audit_success'],
-                                         user.username, audit_remark)
+                                       user.username, audit_remark)
 
             # 按照审核结果更新业务表审核状态
             if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
@@ -386,12 +360,12 @@ def execute(request):
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,
-                    operation_type=5,
-                    operation_type_desc='执行工单',
-                    operation_info="人工操作执行",
-                    operator=request.user.username,
-                    operator_display=request.user.display
-                    )
+                  operation_type=5,
+                  operation_type_desc='执行工单',
+                  operation_info="人工操作执行",
+                  operator=request.user.username,
+                  operator_display=request.user.display
+                  )
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
@@ -428,12 +402,12 @@ def timingtask(request):
                                                    workflow_type=WorkflowDict.workflow_type[
                                                        'sqlreview']).audit_id
             Audit.add_log(audit_id=audit_id,
-                            operation_type=4,
-                            operation_type_desc='定时执行',
-                            operation_info="定时执行时间：{}".format(run_date),
-                            operator=request.user.username,
-                            operator_display=request.user.display
-                            )
+                          operation_type=4,
+                          operation_type_desc='定时执行',
+                          operation_info="定时执行时间：{}".format(run_date),
+                          operator=request.user.username,
+                          operator_display=request.user.display
+                          )
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -472,30 +446,30 @@ def cancel(request):
                 # 增加工单日志
                 if user.username == workflow_detail.engineer:
                     Audit.add_log(audit_id=audit_id,
-                                    operation_type=3,
-                                    operation_type_desc='取消执行',
-                                    operation_info="取消原因：{}".format(audit_remark),
-                                    operator=request.user.username,
-                                    operator_display=request.user.display
-                                    )
+                                  operation_type=3,
+                                  operation_type_desc='取消执行',
+                                  operation_info="取消原因：{}".format(audit_remark),
+                                  operator=request.user.username,
+                                  operator_display=request.user.display
+                                  )
                 else:
                     Audit.add_log(audit_id=audit_id,
-                                    operation_type=2,
-                                    operation_type_desc='审批不通过',
-                                    operation_info="审批备注：{}".format(audit_remark),
-                                    operator=request.user.username,
-                                    operator_display=request.user.display
-                                    )
+                                  operation_type=2,
+                                  operation_type_desc='审批不通过',
+                                  operation_info="审批备注：{}".format(audit_remark),
+                                  operator=request.user.username,
+                                  operator_display=request.user.display
+                                  )
             else:
                 if user.username == workflow_detail.engineer:
                     Audit.audit(audit_id,
-                                  WorkflowDict.workflow_status['audit_abort'],
-                                  user.username, audit_remark)
+                                WorkflowDict.workflow_status['audit_abort'],
+                                user.username, audit_remark)
                 # 非提交人需要校验审核权限
                 elif user.has_perm('sql.sql_review'):
                     Audit.audit(audit_id,
-                                  WorkflowDict.workflow_status['audit_reject'],
-                                  user.username, audit_remark)
+                                WorkflowDict.workflow_status['audit_reject'],
+                                user.username, audit_remark)
                 else:
                     raise PermissionDenied
 
