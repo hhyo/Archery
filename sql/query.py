@@ -20,7 +20,7 @@ from django_q.tasks import async_task
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.notify import notify
+from sql.notify import notify_for_audit
 from sql.utils.data_masking import Masking
 from sql.utils.resource_group import user_instances, user_groups
 from sql.utils.workflow_audit import Audit
@@ -438,7 +438,7 @@ def queryprivaudit(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 

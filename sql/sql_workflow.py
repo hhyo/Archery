@@ -18,7 +18,7 @@ from django.utils import timezone
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.notify import notify
+from sql.notify import notify_for_audit
 from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
@@ -266,7 +266,7 @@ def autoreview(request):
             # 再次获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify, audit_id=audit_id, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -309,7 +309,7 @@ def passed(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -469,7 +469,7 @@ def cancel(request):
         audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
         if audit_detail.current_status == WorkflowDict.workflow_status['audit_abort']:
-            async_task(notify, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

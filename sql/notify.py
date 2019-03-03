@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger('default')
 
 
-def notify(audit_id, msg_type=0, **kwargs):
+def notify_for_audit(audit_id, msg_type=0, **kwargs):
     """
     工作流消息通知，不包含工单执行结束的通知
     :param audit_id:
@@ -135,3 +135,70 @@ def notify(audit_id, msg_type=0, **kwargs):
         msg_sender.send_email(msg_title, msg_content, msg_email_reciver, list_cc_addr=msg_email_cc)
     elif msg_type == 2:
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+
+
+def notify_for_execute(workflow):
+    """
+    工单执行结束的通知
+    :param workflow:
+    :return:
+    """
+    # 判断是否开启消息通知，未开启直接返回
+    sys_config = SysConfig()
+    if not sys_config.get('mail') and not sys_config.get('ding'):
+        logger.info('未开启消息通知，可在系统设置中开启')
+        return None
+    # 获取当前审批和审批流程
+    base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
+    audit_auth_group, current_audit_auth_group = Audit.review_info(workflow.id, 2)
+    audit_id = Audit.detail_by_workflow_id(workflow.id, 2).audit_id
+    url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_id)
+    msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'],
+                                     workflow.get_status_display(), audit_id)
+    msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        workflow.engineer_display,
+        workflow.group_name,
+        audit_auth_group,
+        workflow.workflow_name,
+        url,
+        re.sub('[\r\n\f]{2,}', '\n', workflow.sql_content[0:500].replace('\r', '')))
+
+    # 邮件通知申请人，抄送DBA
+    list_to_addr = [email['email'] for email in Users.objects.filter(username=workflow.engineer).values('email')]
+    list_cc_addr = [email['email'] for email in auth_group_users(auth_group_names=['DBA'],
+                                                                 group_id=workflow.group_id).values('email')]
+    msg_email_reciver = list_to_addr + list_cc_addr
+
+    # 判断是发送钉钉还是发送邮件
+    msg_sender = MsgSender()
+    logger.info('发送消息通知，消息audit_id={}'.format(audit_id))
+    logger.info('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_email_reciver, msg_content))
+    if sys_config.get('mail'):
+        msg_sender.send_email(msg_title, msg_content, list_to_addr, list_cc_addr=list_cc_addr)
+    if sys_config.get('ding'):
+        # 钉钉通知申请人，审核人，抄送DBA
+        webhook_url = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
+        MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+
+    # DDL通知
+    if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
+        # 判断上线语句是否存在DDL，存在则通知相关人员
+        if workflow.sql_syntax == 1:
+            # 消息内容通知
+            msg_title = '[archery]有新的DDL语句执行完成#{}'.format(audit_id)
+            msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
+                Users.objects.get(username=workflow.engineer).display,
+                workflow.group_name,
+                workflow.instance_name,
+                workflow.db_name,
+                workflow.workflow_name,
+                url,
+                workflow.sql_content[0:500])
+            # 获取通知成员ddl_notify_auth_group
+            msg_to = [email['email'] for email in
+                      Users.objects.filter(groups__name=sys_config.get('ddl_notify_auth_group')).values('email')]
+
+            # 发送
+            logger.info('发送DDL通知，消息audit_id={}'.format(audit_id))
+            logger.info('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_to, msg_content))
+            msg_sender.send_email(msg_title, msg_content, msg_to)
