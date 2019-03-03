@@ -26,7 +26,6 @@ from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, Instance
 from django_q.tasks import async_task
-from django.utils.translation import gettext as _
 
 from sql.engines import get_engine
 
@@ -466,8 +465,11 @@ def cancel(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 消息通知
-        async_task(notify, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        # 仅未审核通过又取消的工单需要发送消息，审核通过的不发送
+        audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type['sqlreview'])
+        if audit_detail.current_status == WorkflowDict.workflow_status['audit_abort']:
+            async_task(notify, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
