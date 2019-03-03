@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from django_q.tasks import schedule
 from django_q.models import Schedule
+from sql.utils.execute_sql import execute, execute_callback
 
 import logging
 
@@ -10,7 +11,7 @@ logger = logging.getLogger('default')
 # 添加/修改sql执行任务
 def add_sqlcronjob(job_id, run_date, workflow_id):
     del_sqlcronjob(job_id)
-    schedule('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback', name=job_id, schedule_type='O', next_run=run_date, repeats=1)
+    schedule(execute, workflow_id, hook=execute_callback, name=job_id, schedule_type='O', next_run=run_date, repeats=1)
     logger.debug('add_sqlcronjob:' + job_id + " run_date:" + run_date.strftime('%Y-%m-%d %H:%M:%S'))
 
 
