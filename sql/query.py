@@ -438,18 +438,7 @@ def queryprivaudit(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        sys_config = SysConfig()
-        if sys_config.get('mail') or sys_config.get('ding'):
-            # 再次获取审核信息
-            audit_detail = Audit.detail_by_workflow_id(workflow_id=apply_id,
-                                                       workflow_type=WorkflowDict.workflow_type['query'])
-            base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
-            workflow_url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_detail.audit_id)
-            async_task(notify,
-                       audit_info=audit_detail,
-                       workflow_url=workflow_url,
-                       audit_remark=audit_remark,
-                       timeout=60)
+        async_task(notify, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 

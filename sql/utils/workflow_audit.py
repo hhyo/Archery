@@ -84,12 +84,12 @@ class Audit(object):
             result['msg'] = '无审核配置，直接审核通过'
             # 增加工单日志
             Audit.add_log(audit_id=audit_detail.audit_id,
-                         operation_type=0,
-                         operation_type_desc='提交',
-                         operation_info='无需审批，系统直接审核通过',
-                         operator=audit_detail.create_user,
-                         operator_display=audit_detail.create_user_display
-                         )
+                          operation_type=0,
+                          operation_type_desc='提交',
+                          operation_info='无需审批，系统直接审核通过',
+                          operator=audit_detail.create_user,
+                          operator_display=audit_detail.create_user_display
+                          )
         else:
             # 向审核主表插入待审核数据
             audit_detail = WorkflowAudit()
@@ -115,12 +115,12 @@ class Audit(object):
             # 增加工单日志
             audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, workflow_type)
             Audit.add_log(audit_id=audit_detail.audit_id,
-                         operation_type=0,
-                         operation_type_desc='提交',
-                         operation_info='等待审批，审批流程：{}'.format(audit_auth_group),
-                         operator=audit_detail.create_user,
-                         operator_display=audit_detail.create_user_display
-                         )
+                          operation_type=0,
+                          operation_type_desc='提交',
+                          operation_info='等待审批，审批流程：{}'.format(audit_auth_group),
+                          operator=audit_detail.create_user,
+                          operator_display=audit_detail.create_user_display
+                          )
         # 返回添加结果
         return result
 
@@ -174,14 +174,14 @@ class Audit(object):
             audit_detail_result.save()
             # 增加工单日志
             audit_auth_group, current_audit_auth_group = Audit.review_info(audit_detail.workflow_id,
-                                                                          audit_detail.workflow_type)
+                                                                           audit_detail.workflow_type)
             Audit.add_log(audit_id=audit_id,
-                         operation_type=1,
-                         operation_type_desc='审批通过',
-                         operation_info="审批备注：{}，下级审批：{}".format(audit_remark, current_audit_auth_group),
-                         operator=audit_user,
-                         operator_display=Users.objects.get(username=audit_user).display
-                         )
+                          operation_type=1,
+                          operation_type_desc='审批通过',
+                          operation_info="审批备注：{}，下级审批：{}".format(audit_remark, current_audit_auth_group),
+                          operator=audit_user,
+                          operator_display=Users.objects.get(username=audit_user).display
+                          )
         elif audit_status == WorkflowDict.workflow_status['audit_reject']:
             # 判断当前工单是否为待审核状态
             if audit_detail.current_status != WorkflowDict.workflow_status['audit_wait']:
@@ -206,12 +206,12 @@ class Audit(object):
             audit_detail_result.save()
             # 增加工单日志
             Audit.add_log(audit_id=audit_id,
-                         operation_type=2,
-                         operation_type_desc='审批不通过',
-                         operation_info="审批备注：{}".format(audit_remark),
-                         operator=audit_user,
-                         operator_display=Users.objects.get(username=audit_user).display
-                         )
+                          operation_type=2,
+                          operation_type_desc='审批不通过',
+                          operation_info="审批备注：{}".format(audit_remark),
+                          operator=audit_user,
+                          operator_display=Users.objects.get(username=audit_user).display
+                          )
         elif audit_status == WorkflowDict.workflow_status['audit_abort']:
             # 判断当前工单是否为待审核/审核通过状态
             if audit_detail.current_status != WorkflowDict.workflow_status['audit_wait'] and \
@@ -236,12 +236,12 @@ class Audit(object):
 
             # 增加工单日志
             Audit.add_log(audit_id=audit_id,
-                         operation_type=3,
-                         operation_type_desc='审批取消',
-                         operation_info="取消原因：{}".format(audit_remark),
-                         operator=audit_user,
-                         operator_display=Users.objects.get(username=audit_user).display
-                         )
+                          operation_type=3,
+                          operation_type_desc='审批取消',
+                          operation_info="取消原因：{}".format(audit_remark),
+                          operator=audit_user,
+                          operator_display=Users.objects.get(username=audit_user).display
+                          )
         else:
             result['msg'] = '审核异常'
             raise Exception(result['msg'])
