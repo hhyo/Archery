@@ -17,6 +17,8 @@
 
 {% block js %}
     {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
         $('#tb-rollback').bootstrapTable('destroy').bootstrapTable({
             escape: true,
@@ -27,7 +29,11 @@
             sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
             pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
             pageSize: 14,                       //每页的记录行数（*）
-            pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
+            pageList: [10, 30, 50, 100, 500],        //可供选择的每页的行数（*）
+            showExport: true,                   //是否显示导出按钮
+            exportOptions: {
+                ignoreColumn: [0],  //忽略某些列的索引数组
+            },
             search: false,                       //是否显示表格搜索
             strictSearch: false,                //是否全匹配搜索
             showColumns: true,                  //是否显示所有的列（选择显示的列）
@@ -64,8 +70,7 @@
                 formatter: function (value, row, index) {
                     if (value.length > 50) {
                         return value.substr(0, 50) + '...';
-                    }
-                    else {
+                    } else {
                         return value
                     }
                 }
@@ -73,17 +78,20 @@
                 title: '完整执行语句',
                 field: 0,
                 visible: false
-            },{
+            }, {
                 title: '回滚语句',
                 field: 1,
                 formatter: function (value, row, index) {
                     if (value.length > 80) {
                         return value.substr(0, 80) + '...';
-                    }
-                    else {
+                    } else {
                         return value
                     }
                 }
+            }, {
+                title: '完整回滚语句',
+                field: 1,
+                visible: false // 默认不显示
             }],
             onLoadSuccess: function () {
             },
