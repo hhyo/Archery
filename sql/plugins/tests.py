@@ -140,7 +140,7 @@ class TestPlugin(TestCase):
         soar = Soar()
         cmd_args = soar.generate_args2cmd(args, True)
         result = soar.execute_cmd(cmd_args, True)
-        self.assertEqual(result, '/bin/sh: /opt/archery/src/plugins/soar: No such file or directory\n')
+        self.assertTrue('/opt/archery/src/plugins/soar' in result)
         # 异常
         with self.assertRaises(RuntimeError):
             soar.execute_cmd(cmd_args, False)

@@ -462,7 +462,7 @@ class TestOptimize(TestCase):
         测试SQLTuning报告
         :return:
         """
-        data = {"sql_content": "select * from archery.sql_users;",
+        data = {"sql_content": "select * from test_archery.sql_users;",
                 "instance_name": "test_instance",
                 "db_name": settings.DATABASES['default']['TEST']['NAME']
                 }
