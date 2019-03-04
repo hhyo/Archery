@@ -340,7 +340,7 @@
             //将数据通过ajax提交给后端进行检查
             $.ajax({
                 type: "post",
-                url: "/slowquery/sqladvisor/",
+                url: "/slowquery/optimize_sqladvisor/",
                 dataType: "json",
                 data: {
                     sql_content: sqlContent,
@@ -471,7 +471,7 @@
             //将数据通过ajax提交给后端进行检查
             $.ajax({
                 type: "post",
-                url: "/slowquery/soar/",
+                url: "/slowquery/optimize_soar/",
                 dataType: "json",
                 data: {
                     instance_name: instance_name,
@@ -528,7 +528,7 @@
 
             $.ajax({
                 type: "post",
-                url: "/slowquery/sqltuning/",
+                url: "/slowquery/optimize_sqltuning/",
                 dataType: "json",
                 data: {
                     sql_content: editor.getValue(),

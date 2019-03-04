@@ -5,7 +5,7 @@ from django.views.i18n import JavaScriptCatalog
 
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, sql_tuning, resource_group, \
-    sql_advisor, binlog2sql, soar
+    sqladvisor_web, binlog2sql, soar_web
 from sql.utils import jobs
 
 urlpatterns = [
@@ -90,9 +90,9 @@ urlpatterns = [
 
     path('slowquery/review/', slowlog.slowquery_review),
     path('slowquery/review_history/', slowlog.slowquery_review_history),
-    path('slowquery/sqladvisor/', sql_advisor.sqladvisor),
-    path('slowquery/sqltuning/', sql_tuning.tuning),
-    path('slowquery/soar/', soar.soar),
+    path('slowquery/optimize_sqladvisor/', sqladvisor_web.optimize_sqladvisor),
+    path('slowquery/optimize_sqltuning/', sql_tuning.tuning),
+    path('slowquery/optimize_soar/', soar_web.optimize_soar),
 
     path('db_diagnostic/process/', db_diagnostic.process),
     path('db_diagnostic/create_kill_session/', db_diagnostic.create_kill_session),
