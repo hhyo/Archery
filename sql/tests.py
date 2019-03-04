@@ -156,7 +156,6 @@ class QueryTest(TestCase):
         archer_config = SysConfig()
         archer_config.set('disable_star', False)
 
-
     def testQueryAuditCallback(self):
         """测试权限申请工单回调"""
         # 工单状态改为审核失败, 验证工单状态
@@ -188,7 +187,10 @@ class QueryTest(TestCase):
                 table_name=tb,
                 limit_num=self.query_apply_2.limit_num)), 1)
 
-    def testCorrectSQL(self):
+    @patch('sql.engines.mysql.MysqlEngine.query')
+    @patch('sql.engines.mysql.MysqlEngine.query_masking')
+    @patch('sql.query.query_priv_check')
+    def testCorrectSQL(self, _priv_check, _query_masking, _query):
         c = Client()
         some_sql = 'select some from some_table limit 100;'
         some_db = 'some_db'
@@ -203,17 +205,14 @@ class QueryTest(TestCase):
         q_result = ResultSet(full_sql=some_sql, rows=['value'])
         q_result.column_list = ['some']
 
-        mock_engine = MysqlEngine
-        mock_engine.query = MagicMock(return_value=q_result)
-        mock_engine.query_masking = MagicMock(return_value=q_result)
-
-        mock_query = query
-        mock_query.query_priv_check = MagicMock(return_value={'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}})
+        _query.return_value = q_result
+        _query_masking.return_value = q_result
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        mock_engine.query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
+        _query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
