@@ -2,6 +2,7 @@ import json
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
@@ -30,6 +31,9 @@ class SignUpTests(TestCase):
         archer_config.get_all_config()
         self.client = Client()
         Group.objects.create(id=1, name='默认组')
+
+    def tearDown(self):
+        SysConfig().replace(json.dumps({}))
 
     def test_sing_up_not_username(self):
         """
@@ -162,7 +166,7 @@ class QueryTest(TestCase):
             self.assertEqual(len(QueryPrivileges.objects.filter(
                 user_name=self.query_apply_1.user_name,
                 db_name=db,
-                limit_num=100)),0)
+                limit_num=100)), 0)
         # 工单改为审核成功, 验证工单状态和权限状态
         query.query_audit_call_back(self.query_apply_1.apply_id, 1)
         self.query_apply_1.refresh_from_db()
@@ -171,7 +175,7 @@ class QueryTest(TestCase):
             self.assertEqual(len(QueryPrivileges.objects.filter(
                 user_name=self.query_apply_1.user_name,
                 db_name=db,
-                limit_num=100)),1)
+                limit_num=100)), 1)
         # 表权限申请测试, 只测试审核成功
         query.query_audit_call_back(self.query_apply_2.apply_id, 1)
         self.query_apply_2.refresh_from_db()
@@ -181,9 +185,12 @@ class QueryTest(TestCase):
                 user_name=self.query_apply_2.user_name,
                 db_name=self.query_apply_2.db_list,
                 table_name=tb,
-                limit_num=self.query_apply_2.limit_num)),1)
+                limit_num=self.query_apply_2.limit_num)), 1)
 
-    def testCorrectSQL(self):
+    @patch('sql.engines.mysql.MysqlEngine.query')
+    @patch('sql.engines.mysql.MysqlEngine.query_masking')
+    @patch('sql.query.query_priv_check')
+    def testCorrectSQL(self, _priv_check, _query_masking, _query):
         c = Client()
         some_sql = 'select some from some_table limit 100;'
         some_db = 'some_db'
@@ -198,17 +205,14 @@ class QueryTest(TestCase):
         q_result = ResultSet(full_sql=some_sql, rows=['value'])
         q_result.column_list = ['some']
 
-        mock_engine = MysqlEngine
-        mock_engine.query = MagicMock(return_value=q_result)
-        mock_engine.query_masking = MagicMock(return_value=q_result)
-
-        mock_query = query
-        mock_query.query_priv_check = MagicMock(return_value={'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}})
+        _query.return_value = q_result
+        _query_masking.return_value = q_result
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        mock_engine.query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
+        _query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -242,9 +246,9 @@ class QueryTest(TestCase):
         filtered_sql_with_star = 'select * from some_table limit {0};'.format(some_limit)
         _query.reset_mock()
         c.post('/query/', data={'instance_name': self.slave1.instance_name,
-                                    'sql_content': sql_with_star,
-                                    'db_name': some_db,
-                                    'limit_num': some_limit})
+                                'sql_content': sql_with_star,
+                                'db_name': some_db,
+                                'limit_num': some_limit})
         _query.assert_called_once_with(db_name=some_db, sql=filtered_sql_with_star, limit_num=some_limit)
 
     @patch('sql.query.query_priv_check')
@@ -289,8 +293,8 @@ class WorkflowViewTest(TestCase):
             sql_content='some_sql',
             sql_syntax=1,
             execute_result=json.dumps([{
-                'id':1,
-                'sql':'some_content'
+                'id': 1,
+                'sql': 'some_content'
             }])
         )
         self.wf1.save()
@@ -357,12 +361,12 @@ class WorkflowViewTest(TestCase):
         r = c.post('/passed/')
         self.assertContains(r, 'workflow_id参数为空.')
         _can_review.return_value = False
-        r = c.post('/passed/', {'workflow_id':self.wf1.id})
+        r = c.post('/passed/', {'workflow_id': self.wf1.id})
         self.assertContains(r, '你无权操作当前工单！')
         _can_review.return_value = True
         _detail_by_id.return_value.audit_id = 123
         _audit.return_value = {
-            "data":{
+            "data": {
                 "workflow_status": 1  # TODO 改为audit_success
             }
         }
@@ -387,10 +391,104 @@ class WorkflowViewTest(TestCase):
         r = c.post('/cancel/', data={'workflow_id': self.wf2.id})
         self.assertContains(r, '终止原因不能为空')
         _can_cancel.return_value = False
-        r = c.post('/cancel/', data={'workflow_id': self.wf2.id, 'cancel_remark':'some_reason'})
+        r = c.post('/cancel/', data={'workflow_id': self.wf2.id, 'cancel_remark': 'some_reason'})
         self.assertContains(r, '你无权操作当前工单！')
         _can_cancel.return_value = True
         _detail_by_id = 123
         r = c.post('/cancel/', data={'workflow_id': self.wf2.id, 'cancel_remark': 'some_reason'})
         self.wf2.refresh_from_db()
         self.assertEqual('workflow_abort', self.wf2.status)
+
+
+class TestOptimize(TestCase):
+    """
+    测试SQL优化
+    """
+
+    def setUp(self):
+        self.superuser = User(username='super', is_superuser=True)
+        self.superuser.save()
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+                               host=settings.DATABASES['default']['HOST'],
+                               port=settings.DATABASES['default']['PORT'],
+                               user=settings.DATABASES['default']['USER'],
+                               password=settings.DATABASES['default']['PASSWORD'])
+        self.master.save()
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.master.delete()
+        self.sys_config.replace(json.dumps({}))
+
+    def test_sqladvisor(self):
+        """
+        测试SQLAdvisor报告
+        :return:
+        """
+        r = self.client.post(path='/slowquery/optimize_sqladvisor/')
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '页面提交参数可能为空', 'data': []})
+        r = self.client.post(path='/slowquery/optimize_sqladvisor/',
+                             data={"sql_content": "select 1;", "instance_name": "test_instance"})
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '请配置SQLAdvisor路径！', 'data': []})
+        self.sys_config.set('sqladvisor', '/opt/archery/src/plugins/sqladvisor')
+        self.sys_config.get_all_config()
+        r = self.client.post(path='/slowquery/optimize_sqladvisor/',
+                             data={"sql_content": "select 1;", "instance_name": "test_instance"})
+        self.assertEqual(json.loads(r.content)['status'], 0)
+
+    def test_soar(self):
+        """
+        测试SOAR报告
+        :return:
+        """
+        r = self.client.post(path='/slowquery/optimize_soar/')
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '页面提交参数可能为空', 'data': []})
+        r = self.client.post(path='/slowquery/optimize_soar/',
+                             data={"sql": "select 1;", "instance_name": "test_instance", "db_name": "mysql"})
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '请配置soar_path和test_dsn！', 'data': []})
+        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        self.sys_config.set('soar_test_dsn', 'root:@127.0.0.1:3306/information_schema')
+        self.sys_config.get_all_config()
+        r = self.client.post(path='/slowquery/optimize_soar/',
+                             data={"sql": "select 1;", "instance_name": "test_instance", "db_name": "mysql"})
+        self.assertEqual(json.loads(r.content)['status'], 0)
+
+    def test_tuning(self):
+        """
+        测试SQLTuning报告
+        :return:
+        """
+        data = {"sql_content": "select * from test_archery.sql_users;",
+                "instance_name": "test_instance",
+                "db_name": settings.DATABASES['default']['TEST']['NAME']
+                }
+        r = self.client.post(path='/slowquery/optimize_sqltuning/')
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+
+        # 获取sys_parm
+        data['option[]'] = 'sys_parm'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()),
+                             ['basic_information', 'sys_parameter', 'optimizer_switch', 'sqltext'])
+
+        # 获取sql_plan
+        data['option[]'] = 'sql_plan'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()),
+                             ['optimizer_rewrite_sql', 'plan', 'sqltext'])
+
+        # 获取obj_stat
+        data['option[]'] = 'obj_stat'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()),
+                             ['object_statistics_tableistructure', 'object_statistics_tableinfo',
+                              'object_statistics_indexinfo', 'sqltext'])
+
+        # 获取sql_profile
+        data['option[]'] = 'sql_profile'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()), ['session_status', 'sqltext'])

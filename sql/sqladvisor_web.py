@@ -1,25 +1,20 @@
 # -*- coding: UTF-8 -*-
-import logging
-import subprocess
-import traceback
-
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from common.config import SysConfig
 from sql.models import Instance
 from sql.utils.resource_group import user_instances
-
-logger = logging.getLogger('default')
+from sql.plugins.sqladvisor import SQLAdvisor
 
 
 # 获取SQLAdvisor的优化结果
 @permission_required('sql.optimize_sqladvisor', raise_exception=True)
-def sqladvisor(request):
+def optimize_sqladvisor(request):
     sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
-    verbose = request.POST.get('verbose')
+    verbose = request.POST.get('verbose', 1)
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     # 服务器端参数验证
@@ -28,8 +23,6 @@ def sqladvisor(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    sql_content = sql_content.strip()
-
     try:
         user_instances(request.user, 'all').get(instance_name=instance_name)
     except Exception:
@@ -37,24 +30,38 @@ def sqladvisor(request):
         result['msg'] = '你所在组未关联该实例！'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    if verbose is None or verbose == '':
-        verbose = 1
+    # 检查sqladvisor程序路径
+    sqladvisor_path = SysConfig().get('sqladvisor')
+    if sqladvisor_path is None:
+        result['status'] = 1
+        result['msg'] = '请配置SQLAdvisor路径！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 取出实例的连接信息
     instance_info = Instance.objects.get(instance_name=instance_name)
 
-    # 提交给sqladvisor获取审核结果
-    sqladvisor_path = SysConfig().get('sqladvisor')
-    sql_content = sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+    # 提交给sqladvisor获取分析报告
+    sqladvisor = SQLAdvisor()
+    # 准备参数
+    args = {"h": instance_info.host,
+            "P": instance_info.port,
+            "u": instance_info.user,
+            "p": instance_info.raw_password,
+            "d": db_name,
+            "v": verbose,
+            "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            }
+
+    # 参数检查
+    args_check_result = sqladvisor.check_args(args)
+    if args_check_result['status'] == 1:
+        return HttpResponse(json.dumps(args_check_result), content_type='application/json')
+    # 参数转换
+    cmd_args = sqladvisor.generate_args2cmd(args, shell=True)
+    # 执行命令
     try:
-        p = subprocess.Popen(sqladvisor_path + ' -h "%s" -P "%s" -u "%s" -p "%s\" -d "%s" -v %s -q "%s"' % (
-            str(instance_info.host), str(instance_info.port), str(instance_info.user),
-            str(instance_info.raw_password), str(db_name), verbose, sql_content),
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
-        stdout, stderr = p.communicate()
-        result['data'] = stdout
-    except Exception:
-        logger.error(traceback.format_exc())
-        result['data'] = 'sqladvisor运行报错，请检查日志'
+        result['data'] = sqladvisor.execute_cmd(cmd_args, shell=True)
+    except RuntimeError as e:
+        result['status'] = 1
+        result['msg'] = str(e)
     return HttpResponse(json.dumps(result), content_type='application/json')
