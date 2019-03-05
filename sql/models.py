@@ -95,6 +95,17 @@ class Instance(models.Model):
         super(Instance, self).save(*args, **kwargs)
 
 
+SQL_WORKFLOW_CHOICES = (
+        ('workflow_finish', _('workflow_finish')),
+        ('workflow_abort', _('workflow_abort')),
+        ('workflow_manreviewing', _('workflow_manreviewing')),
+        ('workflow_review_pass', _('workflow_review_pass')),
+        ('workflow_timingtask', _('workflow_timingtask')),
+        ('workflow_executing', _('workflow_executing')),
+        ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
+        ('workflow_exception', _('workflow_exception')))
+
+
 class SqlWorkflow(models.Model):
     """存放各个SQL上线工单的详细内容
     可定期归档或清理历史数据，也可通过``alter table workflow row_format=compressed; ``来进行压缩
@@ -107,16 +118,7 @@ class SqlWorkflow(models.Model):
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
-    status = models.CharField(max_length=50, choices=(
-        ('workflow_finish', _('workflow_finish')),
-        ('workflow_abort', _('workflow_abort')),
-        ('workflow_manreviewing', _('workflow_manreviewing')),
-        ('workflow_review_pass', _('workflow_review_pass')),
-        ('workflow_timingtask', _('workflow_timingtask')),
-        ('workflow_executing', _('workflow_executing')),
-        ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
-        ('workflow_exception', _('workflow_exception')))
-    )
+    status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
     instance_name = models.CharField('实例名称', max_length=50)
@@ -138,15 +140,16 @@ class SqlWorkflow(models.Model):
         verbose_name_plural = u'SQL工单管理'
 
 
-# 工作流审核主表
+workflow_type_choices = (('sql_query', _('sql_query')), ('sql_review', _('sql_review')))
+
+
 class WorkflowAudit(models.Model):
     """工作流审核状态表"""
     audit_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     workflow_id = models.BigIntegerField('关联业务id')
-    workflow_type = models.IntegerField('申请类型',
-                                        choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
+    workflow_type = models.IntegerField('申请类型', choices=workflow_type_choices)
     workflow_title = models.CharField('申请标题', max_length=50)
     workflow_remark = models.CharField('申请备注', default='', max_length=140)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)

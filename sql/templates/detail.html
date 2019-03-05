@@ -83,7 +83,8 @@
                 {% else %}
                     <font color="red">
                 {% endif %}
-                <B id="workflow_detail_status">{{ workflow_detail.get_status_display }}</B></font>
+                <B id="workflow_detail_disaply">{{ workflow_detail.get_status_display }}</B></font>
+                <span hidden="hidden" id="workflow_detail_status">{{ workflow_detail.status }}</span>
             </td>
             <td>
                 {{ workflow_detail.group_name }}
@@ -511,13 +512,13 @@
         var key;
         var retryCnt = 1;
         $(document).ready(function () {
-            if (status === "执行中") {
+            if (status === "workflow_executing") {
                 getWorkflowStatus(workflow_id);
             }
         });
 
         function getWorkflowStatus(workflow_id) {
-            document.getElementById("workflow_detail_status").innerHTML = "确认中...";
+            document.getElementById("workflow_detail_disaply").innerHTML = gettext("确认中...");
             if (retryCnt <= 120) {
                 clearTimeout(key);
                 key = setTimeout(function () {
@@ -540,7 +541,7 @@
                         workflow_id: workflow_id
                     },
                     complete: function () {
-                        if (wfStatus !== -1 && wfStatus !== "执行中") {
+                        if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
                             window.location.reload(true);
                         }
                     },

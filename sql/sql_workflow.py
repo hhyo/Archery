@@ -484,6 +484,5 @@ def get_workflow_status(request):
 
     workflow_id = int(workflow_id)
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    workflow_status = workflow_detail.get_status_display()
-    result = {"status": workflow_status, "msg": "", "data": ""}
+    result = {"status": workflow_detail.status, "msg": "", "data": ""}
     return JsonResponse(result)

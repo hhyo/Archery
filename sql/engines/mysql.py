@@ -267,12 +267,12 @@ ORDER BY ORDINAL_POSITION;""".format(
             workflow_detail.save()
 
         # 二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
-        execute_result.status = "已正常结束"
+        execute_result.status = "workflow_finish"
         for sqlRow in execute_result.rows:
             # 如果发现任何一个行执行结果里有errLevel为1或2，并且stagestatus列没有包含Execute Successfully字样，则判断最终执行结果为有异常.
             if (sqlRow.errlevel == 1 or sqlRow.errlevel == 2) and re.match(r"\w*Execute Successfully\w*",
                                                                            sqlRow.stagestatus) is None:
-                execute_result.status = "执行有异常"
+                execute_result.status = "workflow_exception"
                 execute_result.error = "Line {0} has error/warning: {1}".format(sqlRow.id, sqlRow.errormessage)
 
         return execute_result

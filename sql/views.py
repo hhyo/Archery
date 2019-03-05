@@ -15,7 +15,7 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.jobs import job_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -36,7 +36,7 @@ def login(request):
 
 def sqlworkflow(request):
     """SQL上线工单列表页面"""
-    return render(request, 'sqlworkflow.html')
+    return render(request, 'sqlworkflow.html', {'status_list': SQL_WORKFLOW_CHOICES})
 
 
 # 提交SQL的页面
