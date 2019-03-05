@@ -24,14 +24,12 @@ def lists(request):
     search = request.POST.get('search', '')
 
     if type:
-        instances = Instance.objects.filter(instance_name__contains=search, type=type)[offset:limit] \
-            .values("id", "instance_name", "db_type", "type", "host", "port", "user")
-        count = Instance.objects.filter(instance_name__contains=search, type=type).count()
+        instances_obj = Instance.objects.filter(instance_name__contains=search, type=type)
     else:
-        instances = Instance.objects.filter(instance_name__contains=search)[offset:limit] \
-            .values("id", "instance_name", "db_type", "type", "host", "port", "user")
-        count = Instance.objects.filter(instance_name__contains=search).count()
+        instances_obj = Instance.objects.filter(instance_name__contains=search)
 
+    count = instances_obj.count()
+    instances = instances_obj[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
     # QuerySet 序列化
     rows = [row for row in instances]
 

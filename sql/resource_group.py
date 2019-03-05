@@ -24,10 +24,9 @@ def group(request):
     search = request.POST.get('search', '')
 
     # 全部工单里面包含搜索条件
-    group_list = ResourceGroup.objects.filter(group_name__contains=search)[offset:limit].values("group_id",
-                                                                                                "group_name",
-                                                                                                "ding_webhook")
-    group_count = ResourceGroup.objects.filter(group_name__contains=search).count()
+    group_obj = ResourceGroup.objects.filter(group_name__contains=search)
+    group_count = group_obj.count()
+    group_list = group_obj[offset:limit].values("group_id", "group_name", "ding_webhook")
 
     # QuerySet 序列化
     rows = [row for row in group_list]
@@ -51,17 +50,14 @@ def associated_objects(request):
     search = request.POST.get('search', '')
 
     if object_type:
-        rows = ResourceGroupRelations.objects.filter(group_id=group_id, object_type=object_type,
-                                                     object_name__contains=search)[
-               offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
-                                    'create_time')
-        count = ResourceGroupRelations.objects.filter(group_id=group_id, object_type=object_type,
-                                                      object_name__contains=search).count()
+        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id,
+                                                         object_type=object_type,
+                                                         object_name__contains=search)
     else:
-        rows = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search)[
-               offset:limit].values(
-            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search).count()
+        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search)
+    count = rows_obj.count()
+    rows = rows_obj[offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
+                                         'create_time')
     rows = [row for row in rows]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')

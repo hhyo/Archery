@@ -30,43 +30,29 @@ def lists(request):
 
     # 只返回当前待自己审核的数据
     if workflow_type == 0:
-        audit_list = WorkflowAudit.objects.filter(
+        audit_obj = WorkflowAudit.objects.filter(
             workflow_title__contains=search,
             current_status=WorkflowDict.workflow_status['audit_wait'],
             group_id__in=group_ids,
             current_audit__in=auth_group_ids
-        ).order_by('-audit_id')[offset:limit].values(
-            'audit_id', 'workflow_type', 'workflow_title', 'create_user_display',
-            'create_time', 'current_status', 'audit_auth_groups',
-            'current_audit',
-            'group_name')
-        audit_list_count = WorkflowAudit.objects.filter(
-            workflow_title__contains=search,
-            current_status=WorkflowDict.workflow_status['audit_wait'],
-            group_id__in=group_ids,
-            current_audit__in=auth_group_ids
-        ).count()
+        )
     else:
-        audit_list = WorkflowAudit.objects.filter(
+        audit_obj = WorkflowAudit.objects.filter(
             workflow_title__contains=search,
             workflow_type=workflow_type,
             current_status=WorkflowDict.workflow_status['audit_wait'],
             group_id__in=group_ids,
             current_audit__in=auth_group_ids
-        ).order_by('-audit_id')[offset:limit].values(
+        )
+
+    audit_list_count = audit_obj.count()
+    audit_list = audit_obj.order_by('-audit_id')[offset:limit].values(
             'audit_id', 'workflow_type',
             'workflow_title', 'create_user_display',
             'create_time', 'current_status',
             'audit_auth_groups',
             'current_audit',
             'group_name')
-        audit_list_count = WorkflowAudit.objects.filter(
-            workflow_title__contains=search,
-            workflow_type=workflow_type,
-            current_status=WorkflowDict.workflow_status['audit_wait'],
-            group_id__in=group_ids,
-            current_audit__in=auth_group_ids
-        ).count()
 
     # QuerySet 序列化
     rows = [row for row in audit_list]

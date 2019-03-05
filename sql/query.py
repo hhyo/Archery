@@ -171,32 +171,23 @@ def getqueryapplylist(request):
 
     # 获取列表数据,申请人只能查看自己申请的数据,管理员可以看到全部数据,审核人可以看到自己审核的数据
     if user.is_superuser:
-        lists = QueryPrivilegesApply.objects.all().filter(
-            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[
-                offset:limit].values(
-            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_display', 'status', 'create_time', 'group_name'
-        )
-        count = QueryPrivilegesApply.objects.all().filter(title__contains=search).count()
+        lists_obj = QueryPrivilegesApply.objects.all().filter(
+            Q(title__contains=search) | Q(user_display__contains=search))
     elif user.has_perm('sql.query_review'):
         # 先获取用户所在资源组列表
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
-        lists = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
-            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
-            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_display', 'status', 'create_time', 'group_name'
-        )
-        count = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
-            Q(title__contains=search) | Q(user_display__contains=search)).count()
+        lists_obj = QueryPrivilegesApply.objects.filter(group_id__in=group_ids).filter(
+            Q(title__contains=search) | Q(user_display__contains=search))
     else:
-        lists = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
-            Q(title__contains=search) | Q(user_display__contains=search)).order_by('-apply_id')[offset:limit].values(
-            'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
-            'user_display', 'status', 'create_time', 'group_name'
-        )
-        count = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
-            Q(title__contains=search) | Q(user_display__contains=search)).count()
+        lists_obj = QueryPrivilegesApply.objects.filter(user_name=user.username).filter(
+            Q(title__contains=search) | Q(user_display__contains=search))
+
+    count = lists_obj.count()
+    lists = lists_obj.order_by('-apply_id')[offset:limit].values(
+        'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+        'user_display', 'status', 'create_time', 'group_name'
+    )
 
     # QuerySet 序列化
     rows = [row for row in lists]
@@ -336,35 +327,21 @@ def getuserprivileges(request):
     # 获取用户的权限数据
     if user.is_superuser:
         if user_name != 'all':
-            privileges_list = QueryPrivileges.objects.all().filter(user_name=user_name,
-                                                                   is_deleted=0,
-                                                                   table_name__contains=search,
-                                                                   valid_date__gte=datetime.datetime.now()
-                                                                   ).order_by('-privilege_id')[offset:limit]
-            privileges_count = QueryPrivileges.objects.all().filter(user_name=user_name,
-                                                                    is_deleted=0,
-                                                                    table_name__contains=search,
-                                                                    valid_date__gte=datetime.datetime.now()).count()
+            privileges_list_obj = QueryPrivileges.objects.all().filter(user_name=user_name,
+                                                                       is_deleted=0,
+                                                                       table_name__contains=search,
+                                                                       valid_date__gte=datetime.datetime.now())
         else:
-            privileges_list = QueryPrivileges.objects.all().filter(is_deleted=0,
-                                                                   table_name__contains=search,
-                                                                   valid_date__gte=datetime.datetime.now()
-                                                                   ).order_by('-privilege_id')[offset:limit]
-            privileges_count = QueryPrivileges.objects.all().filter(is_deleted=0,
-                                                                    table_name__contains=search,
-                                                                    valid_date__gte=datetime.datetime.now()
-                                                                    ).count()
+            privileges_list_obj = QueryPrivileges.objects.all().filter(is_deleted=0,
+                                                                       table_name__contains=search,
+                                                                       valid_date__gte=datetime.datetime.now())
     else:
-        privileges_list = QueryPrivileges.objects.filter(user_name=user.username,
-                                                         table_name__contains=search,
-                                                         is_deleted=0,
-                                                         valid_date__gte=datetime.datetime.now()
-                                                         ).order_by('-privilege_id')[offset:limit]
-        privileges_count = QueryPrivileges.objects.filter(user_name=user.username,
-                                                          table_name__contains=search,
-                                                          is_deleted=0,
-                                                          valid_date__gte=datetime.datetime.now()
-                                                          ).count()
+        privileges_list_obj = QueryPrivileges.objects.filter(user_name=user.username,
+                                                             table_name__contains=search,
+                                                             is_deleted=0,
+                                                             valid_date__gte=datetime.datetime.now())
+    privileges_count = privileges_list_obj.count()
+    privileges_list = privileges_list_obj.order_by('-privilege_id')[offset:limit]
 
     # QuerySet 序列化
     privileges_list = serializers.serialize("json", privileges_list)
@@ -613,16 +590,12 @@ def querylog(request):
 
     # 查询个人记录，超管查看所有数据
     if user.is_superuser:
-        sql_log_count = QueryLog.objects.all().filter(
-            Q(sqllog__contains=search) | Q(user_display__contains=search)).count()
-        sql_log_list = QueryLog.objects.all().filter(
-            Q(sqllog__contains=search) | Q(user_display__contains=search)).order_by(
-            '-id')[offset:limit]
+        sql_log_obj = QueryLog.objects.all().filter(Q(sqllog__contains=search) | Q(user_display__contains=search))
     else:
-        sql_log_count = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search).count()
-        sql_log_list = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search).order_by('-id')[
-                       offset:limit]
+        sql_log_obj = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search)
 
+    sql_log_count = sql_log_obj.count()
+    sql_log_list = sql_log_obj.order_by('-id')[offset:limit]
     # QuerySet 序列化
     sql_log_list = serializers.serialize("json", sql_log_list)
     sql_log_list = json.loads(sql_log_list)
