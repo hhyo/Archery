@@ -330,7 +330,7 @@ class WorkflowViewTest(TestCase):
         c.force_login(self.u1)
         r = c.post('/getWorkflowStatus/', {'workflow_id': self.wf1.id})
         r_json = r.json()
-        self.assertEqual(r_json['status'], '已正常结束')
+        self.assertEqual(r_json['status'], 'workflow_finish')
 
     @patch('sql.utils.workflow_audit.Audit.review_info')
     @patch('sql.utils.workflow_audit.Audit.can_review')
@@ -340,8 +340,10 @@ class WorkflowViewTest(TestCase):
         c = Client()
         c.force_login(self.u1)
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        expected_status = r"""id="workflow_detail_status">已正常结束"""
-        self.assertContains(r, expected_status)
+        expected_status_display = r"""id="workflow_detail_disaply">已正常结束"""
+        self.assertContains(r, expected_status_display)
+        exepcted_status = r"""id="workflow_detail_status">workflow_finish"""
+        self.assertContains(r, exepcted_status)
 
     def testWorkflowListView(self):
         c = Client()
