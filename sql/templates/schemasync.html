@@ -220,7 +220,7 @@
                             //填充内容后展现出来
                             $("#schemadiff-result").show();
                         } else {
-                            alert("status: " + data.status + "\nmsg: " + data.data);
+                            alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {

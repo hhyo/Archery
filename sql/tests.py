@@ -492,3 +492,47 @@ class TestOptimize(TestCase):
         data['option[]'] = 'sql_profile'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertListEqual(list(json.loads(r.content)['data'].keys()), ['session_status', 'sqltext'])
+
+
+class TestSchemaSync(TestCase):
+    """
+    测试SchemaSync
+    """
+
+    def setUp(self):
+        self.superuser = User(username='super', is_superuser=True)
+        self.superuser.save()
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+                               host=settings.DATABASES['default']['HOST'],
+                               port=settings.DATABASES['default']['PORT'],
+                               user=settings.DATABASES['default']['USER'],
+                               password=settings.DATABASES['default']['PASSWORD'])
+        self.master.save()
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.master.delete()
+        self.sys_config.replace(json.dumps({}))
+
+    def test_schema_sync(self):
+        """
+        测试SchemaSync
+        :return:
+        """
+        data = {"instance_name": "test_instance",
+                "db_name": "*",
+                "target_instance_name": "test_instance",
+                "target_db_name": "*",
+                "sync_auto_inc": True,
+                "sync_comments": False}
+        r = self.client.post(path='/instance/schemasync/', data=data)
+        self.assertEqual(json.loads(r.content)['status'], 1)
+        self.assertEqual(json.loads(r.content)['msg'], '请配置SchemaSync路径！')
+        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
+        self.sys_config.get_all_config()
+        r = self.client.post(path='/instance/schemasync/', data=data)
+        self.assertEqual(json.loads(r.content)['status'], 0)

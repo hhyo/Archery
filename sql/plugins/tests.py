@@ -9,6 +9,8 @@ import json
 
 from django.test import Client, TestCase
 from django.contrib.auth import get_user_model
+
+from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
 
@@ -126,6 +128,31 @@ class TestPlugin(TestCase):
         cmd_args = sql_advisor.generate_args2cmd(args, False)
         self.assertIsInstance(cmd_args, list)
         cmd_args = sql_advisor.generate_args2cmd(args, True)
+        self.assertIsInstance(cmd_args, str)
+
+    def test_schema_sync_generate_args2cmd(self):
+        args = {
+            "sync-auto-inc": True,
+            "sync-comments": True,
+            "tag": 'tag_v',
+            "output-directory": '',
+            "source": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(user='root',
+                                                                              pwd='123456',
+                                                                              host='127.0.0.1',
+                                                                              port=3306,
+                                                                              database='*'),
+            "target": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(user='root',
+                                                                              pwd='123456',
+                                                                              host='127.0.0.1',
+                                                                              port=3306,
+                                                                              database='*')
+        }
+        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
+        self.sys_config.get_all_config()
+        schema_sync = SchemaSync()
+        cmd_args = schema_sync.generate_args2cmd(args, False)
+        self.assertIsInstance(cmd_args, list)
+        cmd_args = schema_sync.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
     def test_execute_cmd(self):

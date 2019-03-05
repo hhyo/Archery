@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import os
-import subprocess
 import time
 
 import simplejson as json
@@ -11,6 +10,7 @@ from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
+from sql.plugins.schemasync import SchemaSync
 from .models import Instance
 
 
@@ -75,12 +75,9 @@ def schemasync(request):
     db_name = request.POST.get('db_name')
     target_instance_name = request.POST.get('target_instance_name')
     target_db_name = request.POST.get('target_db_name')
-    sync_auto_inc = '--sync-auto-inc' if request.POST.get('sync_auto_inc') == 'true' else ''
-    sync_comments = '--sync-comments' if request.POST.get('sync_comments') == 'true' else ''
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # diff 选项
-    options = sync_auto_inc + ' ' + sync_comments
+    sync_auto_inc = True if request.POST.get('sync_auto_inc') == 'true' else False
+    sync_comments = True if request.POST.get('sync_comments') == 'true' else False
+    result = {'status': 0, 'msg': 'ok', 'data': {'diff_stdout': '', 'patch_stdout': '', 'revert_stdout': ''}}
 
     # 循环对比全部数据库
     if db_name == 'all' or target_db_name == 'all':
@@ -91,46 +88,65 @@ def schemasync(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     target_instance_info = Instance.objects.get(instance_name=target_instance_name)
 
-    # 获取对比结果文件
-    path = SysConfig().get('schemasync', '')
-    timestamp = int(time.time())
-    output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
+    # 检查SchemaSync程序路径
+    path = SysConfig().get('schemasync')
+    if path is None:
+        result['status'] = 1
+        result['msg'] = '请配置SchemaSync路径！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
-    command = path + " %s --output-directory=%s --tag=%s \
-            mysql://%s:'%s'@%s:%d/%s  mysql://%s:'%s'@%s:%d/%s" % (options,
-                                                               output_directory,
-                                                               timestamp,
-                                                               instance_info.user,
-                                                               instance_info.raw_password,
-                                                               instance_info.host,
-                                                               instance_info.port,
-                                                               db_name,
-                                                               target_instance_info.user,
-                                                               target_instance_info.raw_password,
-                                                               target_instance_info.host,
-                                                               target_instance_info.port,
-                                                               target_db_name)
-    diff = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            shell=True, universal_newlines=True)
-    diff_stdout, diff_stderr = diff.communicate()
+    # 提交给SchemaSync获取对比结果
+    schema_sync = SchemaSync()
+    # 准备参数
+    tag = int(time.time())
+    output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
+    args = {
+        "sync-auto-inc": sync_auto_inc,
+        "sync-comments": sync_comments,
+        "tag": tag,
+        "output-directory": output_directory,
+        "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=instance_info.user,
+                                                                            pwd=instance_info.raw_password,
+                                                                            host=instance_info.host,
+                                                                            port=instance_info.port,
+                                                                            database=db_name),
+        "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=target_instance_info.user,
+                                                                            pwd=target_instance_info.raw_password,
+                                                                            host=target_instance_info.host,
+                                                                            port=target_instance_info.port,
+                                                                            database=target_db_name)
+    }
+    # 参数检查
+    args_check_result = schema_sync.check_args(args)
+    if args_check_result['status'] == 1:
+        return HttpResponse(json.dumps(args_check_result), content_type='application/json')
+    # 参数转换
+    cmd_args = schema_sync.generate_args2cmd(args, shell=True)
+    # 执行命令
+    try:
+        diff_stdout = schema_sync.execute_cmd(cmd_args, shell=True)
+    except RuntimeError as e:
+        diff_stdout = str(e)
 
     # 非全部数据库对比可以读取对比结果并在前端展示
     if db_name != '*':
         date = time.strftime("%Y%m%d", time.localtime())
-        patch_sql_file = '%s%s_%s.%s.patch.sql' % (output_directory, target_db_name, timestamp, date)
-        revert_sql_file = '%s%s_%s.%s.revert.sql' % (output_directory, target_db_name, timestamp, date)
-        cat_patch_sql = subprocess.Popen(['cat', patch_sql_file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                         stderr=subprocess.STDOUT, universal_newlines=True)
-        cat_revert_sql = subprocess.Popen(['cat', revert_sql_file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT, universal_newlines=True)
-        patch_stdout, patch_stderr = cat_patch_sql.communicate()
-        revert_stdout, revert_stderr = cat_revert_sql.communicate()
-        result['data'] = {'diff_stdout': diff_stdout, 'patch_stdout': patch_stdout, 'revert_stdout': revert_stdout}
+        patch_sql_file = '%s%s_%s.%s.patch.sql' % (output_directory, target_db_name, tag, date)
+        revert_sql_file = '%s%s_%s.%s.revert.sql' % (output_directory, target_db_name, tag, date)
+        try:
+            with open(patch_sql_file, 'r') as f:
+                patch_sql = f.read()
+        except FileNotFoundError as e:
+            patch_sql = str(e)
+        try:
+            with open(revert_sql_file, 'r') as f:
+                revert_sql = f.read()
+        except FileNotFoundError as e:
+            revert_sql = str(e)
+        result['data'] = {'diff_stdout': diff_stdout, 'patch_stdout': patch_sql, 'revert_stdout': revert_sql}
     else:
         result['data'] = {'diff_stdout': diff_stdout, 'patch_stdout': '', 'revert_stdout': ''}
 
-    # 删除对比文件
-    # subprocess.call(['rm', '-rf', patch_sql_file, revert_sql_file, 'schemasync.log'])
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
