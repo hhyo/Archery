@@ -1,20 +1,10 @@
 import re
 import sqlparse
 
-from common.utils.const import Const
 from sql.models import SqlWorkflow, Instance
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
 from sql.engines import get_engine
-
-
-# 获取工单地址
-def get_detail_url(request, workflow_id):
-    scheme = request.scheme
-    host = request.META['HTTP_HOST']
-    from sql.utils.workflow_audit import Audit
-    audit_id = Audit.detail_by_workflow_id(workflow_id, 2).audit_id
-    return "{}://{}/workflow/{}/".format(scheme, host, audit_id)
 
 
 # 判断SQL上线是否无需审批

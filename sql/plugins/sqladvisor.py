@@ -28,13 +28,10 @@ class SQLAdvisor(Plugin):
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
-                if name == 'v':
-                    cmd_args = cmd_args + ' ' + '-{name} {value}'.format(name=name, value=str(value))
-                else:
-                    cmd_args = cmd_args + ' ' + '-{name} "{value}"'.format(name=name, value=str(value))
+                cmd_args = cmd_args + ' ' + '-{name} "{value}"'.format(name=str(name), value=str(value))
         else:
             cmd_args = [self.path]
             for name, value in args.items():
-                cmd_args.append('-%s' % name)
-                cmd_args.append('%s' % value)
+                cmd_args.append('-%s' % str(name))
+                cmd_args.append('%s' % str(value))
         return cmd_args

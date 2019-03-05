@@ -203,7 +203,7 @@ ORDER BY ORDINAL_POSITION;""".format(
         check_result.column_list = inception_result.column_list
         return check_result
 
-    def execute_workflow(self, manual=False):
+    def execute_workflow(self):
         """执行上线单"""
         workflow_detail = self.workflow
         if workflow_detail.is_manual == 1:
