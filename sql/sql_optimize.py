@@ -8,11 +8,12 @@
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-
 from common.config import SysConfig
+from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.models import Instance
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
+from sql.sql_tuning import SqlTuning
 from sql.utils.resource_group import user_instances
 
 __author__ = 'hhyo'
@@ -133,3 +134,44 @@ def optimize_soar(request):
         result['status'] = 1
         result['msg'] = str(e)
     return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+@permission_required('sql.optimize_sqltuning', raise_exception=True)
+def optimize_sqltuning(request):
+    instance_name = request.POST.get('instance_name')
+    db_name = request.POST.get('db_name')
+    sqltext = request.POST.get('sql_content')
+    option = request.POST.getlist('option[]')
+
+    try:
+        Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
+    sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
+    result = {'status': 0, 'msg': 'ok', 'data': {}}
+    if 'sys_parm' in option:
+        basic_information = sql_tunning.basic_information()
+        sys_parameter = sql_tunning.sys_parameter()
+        optimizer_switch = sql_tunning.optimizer_switch()
+        result['data']['basic_information'] = basic_information
+        result['data']['sys_parameter'] = sys_parameter
+        result['data']['optimizer_switch'] = optimizer_switch
+    if 'sql_plan' in option:
+        plan, optimizer_rewrite_sql = sql_tunning.sqlplan()
+        result['data']['optimizer_rewrite_sql'] = optimizer_rewrite_sql
+        result['data']['plan'] = plan
+    if 'obj_stat' in option:
+        object_statistics_tableistructure, object_statistics_tableinfo, object_statistics_indexinfo = sql_tunning.object_statistics()
+        result['data']['object_statistics_tableistructure'] = object_statistics_tableistructure
+        result['data']['object_statistics_tableinfo'] = object_statistics_tableinfo
+        result['data']['object_statistics_indexinfo'] = object_statistics_indexinfo
+    if 'sql_profile' in option:
+        session_status = sql_tunning.exec_sql()
+        result['data']['session_status'] = session_status
+    # 关闭连接
+    sql_tunning.engine.close()
+    result['data']['sqltext'] = sqltext
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')

@@ -91,7 +91,7 @@ urlpatterns = [
     path('slowquery/review/', slowlog.slowquery_review),
     path('slowquery/review_history/', slowlog.slowquery_review_history),
     path('slowquery/optimize_sqladvisor/', sql.sql_optimize.optimize_sqladvisor),
-    path('slowquery/optimize_sqltuning/', sql_tuning.tuning),
+    path('slowquery/optimize_sqltuning/', sql.sql_optimize.optimize_sqltuning),
     path('slowquery/optimize_soar/', sql.sql_optimize.optimize_soar),
 
     path('db_diagnostic/process/', db_diagnostic.process),
