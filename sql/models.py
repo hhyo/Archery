@@ -2,7 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from common.utils.aes_decryptor import Prpcrypt
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 # 用户信息扩展
 class Users(AbstractUser):

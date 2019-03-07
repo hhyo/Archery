@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -15,7 +15,7 @@ from sql.engines.mysql import MysqlEngine
 from sql import query
 
 from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog
-
+from sql.utils.execute_sql import  execute_callback
 User = get_user_model()
 
 
@@ -538,3 +538,62 @@ class TestSchemaSync(TestCase):
         self.sys_config.get_all_config()
         r = self.client.post(path='/instance/schemasync/', data=data)
         self.assertEqual(json.loads(r.content)['status'], 0)
+
+
+class AsyncTest(TestCase):
+
+    def setUp(self):
+        self.now = datetime.now()
+        self.u1 = User(username='some_user', display='用户1')
+        self.u1.save()
+        self.wf1 = SqlWorkflow(
+            workflow_name='some_name2',
+            group_id=1,
+            group_name='g1',
+            engineer=self.u1.username,
+            engineer_display=self.u1.display,
+            audit_auth_groups='some_group',
+            create_time=self.now - timedelta(days=1),
+            status='workflow_executing',
+            is_backup='是',
+            instance_name='some_instance',
+            db_name='some_db',
+            sql_content='some_sql',
+            sql_syntax=1,
+            execute_result=''
+        )
+        self.wf1.save()
+        # 初始化工单执行返回对象
+        self.task_result = MagicMock()
+        self.task_result.args = [self.wf1.id]
+        self.task_result.success = True
+        self.task_result.stopped = self.now
+        self.task_result.result.json.return_value = json.dumps([{
+                                    'id': 1,
+                                    'sql': 'some_content'}])
+        self.task_result.result.warning = ''
+        self.task_result.result.error = ''
+
+    def tearDown(self):
+        self.wf1.delete()
+        self.u1.delete()
+        self.task_result = None
+
+    @patch('sql.utils.execute_sql.notify_for_execute')
+    @patch('sql.utils.execute_sql.Audit')
+    def test_call_back(self, mock_audit, mock_notify):
+        mock_audit.detail_by_workflow_id.return_value.audit_id = 123
+        mock_audit.add_log.return_value = 'any thing'
+        execute_callback(self.task_result)
+        mock_audit.detail_by_workflow_id.assert_called_with(workflow_id=self.wf1.id, workflow_type=ANY)
+        mock_audit.add_log.assert_called_with(
+            audit_id=123,
+            operation_type=ANY,
+            operation_type_desc=ANY,
+            operation_info="执行结果：已正常结束",
+            operator=ANY,
+            operator_display=ANY,
+        )
+        mock_notify.assert_called_once()
+
+
