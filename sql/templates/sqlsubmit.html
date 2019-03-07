@@ -21,7 +21,7 @@
                     <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
                 </div>
                 <div class="form-group">
-                    <input id="workflow_name" type="text" name="workflow_name" class="form-control"
+                    <input id="workflow_name" type="text" autocomplete="off" name="workflow_name" class="form-control"
                            data-name="上线单名称" data-placeholder="请输入上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表"
                            required>
                 </div>
@@ -280,8 +280,7 @@
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
                     var sqlContent = select_sqlContent
-                }
-                else {
+                } else {
                     var sqlContent = editor.getValue();
 
                 }
@@ -304,8 +303,7 @@
                 $("#CheckErrorCount").text(CheckErrorCount);
                 if (CheckWarningCount > 0 || CheckErrorCount > 0) {
                     $('#submitComfirm').modal('show');
-                }
-                else {
+                } else {
                     formSubmit.submit();
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
@@ -362,8 +360,7 @@
             //先做表单验证，成功了提交ajax给后端
             if (validate()) {
                 autoreview();
-            }
-            else {
+            } else {
                 $("#btn-format").removeClass('disabled');
                 $("#btn-format").prop('disabled', false);
                 $("#btn-autoreview").removeClass('disabled');
@@ -410,8 +407,7 @@
                                         var sql = value.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
                                         if (value.length > 50) {
                                             return sql.substr(0, 50) + '...';
-                                        }
-                                        else {
+                                        } else {
                                             return sql
                                         }
                                     }
@@ -426,11 +422,9 @@
                                     formatter: function (value, row, index) {
                                         if (value === 0) {
                                             return 'pass'
-                                        }
-                                        else if (value === 1) {
+                                        } else if (value === 1) {
                                             return 'warning'
-                                        }
-                                        else if (value === 2) {
+                                        } else if (value === 2) {
                                             return 'error'
                                         }
                                     }
@@ -448,8 +442,7 @@
                                     var style = "";
                                     if (row.errlevel === 1) {
                                         style = 'warning';
-                                    }
-                                    else if (row.errlevel === 2) {
+                                    } else if (row.errlevel === 2) {
                                         style = 'danger';
                                     }
                                     return {classes: style}
@@ -533,8 +526,7 @@
                             $("#instance_name").selectpicker('val', myObject.instance_name);
                             if ($("#instance_name").val()) {
                                 $("#instance_name").trigger("change")
-                            }
-                            else {
+                            } else {
                                 $("#instance_name").empty();
                                 $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
                                 $('#instance_name').selectpicker('render');
@@ -617,15 +609,13 @@
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-            }
-            else if (pathname === "/submitotherinstance/") {
+            } else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-            }
-            else if (pathname === "/submitsql/") {
+            } else if (pathname === "/submitsql/") {
                 $("#workflow_name").val(sessionStorage.removeItem('editWorkflowNname'));
                 sessionStorage.removeItem('editGroup');
                 sessionStorage.removeItem('editSqlContent');
