@@ -33,7 +33,7 @@ RUN yum -y install epel-release \
     && cd sqladvisor/ \
     && cmake -DCMAKE_BUILD_TYPE=debug ./ \
     && make \
-    && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt/archery/src/plugins \
+    && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
     && rm -rf /opt/SQLAdvisor/
 #schemasync
 RUN cd /opt \
@@ -42,7 +42,7 @@ RUN cd /opt \
     && yum install -y python-devel \
     && pip install schema-sync mysql-python
 #soar
-RUN cd /opt/archery/src/plugins \
+RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/0.11.0/soar.linux-amd64 -O soar \
     && chmod a+x soar
 #archery
@@ -52,6 +52,9 @@ RUN cd /opt \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
+    && mv /opt/sqladvisor /opt/archery/src/plugins/ \
+    && mv /opt/soar /opt/archery/src/plugins/
+
 
 
 ENV LANG en_US.UTF-8
