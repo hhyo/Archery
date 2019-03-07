@@ -40,8 +40,11 @@ docker-compose -f docker-compose.yml up -d
 docker exec -ti archery /bin/bash
 cd /opt/archery
 source /opt/venv4archery/bin/activate
-python3 manage.py makemigrations sql  #这一步如果遇到报错可忽略
+python3 manage.py makemigrations sql  
 python3 manage.py migrate 
+
+# 编译翻译文件
+python3 manage.py compilemessages
 
 #创建管理用户
 python3 manage.py createsuperuser
