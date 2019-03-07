@@ -2,6 +2,7 @@
 import logging
 import traceback
 
+from simplejson import JSONDecodeError
 from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns, Instance
 import simplejson as json
@@ -121,18 +122,11 @@ class Masking(object):
         else:
             try:
                 table_ref = json.loads(print_info['query_tree'])['table_ref']
-            except Exception:
-                logger.error(traceback.format_exc())
+            except JSONDecodeError:
                 try:
-                    # 处理JSONDecodeError: Expecting property name enclosed in double quotes
-                    # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
-                    query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", print_info['query_tree'])
-                    query_tree_str = re.sub(r",\s*?]", "]", query_tree_str)
-                    query_tree_str = re.sub(r",\s*?}", "}", query_tree_str)
-                    query_tree_str = re.sub(r"\[,\s*?{", "[{", query_tree_str)
-                    query_tree_str = query_tree_str.replace("'", "\"")
-                    table_ref = json.loads(query_tree_str)['table_ref']
-                except Exception as msg:
+                    table_ref = json.loads(repair_json_str(print_info['query_tree']))['table_ref']
+                except JSONDecodeError as msg:
+                    logger.debug('inception语法树解析表信息出错:')
                     logger.error(traceback.format_exc())
                     result['status'] = 2
                     result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg),
@@ -143,15 +137,11 @@ class Masking(object):
 
     # 解析query_tree,获取语句信息,并返回命中脱敏规则的列信息
     def analy_query_tree(self, query_tree, instance_name):
-        # 处理JSONDecodeError: Expecting property name enclosed in double quotes
-        # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
-        query_tree_str = re.sub(r"(,?)(\w+?)\s*?:", r"\1'\2':", query_tree)
-        query_tree_str = re.sub(r",\s*?]", "]", query_tree_str)
-        query_tree_str = re.sub(r",\s*?}", "}", query_tree_str)
-        query_tree_str = re.sub(r"\[,\s*?{", "[{", query_tree_str)
-        query_tree_str = query_tree_str.replace("'", "\"")
+        try:
+            query_tree_dict = json.loads(query_tree)
+        except JSONDecodeError:
+            query_tree_dict = json.loads(repair_json_str(query_tree))
 
-        query_tree_dict = json.loads(query_tree_str)
         select_list = query_tree_dict.get('select_list')
         table_ref = query_tree_dict.get('table_ref')
 
@@ -328,6 +318,17 @@ class Masking(object):
                 return value
         else:
             return value
+
+
+def repair_json_str(json_str):
+    # 处理JSONDecodeError: Expecting property name enclosed in double quotes
+    # inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
+    json_str = re.sub(r"{\s*'(.+)':", r'{"\1":', json_str)
+    json_str = re.sub(r",\s*?]", "]", json_str)
+    json_str = re.sub(r",\s*?}", "}", json_str)
+    json_str = re.sub(r"\[,\s*?{", "[{", json_str)
+    json_str = json_str.replace("'", "\"")
+    return json_str
 
 
 def brute_mask(sql_result):
