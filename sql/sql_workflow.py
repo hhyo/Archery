@@ -266,7 +266,7 @@ def autoreview(request):
             # 再次获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
