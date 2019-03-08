@@ -3,7 +3,7 @@ from unittest.mock import patch, Mock, ANY
 from sql.models import Instance
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
-from sql.engines.models import ResultSet
+from sql.engines.models import ResultSet, ReviewSet
 
 
 class TestMssql(TestCase):
@@ -156,3 +156,28 @@ class TestMysql(TestCase):
         sql_without_limit = 'select user from usertable'
         check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit,limit_num=100)
         self.assertEqual(check_result['filtered_sql'], 'select user from usertable limit 100')
+
+
+class TestModel(TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_result_set_rows_shadow(self):
+        # 测试默认值为空列表的坑
+        # 如果默认值是空列表，又使用的是累加的方法更新，会导致残留上次的列表
+        result_set1 = ResultSet()
+        for i in range(10):
+            result_set1.rows += [i]
+        brand_new_result_set = ResultSet()
+        self.assertEqual(brand_new_result_set.rows, [])
+
+        review_set1 = ReviewSet()
+        for i in range(10):
+            review_set1.rows += [i]
+        brand_new_review_set = ReviewSet()
+        self.assertEqual(brand_new_review_set.rows, [])
+
