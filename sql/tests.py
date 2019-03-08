@@ -108,14 +108,22 @@ class QueryTest(TestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.slave2 = Instance(instance_name='test_instance_non_mysql', type='slave', db_type='mssql',
+                               host='some_host2', port=3306, user='some_user', password='some_password')
         self.slave1.save()
-        User = get_user_model()
-        self.u1 = User(username='test_user', display='中文显示', is_active=True)
+        self.slave2.save()
+        archer_user = get_user_model()
+        self.superuser1 = archer_user(username='super1', is_superuser=True)
+        self.superuser1.save()
+        self.u1 = archer_user(username='test_user', display='中文显示', is_active=True)
         self.u1.save()
-        self.u2 = User(username='test_user2', display='中文显示', is_active=True)
+        self.u2 = archer_user(username='test_user2', display='中文显示', is_active=True)
         self.u2.save()
+        self.u3 = archer_user(username='test_user3', display='中文显示', is_active=True)
+        self.u3.save()
         sql_query_perm = Permission.objects.get(codename='query_submit')
         self.u2.user_permissions.add(sql_query_perm)
+        self.u3.user_permissions.add(sql_query_perm)
         tomorrow = datetime.now() + timedelta(days=1)
         self.query_apply_1 = QueryPrivilegesApply(
             group_id=1,
@@ -146,12 +154,45 @@ class QueryTest(TestCase):
             audit_auth_groups='some_audit_group'
         )
         self.query_apply_2.save()
+        self.db_priv_for_user3 = QueryPrivileges(
+            user_name=self.u3.username,
+            user_display=self.u3.display,
+            instance_name=self.slave1.instance_name,
+            db_name='some_db',
+            table_name='',
+            valid_date=tomorrow,
+            limit_num=70,
+            priv_type=1)
+        self.db_priv_for_user3.save()
+        self.table_priv_for_user3 = QueryPrivileges(
+            user_name=self.u3.username,
+            user_display=self.u3.display,
+            instance_name=self.slave1.instance_name,
+            db_name='another_db',
+            table_name='some_table',
+            valid_date=tomorrow,
+            limit_num=60,
+            priv_type=2)
+        self.table_priv_for_user3.save()
+        self.db_priv_for_user3_another_instance = QueryPrivileges(
+            user_name=self.u3.username,
+            user_display=self.u3.display,
+            instance_name=self.slave2.instance_name,
+            db_name='some_db_another_instance',
+            table_name='',
+            valid_date=tomorrow,
+            limit_num=50,
+            priv_type=1)
+        self.db_priv_for_user3_another_instance.save()
 
     def tearDown(self):
         self.u1.delete()
         self.u2.delete()
+        self.u3.delete()
         self.slave1.delete()
+        self.slave2.delete()
         self.query_apply_1.delete()
+        self.query_apply_2.delete()
         QueryPrivileges.objects.all().delete()
         archer_config = SysConfig()
         archer_config.set('disable_star', False)
@@ -268,6 +309,40 @@ class QueryTest(TestCase):
         archer_config.set('disable_star', False)
         r_json = r.json()
         self.assertEqual(1, r_json['status'])
+
+    @patch('sql.query.Masking')
+    def test_query_priv_check(self, mock_masking):
+        # 超级用户直接返回
+        superuser_limit = query.query_priv_check(self.superuser1, self.slave1.instance_name,
+                                                 'some_db', 'some_sql', 100)
+        self.assertEqual(superuser_limit['status'], 0)
+        self.assertEqual(superuser_limit['data']['limit_num'], 100)
+
+        # 无语法树解析，只校验db_name
+        limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
+                                                            'some_db_another_instance','some_sql', 1000)
+        self.assertEqual(limit_without_tree_analyse['data']['limit_num'], self.db_priv_for_user3_another_instance.limit_num)
+
+        # 无语法树解析， 无权限的情况
+        limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
+                                                            'some_db_does_not_exist','some_sql', 1000)
+        self.assertEqual(limit_without_tree_analyse['status'],1)
+        self.assertIn('some_db_does_not_exist', limit_without_tree_analyse['msg'])
+
+        # 有语法树解析, 有库权限
+        mock_masking.return_value.query_table_ref.return_value = {
+             'status': 0,
+             'data': [{
+                 'db': 'another_db',
+                 'table': 'some_table'
+             }]}
+        limit_with_tree_analyse = query.query_priv_check(self.u3, self.slave1,
+                                                         'some_db','some_sql',1000)
+        mock_masking.return_value.query_table_ref.assert_called_once()
+        self.assertEqual(limit_with_tree_analyse['data']['limit_num'], self.table_priv_for_user3.limit_num)
+
+        # TODO 有语法树解析， 无库权限， 无表权限
+        # TODO 有语法树解析， 无库权限， 有表权限
 
 
 class WorkflowViewTest(TestCase):

@@ -153,6 +153,10 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
                                                         db_name=db_name,
                                                         valid_date__gte=datetime.datetime.now(),
                                                         is_deleted=0).aggregate(Min('limit_num'))['limit_num__min']
+    if user_limit_num is None:
+        result['status'] = 1
+        result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
+        return result
     limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
     result['data']['limit_num'] = limit_num
     return result
