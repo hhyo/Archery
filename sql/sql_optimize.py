@@ -163,10 +163,7 @@ def optimize_sqltuning(request):
         result['data']['optimizer_rewrite_sql'] = optimizer_rewrite_sql
         result['data']['plan'] = plan
     if 'obj_stat' in option:
-        object_statistics_tableistructure, object_statistics_tableinfo, object_statistics_indexinfo = sql_tunning.object_statistics()
-        result['data']['object_statistics_tableistructure'] = object_statistics_tableistructure
-        result['data']['object_statistics_tableinfo'] = object_statistics_tableinfo
-        result['data']['object_statistics_indexinfo'] = object_statistics_indexinfo
+        result['data']['object_statistics'] = sql_tunning.object_statistics()
     if 'sql_profile' in option:
         session_status = sql_tunning.exec_sql()
         result['data']['session_status'] = session_status

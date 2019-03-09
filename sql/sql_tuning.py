@@ -6,9 +6,7 @@ from MySQLdb.connections import numeric_part
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance
-import sqlparse
-from sqlparse.sql import IdentifierList, Identifier
-from sqlparse.tokens import Keyword, DML
+from sql.utils.extract_tables import extract_tables
 
 
 class SqlTuning(object):
@@ -59,46 +57,9 @@ class SqlTuning(object):
     order by 1, 3;    
     '''
 
-    @staticmethod
-    def __is_subselect(parsed):
-        if not parsed.is_group:
-            return False
-        for item in parsed.tokens:
-            if item.ttype is DML and item.value.upper() == 'SELECT':
-                return True
-        return False
-
-    def __extract_from_part(self, parsed):
-        from_seen = False
-        for item in parsed.tokens:
-            # print item.ttype,item.value
-            if from_seen:
-                if self.__is_subselect(item):
-                    for x in self.__extract_from_part(item):
-                        yield x
-                elif item.ttype is Keyword:
-                    raise StopIteration
-                else:
-                    yield item
-            elif item.ttype is Keyword and item.value.upper() == 'FROM':
-                from_seen = True
-
-    @staticmethod
-    def __extract_table_identifiers(token_stream):
-        for item in token_stream:
-            if isinstance(item, IdentifierList):
-                for identifier in item.get_identifiers():
-                    yield identifier.get_real_name()
-            elif isinstance(item, Identifier):
-                yield item.get_real_name()
-            # It's a bug to check for Keyword here, but in the example
-            # above some tables names are identified as keywords...
-            elif item.ttype is Keyword:
-                yield item.value
-
-    def __extract_tables(self, p_sqltext):
-        stream = self.__extract_from_part(sqlparse.parse(p_sqltext)[0])
-        return list(self.__extract_table_identifiers(stream))
+    def __extract_tables(self):
+        """获取sql语句中的表名"""
+        return [i.name.replace('`', '').lower() for i in extract_tables(self.sqltext)]
 
     def basic_information(self):
         return self.engine.query(sql="select @@version", close_conn=False).to_sep_dict()
@@ -130,21 +91,19 @@ class SqlTuning(object):
 
     # 获取关联表信息存在缺陷，只能获取到一张表
     def object_statistics(self):
-        tableistructure = {'column_list': [], 'rows': []}
-        tableinfo = {'column_list': [], 'rows': []}
-        indexinfo = {'column_list': [], 'rows': []}
-        for index, table_name in enumerate(self.__extract_tables(self.sqltext)):
-            tableistructure = self.engine.query(db_name=self.db_name, sql="show create table {};".format(
-                table_name.replace('`', '').lower()), close_conn=False).to_sep_dict()
+        object_statistics = []
+        for index, table_name in enumerate(self.__extract_tables()):
+            table_statistics = dict()
+            table_statistics['structure'] = self.engine.query(db_name=self.db_name, sql="show create table {};".format(
+                table_name), close_conn=False).to_sep_dict()
 
-            tableinfo = self.engine.query(
-                sql=self.sql_table_info % (self.db_name, table_name.replace('`', '').lower()),
-                close_conn=False).to_sep_dict()
+            table_statistics['tableinfo'] = self.engine.query(sql=self.sql_table_info % (self.db_name, table_name),
+                                                              close_conn=False).to_sep_dict()
 
-            indexinfo = self.engine.query(
-                sql=self.sql_table_index % (self.db_name, table_name.replace('`', '').lower()),
-                close_conn=False).to_sep_dict()
-        return tableistructure, tableinfo, indexinfo
+            table_statistics['indexinfo'] = self.engine.query(sql=self.sql_table_index % (self.db_name, table_name),
+                                                              close_conn=False).to_sep_dict()
+            object_statistics.append(table_statistics)
+        return object_statistics
 
     def exec_sql(self):
         result = {"EXECUTE_TIME": 0,

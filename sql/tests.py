@@ -562,8 +562,7 @@ class TestOptimize(TestCase):
         data['option[]'] = 'obj_stat'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertListEqual(list(json.loads(r.content)['data'].keys()),
-                             ['object_statistics_tableistructure', 'object_statistics_tableinfo',
-                              'object_statistics_indexinfo', 'sqltext'])
+                             ['object_statistics', 'sqltext'])
 
         # 获取sql_profile
         data['option[]'] = 'sql_profile'
