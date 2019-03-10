@@ -143,9 +143,9 @@
                                 <li>
                                     <a href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
                                 </li>
-                                <li>
-                                    <a href="/themis/new/version/sql/review/task/index">任务查询</a>
-                                </li>
+                                    <li>
+                                        <a href="/themis/new/version/sql/review/task/index">任务查询</a>
+                                    </li>
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
@@ -154,7 +154,7 @@
                         <li>
                             <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
-                                {% if perms.sql.menu_instance %}
+                                {% if perms.sql.menu_instance_list %}
                                     <li>
                                         <a href="/instance/">实例列表</a>
                                     </li>

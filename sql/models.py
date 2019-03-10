@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from common.utils.aes_decryptor import Prpcrypt
 from django.utils.translation import gettext as _
 
+
 # 用户信息扩展
 class Users(AbstractUser):
     display = models.CharField('显示的中文名', max_length=50, default='', blank=True)
@@ -96,14 +97,14 @@ class Instance(models.Model):
 
 
 SQL_WORKFLOW_CHOICES = (
-        ('workflow_finish', _('workflow_finish')),
-        ('workflow_abort', _('workflow_abort')),
-        ('workflow_manreviewing', _('workflow_manreviewing')),
-        ('workflow_review_pass', _('workflow_review_pass')),
-        ('workflow_timingtask', _('workflow_timingtask')),
-        ('workflow_executing', _('workflow_executing')),
-        ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
-        ('workflow_exception', _('workflow_exception')))
+    ('workflow_finish', _('workflow_finish')),
+    ('workflow_abort', _('workflow_abort')),
+    ('workflow_manreviewing', _('workflow_manreviewing')),
+    ('workflow_review_pass', _('workflow_review_pass')),
+    ('workflow_timingtask', _('workflow_timingtask')),
+    ('workflow_executing', _('workflow_executing')),
+    ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
+    ('workflow_exception', _('workflow_exception')))
 
 
 class SqlWorkflow(models.Model):
@@ -426,8 +427,9 @@ class Permission(models.Model):
             ('menu_dbdiagnostic', '菜单 会话管理'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
-            ('menu_system', '菜单 系统管理'),
             ('menu_instance', '菜单 实例管理'),
+            ('menu_instance_list', '菜单 实例列表'),
+            ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
             ('menu_themis', '菜单 数据库审核'),
             ('sql_submit', '提交SQL上线工单'),
