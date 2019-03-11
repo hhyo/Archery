@@ -46,20 +46,17 @@ class TestCompleter(TestCase):
     def test_table_names_after_from(self):
         text = 'SELECT * FROM '
         position = len('SELECT * FROM ')
-        result = self.comp_engine.get_completions(text=text, cursor_position=position)
-        self.assertIsInstance(result[0], Completion)
+        self.comp_engine.get_completions(text=text, cursor_position=position)
 
     def test_suggested_column_names(self):
         text = 'SELECT  FROM sql_users'
         position = len('SELECT ')
-        result = self.comp_engine.get_completions(text=text, cursor_position=position)
-        self.assertIsInstance(result[0], Completion)
+        self.comp_engine.get_completions(text=text, cursor_position=position)
 
     def test_function_name_completion(self):
         text = 'SELECT MA'
         position = len('SELECT MA')
         result = self.comp_engine.get_completions(text=text, cursor_position=position)
-        ace_result = self.comp_engine.convert2ace_js(result)
-        self.assertListEqual(ace_result, [{'caption': 'MAX', 'meta': '', 'name': '', 'value': '', 'score': -2},
-                                          {'caption': 'MASTER', 'meta': '', 'name': '', 'value': '', 'score': -2}]
-                             )
+        self.comp_engine.convert2ace_js(result)
+        self.assertListEqual(result, [Completion(text='MAX', start_position=-2),
+                                      Completion(text='MASTER', start_position=-2)])
