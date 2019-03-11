@@ -62,7 +62,7 @@ class Completer:
         ace_completions = []
         for completion in completions:
             comp = dict()
-            comp["caption"] = completion.display.replace('`', '') if completion.display else completion.display
+            comp["caption"] = completion.display
             comp["meta"] = completion.display_meta
             comp["name"] = ''
             comp["value"] = ''
