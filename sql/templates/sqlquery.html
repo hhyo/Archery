@@ -85,9 +85,12 @@
     <script src="{% static 'ace/theme-github.js' %}"></script>
     <script src="{% static 'ace/snippets/sql.js' %}"></script>
     <script src="{% static 'ace/ace_init.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+
     <!-- 查询历史  -->
     <script>
         //获取查询列表
@@ -109,6 +112,7 @@
                 pageSize: 14,                       //每页的记录行数（*）
                 pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
+                exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                 exportOptions: {
                     ignoreColumn: [0],  //忽略某些列的索引数组
                     fileName: 'query_log'  //文件名称设置
@@ -416,7 +420,7 @@
                             columns: columns,
                             showExport: true,
                             exportDataType: "all",
-                            //exportTypes: ['json', 'sql', 'csv', 'txt', 'xml'],
+                            exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
                                 fileName: 'export_result'  //文件名称设置
