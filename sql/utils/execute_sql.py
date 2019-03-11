@@ -6,10 +6,6 @@ from sql.notify import notify_for_execute
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
 
-import logging
-
-logger = logging.getLogger('default')
-
 
 def execute(workflow_id):
     """为延时或异步任务准备的execute, 传入工单ID即可"""
