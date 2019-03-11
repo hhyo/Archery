@@ -65,11 +65,10 @@ function setDbsCompleteData(result) {
 
         }
         setCompleteData(tables);
-    }
-    else {
+    } else {
         $.ajax({
             type: "post",
-            url: "/getdbNameList/",
+            url: "/instance/getdbNameList/",
             dataType: "json",
             data: {
                 instance_name: $("#instance_name").val()
@@ -118,11 +117,10 @@ function setTablesCompleteData(result) {
 
         }
         setCompleteData(tables);
-    }
-    else {
+    } else {
         $.ajax({
             type: "post",
-            url: "/getTableNameList/",
+            url: "/instance/getTableNameList/",
             dataType: "json",
             data: {
                 instance_name: $("#instance_name").val(),
@@ -171,8 +169,7 @@ function setColumnsCompleteData(result) {
 
         }
         setCompleteData(columns);
-    }
-    else {
+    } else {
         $.ajax({
             type: "post",
             url: "/instance/getColumnNameList/",

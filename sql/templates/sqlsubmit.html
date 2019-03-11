@@ -200,23 +200,15 @@
                     if (data.status === 0) {
                         var result = data.data;
                         $("#db_name").empty();
-                        var dbs = [];
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
-                            dbs.push({
-                                name: result[i],
-                                value: result[i],
-                                caption: result[i],
-                                meta: 'databases',
-                                score: '100'
-                            })
                         }
                         $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
-                        setCompleteData(dbs)
+                        setDbsCompleteData(result)
                     } else {
                         alert(data.msg);
                     }
