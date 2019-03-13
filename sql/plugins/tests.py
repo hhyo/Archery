@@ -6,7 +6,6 @@
 @time: 2019/03/04
 """
 import json
-
 from django.test import Client, TestCase
 from django.contrib.auth import get_user_model
 
@@ -26,16 +25,18 @@ class TestPlugin(TestCase):
     测试Plugin调用
     """
 
-    def setUp(self):
-        self.superuser = User(username='super', is_superuser=True)
-        self.superuser.save()
-        self.sys_config = SysConfig()
-        self.client = Client()
-        self.client.force_login(self.superuser)
+    @classmethod
+    def setUpClass(cls):
+        cls.superuser = User(username='super', is_superuser=True)
+        cls.superuser.save()
+        cls.sys_config = SysConfig()
+        cls.client = Client()
+        cls.client.force_login(cls.superuser)
 
-    def tearDown(self):
-        self.superuser.delete()
-        self.sys_config.replace(json.dumps({}))
+    @classmethod
+    def tearDownClass(cls):
+        cls.superuser.delete()
+        cls.sys_config.replace(json.dumps({}))
 
     def test_check_args_path(self):
         """
@@ -171,3 +172,80 @@ class TestPlugin(TestCase):
         # 异常
         with self.assertRaises(RuntimeError):
             soar.execute_cmd(cmd_args, False)
+
+
+class TestSoar(TestCase):
+    """
+    测试Soar的拓展方法
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        soar_path = '/opt/archery/src/plugins/soar'  # 修改为本机的soar路径
+        cls.superuser = User(username='super', is_superuser=True)
+        cls.superuser.save()
+        cls.client = Client()
+        cls.client.force_login(cls.superuser)
+        cls.sys_config = SysConfig()
+        cls.sys_config.set('soar', soar_path)
+        cls.sys_config.get_all_config()
+        cls.soar = Soar()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.superuser.delete()
+        cls.sys_config.replace(json.dumps({}))
+
+    def test_fingerprint(self):
+        """
+        测试SQL指纹打印，未断言
+        :return:
+        """
+        sql = """select * from sql_users where id>0 and email<>'';"""
+        finger = self.soar.fingerprint(sql)
+        # self.assertEqual(finger, 'select * from sql_users where id>? and email<>?\n')
+
+    def test_compress(self):
+        """
+        测试SQL压缩，未断言
+        :return:
+        """
+        sql = """
+        select * 
+        from sql_users
+        where id>0 and email<>'';
+        """
+        compress_sql = self.soar.compress(sql)
+        # self.assertEqual(compress_sql, "select * from sql_users where id>0 and email<>'';\n")
+
+    def test_pretty(self):
+        """
+        测试SQL美化，未断言
+        :return:
+        """
+        sql = """select * from sql_users where id>0 and email<>'';"""
+        self.soar.pretty(sql)
+
+    def test_remove_comment(self):
+        """
+        测试去除注释，未断言
+        :return:
+        """
+        sql = """--
+                select *
+                from sql_users
+                where id = 1 -- and email<>''
+                -- and username<>''
+                # and ;"""
+        self.soar.remove_comment(sql)
+
+    def test_rewrite(self):
+        """
+        测试SQL改写
+        :return:
+        """
+        sql = """update sql_users set username='',id=1 where id>0 and email<>'';"""
+        self.soar.rewrite(sql)
+        # 异常测试
+        with self.assertRaises(RuntimeError):
+            self.soar.rewrite(sql, 'unknown')
