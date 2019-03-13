@@ -211,27 +211,29 @@ LOGGING = {
         }
     },
     'loggers': {
-        'default': {  # default日志，存放于log中
-            'handlers': ['default'],
-            'level': 'DEBUG',
+        'default': {  # default日志
+            'handlers': ['console', 'default'],
+            'level': 'DEBUG'
         },
         'django-q': {  # django_q模块相关日志
             'handlers': ['console', 'default'],
             'level': 'DEBUG',
+            'propagate': False
         },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
-            'handlers': ['default'],
+            'handlers': ['console', 'default'],
             'level': 'DEBUG',
+            'propagate': False
         },
-        # 'django.db': {  # 打印SQL语句到console，方便开发
-        #     'handlers': ['console'],
+        # 'django.db': {  # 打印SQL语句，方便开发
+        #     'handlers': ['console', 'default'],
         #     'level': 'DEBUG',
-        #     'propagate': True,
+        #     'propagate': False
         # },
-        'django.request': {  # 打印请求错误堆栈信息到console，方便开发
-            'handlers': ['console'],
+        'django.request': {  # 打印请求错误堆栈信息，方便开发
+            'handlers': ['console', 'default'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False
         },
     }
 }
