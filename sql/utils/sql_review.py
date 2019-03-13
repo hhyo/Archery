@@ -15,11 +15,6 @@ def is_auto_review(workflow_id):
     db_name = workflow_detail.db_name
     is_manual = workflow_detail.is_manual
 
-    # 删除注释语句
-    sql_content = ''.join(
-        map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-            sql_content.splitlines(1))).strip()
-
     # 获取正则表达式
     auto_review_regex = SysConfig().get('auto_review_regex',
                                         '^alter|^create|^drop|^truncate|^rename|^delete')
@@ -28,6 +23,8 @@ def is_auto_review(workflow_id):
     # 判断是否匹配到需要手动审核的语句
     is_autoreview = True
     for statement in sqlparse.split(sql_content):
+        # 删除注释语句
+        statement = sqlparse.format(statement, strip_comments=True)
         if p.match(statement.strip().lower()):
             is_autoreview = False
             break

@@ -455,10 +455,9 @@ def query(request):
     # 获取用户信息
     user = request.user
 
-    # 过滤注释语句和非查询的语句
-    sql_content = ''.join(
-        map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-            sql_content.splitlines(1))).strip()
+    # 删除注释语句
+    sql_content = sqlparse.format(sql_content, strip_comments=True)
+
     # 去除空行
     sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 

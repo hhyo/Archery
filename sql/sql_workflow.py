@@ -102,19 +102,18 @@ def simplecheck(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # # 删除注释语句
-    # sql_content = ''.join(
-    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-    #         sql_content.splitlines(1))).strip()
-    # # 去除空行
-    # sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
-
-    sql_content = sql_content.strip()
+    for statement in sqlparse.split(sql_content):
+        # 删除注释语句
+        statement = sqlparse.format(statement, strip_comments=True)
+        if re.match(r"^select", statement.lower()):
+            result['status'] = 1
+            result['msg'] = '仅支持DML和DDL语句，查询语句请使用SQL查询功能！'
+            return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 交给inception进行自动审核
     try:
         check_engine = get_engine(instance=instance)
-        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content)
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -170,13 +169,6 @@ def autoreview(request):
     except Exception:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
-
-    # # 删除注释语句
-    # sql_content = ''.join(
-    #     map(lambda x: re.compile(r'(^--.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-    #         sql_content.splitlines(1))).strip()
-    # # 去除空行
-    # sql_content = re.sub('[\r\n\f]{2,}', '\n', sql_content)
 
     sql_content = sql_content.strip()
 

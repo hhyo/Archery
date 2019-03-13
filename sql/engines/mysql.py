@@ -140,13 +140,11 @@ ORDER BY ORDINAL_POSITION;""".format(
             # 如果启用critical_ddl 的检查
             critical_ddl_regex = archer_config.get('critical_ddl_regex')
             p = re.compile(critical_ddl_regex)
-            # 删除注释语句
-            sql = ''.join(
-                map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-                    sql.splitlines(1))).strip()
             # 逐行匹配正则
             line = 1
             for statement in sqlparse.split(sql):
+                # 删除注释语句
+                statement = sqlparse.format(statement, strip_comments=True)
                 if p.match(statement.strip().lower()):
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回高危SQL',
@@ -161,14 +159,11 @@ ORDER BY ORDINAL_POSITION;""".format(
                 return check_result
 
         # 检查 inception 不支持的函数
-        # 删除注释语句
-        sql = ''.join(
-            map(lambda x: re.compile(r'(^--\s+.*|^/\*.*\*/;\s*$)').sub('', x, count=1),
-                sql.splitlines(1))).strip()
         check_result.rows = []
         line = 1
         for statement in sqlparse.split(sql):
-            # 注释不检测
+            # 删除注释语句
+            statement = sqlparse.format(statement, strip_comments=True)
             if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
                         statement.lower() + ";"):
                 result = ReviewSet(
