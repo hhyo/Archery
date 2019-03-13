@@ -28,10 +28,10 @@ class SQLAdvisor(Plugin):
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
-                cmd_args = cmd_args + ' ' + '-{name} "{value}"'.format(name=str(name), value=str(value))
+                cmd_args += f' -{name} "{value}"'
         else:
             cmd_args = [self.path]
             for name, value in args.items():
-                cmd_args.append('-%s' % str(name))
-                cmd_args.append('%s' % str(value))
+                cmd_args.append(f'-{name}')
+                cmd_args.append(f'{value}')
         return cmd_args

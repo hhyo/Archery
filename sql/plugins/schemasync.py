@@ -33,19 +33,19 @@ class SchemaSync(Plugin):
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
                 if name in k_options and value:
-                    cmd_args = cmd_args + ' ' + '--{name}'.format(name=str(name))
+                    cmd_args += f' --{name}'
                 elif name in kv_options:
-                    cmd_args = cmd_args + ' ' + '--{name}={value}'.format(name=str(name), value=str(value))
+                    cmd_args += f' --{name}={value}'
                 elif name in v_options:
-                    cmd_args = cmd_args + ' {value}'.format(value=str(value))
+                    cmd_args += f' {value}'
         else:
             cmd_args = [self.path]
             for name, value in args.items():
                 if name in k_options:
-                    cmd_args.append('--%s' % str(name))
+                    cmd_args.append(f'--{name}')
                 elif name in kv_options:
-                    cmd_args.append('--%s' % str(name))
-                    cmd_args.append('%s' % str(value))
+                    cmd_args.append(f'--{name}')
+                    cmd_args.append(f'{value}')
                 elif name in ['source', 'target']:
-                    cmd_args.append('%s' % str(value))
+                    cmd_args.append(f'{value}')
         return cmd_args
