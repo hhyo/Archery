@@ -37,7 +37,7 @@ def process(request):
         query_engine = get_engine(instance=instance)
         processlist = query_engine.query('information_schema', sql).to_dict()
 
-        result = {'status': 0, 'msg': 'ok', 'data': processlist}
+        result = {'status': 0, 'msg': 'ok', 'rows': processlist}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -133,7 +133,7 @@ def tablesapce(request):
         execute_engine = get_engine(instance=instance)
         table_space = execute_engine.query('information_schema', sql).to_dict()
 
-        result = {'status': 0, 'msg': 'ok', 'data': table_space}
+        result = {'status': 0, 'msg': 'ok', 'rows': table_space}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
