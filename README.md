@@ -1,11 +1,19 @@
+<div align="center">
+
+# <a href="http://139.199.0.191/" target="_blank" rel="noopener noreferrer">Archery</a> 
+
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dba-archery/community)
 [![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
+[![Release](https://img.shields.io/github/release/hhyo/archery.svg)](https://github.com/hhyo/archery/releases/)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
 [![version](https://img.shields.io/badge/django-2.0-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/2.0/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 
 [文档](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
+
+</div>
+
 
 介绍
 ============
@@ -36,14 +44,14 @@ inception镜像: https://hub.docker.com/r/hhyo/inception
 #启动
 docker-compose -f docker-compose.yml up -d
 
-#表结构初始化（先创建数据库archery，字符集utf8）
+#表结构初始化
 docker exec -ti archery /bin/bash
 cd /opt/archery
 source /opt/venv4archery/bin/activate
 python3 manage.py makemigrations sql  
 python3 manage.py migrate 
 
-# 编译翻译文件
+#编译翻译文件
 python3 manage.py compilemessages
 
 #创建管理用户
@@ -85,8 +93,7 @@ http://127.0.0.1:9123/
 - Binlog解析/回滚 [python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 - LDAP [django-auth-ldap](https://github.com/django-auth-ldap/django-auth-ldap)
 - 序列化 [simplejson](https://github.com/simplejson/simplejson)
-- RDS管理 [aliyun-openapi-python-sdk](https://github.com/aliyun/aliyun-openapi-python-sdk)
-### 功能依赖（不完全列举）
+### 功能依赖
 - 可视化 [pyecharts](https://github.com/pyecharts/pyecharts)
 - MySQL审核/语法树解析 [inception](https://github.com/hhyo/inception)
 - 数据库审核 [Themis](https://github.com/CreditEaseDBA/Themis)
@@ -97,6 +104,7 @@ http://127.0.0.1:9123/
 - 慢日志解析展示 [pt-query-digest](https://www.percona.com/doc/percona-toolkit/3.0/pt-query-digest.html)|[aquila_v2](https://github.com/thinkdb/aquila_v2)
 - 大表DDL [gh-ost](https://github.com/github/gh-ost)|[pt-online-schema-change](https://www.percona.com/doc/percona-toolkit/3.0/pt-online-schema-change.html)
 - MyBatis XML解析 [mybatis-mapper2sql](https://github.com/hhyo/mybatis-mapper2sql)
+- RDS管理 [aliyun-openapi-python-sdk](https://github.com/aliyun/aliyun-openapi-python-sdk)
 
 贡献者
 ===============
