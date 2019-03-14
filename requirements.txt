@@ -5,6 +5,7 @@ simplejson==3.16.0
 pycryptodome==3.7.3
 mycli==1.19.0
 sqlparse==0.2.4
+mybatis_mapper2sql==0.1.4
 django-auth-ldap==1.6.1
 python-dateutil==2.7.3
 pymongo==3.7.2

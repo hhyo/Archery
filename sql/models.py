@@ -417,7 +417,9 @@ class Permission(models.Model):
         managed = True
         permissions = (
             ('menu_dashboard', '菜单 Dashboard'),
+            ('menu_sqlcheck', '菜单 SQL审核'),
             ('menu_sqlworkflow', '菜单 SQL上线'),
+            ('menu_sqlanalyze', '菜单 SQL分析'),
             ('menu_query', '菜单 SQL查询'),
             ('menu_sqlquery', '菜单 MySQL查询'),
             ('menu_queryapplylist', '菜单 查询权限申请'),
@@ -435,6 +437,7 @@ class Permission(models.Model):
             ('sql_submit', '提交SQL上线工单'),
             ('sql_review', '审核SQL上线工单'),
             ('sql_execute', '执行SQL上线工单'),
+            ('sql_analyze', '执行SQL分析'),
             ('optimize_sqladvisor', '执行SQLAdvisor'),
             ('optimize_sqltuning', '执行SQLTuning'),
             ('optimize_soar', '执行SOAR'),
