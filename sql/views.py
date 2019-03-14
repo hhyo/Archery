@@ -33,7 +33,6 @@ def login(request):
     return render(request, 'login.html')
 
 
-
 def sqlworkflow(request):
     """SQL上线工单列表页面"""
     return render(request, 'sqlworkflow.html', {'status_list': SQL_WORKFLOW_CHOICES})
@@ -129,6 +128,17 @@ def rollback(request):
     context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow_detail,
                'rollback_workflow_name': rollback_workflow_name}
     return render(request, 'rollback.html', context)
+
+
+def sqlanalyze(request):
+    """
+    SQL分析页面
+    :param request:
+    :return:
+    """
+    # 获取实例列表
+    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    return render(request, 'sqlanalyze.html', {'instances': instances})
 
 
 # SQL文档页面

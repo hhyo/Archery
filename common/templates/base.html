@@ -79,9 +79,22 @@
                             <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                         </li>
                     {% endif %}
-                    {% if perms.sql.menu_sqlworkflow %}
+                    {% if perms.sql.menu_sqlcheck %}
                         <li>
-                            <a href="/sqlworkflow/"><i class="fa fa-cloud-upload fa-fw"></i> SQL上线</a>
+                            <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqlworkflow %}
+                                    <li>
+                                        <a href="/sqlworkflow/">SQL上线</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_sqlanalyze %}
+                                    <li>
+                                        <a href="/sqlanalyze/">SQL分析</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_query %}

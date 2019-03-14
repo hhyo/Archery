@@ -5,7 +5,7 @@ from django.views.i18n import JavaScriptCatalog
 
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, query, slowlog, instance, db_diagnostic, resource_group, binlog2sql
+from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog2sql
 from sql.utils import jobs
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('timingtask/', sql_workflow.timingtask),
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),
+    path('sqlanalyze/', views.sqlanalyze),
     path('sqlquery/', views.sqlquery),
     path('slowquery/', views.slowquery),
     path('sqladvisor/', views.sqladvisor),
@@ -51,6 +52,9 @@ urlpatterns = [
     path('simplecheck/', sql_workflow.simplecheck),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', jobs.del_sqlcronjob),
+
+    path('sql_analyze/generate/', sql_analyze.generate),
+    path('sql_analyze/analyze/', sql_analyze.analyze),
 
     path('workflow/list/', workflow.lists),
     path('workflow/log/', workflow.log),

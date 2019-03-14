@@ -15,7 +15,8 @@ from sql.engines.mysql import MysqlEngine
 from sql import query
 
 from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog
-from sql.utils.execute_sql import  execute_callback
+from sql.utils.execute_sql import execute_callback
+
 User = get_user_model()
 
 
@@ -320,24 +321,25 @@ class QueryTest(TestCase):
 
         # 无语法树解析，只校验db_name
         limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
-                                                            'some_db_another_instance','some_sql', 1000)
-        self.assertEqual(limit_without_tree_analyse['data']['limit_num'], self.db_priv_for_user3_another_instance.limit_num)
+                                                            'some_db_another_instance', 'some_sql', 1000)
+        self.assertEqual(limit_without_tree_analyse['data']['limit_num'],
+                         self.db_priv_for_user3_another_instance.limit_num)
 
         # 无语法树解析， 无权限的情况
         limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
-                                                            'some_db_does_not_exist','some_sql', 1000)
-        self.assertEqual(limit_without_tree_analyse['status'],1)
+                                                            'some_db_does_not_exist', 'some_sql', 1000)
+        self.assertEqual(limit_without_tree_analyse['status'], 1)
         self.assertIn('some_db_does_not_exist', limit_without_tree_analyse['msg'])
 
         # 有语法树解析, 有库权限
         mock_masking.return_value.query_table_ref.return_value = {
-             'status': 0,
-             'data': [{
-                 'db': 'another_db',
-                 'table': 'some_table'
-             }]}
+            'status': 0,
+            'data': [{
+                'db': 'another_db',
+                'table': 'some_table'
+            }]}
         limit_with_tree_analyse = query.query_priv_check(self.u3, self.slave1,
-                                                         'some_db','some_sql',1000)
+                                                         'some_db', 'some_sql', 1000)
         mock_masking.return_value.query_table_ref.assert_called_once()
         self.assertEqual(limit_with_tree_analyse['data']['limit_num'], self.table_priv_for_user3.limit_num)
 
@@ -643,8 +645,8 @@ class AsyncTest(TestCase):
         self.task_result.success = True
         self.task_result.stopped = self.now
         self.task_result.result.json.return_value = json.dumps([{
-                                    'id': 1,
-                                    'sql': 'some_content'}])
+            'id': 1,
+            'sql': 'some_content'}])
         self.task_result.result.warning = ''
         self.task_result.result.error = ''
 
@@ -671,3 +673,66 @@ class AsyncTest(TestCase):
         mock_notify.assert_called_once()
 
 
+class TestSQLAnalyze(TestCase):
+    """
+    测试SQL分析
+    """
+
+    def setUp(self):
+        self.superuser = User(username='super', is_superuser=True)
+        self.superuser.save()
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+                               host=settings.DATABASES['default']['HOST'],
+                               port=settings.DATABASES['default']['PORT'],
+                               user=settings.DATABASES['default']['USER'],
+                               password=settings.DATABASES['default']['PASSWORD'])
+        self.master.save()
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.master.delete()
+        self.sys_config.replace(json.dumps({}))
+
+    def test_generate_text_None(self):
+        """
+        测试解析SQL，text为空
+        :return:
+        """
+        r = self.client.post(path='/sql_analyze/generate/', data={})
+        self.assertEqual(json.loads(r.content), {'rows': [], 'total': 0})
+
+    def test_generate_text_not_None(self):
+        """
+        测试解析SQL，text不为空
+        :return:
+        """
+        text = "select * from sql_user;select * from sql_workflow;"
+        r = self.client.post(path='/sql_analyze/generate/', data={"text": text})
+        self.assertEqual(json.loads(r.content),
+                         {"total": 2, "rows": [{"sql_id": 1, "sql": "select * from sql_user;"},
+                                               {"sql_id": 2, "sql": "select * from sql_workflow;"}]}
+                         )
+
+    def test_analyze_text_None(self):
+        """
+        测试分析SQL，text为空
+        :return:
+        """
+        r = self.client.post(path='/sql_analyze/analyze/', data={})
+        self.assertEqual(json.loads(r.content), {'rows': [], 'total': 0})
+
+    def test_analyze_text_not_None(self):
+        """
+        测试分析SQL，text不为空
+        :return:
+        """
+        text = "select * from sql_user;select * from sql_workflow;"
+        instance_name = self.master.instance_name
+        db_name = settings.DATABASES['default']['TEST']['NAME']
+        r = self.client.post(path='/sql_analyze/analyze/',
+                             data={"text": text, "instance_name": instance_name, "db_name": db_name})
+        self.assertListEqual(list(json.loads(r.content)['rows'][0].keys()), ['sql_id', 'sql', 'report'])
