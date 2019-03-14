@@ -140,13 +140,17 @@
                 defaultPreviewContent: '仅支持10M内的SQL文件',
                 showUpload: false,     //不显示上传按钮
                 showPreview: false,    // 不显示预览,
-                maxFileSize: 10240
-            }).on('fileloaded', function () {
-                loadsql();
-            })
-                .on('fileclear', function (event) {
-                    editor.setValue("");
-                });
+                //maxFileSize: 10240
+            }).on('fileloaded', function (event, data, previewId, index) {
+                if (data.size <= 10240 * 1024) {
+                    loadsql();
+                } else {
+                    $('#sql-upload').fileinput('reset');
+                    alert('文件大小超过10M，请点重新选择');
+                }
+            }).on('fileclear', function (event) {
+                editor.setValue("");
+            });
         }
 
         //读取文件并展示在输入域
