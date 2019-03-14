@@ -497,7 +497,7 @@
                         });
                         //增加的代码，用于个性化输出table
                         rendererMD.table = function (header, body) {
-                            return '<table class="table table-condensed">' + header + body + '</table>'
+                            return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
                         };
                         $("#soar-result-col").html(marked(report));
                         $("#soar-table").bootstrapTable('refresh');
