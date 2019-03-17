@@ -7,6 +7,7 @@
 """
 import json
 from django.test import Client, TestCase
+from unittest.mock import patch, ANY
 from django.contrib.auth import get_user_model
 
 from sql.plugins.schemasync import SchemaSync
@@ -156,7 +157,8 @@ class TestPlugin(TestCase):
         cmd_args = schema_sync.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
-    def test_execute_cmd(self):
+    @patch('sql.plugins.plugin.subprocess')
+    def test_execute_cmd(self, mock_subprocess):
         args = {"online-dsn": '',
                 "test-dsn": '',
                 "allow-online-as-test": "false",
@@ -167,9 +169,20 @@ class TestPlugin(TestCase):
         self.sys_config.get_all_config()
         soar = Soar()
         cmd_args = soar.generate_args2cmd(args, True)
+
+        mock_subprocess.Popen.return_value.communicate.return_value = ('some_stdout', 'some_stderr')
         result = soar.execute_cmd(cmd_args, True)
-        self.assertIn('/opt/archery/src/plugins/soar', result)
+        mock_subprocess.Popen.assert_called_once_with(
+            cmd_args,
+            shell=True,
+            stdout=ANY,
+            stderr=ANY,
+            universal_newlines=ANY
+        )
+        self.assertIn('some_stdout', result)
         # 异常
+
+        mock_subprocess.Popen.side_effect = Exception('Boom! some exception!')
         with self.assertRaises(RuntimeError):
             soar.execute_cmd(cmd_args, False)
 
