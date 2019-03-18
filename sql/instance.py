@@ -61,7 +61,7 @@ def users(request):
         data.append(user_info)
     # 关闭连接
     query_engine.close()
-    result = {'status': 0, 'msg': 'ok', 'data': data}
+    result = {'status': 0, 'msg': 'ok', 'rows': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
