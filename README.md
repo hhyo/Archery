@@ -17,7 +17,7 @@
 
 介绍
 ============
-archery是[archer](https://github.com/jly8866/archer)的一个分支项目，对部分模块进行了优化，新增数据库审核、binlog解析、表结构同步、实例用户管理等功能。同时针对多类型数据库(MsSQL/PostgreSQL/Redis)的支持也在不断完善中。不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
+Archery是[archer](https://github.com/jly8866/archer)的一个分支项目，定位于SQL审核查询平台，同时附加部分简易的日常DB运维功能，不涉及主机、备份管理。针对多类型数据库(MsSQL/PostgreSQL/Redis)的支持也不断完善中。不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
 
 开发计划
 ==============
@@ -33,8 +33,8 @@ https://github.com/hhyo/archery/projects
 | archer | archer |
 
 ### Docker
-archery镜像：https://hub.docker.com/r/hhyo/archery    
-inception镜像: https://hub.docker.com/r/hhyo/inception
+Archery镜像：https://hub.docker.com/r/hhyo/archery    
+Inception镜像: https://hub.docker.com/r/hhyo/inception
 #### 准备运行配置
 具体可参考：https://github.com/hhyo/archery/raw/master/src/docker/install.zip
 
@@ -109,3 +109,12 @@ http://127.0.0.1:9123/
 贡献者
 ===============
 [![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/0)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/0)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/1)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/1)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/2)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/2)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/3)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/3)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/4)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/4)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/5)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/5)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/6)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/6)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/7)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/7)
+
+贡献代码
+===============
+开发计划：https://github.com/hhyo/archery/projects   
+如果你有兴趣一起维护此项目，可查看上面的开发计划以及主页的依赖清单，并且在对应issues中留言，当然也可以提交不在计划列表中功能，我们将为你提供有限的、必要的支持（开发环境搭建、模块接入支持、PyCharm Open Source License）等，期待你的加入
+
+问题反馈
+===============
+[Issues](https://github.com/hhyo/archery/issues)是本项目所推崇的沟通渠道，如果在使用过程中遇到问题，请先查阅文档，如果仍无法解决，请查看相关日志，保存截图信息，给我们提交[Issues](https://github.com/hhyo/archery/issues)，请按照模板提供相关信息，否则可能会被直接关闭，感谢理解
