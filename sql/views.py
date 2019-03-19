@@ -130,6 +130,7 @@ def rollback(request):
     return render(request, 'rollback.html', context)
 
 
+@permission_required('sql.menu_sqlanalyze', raise_exception=True)
 def sqlanalyze(request):
     """
     SQL分析页面

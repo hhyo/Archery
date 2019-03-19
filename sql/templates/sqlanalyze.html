@@ -243,12 +243,15 @@
     <!-- 执行分析获取结果 -->
     <script>
         function analyze() {
-            var instance_name = $('#instance_name').val();
-            var db_name = $('#db_name').val();
-            if (instance_name && db_name) {
+            var analyze_text = sessionStorage.getItem('analyze_text');
+            if (analyze_text !== "undefined") {
                 $('#btn-analyze').addClass('disabled');
                 $('#btn-analyze').prop('disabled', true);
-                alert('请耐心等待分析结果');
+                if ($('#instance_name').val() && $('#db_name').val()) {
+                    alert('已提交SOAR分析，请耐心等待分析结果!');
+                } else {
+                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
+                }
                 //初始化table
                 $('#analyze-sql').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
@@ -355,8 +358,9 @@
                     }
                 });
             } else {
-                alert('请选择实例和数据库')
+                alert('请先解析SQL/MyBatis3 Mapper XML文件');
             }
+
         }
     </script>
     <!-- 查看分析报告 -->
@@ -384,6 +388,7 @@
     </script>
     <script>
         $(document).ready(function () {
+            sessionStorage.setItem('analyze_text', '');
             // 初始化上传控件
             init_upload();
             generate();
