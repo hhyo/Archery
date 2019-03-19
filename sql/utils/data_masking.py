@@ -121,17 +121,17 @@ class Masking(object):
             result['msg'] = 'inception返回异常，无法校验表权限，如果需要继续查询请关闭校验：\n' + print_info['errmsg']
         else:
             try:
-                table_ref = json.loads(print_info['query_tree'])['table_ref']
+                table_ref = json.loads(print_info['query_tree']).get('table_ref', [])
             except JSONDecodeError:
                 try:
-                    table_ref = json.loads(repair_json_str(print_info['query_tree']))['table_ref']
+                    table_ref = json.loads(repair_json_str(print_info['query_tree'])).get('table_ref', [])
                 except JSONDecodeError as msg:
                     logger.debug('inception语法树解析表信息出错:')
                     logger.error(traceback.format_exc())
                     result['status'] = 2
                     result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{}\nquery_tree：{}'.format(str(msg),
                                                                                                            print_info)
-                    table_ref = ''
+                    table_ref = []
             result['data'] = table_ref
         return result
 
@@ -142,8 +142,8 @@ class Masking(object):
         except JSONDecodeError:
             query_tree_dict = json.loads(repair_json_str(query_tree))
 
-        select_list = query_tree_dict.get('select_list')
-        table_ref = query_tree_dict.get('table_ref')
+        select_list = query_tree_dict.get('select_list', [])
+        table_ref = query_tree_dict.get('table_ref', [])
 
         # 获取全部脱敏字段信息，减少循环查询，提升效率
         masking_columns = DataMaskingColumns.objects.all()
