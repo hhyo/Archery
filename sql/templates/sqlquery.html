@@ -2,79 +2,101 @@
 
 {% block content %}
     <div class="row clearfix">
-        <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
-            {% csrf_token %}
-            <div class="col-md-9 column">
-                <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL查询
+                </div>
+                <div class="panel-body">
+                    <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
+                        {% csrf_token %}
+                        <div class="col-md-9 column">
+                            <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
+                        </div>
+                        <div class="col-md-3 column">
+                            <div class="form-group">
+                                <select id="instance_name" name="instance_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-live-search="true"
+                                        data-placeholder="请选择实例:" required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                    {% for instance_name in instances %}
+                                        {% if instance_name != 'mycat' %}
+                                            <option value="{{ instance_name }}">{{ instance_name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="db_name" name="db_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true" data-placeholder="请选择数据库:" required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="table_name" name="table_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true"
+                                        data-name="查看表结构" data-placeholder="查看表结构:" required>
+                                    <option value="is-empty" disabled="" selected="selected">查看表结构:</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="limit_num" name="limit_num"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-placeholder="返回行数:" required>
+                                    <option value="is-empty" disabled="">返回行数:</option>
+                                    <option value=100 selected="selected">100</option>
+                                    <option value=500>500</option>
+                                    <option value=1000>1000</option>
+                                    <option value=0>max(最大限制行数)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
+                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                            </div>
+                        </div>
+                        <div class="text-info">
+                            <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
+                            <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="col-md-3 column">
-                <div class="form-group">
-                    <select id="instance_name" name="instance_name"
-                            class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                            data-placeholder="请选择实例:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                        {% for instance_name in instances %}
-                            {% if instance_name != 'mycat' %}
-                                <option value="{{ instance_name }}">{{ instance_name }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    查询结果
                 </div>
-                <div class="form-group">
-                    <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                            data-live-search="true" data-placeholder="请选择数据库:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="table_name" name="table_name"
-                            class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
-                            data-name="查看表结构" data-placeholder="查看表结构:" required>
-                        <option value="is-empty" disabled="" selected="selected">查看表结构:</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="limit_num" name="limit_num"
-                            class="form-control selectpicker show-tick bs-select-hidden"
-                            data-placeholder="返回行数:" required>
-                        <option value="is-empty" disabled="">返回行数:</option>
-                        <option value=100 selected="selected">100</option>
-                        <option value=500>500</option>
-                        <option value=1000>1000</option>
-                        <option value=0>max(最大限制行数)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                    <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                    <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                <div class="panel-body">
+                    <!-- Nav tabs -->
+                    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+                        <li class="active" id="sqllog_tab">
+                            <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
+                        </li>
+                        <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
+                            <span class="glyphicon glyphicon-minus"></span>
+                        </button>
+                        <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div id="tab-content" class="form-group tab-content">
+                        <div id="sql_log_result" role="tabpanel" class="form-group tab-pane fade in active table-responsive">
+                            <table id="sql-log" data-toggle="table" class="form-group table table-condensed"></table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="text-info">
-                <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
-            </div>
-        </form>
-    </div>
-    <br>
-    <!-- Nav tabs -->
-    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
-        <li class="active" id="sqllog_tab">
-            <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
-        </li>
-        <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
-            <span class="glyphicon glyphicon-minus"></span>
-        </button>
-        <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
-            <span class="glyphicon glyphicon-plus"></span>
-        </button>
-    </ul>
-    <!-- Tab panes -->
-    <div id="tab-content" class="tab-content">
-        <div id="sql_log_result" role="tabpanel" class="tab-pane fade in active table-responsive">
-            <table id="sql-log" data-toggle="table" class="table table-condensed"></table>
         </div>
     </div>
+    <br>
+
 {% endblock content %}
 
 {% block js %}

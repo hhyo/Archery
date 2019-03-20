@@ -2,179 +2,220 @@
 
 {% block content %}
     <div class="row clearfix">
-
-        <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
-            {% csrf_token %}
-            <div class="col-md-9 column">
-                <pre id="sql_content_editor" class="ace_editor" style="min-height:400px"></pre>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    优化工具
+                </div>
+                <div class="panel-body">
+                    <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
+                        {% csrf_token %}
+                        <div class="col-md-9 column">
+                            <pre id="sql_content_editor" class="ace_editor" style="min-height:400px"></pre>
+                        </div>
+                        <div class="text-warning">
+                            <dl>
+                                <dd>SQLAdvisor：<a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a></dd>
+                                <dd>SOAR：<a href="https://github.com/XiaoMi/soar">查看介绍</a></dd>
+                                <dd>MySQLTuning：<a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a></dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-3 column">
+                            <div class="form-group">
+                                <select id="instance_name" name="instance_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-live-search="true"
+                                        data-placeholder="请选择实例:" required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                    {% for instance_name in instances %}
+                                        <option value="{{ instance_name }}">{{ instance_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="db_name" name="db_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true" data-placeholder="请选择数据库:" required>
+                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="tools" name="tools"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true" data-placeholder="请选择优化方式:" required>
+                                    <option value="is-empty" disabled="">请选择优化方式:</option>
+                                    <option value="1" selected="selected">SQLAdvisor</option>
+                                    <option value="3">SOAR</option>
+                                    <option value="2">SQLTuning</option>
+                                </select>
+                            </div>
+                            <div id="div_verbose" class="form-group">
+                                <select id="verbose" name="verbose"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-name="是否查看优化过程"
+                                        data-placeholder="是否查看优化过程:" required>
+                                    <option value="is-empty" disabled="">是否查看优化过程:</option>
+                                    <option value="1" selected="selected">是</option>
+                                    <option value="0">否</option>
+                                </select>
+                            </div>
+                            <div id="div_tuning" class="form-group" style="display: none">
+                                <div class="checkbox">
+                                    <label>
+                                        <input id="sys_parm" type="checkbox" value="">
+                                        显示系统参数
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input id="sql_plan" type="checkbox" value="" checked>
+                                        显示执行计划
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input id="obj_stat" type="checkbox" value="" checked>
+                                        显示相关对象(表、索引)统计信息
+                                    </label>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input id="sql_profile" type="checkbox" value="">
+                                        显示PROFILE跟踪信息(真实执行SQL，谨慎选择)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
+                                <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="text-warning">
-                <dl>
-                    <dd>SQLAdvisor：<a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a></dd>
-                    <dd>SOAR：<a href="https://github.com/XiaoMi/soar">查看介绍</a></dd>
-                    <dd>MySQLTuning：<a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a></dd>
-                </dl>
-            </div>
-            <div class="col-md-3 column">
-                <div class="form-group">
-                    <select id="instance_name" name="instance_name"
-                            class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                            data-placeholder="请选择实例:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                        {% for instance_name in instances %}
-                            <option value="{{ instance_name }}">{{ instance_name }}</option>
-                        {% endfor %}
-                    </select>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    优化建议
                 </div>
-                <div class="form-group">
-                    <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                            data-live-search="true" data-placeholder="请选择数据库:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="tools" name="tools" class="form-control selectpicker show-tick bs-select-hidden"
-                            data-live-search="true" data-placeholder="请选择优化方式:" required>
-                        <option value="is-empty" disabled="">请选择优化方式:</option>
-                        <option value="1" selected="selected">SQLAdvisor</option>
-                        <option value="3">SOAR</option>
-                        <option value="2">SQLTuning</option>
-                    </select>
-                </div>
-                <div id="div_verbose" class="form-group">
-                    <select id="verbose" name="verbose"
-                            class="form-control selectpicker show-tick bs-select-hidden" data-name="是否查看优化过程"
-                            data-placeholder="是否查看优化过程:" required>
-                        <option value="is-empty" disabled="">是否查看优化过程:</option>
-                        <option value="1" selected="selected">是</option>
-                        <option value="0">否</option>
-                    </select>
-                </div>
-                <div id="div_tuning" class="form-group" style="display: none">
-                    <div class="checkbox">
-                        <label>
-                            <input id="sys_parm" type="checkbox" value="">
-                            显示系统参数
-                        </label>
+                <div class="panel-body">
+                    <!-- sqladvisor优化信息 -->
+                    <div id="sqladvisor-result" style="display:none;" class="form-group">
+                        <div id="sqladvisor-result-col" class="col-md-12">
+                        </div>
                     </div>
-                    <div class="checkbox">
-                        <label>
-                            <input id="sql_plan" type="checkbox" value="" checked>
-                            显示执行计划
-                        </label>
+                    <!-- 执行计划 -->
+                    <div id="explain_result" style="display:none;" class="form-group table-responsive">
+                        <table id="tb_explain" data-toggle="table" class="table table-condensed"
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                     </div>
-                    <div class="checkbox">
-                        <label>
-                            <input id="obj_stat" type="checkbox" value="" checked>
-                            显示相关对象(表、索引)统计信息
-                        </label>
+                    <!-- soar报告 -->
+                    <div id="soar-result" style="display:none;" class="form-group">
+                        <div id="soar-result-col" class="col-md-12">
+                        </div>
                     </div>
-                    <div class="checkbox">
-                        <label>
-                            <input id="sql_profile" type="checkbox" value="">
-                            显示PROFILE跟踪信息(真实执行SQL，谨慎选择)
-                        </label>
+                    <!-- MySQLtuning信息 -->
+                    <div id="tuning_result" style="display:none;" class="form-group table-responsive">
+                        <div id="div_sys_parm" class="panel panel-default base_info"
+                             style="border-color: darkgrey;margin-top: 10px;display: none">
+                            <div class="panel-heading" style="background-color: cornflowerblue; color: white">BASIC
+                                INFORMATION
+                            </div>
+                            <div class="panel-body">
+                                <p>author：<b id="author"></b><a href="http://dbaplus.cn/blog-77-736-1.html"
+                                                                target="_blank"> 查看文章</a>
+                                </p>
+                                <p>db_version：<b id="db_version"></b></p>
+                            </div>
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">SYSTEM
+                                PARAMETER
+                            </div>
+                            <div class="panel-body">
+                                <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
+                                       style="table-layout:fixed;word-break: break-word"></table>
+                            </div>
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER
+                                SWITCH
+                            </div>
+                            <div class="panel-body">
+                                <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
+                                       style="table-layout:fixed;word-break: break-word"></table>
+                            </div>
+                        </div>
+                        <div id="div_sql_plan" class="panel panel-default base_info"
+                             style="border-color: darkgrey;margin-top: 10px;display: none">
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PLAN</div>
+                            <div class="panel-body">
+                                <table id="tb_plan" data-toggle="table" class="table table-condensed"></table>
+                            </div>
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER
+                                REWRITE SQL
+                            </div>
+                            <div class="panel-body">
+                                <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
+                                       style="table-layout:fixed;word-break: break-word"></table>
+                            </div>
+                        </div>
+                        <div id="div_obj_stat" class="panel panel-default base_info"
+                             style="border-color: darkgrey;margin-top: 10px;display: none">
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">OBJECT
+                                STATISTICS
+                            </div>
+                            <div id="div_obj_stat-panel-body" class="panel-body">
+                            </div>
+                        </div>
+                        <div id="div_sql_profile" class="panel panel-default base_info"
+                             style="border-color: darkgrey;margin-top: 10px;display: none">
+                            <div class="panel-heading" style="background-color: darkgrey; color: white">
+                                STATUS&PROFILING
+                            </div>
+                            <div class="panel-body">
+                                <div class="panel-heading" style="background-color: darkgrey; color: white">SESSION
+                                    STATUS
+                                    (DIFFERENT)
+                                </div>
+                                <table id="tb_session_status" data-toggle="table" class="table table-condensed"></table>
+                                <br>
+                                <div class="panel-heading" style="background-color: darkgrey; color: white">SQL
+                                    PROFILING(DETAIL)
+                                </div>
+                                <table id="tb_sql_profiling_detail" data-toggle="table"
+                                       class="table table-condensed"></table>
+                                <br>
+                                <div class="panel-heading" style="background-color: darkgrey; color: white">SQL
+                                    PROFILING(SUMMARY)
+                                </div>
+                                <table id="tb_sql_profiling_summary" data-toggle="table"
+                                       class="table table-condensed"></table>
+                                <br>
+                                <div class="panel-heading" style="background-color: darkgrey; color: white">EXECUTE
+                                    TIME
+                                </div>
+                                <p>execute_time:&nbsp&nbsp&nbsp&nbsp<b id="execute_time"></b></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="div_obj_stat_tmp" style="display: none">
+                        <div class="panel-heading" style="background-color: cornflowerblue; color: white">TABLE
+                            STRUCTURE
+                        </div>
+                        <table id="tb_table_structure" data-toggle="table"
+                               class="table table-condensed"></table>
+                        <br>
+                        <div class="panel-heading" style="background-color: darkgrey; color: white">TABLE INFO</div>
+                        <table id="tb_table_info" data-toggle="table"
+                               class="table table-condensed"></table>
+                        <br>
+                        <div class="panel-heading" style="background-color: darkgrey; color: white">INDEX INFO</div>
+                        <table id="tb_index_info" data-toggle="table"
+                               class="table table-condensed"></table>
+                        <br>
                     </div>
                 </div>
-                <div class="form-group">
-                    <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                    <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                    <input type="button" id="btn-sqladvisor" class="btn btn-success" value="获取优化建议"/>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- sqladvisor优化信息 -->
-    <div id="sqladvisor-result" style="display:none;" class="row clearfix">
-        <br/>
-        <div id="sqladvisor-result-col" class="col-md-12">
-        </div>
-    </div>
-    <!-- 执行计划 -->
-    <div id="explain_result" style="display:none;" class="row clearfix table-responsive">
-        <table id="tb_explain" data-toggle="table" class="table table-condensed"
-               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
-    </div>
-    <!-- soar报告 -->
-    <div id="soar-result" style="display:none;" class="row clearfix">
-        <div id="soar-result-col" class="col-md-12">
-        </div>
-    </div>
-    <!-- MySQLtuning信息 -->
-    <div id="tuning_result" style="display:none;" class="row clearfix table-responsive">
-        <div id="div_sys_parm" class="panel panel-default base_info"
-             style="border-color: darkgrey;margin-top: 10px;display: none">
-            <div class="panel-heading" style="background-color: cornflowerblue; color: white">BASIC INFORMATION</div>
-            <div class="panel-body">
-                <p>author：<b id="author"></b><a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a>
-                </p>
-                <p>db_version：<b id="db_version"></b></p>
-            </div>
-            <div class="panel-heading" style="background-color: darkgrey; color: white">SYSTEM PARAMETER</div>
-            <div class="panel-body">
-                <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
-                       style="table-layout:fixed;word-break: break-word"></table>
-            </div>
-            <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER SWITCH</div>
-            <div class="panel-body">
-                <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
-                       style="table-layout:fixed;word-break: break-word"></table>
             </div>
         </div>
-        <div id="div_sql_plan" class="panel panel-default base_info"
-             style="border-color: darkgrey;margin-top: 10px;display: none">
-            <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PLAN</div>
-            <div class="panel-body">
-                <table id="tb_plan" data-toggle="table" class="table table-condensed"></table>
-            </div>
-            <div class="panel-heading" style="background-color: darkgrey; color: white">OPTIMIZER REWRITE SQL</div>
-            <div class="panel-body">
-                <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
-                       style="table-layout:fixed;word-break: break-word"></table>
-            </div>
-        </div>
-        <div id="div_obj_stat" class="panel panel-default base_info"
-             style="border-color: darkgrey;margin-top: 10px;display: none">
-            <div class="panel-heading" style="background-color: darkgrey; color: white">OBJECT STATISTICS</div>
-            <div id="div_obj_stat-panel-body" class="panel-body">
-            </div>
-        </div>
-        <div id="div_sql_profile" class="panel panel-default base_info"
-             style="border-color: darkgrey;margin-top: 10px;display: none">
-            <div class="panel-heading" style="background-color: darkgrey; color: white">STATUS&PROFILING</div>
-            <div class="panel-body">
-                <div class="panel-heading" style="background-color: darkgrey; color: white">SESSION STATUS
-                    (DIFFERENT)
-                </div>
-                <table id="tb_session_status" data-toggle="table" class="table table-condensed"></table>
-                <br>
-                <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PROFILING(DETAIL)
-                </div>
-                <table id="tb_sql_profiling_detail" data-toggle="table" class="table table-condensed"></table>
-                <br>
-                <div class="panel-heading" style="background-color: darkgrey; color: white">SQL PROFILING(SUMMARY)
-                </div>
-                <table id="tb_sql_profiling_summary" data-toggle="table" class="table table-condensed"></table>
-                <br>
-                <div class="panel-heading" style="background-color: darkgrey; color: white">EXECUTE TIME</div>
-                <p>execute_time:&nbsp&nbsp&nbsp&nbsp<b id="execute_time"></b></p>
-            </div>
-        </div>
-    </div>
-    <div id="div_obj_stat_tmp" style="display: none">
-        <div class="panel-heading" style="background-color: cornflowerblue; color: white">TABLE STRUCTURE</div>
-        <table id="tb_table_structure" data-toggle="table"
-               class="table table-condensed"></table>
-        <br>
-        <div class="panel-heading" style="background-color: darkgrey; color: white">TABLE INFO</div>
-        <table id="tb_table_info" data-toggle="table"
-               class="table table-condensed"></table>
-        <br>
-        <div class="panel-heading" style="background-color: darkgrey; color: white">INDEX INFO</div>
-        <table id="tb_index_info" data-toggle="table"
-               class="table table-condensed"></table>
-        <br>
     </div>
 {% endblock content %}
 
@@ -358,9 +399,7 @@
                         var result = data.data;
                         result = result.replace(/\n/g, '<br>');
                         alertStyle = "alert-success";
-                        finalHtml = "<table class='table' width='100%' style='table-layout:fixed;'> " +
-                            "<thead><tr><th>优化建议</th></tr></thead>" +
-                            "</table>";
+                        finalHtml = '';
                         finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
                             "<table class='' width='100%' style='table-layout:fixed;'> " +
                             "<tbody><tr>" +
