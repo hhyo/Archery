@@ -73,7 +73,8 @@ class QueryLogAdmin(admin.ModelAdmin):
 @admin.register(QueryPrivileges)
 class QueryPrivilegesAdmin(admin.ModelAdmin):
     list_display = (
-        'user_display', 'instance_name', 'db_name', 'table_name', 'valid_date', 'limit_num', 'create_time')
+        # TODO 删除instance_name
+        'user_display', 'instance_name', 'instance', 'db_name', 'table_name', 'valid_date', 'limit_num', 'create_time')
     search_fields = ['user_display', 'instance_name']
     list_filter = ('user_display', 'instance_name', 'db_name', 'table_name',)
 

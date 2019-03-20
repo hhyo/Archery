@@ -337,6 +337,9 @@ class ChartTest(TestCase):
         cls.superuser1 = User(username='super1', is_superuser=True)
         cls.superuser1.save()
         cls.now = datetime.datetime.now()
+        cls.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
+                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        cls.slave1.save()
         # 批量创建数据 ddl ,u1 ,g1, yesterday 组, 2 个数据
         ddl_workflow = [SqlWorkflow(
             workflow_name='ddl %s' % i,
@@ -346,8 +349,9 @@ class ChartTest(TestCase):
             engineer_display=cls.u1.display,
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=1),
-            status = '已正常结束',
-            is_backup = '是',
+            status='workflow_finish',
+            is_backup='是',
+            instance=cls.slave1,
             instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
@@ -362,8 +366,9 @@ class ChartTest(TestCase):
             engineer_display=cls.u2.display,
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=2),
-            status='已正常结束',
+            status='workflow_finish',
             is_backup='是',
+            instance=cls.slave1,
             instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
@@ -374,6 +379,15 @@ class ChartTest(TestCase):
 #    instance_name = 'some_instance',
 #
 #) for i in range(20)]
+
+    @classmethod
+    def tearDownClass(cls):
+        SqlWorkflow.objects.all().delete()
+        QueryLog.objects.all().delete()
+        cls.u1.delete()
+        cls.u2.delete()
+        cls.superuser1.delete()
+        cls.slave1.delete()
 
     def testGetDateList(self):
         dao = ChartDao()
@@ -419,14 +433,6 @@ class ChartTest(TestCase):
         c.force_login(self.superuser1)
         r = c.get('/dashboard/')
         self.assertEqual(r.status_code, 200)
-
-    @classmethod
-    def tearDownClass(cls):
-        SqlWorkflow.objects.all().delete()
-        QueryLog.objects.all().delete()
-        cls.u1.delete()
-        cls.u2.delete()
-        cls.superuser1.delete()
 
 
 class AuthTest(TestCase):

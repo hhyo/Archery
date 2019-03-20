@@ -1,7 +1,7 @@
 import json
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, patch, ANY
-
+from unittest import skip
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -131,6 +131,7 @@ class QueryTest(TestCase):
             group_name='some_group',
             title='some_title',
             user_name='some_user',
+            instance=self.slave1,
             instance_name='some_ins',
             db_list='some_db,some_db2',
             limit_num=100,
@@ -145,6 +146,7 @@ class QueryTest(TestCase):
             group_name='some_group',
             title='some_title',
             user_name='some_user',
+            instance=self.slave1,
             instance_name='some_ins',
             db_list='some_db',
             table_list='some_table,some_tb2',
@@ -158,6 +160,7 @@ class QueryTest(TestCase):
         self.db_priv_for_user3 = QueryPrivileges(
             user_name=self.u3.username,
             user_display=self.u3.display,
+            instance=self.slave1,
             instance_name=self.slave1.instance_name,
             db_name='some_db',
             table_name='',
@@ -168,6 +171,7 @@ class QueryTest(TestCase):
         self.table_priv_for_user3 = QueryPrivileges(
             user_name=self.u3.username,
             user_display=self.u3.display,
+            instance=self.slave1,
             instance_name=self.slave1.instance_name,
             db_name='another_db',
             table_name='some_table',
@@ -178,6 +182,7 @@ class QueryTest(TestCase):
         self.db_priv_for_user3_another_instance = QueryPrivileges(
             user_name=self.u3.username,
             user_display=self.u3.display,
+            instance=self.slave2,
             instance_name=self.slave2.instance_name,
             db_name='some_db_another_instance',
             table_name='',
@@ -187,14 +192,15 @@ class QueryTest(TestCase):
         self.db_priv_for_user3_another_instance.save()
 
     def tearDown(self):
-        self.u1.delete()
-        self.u2.delete()
-        self.u3.delete()
-        self.slave1.delete()
-        self.slave2.delete()
         self.query_apply_1.delete()
         self.query_apply_2.delete()
         QueryPrivileges.objects.all().delete()
+        self.u1.delete()
+        self.u2.delete()
+        self.u3.delete()
+        self.superuser1.delete()
+        self.slave1.delete()
+        self.slave2.delete()
         archer_config = SysConfig()
         archer_config.set('disable_star', False)
 
@@ -355,6 +361,9 @@ class WorkflowViewTest(TestCase):
         self.u1.save()
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
+        self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
+                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.master1.save()
         self.wf1 = SqlWorkflow(
             workflow_name='some_name',
             group_id=1,
@@ -365,6 +374,7 @@ class WorkflowViewTest(TestCase):
             create_time=self.now - timedelta(days=1),
             status='workflow_finish',
             is_backup='是',
+            instance=self.master1,
             instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
@@ -385,6 +395,7 @@ class WorkflowViewTest(TestCase):
             create_time=self.now - timedelta(days=1),
             status='workflow_manreviewing',
             is_backup='是',
+            instance=self.master1,
             instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
@@ -397,10 +408,11 @@ class WorkflowViewTest(TestCase):
         self.wf2.save()
 
     def tearDown(self):
-        self.u1.delete()
-        self.superuser1.delete()
         self.wf1.delete()
         self.wf2.delete()
+        self.master1.delete()
+        self.u1.delete()
+        self.superuser1.delete()
 
     def testWorkflowStatus(self):
         c = Client(header={})
@@ -622,6 +634,9 @@ class AsyncTest(TestCase):
         self.now = datetime.now()
         self.u1 = User(username='some_user', display='用户1')
         self.u1.save()
+        self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
+                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.master1.save()
         self.wf1 = SqlWorkflow(
             workflow_name='some_name2',
             group_id=1,
@@ -632,6 +647,7 @@ class AsyncTest(TestCase):
             create_time=self.now - timedelta(days=1),
             status='workflow_executing',
             is_backup='是',
+            instance=self.master1,
             instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
@@ -654,6 +670,7 @@ class AsyncTest(TestCase):
         self.wf1.delete()
         self.u1.delete()
         self.task_result = None
+        self.master1.delete()
 
     @patch('sql.utils.execute_sql.notify_for_execute')
     @patch('sql.utils.execute_sql.Audit')
@@ -736,3 +753,122 @@ class TestSQLAnalyze(TestCase):
         r = self.client.post(path='/sql_analyze/analyze/',
                              data={"text": text, "instance_name": instance_name, "db_name": db_name})
         self.assertListEqual(list(json.loads(r.content)['rows'][0].keys()), ['sql_id', 'sql', 'report'])
+
+
+class UserQueryPrivilege(TestCase):
+
+    def setUp(self):
+        self.u1 = User(username='some_user', display='用户1')
+        self.u1.save()
+        self.ins1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
+                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.ins1.save()
+        self.tomorrow = datetime.now() + timedelta(days=1)
+
+    def tearDown(self):
+        self.u1.delete()
+        self.ins1.delete()
+        QueryPrivileges.objects.all().delete()
+
+    @skip('not implemented')
+    def test_add_privilege(self):
+
+        self.assertEqual(0, QueryPrivileges.objects.filter(
+            instance=self.ins1,
+            db_name='some_db',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=1
+        ).count())
+        self.u1.add_db_privilege(instance=self.ins1,
+                                 db_name='some_db',
+                                 limit_num=100,
+                                 valid_date=self.tomorrow)
+        self.assertEqual(1, QueryPrivileges.objects.filter(
+            instance=self.ins1,
+            db_name='some_db',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            is_deleted=0,
+            priv_type=2
+        ).count())
+
+    @skip('not implemented')
+    def test_get_query_limit(self):
+        self.assertEqual(0, self.u1.get_db_limit(instance=self.ins1, db_name='some_db'))
+        new_priv = QueryPrivileges(
+            instance=self.ins1,
+            db_name='some_db',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=1)
+        new_priv.save()
+        self.assertEqual(new_priv.limit_num, self.u1.get_db_limit(instance=self.ins1, db_name='some_db'))
+
+        self.assertEqual(0, self.u1.get_table_limit(instance=self.ins1, db_name='some_db', table_name='some_table'))
+        new_table_priv = QueryPrivileges(
+            instance=self.ins1,
+            db_name='some_db',
+            table_name='some_tb',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=2
+        )
+        new_table_priv.save()
+        self.assertEqual(new_table_priv.limit_num,
+                         self.u1.get_table_limit(instance=self.ins1, db_name='some_db', table_name='some_table'))
+
+    @skip('not implemented')
+    def test_revoke_privilege(self):
+        new_db_priv = QueryPrivileges(
+            instance=self.ins1,
+            db_name='some_db',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=1)
+        new_db_priv.save()
+        self.u1.revoke_db_query_privilege(instance=self.ins1, db_name='some_db')
+        self.assertEqual(0, QueryPrivileges.objects.filter(
+            instance=self.ins1,
+            db_name='some_db',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=1
+        ).count())
+
+        new_table_priv = QueryPrivileges(
+            instance=self.ins1,
+            db_name='some_db',
+            table_name='some_table',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=2
+        )
+        new_table_priv.save()
+        self.u1.revoke_table_query_privilege(instance=self.ins1,db_name='some_db',table_name='some_table')
+        self.assertEqual(0, QueryPrivileges.objects.filter(
+            instance=self.ins1,
+            db_name='some_db',
+            table_name='some_table',
+            limit_num=100,
+            valid_date=self.tomorrow,
+            user_name=self.u1.username,
+            priv_type=2
+        ).count())
+
+class PrivilegeApplyTest(TestCase):
+
+    def setUp(self):
+        self.u1 = User(username='some_user', display='用户1')
+        self.u1.save()
+        self.ins1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
+                             host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.ins1.save()
+        self.tomorrow = datetime.now() + timedelta(days=1)

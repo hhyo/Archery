@@ -122,6 +122,7 @@ class SqlWorkflow(models.Model):
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
+    # TODO 需要删除instance_name 字段
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=60)
@@ -244,6 +245,8 @@ class QueryPrivilegesApply(models.Model):
     title = models.CharField('申请标题', max_length=50)
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
+    # TODO 后期删除 instance_name
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     db_list = models.TextField('数据库')  # 逗号分隔的数据库列表
     table_list = models.TextField('表')  # 逗号分隔的表列表
@@ -270,6 +273,7 @@ class QueryPrivileges(models.Model):
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
+    # TODO 后期删除instance_name
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=200)
@@ -293,7 +297,6 @@ class QueryPrivileges(models.Model):
 
 # 记录在线查询sql的日志
 class QueryLog(models.Model):
-    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=30)
     sqllog = models.TextField('执行的sql查询')
@@ -320,6 +323,7 @@ class DataMaskingColumns(models.Model):
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
+    # TODO 暂时设置为允许为空， 迁移完成后再修改
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     table_schema = models.CharField('字段所在库名', max_length=64)
