@@ -46,7 +46,7 @@ def query_audit_call_back(workflow_id, workflow_status):
                 user_name=apply_queryset.user_name,
                 user_display=apply_queryset.user_display,
                 instance = apply_queryset.instance,
-                instance_name=apply_queryset.instance_name, db_name=db_name,
+                db_name=db_name,
                 table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
                 apply_queryset.db_list.split(',')]
@@ -56,7 +56,7 @@ def query_audit_call_back(workflow_id, workflow_status):
                 user_name=apply_queryset.user_name,
                 user_display=apply_queryset.user_display,
                 instance=apply_queryset.instance,
-                instance_name=apply_queryset.instance_name, db_name=apply_queryset.db_list,
+                db_name=apply_queryset.db_list,
                 table_name=table_name, valid_date=apply_queryset.valid_date,
                 limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for table_name in
                 apply_queryset.table_list.split(',')]
@@ -191,7 +191,7 @@ def getqueryapplylist(request):
 
     count = lists_obj.count()
     lists = lists_obj.order_by('-apply_id')[offset:limit].values(
-        'apply_id', 'title', 'instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
+        'apply_id', 'title', 'instance__instance_name', 'db_list', 'priv_type', 'table_list', 'limit_num', 'valid_date',
         'user_display', 'status', 'create_time', 'group_name'
     )
 
@@ -288,7 +288,6 @@ def applyforprivileges(request):
                 user_name=user.username,
                 user_display=user.display,
                 instance=ins,
-                instance_name=instance_name,
                 priv_type=int(priv_type),
                 valid_date=valid_date,
                 status=WorkflowDict.workflow_status['audit_wait'],
@@ -372,21 +371,25 @@ def modifyqueryprivileges(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     # type=1删除权限,type=2变更权限
-    privileges = QueryPrivileges()
+    try:
+        privilege = QueryPrivileges.objects.get(privilege_id=int(privilege_id))
+    except QueryPrivileges.DoesNotExist:
+        result['msg'] = '待操作权限不存在'
+        result['status'] = 1
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
     if int(type) == 1:
         # 删除权限
-        privileges.privilege_id = int(privilege_id)
-        privileges.is_deleted = 1
-        privileges.save(update_fields=['is_deleted'])
+        privilege.is_deleted = 1
+        privilege.save(update_fields=['is_deleted'])
         return HttpResponse(json.dumps(result), content_type='application/json')
     elif int(type) == 2:
         # 变更权限
         valid_date = request.POST.get('valid_date')
         limit_num = request.POST.get('limit_num')
-        privileges.privilege_id = int(privilege_id)
-        privileges.valid_date = valid_date
-        privileges.limit_num = limit_num
-        privileges.save(update_fields=['valid_date', 'limit_num'])
+        privilege.valid_date = valid_date
+        privilege.limit_num = limit_num
+        privilege.save(update_fields=['valid_date', 'limit_num'])
         return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -549,21 +552,22 @@ def query(request):
         if sql_result.get('error'):
             pass
         else:
-            query_log = QueryLog()
-            query_log.username = user.username
-            query_log.user_display = user.display
-            query_log.db_name = db_name
-            query_log.instance_name = instance_name
-            query_log.sqllog = sql_content
             if int(limit_num) == 0:
                 limit_num = int(sql_result['affected_rows'])
             else:
                 limit_num = min(int(limit_num), int(sql_result['affected_rows']))
-            query_log.effect_row = limit_num
-            query_log.cost_time = query_result.query_time
-            query_log.priv_check = priv_check
-            query_log.hit_rule = hit_rule
-            query_log.masking = masking
+            query_log = QueryLog(
+                username=user.username,
+                user_display=user.display,
+                db_name=db_name,
+                instance_name=instance.instance_name,
+                sqllog=sql_content,
+                effect_row=limit_num,
+                cost_time=query_result.query_time,
+                priv_check=priv_check,
+                hit_rule=hit_rule,
+                masking=masking
+            )
             # 防止查询超时
             try:
                 query_log.save()

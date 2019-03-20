@@ -132,7 +132,6 @@ class QueryTest(TestCase):
             title='some_title',
             user_name='some_user',
             instance=self.slave1,
-            instance_name='some_ins',
             db_list='some_db,some_db2',
             limit_num=100,
             valid_date=tomorrow,
@@ -147,7 +146,6 @@ class QueryTest(TestCase):
             title='some_title',
             user_name='some_user',
             instance=self.slave1,
-            instance_name='some_ins',
             db_list='some_db',
             table_list='some_table,some_tb2',
             limit_num=100,
@@ -161,7 +159,6 @@ class QueryTest(TestCase):
             user_name=self.u3.username,
             user_display=self.u3.display,
             instance=self.slave1,
-            instance_name=self.slave1.instance_name,
             db_name='some_db',
             table_name='',
             valid_date=tomorrow,
@@ -172,7 +169,6 @@ class QueryTest(TestCase):
             user_name=self.u3.username,
             user_display=self.u3.display,
             instance=self.slave1,
-            instance_name=self.slave1.instance_name,
             db_name='another_db',
             table_name='some_table',
             valid_date=tomorrow,
@@ -183,7 +179,6 @@ class QueryTest(TestCase):
             user_name=self.u3.username,
             user_display=self.u3.display,
             instance=self.slave2,
-            instance_name=self.slave2.instance_name,
             db_name='some_db_another_instance',
             table_name='',
             valid_date=tomorrow,
@@ -357,8 +352,16 @@ class WorkflowViewTest(TestCase):
 
     def setUp(self):
         self.now = datetime.now()
+        can_view_permission = Permission.objects.get(codename='menu_sqlworkflow')
         self.u1 = User(username='some_user', display='用户1')
         self.u1.save()
+        self.u1.user_permissions.add(can_view_permission)
+        self.u2 = User(username='some_user2', display='用户2')
+        self.u2.save()
+        self.u2.user_permissions.add(can_view_permission)
+        self.u3 = User(username='some_user3', display='用户3')
+        self.u3.save()
+        self.u3.user_permissions.add(can_view_permission)
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
@@ -375,7 +378,6 @@ class WorkflowViewTest(TestCase):
             status='workflow_finish',
             is_backup='是',
             instance=self.master1,
-            instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
             sql_syntax=1,
@@ -389,14 +391,13 @@ class WorkflowViewTest(TestCase):
             workflow_name='some_name2',
             group_id=1,
             group_name='g1',
-            engineer=self.u1.username,
-            engineer_display=self.u1.display,
+            engineer=self.u2.username,
+            engineer_display=self.u2.display,
             audit_auth_groups='some_group',
             create_time=self.now - timedelta(days=1),
             status='workflow_manreviewing',
             is_backup='是',
             instance=self.master1,
-            instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
             sql_syntax=1,
@@ -443,6 +444,19 @@ class WorkflowViewTest(TestCase):
         # 列表按创建时间倒序排列, 第二个是wf1 , 是已正常结束
         self.assertEqual(r_json['rows'][1]['status'], 'workflow_finish')
 
+        # u1拿到u1的
+        c.force_login(self.u1)
+        r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'navStatus': 'all'})
+        r_json = r.json()
+        self.assertEqual(r_json['total'],1)
+        self.assertEqual(r_json['rows'][0]['id'], self.wf1.id)
+
+        # u3拿到None
+        c.force_login(self.u3)
+        r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'navStatus': 'all'})
+        r_json = r.json()
+        self.assertEqual(r_json['total'], 0)
+
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     @patch('sql.utils.workflow_audit.Audit.audit')
     @patch('sql.utils.workflow_audit.Audit.can_review')
@@ -476,7 +490,7 @@ class WorkflowViewTest(TestCase):
     @patch('sql.sql_workflow.can_cancel')
     def testWorkflowCancelView(self, _can_cancel, _audit, _detail_by_id, _add_log):
         c = Client()
-        c.force_login(self.u1)
+        c.force_login(self.u2)
         r = c.post('/cancel/')
         self.assertContains(r, 'workflow_id参数为空.')
         r = c.post('/cancel/', data={'workflow_id': self.wf2.id})
@@ -648,7 +662,6 @@ class AsyncTest(TestCase):
             status='workflow_executing',
             is_backup='是',
             instance=self.master1,
-            instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
             sql_syntax=1,
@@ -754,121 +767,3 @@ class TestSQLAnalyze(TestCase):
                              data={"text": text, "instance_name": instance_name, "db_name": db_name})
         self.assertListEqual(list(json.loads(r.content)['rows'][0].keys()), ['sql_id', 'sql', 'report'])
 
-
-class UserQueryPrivilege(TestCase):
-
-    def setUp(self):
-        self.u1 = User(username='some_user', display='用户1')
-        self.u1.save()
-        self.ins1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
-                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
-        self.ins1.save()
-        self.tomorrow = datetime.now() + timedelta(days=1)
-
-    def tearDown(self):
-        self.u1.delete()
-        self.ins1.delete()
-        QueryPrivileges.objects.all().delete()
-
-    @skip('not implemented')
-    def test_add_privilege(self):
-
-        self.assertEqual(0, QueryPrivileges.objects.filter(
-            instance=self.ins1,
-            db_name='some_db',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=1
-        ).count())
-        self.u1.add_db_privilege(instance=self.ins1,
-                                 db_name='some_db',
-                                 limit_num=100,
-                                 valid_date=self.tomorrow)
-        self.assertEqual(1, QueryPrivileges.objects.filter(
-            instance=self.ins1,
-            db_name='some_db',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            is_deleted=0,
-            priv_type=2
-        ).count())
-
-    @skip('not implemented')
-    def test_get_query_limit(self):
-        self.assertEqual(0, self.u1.get_db_limit(instance=self.ins1, db_name='some_db'))
-        new_priv = QueryPrivileges(
-            instance=self.ins1,
-            db_name='some_db',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=1)
-        new_priv.save()
-        self.assertEqual(new_priv.limit_num, self.u1.get_db_limit(instance=self.ins1, db_name='some_db'))
-
-        self.assertEqual(0, self.u1.get_table_limit(instance=self.ins1, db_name='some_db', table_name='some_table'))
-        new_table_priv = QueryPrivileges(
-            instance=self.ins1,
-            db_name='some_db',
-            table_name='some_tb',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=2
-        )
-        new_table_priv.save()
-        self.assertEqual(new_table_priv.limit_num,
-                         self.u1.get_table_limit(instance=self.ins1, db_name='some_db', table_name='some_table'))
-
-    @skip('not implemented')
-    def test_revoke_privilege(self):
-        new_db_priv = QueryPrivileges(
-            instance=self.ins1,
-            db_name='some_db',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=1)
-        new_db_priv.save()
-        self.u1.revoke_db_query_privilege(instance=self.ins1, db_name='some_db')
-        self.assertEqual(0, QueryPrivileges.objects.filter(
-            instance=self.ins1,
-            db_name='some_db',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=1
-        ).count())
-
-        new_table_priv = QueryPrivileges(
-            instance=self.ins1,
-            db_name='some_db',
-            table_name='some_table',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=2
-        )
-        new_table_priv.save()
-        self.u1.revoke_table_query_privilege(instance=self.ins1,db_name='some_db',table_name='some_table')
-        self.assertEqual(0, QueryPrivileges.objects.filter(
-            instance=self.ins1,
-            db_name='some_db',
-            table_name='some_table',
-            limit_num=100,
-            valid_date=self.tomorrow,
-            user_name=self.u1.username,
-            priv_type=2
-        ).count())
-
-class PrivilegeApplyTest(TestCase):
-
-    def setUp(self):
-        self.u1 = User(username='some_user', display='用户1')
-        self.u1.save()
-        self.ins1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
-                             host='testhost', port=3306, user='mysql_user', password='mysql_password')
-        self.ins1.save()
-        self.tomorrow = datetime.now() + timedelta(days=1)

@@ -352,7 +352,6 @@ class ChartTest(TestCase):
             status='workflow_finish',
             is_backup='是',
             instance=cls.slave1,
-            instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
             sql_syntax=1
@@ -369,7 +368,6 @@ class ChartTest(TestCase):
             status='workflow_finish',
             is_backup='是',
             instance=cls.slave1,
-            instance_name='some_instance',
             db_name='some_db',
             sql_content='some_sql',
             sql_syntax=2

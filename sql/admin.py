@@ -55,9 +55,9 @@ class InstanceAdmin(admin.ModelAdmin):
 @admin.register(SqlWorkflow)
 class SqlWorkflowAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'workflow_name', 'group_name', 'instance_name', 'engineer_display', 'create_time', 'status', 'is_backup')
+        'id', 'workflow_name', 'group_name', 'instance', 'engineer_display', 'create_time', 'status', 'is_backup')
     search_fields = ['id', 'workflow_name', 'engineer_display', 'sql_content']
-    list_filter = ('group_name', 'instance_name', 'status', 'sql_syntax',)
+    list_filter = ('group_name', 'instance__instance_name', 'status', 'sql_syntax',)
 
 
 # SQL查询日志
@@ -73,10 +73,9 @@ class QueryLogAdmin(admin.ModelAdmin):
 @admin.register(QueryPrivileges)
 class QueryPrivilegesAdmin(admin.ModelAdmin):
     list_display = (
-        # TODO 删除instance_name
-        'user_display', 'instance_name', 'instance', 'db_name', 'table_name', 'valid_date', 'limit_num', 'create_time')
-    search_fields = ['user_display', 'instance_name']
-    list_filter = ('user_display', 'instance_name', 'db_name', 'table_name',)
+        'user_display', 'instance', 'db_name', 'table_name', 'valid_date', 'limit_num', 'create_time')
+    search_fields = ['user_display', 'instance__instance_name']
+    list_filter = ('user_display', 'instance', 'db_name', 'table_name',)
 
 
 # 脱敏字段页面定义

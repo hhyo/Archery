@@ -76,7 +76,7 @@ def sqlworkflow_list(request):
                                                        ).order_by('-create_time')
     count = workflow_list.count()
     workflow = workflow_list[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                  "is_backup", "create_time", "instance_name", "db_name",
+                                                  "is_backup", "create_time", "instance__instance_name", "db_name",
                                                   "group_name", "sql_syntax")
     # QuerySet 序列化
     rows = [row for row in workflow]

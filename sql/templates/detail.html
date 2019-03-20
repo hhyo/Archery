@@ -63,7 +63,7 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflow_detail.instance_name }}
+                {{ workflow_detail.instance.instance_name }}
             </td>
             <td>
                 {{ workflow_detail.db_name }}
@@ -306,7 +306,7 @@
         var editWorkflowNname = "{{ workflow_detail.workflow_name }}";
         var editSqlContent = $("#editSqlContent").val();
         var editGroup = "{{ workflow_detail.group_name }}";
-        var editClustername = "{{ workflow_detail.instance_name }}";
+        var editClustername = "{{ workflow_detail.instance.instance_name }}";
         var editDbname = "{{ workflow_detail.db_name }}";
         var editIsbackup = "{{ workflow_detail.is_backup }}";
 

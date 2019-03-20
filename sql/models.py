@@ -65,6 +65,7 @@ class ResourceGroupRelations(models.Model):
 
 # 各个线上实例配置
 class Instance(models.Model):
+    # TODO （低优先级）instance_name 可改为name
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
     db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'MySQL'), ('mssql', 'MsSQL')))
@@ -122,9 +123,7 @@ class SqlWorkflow(models.Model):
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
     is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     review_content = models.TextField('自动审核内容的JSON格式')
-    # TODO 需要删除instance_name 字段
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=60)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
@@ -237,17 +236,16 @@ class WorkflowLog(models.Model):
         verbose_name_plural = u'工作流日志'
 
 
-# 查询权限申请记录表
 class QueryPrivilegesApply(models.Model):
+    """查询权限申请记录表"""
     apply_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     title = models.CharField('申请标题', max_length=50)
+    # TODO user_name display 改为外键
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
-    # TODO 后期删除 instance_name
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    instance_name = models.CharField('实例名称', max_length=50)
     db_list = models.TextField('数据库')  # 逗号分隔的数据库列表
     table_list = models.TextField('表')  # 逗号分隔的表列表
     valid_date = models.DateField('有效时间')
@@ -268,14 +266,12 @@ class QueryPrivilegesApply(models.Model):
         verbose_name_plural = u'查询权限申请记录表'
 
 
-# 用户权限关系表
 class QueryPrivileges(models.Model):
+    """用户权限关系表"""
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
-    # TODO 后期删除instance_name
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库', max_length=200)
     table_name = models.CharField('表', max_length=200)
     valid_date = models.DateField('有效时间')
@@ -297,11 +293,13 @@ class QueryPrivileges(models.Model):
 
 # 记录在线查询sql的日志
 class QueryLog(models.Model):
+    # TODO 改为实例外键
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=30)
     sqllog = models.TextField('执行的sql查询')
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
+    # TODO 改为user 外键
     username = models.CharField('操作人', max_length=30)
     user_display = models.CharField('操作人中文名', max_length=50, default='')
     priv_check = models.IntegerField('查询权限是否正常校验', choices=((1, ' 正常'), (2, '跳过'),), default=0)
@@ -324,7 +322,6 @@ class DataMaskingColumns(models.Model):
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
     # TODO 暂时设置为允许为空， 迁移完成后再修改
-    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     instance_name = models.CharField('实例名称', max_length=50)
     table_schema = models.CharField('字段所在库名', max_length=64)
     table_name = models.CharField('字段所在表名', max_length=64)
