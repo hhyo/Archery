@@ -11,7 +11,7 @@ from sql.engines import get_engine
 def is_auto_review(workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     sql_content = workflow_detail.sql_content
-    instance_name = workflow_detail.instance_name
+    instance_name = workflow_detail.instance.instance_name
     db_name = workflow_detail.db_name
     is_manual = workflow_detail.is_manual
 

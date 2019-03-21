@@ -9,7 +9,7 @@ class EngineBase:
         self.conn = None
         if workflow:
             self.workflow = workflow
-            instance = Instance.objects.get(instance_name=self.workflow.instance_name)
+            instance = Instance.objects.get(instance_name=self.workflow.instance.instance_name)
             self.sql = workflow.sql_content
         if instance:
             self.instance_name = instance.instance_name
@@ -70,7 +70,7 @@ class EngineBase:
 def get_engine(instance=None, workflow=None):
     """获取数据库操作engine"""
     if workflow:
-        instance = Instance.objects.get(instance_name=workflow.instance_name)
+        instance = Instance.objects.get(instance_name=workflow.instance.instance_name)
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
         return MysqlEngine(workflow=workflow, instance=instance)

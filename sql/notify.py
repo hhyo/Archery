@@ -189,7 +189,7 @@ def notify_for_execute(workflow):
             msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
                 Users.objects.get(username=workflow.engineer).display,
                 workflow.group_name,
-                workflow.instance_name,
+                workflow.instance.instance_name,
                 workflow.db_name,
                 workflow.workflow_name,
                 url,
