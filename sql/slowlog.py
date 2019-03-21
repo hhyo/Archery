@@ -30,7 +30,7 @@ def slowquery_review(request):
 
     # 判断是RDS还是其他实例
     instance_info = Instance.objects.get(instance_name=instance_name)
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=1)) > 0:
         # 调用阿里云慢日志接口
         result = aliyun_rds_slowquery_review(request)
     else:
@@ -98,7 +98,7 @@ def slowquery_review_history(request):
 
     # 判断是RDS还是其他实例
     instance_info = Instance.objects.get(instance_name=instance_name)
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=1)) > 0:
         # 调用阿里云慢日志接口
         result = aliyun_rds_slowquery_review_history(request)
     else:

@@ -321,8 +321,7 @@ class DataMaskingColumns(models.Model):
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
-    # TODO 暂时设置为允许为空， 迁移完成后再修改
-    instance_name = models.CharField('实例名称', max_length=50)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     table_schema = models.CharField('字段所在库名', max_length=64)
     table_name = models.CharField('字段所在表名', max_length=64)
     column_name = models.CharField('字段名', max_length=64)
@@ -399,10 +398,9 @@ class AliyunAccessKey(models.Model):
         super(AliyunAccessKey, self).save(*args, **kwargs)
 
 
-# 阿里云rds配置信息
+# 阿里云rds配置信息`
 class AliyunRdsConfig(models.Model):
-    instance_name = models.OneToOneField(Instance, on_delete=True, db_constraint=False, to_field='instance_name',
-                                         db_column='instance_name', verbose_name='实例名称', unique=True)
+    instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
     is_enable = models.IntegerField('是否启用', choices=((1, '启用'), (2, '禁用')))
 

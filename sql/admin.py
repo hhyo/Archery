@@ -4,7 +4,8 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivileges, WorkflowAudit, WorkflowLog
+    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
+    WorkflowAudit, WorkflowLog
 
 
 # 用户管理
@@ -69,23 +70,31 @@ class QueryLogAdmin(admin.ModelAdmin):
     list_filter = ('instance_name', 'db_name', 'user_display', 'priv_check', 'hit_rule', 'masking',)
 
 
-# 查询权限记录
+# 查询权限列表
 @admin.register(QueryPrivileges)
 class QueryPrivilegesAdmin(admin.ModelAdmin):
-    list_display = (
-        'user_display', 'instance', 'db_name', 'table_name', 'valid_date', 'limit_num', 'create_time')
+    list_display = ('privilege_id', 'user_display', 'instance', 'db_name', 'table_name',
+                    'valid_date', 'limit_num', 'create_time')
     search_fields = ['user_display', 'instance__instance_name']
     list_filter = ('user_display', 'instance', 'db_name', 'table_name',)
+
+
+# 查询权限申请记录
+@admin.register(QueryPrivilegesApply)
+class QueryPrivilegesApplyAdmin(admin.ModelAdmin):
+    list_display = ('apply_id', 'user_display', 'group_name', 'instance', 'valid_date', 'limit_num', 'create_time')
+    search_fields = ['user_display', 'instance__instance_name', 'db_list', 'tb_list']
+    list_filter = ('user_display', 'group_name', 'instance')
 
 
 # 脱敏字段页面定义
 @admin.register(DataMaskingColumns)
 class DataMaskingColumnsAdmin(admin.ModelAdmin):
     list_display = (
-        'column_id', 'rule_type', 'active', 'instance_name', 'table_schema', 'table_name', 'column_name',
+        'column_id', 'rule_type', 'active', 'instance', 'table_schema', 'table_name', 'column_name',
         'create_time',)
     search_fields = ['table_name', 'column_name']
-    list_filter = ('rule_type', 'active', 'instance_name')
+    list_filter = ('rule_type', 'active', 'instance__instance_name')
 
 
 # 脱敏规则页面定义
@@ -122,5 +131,5 @@ class AliAccessKeyAdmin(admin.ModelAdmin):
 # 阿里云实例配置信息
 @admin.register(AliyunRdsConfig)
 class AliRdsConfigAdmin(admin.ModelAdmin):
-    list_display = ('instance_name', 'rds_dbinstanceid', 'is_enable')
-    search_fields = ['instance_name', 'rds_dbinstanceid']
+    list_display = ('instance', 'rds_dbinstanceid', 'is_enable')
+    search_fields = ['instance__instance_name', 'rds_dbinstanceid']

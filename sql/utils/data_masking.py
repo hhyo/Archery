@@ -146,12 +146,13 @@ class Masking(object):
         table_ref = query_tree_dict.get('table_ref', [])
 
         # 获取全部脱敏字段信息，减少循环查询，提升效率
+        instance = Instance.objects.get(instance_name=instance_name)
         masking_columns = DataMaskingColumns.objects.all()
 
         # 判断语句涉及的表是否存在脱敏字段配置
         is_exist = False
         for table in table_ref:
-            if masking_columns.filter(instance_name=instance_name,
+            if masking_columns.filter(instance=instance,
                                       table_schema=table['db'],
                                       table_name=table['table'],
                                       active=1).exists():
@@ -186,7 +187,7 @@ class Masking(object):
                 if '*' in select_index:
                     # 涉及表命中的列
                     for table in table_ref:
-                        hit_columns_info = self.hit_table(masking_columns, instance_name, table['db'],
+                        hit_columns_info = self.hit_table(masking_columns, instance, table['db'],
                                                           table['table'])
                         table_hit_columns.extend(hit_columns_info)
                     # 几种不同查询格式
@@ -247,7 +248,7 @@ class Masking(object):
 
             # 格式化命中的列信息
             for column in columns:
-                hit_info = self.hit_column(masking_columns, instance_name, column.get('db'), column.get('table'),
+                hit_info = self.hit_column(masking_columns, instance, column.get('db'), column.get('table'),
                                            column.get('field'))
                 if hit_info['is_hit']:
                     hit_info['index'] = column['index']
@@ -258,12 +259,12 @@ class Masking(object):
         return table_hit_columns, hit_columns
 
     # 判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型
-    def hit_column(self, masking_columns, instance_name, table_schema, table_name, column_name):
-        column_info = masking_columns.filter(instance_name=instance_name, table_schema=table_schema,
+    def hit_column(self, masking_columns, instance, table_schema, table_name, column_name):
+        column_info = masking_columns.filter(instance=instance, table_schema=table_schema,
                                              table_name=table_name, column_name=column_name, active=1)
 
         hit_column_info = {}
-        hit_column_info['instance_name'] = instance_name
+        hit_column_info['instance_name'] = instance.instance_name
         hit_column_info['table_schema'] = table_schema
         hit_column_info['table_name'] = table_name
         hit_column_info['column_name'] = column_name
@@ -278,15 +279,15 @@ class Masking(object):
         return hit_column_info
 
     # 获取表中所有命中脱敏规则的字段信息，用于select *
-    def hit_table(self, masking_columns, instance_name, table_schema, table_name):
-        columns_info = masking_columns.filter(instance_name=instance_name, table_schema=table_schema,
+    def hit_table(self, masking_columns, instance, table_schema, table_name):
+        columns_info = masking_columns.filter(instance=instance, table_schema=table_schema,
                                               table_name=table_name, active=1)
 
         # 命中规则
         hit_columns_info = []
         for column in columns_info:
             hit_column_info = {}
-            hit_column_info['instance_name'] = instance_name
+            hit_column_info['instance_name'] = instance.instance_name
             hit_column_info['table_schema'] = table_schema
             hit_column_info['table_name'] = table_name
             hit_column_info['is_hit'] = True
