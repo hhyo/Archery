@@ -1,9 +1,63 @@
-from django.test import TestCase
+import json
+from datetime import timedelta, datetime
 from unittest.mock import patch, Mock, ANY
-from sql.models import Instance
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from sql.engines import EngineBase
+from sql.engines.models import ResultSet, ReviewSet
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
-from sql.engines.models import ResultSet, ReviewSet
+from sql.models import Instance, SqlWorkflow
+
+User = get_user_model()
+
+
+class TestEngineBase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.u1 = User(username='some_user', display='用户1')
+        cls.u1.save()
+        cls.ins1 = Instance(instance_name='some_ins', type='master', db_type='mssql', host='some_host',
+                            port=1366, user='ins_user', password='some_pass')
+        cls.ins1.save()
+        cls.wf1 = SqlWorkflow(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer=cls.u1.username,
+            engineer_display=cls.u1.display,
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup='是',
+            instance=cls.ins1,
+            db_name='some_db',
+            sql_content='some_sql',
+            sql_syntax=1,
+            execute_result=json.dumps([{
+                'id': 1,
+                'sql': 'some_content'
+            }])
+        )
+        cls.wf1.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.wf1.delete()
+        cls.ins1.delete()
+        cls.u1.delete()
+
+    def test_init_with_ins(self):
+        engine = EngineBase(instance=self.ins1)
+        self.assertEqual(self.ins1.instance_name, engine.instance_name)
+        self.assertEqual(self.ins1.user, engine.user)
+
+    def test_init_with_workflow(self):
+        engine = EngineBase(workflow=self.wf1)
+        self.assertEqual(self.ins1.instance_name, engine.instance_name)
+        self.assertEqual(self.ins1.user, engine.user)
 
 
 class TestMssql(TestCase):
@@ -11,7 +65,7 @@ class TestMssql(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ins1 = Instance(instance_name='some_ins', type='slave', db_type='mssql', host='some_host',
-                             port=1366, user='ins_user', password='some_pass')
+                            port=1366, user='ins_user', password='some_pass')
         cls.ins1.save()
         cls.engine = MssqlEngine(instance=cls.ins1)
 
