@@ -3,8 +3,9 @@ set @content_type_id=(select id from django_content_type where app_label='sql' a
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL审核', @content_type_id, 'menu_sqlcheck');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL分析', @content_type_id, 'menu_sqlanalyze');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('执行SQL分析', @content_type_id, 'sql_analyze');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('执行SQL上线工单(资源组粒度)', @content_type_id, 'sql_execute_for_resource_group');
 
--- SQL工单、查询权限增加Instance外键，设置为CASCADE级联操作，通过管理后台删除数据时
+-- SQL工单、查询权限、RDS、脱敏配置增加Instance外键，设置为CASCADE级联操作，通过管理后台删除数据时
 SET FOREIGN_KEY_CHECKS = 0;
 ALTER TABLE sql_workflow
   ADD COLUMN instance_id int(11) NOT NULL AFTER group_name,
