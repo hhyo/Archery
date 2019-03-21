@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, patch, ANY
 from unittest import skip
@@ -14,7 +15,7 @@ from sql.engines.models import ResultSet
 from sql.engines.mysql import MysqlEngine
 from sql import query
 
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog
+from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog, ResourceGroup
 from sql.utils.execute_sql import execute_callback
 
 User = get_user_model()
@@ -407,13 +408,17 @@ class WorkflowViewTest(TestCase):
             }])
         )
         self.wf2.save()
+        self.resource_group1 = ResourceGroup(
+            group_name='some_group'
+        )
+        self.resource_group1.save()
 
     def tearDown(self):
-        self.wf1.delete()
-        self.wf2.delete()
+        SqlWorkflow.objects.all().delete()
         self.master1.delete()
         self.u1.delete()
         self.superuser1.delete()
+        self.resource_group1.delete()
 
     def testWorkflowStatus(self):
         c = Client(header={})
@@ -503,6 +508,41 @@ class WorkflowViewTest(TestCase):
         r = c.post('/cancel/', data={'workflow_id': self.wf2.id, 'cancel_remark': 'some_reason'})
         self.wf2.refresh_from_db()
         self.assertEqual('workflow_abort', self.wf2.status)
+
+    @patch('sql.sql_workflow.async_task')
+    @patch('sql.sql_workflow.Audit')
+    @patch('sql.sql_workflow.get_engine')
+    @patch('sql.sql_workflow.user_instances')
+    def test_workflow_auto_review_view(self, mock_user_instances, mock_get_engine, mock_audit, mock_async_task):
+        c = Client()
+        c.force_login(self.superuser1)
+        request_data = {
+            'sql_content': "update some_db set some_key=\'some value\';",
+            'workflow_name': 'some_title',
+            'group_name': self.resource_group1.group_name,
+            'group_id': self.resource_group1.group_id,
+            'instance_name': self.master1.instance_name,
+            'db_name': 'some_db',
+            'is_backup': '是',
+            'notify_users': ''
+        }
+        mock_user_instances.return_value.get.return_value = None
+        mock_get_engine.return_value.execute_check.return_value.rows = []
+        mock_get_engine.return_value.execute_check.return_value.json.return_value = json.dumps([{
+            "id": 1,
+            "stage": "CHECKED",
+            "errlevel": 0,
+            "stagestatus": "Audit completed",
+            "errormessage": "None", "sql": "use thirdservice_db", "affected_rows": 0,
+            "sequence": "'0_0_0'", "backup_dbname": "None", "execute_time": "0", "sqlsha1": "",
+            "actual_affected_rows": None}])
+        mock_audit.settings.return_value = 'some_group,another_group'
+        mock_audit.add.return_value = None
+        mock_async_task.return_value = None
+        r = c.post('/autoreview/', data=request_data, follow=False)
+        self.assertIn('detail', r.url)
+        workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
+        self.assertEqual(request_data['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
 
 
 class TestOptimize(TestCase):

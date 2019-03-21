@@ -149,6 +149,9 @@ def autoreview(request):
     workflow_id = request.POST.get('workflow_id')
     sql_content = request.POST['sql_content']
     workflow_title = request.POST['workflow_name']
+    # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
+    # 工单表中可以考虑不存储资源组相关信息
+    # 工单和实例关联， 实例和资源组关联， 资源组和用户关联。
     group_name = request.POST['group_name']
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
@@ -235,7 +238,7 @@ def autoreview(request):
             sql_workflow.status = workflow_status
             sql_workflow.is_backup = is_backup
             sql_workflow.review_content = check_result.json()
-            sql_workflow.instance_name = instance_name
+            sql_workflow.instance = instance
             sql_workflow.db_name = db_name
             sql_workflow.sql_content = sql_content
             sql_workflow.execute_result = ''
