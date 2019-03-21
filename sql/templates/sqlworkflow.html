@@ -100,16 +100,27 @@
                     title: '工单名称',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
-                        return "<a href=\"/detail/" + row.id + "/\">" + value + "</a>"
+                        var span = document.createElement('span');
+                        span.setAttribute('title', value);
+                        if (value.length > 20) {
+                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value.substr(0, 20) + '...';
+                            +"</a>";
+                        } else {
+                            span.innerHTML = "<a href=\"/detail/" + row.id + "/\">" + value + "</a>";
+                        }
+                        return span.outerHTML;
                     }
+                }, {
+                    title: '工单完整名称',
+                    field: 'workflow_name',
+                    visible: false // 默认不显示
                 }, {
                     title: '类型',
                     field: 'sql_syntax',
                     formatter: function (value, row, index) {
                         if (value === 1) {
                             return 'DDL'
-                        }
-                        else if (value === 2) {
+                        } else if (value === 2) {
                             return 'DML'
                         }
                     }
@@ -124,7 +135,8 @@
                     }
                 }, {
                     title: '是否备份',
-                    field: 'is_backup'
+                    field: 'is_backup',
+                    visible: false // 默认不显示
                 }, {
                     title: '发起时间',
                     field: 'create_time'

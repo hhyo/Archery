@@ -260,8 +260,7 @@
                             }
                         });
                         return html.join('');
-                    }
-                    else {
+                    } else {
                         $.each(row, function (key, value) {
                             if (key === 'db_list') {
                                 var sql = '数据库清单：<br>' + value;
@@ -277,7 +276,15 @@
                     title: '工单名称',
                     field: 'title',
                     formatter: function (value, row, index) {
-                        return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
+                        var span = document.createElement('span');
+                        span.setAttribute('title', value);
+                        if (value.length > 10) {
+                            span.innerHTML = "<a href=\"/queryapplydetail/" + row.apply_id + "/\">" + value.substr(0, 10) + '...';
+                            +"</a>";
+                        } else {
+                            span.innerHTML = "<a href=\"/queryapplydetail/" + row.apply_id + "/\">" + value + "</a>";
+                        }
+                        return span.outerHTML;
                     }
                 }, {
                     title: '实例',
@@ -289,8 +296,7 @@
                         if (value.length > 30) {
                             var db_list = value.substr(0, 30) + '...';
                             return db_list;
-                        }
-                        else {
+                        } else {
                             return value
                         }
                     }
@@ -300,8 +306,7 @@
                     formatter: function (value, row, index) {
                         if (value === 1) {
                             return 'DATABASE';
-                        }
-                        else {
+                        } else {
                             return 'TABLE';
                         }
                     }
@@ -461,23 +466,19 @@
                 if (priv_type === '1') {
                     if (title && group_name && workflow_auditors && instance_name && db_name_multiple && valid_date && limit_num) {
                         return true
-                    }
-                    else {
+                    } else {
                         alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
-                }
-                else if (priv_type === '2') {
+                } else if (priv_type === '2') {
                     if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
-                    }
-                    else {
+                    } else {
                         alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
                 }
-            }
-            else if (priv_type == null) {
+            } else if (priv_type == null) {
                 alert("请选择权限类别");
                 return false
             }
@@ -504,17 +505,13 @@
                 if (valid_date === 'day') {
                     valid_date = addDate(date, 1);
 
-                }
-                else if (valid_date === 'week') {
+                } else if (valid_date === 'week') {
                     valid_date = addDate(date, 7);
-                }
-                else if (valid_date === 'month') {
+                } else if (valid_date === 'month') {
                     valid_date = addDate(date, 30);
-                }
-                else if (valid_date === 'year') {
+                } else if (valid_date === 'year') {
                     valid_date = addDate(date, 365);
-                }
-                else {
+                } else {
                     valid_date = addDate(date, 1);
                 }
 
@@ -522,16 +519,13 @@
                 if (priv_type === '1') {
                     if (db_name_multiple.length > 1) {
                         var db_list = db_name_multiple.join(",");
-                    }
-                    else {
+                    } else {
                         var db_list = db_name_multiple.toString()
                     }
-                }
-                else if (priv_type === '2') {
+                } else if (priv_type === '2') {
                     if (table_name.length > 1) {
                         var table_list = table_name.join(",");
-                    }
-                    else {
+                    } else {
                         var table_list = table_name.toString()
                     }
                 }
@@ -566,8 +560,7 @@
                         if (data.status === 0) {
                             $('#apply').modal('hide');
                             location.href = '/queryapplylist/'
-                        }
-                        else {
+                        } else {
                             alert(data.msg)
                         }
                     },
