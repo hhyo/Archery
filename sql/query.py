@@ -234,7 +234,7 @@ def applyforprivileges(request):
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user, 'slave').get(instance_name=instance_name)
+        user_instances(request.user, type='slave', db_type='all').get(instance_name=instance_name)
     except Exception:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)

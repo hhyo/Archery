@@ -138,7 +138,7 @@ def sqlanalyze(request):
     :return:
     """
     # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
     return render(request, 'sqlanalyze.html', {'instances': instances})
 
 
@@ -158,7 +158,7 @@ def dashboard(request):
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联实例列表
-    instances = [slave.instance_name for slave in user_instances(request.user, 'slave')]
+    instances = [slave.instance_name for slave in user_instances(request.user, type='slave', db_type='all')]
 
     context = {'instances': instances}
     return render(request, 'sqlquery.html', context)
@@ -178,7 +178,7 @@ def slowquery(request):
 @permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
     # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
 
     context = {'instances': instances}
     return render(request, 'sqladvisor.html', context)
@@ -221,7 +221,7 @@ def queryuserprivileges(request):
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
     # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
 
     context = {'tab': 'process', 'instances': instances}
     return render(request, 'dbdiagnostic.html', context)
@@ -290,7 +290,7 @@ def instanceuser(request, instance_id):
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):
     # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
     return render(request, 'binlog2sql.html', {'instances': instances})
 
 
@@ -298,5 +298,5 @@ def binlog2sql(request):
 @permission_required('sql.menu_schemasync', raise_exception=True)
 def schemasync(request):
     # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
     return render(request, 'schemasync.html', {'instances': instances})

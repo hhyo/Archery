@@ -168,7 +168,7 @@ def autoreview(request):
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        user_instances(request.user, 'master').get(instance_name=instance_name)
+        user_instances(request.user, type='master', db_type='mysql').get(instance_name=instance_name)
     except Exception:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
