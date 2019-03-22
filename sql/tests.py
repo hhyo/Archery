@@ -2,7 +2,6 @@ import json
 import re
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, patch, ANY
-from unittest import skip
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -12,10 +11,10 @@ from django.test import Client, TestCase
 
 from common.config import SysConfig
 from sql.engines.models import ResultSet
-from sql.engines.mysql import MysqlEngine
 from sql import query
 
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, QueryLog, ResourceGroup
+from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
+    ResourceGroup
 from sql.utils.execute_sql import execute_callback
 
 User = get_user_model()
@@ -366,9 +365,9 @@ class WorkflowViewTest(TestCase):
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
-                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
         self.master1.save()
-        self.wf1 = SqlWorkflow(
+        self.wf1 = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
             group_name='g1',
@@ -380,15 +379,17 @@ class WorkflowViewTest(TestCase):
             is_backup='是',
             instance=self.master1,
             db_name='some_db',
-            sql_content='some_sql',
             syntax_type=1,
+        )
+        self.wfc1 = SqlWorkflowContent.objects.create(
+            workflow=self.wf1,
+            sql_content='some_sql',
             execute_result=json.dumps([{
                 'id': 1,
                 'sql': 'some_content'
             }])
         )
-        self.wf1.save()
-        self.wf2 = SqlWorkflow(
+        self.wf2 = SqlWorkflow.objects.create(
             workflow_name='some_name2',
             group_id=1,
             group_name='g1',
@@ -400,20 +401,23 @@ class WorkflowViewTest(TestCase):
             is_backup='是',
             instance=self.master1,
             db_name='some_db',
+            syntax_type=1
+        )
+        self.wfc2 = SqlWorkflowContent.objects.create(
+            workflow=self.wf2,
             sql_content='some_sql',
-            syntax_type=1,
             execute_result=json.dumps([{
                 'id': 1,
                 'sql': 'some_content'
             }])
         )
-        self.wf2.save()
         self.resource_group1 = ResourceGroup(
             group_name='some_group'
         )
         self.resource_group1.save()
 
     def tearDown(self):
+        SqlWorkflowContent.objects.all().delete()
         SqlWorkflow.objects.all().delete()
         self.master1.delete()
         self.u1.delete()
@@ -453,7 +457,7 @@ class WorkflowViewTest(TestCase):
         c.force_login(self.u1)
         r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'navStatus': 'all'})
         r_json = r.json()
-        self.assertEqual(r_json['total'],1)
+        self.assertEqual(r_json['total'], 1)
         self.assertEqual(r_json['rows'][0]['id'], self.wf1.id)
 
         # u3拿到None
@@ -689,9 +693,9 @@ class AsyncTest(TestCase):
         self.u1 = User(username='some_user', display='用户1')
         self.u1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
-                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
         self.master1.save()
-        self.wf1 = SqlWorkflow(
+        self.wf1 = SqlWorkflow.objects.create(
             workflow_name='some_name2',
             group_id=1,
             group_name='g1',
@@ -703,11 +707,13 @@ class AsyncTest(TestCase):
             is_backup='是',
             instance=self.master1,
             db_name='some_db',
-            sql_content='some_sql',
             syntax_type=1,
+        )
+        self.wfc1 = SqlWorkflowContent.objects.create(
+            workflow=self.wf1,
+            sql_content='some_sql',
             execute_result=''
         )
-        self.wf1.save()
         # 初始化工单执行返回对象
         self.task_result = MagicMock()
         self.task_result.args = [self.wf1.id]
@@ -806,4 +812,3 @@ class TestSQLAnalyze(TestCase):
         r = self.client.post(path='/sql_analyze/analyze/',
                              data={"text": text, "instance_name": instance_name, "db_name": db_name})
         self.assertListEqual(list(json.loads(r.content)['rows'][0].keys()), ['sql_id', 'sql', 'report'])
-

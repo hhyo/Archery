@@ -57,9 +57,9 @@ def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     if workflow_detail.status in ['workflow_finish', 'workflow_exception'] \
             and workflow_detail.is_manual == 0:
-        rows = workflow_detail.execute_result
+        rows = workflow_detail.sqlworkflowcontent.execute_result
     else:
-        rows = workflow_detail.review_content
+        rows = workflow_detail.sqlworkflowcontent.review_content
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != 'workflow_autoreviewwrong':
         # 获取当前审批和审批流程

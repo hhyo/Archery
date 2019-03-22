@@ -10,7 +10,7 @@ from sql.engines import get_engine
 # 判断SQL上线是否无需审批
 def is_auto_review(workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    sql_content = workflow_detail.sql_content
+    sql_content = workflow_detail.sqlworkflowcontent.sql_content
     instance_name = workflow_detail.instance.instance_name
     db_name = workflow_detail.db_name
     is_manual = workflow_detail.is_manual

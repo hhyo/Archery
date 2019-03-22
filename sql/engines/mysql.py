@@ -202,8 +202,8 @@ ORDER BY ORDINAL_POSITION;""".format(
         """执行上线单"""
         workflow_detail = self.workflow
         if workflow_detail.is_manual == 1:
-            return self.execute(db_name=workflow_detail.db_name, sql=workflow_detail.sql_content)
-        execute_result = ReviewSet(full_sql=workflow_detail.sql_content)
+            return self.execute(db_name=workflow_detail.db_name, sql=workflow_detail.sqlworkflowcontent.sql_content)
+        execute_result = ReviewSet(full_sql=workflow_detail.sqlworkflowcontent.sql_content)
         inception_engine = InceptionEngine()
         if workflow_detail.is_backup == '是':
             str_backup = "--enable-remote-backup;"
@@ -219,7 +219,7 @@ ORDER BY ORDINAL_POSITION;""".format(
             self.password,
             self.host,
             self.port,
-            workflow_detail.db_name, workflow_detail.sql_content)
+            workflow_detail.db_name, workflow_detail.sqlworkflowcontent.sql_content)
         split_result = inception_engine.query(sql=sql_split)
 
         execute_result.rows = []
@@ -255,7 +255,7 @@ ORDER BY ORDINAL_POSITION;""".format(
                     sqlsha1=sqlRow['sqlsha1']))
 
             # 每执行一次，就将执行结果更新到工单的execute_result
-            workflow_detail.execute_result = execute_result.json()
+            workflow_detail.sqlworkflowcontent.execute_result = execute_result.json()
             from django.db import connection
             if connection.connection is not None:
                 connection.close()

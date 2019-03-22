@@ -44,7 +44,7 @@ def execute_callback(task):
         workflow.status = 'workflow_finish'
         execute_result = task.result
     # resultset 的内部方法 json()
-    workflow.execute_result = execute_result.json()
+    workflow.sqlworkflowcontent.execute_result = execute_result.json()
     workflow.audit_remark = ''
     workflow.save()
 

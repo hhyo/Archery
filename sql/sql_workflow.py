@@ -23,8 +23,9 @@ from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
 from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
+from sql.utils.sql_utils import get_syntax_type
 from sql.utils.workflow_audit import Audit
-from .models import SqlWorkflow, Instance
+from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
 
 from sql.engines import get_engine
@@ -212,9 +213,7 @@ def autoreview(request):
     # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
     syntax_type = 2
     for stmt in sqlparse.split(sql_content):
-        statement = sqlparse.parse(stmt)[0]
-        syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
-        if syntax_type == 'Token.Keyword.DDL':
+        if get_syntax_type(stmt) == 'DDL':
             syntax_type = 1
             break
 
@@ -223,29 +222,27 @@ def autoreview(request):
     try:
         with transaction.atomic():
             # 存进数据库里
-            engineer = request.user.username
-            if not workflow_id:
-                sql_workflow = SqlWorkflow()
-                sql_workflow.create_time = timezone.now()
-            else:
-                sql_workflow = SqlWorkflow.objects.get(id=int(workflow_id))
-            sql_workflow.workflow_name = workflow_title
-            sql_workflow.group_id = group_id
-            sql_workflow.group_name = group_name
-            sql_workflow.engineer = engineer
-            sql_workflow.engineer_display = request.user.display
-            sql_workflow.audit_auth_groups = Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview'])
-            sql_workflow.status = workflow_status
-            sql_workflow.is_backup = is_backup
-            sql_workflow.review_content = check_result.json()
-            sql_workflow.instance = instance
-            sql_workflow.db_name = db_name
-            sql_workflow.sql_content = sql_content
-            sql_workflow.execute_result = ''
-            sql_workflow.is_manual = is_manual
-            sql_workflow.audit_remark = ''
-            sql_workflow.syntax_type = syntax_type
-            sql_workflow.save()
+            sql_workflow = SqlWorkflow.objects.create(
+                workflow_name=workflow_title,
+                group_id=group_id,
+                group_name=group_name,
+                engineer=request.user.username,
+                engineer_display=request.user.display,
+                audit_auth_groups=Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview']),
+                status=workflow_status,
+                is_backup=is_backup,
+                instance=instance,
+                db_name=db_name,
+                is_manual=is_manual,
+                audit_remark='',
+                syntax_type=syntax_type,
+                create_time=timezone.now()
+            )
+            SqlWorkflowContent.objects.create(workflow=sql_workflow,
+                                              sql_content=sql_content,
+                                              review_content=check_result.json(),
+                                              execute_result=''
+                                              )
             workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流
             if workflow_status == 'workflow_manreviewing':

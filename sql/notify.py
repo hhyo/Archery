@@ -66,7 +66,8 @@ def notify_for_audit(audit_id, msg_type=0, **kwargs):
     elif workflow_type == WorkflowDict.workflow_type['sqlreview']:
         workflow_type_display = WorkflowDict.workflow_type['sqlreview_display']
         workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
-        workflow_content = re.sub('[\r\n\f]{2,}', '\n', workflow_detail.sql_content[0:500].replace('\r', ''))
+        workflow_content = re.sub('[\r\n\f]{2,}', '\n',
+                                  workflow_detail.sqlworkflowcontent.sql_content[0:500].replace('\r', ''))
     else:
         raise Exception('工单类型不正确')
 
@@ -161,7 +162,7 @@ def notify_for_execute(workflow):
         audit_auth_group,
         workflow.workflow_name,
         url,
-        re.sub('[\r\n\f]{2,}', '\n', workflow.sql_content[0:500].replace('\r', '')))
+        re.sub('[\r\n\f]{2,}', '\n', workflow.sqlworkflowcontent.sql_content[0:500].replace('\r', '')))
 
     # 邮件通知申请人，抄送DBA
     list_to_addr = [email['email'] for email in Users.objects.filter(username=workflow.engineer).values('email')]
@@ -193,7 +194,7 @@ def notify_for_execute(workflow):
                 workflow.db_name,
                 workflow.workflow_name,
                 url,
-                workflow.sql_content[0:500])
+                workflow.sqlworkflowcontent.sql_content[0:500])
             # 获取通知成员ddl_notify_auth_group
             msg_to = [email['email'] for email in
                       Users.objects.filter(groups__name=sys_config.get('ddl_notify_auth_group')).values('email')]
