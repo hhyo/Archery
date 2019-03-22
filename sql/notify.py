@@ -183,7 +183,7 @@ def notify_for_execute(workflow):
     # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
         # 判断上线语句是否存在DDL，存在则通知相关人员
-        if workflow.sql_syntax == 1:
+        if workflow.syntax_type == 1:
             # 消息内容通知
             msg_title = '[archery]有新的DDL语句执行完成#{}'.format(audit_id)
             msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(

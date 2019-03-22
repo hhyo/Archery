@@ -354,7 +354,7 @@ class ChartTest(TestCase):
             instance=cls.slave1,
             db_name='some_db',
             sql_content='some_sql',
-            sql_syntax=1
+            syntax_type=1
         ) for i in range(2)]
         # 批量创建数据 dml ,u1 ,g2, the day before yesterday 组, 3 个数据
         dml_workflow = [SqlWorkflow(
@@ -370,7 +370,7 @@ class ChartTest(TestCase):
             instance=cls.slave1,
             db_name='some_db',
             sql_content='some_sql',
-            sql_syntax=2
+            syntax_type=2
         ) for i in range(3)]
         SqlWorkflow.objects.bulk_create(ddl_workflow + dml_workflow)
 #query_logs = [QueryLog(
@@ -400,7 +400,7 @@ class ChartTest(TestCase):
         """工单以语法类型分组"""
         dao = ChartDao()
         expected_rows = (('DDL',2), ('DML',3))
-        result = dao.sql_syntax()
+        result = dao.syntax_type()
         self.assertEqual(result['rows'], expected_rows)
 
     def testWorkflowByDate(self):
