@@ -61,7 +61,7 @@ CREATE TABLE sql_workflow_content(
   review_content longtext NOT NULL COMMENT '自动审核内容的JSON格式',
   execute_result longtext NOT NULL COMMENT '执行结果的JSON格式',
   UNIQUE KEY uniq_workflow_id (workflow_id) USING BTREE,
-  CONSTRAINT fk_cont_workflow FOREIGN KEY fk_cont_workflow (workflow_id) REFERENCES sql_instance (id) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT fk_cont_workflow FOREIGN KEY fk_cont_workflow (workflow_id) REFERENCES sql_workflow (id) ON DELETE RESTRICT ON UPDATE RESTRICT
 );
 -- 数据迁移
 SET FOREIGN_KEY_CHECKS = 0;
