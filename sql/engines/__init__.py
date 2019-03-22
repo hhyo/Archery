@@ -10,7 +10,7 @@ class EngineBase:
         if workflow:
             self.workflow = workflow
             instance = self.workflow.instance
-            self.sql = workflow.sql_content
+            self.sql = workflow.sqlworkflowcontent.sql_content
         if instance:
             self.instance_name = instance.instance_name
             self.host = instance.host

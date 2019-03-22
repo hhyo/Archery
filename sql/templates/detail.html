@@ -11,7 +11,7 @@
         <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
     {% endif %}
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
-    <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
+    <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
     <table data-toggle="table" class="table table-striped table-hover">
         <thead>

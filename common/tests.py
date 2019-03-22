@@ -7,9 +7,9 @@ from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
-from sql.models import Instance, SqlWorkflow, QueryLog
+from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog
 from common.utils.chart_dao import ChartDao
-from common.auth import ArcherAuth
+
 User = get_user_model()
 
 
@@ -20,35 +20,38 @@ class ConfigOpsTests(TestCase):
     def test_replace_configs(self):
         archer_config = SysConfig()
         new_config = json.dumps(
-            [{'key': 'numconfig','value': 1},
-            {'key':'strconfig','value':'strconfig'},
-            {'key':'boolconfig','value':'false'}])
+            [{'key': 'numconfig', 'value': 1},
+             {'key': 'strconfig', 'value': 'strconfig'},
+             {'key': 'boolconfig', 'value': 'false'}])
         archer_config.replace(new_config)
         archer_config.get_all_config()
         expected_config = {
             'numconfig': '1',
             'strconfig': 'strconfig',
             'boolconfig': False
-            }
-        self.assertEqual(archer_config.sys_config,expected_config)
+        }
+        self.assertEqual(archer_config.sys_config, expected_config)
 
     def test_get_bool_transform(self):
-        bool_config = json.dumps([{'key':'boolconfig2','value':'false'}])
+        bool_config = json.dumps([{'key': 'boolconfig2', 'value': 'false'}])
         archer_config = SysConfig()
         archer_config.replace(bool_config)
         self.assertEqual(archer_config.sys_config['boolconfig2'], False)
+
     def test_set_bool_transform(self):
         archer_config = SysConfig()
         archer_config.set('boolconfig3', False)
         self.assertEqual(archer_config.sys_config['boolconfig3'], False)
+
     def test_get_other_data(self):
-        new_config = json.dumps([{'key':'other_config','value':'testvalue'}])
+        new_config = json.dumps([{'key': 'other_config', 'value': 'testvalue'}])
         archer_config = SysConfig()
         archer_config.replace(new_config)
         self.assertEqual(archer_config.sys_config['other_config'], 'testvalue')
+
     def test_set_other_data(self):
         archer_config = SysConfig()
-        archer_config.set('other_config','testvalue3')
+        archer_config.set('other_config', 'testvalue3')
         self.assertEqual(archer_config.sys_config['other_config'], 'testvalue3')
 
 
@@ -100,7 +103,7 @@ class SendMessageTest(TestCase):
     @patch.object(smtplib.SMTP, 'login')
     @patch.object(smtplib.SMTP, 'sendmail')
     @patch.object(smtplib.SMTP, 'quit')
-    def testSendMail(self,_quit, sendmail, login, _):
+    def testSendMail(self, _quit, sendmail, login, _):
         """有密码测试"""
         some_sub = 'test_subject'
         some_body = 'mail_body'
@@ -192,6 +195,7 @@ class GlobalInfoTest(TestCase):
 
     def tearDown(self):
         self.u1.delete()
+
 
 class CheckTest(TestCase):
     """检查功能测试"""
@@ -293,7 +297,7 @@ class CheckTest(TestCase):
         mailsender.assert_called_once_with(server=smtp_server, port=int(smtp_port), user=smtp_user,
                                            password=smtp_pass, ssl=False)
         send_email.called_once_with('Archery 邮件发送测试', 'Archery 邮件发送测试...',
-                                                           [self.superuser1.email])
+                                    [self.superuser1.email])
         self.assertEqual(r_json['status'], 0)
         self.assertEqual(r_json['msg'], 'ok')
 
@@ -328,9 +332,10 @@ class CheckTest(TestCase):
 
 class ChartTest(TestCase):
     """报表测试"""
+
     @classmethod
     def setUpClass(cls):
-        cls.u1 = User(username='some_user',display='用户1')
+        cls.u1 = User(username='some_user', display='用户1')
         cls.u1.save()
         cls.u2 = User(username='some_other_user', display='用户2')
         cls.u2.save()
@@ -338,7 +343,7 @@ class ChartTest(TestCase):
         cls.superuser1.save()
         cls.now = datetime.datetime.now()
         cls.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
-                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+                              host='testhost', port=3306, user='mysql_user', password='mysql_password')
         cls.slave1.save()
         # 批量创建数据 ddl ,u1 ,g1, yesterday 组, 2 个数据
         ddl_workflow = [SqlWorkflow(
@@ -353,7 +358,6 @@ class ChartTest(TestCase):
             is_backup='是',
             instance=cls.slave1,
             db_name='some_db',
-            sql_content='some_sql',
             syntax_type=1
         ) for i in range(2)]
         # 批量创建数据 dml ,u1 ,g2, the day before yesterday 组, 3 个数据
@@ -369,17 +373,28 @@ class ChartTest(TestCase):
             is_backup='是',
             instance=cls.slave1,
             db_name='some_db',
-            sql_content='some_sql',
             syntax_type=2
         ) for i in range(3)]
         SqlWorkflow.objects.bulk_create(ddl_workflow + dml_workflow)
-#query_logs = [QueryLog(
-#    instance_name = 'some_instance',
-#
-#) for i in range(20)]
+        # 保存内容数据
+        ddl_workflow_content = [SqlWorkflowContent(
+            workflow=SqlWorkflow.objects.get(workflow_name='ddl %s' % i),
+            sql_content='some_sql',
+        ) for i in range(2)]
+        dml_workflow_content = [SqlWorkflowContent(
+            workflow=SqlWorkflow.objects.get(workflow_name='Test %s' % i),
+            sql_content='some_sql',
+        ) for i in range(3)]
+        SqlWorkflowContent.objects.bulk_create(ddl_workflow_content + dml_workflow_content)
+
+    # query_logs = [QueryLog(
+    #    instance_name = 'some_instance',
+    #
+    # ) for i in range(20)]
 
     @classmethod
     def tearDownClass(cls):
+        SqlWorkflowContent.objects.all().delete()
         SqlWorkflow.objects.all().delete()
         QueryLog.objects.all().delete()
         cls.u1.delete()
@@ -399,7 +414,7 @@ class ChartTest(TestCase):
     def testSyntaxList(self):
         """工单以语法类型分组"""
         dao = ChartDao()
-        expected_rows = (('DDL',2), ('DML',3))
+        expected_rows = (('DDL', 2), ('DML', 3))
         result = dao.syntax_type()
         self.assertEqual(result['rows'], expected_rows)
 
@@ -407,7 +422,7 @@ class ChartTest(TestCase):
         """TODO 按日分组工单数量统计测试"""
         dao = ChartDao()
         result = dao.workflow_by_date(30)
-        self.assertEqual(len(result['rows'][0]),2)
+        self.assertEqual(len(result['rows'][0]), 2)
 
     def testWorkflowByGroup(self):
         """按组统计测试"""
@@ -420,7 +435,7 @@ class ChartTest(TestCase):
         """按用户统计测试"""
         dao = ChartDao()
         result = dao.workflow_by_user(30)
-        expected_rows = ((self.u2.display, 3),(self.u1.display, 2))
+        expected_rows = ((self.u2.display, 3), (self.u1.display, 2))
         self.assertEqual(result['rows'], expected_rows)
 
     def testDashboard(self):

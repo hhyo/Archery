@@ -75,7 +75,7 @@ class InceptionEngine(EngineBase):
         获取回滚语句，并且按照执行顺序倒序展示
         """
         workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-        list_execute_result = json.loads(workflow_detail.execute_result)
+        list_execute_result = json.loads(workflow_detail.sqlworkflowcontent.execute_result)
         list_execute_result.reverse()
         list_backup_sql = []
         # 创建连接
