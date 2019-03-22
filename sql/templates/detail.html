@@ -457,7 +457,7 @@
                 },
                 sortable: false
             }, {
-                title: '审核状态',
+                title: '审核/执行状态',
                 field: 'errlevel',
                 formatter: function (value, row, index) {
                     if (value === 0) {
@@ -470,7 +470,7 @@
                 },
                 sortable: true
             }, {
-                title: '审核结果',
+                title: '审核/执行信息',
                 field: 'errormessage',
                 formatter: function (value, row, index) {
                     return value.replace(/\n/g, '<br>');
@@ -485,7 +485,7 @@
                 field: 'execute_time',
                 sortable: true
             }, {
-                title: '执行状态',
+                title: '当前阶段',
                 field: 'stagestatus',
                 sortable: true
             }],
