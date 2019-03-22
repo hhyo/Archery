@@ -309,24 +309,21 @@ def passed(request):
 # 仅执行SQL
 @permission_required('sql.sql_execute', raise_exception=True)
 def execute(request):
-    workflow_id = request.POST['workflow_id']
-    if workflow_id == '' or workflow_id is None:
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-
-    workflow_id = int(workflow_id)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
 
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
-    workflow_detail.status = 'workflow_executing'
-    workflow_detail.reviewok_time = timezone.now()
-    workflow_detail.save()
-    async_task('sql.utils.execute_sql.execute', workflow_detail.id, hook='sql.utils.execute_sql.execute_callback',
-               timeout=-1)
+    SqlWorkflow(id=workflow_id,
+                status='workflow_executing',
+                reviewok_time=timezone.now()
+                ).save(update_fields=['status', 'reviewok_time'])
+
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
@@ -337,6 +334,10 @@ def execute(request):
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
+    # 加入执行队列
+    async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
+               timeout=-1)
+
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
