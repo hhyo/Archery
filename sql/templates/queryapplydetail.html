@@ -29,6 +29,9 @@
                 权限级别
             </th>
             <th>
+                数据库
+            </th>
+            <th>
                 结果集
             </th>
             <th>
@@ -60,11 +63,10 @@
                 {{ workflow_detail.instance.instance_name }}
             </td>
             <td>
-                {% if workflow_detail.priv_type == 1 %}
-                    DATABASE
-                {% elif workflow_detail.priv_type == 2 %}
-                    TABLE
-                {% endif %}
+                {{ workflow_detail.get_priv_type_display }}
+            </td>
+            <td>
+                {{ workflow_detail.db_list| slice:"30" }}
             </td>
             <td>
                 {{ workflow_detail.limit_num }}
@@ -154,8 +156,7 @@
                     $(this).dequeue();
                 });
                 formCancel.submit();
-            }
-            else {
+            } else {
                 alert('请填写审核备注')
             }
         })
