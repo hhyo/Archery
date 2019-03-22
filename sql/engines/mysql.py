@@ -259,6 +259,7 @@ ORDER BY ORDINAL_POSITION;""".format(
             from django.db import connection
             if connection.connection is not None:
                 connection.close()
+            workflow_detail.sqlworkflowcontent.save()
             workflow_detail.save()
 
         # 二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
