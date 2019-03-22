@@ -77,7 +77,7 @@ def sqlworkflow_list(request):
     count = workflow_list.count()
     workflow = workflow_list[offset:limit].values("id", "workflow_name", "engineer_display", "status",
                                                   "is_backup", "create_time", "instance__instance_name", "db_name",
-                                                  "group_name", "sql_syntax")
+                                                  "group_name", "syntax_type")
     # QuerySet 序列化
     rows = [row for row in workflow]
     result = {"total": count, "rows": rows}
@@ -210,12 +210,12 @@ def autoreview(request):
             break
 
     # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
-    sql_syntax = 2
+    syntax_type = 2
     for stmt in sqlparse.split(sql_content):
         statement = sqlparse.parse(stmt)[0]
         syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
         if syntax_type == 'Token.Keyword.DDL':
-            sql_syntax = 1
+            syntax_type = 1
             break
 
     # 调用工作流生成工单
@@ -244,7 +244,7 @@ def autoreview(request):
             sql_workflow.execute_result = ''
             sql_workflow.is_manual = is_manual
             sql_workflow.audit_remark = ''
-            sql_workflow.sql_syntax = sql_syntax
+            sql_workflow.syntax_type = syntax_type
             sql_workflow.save()
             workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流

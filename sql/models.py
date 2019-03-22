@@ -5,8 +5,10 @@ from common.utils.aes_decryptor import Prpcrypt
 from django.utils.translation import gettext as _
 
 
-# 用户信息扩展
 class Users(AbstractUser):
+    """
+    用户信息扩展
+    """
     display = models.CharField('显示的中文名', max_length=50, default='', blank=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
@@ -23,8 +25,10 @@ class Users(AbstractUser):
         verbose_name_plural = u'用户管理'
 
 
-# 资源组
 class ResourceGroup(models.Model):
+    """
+    资源组
+    """
     group_id = models.AutoField('组ID', primary_key=True)
     group_name = models.CharField('组名称', max_length=100, unique=True)
     group_parent_id = models.BigIntegerField('父级id', default=0)
@@ -45,8 +49,10 @@ class ResourceGroup(models.Model):
         verbose_name_plural = u'资源组管理'
 
 
-# 资源组关系表（用户与组、实例与组等）
 class ResourceGroupRelations(models.Model):
+    """
+    资源组关系表（用户与组、实例与组等）
+    """
     object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
     object_id = models.IntegerField('关联对象主键ID', )
     object_name = models.CharField('关联对象描述，用户名、实例名', max_length=100)
@@ -63,8 +69,10 @@ class ResourceGroupRelations(models.Model):
         verbose_name_plural = u'资源组对象管理'
 
 
-# 各个线上实例配置
 class Instance(models.Model):
+    """
+    各个线上实例配置
+    """
     # TODO （低优先级）instance_name 可改为name
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
@@ -109,28 +117,25 @@ SQL_WORKFLOW_CHOICES = (
 
 
 class SqlWorkflow(models.Model):
-    """存放各个SQL上线工单的详细内容
-    可定期归档或清理历史数据，也可通过``alter table workflow row_format=compressed; ``来进行压缩
+    """
+    存放各个SQL上线工单的基础内容
     """
     workflow_name = models.CharField('工单内容', max_length=50)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    db_name = models.CharField('数据库', max_length=64)
+    syntax_type = models.IntegerField('SQL语法 1、DDL，2、DML', choices=((1, 'DDL'), (2, 'DML')))
+    is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
     engineer = models.CharField('发起人', max_length=30)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
-    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
-    create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
-    is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
-    review_content = models.TextField('自动审核内容的JSON格式')
-    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField('数据库', max_length=60)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
+    audit_remark = models.CharField('最后一次审核备注', max_length=200, null=True, blank=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
-    sql_content = models.TextField('具体sql内容')
-    execute_result = models.TextField('执行结果的JSON格式', blank=True)
-    is_manual = models.IntegerField('是否跳过inception执行', choices=((0, '否'), (1, '是')), default=0)
-    audit_remark = models.CharField('审核备注', max_length=200, null=True, blank=True)
-    sql_syntax = models.IntegerField('SQL语法 1、DDL，2、DML', choices=((1, 'DDL'), (2, 'DML')))
+    finish_time = models.DateTimeField('结束时间', null=True, blank=True)
+    is_manual = models.IntegerField('是否原生执行', choices=((0, '否'), (1, '是')), default=0)
 
     def __str__(self):
         return self.workflow_name
@@ -138,15 +143,37 @@ class SqlWorkflow(models.Model):
     class Meta:
         managed = True
         db_table = 'sql_workflow'
-        verbose_name = u'SQL工单管理'
-        verbose_name_plural = u'SQL工单管理'
+        verbose_name = u'SQL工单'
+        verbose_name_plural = u'SQL工单'
+
+
+class SqlWorkflowContent(models.Model):
+    """
+    存放各个SQL上线工单的SQL|审核|执行内容
+    可定期归档或清理历史数据，也可通过``alter table sql_workflow_content row_format=compressed; ``来进行压缩
+    """
+    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
+    sql_content = models.TextField('具体sql内容')
+    review_content = models.TextField('自动审核内容的JSON格式')
+    execute_result = models.TextField('执行结果的JSON格式', blank=True)
+
+    def __str__(self):
+        return self.workflow.workflow_name
+
+    class Meta:
+        managed = True
+        db_table = 'sql_workflow_content'
+        verbose_name = u'SQL工单内容'
+        verbose_name_plural = u'SQL工单内容'
 
 
 workflow_type_choices = (('sql_query', _('sql_query')), ('sql_review', _('sql_review')))
 
 
 class WorkflowAudit(models.Model):
-    """工作流审核状态表"""
+    """
+    工作流审核状态表
+    """
     audit_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
@@ -174,8 +201,10 @@ class WorkflowAudit(models.Model):
         verbose_name_plural = u'工作流审批列表'
 
 
-# 审批明细表
 class WorkflowAuditDetail(models.Model):
+    """
+    审批明细表
+    """
     audit_detail_id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField('审核主表id')
     audit_user = models.CharField('审核人', max_length=30)
@@ -194,8 +223,10 @@ class WorkflowAuditDetail(models.Model):
         verbose_name_plural = u'工作流审批明细'
 
 
-# 审批配置表
 class WorkflowAuditSetting(models.Model):
+    """
+    审批配置表
+    """
     audit_setting_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
@@ -215,8 +246,10 @@ class WorkflowAuditSetting(models.Model):
         verbose_name_plural = u'审批流程配置'
 
 
-# 工作流日志表
 class WorkflowLog(models.Model):
+    """
+    工作流日志表
+    """
     id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField('工单审批id', db_index=True)
     operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
@@ -237,7 +270,9 @@ class WorkflowLog(models.Model):
 
 
 class QueryPrivilegesApply(models.Model):
-    """查询权限申请记录表"""
+    """
+    查询权限申请记录表
+    """
     apply_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
@@ -267,13 +302,15 @@ class QueryPrivilegesApply(models.Model):
 
 
 class QueryPrivileges(models.Model):
-    """用户权限关系表"""
+    """
+    用户权限关系表
+    """
     privilege_id = models.AutoField(primary_key=True)
     user_name = models.CharField('用户名', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField('数据库', max_length=200)
-    table_name = models.CharField('表', max_length=200)
+    db_name = models.CharField('数据库', max_length=64)
+    table_name = models.CharField('表', max_length=64)
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
@@ -291,11 +328,13 @@ class QueryPrivileges(models.Model):
         verbose_name_plural = u'查询权限记录'
 
 
-# 记录在线查询sql的日志
 class QueryLog(models.Model):
+    """
+    记录在线查询sql的日志
+    """
     # TODO 改为实例外键
     instance_name = models.CharField('实例名称', max_length=50)
-    db_name = models.CharField('数据库名称', max_length=30)
+    db_name = models.CharField('数据库名称', max_length=64)
     sqllog = models.TextField('执行的sql查询')
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
@@ -315,8 +354,10 @@ class QueryLog(models.Model):
         verbose_name_plural = u'查询日志'
 
 
-# 脱敏字段配置
 class DataMaskingColumns(models.Model):
+    """
+    脱敏字段配置
+    """
     column_id = models.AutoField('字段id', primary_key=True)
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
@@ -336,8 +377,10 @@ class DataMaskingColumns(models.Model):
         verbose_name_plural = u'脱敏字段配置'
 
 
-# 脱敏规则配置
 class DataMaskingRules(models.Model):
+    """
+    脱敏规则配置
+    """
     rule_type = models.IntegerField('规则类型',
                                     choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')),
                                     unique=True)
@@ -353,8 +396,10 @@ class DataMaskingRules(models.Model):
         verbose_name_plural = u'脱敏规则配置'
 
 
-# 配置信息表
 class Config(models.Model):
+    """
+    配置信息表
+    """
     item = models.CharField('配置项', max_length=50, primary_key=True)
     value = models.CharField('配置项值', max_length=200)
     description = models.CharField('描述', max_length=200, default='', blank=True)
@@ -366,8 +411,10 @@ class Config(models.Model):
         verbose_name_plural = u'系统配置'
 
 
-# 记录阿里云的认证信息
 class AliyunAccessKey(models.Model):
+    """
+    记录阿里云的认证信息
+    """
     ak = models.CharField(max_length=50)
     secret = models.CharField(max_length=100)
     is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
@@ -398,8 +445,10 @@ class AliyunAccessKey(models.Model):
         super(AliyunAccessKey, self).save(*args, **kwargs)
 
 
-# 阿里云rds配置信息`
 class AliyunRdsConfig(models.Model):
+    """
+    阿里云rds配置信息
+    """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
     is_enable = models.IntegerField('是否启用', choices=((1, '启用'), (2, '禁用')))
@@ -414,8 +463,11 @@ class AliyunRdsConfig(models.Model):
         verbose_name_plural = u'阿里云rds配置'
 
 
-# 自定义权限定义
 class Permission(models.Model):
+    """
+    自定义业务权限
+    """
+
     class Meta:
         managed = True
         permissions = (
@@ -456,8 +508,10 @@ class Permission(models.Model):
         )
 
 
-# SlowQuery
 class SlowQuery(models.Model):
+    """
+    SlowQuery
+    """
     checksum = models.CharField(max_length=32, primary_key=True)
     fingerprint = models.TextField()
     sample = models.TextField()
@@ -474,8 +528,10 @@ class SlowQuery(models.Model):
         verbose_name_plural = u'慢日志统计'
 
 
-# SlowQueryHistory
 class SlowQueryHistory(models.Model):
+    """
+    SlowQueryHistory
+    """
     hostname_max = models.CharField(max_length=64, null=False)
     client_max = models.CharField(max_length=64, null=True)
     user_max = models.CharField(max_length=64, null=False)

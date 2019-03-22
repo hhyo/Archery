@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from .models import Users, Instance, SqlWorkflow, QueryLog, DataMaskingColumns, DataMaskingRules, \
+from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
     WorkflowAudit, WorkflowLog
 
@@ -11,24 +11,16 @@ from .models import Users, Instance, SqlWorkflow, QueryLog, DataMaskingColumns, 
 # 用户管理
 @admin.register(Users)
 class UsersAdmin(UserAdmin):
-    def __init__(self, *args, **kwargs):
-        super(UserAdmin, self).__init__(*args, **kwargs)
-        self.list_display = ('id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
-        self.search_fields = ('id', 'username', 'display', 'email')
-
-    def changelist_view(self, request, extra_context=None):
-        # 此字段定义UserChangeForm表单中的具体显示内容，并可以分类显示
-        self.fieldsets = (
-            (('认证信息'), {'fields': ('username', 'password')}),
-            (('个人信息'), {'fields': ('display', 'email')}),
-            (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
-            (('其他信息'), {'fields': ('last_login', 'date_joined')}),
-        )
-        # 此字段定义UserCreationForm表单中的具体显示内容
-        self.add_fieldsets = (
-            (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
-        )
-        return super(UserAdmin, self).changelist_view(request, extra_context)
+    list_display = ('id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
+    search_fields = ('id', 'username', 'display', 'email')
+    list_display_links = ('id', 'username',)
+    # 自定义显示内容
+    fieldsets = (
+        (('认证信息'), {'fields': ('username', 'password')}),
+        (('个人信息'), {'fields': ('display', 'email')}),
+        (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+        (('其他信息'), {'fields': ('last_login', 'date_joined')}),
+    )
 
 
 # 资源组管理
@@ -44,21 +36,34 @@ class ResourceGroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
+# 阿里云实例配置
+class AliRdsConfigInline(admin.TabularInline):
+    model = AliyunRdsConfig
+
+
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type',)
+    inlines = [AliRdsConfigInline]
 
 
-# SQL工单管理
+# SQL工单内容
+class SqlWorkflowContentInline(admin.TabularInline):
+    model = SqlWorkflowContent
+
+
+# SQL工单
 @admin.register(SqlWorkflow)
 class SqlWorkflowAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'workflow_name', 'group_name', 'instance', 'engineer_display', 'create_time', 'status', 'is_backup')
-    search_fields = ['id', 'workflow_name', 'engineer_display', 'sql_content']
-    list_filter = ('group_name', 'instance__instance_name', 'status', 'sql_syntax',)
+    search_fields = ['id', 'workflow_name', 'engineer_display', 'sqlworkflowcontent__sql_content']
+    list_filter = ('group_name', 'instance__instance_name', 'status', 'syntax_type',)
+    list_display_links = ('id', 'workflow_name',)
+    inlines = [SqlWorkflowContentInline]
 
 
 # SQL查询日志

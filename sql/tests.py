@@ -381,7 +381,7 @@ class WorkflowViewTest(TestCase):
             instance=self.master1,
             db_name='some_db',
             sql_content='some_sql',
-            sql_syntax=1,
+            syntax_type=1,
             execute_result=json.dumps([{
                 'id': 1,
                 'sql': 'some_content'
@@ -401,7 +401,7 @@ class WorkflowViewTest(TestCase):
             instance=self.master1,
             db_name='some_db',
             sql_content='some_sql',
-            sql_syntax=1,
+            syntax_type=1,
             execute_result=json.dumps([{
                 'id': 1,
                 'sql': 'some_content'
@@ -704,7 +704,7 @@ class AsyncTest(TestCase):
             instance=self.master1,
             db_name='some_db',
             sql_content='some_sql',
-            sql_syntax=1,
+            syntax_type=1,
             execute_result=''
         )
         self.wf1.save()
