@@ -45,16 +45,21 @@ RUN cd /opt \
 RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/0.11.0/soar.linux-amd64 -O soar \
     && chmod a+x soar
+#binlog2sql
+RUN cd /opt \
+    && git clone https://github.com/danfengcao/binlog2sql.git \
+    && mv binlog2sql/binlog2sql/ tmp_binlog2sql \
+    && rm -rf binlog2sql
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel unixODBC-devel gettext nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.4.3 \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.4.5 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
-    && mv /opt/soar /opt/archery/src/plugins/
-
+    && mv /opt/soar /opt/archery/src/plugins/ \
+    && mv /opt/tmp_binlog2sql /opt/archery/src/plugins/binlog2sql
 
 
 ENV LANG en_US.UTF-8
