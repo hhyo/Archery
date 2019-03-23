@@ -8,6 +8,7 @@
 import xml
 import mybatis_mapper2sql
 import sqlparse
+from sql.utils.extract_tables import extract_tables as extract_tables_by_sqlparse
 
 __author__ = 'hhyo'
 
@@ -25,6 +26,15 @@ def get_syntax_type(sql):
     elif syntax_type == 'Token.Keyword.DML':
         syntax_type = 'DML'
     return syntax_type
+
+
+def extract_tables(sql):
+    """
+    获取sql语句中的库、表名
+    :param sql:
+    :return:
+    """
+    return extract_tables_by_sqlparse(sql)
 
 
 def generate_sql(text):

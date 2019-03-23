@@ -3,7 +3,6 @@ mysqlclient==1.3.13
 requests==2.21.0
 simplejson==3.16.0
 pycryptodome==3.7.3
-mycli==1.19.0
 sqlparse==0.2.4
 mybatis_mapper2sql==0.1.4
 django-auth-ldap==1.6.1
