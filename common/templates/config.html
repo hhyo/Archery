@@ -287,22 +287,18 @@
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
                         <hr/>
-                        <div class="form-group">
-                            <label for="archery_base_url"
-                                   class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
-                            <div class="col-sm-8">
-                                <div class="switch switch-small">
-                                    <label>
-                                        <input type="text" class="form-control"
-                                               id="archery_base_url"
-                                               key="archery_base_url"
-                                               value="{{ config.archery_base_url }}"
-                                               placeholder="http://archery.com">系统首页地址, 用于钉钉和邮件发送链接使用
-                                    </label>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="archery_base_url"
+                                       class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="archery_base_url"
+                                           key="archery_base_url"
+                                           value="{{ config.archery_base_url }}"
+                                           placeholder="系统首页地址, 用于钉钉和邮件发送链接使用，http://archery.com">
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-horizontal">
                             <div class="form-group">
                                 <label for="mail"
                                        class="col-sm-4 control-label">MAIL</label>
