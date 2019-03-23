@@ -5,7 +5,7 @@ from django.views.i18n import JavaScriptCatalog
 
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog2sql
+from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog
 from sql.utils import jobs
 
 urlpatterns = [
@@ -89,8 +89,8 @@ urlpatterns = [
     path('query/modifyprivileges/', query.modifyqueryprivileges),
     path('query/privaudit/', query.queryprivaudit),
 
-    path('binlog2sql/sql/', binlog2sql.binlog2sql),
-    path('binlog2sql/binlog_list/', binlog2sql.binlog_list),
+    path('binlog2sql/sql/', binlog.binlog2sql),
+    path('binlog2sql/binlog_list/', binlog.binlog_list),
 
     path('slowquery/review/', slowlog.slowquery_review),
     path('slowquery/review_history/', slowlog.slowquery_review_history),

@@ -122,7 +122,8 @@ def schemasync(request):
     cmd_args = schema_sync.generate_args2cmd(args, shell=True)
     # 执行命令
     try:
-        diff_stdout = schema_sync.execute_cmd(cmd_args, shell=True)
+        stdout, stderr = schema_sync.execute_cmd(cmd_args, shell=True).communicate()
+        diff_stdout = f'{stdout}{stderr}'
     except RuntimeError as e:
         diff_stdout = str(e)
 

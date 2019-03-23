@@ -41,7 +41,7 @@ class SchemaSync(Plugin):
         else:
             cmd_args = [self.path]
             for name, value in args.items():
-                if name in k_options:
+                if name in k_options and value:
                     cmd_args.append(f'--{name}')
                 elif name in kv_options:
                     cmd_args.append(f'--{name}')

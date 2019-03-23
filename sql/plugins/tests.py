@@ -10,6 +10,7 @@ from django.test import Client, TestCase
 from unittest.mock import patch, ANY
 from django.contrib.auth import get_user_model
 
+from sql.plugins.binglog2sql import Binlog2Sql
 from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
@@ -101,6 +102,10 @@ class TestPlugin(TestCase):
         self.assertDictEqual(args_check_result, {'status': 1, 'msg': 'query参数值不能为空', 'data': {}})
 
     def test_soar_generate_args2cmd(self):
+        """
+        测试SOAR参数转换
+        :return:
+        """
         args = {"online-dsn": '',
                 "test-dsn": '',
                 "allow-online-as-test": "false",
@@ -116,6 +121,10 @@ class TestPlugin(TestCase):
         self.assertIsInstance(cmd_args, str)
 
     def test_sql_advisor_generate_args2cmd(self):
+        """
+        测试sql_advisor参数转换
+        :return:
+        """
         args = {"h": 'mysql',
                 "P": 3306,
                 "u": 'root',
@@ -133,6 +142,10 @@ class TestPlugin(TestCase):
         self.assertIsInstance(cmd_args, str)
 
     def test_schema_sync_generate_args2cmd(self):
+        """
+        测试schema_sync参数转换
+        :return:
+        """
         args = {
             "sync-auto-inc": True,
             "sync-comments": True,
@@ -157,6 +170,34 @@ class TestPlugin(TestCase):
         cmd_args = schema_sync.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
+    def test_binlog2ql_generate_args2cmd(self):
+        """
+        测试binlog2sql参数转换
+        :return:
+        """
+        args = {'conn_options': "-hmysql -uroot -p'123456' -P3306 ",
+                'stop_never': False,
+                'no-primary-key': False,
+                'flashback': True,
+                'back-interval': 0,
+                'start-file': 'mysql-bin.000043',
+                'start-position': 111,
+                'stop-file': '',
+                'stop-position': '',
+                'start-datetime': '',
+                'stop-datetime': '',
+                'databases': 'account_center',
+                'tables': 'ac_apps',
+                'only-dml': True,
+                'sql-type': 'UPDATE'}
+        self.sys_config.set('binlog2sql', '/opt/archery/src/plugins/binlog2sql/binlog2sql.py')
+        self.sys_config.get_all_config()
+        binlog2sql = Binlog2Sql()
+        cmd_args = binlog2sql.generate_args2cmd(args, False)
+        self.assertIsInstance(cmd_args, list)
+        cmd_args = binlog2sql.generate_args2cmd(args, True)
+        self.assertIsInstance(cmd_args, str)
+
     @patch('sql.plugins.plugin.subprocess')
     def test_execute_cmd(self, mock_subprocess):
         args = {"online-dsn": '',
@@ -171,7 +212,7 @@ class TestPlugin(TestCase):
         cmd_args = soar.generate_args2cmd(args, True)
 
         mock_subprocess.Popen.return_value.communicate.return_value = ('some_stdout', 'some_stderr')
-        result = soar.execute_cmd(cmd_args, True)
+        stdout, stderr = soar.execute_cmd(cmd_args, True).communicate()
         mock_subprocess.Popen.assert_called_once_with(
             cmd_args,
             shell=True,
@@ -179,7 +220,7 @@ class TestPlugin(TestCase):
             stderr=ANY,
             universal_newlines=ANY
         )
-        self.assertIn('some_stdout', result)
+        self.assertIn('some_stdout', stdout)
         # 异常
 
         mock_subprocess.Popen.side_effect = Exception('Boom! some exception!')

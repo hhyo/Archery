@@ -70,7 +70,8 @@ def analyze(request):
         for row in rows:
             args['query'] = row['sql'].replace('"', '\\"').replace('`', '').replace('\n', ' ')
             cmd_args = soar.generate_args2cmd(args=args, shell=True)
-            row['report'] = soar.execute_cmd(cmd_args, shell=True)
+            stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
+            row['report'] = stdout if stdout else stderr
         result = {"total": len(rows), "rows": rows}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
