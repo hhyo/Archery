@@ -3,7 +3,7 @@
 # <a href="http://139.199.0.191/" target="_blank" rel="noopener noreferrer">Archery</a> 
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dba-archery/community)
-[![Build Status](https://travis-ci.org/hhyo/archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
+[![Build Status](https://travis-ci.org/hhyo/Archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
 [![Release](https://img.shields.io/github/release/hhyo/archery.svg)](https://github.com/hhyo/archery/releases/)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
