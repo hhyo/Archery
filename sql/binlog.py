@@ -4,7 +4,6 @@ import os
 import time
 import traceback
 
-import pymysql
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
@@ -15,14 +14,19 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 
 from sql.plugins.binglog2sql import Binlog2Sql
+from sql.notify import notify_for_binlog2sql
 from .models import Instance
 
 logger = logging.getLogger('default')
 
 
-# 获取binlog列表
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog_list(request):
+    """
+    获取binlog列表
+    :param request:
+    :return:
+    """
     instance_name = request.POST.get('instance_name')
     try:
         instance = Instance.objects.get(instance_name=instance_name)
@@ -46,9 +50,13 @@ def binlog_list(request):
                         content_type='application/json')
 
 
-# 通过binlog获取DML
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):
+    """
+    通过解析binlog获取SQL
+    :param request:
+    :return:
+    """
     instance_name = request.POST.get('instance_name')
     save_sql = True if request.POST.get('save_sql') == 'true' else False
     instance = Instance.objects.get(instance_name=instance_name)
@@ -102,7 +110,7 @@ def binlog2sql(request):
     # 执行命令
     try:
         p = binlog2sql.execute_cmd(cmd_args, shell=True)
-        # 读取前500行
+        # 读取前num行后结束
         rows = []
         n = 1
         for line in iter(p.stdout.readline, ''):
@@ -126,22 +134,25 @@ def binlog2sql(request):
         result['status'] = 1
         result['msg'] = str(e)
 
-    # 保存到文件
+    # 异步保存到文件，去除conn_options避免展示密码信息
     if save_sql:
-        async_task(binlog2sql_file, args=args)
+        args['conn_options'] = ''
+        async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql)
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
 
-def binlog2sql_file(args):
+def binlog2sql_file(args, user):
     """
-    :param cmd_args: 生成好的命令
+    :param args: 参数
+    :param user: 操作用户对象，用户消息推送
     :return:
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
+    args['conn_options'] = fr"-h{instance.host} -u{instance.user} -p'{instance.raw_password}' -P{instance.port} "
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
     if args.get('flashback'):
@@ -156,3 +167,4 @@ def binlog2sql_file(args):
         p = binlog2sql.execute_cmd(cmd_args, shell=True)
         for c in iter(lambda: p.stdout.read(1), ''):
             f.write(c)
+    return user, filename

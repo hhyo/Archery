@@ -56,7 +56,7 @@
                     <div class="form-group">
                         <h5 class="control-label text-bold">解析范围控制：</h5>
                         <div class="form-group">
-                            <input type="number" class="form-control" id="num" placeholder="解析行数，默认500"
+                            <input type="number" class="form-control" id="num" placeholder="页面解析行数，默认500"
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
@@ -127,11 +127,8 @@
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>前端展示数量由解析范围控制控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
-                            保存到项目downloads目录</b>
-                        <br>
-                        <br>
-                        <b>前往<a href="/admin/django_q/success/">django_q</a>查看执行结果</b>
+                        <b>前端展示数量由解析范围参数控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
+                            保存到项目downloads目录，在开启邮件通知后，执行结束后会通知给操作人</b>
                     </h5>
                     <br>
                     <table id="tb-binlog2sql" data-toggle="table" class="table table-condensed"></table>
@@ -250,7 +247,6 @@
             if ($("#instance_name").val() && $("#start_file").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
-                alert('请耐心等待结果!');
                 $.ajax({
                     type: "post",
                     url: "/binlog2sql/sql/",

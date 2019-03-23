@@ -140,7 +140,7 @@ def notify_for_audit(audit_id, msg_type=0, **kwargs):
 
 def notify_for_execute(workflow):
     """
-    工单执行结束的通知
+    工单执行结束的通知，仅支持邮件
     :param workflow:
     :return:
     """
@@ -186,7 +186,7 @@ def notify_for_execute(workflow):
         # 判断上线语句是否存在DDL，存在则通知相关人员
         if workflow.syntax_type == 1:
             # 消息内容通知
-            msg_title = '[archery]有新的DDL语句执行完成#{}'.format(audit_id)
+            msg_title = '[Archery]有新的DDL语句执行完成#{}'.format(audit_id)
             msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
                 Users.objects.get(username=workflow.engineer).display,
                 workflow.group_name,
@@ -203,3 +203,23 @@ def notify_for_execute(workflow):
             logger.info('发送DDL通知，消息audit_id={}'.format(audit_id))
             logger.info('消息标题:{}\n通知对象：{}\n消息内容：{}'.format(msg_title, msg_to, msg_content))
             msg_sender.send_email(msg_title, msg_content, msg_to)
+
+
+def notify_for_binlog2sql(task):
+    """
+    binlog2sql执行结束的通知，仅支持邮件
+    :param task:
+    :return:
+    """
+    # 判断是否开启消息通知，未开启直接返回
+    sys_config = SysConfig()
+    if not sys_config.get('mail') and not sys_config.get('ding'):
+        logger.info('未开启消息通知，可在系统设置中开启')
+        return None
+
+    # 发送邮件通知
+    if task.success:
+        msg_title = '[Archery]Binlog2SQL执行结束'
+        msg_content = f'解析的SQL文件为{task.result[1]}，请到指定目录查看'
+        msg_to = [task.result[0].email]
+        MsgSender().send_email(msg_title, msg_content, msg_to)
