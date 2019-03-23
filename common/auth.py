@@ -23,8 +23,7 @@ def init_user(user):
             group = Group.objects.get(name=default_auth_group)
             user.groups.add(group)
         except Exception:
-            logger.error(traceback.format_exc())
-            logger.error('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
+            logger.info('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
     # 添加到默认资源组
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
@@ -37,11 +36,10 @@ def init_user(user):
                 group_name=default_resource_group)
             new_relation.save()
         except Exception:
-            logger.error(traceback.format_exc())
-            logger.error('无name为{}的资源组，无法默认关联，请到系统设置进行配置'.format(default_resource_group))
+            logger.info('无name为{}的资源组，无法默认关联，请到系统设置进行配置'.format(default_resource_group))
 
 
-class ArcherAuth(object):
+class ArcheryAuth(object):
     def __init__(self, request):
         self.request = request
 
@@ -59,7 +57,6 @@ class ArcherAuth(object):
         username = self.request.POST.get('username')
         password = self.request.POST.get('password')
         # 验证时候在加锁时间内
-        now = datetime.datetime.now()
         try:
             user = Users.objects.get(username=username)
         except Users.DoesNotExist:
@@ -112,7 +109,7 @@ class ArcherAuth(object):
 # ajax接口，登录页面调用，用来验证用户名密码
 def authenticate_entry(request):
     """接收http请求，然后把请求中的用户名密码传给ArcherAuth去验证"""
-    new_auth = ArcherAuth(request)
+    new_auth = ArcheryAuth(request)
     result = new_auth.authenticate()
     if result['status'] == 0:
         result = {'status': 0, 'msg': 'ok', 'data': None}
