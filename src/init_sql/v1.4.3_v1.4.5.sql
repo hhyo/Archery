@@ -44,14 +44,19 @@ ALTER TABLE data_masking_columns DROP COLUMN instance_name;
 ALTER TABLE aliyun_rds_config DROP COLUMN instance_name;
 
 
--- 修改字段名称sql_syntax为syntax_type
-ALTER TABLE sql_workflow CHANGE sql_syntax  syntax_type tinyint(4) NOT NULL DEFAULT '0' COMMENT '工单类型 1、DDL，2、DML';
+-- 修改字段名称sql_syntax为syntax_type，删除audit_remark和reviewok_time
+ALTER TABLE sql_workflow 
+  CHANGE sql_syntax  syntax_type tinyint(4) NOT NULL DEFAULT '0' COMMENT '工单类型 1、DDL，2、DML',
+  DROP audit_remark,
+  DROP reviewok_time;
 
 -- 修改db_name/table_name长度为64
 ALTER TABLE sql_workflow MODIFY  db_name varchar(64) NOT NULL DEFAULT '' COMMENT '数据库' AFTER instance_id;
 ALTER TABLE query_privileges MODIFY  db_name varchar(64) NOT NULL DEFAULT '' COMMENT '数据库' AFTER instance_id;
 ALTER TABLE query_privileges MODIFY  table_name varchar(64) NOT NULL DEFAULT '' COMMENT '表' AFTER instance_id;
 ALTER TABLE query_log MODIFY db_name varchar(64) NOT NULL DEFAULT '' COMMENT '数据库' AFTER instance_name;
+
+
 
 -- 将SQL工单的大字段拆分到单独的内容表
 CREATE TABLE sql_workflow_content(

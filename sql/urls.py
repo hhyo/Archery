@@ -20,10 +20,10 @@ urlpatterns = [
     path('editsql/', views.submit_sql),
     path('submitotherinstance/', views.submit_sql),
     path('detail/<int:workflow_id>/', views.detail, name='detail'),
-    path('autoreview/', sql_workflow.autoreview),
+    path('autoreview/', sql_workflow.submit),
     path('passed/', sql_workflow.passed),
     path('execute/', sql_workflow.execute),
-    path('timingtask/', sql_workflow.timingtask),
+    path('timingtask/', sql_workflow.timing_task),
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),
     path('sqlanalyze/', views.sqlanalyze),
@@ -48,8 +48,8 @@ urlpatterns = [
     path('config/', views.config),
 
     path('authenticate/', auth.authenticate_entry),
-    path('sqlworkflow_list/', sql_workflow.sqlworkflow_list),
-    path('simplecheck/', sql_workflow.simplecheck),
+    path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', jobs.del_sqlcronjob),
 

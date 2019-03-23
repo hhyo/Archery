@@ -360,3 +360,8 @@ class Audit(object):
                     operator=operator,
                     operator_display=operator_display
                     ).save()
+
+    # 获取工单日志
+    @staticmethod
+    def logs(audit_id):
+        return WorkflowLog.objects.filter(audit_id=audit_id)

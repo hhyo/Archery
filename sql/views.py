@@ -73,6 +73,11 @@ def detail(request, workflow_id):
         is_can_timingtask = can_timingtask(request.user, workflow_id)
         # 是否可取消
         is_can_cancel = can_cancel(request.user, workflow_id)
+
+        # 获取审核日志
+        audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+        last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
     else:
         audit_auth_group = '系统自动驳回'
         current_audit_auth_group = '系统自动驳回'
@@ -80,6 +85,7 @@ def detail(request, workflow_id):
         is_can_execute = False
         is_can_timingtask = False
         is_can_cancel = False
+        last_operation_info = None
 
     # 获取定时执行任务信息
     if workflow_detail.status == 'workflow_timingtask':
@@ -99,7 +105,7 @@ def detail(request, workflow_id):
             review_result.rows += [ReviewResult(inception_result=r)]
         rows = review_result.json()
 
-    context = {'workflow_detail': workflow_detail, 'rows': rows,
+    context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
