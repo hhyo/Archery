@@ -50,17 +50,16 @@ class Plugin:
     @staticmethod
     def execute_cmd(cmd_args, shell):
         """
-        执行命令并且返回执行信息
+        执行命令并且返回process
         :return:
         """
         try:
             p = subprocess.Popen(cmd_args,
                                  shell=shell,
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT,
+                                 stderr=subprocess.PIPE,
                                  universal_newlines=True)
-            stdout, stderr = p.communicate()
-            return stdout
+            return p
         except Exception as e:
             logger.error("命令执行失败\n{}".format(traceback.format_exc()))
             raise RuntimeError('命令执行失败，失败原因:%s' % str(e))

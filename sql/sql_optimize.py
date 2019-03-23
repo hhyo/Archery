@@ -70,7 +70,8 @@ def optimize_sqladvisor(request):
     cmd_args = sqladvisor.generate_args2cmd(args, shell=True)
     # 执行命令
     try:
-        result['data'] = sqladvisor.execute_cmd(cmd_args, shell=True)
+        stdout, stderr = sqladvisor.execute_cmd(cmd_args, shell=True).communicate()
+        result['data'] = f'{stdout}{stderr}'
     except RuntimeError as e:
         result['status'] = 1
         result['msg'] = str(e)
@@ -129,7 +130,8 @@ def optimize_soar(request):
     cmd_args = soar.generate_args2cmd(args, shell=True)
     # 执行命令
     try:
-        result['data'] = soar.execute_cmd(cmd_args, shell=True)
+        stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
+        result['data'] = stdout if stdout else stderr
     except RuntimeError as e:
         result['status'] = 1
         result['msg'] = str(e)

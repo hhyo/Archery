@@ -218,7 +218,7 @@
                                             <input id="disable_star"
                                                    key="disable_star"
                                                    value="{{ config.disable_star }}" type="checkbox">
-                                            禁止在查询时使用 * 
+                                            禁止在查询时使用 *
                                         </label>
                                     </div>
                                 </div>
@@ -287,6 +287,21 @@
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
                         <hr/>
+                        <div class="form-group">
+                            <label for="archery_base_url"
+                                   class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
+                            <div class="col-sm-8">
+                                <div class="switch switch-small">
+                                    <label>
+                                        <input type="text" class="form-control"
+                                               id="archery_base_url"
+                                               key="archery_base_url"
+                                               value="{{ config.archery_base_url }}"
+                                               placeholder="http://archery.com">系统首页地址, 用于钉钉和邮件发送链接使用
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-horizontal">
                             <div class="form-group">
                                 <label for="mail"
@@ -399,6 +414,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="lock_time_threshold"
+                                       class="col-sm-4 control-label">BINLOG2SQL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="binlog2sql"
+                                           key="binlog2sql"
+                                           value="{{ config.binlog2sql }}"
+                                           placeholder="binlog2sql调用路径，类似/opt/binlog2sql.py">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="default_auth_group"
                                        class="col-sm-4 control-label">DEFAULT_AUTH_GROUP</label>
                                 <div class="col-sm-5">
@@ -448,23 +474,9 @@
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
-                                            <input id="sign_up_enabled" key="sign_up_enabled" value="{{ config.sign_up_enabled }}"
+                                            <input id="sign_up_enabled" key="sign_up_enabled"
+                                                   value="{{ config.sign_up_enabled }}"
                                                    type="checkbox"> 是否开启注册功能
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="archery_base_url"
-                                       class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
-                                <div class="col-sm-8">
-                                    <div class="switch switch-small">
-                                        <label>
-                                            <input type="text" class="form-control"
-                                                id="archery_base_url"
-                                                key="archery_base_url"
-                                                value="{{ config.archery_base_url }}"
-                                                placeholder="http://archery.com">系统首页地址, 用于钉钉和邮件发送链接使用
                                         </label>
                                     </div>
                                 </div>
@@ -526,13 +538,11 @@
                 $('input[type="checkbox"]').each(function (i) {
                     if ($(this).val() === 'true') {
                         $(this).bootstrapSwitch('state', true);
-                    }
-                    else {
+                    } else {
                         $(this).bootstrapSwitch('state', false);
                     }
                 });
-            }
-            else if ($("#config").val() === '1') {
+            } else if ($("#config").val() === '1') {
                 $("#div-system-config").hide();
                 $("#div-workflow").show();
                 $("#div-workflow-config").show();
@@ -546,18 +556,15 @@
                 $(this).val(true);
                 if ($(this).attr("id") === 'mail') {
                     $("#div-mail-config").show();
-                }
-                else if ($(this).attr("id") === 'auto_review') {
+                } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
                 }
-            }
-            else {
+            } else {
                 $(this).val(false);
                 if ($(this).attr("id") === 'mail') {
                     $("#mail_ssl").val(false);
                     $("#div-mail-config").hide();
-                }
-                else if ($(this).attr("id") === 'auto_review') {
+                } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
                 }
             }
@@ -611,8 +618,7 @@
             var auditors = $("#workflow_auditors_text").val();
             if (auditors) {
                 $("#workflow_auditors_text").val(auditors + '->' + auth_group);
-            }
-            else {
+            } else {
                 $("#workflow_auditors_text").val(auth_group)
             }
             $('#group_auditors').selectpicker('render');
@@ -687,8 +693,7 @@
                         alert(errorThrown);
                     }
                 });
-            }
-            else {
+            } else {
                 alert('请选择组、工单类型和审批流程！')
             }
 
@@ -764,8 +769,7 @@
         $(document).ready(function () {
             if (sessionStorage.getItem('config_type')) {
                 $("#config").val(sessionStorage.getItem('config_type')).trigger("change")
-            }
-            else if ($("#config").val()) {
+            } else if ($("#config").val()) {
                 $("#config").trigger("change")
             }
         })

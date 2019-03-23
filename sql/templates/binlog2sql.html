@@ -22,6 +22,16 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <div class="form-group">
+                            <div class="checkbox">
+                                <label>
+                                    <input id="save_sql" type="checkbox">
+                                    是否保存到文件(异步操作)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <h5 class="control-label text-bold">解析模式：</h5>
                         <div class="form-group">
                             <div class="checkbox">
@@ -36,10 +46,19 @@
                                     --flashback
                                 </label>
                             </div>
+                            <div class="form-group">
+                                <input type="number" class="form-control" id="back_interval"
+                                       placeholder="每一千行回滚SLEEP多少秒"
+                                       onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <h5 class="control-label text-bold">解析范围控制：</h5>
+                        <div class="form-group">
+                            <input type="number" class="form-control" id="num" placeholder="解析行数，默认500"
+                                   onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
+                        </div>
                         <div class="form-group">
                             <select id="start_file" class="selectpicker form-control" required>
                                 <option value="is-empty" disabled="">起始解析文件:</option>
@@ -108,7 +127,11 @@
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>页面仅展示5000条，完整的SQL文件会保存到项目downloads目录，<a href="https://github.com/danfengcao/binlog2sql">项目地址</a></b>
+                        <b>前端展示数量由解析范围控制控制，如果勾选了保存到文件，则会异步获取完整的SQL文件，
+                            保存到项目downloads目录</b>
+                        <br>
+                        <br>
+                        <b>前往<a href="/admin/django_q/success/">django_q</a>查看执行结果</b>
                     </h5>
                     <br>
                     <table id="tb-binlog2sql" data-toggle="table" class="table table-condensed"></table>
@@ -174,7 +197,7 @@
                         $("#start_file").empty();
                         $("#end_file").empty();
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i]['Log_name'] + "\">" + result[i]['Log_name'] + "</option>";
+                            var name = "<option value=\"" + result[i]['Log_name'] + "\">" + result[i]['Log_name'] + '   Size:' + result[i]['File_size'] + "</option>";
                             $("#start_file").append(name);
                             $("#end_file").append(name);
                         }
@@ -227,15 +250,18 @@
             if ($("#instance_name").val() && $("#start_file").val()) {
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
-                alert('请耐心等待结果，可在对应目录获取生成的SQL文件');
+                alert('请耐心等待结果!');
                 $.ajax({
                     type: "post",
                     url: "/binlog2sql/sql/",
                     dataType: "json",
                     data: {
                         instance_name: $("#instance_name").val(),
+                        save_sql: document.getElementById("save_sql").checked,
                         no_pk: document.getElementById("no_pk").checked,
                         flashback: document.getElementById("flashback").checked,
+                        back_interval: $("#back_interval").val(),
+                        num: $("#num").val(),
                         start_file: $("#start_file").val(),
                         start_pos: $("#start_pos").val(),
                         end_file: $("#end_file").val(),
@@ -275,13 +301,42 @@
                                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                                 cardView: false,                    //是否显示详细视图
                                 locale: 'zh-CN',                    //本地化
+                                detailView: true,                   //是否显示父子表
+                                //格式化详情
+                                detailFormatter: function (index, row) {
+                                    var html = [];
+                                    $.each(row, function (key, value) {
+                                        if (key === 'sql') {
+                                            var sql = window.sqlFormatter.format(value);
+                                            //替换所有的换行符
+                                            sql = sql.replace(/\r\n/g, "<br>");
+                                            sql = sql.replace(/\n/g, "<br>");
+                                            //替换所有的空格
+                                            sql = sql.replace(/\s/g, "&nbsp;");
+                                            html.push('<span>' + sql + '</span>');
+                                        }
+                                    });
+                                    return html.join('');
+                                },
                                 data: data.data,
                                 columns: [{
                                     title: 'BINLOG_INFO',
                                     field: 'binlog_info'
                                 }, {
                                     title: 'SQL',
-                                    field: 'sql'
+                                    field: 'sql',
+                                    formatter: function (value, row, index) {
+                                        if (value.length > 200) {
+                                            var sql = value.substr(0, 200) + '...';
+                                            return sql;
+                                        } else {
+                                            return value
+                                        }
+                                    }
+                                }, {
+                                    title: '完整SQL',
+                                    field: 'sql',
+                                    visible: false // 默认不显示
                                 }],
                                 onLoadSuccess: function () {
                                 },
@@ -294,8 +349,7 @@
                         }
                     }
                 });
-            }
-            else {
+            } else {
                 alert("请选择实例和起始解析文件！")
             }
 
