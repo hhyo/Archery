@@ -33,9 +33,13 @@ from sql.engines import get_engine
 logger = logging.getLogger('default')
 
 
-# 获取审核列表
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
-def sqlworkflow_list(request):
+def sql_workflow_list(request):
+    """
+    获取审核列表
+    :param request:
+    :return:
+    """
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
@@ -87,9 +91,8 @@ def sqlworkflow_list(request):
                         content_type='application/json')
 
 
-# SQL检测
 @permission_required('sql.sql_submit', raise_exception=True)
-def simplecheck(request):
+def check(request):
     """SQL检测按钮, 此处没有产生工单"""
     sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
@@ -143,11 +146,9 @@ def simplecheck(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# SQL提交
 @permission_required('sql.sql_submit', raise_exception=True)
-def autoreview(request):
+def submit(request):
     """正式提交SQL, 此处生成工单"""
-    workflow_id = request.POST.get('workflow_id')
     sql_content = request.POST['sql_content']
     workflow_title = request.POST['workflow_name']
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
@@ -187,9 +188,8 @@ def autoreview(request):
     if not check_result:
         context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
         return render(request, 'error.html', context)
-    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
 
-    # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内跳过inception直接执行
+    # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内原生执行
     sys_config = SysConfig()
     is_manual = 0
     workflow_status = 'workflow_manreviewing'
@@ -234,7 +234,6 @@ def autoreview(request):
                 instance=instance,
                 db_name=db_name,
                 is_manual=is_manual,
-                audit_remark='',
                 syntax_type=syntax_type,
                 create_time=timezone.now()
             )
@@ -263,16 +262,18 @@ def autoreview(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-# 审核通过，不执行
 @permission_required('sql.sql_review', raise_exception=True)
 def passed(request):
-    workflow_id = request.POST.get('workflow_id')
-    if workflow_id == '' or workflow_id is None:
+    """
+    审核通过，不执行
+    :param request:
+    :return:
+    """
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    audit_remark = request.POST.get('audit_remark', '')
+    if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-    workflow_id = int(workflow_id)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    audit_remark = request.POST.get('audit_remark', '')
 
     user = request.user
     if Audit.can_review(request.user, workflow_id, 2) is False:
@@ -290,11 +291,8 @@ def passed(request):
 
             # 按照审核结果更新业务表审核状态
             if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
-                # 将流程状态修改为审核通过，并更新reviewok_time字段
-                workflow_detail.status = 'workflow_review_pass'
-                workflow_detail.reviewok_time = timezone.now()
-                workflow_detail.audit_remark = audit_remark
-                workflow_detail.save()
+                # 将流程状态修改为审核通过
+                SqlWorkflow(id=workflow_id, status='workflow_review_pass').save(update_fields=['status'])
     except Exception as msg:
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
@@ -306,9 +304,13 @@ def passed(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-# 仅执行SQL
 @permission_required('sql.sql_execute', raise_exception=True)
 def execute(request):
+    """
+    执行SQL
+    :param request:
+    :return:
+    """
     workflow_id = int(request.POST.get('workflow_id', 0))
     if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
@@ -318,11 +320,8 @@ def execute(request):
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
-    # 将流程状态修改为执行中，并更新reviewok_time字段
-    SqlWorkflow(id=workflow_id,
-                status='workflow_executing',
-                reviewok_time=timezone.now()
-                ).save(update_fields=['status', 'reviewok_time'])
+    # 将流程状态修改为执行中
+    SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
@@ -341,9 +340,13 @@ def execute(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-# 定时执行SQL
 @permission_required('sql.sql_execute', raise_exception=True)
-def timingtask(request):
+def timing_task(request):
+    """
+    定时执行SQL
+    :param request:
+    :return:
+    """
     workflow_id = request.POST.get('workflow_id')
     run_date = request.POST.get('run_date')
     if run_date is None or workflow_id is None:
@@ -387,14 +390,16 @@ def timingtask(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-# 终止流程
 def cancel(request):
-    workflow_id = request.POST.get('workflow_id')
-    if workflow_id == '' or workflow_id is None:
+    """
+    终止流程
+    :param request:
+    :return:
+    """
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-
-    workflow_id = int(workflow_id)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get('cancel_remark')
     if audit_remark is None:
@@ -451,7 +456,6 @@ def cancel(request):
                 del_sqlcronjob(job_id)
             # 将流程状态修改为人工终止流程
             workflow_detail.status = 'workflow_abort'
-            workflow_detail.audit_remark = audit_remark
             workflow_detail.save()
     except Exception as msg:
         logger.error(traceback.format_exc())

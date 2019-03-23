@@ -90,7 +90,7 @@
                 {{ workflow_detail.group_name }}
             </td>
             <td>
-                {{ workflow_detail.get_syntax_type_display  }}
+                {{ workflow_detail.get_syntax_type_display }}
             </td>
         </tr>
         </tbody>
@@ -117,38 +117,20 @@
         </table>
         <br>
     {% endif %}
-    {% if workflow_detail.audit_remark %}
+    <!--最后操作信息-->
+    {% if last_operation_info %}
         <table data-toggle="table" class="table table-striped table-hover">
             <thead>
             <tr>
                 <th>
-                    审核备注/终止原因
+                    操作信息
                 </th>
             </tr>
             </thead>
             <tbody>
             <tr>
                 <td>
-                    {{ workflow_detail.audit_remark }}
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <br>
-    {% endif %}
-    {% if workflow_detail.status == 'workflow_timingtask' %}
-        <table data-toggle="table" class="table table-striped table-hover">
-            <thead>
-            <tr>
-                <th>
-                    定时执行时间
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>
-                    {{ run_date }}
+                    {{ last_operation_info }}
                 </td>
             </tr>
             </tbody>

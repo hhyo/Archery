@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 
 from common.config import SysConfig
 from sql.engines.models import ResultSet
@@ -348,7 +348,7 @@ class QueryTest(TestCase):
         # TODO 有语法树解析， 无库权限， 有表权限
 
 
-class WorkflowViewTest(TestCase):
+class WorkflowViewTest(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -431,11 +431,15 @@ class WorkflowViewTest(TestCase):
         r_json = r.json()
         self.assertEqual(r_json['status'], 'workflow_finish')
 
+    @patch('sql.utils.workflow_audit.Audit.logs')
+    @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     @patch('sql.utils.workflow_audit.Audit.review_info')
     @patch('sql.utils.workflow_audit.Audit.can_review')
-    def testWorkflowDetailView(self, _can_review, _review_info):
+    def testWorkflowDetailView(self, _can_review, _review_info, _detail_by_id, _logs):
         _review_info.return_value = ('some_auth_group', 'current_auth_group')
         _can_review.return_value = False
+        _detail_by_id.return_value.audit_id = 123
+        _logs.return_value.latest('id').operation_info = ''
         c = Client()
         c.force_login(self.u1)
         r = c.get('/detail/{}/'.format(self.wf1.id))
@@ -488,7 +492,6 @@ class WorkflowViewTest(TestCase):
         self.assertRedirects(r, '/detail/{}/'.format(self.wf1.id), fetch_redirect_response=False)
         self.wf1.refresh_from_db()
         self.assertEqual(self.wf1.status, 'workflow_review_pass')
-        self.assertEqual(self.wf1.audit_remark, 'some_audit')
 
     @patch('sql.sql_workflow.Audit.add_log')
     @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
