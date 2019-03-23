@@ -165,6 +165,6 @@ def binlog2sql_file(args, user):
     # 执行命令保存到文件
     with open(filename, 'w') as f:
         p = binlog2sql.execute_cmd(cmd_args, shell=True)
-        for c in iter(lambda: p.stdout.read(1), ''):
+        for c in iter(p.stdout.readline, ''):
             f.write(c)
     return user, filename

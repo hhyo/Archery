@@ -10,6 +10,7 @@ from django.contrib.auth.models import Permission
 from django.test import Client, TestCase, TransactionTestCase
 
 from common.config import SysConfig
+from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet
 from sql import query
 
@@ -815,3 +816,129 @@ class TestSQLAnalyze(TestCase):
         r = self.client.post(path='/sql_analyze/analyze/',
                              data={"text": text, "instance_name": instance_name, "db_name": db_name})
         self.assertListEqual(list(json.loads(r.content)['rows'][0].keys()), ['sql_id', 'sql', 'report'])
+
+
+class TestBinLog(TestCase):
+    """
+    测试Binlog相关
+    """
+
+    def setUp(self):
+        self.superuser = User(username='super', is_superuser=True)
+        self.superuser.save()
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+                               host=settings.DATABASES['default']['HOST'],
+                               port=settings.DATABASES['default']['PORT'],
+                               user=settings.DATABASES['default']['USER'],
+                               password=settings.DATABASES['default']['PASSWORD'])
+        self.master.save()
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.master.delete()
+        self.sys_config.replace(json.dumps({}))
+
+    def test_binlog_list_instance_not_exist(self):
+        """
+        测试获取binlog列表，实例不存在
+        :return:
+        """
+        data = {
+            "instance_name": 'some_instance'
+        }
+        r = self.client.post(path='/binlog2sql/binlog_list/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+
+    def test_binlog_list_instance(self):
+        """
+        测试获取binlog列表，实例存在
+        :return:
+        """
+        data = {
+            "instance_name": 'test_instance'
+        }
+        r = self.client.post(path='/binlog2sql/binlog_list/', data=data)
+        self.assertEqual(json.loads(r.content).get('status'), 0)
+
+    def test_binlog2sql_path_not_exist(self):
+        """
+        测试获取解析binlog，path未设置
+        :return:
+        """
+        data = {"instance_name": "test_instance",
+                "save_sql": "false",
+                "no_pk": "false",
+                "flashback": "false",
+                "back_interval": "",
+                "num": "",
+                "start_file": "mysql-bin.000045",
+                "start_pos": "",
+                "end_file": "",
+                "end_pos": "",
+                "stop_time": "",
+                "start_time": "",
+                "only_schemas": "",
+                "only_dml": "true",
+                "sql_type": ""}
+        r = self.client.post(path='/binlog2sql/sql/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '可执行文件路径不能为空！', 'data': {}})
+
+    @patch('sql.plugins.plugin.subprocess')
+    def test_binlog2sql(self, _subprocess):
+        """
+        测试获取解析binlog，path设置
+        :param _subprocess:
+        :return:
+        """
+        self.sys_config.set('binlog2sql', '/opt/binlog2sql')
+        self.sys_config.get_all_config()
+        data = {"instance_name": "test_instance",
+                "save_sql": "1",
+                "no_pk": "false",
+                "flashback": "false",
+                "back_interval": "",
+                "num": "1",
+                "start_file": "mysql-bin.000045",
+                "start_pos": "",
+                "end_file": "",
+                "end_pos": "",
+                "stop_time": "",
+                "start_time": "",
+                "only_schemas": "",
+                "only_dml": "true",
+                "sql_type": ""}
+        r = self.client.post(path='/binlog2sql/sql/', data=data)
+        self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": [{"sql": {}, "binlog_info": {}}]})
+
+    @patch('builtins.iter')
+    @patch('sql.plugins.plugin.subprocess')
+    def test_binlog2sql_file(self, _subprocess, _iter):
+        """
+        测试保存文件
+        :param _subprocess:
+        :return:
+        """
+        args = {"instance_name": "test_instance",
+                "save_sql": "1",
+                "no_pk": "false",
+                "flashback": "false",
+                "back_interval": "",
+                "num": "1",
+                "start_file": "",
+                "start_pos": "",
+                "end_file": "",
+                "end_pos": "",
+                "stop_time": "",
+                "start_time": "",
+                "only_schemas": "",
+                "only_dml": "true",
+                "sql_type": "",
+                "instance": self.master}
+        _subprocess.Popen.return_value.stdout.return_value.readline.return_value = 'sql'
+        _iter.return_value = ''
+        r = binlog2sql_file(args=args, user=self.superuser)
+        self.assertEqual(self.superuser, r[0])
