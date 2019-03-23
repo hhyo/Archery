@@ -6,7 +6,7 @@ from MySQLdb.connections import numeric_part
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance
-from mycli.packages.parseutils import extract_tables
+from sql.utils.sql_utils import extract_tables
 
 
 class SqlTuning(object):
@@ -59,7 +59,7 @@ class SqlTuning(object):
 
     def __extract_tables(self):
         """获取sql语句中的表名"""
-        return [list(i)[1].replace('`', '').lower() for i in extract_tables(self.sqltext)]
+        return [i.name.replace('`', '').lower() for i in extract_tables(self.sqltext)]
 
     def basic_information(self):
         return self.engine.query(sql="select @@version", close_conn=False).to_sep_dict()
