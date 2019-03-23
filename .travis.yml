@@ -6,6 +6,7 @@ services:
   - redis-server
 install:
   - pip install -r requirements.txt
+  - pip install mycli==1.19.0
   - pip install coverage
   - pip install codecov
 before_script:
