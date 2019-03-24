@@ -2,8 +2,7 @@
 
 # <a href="http://139.199.0.191/" target="_blank" rel="noopener noreferrer">Archery</a> 
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/dba-archery/community)
-[![Build Status](https://travis-ci.org/hhyo/Archery.svg?branch=master)](https://travis-ci.org/hhyo/archery)
+[![Build Status](https://travis-ci.org/hhyo/Archery.svg?branch=master)](https://travis-ci.org/hhyo/Archery)
 [![Release](https://img.shields.io/github/release/hhyo/archery.svg)](https://github.com/hhyo/archery/releases/)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/badge/python-3.6.5-blue.svg)](https://www.python.org/downloads/release/python-365/)
@@ -58,7 +57,7 @@ python3 manage.py compilemessages
 python3 manage.py createsuperuser
 
 #日志查看和问题排查
-docker logs archery
+docker logs archery -f --tail=10
 /downloads/log/archery.log
 ```
 
@@ -112,9 +111,8 @@ http://127.0.0.1:9123/
 
 贡献代码
 ===============
-开发计划：https://github.com/hhyo/archery/projects   
-如果你有兴趣一起维护此项目，可查看上面的开发计划以及主页的依赖清单，并且在对应issues中留言，当然也可以提交不在计划列表中功能，我们将为你提供有限的、必要的支持（开发环境搭建、模块接入支持、PyCharm Open Source License）等，期待你的加入
+如果你有兴趣一起维护此项目，可查阅主页的开发计划以及依赖清单，并且在对应issues中留言，也可以提交不在计划列表中功能，我们将为你提供有限的支持（开发环境搭建、模块接入支持、PyCharm Open Source License）等，期待你的加入
 
 问题反馈
 ===============
-[Issues](https://github.com/hhyo/archery/issues)是本项目所推崇的沟通渠道，如果在使用过程中遇到问题，请先查阅文档，如果仍无法解决，请查看相关日志，保存截图信息，给我们提交[Issues](https://github.com/hhyo/archery/issues)，请按照模板提供相关信息，否则可能会被直接关闭，感谢理解
+[Issues](https://github.com/hhyo/archery/issues)是本项目唯一的沟通渠道，如果在使用过程中遇到问题，请先查阅文档，如果仍无法解决，请查看相关日志，保存截图信息，给我们提交[Issues](https://github.com/hhyo/archery/issues)，请按照模板提供相关信息，否则会被直接关闭，感谢理解
