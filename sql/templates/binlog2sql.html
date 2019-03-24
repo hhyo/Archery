@@ -181,7 +181,7 @@
             //获取binlog
             $.ajax({
                 type: "post",
-                url: "/binlog2sql/binlog_list/",
+                url: "/binlog/list/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val()
@@ -249,7 +249,7 @@
                 $(this).prop('disabled', true);
                 $.ajax({
                     type: "post",
-                    url: "/binlog2sql/sql/",
+                    url: "/binlog/binlog2sql/",
                     dataType: "json",
                     data: {
                         instance_name: $("#instance_name").val(),

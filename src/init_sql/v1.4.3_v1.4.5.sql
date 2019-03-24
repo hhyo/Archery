@@ -4,6 +4,8 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQ
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 SQL分析', @content_type_id, 'menu_sqlanalyze');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('执行SQL分析', @content_type_id, 'sql_analyze');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('执行SQL上线工单(资源组粒度)', @content_type_id, 'sql_execute_for_resource_group');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('清理BINLOG日志', @content_type_id, 'binlog_del');
+
 
 -- SQL工单、查询权限、RDS、脱敏配置增加Instance外键，设置为CASCADE级联操作，通过管理后台删除数据时
 SET FOREIGN_KEY_CHECKS = 0;

@@ -90,8 +90,9 @@ urlpatterns = [
     path('query/modifyprivileges/', sql.query_privileges.query_priv_modify),
     path('query/privaudit/', sql.query_privileges.query_priv_audit),
 
-    path('binlog2sql/sql/', binlog.binlog2sql),
-    path('binlog2sql/binlog_list/', binlog.binlog_list),
+    path('binlog/list/', binlog.binlog_list),
+    path('binlog/binlog2sql/', binlog.binlog2sql),
+    path('binlog/del_log/', binlog.del_binlog),
 
     path('slowquery/review/', slowlog.slowquery_review),
     path('slowquery/review_history/', slowlog.slowquery_review_history),

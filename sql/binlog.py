@@ -50,6 +50,29 @@ def binlog_list(request):
                         content_type='application/json')
 
 
+@permission_required('sql.binlog_del', raise_exception=True)
+def del_binlog(request):
+    instance_id = request.POST.get('instance_id')
+    binlog = request.POST.get('binlog', '')
+    try:
+        instance = Instance.objects.get(id=instance_id)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
+    if binlog:
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.query(sql=fr"purge master logs to '{binlog}';")
+        if query_result.error is None:
+            result = {'status': 0, 'msg': '清理成功', 'data': ''}
+        else:
+            result = {'status': 2, 'msg': f'清理失败,Error:{query_result.error}', 'data': ''}
+    else:
+        result = {'status': 1, 'msg': 'Error:未选择binlog！', 'data': ''}
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
+
+
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):
     """
@@ -146,6 +169,7 @@ def binlog2sql(request):
 
 def binlog2sql_file(args, user):
     """
+    用于异步保存binlog解析的文件
     :param args: 参数
     :param user: 操作用户对象，用户消息推送
     :return:

@@ -318,19 +318,19 @@ class QueryTest(TestCase):
     def test_query_priv_check(self, mock_masking):
         # 超级用户直接返回
         superuser_limit = sql.query_privileges.query_priv_check(self.superuser1, self.slave1.instance_name,
-                                                 'some_db', 'some_sql', 100)
+                                                                'some_db', 'some_sql', 100)
         self.assertEqual(superuser_limit['status'], 0)
         self.assertEqual(superuser_limit['data']['limit_num'], 100)
 
         # 无语法树解析，只校验db_name
         limit_without_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave2,
-                                                            'some_db_another_instance', 'some_sql', 1000)
+                                                                           'some_db_another_instance', 'some_sql', 1000)
         self.assertEqual(limit_without_tree_analyse['data']['limit_num'],
                          self.db_priv_for_user3_another_instance.limit_num)
 
         # 无语法树解析， 无权限的情况
         limit_without_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave2,
-                                                            'some_db_does_not_exist', 'some_sql', 1000)
+                                                                           'some_db_does_not_exist', 'some_sql', 1000)
         self.assertEqual(limit_without_tree_analyse['status'], 1)
         self.assertIn('some_db_does_not_exist', limit_without_tree_analyse['msg'])
 
@@ -342,7 +342,7 @@ class QueryTest(TestCase):
                 'table': 'some_table'
             }]}
         limit_with_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave1,
-                                                         'some_db', 'some_sql', 1000)
+                                                                        'some_db', 'some_sql', 1000)
         mock_masking.return_value.query_table_ref.assert_called_once()
         self.assertEqual(limit_with_tree_analyse['data']['limit_num'], self.table_priv_for_user3.limit_num)
 
@@ -851,7 +851,7 @@ class TestBinLog(TestCase):
         data = {
             "instance_name": 'some_instance'
         }
-        r = self.client.post(path='/binlog2sql/binlog_list/', data=data)
+        r = self.client.post(path='/binlog/list/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
 
     def test_binlog_list_instance(self):
@@ -862,7 +862,7 @@ class TestBinLog(TestCase):
         data = {
             "instance_name": 'test_instance'
         }
-        r = self.client.post(path='/binlog2sql/binlog_list/', data=data)
+        r = self.client.post(path='/binlog/list/', data=data)
         self.assertEqual(json.loads(r.content).get('status'), 0)
 
     def test_binlog2sql_path_not_exist(self):
@@ -885,7 +885,7 @@ class TestBinLog(TestCase):
                 "only_schemas": "",
                 "only_dml": "true",
                 "sql_type": ""}
-        r = self.client.post(path='/binlog2sql/sql/', data=data)
+        r = self.client.post(path='/binlog/binlog2sql/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '可执行文件路径不能为空！', 'data': {}})
 
     @patch('sql.plugins.plugin.subprocess')
@@ -912,7 +912,7 @@ class TestBinLog(TestCase):
                 "only_schemas": "",
                 "only_dml": "true",
                 "sql_type": ""}
-        r = self.client.post(path='/binlog2sql/sql/', data=data)
+        r = self.client.post(path='/binlog/binlog2sql/', data=data)
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": [{"sql": {}, "binlog_info": {}}]})
 
     @patch('builtins.iter')
@@ -943,3 +943,58 @@ class TestBinLog(TestCase):
         _iter.return_value = ''
         r = binlog2sql_file(args=args, user=self.superuser)
         self.assertEqual(self.superuser, r[0])
+
+    def test_del_binlog_instance_not_exist(self):
+        """
+        测试删除binlog，实例不存在
+        :return:
+        """
+        data = {
+            "instance_id": 0,
+            "binlog": "mysql-bin.000001",
+        }
+        r = self.client.post(path='/binlog/del_log/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+
+    def test_del_binlog_binlog_not_exist(self):
+        """
+        测试删除binlog，实例存在,binlog 不存在
+        :return:
+        """
+        data = {
+            "instance_id": self.master.id,
+            "binlog": ''
+        }
+        r = self.client.post(path='/binlog/del_log/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': 'Error:未选择binlog！', 'data': ''})
+
+    @patch('sql.engines.mysql.MysqlEngine.query')
+    @patch('sql.engines.get_engine')
+    def test_del_binlog(self, _get_engine, _query):
+        """
+        测试删除binlog
+        :return:
+        """
+        data = {
+            "instance_id": self.master.id,
+            "binlog": "mysql-bin.000001"
+        }
+        _query.return_value = ResultSet(full_sql='select 1')
+        r = self.client.post(path='/binlog/del_log/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 0, 'msg': '清理成功', 'data': ''})
+
+    @patch('sql.engines.mysql.MysqlEngine.query')
+    @patch('sql.engines.get_engine')
+    def test_del_binlog_wrong(self, _get_engine, _query):
+        """
+        测试删除binlog
+        :return:
+        """
+        data = {
+            "instance_id": self.master.id,
+            "binlog": "mysql-bin.000001"
+        }
+        _query.return_value = ResultSet(full_sql='select 1')
+        _query.return_value.error = '清理失败'
+        r = self.client.post(path='/binlog/del_log/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 2, 'msg': '清理失败,Error:清理失败', 'data': ''})
