@@ -20,7 +20,7 @@ $(document).ready(function() {
   //     if (flag != 0){
 
   //     }
-  // }) 
+  // })
       $.get("/themis/sqlreview/rule/info", {}, function(result){
         if(result["errcode"] === 80013){
            var columns = [
@@ -63,32 +63,24 @@ $(document).ready(function() {
                    $(nTd).addClass('inputParm2').attr('id', oData[0] + "$parm2");
                  }
               },
-              {
+               {
                  "title": "参数三",
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                    $(nTd).addClass('inputParm3').attr('dbtype', oData[6]);
                    $(nTd).addClass('inputParm3').attr('id', oData[0] + "$parm3");
                  }
               },
-              {
-                 "title": "参数四",
+               {
+                 "title": "RuleCmd",
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                   $(nTd).addClass('inputParm4').attr('dbtype', oData[6]);
-                   $(nTd).addClass('inputParm4').attr('id', oData[0] + "$parm4");
+                   $(nTd).addClass('RuleCmd').attr('dbtype', oData[6]);
+                   $(nTd).addClass('RuleCmd').attr('id', oData[0] + "$rule_cmd");
                  }
-              },
-              {
-                 "title": "参数五",
-                  "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                   $(nTd).addClass('inputParm5').attr('dbtype', oData[6]);
-                   $(nTd).addClass('inputParm5').attr('id', oData[0] + "$parm5");
-                 }
-              },
-              {"title": "exclude_type"} 
+              }
            ]
            genTable("struct", "struct_table", result["data"], columns)
         }
-     }) 
+     })
 });
 
 function genTable(domid, table_id, data, columns){
@@ -227,7 +219,7 @@ function genTable(domid, table_id, data, columns){
                   }
               }
             });
-              $('#' + table_id + ' tbody td.inputParm3').
+               $('#' + table_id + ' tbody td.inputParm3').
             editable('/themis/sqlreview/rule/info', {
               method: "POST",
               submitdata: function(value, settings) {
@@ -248,35 +240,14 @@ function genTable(domid, table_id, data, columns){
                   }
               }
             });
-          $('#' + table_id + ' tbody td.inputParm4').
+             $('#' + table_id + ' tbody td.RuleCmd').
             editable('/themis/sqlreview/rule/info', {
               method: "POST",
               submitdata: function(value, settings) {
                 return {
                         oldvalue: value,
                         dbtype: $(this).attr("dbtype"),
-                        flag: "parm4"
-                      };
-              },
-               callback: function(value, settings) {
-                  var result = JSON.parse(value)
-                  if (result["errcode"] === 80025){
-                    $(this).text(function(){ return result["data"]})
-                  }
-                  else{
-                    alert(result["message"])
-                    $(this).text(function(){ return 0})
-                  }
-              }
-            });
-          $('#' + table_id + ' tbody td.inputParm5').
-            editable('/themis/sqlreview/rule/info', {
-              method: "POST",
-              submitdata: function(value, settings) {
-                return {
-                        oldvalue: value,
-                        dbtype: $(this).attr("dbtype"),
-                        flag: "parm5"
+                        flag: "rule_cmd"
                       };
               },
                callback: function(value, settings) {

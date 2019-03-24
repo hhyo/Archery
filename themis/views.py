@@ -161,9 +161,8 @@ class SqlReviewRuleInfo(BaseHandler):
                 parms[0],
                 parms[1],
                 parms[2],
-                parms[3],
-                parms[4],
-                value.get("exclude_obj_type", "无")
+                value["rule_cmd"],
+                value.get("exclude_obj_type", "无"),
             ])
         return {"errcode": 80013, "message": u"查询成功", "data": data}
 
