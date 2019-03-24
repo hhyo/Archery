@@ -31,14 +31,14 @@ def lists(request):
     # 只返回当前待自己审核的数据
     if workflow_type == 0:
         audit_obj = WorkflowAudit.objects.filter(
-            workflow_title__contains=search,
+            workflow_title__icontains=search,
             current_status=WorkflowDict.workflow_status['audit_wait'],
             group_id__in=group_ids,
             current_audit__in=auth_group_ids
         )
     else:
         audit_obj = WorkflowAudit.objects.filter(
-            workflow_title__contains=search,
+            workflow_title__icontains=search,
             workflow_type=workflow_type,
             current_status=WorkflowDict.workflow_status['audit_wait'],
             group_id__in=group_ids,

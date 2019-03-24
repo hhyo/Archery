@@ -12,7 +12,6 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.core import serializers
 from django.db import transaction
 from django.db.models import Min, Q
 from django.http import HttpResponse, HttpResponseRedirect
@@ -182,7 +181,7 @@ def query_priv_apply_list(request):
     query_privs = QueryPrivilegesApply.objects.all()
     # 过滤搜索项，支持模糊搜索标题、用户
     if search:
-        query_privs = query_privs.filter(Q(title__contains=search) | Q(user_display__contains=search))
+        query_privs = query_privs.filter(Q(title__icontains=search) | Q(user_display__icontains=search))
     # 管理员可以看到全部数据
     if user.is_superuser:
         query_privs = query_privs

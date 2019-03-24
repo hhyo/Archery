@@ -24,7 +24,7 @@ def group(request):
     search = request.POST.get('search', '')
 
     # 全部工单里面包含搜索条件
-    group_obj = ResourceGroup.objects.filter(group_name__contains=search)
+    group_obj = ResourceGroup.objects.filter(group_name__icontains=search)
     group_count = group_obj.count()
     group_list = group_obj[offset:limit].values("group_id", "group_name", "ding_webhook")
 
@@ -52,9 +52,9 @@ def associated_objects(request):
     if object_type:
         rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id,
                                                          object_type=object_type,
-                                                         object_name__contains=search)
+                                                         object_name__icontains=search)
     else:
-        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search)
+        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__icontains=search)
     count = rows_obj.count()
     rows = rows_obj[offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
                                          'create_time')

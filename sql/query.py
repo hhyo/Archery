@@ -185,9 +185,9 @@ def querylog(request):
 
     # 查询个人记录，超管查看所有数据
     if user.is_superuser:
-        sql_log_obj = QueryLog.objects.all().filter(Q(sqllog__contains=search) | Q(user_display__contains=search))
+        sql_log_obj = QueryLog.objects.all().filter(Q(sqllog__icontains=search) | Q(user_display__icontains=search))
     else:
-        sql_log_obj = QueryLog.objects.filter(username=user.username).filter(sqllog__contains=search)
+        sql_log_obj = QueryLog.objects.filter(username=user.username).filter(sqllog__icontains=search)
 
     sql_log_count = sql_log_obj.count()
     sql_log_list = sql_log_obj.order_by('-id')[offset:limit]

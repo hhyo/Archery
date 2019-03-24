@@ -24,9 +24,9 @@ def lists(request):
     search = request.POST.get('search', '')
 
     if type:
-        instances_obj = Instance.objects.filter(instance_name__contains=search, type=type)
+        instances_obj = Instance.objects.filter(instance_name__icontains=search, type=type)
     else:
-        instances_obj = Instance.objects.filter(instance_name__contains=search)
+        instances_obj = Instance.objects.filter(instance_name__icontains=search)
 
     count = instances_obj.count()
     instances = instances_obj[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
