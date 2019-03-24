@@ -364,8 +364,8 @@ def user_query_priv(request):
     else:
         user_query_privs = user_query_privs.filter(user_name=user.username)
 
-    privileges_count = user_query_privs.count()
-    privileges_list = user_query_privs.order_by('-privilege_id')[offset:limit].values(
+    privileges_count = user_query_privs.distinct().count()
+    privileges_list = user_query_privs.distinct().order_by('-privilege_id')[offset:limit].values(
         'privilege_id', 'user_display', 'instance__instance_name', 'db_name', 'priv_type',
         'table_name', 'limit_num', 'valid_date'
     )
