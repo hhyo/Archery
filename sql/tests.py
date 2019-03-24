@@ -9,6 +9,7 @@ from django.contrib.auth.models import Permission
 
 from django.test import Client, TestCase, TransactionTestCase
 
+import sql.query_privileges
 from common.config import SysConfig
 from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet
@@ -203,7 +204,7 @@ class QueryTest(TestCase):
     def testQueryAuditCallback(self):
         """测试权限申请工单回调"""
         # 工单状态改为审核失败, 验证工单状态
-        query.query_audit_call_back(self.query_apply_1.apply_id, 2)
+        sql.query_privileges.query_apply_audit_call_back(self.query_apply_1.apply_id, 2)
         self.query_apply_1.refresh_from_db()
         self.assertEqual(self.query_apply_1.status, 2)
         for db in self.query_apply_1.db_list.split(','):
@@ -212,7 +213,7 @@ class QueryTest(TestCase):
                 db_name=db,
                 limit_num=100)), 0)
         # 工单改为审核成功, 验证工单状态和权限状态
-        query.query_audit_call_back(self.query_apply_1.apply_id, 1)
+        sql.query_privileges.query_apply_audit_call_back(self.query_apply_1.apply_id, 1)
         self.query_apply_1.refresh_from_db()
         self.assertEqual(self.query_apply_1.status, 1)
         for db in self.query_apply_1.db_list.split(','):
@@ -221,7 +222,7 @@ class QueryTest(TestCase):
                 db_name=db,
                 limit_num=100)), 1)
         # 表权限申请测试, 只测试审核成功
-        query.query_audit_call_back(self.query_apply_2.apply_id, 1)
+        sql.query_privileges.query_apply_audit_call_back(self.query_apply_2.apply_id, 1)
         self.query_apply_2.refresh_from_db()
         self.assertEqual(self.query_apply_2.status, 1)
         for tb in self.query_apply_2.table_list.split(','):
@@ -313,22 +314,22 @@ class QueryTest(TestCase):
         r_json = r.json()
         self.assertEqual(1, r_json['status'])
 
-    @patch('sql.query.Masking')
+    @patch('sql.query_privileges.Masking')
     def test_query_priv_check(self, mock_masking):
         # 超级用户直接返回
-        superuser_limit = query.query_priv_check(self.superuser1, self.slave1.instance_name,
+        superuser_limit = sql.query_privileges.query_priv_check(self.superuser1, self.slave1.instance_name,
                                                  'some_db', 'some_sql', 100)
         self.assertEqual(superuser_limit['status'], 0)
         self.assertEqual(superuser_limit['data']['limit_num'], 100)
 
         # 无语法树解析，只校验db_name
-        limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
+        limit_without_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave2,
                                                             'some_db_another_instance', 'some_sql', 1000)
         self.assertEqual(limit_without_tree_analyse['data']['limit_num'],
                          self.db_priv_for_user3_another_instance.limit_num)
 
         # 无语法树解析， 无权限的情况
-        limit_without_tree_analyse = query.query_priv_check(self.u3, self.slave2,
+        limit_without_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave2,
                                                             'some_db_does_not_exist', 'some_sql', 1000)
         self.assertEqual(limit_without_tree_analyse['status'], 1)
         self.assertIn('some_db_does_not_exist', limit_without_tree_analyse['msg'])
@@ -340,7 +341,7 @@ class QueryTest(TestCase):
                 'db': 'another_db',
                 'table': 'some_table'
             }]}
-        limit_with_tree_analyse = query.query_priv_check(self.u3, self.slave1,
+        limit_with_tree_analyse = sql.query_privileges.query_priv_check(self.u3, self.slave1,
                                                          'some_db', 'some_sql', 1000)
         mock_masking.return_value.query_table_ref.assert_called_once()
         self.assertEqual(limit_with_tree_analyse['data']['limit_num'], self.table_priv_for_user3.limit_num)

@@ -3,6 +3,7 @@
 from django.urls import path
 from django.views.i18n import JavaScriptCatalog
 
+import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog
@@ -83,11 +84,11 @@ urlpatterns = [
     path('query/', query.query),
     path('query/querylog/', query.querylog),
     path('query/explain/', query.explain),
-    path('query/applylist/', query.getqueryapplylist),
-    path('query/userprivileges/', query.getuserprivileges),
-    path('query/applyforprivileges/', query.applyforprivileges),
-    path('query/modifyprivileges/', query.modifyqueryprivileges),
-    path('query/privaudit/', query.queryprivaudit),
+    path('query/applylist/', sql.query_privileges.query_priv_apply_list),
+    path('query/userprivileges/', sql.query_privileges.user_query_priv),
+    path('query/applyforprivileges/', sql.query_privileges.query_priv_apply),
+    path('query/modifyprivileges/', sql.query_privileges.query_priv_modify),
+    path('query/privaudit/', sql.query_privileges.query_priv_audit),
 
     path('binlog2sql/sql/', binlog.binlog2sql),
     path('binlog2sql/binlog_list/', binlog.binlog_list),

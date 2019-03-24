@@ -218,7 +218,7 @@ def queryapplydetail(request, apply_id):
 # 用户的查询权限管理页面
 def queryuserprivileges(request):
     # 获取所有用户
-    user_list = QueryPrivileges.objects.filter(is_deleted=0).values('user_name').distinct()
+    user_list = QueryPrivileges.objects.filter(is_deleted=0).values('user_display').distinct()
     context = {'user_list': user_list}
     return render(request, 'queryuserprivileges.html', context)
 

@@ -304,7 +304,7 @@ class Masking(object):
             hide_group = rules_info.hide_group
             # 正则匹配必须分组，隐藏的组会使用****代替
             try:
-                p = re.compile(rule_regex)
+                p = re.compile(rule_regex, re.I)
                 m = p.search(str(value))
                 masking_str = ''
                 for i in range(m.lastindex):
@@ -342,7 +342,7 @@ def brute_mask(sql_result):
     # 读取所有的脱敏表达
     masking_rules = DataMaskingRules.objects.all()
     for reg in masking_rules:
-        compiled_r = re.compile(reg.rule_regex)
+        compiled_r = re.compile(reg.rule_regex, re.I)
         replace_pattern = r""
         for i in range(1, compiled_r.groups + 1):
             if i == int(reg.hide_group):
