@@ -14,6 +14,7 @@ from django.http import HttpResponse
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines.models import ResultSet
 from sql.query_privileges import query_priv_check
 from .models import QueryLog, Instance
 from sql.engines import get_engine
@@ -65,7 +66,12 @@ def query(request):
             limit_num = priv_check_info['data']['limit_num']
             priv_check = priv_check_info['data']['priv_check']
         else:
-            return HttpResponse(json.dumps(priv_check_info), content_type='application/json')
+            result['status'] = priv_check_info['status']
+            result['msg'] = priv_check_info['msg']
+            data = ResultSet(full_sql=sql_content)
+            data.error = priv_check_info['msg']
+            result['data'] = data.__dict__
+            return HttpResponse(json.dumps(result), content_type='application/json')
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
 
         # 查询检查
