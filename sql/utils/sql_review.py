@@ -7,8 +7,12 @@ from sql.utils.resource_group import user_groups
 from sql.engines import get_engine
 
 
-# 判断SQL上线是否无需审批
 def is_auto_review(workflow_id):
+    """
+    判断SQL上线是否无需审批，无需审批的提交会自动审核通过
+    :param workflow_id:
+    :return:
+    """
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     sql_content = workflow_detail.sqlworkflowcontent.sql_content
     instance_name = workflow_detail.instance.instance_name
@@ -48,34 +52,61 @@ def is_auto_review(workflow_id):
     return is_autoreview
 
 
-# 判断用户当前是否可执行
 def can_execute(user, workflow_id):
+    """
+    判断用户当前是否可执行，两种情况下用户有执行权限
+    1.登录用户有资源组粒度执行权限，并且为组内用户
+    2.当前登录用户为提交人，并且有执行权限
+    :param user:
+    :param workflow_id:
+    :return:
+    """
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
     # 只有审核通过和定时执行的数据才可以立即执行
     if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
-        # 当前登录用户必须为有执行权限的组内用户
+        # 当前登录用户有资源组粒度执行权限，并且为组内用户
         group_ids = [group.group_id for group in user_groups(user)]
-        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute'):
-            return True
-    return result
-
-
-# 判断用户当前是否可定时执行
-def can_timingtask(user, workflow_id):
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    result = False
-    # 只有审核通过和定时执行的数据才可以执行
-    if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
-        # 当前登录用户必须为有执行权限的组内用户
-        group_ids = [group.group_id for group in user_groups(user)]
-        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute'):
+        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute_for_resource_group'):
+            result = True
+        # 当前登录用户为提交人，并且有执行权限
+        if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
             result = True
     return result
 
 
-# 判断用户当前是否是可终止
+def can_timingtask(user, workflow_id):
+    """
+    判断用户当前是否可定时执行，两种情况下用户有定时执行权限
+    1.登录用户有资源组粒度执行权限，并且为组内用户
+    2.当前登录用户为提交人，并且有执行权限
+    :param user:
+    :param workflow_id:
+    :return:
+    """
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = False
+    # 只有审核通过和定时执行的数据才可以执行
+    if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
+        # 当前登录用户有资源组粒度执行权限，并且为组内用户
+        group_ids = [group.group_id for group in user_groups(user)]
+        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute_for_resource_group'):
+            result = True
+        # 当前登录用户为提交人，并且有执行权限
+        if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
+            result = True
+    return result
+
+
 def can_cancel(user, workflow_id):
+    """
+    判断用户当前是否是可终止，
+    审核中的工单，审核人和提交人可终止
+    审核通过但未执行的工单，有执行权限的用户终止
+    :param user:
+    :param workflow_id:
+    :return:
+    """
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
     # 审核中的工单，审核人和提交人可终止
