@@ -692,6 +692,15 @@ class SqlReviewTaskPublish(BaseHandler):
             'create_user': request.user.display
         }
 
+        # 非对象类型必须选择起止日期
+        if kwargs['rule_type'] != 'obj':
+            if not (kwargs['start_date'] and kwargs['stop_date']):
+                context = {
+                    "errcode": 80058,
+                    "message": u"请分析选择起止日期"
+                }
+                return context
+
         async_task(self.run, kwargs=kwargs)
 
         context = {
