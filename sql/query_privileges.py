@@ -114,17 +114,9 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     elif instance.db_type == 'mysql':
         # 首先使用inception的语法树打印获取查询涉及的的表
         table_ref_result = Masking().query_table_ref(sql_content + ';', instance_name, db_name)
-
         # 正确解析拿到表数据，可以校验表权限
         if table_ref_result['status'] == 0:
             table_ref = table_ref_result['data']
-            db_list = [table_info['db'] for table_info in table_ref]
-            table_list = [table_info['table'] for table_info in table_ref]
-            if '' in db_list or '*' in table_list:
-                result['status'] = 2
-                result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验'
-                return result
-
             # 先判断是否有整库权限
             for table in table_ref:
                 db_privileges = user_privileges.filter(db_name=table['db'], priv_type=1)

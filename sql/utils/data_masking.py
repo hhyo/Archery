@@ -130,6 +130,13 @@ class Masking(object):
                     result['status'] = 2
                     result['msg'] = f'通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验：{str(msg)}\nquery_tree：{print_info}'
                     table_ref = []
+            finally:
+                db_list = [table_info['db'] for table_info in table_ref]
+                table_list = [table_info['table'] for table_info in table_ref]
+                # 异常解析的情形
+                if '' in db_list or '*' in table_list:
+                    result['status'] = 2
+                    result['msg'] = '通过inception语法树解析表信息出错，无法校验表权限，如果需要继续查询请关闭校验'
             result['data'] = table_ref
         return result
 
