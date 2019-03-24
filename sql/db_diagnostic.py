@@ -180,8 +180,8 @@ def trxandlocks(request):
           AND lw.blocking_trx_id = trx.trx_id;'''
 
     execute_engine = get_engine(instance=instance)
-    trxandlocks = execute_engine.query('information_schema', sql).to_sep_dict()
-    result = {'status': 0, 'msg': 'ok', 'data': trxandlocks}
+    trxandlocks = execute_engine.query('information_schema', sql).to_dict()
+    result = {'status': 0, 'msg': 'ok', 'rows': trxandlocks}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
