@@ -40,51 +40,42 @@ def sql_workflow_list(request):
     :param request:
     :return:
     """
+    nav_status = request.POST.get('navStatus', 'all')
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-    search = request.POST.get('search', '')
-
-    # 获取筛选参数
-    navStatus = request.POST.get('navStatus')
-
-    # 管理员可以看到全部工单，其他人能看到自己提交和审核的工单
+    search = request.POST.get('search')
     user = request.user
 
-    # 全部工单里面包含搜索条件
-    if navStatus == 'all':
-        if user.is_superuser:
-            workflow_list = SqlWorkflow.objects.filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')
-        elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
-            # 先获取用户所在资源组列表
-            group_list = user_groups(user)
-            group_ids = [group.group_id for group in group_list]
-            workflow_list = SqlWorkflow.objects.filter(group_id__in=group_ids).filter(
-                Q(engineer_display__contains=search) | Q(workflow_name__contains=search)).order_by('-create_time')
-        else:
-            workflow_list = SqlWorkflow.objects.filter(engineer=user.username).filter(
-                workflow_name__contains=search).order_by('-create_time')
+    workflow = SqlWorkflow.objects.all()
+    # 过滤搜索项，模糊检索项包括提交人名称、工单名
+    if search:
+        workflow = SqlWorkflow.objects.filter(
+            Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
+    # 过滤工单状态
+    if nav_status != 'all':
+        workflow = workflow.filter(status=nav_status)
+    # 管理员，可查看所有工单
+    if user.is_superuser:
+        workflow = workflow
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        workflow = workflow.filter(group_id__in=group_ids)
+    # 其他人只能查看自己提交的工单
     else:
-        if user.is_superuser:
-            workflow_list = SqlWorkflow.objects.filter(
-                status=navStatus
-            ).order_by('-create_time')
-        elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute'):
-            # 先获取用户所在资源组列表
-            group_list = user_groups(user)
-            group_ids = [group.group_id for group in group_list]
-            workflow_list = SqlWorkflow.objects.filter(status=navStatus,
-                                                       group_id__in=group_ids).order_by('-create_time')
-        else:
-            workflow_list = SqlWorkflow.objects.filter(status=navStatus, engineer=user.username
-                                                       ).order_by('-create_time')
-    count = workflow_list.count()
-    workflow = workflow_list[offset:limit].values("id", "workflow_name", "engineer_display", "status",
-                                                  "is_backup", "create_time", "instance__instance_name", "db_name",
-                                                  "group_name", "syntax_type")
+        workflow = workflow.filter(engineer=user.username)
+
+    count = workflow.count()
+    workflow_list = workflow.order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display",
+                                                                           "status", "is_backup", "create_time",
+                                                                           "instance__instance_name", "db_name",
+                                                                           "group_name", "syntax_type")
+
     # QuerySet 序列化
-    rows = [row for row in workflow]
+    rows = [row for row in workflow_list]
     result = {"total": count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -304,13 +295,15 @@ def passed(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-@permission_required('sql.sql_execute', raise_exception=True)
 def execute(request):
     """
     执行SQL
     :param request:
     :return:
     """
+    # 校验多个权限
+    if not (request.user.has_perm('sql.sql_execute') or request.user.has_perm('sql.sql_execute_for_resource_group')):
+        raise PermissionDenied
     workflow_id = int(request.POST.get('workflow_id', 0))
     if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
@@ -340,13 +333,15 @@ def execute(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-@permission_required('sql.sql_execute', raise_exception=True)
 def timing_task(request):
     """
     定时执行SQL
     :param request:
     :return:
     """
+    # 校验多个权限
+    if not (request.user.has_perm('sql.sql_execute') or request.user.has_perm('sql.sql_execute_for_resource_group')):
+        raise PermissionDenied
     workflow_id = request.POST.get('workflow_id')
     run_date = request.POST.get('run_date')
     if run_date is None or workflow_id is None:

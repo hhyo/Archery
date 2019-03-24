@@ -14,13 +14,16 @@ class UsersAdmin(UserAdmin):
     list_display = ('id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
     search_fields = ('id', 'username', 'display', 'email')
     list_display_links = ('id', 'username',)
-    # 自定义显示内容
+    ordering = ('id',)
+    # 编辑页显示内容
     fieldsets = (
         (('认证信息'), {'fields': ('username', 'password')}),
         (('个人信息'), {'fields': ('display', 'email')}),
         (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         (('其他信息'), {'fields': ('last_login', 'date_joined')}),
     )
+    # 添加页显示内容
+    add_fieldsets = (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
 
 
 # 资源组管理
