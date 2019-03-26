@@ -73,6 +73,10 @@ order by o.name,c.colid""".format(db_name, tb_name)
                            "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
+        if re.match(r"^select", sql, re.I) is None:
+            result['bad_query'] = True
+            result['msg'] = '仅支持^select语法!'
+            return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['bad_query'] = True
@@ -127,5 +131,5 @@ order by o.name,c.colid""".format(db_name, tb_name)
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         filtered_result = brute_mask(resultset)
-        filtered_result.is_masked = True
+        filtered_result.is_masked = 1
         return filtered_result
