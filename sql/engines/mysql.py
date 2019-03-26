@@ -54,19 +54,19 @@ class MysqlEngine(EngineBase):
     def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
         sql = """SELECT 
-    COLUMN_NAME,
-    COLUMN_TYPE,
-    CHARACTER_SET_NAME,
-    IS_NULLABLE,
-    COLUMN_KEY,
-    EXTRA,
-    COLUMN_COMMENT
-FROM
-    information_schema.COLUMNS
-WHERE
-    TABLE_SCHEMA = '{0}'
-        AND TABLE_NAME = '{1}'
-ORDER BY ORDINAL_POSITION;""".format(
+            COLUMN_NAME,
+            COLUMN_TYPE,
+            CHARACTER_SET_NAME,
+            IS_NULLABLE,
+            COLUMN_KEY,
+            EXTRA,
+            COLUMN_COMMENT
+        FROM
+            information_schema.COLUMNS
+        WHERE
+            TABLE_SCHEMA = '{0}'
+                AND TABLE_NAME = '{1}'
+        ORDER BY ORDINAL_POSITION;""".format(
             db_name, tb_name)
         result = self.query(sql=sql)
         return result
@@ -103,16 +103,20 @@ ORDER BY ORDINAL_POSITION;""".format(
 
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
-        check_result = {'has_star': False, 'msg': '', 'filtered_sql': sql}
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': '', 'has_star': False}
+        sql_lower = sql.lower()
+        if re.match(r"^select|^show|^explain", sql_lower) is None:
+            result['bad_query'] = True
+            result['msg'] = '仅支持^select|^show|^explain语法!'
         if '*' in sql:
-            check_result['has_star'] = True
-            check_result['msg'] = 'SQL语句中含有 * '
+            result['has_star'] = True
+            result['msg'] = 'SQL语句中含有 * '
         # 对查询sql增加limit限制
-        if re.match(r"^select", sql.lower()):
-            if re.search(r"limit\s+(\d+)$", sql.lower()) is None:
-                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql.lower()) is None:
-                    check_result['filtered_sql'] = sql + ' limit ' + str(limit_num)
-        return check_result
+        if re.match(r"^select", sql_lower):
+            if re.search(r"limit\s+(\d+)$", sql_lower) is None:
+                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
+                    result['filtered_sql'] = sql + ' limit ' + str(limit_num) + ';'
+        return result
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -123,12 +127,12 @@ ORDER BY ORDINAL_POSITION;""".format(
         inception_mask_result = mask_tool.data_masking(self.instance_name, db_name, sql, resultset_dict)
         # 传参进去之后, 就已经被处理
         resultset.rows = resultset_dict['rows']
-        hit_rule = inception_mask_result['data']['hit_rule']
-        if hit_rule == 1:
-            resultset.is_masked = True
+        resultset.mask_rule_hit = inception_mask_result['data']['hit_rule']
         if inception_mask_result['status'] != 0:
             resultset.is_critical = True
             resultset.error = inception_mask_result['msg']
+        elif resultset.mask_rule_hit == 1:
+            resultset.is_masked = 1
         resultset.status = inception_mask_result['status']
         return resultset
 

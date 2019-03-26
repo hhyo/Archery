@@ -49,15 +49,9 @@ def query(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 删除注释语句，进行语法判断
+    # 删除注释语句，进行语法判断，执行第一条有效sql
     sql_content = sqlparse.format(sql_content.strip(), strip_comments=True)
-    sql_list = sqlparse.split(sql_content)
-    # 执行第一条有效sql
-    sql_content = sql_list[0].rstrip(';')
-    if re.match(r"^select|^show|^explain", sql_content, re.I) is None:
-        result['status'] = 1
-        result['msg'] = '仅支持^select|^show|^explain语法，请联系管理员！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
+    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
 
     try:
         # 查询权限校验
@@ -89,7 +83,6 @@ def query(request):
             return HttpResponse(json.dumps(result), content_type='application/json')
         else:
             sql_content = filter_result['filtered_sql']
-        sql_content = sql_content + ';'
 
         # 执行查询语句,统计执行时间
         t_start = time.time()
@@ -97,41 +90,34 @@ def query(request):
         t_end = time.time()
         query_result.query_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
-        # 数据脱敏，同样需要检查配置，是否开启脱敏，语法树解析是否允许出错继续执行
-        hit_rule = 0 if re.match(r"^select", sql_content.lower()) else 2  # 查询是否命中脱敏规则，0, '未知', 1, '命中', 2, '未命中'
-        masking = 2  # 查询结果是否正常脱敏，1, '是', 2, '否'
+        # 数据脱敏
         t_start = time.time()
-        # 仅对正确查询的语句进行脱敏
-        if SysConfig().get('data_masking') and re.match(r"^select", sql_content.lower()) and query_result.error is None:
+        # 仅对正确查询并返回的语句进行脱敏
+        if SysConfig().get('data_masking') and re.match(r"^select", sql_content, re.I) and query_result.error is None:
             try:
-                query_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
-                if query_result.is_critical is True and SysConfig().get('query_check'):
-                    masking_result = {'status': query_result.status,
-                                      'msg': query_result.error,
-                                      'data': query_result.__dict__}
-                    return HttpResponse(json.dumps(masking_result), content_type='application/json')
-                else:
-                    # 重置脱敏结果，返回未脱敏数据
-                    query_result.status = 0
-                    query_result.error = None
-                    # 实际未命中, 则显示为未做脱敏
-                    if query_result.is_masked:
-                        masking = 1
-                        hit_rule = 1
+                masking_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
+                # 脱敏报错的处理
+                if masking_result.is_critical is True:
+                    # 开启query_check，直接返回异常，禁止执行
+                    if SysConfig().get('query_check'):
+                        masking_result.rows = []
+                        masking_result.column_list = []
+                        masking_result = {'status': masking_result.status,
+                                          'msg': masking_result.error,
+                                          'data':query_result.__dict__}
+                        return HttpResponse(json.dumps(masking_result), content_type='application/json')
+                query_result = masking_result
             except Exception:
-                logger.error(traceback.format_exc())
-                # 报错, 未脱敏, 未命中
-                hit_rule = 2
-                masking = 2
+                # 抛出未定义异常
+                logger.error(f'数据脱敏异常，查询语句:{sql_content}\n，错误信息：{traceback.format_exc()}')
+                # 开启query_check，直接返回异常，禁止执行
                 if SysConfig().get('query_check'):
                     result['status'] = 1
                     result['msg'] = '脱敏数据报错,请联系管理员'
                     return HttpResponse(json.dumps(result), content_type='application/json')
-
         t_end = time.time()
         query_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
         sql_result = query_result.__dict__
-
         result['data'] = sql_result
 
         # 成功的查询语句记录存入数据库
@@ -151,8 +137,8 @@ def query(request):
                 effect_row=limit_num,
                 cost_time=query_result.query_time,
                 priv_check=priv_check,
-                hit_rule=hit_rule,
-                masking=masking
+                hit_rule=query_result.mask_rule_hit,  # '查询是否命中脱敏规则', choices=((0, '未知'), (1, '命中'), (2, '未命中'),)
+                masking=query_result.is_masked  # '查询结果是否正常脱敏', choices=((1, '是'), (2, '否')
             )
             # 防止查询超时
             try:
@@ -161,7 +147,8 @@ def query(request):
                 connection.close()
                 query_log.save()
     except Exception as e:
-        logger.error(traceback.format_exc())
+        # 抛出未定义异常
+        logger.error(f'查询异常报错，查询语句:{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1
         result['msg'] = str(e)
 
