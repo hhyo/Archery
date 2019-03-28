@@ -9,6 +9,7 @@ from sql.engines import EngineBase
 from sql.engines.models import ResultSet, ReviewSet
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
+from sql.engines.redis import RedisEngine
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -207,6 +208,70 @@ class TestMysql(TestCase):
         sql_without_limit = 'select user from usertable'
         check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit, limit_num=100)
         self.assertEqual(check_result['filtered_sql'], 'select user from usertable limit 100;')
+
+
+class TestRedis(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', host='some_host',
+                           port=1366, user='ins_user', password='some_pass')
+        cls.ins.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ins.delete()
+
+    @patch('redis.Redis')
+    def test_get_connection(self, _conn):
+        new_engine = RedisEngine(instance=self.ins)
+        new_engine.get_connection()
+        _conn.assert_called_once()
+
+    @patch('redis.Redis.execute_command', return_value=[1, 2, 3])
+    def test_query_return_list(self, _execute_command):
+        new_engine = RedisEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertTupleEqual(query_result.rows, ([1], [2], [3]))
+
+    @patch('redis.Redis.execute_command', return_value='text')
+    def test_query_return_str(self, _execute_command):
+        new_engine = RedisEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertTupleEqual(query_result.rows, (['text'],))
+
+    @patch('redis.Redis.execute_command', return_value='text')
+    def test_query_execute(self, _execute_command):
+        new_engine = RedisEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertTupleEqual(query_result.rows, (['text'],))
+
+    @patch('redis.Redis.config_get', return_value={"databases": 4})
+    def test_get_all_databases(self, _config_get):
+        new_engine = RedisEngine(instance=self.ins)
+        dbs = new_engine.get_all_databases()
+        self.assertListEqual(dbs, ['0', '1', '2', '3'])
+
+    def test_query_check_safe_cmd(self):
+        safe_cmd = "keys 1*"
+        new_engine = RedisEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name=0, sql=safe_cmd)
+        self.assertDictEqual(check_result, {'msg': '', 'bad_query': False, 'filtered_sql': safe_cmd, 'has_star': False})
+
+    def test_query_check_danger_cmd(self):
+        safe_cmd = "keys *"
+        new_engine = RedisEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name=0, sql=safe_cmd)
+        self.assertDictEqual(check_result,
+                             {'msg': '禁止执行该命令！', 'bad_query': True, 'filtered_sql': safe_cmd, 'has_star': False})
+
+    def test_query_masking(self):
+        query_result = ResultSet()
+        new_engine = RedisEngine(instance=self.ins)
+        masking_result = new_engine.query_masking(db_name=0, sql='', resultset=query_result)
+        self.assertEqual(masking_result, query_result)
 
 
 class TestModel(TestCase):

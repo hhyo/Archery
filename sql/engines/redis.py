@@ -84,14 +84,6 @@ class RedisEngine(EngineBase):
             result_set.error = str(e)
         return result_set
 
-    def execute(self, db_name=None, sql='', close_conn=True):
-        result = ResultSet(full_sql=sql)
-        try:
-            conn = self.get_connection()
-            if db_name:
-                conn.execute_command(f"select {db_name}")
-            conn.execute_command(sql)
-        except Exception as e:
-            logger.error(f"执行redis命令报错，查询语句：{sql}，错误信息：{traceback.format_exc()}")
-            result.error = str(e)
-        return result
+    def query_masking(self, db_name=None, sql='', resultset=None):
+        """不做脱敏"""
+        return resultset
