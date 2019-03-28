@@ -1,6 +1,6 @@
 ---
-name: 使用问题反馈
-about: 使用问题反馈, bug提交, 必须使用这个模板, 不规范issue直接关闭
+name: BUG提交
+about: BUG提交，必须使用这个模板，不规范issue将直接关闭
 title: "[ bug ]"
 labels: ''
 assignees: ''
