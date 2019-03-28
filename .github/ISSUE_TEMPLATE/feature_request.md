@@ -1,20 +1,15 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+name: 功能建议
+about: 如果你对Archery有什么功能或者改进建议，请在此反馈
+title: '[ 功能建议 ]'
+labels: enhancement
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**目前遇到的问题/使用障碍**
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**希望如何解决/实现它**
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**其他信息**
+如果有其他类似的产品功能或者图片信息，可在此提交

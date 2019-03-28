@@ -1,6 +1,6 @@
 ---
-name: BUG
-about: 使用问题反馈, bug提交, 必须使用这个模板, 不规范issue直接关闭
+name: BUG提交
+about: BUG提交，必须使用这个模板，不规范issue将直接关闭
 title: "[ bug ]"
 labels: ''
 assignees: ''
@@ -28,4 +28,4 @@ docker logs archery -f --tail=10
 **版本信息**
 一般建议使用release版本，其他都是非稳定版本
  - 应用版本/分支：Release v1.4.5  
- - 部署方式：Docker还是手工部署
+ - 部署方式：Docker、手工部署

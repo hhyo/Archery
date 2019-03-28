@@ -1,10 +1,16 @@
 ---
-name: Custom issue template
-about: Describe this issue template's purpose here.
-title: ''
-labels: ''
+name: 问题咨询
+about: 如果在使用过程中遇到无法解决的问题，在查阅文档后仍无法解决，可以在此反馈
+title: '[ 问题咨询 ]'
+labels: 'question'
 assignees: ''
 
 ---
 
+**问题描述**
+详细描述你的操作步骤和结果，以及你的疑问
 
+**版本信息**
+一般建议使用release版本，其他都是非稳定版本
+ - 应用版本/分支：Release v1.4.5  
+ - 部署方式：Docker、手工部署
