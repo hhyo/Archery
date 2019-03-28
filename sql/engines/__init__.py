@@ -5,12 +5,8 @@ from sql.engines.models import ResultSet
 class EngineBase:
     """enginebase 只定义了init函数和若干方法的名字, 具体实现用mysql.py pg.py等实现"""
 
-    def __init__(self, instance=None, workflow=None):
+    def __init__(self, instance=None):
         self.conn = None
-        if workflow:
-            self.workflow = workflow
-            self.instance = self.workflow.instance
-            self.sql = workflow.sqlworkflowcontent.sql_content
         if instance:
             self.instance = instance
             self.instance_name = instance.instance_name
@@ -78,10 +74,10 @@ def get_engine(instance=None, workflow=None):
         instance = workflow.instance
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
-        return MysqlEngine(workflow=workflow, instance=instance)
+        return MysqlEngine(instance=instance)
     elif instance.db_type == 'mssql':
         from .mssql import MssqlEngine
-        return MssqlEngine(workflow=workflow, instance=instance)
+        return MssqlEngine(instance=instance)
     elif instance.db_type == 'redis':
         from .redis import RedisEngine
-        return RedisEngine(workflow=workflow, instance=instance)
+        return RedisEngine(instance=instance)
