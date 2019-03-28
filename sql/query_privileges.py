@@ -33,44 +33,6 @@ logger = logging.getLogger('default')
 __author__ = 'hhyo'
 
 
-def query_apply_audit_call_back(workflow_id, workflow_status):
-    """
-    查询权限申请用于工作流审核回调
-    :param workflow_id:
-    :param workflow_status:
-    :return:
-    """
-    # 更新业务表状态
-    apply_info = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
-    apply_info.status = workflow_status
-    apply_info.save()
-    # 审核通过插入权限信息，批量插入，减少性能消耗
-    if workflow_status == WorkflowDict.workflow_status['audit_success']:
-        apply_queryset = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
-        # 库权限
-
-        if apply_queryset.priv_type == 1:
-            insert_list = [QueryPrivileges(
-                user_name=apply_queryset.user_name,
-                user_display=apply_queryset.user_display,
-                instance=apply_queryset.instance,
-                db_name=db_name,
-                table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
-                limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
-                apply_queryset.db_list.split(',')]
-        # 表权限
-        elif apply_queryset.priv_type == 2:
-            insert_list = [QueryPrivileges(
-                user_name=apply_queryset.user_name,
-                user_display=apply_queryset.user_display,
-                instance=apply_queryset.instance,
-                db_name=apply_queryset.db_list,
-                table_name=table_name, valid_date=apply_queryset.valid_date,
-                limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for table_name in
-                apply_queryset.table_list.split(',')]
-        QueryPrivileges.objects.bulk_create(insert_list)
-
-
 def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     """
     查询权限校验
@@ -202,13 +164,15 @@ def query_priv_apply(request):
     :return:
     """
     title = request.POST['title']
-    instance_name = request.POST['instance_name']
-    group_name = request.POST['group_name']
+    instance_name = request.POST.get('instance_name')
+    group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
-    priv_type = request.POST['priv_type']
-    db_name = request.POST['db_name']
-    valid_date = request.POST['valid_date']
-    limit_num = request.POST['limit_num']
+    priv_type = request.POST.get('priv_type')
+    db_name = request.POST.get('db_name')
+    db_list = request.POST.getlist('db_list[]')
+    table_list = request.POST.getlist('table_list[]')
+    valid_date = request.POST.get('valid_date')
+    limit_num = request.POST.get('limit_num')
 
     # 获取用户信息
     user = request.user
@@ -216,58 +180,44 @@ def query_priv_apply(request):
     # 服务端参数校验
     result = {'status': 0, 'msg': 'ok', 'data': []}
     if int(priv_type) == 1:
-        db_list = request.POST['db_list']
-        if title is None or instance_name is None or db_list is None or valid_date is None or limit_num is None:
+        if not (title and instance_name and db_list and valid_date and limit_num):
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     elif int(priv_type) == 2:
-        table_list = request.POST['table_list']
-        if title is None or instance_name is None or db_name is None or valid_date is None or table_list is None or limit_num is None:
+        if not (title and instance_name and db_name and valid_date and table_list and limit_num):
             result['status'] = 1
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
         user_instances(request.user, type='slave', db_type='all').get(instance_name=instance_name)
-    except Exception:
+    except Instance.DoesNotExist:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
-    # 判断是否需要限制到表级别的权限
     # 库权限
     ins = Instance.objects.get(instance_name=instance_name)
-    # 获取用户所有未过期权限
-    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=ins,
-                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0)
     if int(priv_type) == 1:
-        db_list = db_list.split(',')
-        # 检查申请账号是否已拥整个库的查询权限
-        own_dbs = user_privileges.filter(db_name__in=db_list, priv_type=1).values('db_name')
-        own_db_list = [table_info['db_name'] for table_info in own_dbs]
-        if own_db_list is None:
-            pass
-        else:
-            for db_name in db_list:
-                if db_name in own_db_list:
-                    result['status'] = 1
-                    result['msg'] = '你已拥有' + instance_name + '实例' + db_name + '库的全部查询权限，不能重复申请'
-                    return HttpResponse(json.dumps(result), content_type='application/json')
+        # 检查申请账号是否已拥库查询权限
+        for db_name in db_list:
+            if _db_priv(user, ins, db_name):
+                result['status'] = 1
+                result['msg'] = f'你已拥有{instance_name}实例{db_name}库权限，不能重复申请'
+                return HttpResponse(json.dumps(result), content_type='application/json')
+
     # 表权限
     elif int(priv_type) == 2:
-        table_list = table_list.split(',')
+        # 先检查是否拥有库权限
+        if _db_priv(user, ins, db_name):
+            result['status'] = 1
+            result['msg'] = f'你已拥有{instance_name}实例{db_name}库的全部权限，不能重复申请'
+            return HttpResponse(json.dumps(result), content_type='application/json')
         # 检查申请账号是否已拥有该表的查询权限
-        own_tables = user_privileges.filter(db_name=db_name,
-                                            table_name__in=table_list,
-                                            priv_type=2).values('table_name')
-        own_table_list = [table_info['table_name'] for table_info in own_tables]
-        if own_table_list is None:
-            pass
-        else:
-            for table_name in table_list:
-                if table_name in own_table_list:
-                    result['status'] = 1
-                    result['msg'] = '你已拥有' + instance_name + '实例' + db_name + '.' + table_name + '表的查询权限，不能重复申请'
-                    return HttpResponse(json.dumps(result), content_type='application/json')
+        for tb_name in table_list:
+            if _tb_priv(user, ins, db_name, tb_name):
+                result['status'] = 1
+                result['msg'] = f'你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请'
+                return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 使用事务保持数据一致性
     try:
@@ -299,7 +249,7 @@ def query_priv_apply(request):
             audit_result = Audit.add(WorkflowDict.workflow_type['query'], apply_id)
             if audit_result['status'] == 0:
                 # 更新业务表审核状态,判断是否插入权限信息
-                query_apply_audit_call_back(apply_id, audit_result['data']['workflow_status'])
+                _query_apply_audit_call_back(apply_id, audit_result['data']['workflow_status'])
     except Exception as msg:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -430,7 +380,7 @@ def query_priv_audit(request):
             audit_detail = Audit.detail(audit_id)
             if audit_detail.workflow_type == WorkflowDict.workflow_type['query']:
                 # 更新业务表审核状态,插入权限信息
-                query_apply_audit_call_back(audit_detail.workflow_id, audit_result['data']['workflow_status'])
+                _query_apply_audit_call_back(audit_detail.workflow_id, audit_result['data']['workflow_status'])
 
     except Exception as msg:
         logger.error(traceback.format_exc())
@@ -495,7 +445,7 @@ def _tb_priv(user, instance, db_name, tb_name):
     """
     # 获取用户表权限
     user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance, db_name=str(db_name),
-                                                     tb_name=str(tb_name), valid_date__gte=datetime.datetime.now(),
+                                                     table_name=str(tb_name), valid_date__gte=datetime.datetime.now(),
                                                      is_deleted=0, priv_type=2)
     if user.is_superuser:
         return int(SysConfig().get('admin_query_limit', 5000))
@@ -509,7 +459,7 @@ def _priv_limit(user, instance, db_name, tb_name=None):
     """
     获取用户拥有的查询权限的最小limit限制，用于返回结果集限制
     :param db_name:
-    :param tb_name:
+    :param tb_name: 可为空，为空时返回库权限
     :return:
     """
     # 到查询权限表获取信息
@@ -521,7 +471,52 @@ def _priv_limit(user, instance, db_name, tb_name=None):
     if tb_name:
         tb_limit_num = user_privileges.filter(db_name=str(db_name), table_name=str(tb_name), priv_type=2
                                               ).aggregate(Min('limit_num'))['limit_num__min']
-        if tb_limit_num:
-            return min(db_limit_num, tb_limit_num)
     else:
+        tb_limit_num = None
+    # 返回最小值
+    if db_limit_num and tb_limit_num:
+        return min(db_limit_num, tb_limit_num)
+    elif db_limit_num:
         return db_limit_num
+    elif tb_limit_num:
+        return tb_limit_num
+    else:
+        raise RuntimeError('用户无任何有效权限！')
+
+
+def _query_apply_audit_call_back(apply_id, workflow_status):
+    """
+    查询权限申请用于工作流审核回调
+    :param apply_id: 申请id
+    :param workflow_status: 审核结果
+    :return:
+    """
+    # 更新业务表状态
+    apply_info = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+    apply_info.status = workflow_status
+    apply_info.save()
+    # 审核通过插入权限信息，批量插入，减少性能消耗
+    if workflow_status == WorkflowDict.workflow_status['audit_success']:
+        apply_queryset = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+        # 库权限
+
+        if apply_queryset.priv_type == 1:
+            insert_list = [QueryPrivileges(
+                user_name=apply_queryset.user_name,
+                user_display=apply_queryset.user_display,
+                instance=apply_queryset.instance,
+                db_name=db_name,
+                table_name=apply_queryset.table_list, valid_date=apply_queryset.valid_date,
+                limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for db_name in
+                apply_queryset.db_list.split(',')]
+        # 表权限
+        elif apply_queryset.priv_type == 2:
+            insert_list = [QueryPrivileges(
+                user_name=apply_queryset.user_name,
+                user_display=apply_queryset.user_display,
+                instance=apply_queryset.instance,
+                db_name=apply_queryset.db_list,
+                table_name=table_name, valid_date=apply_queryset.valid_date,
+                limit_num=apply_queryset.limit_num, priv_type=apply_queryset.priv_type) for table_name in
+                apply_queryset.table_list.split(',')]
+        QueryPrivileges.objects.bulk_create(insert_list)
