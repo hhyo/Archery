@@ -153,14 +153,19 @@ def query(request):
             except:
                 connection.close()
                 query_log.save()
-        # 返回查询结果
-        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                            content_type='application/json')
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1
         result['msg'] = f'查询异常报错，错误信息：{e}'
         return HttpResponse(json.dumps(result), content_type='application/json')
+    # 返回查询结果
+    try:
+        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                            content_type='application/json')
+    # 虽然能正常返回，但是依然会乱码
+    except UnicodeDecodeError:
+        return HttpResponse(json.dumps(result, default=str, bigint_as_string=True, encoding='latin1'),
+                            content_type='application/json')
 
 
 @permission_required('sql.menu_sqlquery', raise_exception=True)
