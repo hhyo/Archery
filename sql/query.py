@@ -111,12 +111,12 @@ def query(request):
                 # 正常脱敏
                 else:
                     result['data'] = masking_result.__dict__
-            except Exception:
+            except Exception as e:
                 logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if SysConfig().get('query_check'):
                     result['status'] = 1
-                    result['msg'] = '脱敏数据报错，请联系管理员'
+                    result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{e}'
                 # 关闭query_check，忽略错误信息，返回未脱敏数据
                 else:
                     query_result.error = None
@@ -159,7 +159,7 @@ def query(request):
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1
-        result['msg'] = str(e)
+        result['msg'] = f'查询异常报错，错误信息：{e}'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
 

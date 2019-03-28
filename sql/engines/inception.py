@@ -74,9 +74,9 @@ class InceptionEngine(EngineBase):
         if print_info['errlevel'] == 0 and print_info['errmsg'] == 'None':
             return json.loads(_repair_json_str(print_info['query_tree']))
         elif print_info['errlevel'] == 0 and print_info['errmsg']:
-            raise RuntimeError(print_info['query_tree'])
+            raise RuntimeError(f"Inception Error: {print_info['query_tree']}")
         else:
-            raise RuntimeError(print_info['errmsg'])
+            raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 
     def get_rollback_list(self, workflow_id):
         """
