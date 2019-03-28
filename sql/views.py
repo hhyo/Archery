@@ -164,7 +164,7 @@ def dashboard(request):
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取用户关联实例列表
-    instances = [slave.instance_name for slave in user_instances(request.user, type='slave', db_type='all')]
+    instances = [slave for slave in user_instances(request.user, type='slave', db_type='all')]
 
     context = {'instances': instances}
     return render(request, 'sqlquery.html', context)

@@ -73,14 +73,18 @@ class Instance(models.Model):
     """
     各个线上实例配置
     """
-    # TODO （低优先级）instance_name 可改为name
+    DB_TYPE_CHOICES = (
+        ('mysql', 'MySQL'),
+        ('mssql', 'MsSQL'),
+        ('redis', 'Redis'))
+
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'MySQL'), ('mssql', 'MsSQL')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=DB_TYPE_CHOICES)
     host = models.CharField('实例连接', max_length=200)
-    port = models.IntegerField('端口', default=3306)
-    user = models.CharField('用户名', max_length=100)
-    password = models.CharField('密码', max_length=300, null=True, blank=True)
+    port = models.IntegerField('端口', default=0)
+    user = models.CharField('用户名', max_length=100, default='', blank=True)
+    password = models.CharField('密码', max_length=300, default='', blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
@@ -101,7 +105,8 @@ class Instance(models.Model):
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
-        self.password = pc.encrypt(self.password)
+        if self.password:
+            self.password = pc.encrypt(self.password)
         super(Instance, self).save(*args, **kwargs)
 
 
@@ -307,8 +312,8 @@ class QueryPrivileges(models.Model):
     user_name = models.CharField('用户名', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = models.CharField('数据库', max_length=64)
-    table_name = models.CharField('表', max_length=64)
+    db_name = models.CharField('数据库', max_length=64, default='')
+    table_name = models.CharField('表', max_length=64, default='')
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
@@ -322,6 +327,7 @@ class QueryPrivileges(models.Model):
     class Meta:
         managed = True
         db_table = 'query_privileges'
+        index_together = ["user_name", "instance", "db_name", "valid_date"]
         verbose_name = u'查询权限记录'
         verbose_name_plural = u'查询权限记录'
 

@@ -149,16 +149,16 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data['data'];
+                        $("#optgroup-mysql").empty();
+                        $("#optgroup-mssql").empty();
+                        $("#optgroup-redis").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
-                                $("#optgroup-mysql").empty();
                                 $("#optgroup-mysql").append(instance);
                             } else if (result[i]['db_type'] === 'mssql') {
-                                $("#optgroup-mssql").empty();
                                 $("#optgroup-mssql").append(instance);
                             } else if (result[i]['db_type'] === 'redis') {
-                                $("#optgroup-redis").empty();
                                 $("#optgroup-redis").append(instance);
                             }
                         }

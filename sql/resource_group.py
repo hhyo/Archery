@@ -15,9 +15,9 @@ from sql.utils.workflow_audit import Audit
 logger = logging.getLogger('default')
 
 
-# 获取资源组列表
 @superuser_required
 def group(request):
+    """获取资源组列表"""
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
@@ -37,9 +37,9 @@ def group(request):
                         content_type='application/json')
 
 
-# 获取资源组已关联对象信息
 def associated_objects(request):
     """
+    获取资源组已关联对象信息
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
@@ -47,14 +47,15 @@ def associated_objects(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-    search = request.POST.get('search', '')
+    search = request.POST.get('search')
 
+    rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id)
+    # 过滤搜索项
+    if search:
+        rows_obj = rows_obj.filter(object_name__icontains=search)
+    # 过滤对象类型
     if object_type:
-        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id,
-                                                         object_type=object_type,
-                                                         object_name__icontains=search)
-    else:
-        rows_obj = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__icontains=search)
+        rows_obj = rows_obj.filter(object_type=object_type)
     count = rows_obj.count()
     rows = rows_obj[offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
                                          'create_time')
@@ -63,9 +64,9 @@ def associated_objects(request):
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
 
 
-# 获取资源组未关联对象信息
 def unassociated_objects(request):
     """
+    获取资源组未关联对象信息
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
@@ -92,8 +93,8 @@ def unassociated_objects(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取资源组关联实例列表
 def instances(request):
+    """获取资源组关联实例列表"""
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     type = request.POST.get('type')
@@ -102,16 +103,17 @@ def instances(request):
                     ResourceGroupRelations.objects.filter(group_id=group_id, object_type=1).values('object_id')]
 
     # 获取实例信息
-    instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'instance_name')
+    instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'type', 'db_type',
+                                                                                  'instance_name')
     rows = [row for row in instances_ob]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 添加资源组关联对象
 @superuser_required
 def addrelation(request):
     """
+    添加资源组关联对象
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
@@ -132,8 +134,8 @@ def addrelation(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取资源组的审批流程
 def auditors(request):
+    """获取资源组的审批流程"""
     group_name = request.POST.get('group_name')
     workflow_type = request.POST['workflow_type']
     result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
@@ -163,9 +165,9 @@ def auditors(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 资源组审批流程配置
 @superuser_required
 def changeauditors(request):
+    """设置资源组的审批流程"""
     auth_groups = request.POST.get('audit_auth_groups')
     group_name = request.POST.get('group_name')
     workflow_type = request.POST.get('workflow_type')
