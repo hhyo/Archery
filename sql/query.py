@@ -59,7 +59,7 @@ def query(request):
 
     try:
         # 查询权限校验
-        check_info = query_priv_check(user, instance_name, db_name, sql_content, limit_num)
+        check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
         if check_info['status'] == 0:
             limit_num = check_info['data']['limit_num']
             priv_check = check_info['data']['priv_check']
