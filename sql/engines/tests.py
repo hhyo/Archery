@@ -57,11 +57,6 @@ class TestEngineBase(TestCase):
         self.assertEqual(self.ins1.instance_name, engine.instance_name)
         self.assertEqual(self.ins1.user, engine.user)
 
-    def test_init_with_workflow(self):
-        engine = EngineBase(workflow=self.wf1)
-        self.assertEqual(self.ins1.instance_name, engine.instance.instance_name)
-        self.assertEqual(self.ins1.user, engine.instance.user)
-
 
 class TestMssql(TestCase):
 

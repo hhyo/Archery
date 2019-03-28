@@ -7,13 +7,12 @@
 """
 import logging
 import datetime
-import re
 import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.db import transaction
-from django.db.models import Min, Q
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -33,18 +32,17 @@ logger = logging.getLogger('default')
 __author__ = 'hhyo'
 
 
-def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
+def query_priv_check(user, instance, db_name, sql_content, limit_num):
     """
     查询权限校验
     :param user:
-    :param instance_name:
+    :param instance:
     :param db_name:
     :param sql_content:
     :param limit_num:
     :return:
     """
     result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 0}}
-    instance = Instance.objects.get(instance_name=instance_name)
     # 管理员不做权限校验，仅获取limit值信息
     if user.is_superuser:
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
@@ -53,14 +51,6 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
 
     # mysql可以校验到表级权限
     if instance.db_type == 'mysql':
-        # 查看表结构的语句，inception语法树解析会报错，单独处理，explain、其他show语句直接跳过不做校验
-        if re.match(r"^show\s+create\s+table\s+", sql_content, re.I):
-            tb_name = re.sub(r'^show\s+create\s+table\s+', '', sql_content, count=1, flags=0).strip()
-            # 既无库权限也无表权限
-            if not _db_priv(user, instance, db_name) and not _tb_priv(user, instance, db_name, tb_name):
-                result['status'] = 1
-                result['msg'] = f"你无{db_name}.{tb_name}表的查询权限！请先到查询权限管理进行申请"
-                return result
         try:
             # 首先使用inception的语法树打印获取查询涉及的的表
             table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
@@ -119,8 +109,8 @@ def query_priv_apply_list(request):
     :return:
     """
     user = request.user
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.POST.get('limit', 0))
+    offset = int(request.POST.get('offset', 0))
     limit = offset + limit
     search = request.POST.get('search', '')
 
@@ -263,6 +253,7 @@ def query_priv_apply(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
+@permission_required('sql.menu_queryapplylist', raise_exception=True)
 def user_query_priv(request):
     """
     用户的查询权限管理
@@ -270,7 +261,7 @@ def user_query_priv(request):
     :return:
     """
     user = request.user
-    user_display = request.POST.get('user_display')
+    user_display = request.POST.get('user_display', 'all')
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
@@ -408,9 +399,9 @@ def _table_ref(sql_content, instance, db_name):
     table_list = [table_info['table'] for table_info in table_ref]
     # 异常解析的情形
     if '' in db_list or '*' in table_list:
-        raise RuntimeError
+        raise RuntimeError('Inception Error: 存在空数据库表信息')
     if not (db_list or table_list):
-        raise RuntimeError
+        raise RuntimeError('Inception Error: 未解析到任何库表信息')
     return table_ref
 
 
@@ -462,15 +453,10 @@ def _priv_limit(user, instance, db_name, tb_name=None):
     :param tb_name: 可为空，为空时返回库权限
     :return:
     """
-    # 到查询权限表获取信息
-    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance,
-                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0)
-    db_limit_num = user_privileges.filter(db_name=str(db_name), priv_type=1
-                                          ).aggregate(Min('limit_num'))['limit_num__min']
-    # 传了表名则获取表权限
+    # 获取库表权限limit值
+    db_limit_num = _db_priv(user, instance, db_name)
     if tb_name:
-        tb_limit_num = user_privileges.filter(db_name=str(db_name), table_name=str(tb_name), priv_type=2
-                                              ).aggregate(Min('limit_num'))['limit_num__min']
+        tb_limit_num = _tb_priv(user, instance, db_name, tb_name)
     else:
         tb_limit_num = None
     # 返回最小值
