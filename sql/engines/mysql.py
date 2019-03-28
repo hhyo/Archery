@@ -104,7 +104,7 @@ class MysqlEngine(EngineBase):
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        sql_lower = sql.lower()
+        sql_lower = sql.lower().rstrip(';').strip()
         if re.match(r"^select|^show|^explain", sql_lower) is None:
             result['bad_query'] = True
             result['msg'] = '不止的支持查询语法类型!'
