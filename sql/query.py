@@ -14,7 +14,6 @@ from django.http import HttpResponse
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.engines.models import ResultSet
 from sql.query_privileges import query_priv_check
 from .models import QueryLog, Instance
 from sql.engines import get_engine
@@ -32,7 +31,7 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
-    limit_num = request.POST.get('limit_num')
+    limit_num = int(request.POST.get('limit_num', 0))
     user = request.user
 
     result = {'status': 0, 'msg': 'ok', 'data': {}}
@@ -44,31 +43,34 @@ def query(request):
         return result
 
     # 服务器端参数验证
-    if sql_content is None or db_name is None or instance_name is None or limit_num is None:
+    if not (sql_content and db_name and instance_name and limit_num):
         result['status'] = 1
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 删除注释语句，进行语法判断，执行第一条有效sql
     sql_content = sqlparse.format(sql_content.strip(), strip_comments=True)
-    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
+    try:
+        sql_content = sqlparse.split(sql_content)[0]
+    except IndexError:
+        result['status'] = 1
+        result['msg'] = '没有有效的SQL语句'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     try:
         # 查询权限校验
-        priv_check_info = query_priv_check(user, instance_name, db_name, sql_content, limit_num)
-        if priv_check_info['status'] == 0:
-            limit_num = priv_check_info['data']['limit_num']
-            priv_check = priv_check_info['data']['priv_check']
+        check_info = query_priv_check(user, instance_name, db_name, sql_content, limit_num)
+        if check_info['status'] == 0:
+            limit_num = check_info['data']['limit_num']
+            priv_check = check_info['data']['priv_check']
         else:
-            result['status'] = priv_check_info['status']
-            result['msg'] = priv_check_info['msg']
-            data = ResultSet(full_sql=sql_content)
-            data.error = priv_check_info['msg']
-            result['data'] = data.__dict__
+            result['status'] = 1
+            result['msg'] = check_info['msg']
             return HttpResponse(json.dumps(result), content_type='application/json')
+        # explain的limit_num = 0设置为0
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
 
-        # 查询检查
+        # 查询前的检查，禁用语句等校验
         query_engine = get_engine(instance=instance)
         filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
         if filter_result.get('bad_query'):
@@ -90,44 +92,49 @@ def query(request):
         t_end = time.time()
         query_result.query_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
-        # 数据脱敏
-        t_start = time.time()
-        # 仅对正确查询并返回的语句进行脱敏
+        # 数据脱敏，仅对正确查询并返回的语句进行脱敏
         if SysConfig().get('data_masking') and re.match(r"^select", sql_content, re.I) and query_result.error is None:
             try:
+                # 记录脱敏时间
+                t_start = time.time()
                 masking_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
-                # 脱敏报错的处理
-                if masking_result.is_critical is True:
-                    # 开启query_check，直接返回异常，禁止执行
-                    if SysConfig().get('query_check'):
-                        masking_result.rows = []
-                        masking_result.column_list = []
-                        masking_result = {'status': masking_result.status,
-                                          'msg': masking_result.error,
-                                          'data':query_result.__dict__}
-                        return HttpResponse(json.dumps(masking_result), content_type='application/json')
-                query_result = masking_result
+                t_end = time.time()
+                masking_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
+                # 脱敏出错，并且开启query_check，直接返回异常，禁止执行
+                if masking_result.error and SysConfig().get('query_check'):
+                    result['status'] = 1
+                    result['msg'] = masking_result.error
+                # 脱敏出错，关闭query_check，忽略错误信息，返回未脱敏数据
+                elif masking_result.error and not SysConfig().get('query_check'):
+                    query_result.error = None
+                    result['data'] = query_result.__dict__
+                # 正常脱敏
+                else:
+                    result['data'] = masking_result.__dict__
             except Exception:
-                # 抛出未定义异常
-                logger.error(f'数据脱敏异常，查询语句:{sql_content}\n，错误信息：{traceback.format_exc()}')
-                # 开启query_check，直接返回异常，禁止执行
+                logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
+                # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if SysConfig().get('query_check'):
                     result['status'] = 1
-                    result['msg'] = '脱敏数据报错,请联系管理员'
-                    return HttpResponse(json.dumps(result), content_type='application/json')
-        t_end = time.time()
-        query_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
-        sql_result = query_result.__dict__
-        result['data'] = sql_result
-
-        # 成功的查询语句记录存入数据库
-        if sql_result.get('error'):
-            pass
+                    result['msg'] = '脱敏数据报错，请联系管理员'
+                # 关闭query_check，忽略错误信息，返回未脱敏数据
+                else:
+                    query_result.error = None
+                    result['data'] = query_result.__dict__
+        # 无需脱敏的语句
         else:
-            if int(limit_num) == 0:
-                limit_num = int(sql_result['affected_rows'])
+            if query_result.error:
+                result['status'] = 1
+                result['msg'] = query_result.error
             else:
-                limit_num = min(int(limit_num), int(sql_result['affected_rows']))
+                result['data'] = query_result.__dict__
+
+        # 仅将成功的查询语句记录存入数据库
+        if not query_result.error:
+            if int(limit_num) == 0:
+                limit_num = int(query_result.affected_rows)
+            else:
+                limit_num = min(int(limit_num), int(query_result.affected_rows))
             query_log = QueryLog(
                 username=user.username,
                 user_display=user.display,
@@ -137,8 +144,8 @@ def query(request):
                 effect_row=limit_num,
                 cost_time=query_result.query_time,
                 priv_check=priv_check,
-                hit_rule=query_result.mask_rule_hit,  # '查询是否命中脱敏规则', choices=((0, '未知'), (1, '命中'), (2, '未命中'),)
-                masking=query_result.is_masked  # '查询结果是否正常脱敏', choices=((1, '是'), (2, '否')
+                hit_rule=query_result.mask_rule_hit,
+                masking=query_result.is_masked
             )
             # 防止查询超时
             try:
@@ -146,19 +153,14 @@ def query(request):
             except:
                 connection.close()
                 query_log.save()
-    except Exception as e:
-        # 抛出未定义异常
-        logger.error(f'查询异常报错，查询语句:{sql_content}\n，错误信息：{traceback.format_exc()}')
-        result['status'] = 1
-        result['msg'] = str(e)
-
-    # 返回查询结果
-    try:
+        # 返回查询结果
         return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                             content_type='application/json')
-    except Exception:
-        return HttpResponse(json.dumps(result, default=str, bigint_as_string=True, encoding='latin1'),
-                            content_type='application/json')
+    except Exception as e:
+        logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
+        result['status'] = 1
+        result['msg'] = str(e)
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 @permission_required('sql.menu_sqlquery', raise_exception=True)
@@ -176,14 +178,18 @@ def querylog(request):
     limit = offset + limit
     search = request.POST.get('search', '')
 
-    # 查询个人记录，超管查看所有数据
+    sql_log = QueryLog.objects.all()
+    # 过滤搜索信息
+    sql_log = sql_log.filter(Q(sqllog__icontains=search) | Q(user_display__icontains=search))
+    # 管理员查看全部数据
     if user.is_superuser:
-        sql_log_obj = QueryLog.objects.all().filter(Q(sqllog__icontains=search) | Q(user_display__icontains=search))
+        sql_log = sql_log
+    # 普通用户查看自己的数据
     else:
-        sql_log_obj = QueryLog.objects.filter(username=user.username).filter(sqllog__icontains=search)
+        sql_log = sql_log.filter(username=user.username)
 
-    sql_log_count = sql_log_obj.count()
-    sql_log_list = sql_log_obj.order_by('-id')[offset:limit]
+    sql_log_count = sql_log.count()
+    sql_log_list = sql_log.order_by('-id')[offset:limit]
     # QuerySet 序列化
     sql_log_list = serializers.serialize("json", sql_log_list)
     sql_log_list = json.loads(sql_log_list)
@@ -192,51 +198,3 @@ def querylog(request):
     result = {"total": sql_log_count, "rows": sql_log}
     # 返回查询结果
     return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-@permission_required('sql.optimize_sqladvisor', raise_exception=True)
-def explain(request):
-    """
-    获取SQL执行计划
-    :param request:
-    :return:
-    """
-    sql_content = request.POST.get('sql_content')
-    instance_name = request.POST.get('instance_name')
-    db_name = request.POST.get('db_name')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    # 服务器端参数验证
-    if sql_content is None or instance_name is None:
-        result['status'] = 1
-        result['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    try:
-        instance = Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    sql_content = sql_content.strip()
-
-    # 过滤非查询的语句
-    if re.match(r"^explain", sql_content.lower()):
-        pass
-    else:
-        result['status'] = 1
-        result['msg'] = '仅支持explain开头的语句，请检查'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    # 执行第一条有效sql
-    sql_content = sqlparse.split(sql_content)[0].rstrip(';')
-
-    # 执行获取执行计划语句
-    query_engine = get_engine(instance=instance)
-    sql_result = query_engine.query(str(db_name), sql_content).to_sep_dict()
-
-    result['data'] = sql_result
-
-    # 返回查询结果
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')

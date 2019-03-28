@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import logging
+import re
 import traceback
 import MySQLdb
 import simplejson as json
@@ -68,7 +69,14 @@ class InceptionEngine(EngineBase):
                                                       instance.port,
                                                       db_name,
                                                       sql)
-        return self.query(db_name=db_name, sql=sql)
+        print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        # 兼容语法错误时errlevel=0的场景
+        if print_info['errlevel'] == 0 and print_info['errmsg'] == 'None':
+            return json.loads(_repair_json_str(print_info['query_tree']))
+        elif print_info['errlevel'] == 0 and print_info['errmsg']:
+            raise RuntimeError(print_info['query_tree'])
+        else:
+            raise RuntimeError(print_info['errmsg'])
 
     def get_rollback_list(self, workflow_id):
         """
@@ -115,3 +123,16 @@ class InceptionEngine(EngineBase):
                 logger.error(traceback.format_exc())
                 raise Exception(e)
         return list_backup_sql
+
+
+def _repair_json_str(json_str):
+    """
+    处理JSONDecodeError: Expecting property name enclosed in double quotes
+    inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
+    """
+    json_str = re.sub(r"{\s*'(.+)':", r'{"\1":', json_str)
+    json_str = re.sub(r",\s*?]", "]", json_str)
+    json_str = re.sub(r",\s*?}", "}", json_str)
+    json_str = re.sub(r"\[,\s*?{", "[{", json_str)
+    json_str = json_str.replace("'", "\"")
+    return json_str
