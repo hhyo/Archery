@@ -1,28 +1,25 @@
 import json
 import re
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from unittest.mock import MagicMock, patch, ANY
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-
 from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
 from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet
-from sql import query
-
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
-    ResourceGroup
 from sql.utils.execute_sql import execute_callback
+from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
+    ResourceGroup, ResourceGroupRelations
 
 User = get_user_model()
 
 
-class SignUpTests(TestCase):
+class TestSignUp(TestCase):
     """注册测试"""
 
     def setUp(self):
@@ -87,7 +84,7 @@ class SignUpTests(TestCase):
         self.assertTrue(user)
 
 
-class UserTest(TestCase):
+class TestUser(TestCase):
     def setUp(self):
         self.u1 = User(username='test_user', display='中文显示', is_active=True)
         self.u1.save()
@@ -107,33 +104,304 @@ class UserTest(TestCase):
         self.assertRedirects(r, '/')
 
 
-class QueryTest(TestCase):
+class TestQueryPrivilegesCheck(TestCase):
+    """测试权限校验"""
+
     def setUp(self):
-        self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
-                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
-        self.slave2 = Instance(instance_name='test_instance_non_mysql', type='slave', db_type='mssql',
-                               host='some_host2', port=3306, user='some_user', password='some_password')
-        self.slave1.save()
-        self.slave2.save()
-        archer_user = get_user_model()
-        self.superuser1 = archer_user(username='super1', is_superuser=True)
-        self.superuser1.save()
-        self.u1 = archer_user(username='test_user', display='中文显示', is_active=True)
-        self.u1.save()
-        self.u2 = archer_user(username='test_user2', display='中文显示', is_active=True)
-        self.u2.save()
-        self.u3 = archer_user(username='test_user3', display='中文显示', is_active=True)
-        self.u3.save()
-        sql_query_perm = Permission.objects.get(codename='query_submit')
-        self.u2.user_permissions.add(sql_query_perm)
-        self.u3.user_permissions.add(sql_query_perm)
-        tomorrow = datetime.now() + timedelta(days=1)
-        self.query_apply_1 = QueryPrivilegesApply(
-            group_id=1,
-            group_name='some_group',
-            title='some_title',
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.user = User.objects.create(username='user')
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.slave = Instance.objects.create(instance_name='test_instance', type='slave', db_type='mysql',
+                                             host=settings.DATABASES['default']['HOST'],
+                                             port=settings.DATABASES['default']['PORT'],
+                                             user=settings.DATABASES['default']['USER'],
+                                             password=settings.DATABASES['default']['PASSWORD'])
+        self.db_name = settings.DATABASES['default']['TEST']['NAME']
+        self.sys_config = SysConfig()
+        self.client = Client()
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.user.delete()
+        Instance.objects.all().delete()
+        QueryPrivileges.objects.all().delete()
+        self.sys_config.replace(json.dumps({}))
+
+    def test_db_priv_super(self):
+        """
+        测试超级管理员验证数据库权限
+        :return:
+        """
+        self.sys_config.set('admin_query_limit', '50')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges._db_priv(user=self.superuser, instance=self.slave, db_name=self.db_name)
+        self.assertEqual(r, 50)
+
+    def test_db_priv_user_priv_not_exist(self):
+        """
+        测试普通用户验证数据库权限，用户无权限
+        :return:
+        """
+        r = sql.query_privileges._db_priv(user=self.user, instance=self.slave, db_name=self.db_name)
+        self.assertFalse(r)
+
+    def test_db_priv_user_priv_exist(self):
+        """
+        测试普通用户验证数据库权限，用户有权限
+        :return:
+        """
+        QueryPrivileges.objects.create(user_name=self.user.username,
+                                       instance=self.slave,
+                                       db_name=self.db_name,
+                                       valid_date=date.today() + timedelta(days=1),
+                                       limit_num=10,
+                                       priv_type=1)
+        r = sql.query_privileges._db_priv(user=self.user, instance=self.slave, db_name=self.db_name)
+        self.assertTrue(r)
+
+    def test_tb_priv_super(self):
+        """
+        测试超级管理员验证表权限
+        :return:
+        """
+        self.sys_config.set('admin_query_limit', '50')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges._tb_priv(user=self.superuser, instance=self.slave, db_name=self.db_name,
+                                          tb_name='table_name')
+        self.assertEqual(r, 50)
+
+    def test_tb_priv_user_priv_not_exist(self):
+        """
+        测试普通用户验证表权限，用户无权限
+        :return:
+        """
+        r = sql.query_privileges._tb_priv(user=self.user, instance=self.slave, db_name=self.db_name,
+                                          tb_name='table_name')
+        self.assertFalse(r)
+
+    def test_tb_priv_user_priv_exist(self):
+        """
+        测试普通用户验证表权限，用户有权限
+        :return:
+        """
+        QueryPrivileges.objects.create(user_name=self.user.username,
+                                       instance=self.slave,
+                                       db_name=self.db_name,
+                                       table_name='table_name',
+                                       valid_date=date.today() + timedelta(days=1),
+                                       limit_num=10,
+                                       priv_type=2)
+        r = sql.query_privileges._tb_priv(user=self.user, instance=self.slave, db_name=self.db_name,
+                                          tb_name='table_name')
+        self.assertTrue(r)
+
+    @patch('sql.query_privileges._db_priv')
+    def test_priv_limit_from_db(self, __db_priv):
+        """
+        测试用户获取查询数量限制，通过库名获取
+        :return:
+        """
+        __db_priv.return_value = 10
+        r = sql.query_privileges._priv_limit(user=self.user, instance=self.slave, db_name=self.db_name)
+        self.assertEqual(r, 10)
+
+    @patch('sql.query_privileges._tb_priv')
+    @patch('sql.query_privileges._db_priv')
+    def test_priv_limit_from_tb(self, __db_priv, __tb_priv):
+        """
+        测试用户获取查询数量限制，通过表名获取
+        :return:
+        """
+        __db_priv.return_value = 10
+        __tb_priv.return_value = 1
+        r = sql.query_privileges._priv_limit(user=self.user, instance=self.slave, db_name=self.db_name, tb_name='test')
+        self.assertEqual(r, 1)
+
+    @patch('sql.engines.inception.InceptionEngine.query_print')
+    def test_table_ref(self, _query_print):
+        """
+        测试通过inception获取查询语句的table_ref
+        :return:
+        """
+        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
+                                     'table_ref': [{'db': 'archery', 'table': 'sql_users'}],
+                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+
+        r = sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
+        self.assertListEqual(r, [{'db': 'archery', 'table': 'sql_users'}])
+
+    @patch('sql.engines.inception.InceptionEngine.query_print')
+    def test_table_ref_wrong(self, _query_print):
+        """
+        测试通过inception获取查询语句的table_ref
+        :return:
+        """
+        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
+                                     'table_ref': [{'db': '', 'table': '*'}],
+                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+        with self.assertRaises(RuntimeError):
+            sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
+
+    def test_query_priv_check_super(self):
+        """
+        测试用户权限校验，超级管理员不做校验，直接返回系统配置的limit
+        :return:
+        """
+        r = sql.query_privileges.query_priv_check(user=self.superuser,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 100}})
+
+    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=False)
+    def test_query_priv_check_no_priv(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 无库表权限，inception语法树正常打印
+        :return:
+        """
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 1, 'msg': '你无test_archery.sql_users表的查询权限！请先到查询权限管理进行申请',
+                                 'data': {'priv_check': 1, 'limit_num': 0}})
+
+    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=1000)
+    def test_query_priv_check_db_priv_exist(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 有库权限，inception语法树正常打印
+        :return:
+        """
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+
+    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._tb_priv', return_value=10)
+    @patch('sql.query_privileges._db_priv', return_value=False)
+    def test_query_priv_check_tb_priv_exist(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树正常打印
+        :return:
+        """
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+
+    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=False)
+    def test_query_priv_check_table_ref_Exception_and_no_db_priv(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
+        :return:
+        """
+        self.sys_config.set('query_check', 'true')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 1,
+                                 'msg': "你无test_archery数据库的查询权限！请先到查询权限管理进行申请",
+                                 'data': {'priv_check': 1, 'limit_num': 0}})
+
+    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=1000)
+    def test_query_priv_check_table_ref_Exception_and_open_query_check(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check开启，有库权限
+        :return:
+        """
+        self.sys_config.set('query_check', 'true')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 1,
+                                 'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：'RuntimeError' object is not iterable",
+                                 'data': {'priv_check': 1, 'limit_num': 0}})
+
+    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=1000)
+    def test_query_priv_check_table_ref_Exception_and_close_query_check(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check关闭，有库权限
+        :return:
+        """
+        self.sys_config.set('query_check', 'false')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 2}, 'msg': 'ok', 'status': 0})
+
+    @patch('sql.query_privileges._db_priv', return_value=1000)
+    def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
+        """
+        测试用户权限校验，非mysql实例、普通用户 有库权限
+        :return:
+        """
+        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
+                                  host='some_host', port=3306, user='some_user', password='some_password')
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=mssql_instance, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+
+    @patch('sql.query_privileges._db_priv', return_value=False)
+    def test_query_priv_check_not_mysql_db_priv_not_exist(self, __db_priv):
+        """
+        测试用户权限校验，非mysql实例、普通用户 无库权限
+        :return:
+        """
+        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
+                                  host='some_host', port=3306, user='some_user', password='some_password')
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=mssql_instance, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'data': {'limit_num': 0, 'priv_check': 1},
+                                 'msg': '你无test_archery数据库的查询权限！请先到查询权限管理进行申请',
+                                 'status': 1})
+
+
+class TestQueryPrivilegesApply(TestCase):
+    """测试权限列表、权限管理"""
+
+    def setUp(self):
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.user = User.objects.create(username='user')
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.slave = Instance.objects.create(instance_name='test_instance', type='slave', db_type='mysql',
+                                             host=settings.DATABASES['default']['HOST'],
+                                             port=settings.DATABASES['default']['PORT'],
+                                             user=settings.DATABASES['default']['USER'],
+                                             password=settings.DATABASES['default']['PASSWORD'])
+        self.db_name = settings.DATABASES['default']['TEST']['NAME']
+        self.sys_config = SysConfig()
+        self.client = Client()
+        tomorrow = datetime.today() + timedelta(days=1)
+        self.group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
+        self.query_apply_1 = QueryPrivilegesApply.objects.create(
+            group_id=self.group.group_id,
+            group_name=self.group.group_name,
+            title='some_title1',
             user_name='some_user',
-            instance=self.slave1,
+            instance=self.slave,
             db_list='some_db,some_db2',
             limit_num=100,
             valid_date=tomorrow,
@@ -141,13 +409,12 @@ class QueryTest(TestCase):
             status=0,
             audit_auth_groups='some_audit_group'
         )
-        self.query_apply_1.save()
-        self.query_apply_2 = QueryPrivilegesApply(
-            group_id=1,
-            group_name='some_group',
-            title='some_title',
+        self.query_apply_2 = QueryPrivilegesApply.objects.create(
+            group_id=2,
+            group_name='some_group2',
+            title='some_title2',
             user_name='some_user',
-            instance=self.slave1,
+            instance=self.slave,
             db_list='some_db',
             table_list='some_table,some_tb2',
             limit_num=100,
@@ -156,55 +423,20 @@ class QueryTest(TestCase):
             status=0,
             audit_auth_groups='some_audit_group'
         )
-        self.query_apply_2.save()
-        self.db_priv_for_user3 = QueryPrivileges(
-            user_name=self.u3.username,
-            user_display=self.u3.display,
-            instance=self.slave1,
-            db_name='some_db',
-            table_name='',
-            valid_date=tomorrow,
-            limit_num=70,
-            priv_type=1)
-        self.db_priv_for_user3.save()
-        self.table_priv_for_user3 = QueryPrivileges(
-            user_name=self.u3.username,
-            user_display=self.u3.display,
-            instance=self.slave1,
-            db_name='another_db',
-            table_name='some_table',
-            valid_date=tomorrow,
-            limit_num=60,
-            priv_type=2)
-        self.table_priv_for_user3.save()
-        self.db_priv_for_user3_another_instance = QueryPrivileges(
-            user_name=self.u3.username,
-            user_display=self.u3.display,
-            instance=self.slave2,
-            db_name='some_db_another_instance',
-            table_name='',
-            valid_date=tomorrow,
-            limit_num=50,
-            priv_type=1)
-        self.db_priv_for_user3_another_instance.save()
 
     def tearDown(self):
-        self.query_apply_1.delete()
-        self.query_apply_2.delete()
+        self.superuser.delete()
+        self.user.delete()
+        Instance.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+        QueryPrivilegesApply.objects.all().delete()
         QueryPrivileges.objects.all().delete()
-        self.u1.delete()
-        self.u2.delete()
-        self.u3.delete()
-        self.superuser1.delete()
-        self.slave1.delete()
-        self.slave2.delete()
-        archer_config = SysConfig()
-        archer_config.set('disable_star', False)
+        self.sys_config.replace(json.dumps({}))
 
-    def testQueryAuditCallback(self):
+    def test_query_audit_call_back(self):
         """测试权限申请工单回调"""
         # 工单状态改为审核失败, 验证工单状态
-        sql.query_privileges.query_apply_audit_call_back(self.query_apply_1.apply_id, 2)
+        sql.query_privileges._query_apply_audit_call_back(self.query_apply_1.apply_id, 2)
         self.query_apply_1.refresh_from_db()
         self.assertEqual(self.query_apply_1.status, 2)
         for db in self.query_apply_1.db_list.split(','):
@@ -213,7 +445,7 @@ class QueryTest(TestCase):
                 db_name=db,
                 limit_num=100)), 0)
         # 工单改为审核成功, 验证工单状态和权限状态
-        sql.query_privileges.query_apply_audit_call_back(self.query_apply_1.apply_id, 1)
+        sql.query_privileges._query_apply_audit_call_back(self.query_apply_1.apply_id, 1)
         self.query_apply_1.refresh_from_db()
         self.assertEqual(self.query_apply_1.status, 1)
         for db in self.query_apply_1.db_list.split(','):
@@ -222,7 +454,7 @@ class QueryTest(TestCase):
                 db_name=db,
                 limit_num=100)), 1)
         # 表权限申请测试, 只测试审核成功
-        sql.query_privileges.query_apply_audit_call_back(self.query_apply_2.apply_id, 1)
+        sql.query_privileges._query_apply_audit_call_back(self.query_apply_2.apply_id, 1)
         self.query_apply_2.refresh_from_db()
         self.assertEqual(self.query_apply_2.status, 1)
         for tb in self.query_apply_2.table_list.split(','):
@@ -231,6 +463,167 @@ class QueryTest(TestCase):
                 db_name=self.query_apply_2.db_list,
                 table_name=tb,
                 limit_num=self.query_apply_2.limit_num)), 1)
+
+    def test_query_priv_apply_list_super_with_search(self):
+        """
+        测试权限申请列表，管理员查看所有用户，并且搜索
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": 'some_title1'
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/query/applylist/', data=data)
+        self.assertEqual(json.loads(r.content)['total'], 1)
+        keys = list(json.loads(r.content)['rows'][0].keys())
+        self.assertListEqual(keys,
+                             ['apply_id', 'title', 'instance__instance_name', 'db_list', 'priv_type', 'table_list',
+                              'limit_num', 'valid_date', 'user_display', 'status', 'create_time', 'group_name'])
+
+    def test_query_priv_apply_list_with_query_review_perm(self):
+        """
+        测试权限申请列表，普通用户，拥有sql.query_review权限，在组内
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": ''
+        }
+
+        menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
+        self.user.user_permissions.add(menu_queryapplylist)
+        query_review = Permission.objects.get(codename='query_review')
+        self.user.user_permissions.add(query_review)
+        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        self.client.force_login(self.user)
+        r = self.client.post(path='/query/applylist/', data=data)
+        self.assertEqual(json.loads(r.content)['total'], 1)
+        keys = list(json.loads(r.content)['rows'][0].keys())
+        self.assertListEqual(keys,
+                             ['apply_id', 'title', 'instance__instance_name', 'db_list', 'priv_type', 'table_list',
+                              'limit_num', 'valid_date', 'user_display', 'status', 'create_time', 'group_name'])
+
+    def test_query_priv_apply_list_no_query_review_perm(self):
+        """
+        测试权限申请列表，普通用户，无sql.query_review权限，在组内
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": ''
+        }
+
+        menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
+        self.user.user_permissions.add(menu_queryapplylist)
+        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        self.client.force_login(self.user)
+        r = self.client.post(path='/query/applylist/', data=data)
+        self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_user_query_priv_with_search(self):
+        """
+        测试权限申请列表，管理员查看所有用户，并且搜索
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": 'user'
+        }
+        QueryPrivileges.objects.create(user_name=self.user.username,
+                                       user_display='user2',
+                                       instance=self.slave,
+                                       db_name=self.db_name,
+                                       table_name='table_name',
+                                       valid_date=date.today() + timedelta(days=1),
+                                       limit_num=10,
+                                       priv_type=2)
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/query/userprivileges/', data=data)
+        self.assertEqual(json.loads(r.content)['total'], 1)
+        keys = list(json.loads(r.content)['rows'][0].keys())
+        self.assertListEqual(keys,
+                             ['privilege_id', 'user_display', 'instance__instance_name', 'db_name', 'priv_type',
+                              'table_name', 'limit_num', 'valid_date'])
+
+    def test_user_query_priv_with_query_mgtpriv(self):
+        """
+        测试权限申请列表，普通用户，拥有sql.query_mgtpriv权限，在组内
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": 'user'
+        }
+        QueryPrivileges.objects.create(user_name='some_name',
+                                       user_display='user2',
+                                       instance=self.slave,
+                                       db_name=self.db_name,
+                                       table_name='table_name',
+                                       valid_date=date.today() + timedelta(days=1),
+                                       limit_num=10,
+                                       priv_type=2)
+        menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
+        self.user.user_permissions.add(menu_queryapplylist)
+        query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
+        self.user.user_permissions.add(query_mgtpriv)
+        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        self.client.force_login(self.user)
+        r = self.client.post(path='/query/userprivileges/', data=data)
+        self.assertEqual(json.loads(r.content)['total'], 1)
+        keys = list(json.loads(r.content)['rows'][0].keys())
+        self.assertListEqual(keys,
+                             ['privilege_id', 'user_display', 'instance__instance_name', 'db_name', 'priv_type',
+                              'table_name', 'limit_num', 'valid_date'])
+
+    def test_user_query_priv_no_query_mgtpriv(self):
+        """
+        测试权限申请列表，普通用户，没有sql.query_mgtpriv权限，在组内
+        """
+        data = {
+            "limit": 14,
+            "offset": 0,
+            "search": 'user'
+        }
+        QueryPrivileges.objects.create(user_name='some_name',
+                                       user_display='user2',
+                                       instance=self.slave,
+                                       db_name=self.db_name,
+                                       table_name='table_name',
+                                       valid_date=date.today() + timedelta(days=1),
+                                       limit_num=10,
+                                       priv_type=2)
+        menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
+        self.user.user_permissions.add(menu_queryapplylist)
+        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        self.client.force_login(self.user)
+        r = self.client.post(path='/query/userprivileges/', data=data)
+        self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+
+class TestQuery(TestCase):
+    def setUp(self):
+        self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
+                               host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        self.slave2 = Instance(instance_name='test_instance_non_mysql', type='slave', db_type='mssql',
+                               host='some_host2', port=3306, user='some_user', password='some_password')
+        self.slave1.save()
+        self.slave2.save()
+        self.superuser1 = User.objects.create(username='super1', is_superuser=True)
+        self.u1 = User.objects.create(username='test_user', display='中文显示', is_active=True)
+        self.u2 = User.objects.create(username='test_user2', display='中文显示', is_active=True)
+        sql_query_perm = Permission.objects.get(codename='query_submit')
+        self.u2.user_permissions.add(sql_query_perm)
+
+    def tearDown(self):
+        QueryPrivileges.objects.all().delete()
+        self.u1.delete()
+        self.u2.delete()
+        self.superuser1.delete()
+        self.slave1.delete()
+        self.slave2.delete()
+        archer_config = SysConfig()
+        archer_config.set('disable_star', False)
 
     @patch('sql.engines.mysql.MysqlEngine.query')
     @patch('sql.engines.mysql.MysqlEngine.query_masking')
@@ -257,6 +650,7 @@ class QueryTest(TestCase):
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
+        _query.assert_called_once_with(db_name=some_db, sql=some_sql, limit_num=some_limit)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -313,12 +707,8 @@ class QueryTest(TestCase):
         r_json = r.json()
         self.assertEqual(1, r_json['status'])
 
-    @patch('sql.utils.data_masking.data_masking')
-    def test_query_priv_check(self, mock_masking):
-        """#TODO"""
 
-
-class WorkflowViewTest(TransactionTestCase):
+class TestWorkflowView(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -659,7 +1049,7 @@ class TestSchemaSync(TestCase):
         self.assertEqual(json.loads(r.content)['status'], 0)
 
 
-class AsyncTest(TestCase):
+class TestAsync(TestCase):
 
     def setUp(self):
         self.now = datetime.now()
