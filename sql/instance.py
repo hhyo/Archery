@@ -188,9 +188,6 @@ def get_table_name_list(request):
         query_engine = get_engine(instance=instance)
         table_list = query_engine.get_all_tables(db_name)
         result['data'] = table_list
-        if not table_list:
-            result['status'] = 1
-            result['msg'] = '表列表为空, 可能是权限或配置有误, 请再次确认库名'
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)

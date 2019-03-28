@@ -49,7 +49,7 @@
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div id="div-table_name" class="form-group">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
@@ -534,6 +534,13 @@
     <script>
         // 实例变更获取数据库
         $("#instance_name").change(function () {
+            // 仅MySQL支持限制到表级权限
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            if (optgroup === "MySQL") {
+                $("#div-table_name").show()
+            } else {
+                $("#div-table_name").hide()
+            }
             sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
             //将数据通过ajax提交给获取db_name
             $.ajax({
