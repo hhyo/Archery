@@ -1,5 +1,5 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
-from sql.models import Instance
+from sql.engines.models import ResultSet
 
 
 class EngineBase:
@@ -9,9 +9,10 @@ class EngineBase:
         self.conn = None
         if workflow:
             self.workflow = workflow
-            instance = self.workflow.instance
+            self.instance = self.workflow.instance
             self.sql = workflow.sqlworkflowcontent.sql_content
         if instance:
+            self.instance = instance
             self.instance_name = instance.instance_name
             self.host = instance.host
             self.port = int(instance.port)
@@ -33,15 +34,19 @@ class EngineBase:
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个list"""
+        return []
 
     def get_all_tables(self, db_name):
         """获取table 列表, 返回一个list"""
+        return []
 
     def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个list"""
+        return []
 
     def describe_table(self, db_name, tb_name):
         """获取表结构, 返回一个 ResultSet"""
+        return ResultSet()
 
     def query_check(self, db_name=None, sql='', limit_num=10):
         """查询语句的检查, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
@@ -77,3 +82,6 @@ def get_engine(instance=None, workflow=None):
     elif instance.db_type == 'mssql':
         from .mssql import MssqlEngine
         return MssqlEngine(workflow=workflow, instance=instance)
+    elif instance.db_type == 'redis':
+        from .redis import RedisEngine
+        return RedisEngine(workflow=workflow, instance=instance)

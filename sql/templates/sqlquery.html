@@ -19,12 +19,27 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-live-search="true"
                                         data-placeholder="请选择实例:" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                                    {% for instance_name in instances %}
-                                        {% if instance_name != 'mycat' %}
-                                            <option value="{{ instance_name }}">{{ instance_name }}</option>
-                                        {% endif %}
-                                    {% endfor %}
+                                    <optgroup id="optgroup-mysql" label="MySQL">
+                                        {% for instance in instances %}
+                                            {% if instance.db_type == 'mysql' %}
+                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup id="optgroup-mssql" label="MsSQL">
+                                        {% for instance in instances %}
+                                            {% if instance.db_type == 'mssql' %}
+                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup id="optgroup-redis" label="Redis">
+                                        {% for instance in instances %}
+                                            {% if instance.db_type == 'redis' %}
+                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -87,7 +102,8 @@
                     </ul>
                     <!-- Tab panes -->
                     <div id="tab-content" class="form-group tab-content">
-                        <div id="sql_log_result" role="tabpanel" class="form-group tab-pane fade in active table-responsive">
+                        <div id="sql_log_result" role="tabpanel"
+                             class="form-group tab-pane fade in active table-responsive">
                             <table id="sql-log" data-toggle="table" class="form-group table table-condensed"></table>
                         </div>
                     </div>
@@ -95,8 +111,6 @@
             </div>
         </div>
     </div>
-    <br>
-
 {% endblock content %}
 
 {% block js %}
@@ -166,7 +180,7 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            var sql = window.sqlFormatter.format(value);
+                            var sql = value;
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
@@ -362,12 +376,12 @@
         );
 
         function display_data(data) {
-            if (data.status === 0 || data.status === 2) {
-                var result = data.data;
-                //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
-                var active_li_id = sessionStorage.getItem('active_li_id');
-                var active_li_title = sessionStorage.getItem('active_li_title');
+            var result = data.data;
+            //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
+            var active_li_id = sessionStorage.getItem('active_li_id');
+            var active_li_title = sessionStorage.getItem('active_li_title');
 
+            if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
                 if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe) {
@@ -388,23 +402,10 @@
                     n = sessionStorage.getItem('tab_num');
                 }
 
-
-                //查询报错失败或者inception检测报错
-                if (result['error']) {
-                    alertStyle = "alert-danger";
-                    $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                        escape: false,
-                        columns: [{
-                            field: 'error',
-                            title: 'Error'
-                        }],
-                        data: [{
-                            error: result['error']
-                        }]
-                    })
-                } else if (result['column_list']) {
+                //显示查询结果
+                if (result['column_list']) {
                     //异步获取要动态生成的列
-                    var columns = []
+                    var columns = [];
                     $.each(result['column_list'], function (i, column) {
                         columns.push({
                             "field": i,
@@ -461,8 +462,25 @@
                     $("#" + ('time') + n).text(result['query_time'] + ' sec');
                     $("#" + ('masking_time') + n).text(result['mask_time'] + ' sec');
                 }
+
             } else {
-                alert(data.msg);
+                //查询报错失败信息
+                if (active_li_title.match(/^执行结果\d$/)) {
+                    n = active_li_id.split("execute_result_tab")[1];
+                } else {
+                    tab_add();
+                    n = sessionStorage.getItem('tab_num');
+                }
+                $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                    escape: false,
+                    columns: [{
+                        field: 'error',
+                        title: 'Error'
+                    }],
+                    data: [{
+                        error: data.msg
+                    }]
+                })
             }
         }
 
@@ -484,9 +502,9 @@
                 sqlContent = "show create table " + $("#table_name").val() + ";"
             }
             //处理SQL，去除注释、空行等
-            sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
-            sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
-            sqlContent = sqlContent.trim();
+            //sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
+            //sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
+            //sqlContent = sqlContent.trim();
             //提交请求
             $.ajax({
                 type: "post",

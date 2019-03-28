@@ -59,8 +59,8 @@ class TestEngineBase(TestCase):
 
     def test_init_with_workflow(self):
         engine = EngineBase(workflow=self.wf1)
-        self.assertEqual(self.ins1.instance_name, engine.instance_name)
-        self.assertEqual(self.ins1.user, engine.user)
+        self.assertEqual(self.ins1.instance_name, engine.instance.instance_name)
+        self.assertEqual(self.ins1.user, engine.instance.user)
 
 
 class TestMssql(TestCase):
@@ -211,7 +211,7 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable'
         check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit, limit_num=100)
-        self.assertEqual(check_result['filtered_sql'], 'select user from usertable limit 100')
+        self.assertEqual(check_result['filtered_sql'], 'select user from usertable limit 100;')
 
 
 class TestModel(TestCase):

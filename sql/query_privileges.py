@@ -22,19 +22,15 @@ from django_q.tasks import async_task
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines.inception import InceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
 from sql.notify import notify_for_audit
-from sql.utils.data_masking import Masking
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
 
 __author__ = 'hhyo'
-
-"""
-权限管理模块待优化，计划剥离库、表权限校验到单独的方法，在查询和申请时方法可以复用
-"""
 
 
 def query_apply_audit_call_back(workflow_id, workflow_status):
@@ -87,81 +83,70 @@ def query_priv_check(user, instance_name, db_name, sql_content, limit_num):
     """
     result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 0}}
     instance = Instance.objects.get(instance_name=instance_name)
-    table_ref = None  # 查询语句涉及的表信息
-    # 获取用户所有未过期权限
-    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance,
-                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0)
-    # 检查用户是否有该数据库/表的查询权限
+    # 管理员不做权限校验，仅获取limit值信息
     if user.is_superuser:
-        user_limit_num = int(SysConfig().get('admin_query_limit', 5000))
-        limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
-        result['data']['limit_num'] = limit_num
+        priv_limit = int(SysConfig().get('admin_query_limit', 5000))
+        result['data']['limit_num'] = min(priv_limit, limit_num)
         return result
 
-    # 查看表结构的语句，inception语法树解析会报错，故单独处理，explain直接跳过不做校验
-    elif re.match(r"^show\s+create\s+table", sql_content.lower()):
-        tb_name = re.sub(r'^show\s+create\s+table', '', sql_content, count=1, flags=0).strip()
-        # 先判断是否有整库权限
-        db_privileges = user_privileges.filter(db_name=db_name, priv_type=1)
-        # 无整库权限再验证表权限
-        if len(db_privileges) == 0:
-            tb_privileges = user_privileges.filter(db_name=db_name, table_name=tb_name, priv_type=2)
-            if len(tb_privileges) == 0:
+    # mysql可以校验到表级权限
+    if instance.db_type == 'mysql':
+        # 查看表结构的语句，inception语法树解析会报错，单独处理，explain、其他show语句直接跳过不做校验
+        if re.match(r"^show\s+create\s+table\s+", sql_content, re.I):
+            tb_name = re.sub(r'^show\s+create\s+table\s+', '', sql_content, count=1, flags=0).strip()
+            # 既无库权限也无表权限
+            if not _db_priv(user, instance, db_name) and not _tb_priv(user, instance, db_name, tb_name):
                 result['status'] = 1
-                result['msg'] = '你无' + db_name + '.' + tb_name + '表的查询权限！请先到查询权限管理进行申请'
+                result['msg'] = f"你无{db_name}.{tb_name}表的查询权限！请先到查询权限管理进行申请"
                 return result
-    # sql查询, 可以校验到表级权限
-    elif instance.db_type == 'mysql':
-        # 首先使用inception的语法树打印获取查询涉及的的表
-        table_ref_result = Masking().query_table_ref(sql_content + ';', instance_name, db_name)
-        # 正确解析拿到表数据，可以校验表权限
-        if table_ref_result['status'] == 0:
-            table_ref = table_ref_result['data']
-            # 先判断是否有整库权限
+        try:
+            # 首先使用inception的语法树打印获取查询涉及的的表
+            table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
+            # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
             for table in table_ref:
-                db_privileges = user_privileges.filter(db_name=table['db'], priv_type=1)
-                # 无整库权限再验证表权限
-                if len(db_privileges) == 0:
-                    tb_privileges = user_privileges.filter(db_name=table['db'], table_name=table['table'])
-                    if len(tb_privileges) == 0:
-                        result['status'] = 1
-                        result['msg'] = '你无' + table['db'] + '.' + table['table'] + '表的查询权限！请先到查询权限管理进行申请'
-                        return result
-
-        # 获取表数据报错，检查配置文件是否允许继续执行，并进行库权限校验
-        else:
-            # 校验库权限，防止inception的语法树打印错误时连库权限也未做校验
-            privileges = user_privileges.filter(db_name=db_name, priv_type=1)
-            if len(privileges) == 0:
+                # 既无库权限也无表权限
+                if not _db_priv(user, instance, table['db']) and not _tb_priv(user, instance, db_name, table['table']):
+                    result['status'] = 1
+                    result['msg'] = f"你无{db_name}.{table['table']}表的查询权限！请先到查询权限管理进行申请"
+                    return result
+        except Exception as msg:
+            # 获取表数据报错，仅校验当前库权限
+            if not _db_priv(user, instance, db_name):
                 result['status'] = 1
-                result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
+                result['msg'] = f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
                 return result
+            # 开启query_check，禁止执行，直接抛出异常
             if SysConfig().get('query_check'):
-                return table_ref_result
+                result['status'] = 1
+                result['msg'] = f"无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：{msg}"
+                return result
+            # 关闭query_check，忽略错误继续执行，标记权限校验为跳过
             else:
+                # 获取查询库的最小limit限制，和前端传参作对比，取最小值
+                priv_limit = _priv_limit(user, instance, db_name=db_name)
+                result['data']['limit_num'] = min(priv_limit, limit_num)
                 result['data']['priv_check'] = 2
-
-    # 获取查询涉及表的最小limit限制
-    if table_ref:
-        db_list = [table_info['db'] for table_info in table_ref]
-        table_list = [table_info['table'] for table_info in table_ref]
-        user_limit_num = user_privileges.filter(db_name__in=db_list, table_name__in=table_list, priv_type=2
-                                                ).aggregate(Min('limit_num'))['limit_num__min']
-        if user_limit_num is None:
-            # 如果表没获取到则获取涉及库的最小limit限制
-            user_limit_num = user_privileges.filter(db_name=db_name, priv_type=1
-                                                    ).aggregate(Min('limit_num'))['limit_num__min']
+                return result
+        else:
+            # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
+            # 循环获取，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
+            for table in table_ref:
+                priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
+                limit_num = min(priv_limit, limit_num)
+            result['data']['limit_num'] = limit_num
+            return result
+    # 其他数据库仅校验到库权限
     else:
-        # 如果表没获取到则获取涉及库的最小limit限制
-        user_limit_num = user_privileges.filter(db_name=db_name, priv_type=1
-                                                ).aggregate(Min('limit_num'))['limit_num__min']
-    if user_limit_num is None:
-        result['status'] = 1
-        result['msg'] = '你无' + db_name + '数据库的查询权限！请先到查询权限管理进行申请'
-        return result
-    limit_num = int(user_limit_num) if int(limit_num) == 0 else min(int(limit_num), int(user_limit_num))
-    result['data']['limit_num'] = limit_num
-    return result
+        # 无库权限直接返回
+        if not _db_priv(user, instance, db_name):
+            result['status'] = 1
+            result['msg'] = f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
+            return result
+        # 有库权限则获取对应limit值
+        else:
+            priv_limit = _priv_limit(user, instance, db_name=db_name)
+            result['data']['limit_num'] = min(priv_limit, limit_num)
+            return result
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -456,3 +441,87 @@ def query_priv_audit(request):
         async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
+
+
+def _table_ref(sql_content, instance, db_name):
+    """
+    解析语法树，获取语句涉及的表，用于查询权限限制
+    :param sql_content:
+    :param instance:
+    :param db_name:
+    :return:
+    """
+    inception_engine = InceptionEngine()
+    query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql_content)
+    table_ref = query_tree.get('table_ref', [])
+    db_list = [table_info['db'] for table_info in table_ref]
+    table_list = [table_info['table'] for table_info in table_ref]
+    # 异常解析的情形
+    if '' in db_list or '*' in table_list:
+        raise RuntimeError
+    if not (db_list or table_list):
+        raise RuntimeError
+    return table_ref
+
+
+def _db_priv(user, instance, db_name):
+    """
+    检测用户是否拥有指定库权限
+    :param user: 用户对象
+    :param instance: 实例对象
+    :param db_name: 库名
+    :return: 权限存在则返回对应权限的limit_num，否则返回False
+    """
+    # 获取用户库权限
+    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance, db_name=str(db_name),
+                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0,
+                                                     priv_type=1)
+    if user.is_superuser:
+        return int(SysConfig().get('admin_query_limit', 5000))
+    else:
+        if user_privileges.exists():
+            return user_privileges.first().limit_num
+    return False
+
+
+def _tb_priv(user, instance, db_name, tb_name):
+    """
+    检测用户是否拥有指定表权限
+    :param user: 用户对象
+    :param instance: 实例对象
+    :param db_name: 库名
+    :param tb_name: 表名
+    :return: 权限存在则返回对应权限的limit_num，否则返回False
+    """
+    # 获取用户表权限
+    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance, db_name=str(db_name),
+                                                     tb_name=str(tb_name), valid_date__gte=datetime.datetime.now(),
+                                                     is_deleted=0, priv_type=2)
+    if user.is_superuser:
+        return int(SysConfig().get('admin_query_limit', 5000))
+    else:
+        if user_privileges.exists():
+            return user_privileges.first().limit_num
+    return False
+
+
+def _priv_limit(user, instance, db_name, tb_name=None):
+    """
+    获取用户拥有的查询权限的最小limit限制，用于返回结果集限制
+    :param db_name:
+    :param tb_name:
+    :return:
+    """
+    # 到查询权限表获取信息
+    user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance,
+                                                     valid_date__gte=datetime.datetime.now(), is_deleted=0)
+    db_limit_num = user_privileges.filter(db_name=str(db_name), priv_type=1
+                                          ).aggregate(Min('limit_num'))['limit_num__min']
+    # 传了表名则获取表权限
+    if tb_name:
+        tb_limit_num = user_privileges.filter(db_name=str(db_name), table_name=str(tb_name), priv_type=2
+                                              ).aggregate(Min('limit_num'))['limit_num__min']
+        if tb_limit_num:
+            return min(db_limit_num, tb_limit_num)
+    else:
+        return db_limit_num

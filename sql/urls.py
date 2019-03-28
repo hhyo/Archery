@@ -83,7 +83,7 @@ urlpatterns = [
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
-    path('query/explain/', query.explain),
+    path('query/explain/', sql.sql_optimize.explain),
     path('query/applylist/', sql.query_privileges.query_priv_apply_list),
     path('query/userprivileges/', sql.query_privileges.user_query_priv),
     path('query/applyforprivileges/', sql.query_privileges.query_priv_apply),

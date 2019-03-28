@@ -7,7 +7,7 @@ import sqlparse
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
-from sql.utils.data_masking import Masking
+from sql.utils.data_masking import data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
@@ -103,11 +103,11 @@ class MysqlEngine(EngineBase):
 
     def query_check(self, db_name=None, sql='', limit_num=10):
         # 连进指定的mysql实例里，执行sql并返回
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': '', 'has_star': False}
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         sql_lower = sql.lower()
         if re.match(r"^select|^show|^explain", sql_lower) is None:
             result['bad_query'] = True
-            result['msg'] = '仅支持^select|^show|^explain语法!'
+            result['msg'] = '不止的支持查询语法类型!'
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
@@ -115,26 +115,14 @@ class MysqlEngine(EngineBase):
         if re.match(r"^select", sql_lower):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
-                    result['filtered_sql'] = sql + ' limit ' + str(limit_num) + ';'
+                    result['filtered_sql'] = f"{sql.rstrip(';')} limit {limit_num};"
         return result
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
-        # 解析语法树
-        mask_tool = Masking()
-        resultset_dict = resultset.__dict__
-        inception_mask_result = mask_tool.data_masking(self.instance_name, db_name, sql, resultset_dict)
-        # 传参进去之后, 就已经被处理
-        resultset.rows = resultset_dict['rows']
-        resultset.mask_rule_hit = inception_mask_result['data']['hit_rule']
-        if inception_mask_result['status'] != 0:
-            resultset.is_critical = True
-            resultset.error = inception_mask_result['msg']
-        elif resultset.mask_rule_hit == 1:
-            resultset.is_masked = 1
-        resultset.status = inception_mask_result['status']
-        return resultset
+        mask_result = data_masking(self.instance, db_name, sql, resultset)
+        return mask_result
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
