@@ -92,8 +92,8 @@ def query(request):
         t_end = time.time()
         query_result.query_time = "%5s" % "{:.4f}".format(t_end - t_start)
 
-        # 数据脱敏，仅对正确查询并返回的语句进行脱敏
-        if SysConfig().get('data_masking') and re.match(r"^select", sql_content, re.I) and query_result.error is None:
+        # 数据脱敏，仅对查询无错误的结果集进行脱敏
+        if SysConfig().get('data_masking') and query_result.error is None:
             try:
                 # 记录脱敏时间
                 t_start = time.time()

@@ -12,8 +12,8 @@ logger = logging.getLogger('default')
 class MssqlEngine(EngineBase):
     def get_connection(self, db_name=None):
         connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0};PORT={1};UID={2};PWD={3};
-client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
-                                                                  self.port, self.user, self.password)
+        client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
+                                                                          self.port, self.user, self.password)
         conn = pyodbc.connect(connstr)
         return conn
 
@@ -29,8 +29,8 @@ client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
     def get_all_tables(self, db_name):
         """return List [tables]"""
         sql = """SELECT TABLE_NAME
-FROM {0}.INFORMATION_SCHEMA.TABLES
-WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
+        FROM {0}.INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         return tb_list
@@ -44,22 +44,22 @@ WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
     def describe_table(self, db_name, tb_name):
         """return ResultSet"""
         sql = r"""select
-c.name ColumnName,
-t.name ColumnType,
-c.length  ColumnLength,
-c.scale   ColumnScale,
-c.isnullable ColumnNull,
-    case when i.id is not null then 'Y' else 'N' end TablePk
-from (select name,id,uid from {0}..sysobjects where (xtype='U' or xtype='V') ) o 
-inner join {0}..syscolumns c on o.id=c.id 
-inner join {0}..systypes t on c.xtype=t.xusertype 
-left join {0}..sysusers u on u.uid=o.uid
-left join (select name,id,uid,parent_obj from {0}..sysobjects where xtype='PK' )  opk on opk.parent_obj=o.id 
-left join (select id,name,indid from {0}..sysindexes) ie on ie.id=o.id and ie.name=opk.name
-left join {0}..sysindexkeys i on i.id=o.id and i.colid=c.colid and i.indid=ie.indid
-WHERE O.name NOT LIKE 'MS%' AND O.name NOT LIKE 'SY%'
-and O.name='{1}'
-order by o.name,c.colid""".format(db_name, tb_name)
+        c.name ColumnName,
+        t.name ColumnType,
+        c.length  ColumnLength,
+        c.scale   ColumnScale,
+        c.isnullable ColumnNull,
+            case when i.id is not null then 'Y' else 'N' end TablePk
+        from (select name,id,uid from {0}..sysobjects where (xtype='U' or xtype='V') ) o 
+        inner join {0}..syscolumns c on o.id=c.id 
+        inner join {0}..systypes t on c.xtype=t.xusertype 
+        left join {0}..sysusers u on u.uid=o.uid
+        left join (select name,id,uid,parent_obj from {0}..sysobjects where xtype='PK' )  opk on opk.parent_obj=o.id 
+        left join (select id,name,indid from {0}..sysindexes) ie on ie.id=o.id and ie.name=opk.name
+        left join {0}..sysindexkeys i on i.id=o.id and i.colid=c.colid and i.indid=ie.indid
+        WHERE O.name NOT LIKE 'MS%' AND O.name NOT LIKE 'SY%'
+        and O.name='{1}'
+        order by o.name,c.colid""".format(db_name, tb_name)
         result = self.query(sql=sql)
         return result
 
@@ -106,7 +106,7 @@ order by o.name,c.colid""".format(db_name, tb_name)
             cursor = conn.cursor()
             if db_name:
                 cursor.execute('use {};'.format(db_name))
-            effect_row = cursor.execute(sql)
+            cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
             else:
@@ -130,6 +130,10 @@ order by o.name,c.colid""".format(db_name, tb_name)
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
-        filtered_result = brute_mask(resultset)
-        filtered_result.is_masked = 1
+        # 仅对select语句脱敏
+        if re.match(r"^select", sql, re.I):
+            filtered_result = brute_mask(resultset)
+            filtered_result.is_masked = 1
+        else:
+            filtered_result = resultset
         return filtered_result

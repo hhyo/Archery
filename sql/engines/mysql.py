@@ -121,7 +121,11 @@ class MysqlEngine(EngineBase):
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
-        mask_result = data_masking(self.instance, db_name, sql, resultset)
+        # 仅对select语句脱敏
+        if re.match(r"^select", sql, re.I):
+            mask_result = data_masking(self.instance, db_name, sql, resultset)
+        else:
+            mask_result = resultset
         return mask_result
 
     def execute_check(self, db_name=None, sql=''):
