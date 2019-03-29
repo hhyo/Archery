@@ -48,43 +48,37 @@ def query(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 删除注释语句，进行语法判断，执行第一条有效sql
-    sql_content = sqlparse.format(sql_content.strip(), strip_comments=True)
     try:
-        sql_content = sqlparse.split(sql_content)[0]
-    except IndexError:
-        result['status'] = 1
-        result['msg'] = '没有有效的SQL语句'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    try:
-        # 查询权限校验
-        check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
-        if check_info['status'] == 0:
-            limit_num = check_info['data']['limit_num']
-            priv_check = check_info['data']['priv_check']
-        else:
-            result['status'] = 1
-            result['msg'] = check_info['msg']
-            return HttpResponse(json.dumps(result), content_type='application/json')
-        # explain的limit_num = 0设置为0
-        limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
-
-        # 查询前的检查，禁用语句等校验
+        # 查询前的检查，禁用语句检查，语句切分
         query_engine = get_engine(instance=instance)
-        filter_result = query_engine.query_check(db_name=db_name, sql=sql_content, limit_num=limit_num)
-        if filter_result.get('bad_query'):
+        query_check_info = query_engine.query_check(db_name=db_name, sql=sql_content)
+        if query_check_info.get('bad_query'):
             # 引擎内部判断为 bad_query
             result['status'] = 1
-            result['msg'] = filter_result.get('msg')
+            result['msg'] = query_check_info.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')
-        if filter_result.get('has_star') and SysConfig().get('disable_star') is True:
+        if query_check_info.get('has_star') and SysConfig().get('disable_star') is True:
             # 引擎内部判断为有 * 且禁止 * 选项打开
             result['status'] = 1
-            result['msg'] = filter_result.get('msg')
+            result['msg'] = query_check_info.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')
         else:
-            sql_content = filter_result['filtered_sql']
+            sql_content = query_check_info['filtered_sql']
+
+        # 查询权限校验，并且获取limit_num
+        priv_check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
+        if priv_check_info['status'] == 0:
+            limit_num = priv_check_info['data']['limit_num']
+            priv_check = priv_check_info['data']['priv_check']
+        else:
+            result['status'] = 1
+            result['msg'] = priv_check_info['msg']
+            return HttpResponse(json.dumps(result), content_type='application/json')
+        # explain的limit_num设置为0
+        limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
+
+        # 对查询sql增加limit限制或者改写语句
+        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
 
         # 执行查询语句,统计执行时间
         t_start = time.time()
@@ -131,28 +125,28 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
-            if int(limit_num) == 0:
-                limit_num = int(query_result.affected_rows)
-            else:
-                limit_num = min(int(limit_num), int(query_result.affected_rows))
-            query_log = QueryLog(
-                username=user.username,
-                user_display=user.display,
-                db_name=db_name,
-                instance_name=instance.instance_name,
-                sqllog=sql_content,
-                effect_row=limit_num,
-                cost_time=query_result.query_time,
-                priv_check=priv_check,
-                hit_rule=query_result.mask_rule_hit,
-                masking=query_result.is_masked
-            )
-            # 防止查询超时
-            try:
-                query_log.save()
-            except:
-                connection.close()
-                query_log.save()
+                if int(limit_num) == 0:
+                    limit_num = int(query_result.affected_rows)
+                else:
+                    limit_num = min(int(limit_num), int(query_result.affected_rows))
+                query_log = QueryLog(
+                    username=user.username,
+                    user_display=user.display,
+                    db_name=db_name,
+                    instance_name=instance.instance_name,
+                    sqllog=sql_content,
+                    effect_row=limit_num,
+                    cost_time=query_result.query_time,
+                    priv_check=priv_check,
+                    hit_rule=query_result.mask_rule_hit,
+                    masking=query_result.is_masked
+                )
+                # 防止查询超时
+                try:
+                    query_log.save()
+                except:
+                    connection.close()
+                    query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1

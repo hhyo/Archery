@@ -1,6 +1,9 @@
+# -*- coding: UTF-8 -*-
 import logging
 import traceback
 import re
+import sqlparse
+
 from . import EngineBase
 import pyodbc
 from .models import ResultSet, ReviewResult, ReviewSet
@@ -63,17 +66,26 @@ class MssqlEngine(EngineBase):
         result = self.query(sql=sql)
         return result
 
-    def query_check(self, db_name=None, sql='', limit_num=10):
-        # 连进指定的mysql实例里，执行sql并返回
-        sql_lower = sql.lower()
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': '', 'has_star': False}
+    def query_check(self, db_name=None, sql=''):
+        # 查询语句的检查、注释去除、切分
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format",
                            "len", "nchar", "patindex", "quotename", "replace", "replicate",
                            "reverse", "right", "soundex", "space", "str", "string_agg",
                            "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
-        if re.match(r"^select", sql, re.I) is None:
+        # 删除注释语句，进行语法判断，执行第一条有效sql
+        try:
+            sql = sql.format(sql, strip_comments=True)
+            sql = sqlparse.split(sql)[0]
+            result['filtered_sql'] = sql.strip()
+            sql_lower = sql.lower()
+        except IndexError:
+            result['has_star'] = True
+            result['msg'] = '没有有效的SQL语句'
+            return result
+        if re.match(r"^select", sql_lower) is None:
             result['bad_query'] = True
             result['msg'] = '仅支持^select语法!'
             return result
@@ -91,12 +103,15 @@ class MssqlEngine(EngineBase):
                 result['bad_query'] = True
         if result.get('bad_query'):
             result['msg'] = keyword_warning
-            return result
+        return result
+
+    def filter_sql(self, sql='', limit_num=0):
+        sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
             if sql_lower.find(' top ') == -1:
-                sql = sql_lower.replace('select', 'select top {}'.format(limit_num))
-        return {'filtered_sql': sql}
+                return sql_lower.replace('select', 'select top {}'.format(limit_num))
+        return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
@@ -121,7 +136,7 @@ class MssqlEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.error(traceback.format_exc())
+            logger.error(f"MsSQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             conn.close()

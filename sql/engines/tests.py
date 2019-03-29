@@ -136,6 +136,13 @@ class TestMssql(TestCase):
         check_result = new_engine.query_check(db_name='some_db', sql=banned_sql)
         self.assertTrue(check_result.get('bad_query'))
 
+    def test_filter_sql(self):
+        new_engine = MssqlEngine(instance=self.ins1)
+        # 只抽查一个函数
+        banned_sql = 'select user from user_table'
+        check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
+        self.assertEqual(check_result, "select top 10 user from user_table")
+
 
 class TestMysql(TestCase):
 
@@ -205,9 +212,15 @@ class TestMysql(TestCase):
 
     def testQueryCheck(self):
         new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = '-- 测试\n select user from usertable'
+        check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit)
+        self.assertEqual(check_result['filtered_sql'], 'select user from usertable')
+
+    def test_filter_sql(self):
+        new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable'
-        check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit, limit_num=100)
-        self.assertEqual(check_result['filtered_sql'], 'select user from usertable limit 100;')
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, 'select user from usertable limit 100;')
 
 
 class TestRedis(TestCase):
@@ -266,6 +279,12 @@ class TestRedis(TestCase):
         check_result = new_engine.query_check(db_name=0, sql=safe_cmd)
         self.assertDictEqual(check_result,
                              {'msg': '禁止执行该命令！', 'bad_query': True, 'filtered_sql': safe_cmd, 'has_star': False})
+
+    def test_filter_sql(self):
+        safe_cmd = "keys 1*"
+        new_engine = RedisEngine(instance=self.ins)
+        check_result = new_engine.filter_sql(sql=safe_cmd, limit_num=100)
+        self.assertEqual(check_result, 'keys 1*')
 
     def test_query_masking(self):
         query_result = ResultSet()

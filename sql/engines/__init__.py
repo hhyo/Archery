@@ -44,8 +44,11 @@ class EngineBase:
         """获取表结构, 返回一个 ResultSet"""
         return ResultSet()
 
-    def query_check(self, db_name=None, sql='', limit_num=10):
-        """查询语句的检查, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
+    def query_check(self, db_name=None, sql=''):
+        """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
+
+    def filter_sql(self, sql='', limit_num=0):
+        """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """实际查询 返回一个ResultSet"""

@@ -229,8 +229,7 @@ def regex(masking_rules, rule_type, value):
                     group = m.group(i + 1)
                 masking_str = masking_str + group
             return masking_str
-        except Exception:
-            logger.error(traceback.format_exc())
+        except AttributeError:
             return value
     else:
         return value

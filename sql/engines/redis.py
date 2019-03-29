@@ -81,9 +81,12 @@ class RedisEngine(EngineBase):
             if limit_num > 0:
                 result_set.rows = result_set.rows[0:limit_num]
         except Exception as e:
-            logger.error(f"查询redis命令报错，查询语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         return result_set
+
+    def filter_sql(self, sql='', limit_num=0):
+        return sql.strip()
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """不做脱敏"""

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """engine 结果集定义"""
 import json
 
