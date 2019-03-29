@@ -22,7 +22,8 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
-        self.conn = redis.Redis(host=self.host, port=self.port, db=0, password=self.password)
+        self.conn = redis.Redis(host=self.host, port=self.port, db=0, password=self.password,
+                                encoding_errors='ignore', decode_responses=True)
         return self.conn
 
     @property
