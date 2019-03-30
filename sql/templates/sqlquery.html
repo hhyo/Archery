@@ -638,6 +638,7 @@
                             $('#table_name').selectpicker('render');
                             $('#table_name').selectpicker('refresh');
                             //自动补全提示
+                            $("#schema_name").val('');
                             setTablesCompleteData(result)
                         } else {
                             $("#schema_name").empty();
