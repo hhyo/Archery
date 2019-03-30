@@ -16,7 +16,7 @@
 
 介绍
 ============
-Archery是[archer](https://github.com/jly8866/archer)的一个分支项目，定位于SQL审核查询平台，同时附加部分简易的日常DB运维功能，不涉及主机、备份管理。针对多类型数据库(MsSQL/PostgreSQL/Redis)的支持也不断完善中。不定期更新，请通过[Issues](https://github.com/hhyo/archery/issues)沟通反馈
+Archery是[archer](https://github.com/jly8866/archer)的一个分支项目，定位于SQL审核查询平台，附加部分日常DB运维功能，[功能列表](https://github.com/hhyo/Archery/wiki/功能列表)
 
 开发计划
 ==============
@@ -66,7 +66,7 @@ http://127.0.0.1:9123/
 
 手动安装
 ===============
-[部署说明](https://github.com/hhyo/archery/wiki/%E9%83%A8%E7%BD%B2)
+[部署说明](https://github.com/hhyo/archery/wiki/部署#手动部署)
 
 依赖清单
 ===============
