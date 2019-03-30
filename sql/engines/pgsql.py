@@ -64,7 +64,7 @@ class PgSQLEngine(EngineBase):
         :return:
         """
         sql = f"""SELECT table_name 
-        FROM information_schema.columns 
+        FROM information_schema.tables 
         where table_catalog='{db_name}'
         and table_schema ='{schema_name}';"""
         result = self.query(db_name=db_name, sql=sql)
