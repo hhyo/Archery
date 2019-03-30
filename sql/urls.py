@@ -76,9 +76,7 @@ urlpatterns = [
     path('instance/list/', instance.lists),
     path('instance/users/', instance.users),
     path('instance/schemasync/', instance.schemasync),
-    path('instance/getdbNameList/', instance.get_db_name_list),
-    path('instance/getTableNameList/', instance.get_table_name_list),
-    path('instance/getColumnNameList/', instance.get_column_name_list),
+    path('instance/instance_resource/', instance.instance_resource),
     path('instance/describetable/', instance.describe),
 
     path('query/', query.query),

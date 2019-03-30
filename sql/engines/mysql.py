@@ -39,20 +39,20 @@ class MysqlEngine(EngineBase):
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, schema_name=None):
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         return tb_list
 
     # 连进指定的mysql实例里，读取所有Columns并返回
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
         """return list [columns]"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, schema_name=None):
         """return ResultSet 类似查询"""
         sql = """SELECT 
             COLUMN_NAME,
@@ -122,12 +122,12 @@ class MysqlEngine(EngineBase):
         return result
 
     def filter_sql(self, sql='', limit_num=0):
-        # 对查询sql增加limit限制
+        # 对查询sql增加limit限制，# TODO limit改写待优化
         sql_lower = sql.lower().rstrip(';').strip()
         if re.match(r"^select", sql_lower):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
-                    return f"{sql} limit {limit_num};"
+                    return f"{sql.rstrip(';')} limit {limit_num};"
         return sql.strip()
 
     def query_masking(self, db_name=None, sql='', resultset=None):

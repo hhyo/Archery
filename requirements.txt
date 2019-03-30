@@ -8,6 +8,7 @@ mybatis_mapper2sql==0.1.4
 django-auth-ldap==1.6.1
 python-dateutil==2.7.3
 pymongo==3.7.2
+psycopg2-binary==2.7.7
 mysql-replication==0.18
 django-q==1.0.1
 django-redis==4.10.0

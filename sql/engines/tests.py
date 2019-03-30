@@ -10,6 +10,7 @@ from sql.engines.models import ResultSet, ReviewSet
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
 from sql.engines.redis import RedisEngine
+from sql.engines.pgsql import PgSQLEngine
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -216,7 +217,13 @@ class TestMysql(TestCase):
         check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit)
         self.assertEqual(check_result['filtered_sql'], 'select user from usertable')
 
-    def test_filter_sql(self):
+    def test_filter_sql_with_delimiter(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable;'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, 'select user from usertable limit 100;')
+
+    def test_filter_sql_without_delimiter(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
@@ -289,6 +296,100 @@ class TestRedis(TestCase):
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = RedisEngine(instance=self.ins)
+        masking_result = new_engine.query_masking(db_name=0, sql='', resultset=query_result)
+        self.assertEqual(masking_result, query_result)
+
+
+class TestPgSQL(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='pgsql', host='some_host',
+                           port=1366, user='ins_user', password='some_pass')
+        cls.ins.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ins.delete()
+
+    @patch('psycopg2.connect')
+    def test_get_connection(self, _conn):
+        new_engine = PgSQLEngine(instance=self.ins)
+        new_engine.get_connection()
+        _conn.assert_called_once()
+
+    @patch('psycopg2.connect.cursor.execute')
+    @patch('psycopg2.connect.cursor')
+    @patch('psycopg2.connect')
+    def test_query(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchmany.return_value = [(1,)]
+        new_engine = PgSQLEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertListEqual(query_result.rows, [(1,)])
+
+    @patch('sql.engines.pgsql.PgSQLEngine.query',
+           return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))
+    def test_get_all_databases(self, _query):
+        new_engine = PgSQLEngine(instance=self.ins)
+        dbs = new_engine.get_all_databases()
+        self.assertListEqual(dbs, ['archery'])
+
+    @patch('sql.engines.pgsql.PgSQLEngine.query',
+           return_value=ResultSet(rows=[('information_schema',), ('archery',), ('pg_catalog',)]))
+    def test_get_all_schemas(self, _query):
+        new_engine = PgSQLEngine(instance=self.ins)
+        schemas = new_engine.get_all_schemas(db_name='archery')
+        self.assertListEqual(schemas, ['archery'])
+
+    @patch('sql.engines.pgsql.PgSQLEngine.query', return_value=ResultSet(rows=[('test',), ('test2',)]))
+    def test_get_all_tables(self, _query):
+        new_engine = PgSQLEngine(instance=self.ins)
+        tables = new_engine.get_all_tables(db_name='archery', schema_name='archery')
+        self.assertListEqual(tables, ['test2'])
+
+    @patch('sql.engines.pgsql.PgSQLEngine.query',
+           return_value=ResultSet(rows=[('id',), ('name',)]))
+    def test_get_all_columns_by_tb(self, _query):
+        new_engine = PgSQLEngine(instance=self.ins)
+        columns = new_engine.get_all_columns_by_tb(db_name='archery', tb_name='test2', schema_name='archery')
+        self.assertListEqual(columns, ['id', 'name'])
+
+    @patch('sql.engines.pgsql.PgSQLEngine.query',
+           return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))
+    def test_describe_table(self, _query):
+        new_engine = PgSQLEngine(instance=self.ins)
+        describe = new_engine.describe_table(db_name='archery', schema_name='archery',tb_name='text')
+        self.assertIsInstance(describe, ResultSet)
+
+    def test_query_check_disable_sql(self):
+        sql = "update xxx set a=1 "
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name='archery', sql=sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '不止的支持查询语法类型!', 'bad_query': True, 'filtered_sql': sql.strip(), 'has_star': False})
+
+    def test_query_check_star_sql(self):
+        sql = "select * from xx "
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name='archery', sql=sql)
+        self.assertDictEqual(check_result,
+                             {'msg': 'SQL语句中含有 * ', 'bad_query': False, 'filtered_sql': sql.strip(), 'has_star': True})
+
+    def test_filter_sql_with_delimiter(self):
+        sql = "select * from xx;"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
+        self.assertEqual(check_result, "select * from xx limit 100;")
+
+    def test_filter_sql_without_delimiter(self):
+        sql = "select * from xx"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
+        self.assertEqual(check_result, "select * from xx limit 100;")
+
+    def test_query_masking(self):
+        query_result = ResultSet()
+        new_engine = PgSQLEngine(instance=self.ins)
         masking_result = new_engine.query_masking(db_name=0, sql='', resultset=query_result)
         self.assertEqual(masking_result, query_result)
 

@@ -149,71 +149,38 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取实例里面的数据库集合
-def get_db_name_list(request):
+def instance_resource(request):
+    """
+    获取实例内的资源信息，database、schema、table、column
+    :param request:
+    :return:
+    """
     instance_name = request.POST.get('instance_name')
-    try:
-        instance = Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
-    try:
-        query_engine = get_engine(instance=instance)
-        db_list = query_engine.get_all_databases()
-        result['data'] = db_list
-        if not db_list:
-            result['status'] = 1
-            result['msg'] = '数据库列表为空, 可能是权限或配置有误'
-    except Exception as msg:
-        result['status'] = 1
-        result['msg'] = str(msg)
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取数据库的表集合
-def get_table_name_list(request):
-    instance_name = request.POST.get('instance_name')
-    try:
-        instance = Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
     db_name = request.POST.get('db_name')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
+    schema_name = request.POST.get('schema_name')
+    tb_name = request.POST.get('schema_name')
 
-    try:
-        query_engine = get_engine(instance=instance)
-        table_list = query_engine.get_all_tables(db_name)
-        result['data'] = table_list
-    except Exception as msg:
-        result['status'] = 1
-        result['msg'] = str(msg)
-
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 获取表里面的字段集合
-def get_column_name_list(request):
-    instance_name = request.POST.get('instance_name')
+    resource_type = request.POST.get('resource_type')
     try:
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
-    db_name = request.POST.get('db_name')
-    tb_name = request.POST.get('tb_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
         query_engine = get_engine(instance=instance)
-        col_list = query_engine.get_all_columns_by_tb(db_name, tb_name)
-        result['data'] = col_list
-        if not col_list:
-            result['status'] = 1
-            result['msg'] = '字段列表为空, 可能是权限或配置有误'
+        if resource_type == 'database':
+            resource = query_engine.get_all_databases()
+        elif resource_type == 'schema' and db_name:
+            resource = query_engine.get_all_schemas(db_name=db_name)
+        elif resource_type == 'table' and (db_name or schema_name):
+            resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+        elif resource_type == 'column' and db_name and tb_name:
+            resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+        else:
+            raise TypeError('不支持的资源类型或者参数不完整！')
+        result['data'] = resource
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
@@ -228,12 +195,13 @@ def describe(request):
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
     db_name = request.POST.get('db_name')
+    schema_name = request.POST.get('schema_name')
     tb_name = request.POST.get('tb_name')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
         query_engine = get_engine(instance=instance)
-        query_result = query_engine.describe_table(db_name, tb_name)
+        query_result = query_engine.describe_table(db_name, tb_name, schema_name)
         result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1

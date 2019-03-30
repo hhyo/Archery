@@ -76,7 +76,8 @@ class Instance(models.Model):
     DB_TYPE_CHOICES = (
         ('mysql', 'MySQL'),
         ('mssql', 'MsSQL'),
-        ('redis', 'Redis'))
+        ('redis', 'Redis'),
+        ('pgsql', 'PgSQL'),)
 
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
