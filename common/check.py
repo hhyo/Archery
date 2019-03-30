@@ -7,6 +7,7 @@ import simplejson as json
 from django.http import HttpResponse
 
 from common.utils.permission import superuser_required
+from sql.engines import get_engine
 from sql.models import Instance
 from common.utils.sendmsg import MsgSender
 
@@ -94,7 +95,6 @@ def email(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-
 # 检测实例配置
 @superuser_required
 def instance(request):
@@ -102,19 +102,10 @@ def instance(request):
     instance_id = request.POST.get('instance_id')
     instance = Instance.objects.get(id=instance_id)
     try:
-        conn = MySQLdb.connect(host=instance.host,
-                               port=instance.port,
-                               user=instance.user,
-                               passwd=instance.raw_password,
-                               charset='utf8')
-        cursor = conn.cursor()
-        sql = "select 1"
-        cursor.execute(sql)
+        engine = get_engine(instance=instance)
+        engine.get_connection()
     except Exception as e:
         result['status'] = 1
         result['msg'] = '无法连接实例,\n{}'.format(str(e))
-    else:
-        cursor.close()
-        conn.close()
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')

@@ -7,6 +7,7 @@ from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
+from sql.engines import EngineBase
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog
 from common.utils.chart_dao import ChartDao
 
@@ -302,32 +303,14 @@ class CheckTest(TestCase):
         self.assertEqual(r_json['msg'], 'ok')
 
     @patch('MySQLdb.connect')
-    def testInstanceCheck(self, connect):
-        cur = MagicMock()
-        cur.return_value.execute = MagicMock()
-        cur.return_value.close = MagicMock()
-        connect.return_value.cursor = cur
-        connect.return_value.close = MagicMock()
-
+    @patch('common.check.get_engine', return_value=EngineBase)
+    def testInstanceCheck(self, _get_engine, _conn):
+        _get_engine.return_value.get_connection = _conn
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
         r_json = r.json()
         self.assertEqual(r_json['status'], 0)
-        connect.assert_called_once_with(host=self.slave1.host, port=self.slave1.port,
-                                        user=self.slave1.user, passwd=self.slave1.raw_password, charset=ANY)
-        cur.assert_called_once()
-        cur.return_value.execute.assert_called_once()
-        cur.return_value.close.assert_called_once()
-        connect.return_value.close.assert_called_once()
-
-        # exception
-        cur.return_value.execute.side_effect = NameError('some error')
-        r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
-        r_json = r.json()
-        self.assertEqual(r_json['status'], 1)
-        self.assertIn('无法连接实例', r_json['msg'])
-        self.assertIn('some error', r_json['msg'])
 
 
 class ChartTest(TestCase):
