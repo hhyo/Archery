@@ -97,9 +97,6 @@ class PgSQLEngine(EngineBase):
         :return:
         """
         sql = fr"""select
-        col.table_schema,
-        col.table_name,
-        col.ordinal_position,
         col.column_name,
         col.data_type,
         col.character_maximum_length,
