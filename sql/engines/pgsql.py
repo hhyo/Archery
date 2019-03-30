@@ -79,7 +79,7 @@ class PgSQLEngine(EngineBase):
         :param schema_name:
         :return:
         """
-        sql = f"""SELECT table_name
+        sql = f"""SELECT column_name
         FROM information_schema.columns 
         where table_catalog='{db_name}'
         and table_name='{tb_name}'

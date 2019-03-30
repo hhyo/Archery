@@ -158,7 +158,7 @@ def instance_resource(request):
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     schema_name = request.POST.get('schema_name')
-    tb_name = request.POST.get('schema_name')
+    tb_name = request.POST.get('tb_name')
 
     resource_type = request.POST.get('resource_type')
     try:
