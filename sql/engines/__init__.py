@@ -67,7 +67,7 @@ class EngineBase:
     def get_execute_percentage(self):
         """获取执行进度"""
 
-    def get_rollback(self):
+    def get_rollback(self, workflow):
         """获取工单回滚语句"""
 
 

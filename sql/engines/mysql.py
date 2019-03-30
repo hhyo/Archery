@@ -206,9 +206,9 @@ class MysqlEngine(EngineBase):
         check_result.column_list = inception_result.column_list
         return check_result
 
-    def execute_workflow(self):
+    def execute_workflow(self, workflow):
         """执行上线单"""
-        workflow_detail = self.workflow
+        workflow_detail = workflow
         if workflow_detail.is_manual == 1:
             return self.execute(db_name=workflow_detail.db_name, sql=workflow_detail.sqlworkflowcontent.sql_content)
         execute_result = ReviewSet(full_sql=workflow_detail.sqlworkflowcontent.sql_content)
@@ -281,10 +281,10 @@ class MysqlEngine(EngineBase):
 
         return execute_result
 
-    def get_rollback(self):
+    def get_rollback(self, workflow):
         """获取回滚语句列表"""
         inception_engine = InceptionEngine()
-        return inception_engine.get_rollback_list(self.workflow.id)
+        return inception_engine.get_rollback_list(workflow.id)
 
     def execute(self, db_name=None, sql='', close_conn=True):
         result = ResultSet(full_sql=sql)

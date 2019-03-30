@@ -23,8 +23,8 @@ def execute(workflow_id):
                       operator='',
                       operator_display='系统'
                       )
-    execute_engine = get_engine(workflow=workflow_detail)
-    return execute_engine.execute_workflow()
+    execute_engine = get_engine(instance=workflow_detail.instance)
+    return execute_engine.execute_workflow(workflow=workflow_detail)
 
 
 def execute_callback(task):
