@@ -132,8 +132,11 @@
                         title: '操作',
                         field: '',
                         formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户</button>\n" +
-                                "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n" +
+                            var btn_del_binLog = '';
+                            if (row.db_type === 'mysql') {
+                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
+                            }
+                            return "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户</button>\n" + btn_del_binLog +
                                 "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n"
                         }
                     }],
