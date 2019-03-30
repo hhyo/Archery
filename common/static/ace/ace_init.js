@@ -52,106 +52,55 @@ var setCompleteData = function (data) {
 
 //增加数据库提示
 function setDbsCompleteData(result) {
-    if (result) {
-        var tables = [];
-        for (var i = 0; i < result.length; i++) {
-            tables.push({
-                name: result[i],
-                value: result[i],
-                caption: result[i],
-                meta: 'databases',
-                score: '100'
-            });
+    var tables = [];
+    for (var i = 0; i < result.length; i++) {
+        tables.push({
+            name: result[i],
+            value: result[i],
+            caption: result[i],
+            meta: "database",
+            score: 100
+        });
 
-        }
-        setCompleteData(tables);
-    } else {
-        $.ajax({
-            type: "post",
-            url: "/instance/getdbNameList/",
-            dataType: "json",
-            data: {
-                instance_name: $("#instance_name").val()
-            },
-            complete: function () {
-            },
-            success: function (data) {
-                if (data.status === 0) {
-                    var result = data.data;
-                    var dbs = [];
-                    if (result.length > 0) {
-                        for (var i = 0; i < result.length; i++) {
-                            dbs.push({
-                                name: result[i],
-                                value: result[i],
-                                caption: result[i],
-                                meta: 'databases',
-                                score: '100'
-                            })
-                        }
-                        setCompleteData(dbs)
-                    }
-                } else {
-                    alert(data.msg);
-                }
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                alert(errorThrown);
-            }
-        })
     }
+    setCompleteData(tables);
 }
+
+//增加模式提示
+function setSchemasCompleteData(result) {
+    var tables = [];
+    for (var i = 0; i < result.length; i++) {
+        tables.push({
+            name: result[i],
+            value: result[i],
+            caption: result[i],
+            meta: "schema",
+            score: 100
+        });
+
+    }
+    setCompleteData(tables);
+}
+
 
 //增加表提示
 function setTablesCompleteData(result) {
-    if (result) {
-        var tables = [];
-        for (var i = 0; i < result.length; i++) {
-            tables.push({
-                name: result[i],
-                value: result[i],
-                caption: result[i],
-                meta: $("#db_name").val(),
-                score: '100'
-            });
-
-        }
-        setCompleteData(tables);
-    } else {
-        $.ajax({
-            type: "post",
-            url: "/instance/getTableNameList/",
-            dataType: "json",
-            data: {
-                instance_name: $("#instance_name").val(),
-                db_name: $("#db_name").val()
-            },
-            complete: function () {
-            },
-            success: function (data) {
-                if (data.status === 0) {
-                    var result = data.data;
-                    var tables = [];
-                    for (var i = 0; i < result.length; i++) {
-                        tables.push({
-                            name: result[i],
-                            value: result[i],
-                            caption: result[i],
-                            meta: $("#db_name").val(),
-                            score: '100'
-                        })
-                    }
-                    setCompleteData(tables);
-                } else {
-                    alert(data.msg);
-                }
-            }
-            ,
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
-                alert(errorThrown);
-            }
-        });
+    var meta = $("#db_name").val();
+    if ($("#schema_name").val()) {
+        meta = $("#schema_name").val();
     }
+    var tables = [];
+    for (var i = 0; i < result.length; i++) {
+        tables.push({
+            name: result[i],
+            value: result[i],
+            caption: result[i],
+            meta: meta,
+            score: 100
+        });
+
+    }
+    setCompleteData(tables);
 }
 
 //增加字段提示
@@ -164,7 +113,7 @@ function setColumnsCompleteData(result) {
                 value: result[i],
                 caption: result[i],
                 meta: $("#table_name").val(),
-                score: '100'
+                score: 100
             });
 
         }
@@ -172,12 +121,14 @@ function setColumnsCompleteData(result) {
     } else {
         $.ajax({
             type: "post",
-            url: "/instance/getColumnNameList/",
+            url: "/instance/instance_resource/",
             dataType: "json",
             data: {
                 instance_name: $("#instance_name").val(),
                 db_name: $("#db_name").val(),
-                tb_name: $("#table_name").val()
+                schema_name: $("#schema_name").val(),
+                tb_name: $("#table_name").val(),
+                resource_type: "column"
             },
             complete: function () {
             },
@@ -191,7 +142,7 @@ function setColumnsCompleteData(result) {
                             value: result[i],
                             caption: result[i],
                             meta: $("#table_name").val(),
-                            score: '100'
+                            score: 100
                         })
                     }
                     setCompleteData(columns);

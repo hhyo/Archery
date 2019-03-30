@@ -5,7 +5,6 @@ import time
 import traceback
 
 import simplejson as json
-import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.core import serializers
 from django.db import connection
@@ -125,28 +124,28 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
-                if int(limit_num) == 0:
-                    limit_num = int(query_result.affected_rows)
-                else:
-                    limit_num = min(int(limit_num), int(query_result.affected_rows))
-                query_log = QueryLog(
-                    username=user.username,
-                    user_display=user.display,
-                    db_name=db_name,
-                    instance_name=instance.instance_name,
-                    sqllog=sql_content,
-                    effect_row=limit_num,
-                    cost_time=query_result.query_time,
-                    priv_check=priv_check,
-                    hit_rule=query_result.mask_rule_hit,
-                    masking=query_result.is_masked
-                )
-                # 防止查询超时
-                try:
-                    query_log.save()
-                except:
-                    connection.close()
-                    query_log.save()
+            if int(limit_num) == 0:
+                limit_num = int(query_result.affected_rows)
+            else:
+                limit_num = min(int(limit_num), int(query_result.affected_rows))
+            query_log = QueryLog(
+                username=user.username,
+                user_display=user.display,
+                db_name=db_name,
+                instance_name=instance.instance_name,
+                sqllog=sql_content,
+                effect_row=limit_num,
+                cost_time=query_result.query_time,
+                priv_check=priv_check,
+                hit_rule=query_result.mask_rule_hit,
+                masking=query_result.is_masked
+            )
+            # 防止查询超时
+            try:
+                query_log.save()
+            except:
+                connection.close()
+                query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1

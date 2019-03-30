@@ -84,3 +84,6 @@ def get_engine(instance=None, workflow=None):
     elif instance.db_type == 'redis':
         from .redis import RedisEngine
         return RedisEngine(instance=instance)
+    elif instance.db_type == 'pgsql':
+        from .pgsql import PgSQLEngine
+        return PgSQLEngine(instance=instance)

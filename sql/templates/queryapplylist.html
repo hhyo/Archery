@@ -7,7 +7,7 @@
             <span aria-hidden="true"></span>权限管理</a>
         <button id="btn_add" type="button" class="btn btn-default"
                 data-toggle="modal" data-target="#apply">
-            <span aria-hidden="true"></span>申请权限
+            <span aria-hidden="true"></span>权限申请
         </button>
     </div>
     <!-- 申请列表的表格-->
@@ -47,6 +47,7 @@
                             <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                             <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                             <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                            <optgroup id="optgroup-pgsql" label="Redis"></optgroup>
                         </select>
                     </div>
                     <div class="form-group">
@@ -152,6 +153,7 @@
                         $("#optgroup-mysql").empty();
                         $("#optgroup-mssql").empty();
                         $("#optgroup-redis").empty();
+                        $("#optgroup-pgsql").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
@@ -160,6 +162,8 @@
                                 $("#optgroup-mssql").append(instance);
                             } else if (result[i]['db_type'] === 'redis') {
                                 $("#optgroup-redis").append(instance);
+                            } else if (result[i]['db_type'] === 'pgsql') {
+                                $("#optgroup-pgsql").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');
@@ -364,10 +368,11 @@
         $("#instance_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name").val()
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
                 },
                 complete: function () {
                     // 仅MySQL支持限制到表级权限
@@ -413,11 +418,12 @@
         $("#db_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/instance/getTableNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val()
+                    db_name: $("#db_name").val(),
+                    resource_type: "table"
                 },
                 complete: function () {
                 },

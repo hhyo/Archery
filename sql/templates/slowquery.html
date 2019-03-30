@@ -106,8 +106,7 @@
             var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
             if (slowsql_active_li_id === 'slowsql_tab') {
                 slowquery_review()
-            }
-            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+            } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
                 slowquery_review_history()
 
             }
@@ -127,24 +126,24 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name option:selected").text()
+                    instance_name: $("#instance_name option:selected").text(),
+                    resource_type: "database"
                 },
                 complete: function () {
                     if (sessionStorage.getItem('slow_query_db_name')) {
                         $("#db_name").selectpicker();
                         var myObject = {};
                         myObject.db_name = sessionStorage.getItem('slow_query_db_name');
-                        $("#db_name").selectpicker('val', myObject.db_name).trigger("change");;
-                    }
-                    else {
+                        $("#db_name").selectpicker('val', myObject.db_name).trigger("change");
+                        ;
+                    } else {
                         var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
                         if (slowsql_active_li_id === 'slowsql_tab') {
                             slowquery_review()
-                        }
-                        else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                        } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
                             slowquery_review_history()
 
                         }
@@ -178,8 +177,7 @@
             var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
             if (slowsql_active_li_id === 'slowsql_tab') {
                 slowquery_review()
-            }
-            else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+            } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
                 slowquery_review_history()
 
             }
@@ -213,8 +211,7 @@
                         $("#sqladvisor-toolbar").hide();
                         sessionStorage.removeItem('SQLId');
                         slowquery_review();
-                    }
-                    else if (active_li_id === 'slowsqlinfo_tab') {
+                    } else if (active_li_id === 'slowsqlinfo_tab') {
                         $("#sqladvisor-toolbar").show();
                         slowquery_review_history()
                     }
@@ -243,8 +240,7 @@
                     sessionStorage.setItem('advisor_db_name', advisor_db_name);
                     sessionStorage.setItem('advisor_instance_name', advisor_instance_name);
                     location.href = '/slowquery_advisor/';
-                }
-                else {
+                } else {
                     alert("请先选择需要优化的sql")
                 }
             });
@@ -336,8 +332,7 @@
                             if (value.length > 100) {
                                 var sql = value.substr(0, 100) + '...';
                                 return sql;
-                            }
-                            else {
+                            } else {
                                 return value
                             }
                         }
@@ -363,8 +358,7 @@
                         return res;
                     }
                 });
-            }
-            else {
+            } else {
                 alert('请选择实例')
             }
         }
@@ -452,8 +446,7 @@
                             if (value.length > 100) {
                                 var sql = value.substr(0, 100) + '...';
                                 return sql;
-                            }
-                            else {
+                            } else {
                                 return value
                             }
                         }
@@ -487,8 +480,7 @@
                         return res;
                     }
                 });
-            }
-            else {
+            } else {
                 alert("请选择实例")
             }
         }
