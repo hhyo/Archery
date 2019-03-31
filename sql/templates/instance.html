@@ -133,11 +133,13 @@
                         field: '',
                         formatter: function (value, row, index) {
                             var btn_del_binLog = '';
+                            var btn_user_manger = '';
                             if (row.db_type === 'mysql') {
+                                btn_user_manger = "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户</button>\n";
                                 btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
                             }
-                            return "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户</button>\n" + btn_del_binLog +
-                                "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n"
+                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n";
+                            return btn_user_manger + btn_del_binLog + btn_test
                         }
                     }],
                 onLoadSuccess: function () {
