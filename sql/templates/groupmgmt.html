@@ -65,7 +65,6 @@
     {% load staticfiles %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
         //获取列表
         function groupmgmt() {
@@ -206,8 +205,7 @@
                         }
                         $('#object_info').selectpicker('render');
                         $('#object_info').selectpicker('refresh');
-                    }
-                    else {
+                    } else {
                         alert(data.msg)
                     }
                 },
@@ -240,8 +238,7 @@
                         if (data.status === 0) {
                             $('#apply').modal('hide');
                             window.location.reload(true);
-                        }
-                        else {
+                        } else {
                             alert(data.msg)
                         }
                     },
@@ -249,8 +246,7 @@
                         alert(errorThrown);
                     }
                 });
-            }
-            else {
+            } else {
                 alert('请填写完整！')
             }
 

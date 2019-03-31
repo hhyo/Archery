@@ -10,11 +10,11 @@
     <title>SQL审核平台</title>
 
     <!-- 引入 Bootstrap -->
-    <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'metisMenu/css/metisMenu.min.css' %}" rel="stylesheet">
     <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
     <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
-    <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
     <!-- django i18n -->
     <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
@@ -254,12 +254,14 @@
 </div>
 
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
-<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'metisMenu/js/metisMenu.min.js' %}"></script>
 <script src="{% static 'sb-admin-2/js/sb-admin-2.js' %}"></script>
-<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
+<script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+<script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 
 </body>

@@ -174,7 +174,7 @@ def sqlquery(request):
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
     # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, 'all')]
+    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
 
     context = {'tab': 'slowquery', 'instances': instances}
     return render(request, 'slowquery.html', context)

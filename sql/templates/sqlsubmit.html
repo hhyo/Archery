@@ -131,16 +131,15 @@
 {% endblock content %}
 {% block js %}
     {% load staticfiles %}
-    <link href="{% static 'fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <script src="{% static 'ace/ace.js' %}"></script>
     <script src="{% static 'ace/ext-language_tools.js' %}"></script>
     <script src="{% static 'ace/mode-sql.js' %}"></script>
     <script src="{% static 'ace/theme-github.js' %}"></script>
     <script src="{% static 'ace/snippets/sql.js' %}"></script>
-    <script src="{% static 'ace/ace_init.js' %}"></script>
-    <script src="{% static 'fileinput/js/fileinput.min.js' %}"></script>
-    <script src="{% static 'fileinput/js/locales/zh.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <script src="{% static 'ace/ace-init.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
 
     <!--upload -->
     <script>
