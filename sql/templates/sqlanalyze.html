@@ -68,13 +68,12 @@
 {% endblock content %}
 {% block js %}
     {% load staticfiles %}
-    <link href="{% static 'fileinput/css/fileinput.min.css' %}" rel="stylesheet">
-    <script src="{% static 'fileinput/js/fileinput.min.js' %}"></script>
-    <script src="{% static 'fileinput/js/locales/zh.js' %}"></script>
+    <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script src="{% static 'dist/js/marked.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <!-- 解析文件 -->
     <script>
         //初始化上传控件
@@ -84,6 +83,7 @@
                 allowedFileExtensions: ['sql', 'xml'],//接收的文件后缀
                 showCaption: true,//是否显示标题
                 initialCaption: 'SQL/MyBatis3 Mapper XML file',
+                captionClass: "",
                 showUpload: false,     //不显示上传按钮
                 showPreview: false,    // 不显示预览,
             }).on('fileloaded', function (event, data, previewId, index) {
