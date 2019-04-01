@@ -32,15 +32,15 @@ class EngineBase:
         """获取数据库列表, 返回一个list"""
         return []
 
-    def get_all_tables(self, db_name, schema_name=None):
+    def get_all_tables(self, db_name):
         """获取table 列表, 返回一个list"""
         return []
 
-    def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个list"""
         return []
 
-    def describe_table(self, db_name, tb_name, schema_name=None):
+    def describe_table(self, db_name, tb_name):
         """获取表结构, 返回一个 ResultSet"""
         return ResultSet()
 

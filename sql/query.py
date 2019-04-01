@@ -7,7 +7,7 @@ import traceback
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.core import serializers
-from django.db import connection
+from django.db import connection, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse
 
@@ -143,7 +143,7 @@ def query(request):
             # 防止查询超时
             try:
                 query_log.save()
-            except:
+            except OperationalError:
                 connection.close()
                 query_log.save()
     except Exception as e:

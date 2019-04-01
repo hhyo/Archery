@@ -38,13 +38,13 @@ class MssqlEngine(EngineBase):
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         return tb_list
 
-    def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         """return list [columns]"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
 
-    def describe_table(self, db_name, tb_name, schema_name=None):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet"""
         sql = r"""select
         c.name ColumnName,
