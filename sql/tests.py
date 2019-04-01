@@ -894,6 +894,9 @@ class TestWorkflowView(TransactionTestCase):
             'notify_users': ''
         }
         mock_user_instances.return_value.get.return_value = None
+        mock_get_engine.return_value.execute_check.return_value.warning_count = 0
+        mock_get_engine.return_value.execute_check.return_value.error_count = 0
+        mock_get_engine.return_value.execute_check.return_value.syntax_type = 0
         mock_get_engine.return_value.execute_check.return_value.rows = []
         mock_get_engine.return_value.execute_check.return_value.json.return_value = json.dumps([{
             "id": 1,

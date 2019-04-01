@@ -47,7 +47,10 @@ class ReviewSet:
         self.checked = None
         self.warning = None
         self.error = None
+        self.warning_count = 0  # 检测结果警告数
+        self.error_count = 0  # 检测结果错误数
         self.is_critical = False
+        self.syntax_type = 0  # 语法类型
         # rows 为普通列表
         if rows is None:
             self.rows = []

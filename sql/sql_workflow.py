@@ -33,6 +33,8 @@ from sql.engines import get_engine
 logger = logging.getLogger('default')
 
 
+# TODO 清理工单上线内和engines无关的代码，各方法在engines中实现，工单只负责状态流转，方便接入不同数据库
+
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sql_workflow_list(request):
     """
@@ -97,54 +99,30 @@ def check(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    for statement in sqlparse.split(sql_content):
-        # 删除注释语句
-        statement = sqlparse.format(statement, strip_comments=True)
-        if re.match(r"^select", statement.lower()):
-            result['status'] = 1
-            result['msg'] = '仅支持DML和DDL语句，查询语句请使用SQL查询功能！'
-            return HttpResponse(json.dumps(result), content_type='application/json')
-
-    # 交给inception进行自动审核
+    # 交给engine进行检测
     try:
         check_engine = get_engine(instance=instance)
         check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
     except Exception as e:
-        logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = 'Inception审核报错，请检查Inception配置，错误信息：\n{}'.format(str(e))
+        result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    if not check_result:
-        result['status'] = 1
-        result['msg'] = 'inception返回的结果集为空！可能是SQL语句有语法错误'
-        return JsonResponse(result)
-    # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    column_list = ['id', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'sql', 'affected_rows', 'sequence',
-                   'backup_dbname', 'execute_time', 'sqlsha1']
-    check_warning_count = 0
-    check_error_count = 0
-    for row_item in check_result.rows:
-        if row_item.errlevel == 1:
-            check_warning_count = check_warning_count + 1
-        elif row_item.errlevel == 2:
-            check_error_count = check_error_count + 1
-    result['data']['rows'] = [r.__dict__ for r in check_result.rows]
-    result['data']['column_list'] = column_list
-    result['data']['CheckWarningCount'] = check_warning_count
-    result['data']['CheckErrorCount'] = check_error_count
-
+    # 处理检测结果
+    result['data']['rows'] = check_result.to_dict()
+    result['data']['CheckWarningCount'] = check_result.warning_count
+    result['data']['CheckErrorCount'] = check_result.error_count
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 @permission_required('sql.sql_submit', raise_exception=True)
 def submit(request):
     """正式提交SQL, 此处生成工单"""
-    sql_content = request.POST['sql_content']
+    sql_content = request.POST['sql_content'].strip()
     workflow_title = request.POST['workflow_name']
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
     # 工单表中可以考虑不存储资源组相关信息
-    # 工单和实例关联， 实例和资源组关联， 资源组和用户关联。
+    # 工单和实例关联， 实例和资源组关联， 资源组和用户关联。（reply 一个实例可以被多个资源组关联，无法去除）
     group_name = request.POST['group_name']
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
@@ -155,58 +133,33 @@ def submit(request):
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
 
     # 服务器端参数验证
-    if sql_content is None or workflow_title is None or instance_name is None or db_name is None or is_backup is None:
+    if None in [sql_content, db_name, instance_name, db_name, is_backup]:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
         user_instances(request.user, type='master', db_type='mysql').get(instance_name=instance_name)
-    except Exception:
+    except instance.DoesNotExist:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
-    sql_content = sql_content.strip()
-
-    # 审核
+    # 再次交给engine进行检测，防止绕过
     try:
-        check_engine = get_engine(instance)
-        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content)
-    except Exception as msg:
-        context = {'errMsg': msg}
+        check_engine = get_engine(instance=instance)
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
+    except Exception as e:
+        context = {'errMsg': str(e)}
         return render(request, 'error.html', context)
 
-    if not check_result:
-        context = {'errMsg': 'inception返回的结果集为空！可能是SQL语句有语法错误'}
-        return render(request, 'error.html', context)
-
-    # 遍历result，看是否有任何自动审核不通过的地方，并且按配置确定是标记审核不通过还是放行，放行的可以在工单内原生执行
+    # 按照系统配置确定是自动驳回还是放行
     sys_config = SysConfig()
-    is_manual = 0
+    auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
-    for row in check_result.rows:
-        # 1表示警告，不影响执行
-        if row.errlevel == 1 and sys_config.get('auto_review_wrong', '') == '1':
-            workflow_status = 'workflow_autoreviewwrong'
-            break
-        # 2表示严重错误，或者inception不支持的语法，标记手工执行，可以跳过inception直接执行
-        elif row.errlevel == 2:
-            is_manual = 1
-            if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
-                workflow_status = 'workflow_autoreviewwrong'
-            break
-        elif re.match(r"\w*comments\w*", row.errormessage):
-            is_manual = 1
-            if sys_config.get('auto_review_wrong', '') in ('', '1', '2'):
-                workflow_status = 'workflow_autoreviewwrong'
-            break
-
-    # 判断SQL是否包含DDL语句，SQL语法 1、DDL，2、DML
-    syntax_type = 2
-    for stmt in sqlparse.split(sql_content):
-        if get_syntax_type(stmt) == 'DDL':
-            syntax_type = 1
-            break
+    if check_result.warning_count > 0 and auto_review_wrong == '1':
+        workflow_status = 'workflow_autoreviewwrong'
+    elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
+        workflow_status = 'workflow_autoreviewwrong'
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
@@ -224,8 +177,8 @@ def submit(request):
                 is_backup=is_backup,
                 instance=instance,
                 db_name=db_name,
-                is_manual=is_manual,
-                syntax_type=syntax_type,
+                is_manual=0,
+                syntax_type=check_result.syntax_type,
                 create_time=timezone.now()
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
@@ -239,13 +192,13 @@ def submit(request):
                 # 调用工作流插入审核信息, 查询权限申请workflow_type=2
                 Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
-        logger.error(traceback.format_exc())
+        logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 自动审核通过了，才调用工作流，进行消息通知
+        # 自动审核通过才进行消息通知
         if workflow_status == 'workflow_manreviewing':
-            # 再次获取审核信息
+            # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
@@ -267,7 +220,7 @@ def passed(request):
         return render(request, 'error.html', context)
 
     user = request.user
-    if Audit.can_review(request.user, workflow_id, 2) is False:
+    if Audit.can_review(user, workflow_id, 2) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
@@ -285,7 +238,7 @@ def passed(request):
                 # 将流程状态修改为审核通过
                 SqlWorkflow(id=workflow_id, status='workflow_review_pass').save(update_fields=['status'])
     except Exception as msg:
-        logger.error(traceback.format_exc())
+        logger.error(f"审核工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
@@ -379,7 +332,7 @@ def timing_task(request):
                           operator_display=request.user.display
                           )
     except Exception as msg:
-        logger.error(traceback.format_exc())
+        logger.error(f"定时执行工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
@@ -453,7 +406,7 @@ def cancel(request):
             workflow_detail.status = 'workflow_abort'
             workflow_detail.save()
     except Exception as msg:
-        logger.error(traceback.format_exc())
+        logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:

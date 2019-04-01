@@ -39,22 +39,22 @@ class MysqlEngine(EngineBase):
         return db_list
 
     # 连进指定的mysql实例里，读取所有tables并返回
-    def get_all_tables(self, db_name, schema_name=None):
+    def get_all_tables(self, db_name):
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         return tb_list
 
     # 连进指定的mysql实例里，读取所有Columns并返回
-    def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         """return list [columns]"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         return column_list
 
-    def describe_table(self, db_name, tb_name, schema_name=None):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
-        sql = """SELECT 
+        sql = f"""SELECT 
             COLUMN_NAME,
             COLUMN_TYPE,
             CHARACTER_SET_NAME,
@@ -65,10 +65,9 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = '{0}'
-                AND TABLE_NAME = '{1}'
-        ORDER BY ORDINAL_POSITION;""".format(
-            db_name, tb_name)
+            TABLE_SCHEMA = '{db_name}'
+                AND TABLE_NAME = '{tb_name}'
+        ORDER BY ORDINAL_POSITION;"""
         result = self.query(sql=sql)
         return result
 
@@ -144,7 +143,19 @@ class MysqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         archer_config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
-        if archer_config.get('critical_ddl_regex'):
+        # 禁用语句检查
+        line = 1
+        for statement in sqlparse.split(sql):
+            statement = sqlparse.format(statement, strip_comments=True)
+            if re.match(r"^select", statement.lower()):
+                check_result.is_critical = True
+                result = ReviewResult(id=line, errlevel=2,
+                                      stagestatus='驳回高危SQL',
+                                      errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
+                                      sql=statement)
+                check_result.rows += [result]
+        # 高危SQL检查
+        if not check_result.is_critical and archer_config.get('critical_ddl_regex'):
             # 如果启用critical_ddl 的检查
             critical_ddl_regex = archer_config.get('critical_ddl_regex')
             p = re.compile(critical_ddl_regex)
@@ -163,130 +174,36 @@ class MysqlEngine(EngineBase):
                     result = ReviewResult(id=line, errlevel=0, sql=statement)
                 check_result.rows += [result]
                 line += 1
-            if check_result.is_critical:
-                return check_result
-
-        # 检查 inception 不支持的函数
-        check_result.rows = []
-        line = 1
-        for statement in sqlparse.split(sql):
-            # 删除注释语句
-            statement = sqlparse.format(statement, strip_comments=True)
-            if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
-                        statement.lower() + ";"):
-                result = ReviewSet(
-                    id=line, errlevel=2, stagestatus='SQL语法错误',
-                    errormessage='ALTER TABLE 必须带有选项',
-                    sql=statement)
-                check_result.is_critical = True
-            else:
-                result = ReviewSet(id=line, errlevel=0, sql=statement)
-            check_result.rows += [result]
-            line += 1
+        # 高危/禁用语句直接返回
         if check_result.is_critical:
             return check_result
-
-        # inception 校验
-        check_result.rows = []
-        inception_sql = "/*--user=%s;--password=%s;--host=%s;--enable-check=1;--port=%d;*/\
-            inception_magic_start;\
-            use %s;\
-            %s\
-            inception_magic_commit;" % (
-            self.user,
-            self.password,
-            self.host,
-            self.port,
-            db_name,
-            sql)
-        inception_engine = InceptionEngine()
-        inception_result = inception_engine.query(sql=inception_sql)
-        for r in inception_result.rows:
-            check_result.rows += [ReviewResult(inception_result=r)]
-        check_result.column_list = inception_result.column_list
+        # 通过检测的再进行inception检查
+        else:
+            try:
+                inception_engine = InceptionEngine()
+                check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+            except Exception as e:
+                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
+                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
         return check_result
 
     def execute_workflow(self, workflow):
-        """执行上线单"""
-        workflow_detail = workflow
-        if workflow_detail.is_manual == 1:
-            return self.execute(db_name=workflow_detail.db_name, sql=workflow_detail.sqlworkflowcontent.sql_content)
-        execute_result = ReviewSet(full_sql=workflow_detail.sqlworkflowcontent.sql_content)
-        inception_engine = InceptionEngine()
-        if workflow_detail.is_backup == '是':
-            str_backup = "--enable-remote-backup;"
+        """执行上线单，返回Review set"""
+        # 原生执行
+        if workflow.is_manual == 1:
+            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+        # inception执行
         else:
-            str_backup = "--disable-remote-backup;"
-        # 根据inception的要求，执行之前最好先split一下
-        sql_split = "/*--user=%s; --password=%s; --host=%s; --enable-execute;--port=%d; --enable-ignore-warnings;--enable-split;*/\
-             inception_magic_start;\
-             use %s;\
-             %s\
-             inception_magic_commit;" % (
-            self.user,
-            self.password,
-            self.host,
-            self.port,
-            workflow_detail.db_name, workflow_detail.sqlworkflowcontent.sql_content)
-        split_result = inception_engine.query(sql=sql_split)
-
-        execute_result.rows = []
-        # 对于split好的结果，再次交给inception执行.这里无需保持在长连接里执行，短连接即可.
-        for splitRow in split_result.rows:
-            sql_tmp = splitRow[1]
-            sql_execute = "/*--user=%s;--password=%s;--host=%s;--enable-execute;--port=%d; --enable-ignore-warnings;%s*/\
-                    inception_magic_start;\
-                    %s\
-                    inception_magic_commit;" % (
-                self.user,
-                self.password,
-                self.host,
-                self.port,
-                str_backup,
-                sql_tmp)
-
-            one_line_execute_result = inception_engine.query(sql=sql_execute)
-            # 执行, 把结果转换为ReviewSet
-            for sqlRow in one_line_execute_result.to_dict():
-                execute_result.rows.append(ReviewResult(
-                    id=sqlRow['ID'],
-                    stage=sqlRow['stage'],
-                    errlevel=sqlRow['errlevel'],
-                    stagestatus=sqlRow['stagestatus'],
-                    errormessage=sqlRow['errormessage'],
-                    sql=sqlRow['SQL'],
-                    affected_rows=sqlRow['Affected_rows'],
-                    actual_affected_rows=sqlRow['Affected_rows'],
-                    sequence=sqlRow['sequence'],
-                    backup_dbname=sqlRow['backup_dbname'],
-                    execute_time=sqlRow['execute_time'],
-                    sqlsha1=sqlRow['sqlsha1']))
-
-            # 每执行一次，就将执行结果更新到工单的execute_result
-            workflow_detail.sqlworkflowcontent.execute_result = execute_result.json()
-            from django.db import connection
-            if connection.connection is not None:
-                connection.close()
-            workflow_detail.sqlworkflowcontent.save()
-            workflow_detail.save()
-
-        # 二次加工一下，目的是为了和sqlautoReview()函数的return保持格式一致，便于在detail页面渲染.
-        execute_result.status = "workflow_finish"
-        for sqlRow in execute_result.rows:
-            # 如果发现任何一个行执行结果里有errLevel为1或2，并且stagestatus列没有包含Execute Successfully字样，则判断最终执行结果为有异常.
-            if (sqlRow.errlevel == 1 or sqlRow.errlevel == 2) and re.match(r"\w*Execute Successfully\w*",
-                                                                           sqlRow.stagestatus) is None:
-                execute_result.status = "workflow_exception"
-                execute_result.error = "Line {0} has error/warning: {1}".format(sqlRow.id, sqlRow.errormessage)
-
-        return execute_result
+            inception_engine = InceptionEngine()
+            return inception_engine.execute(workflow)
 
     def get_rollback(self, workflow):
-        """获取回滚语句列表"""
+        """通过inception获取回滚语句列表"""
         inception_engine = InceptionEngine()
         return inception_engine.get_rollback_list(workflow.id)
 
     def execute(self, db_name=None, sql='', close_conn=True):
+        """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection()
         try:
