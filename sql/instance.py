@@ -174,10 +174,16 @@ def instance_resource(request):
             resource = query_engine.get_all_databases()
         elif resource_type == 'schema' and db_name:
             resource = query_engine.get_all_schemas(db_name=db_name)
-        elif resource_type == 'table' and (db_name or schema_name):
-            resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+        elif resource_type == 'table' and db_name:
+            if instance.db_type == 'pgsql':
+                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+            else:
+                resource = query_engine.get_all_tables(db_name=db_name)
         elif resource_type == 'column' and db_name and tb_name:
-            resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+            if instance.db_type == 'pgsql':
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+            else:
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
         else:
             raise TypeError('不支持的资源类型或者参数不完整！')
         result['data'] = resource

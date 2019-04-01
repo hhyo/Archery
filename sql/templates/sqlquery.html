@@ -728,7 +728,7 @@
                 //当前激活的标签id
                 sessionStorage.setItem('active_li_id', $(e.target).parents().attr('id'));
                 //当前激活的标签标题
-                sessionStorage.setItem('active_li_title', $(e.target).context.innerText);
+                sessionStorage.setItem('active_li_title', e.target.innerText);
                 if ($(e.target).parents().attr('id') === 'sqllog_tab') {
                     get_querylog();
                 }

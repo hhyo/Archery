@@ -210,9 +210,15 @@ def queryapplydetail(request, apply_id):
     # 是否可审核
     is_can_review = Audit.can_review(request.user, apply_id, 1)
     # 获取审核日志
-    audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
-                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+    if workflow_detail.status == 2:
+        try:
+            audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id, workflow_type=1).audit_id
+            last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        except Exception as e:
+            logger.debug(f'无审核日志记录，错误信息{e}')
+            last_operation_info = ''
+    else:
+        last_operation_info = ''
 
     context = {'workflow_detail': workflow_detail, 'audit_auth_group': audit_auth_group,
                'last_operation_info': last_operation_info, 'current_audit_auth_group': current_audit_auth_group,
