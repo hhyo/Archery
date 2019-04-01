@@ -72,13 +72,14 @@ class InceptionEngine(EngineBase):
                             inception_magic_commit;"""
         inception_engine = InceptionEngine()
         inception_result = inception_engine.query(sql=inception_sql)
+        check_result.syntax_type = 2  # TODO 工单类型 1、DDL，2、DML 仅适用于MySQL，待调整
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
             if r[2] == 1:  # 警告
                 check_result.warning_count += 1
             elif r[2] == 2 or re.match(r"\w*comments\w*", r[4], re.I):  # 错误
                 check_result.error_count += 1
-            if get_syntax_type(r[5]) == 'DDL':  # 工单类型 1、DDL，2、DML
+            if get_syntax_type(r[5]) == 'DDL':
                 check_result.syntax_type = 1
         check_result.column_list = inception_result.column_list
         check_result.checked = True
