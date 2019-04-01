@@ -13,43 +13,38 @@ def is_auto_review(workflow_id):
     :param workflow_id:
     :return:
     """
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    sql_content = workflow_detail.sqlworkflowcontent.sql_content
-    instance_name = workflow_detail.instance.instance_name
-    db_name = workflow_detail.db_name
-    is_manual = workflow_detail.is_manual
+    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    # TODO 这里也可以放到engine中实现，但是配置项可能会相对复杂
+    if workflow.instance.db_type == 'mysql':
+        # 获取正则表达式
+        auto_review_regex = SysConfig().get('auto_review_regex',
+                                            '^alter|^create|^drop|^truncate|^rename|^delete')
+        p = re.compile(auto_review_regex, re.I)
 
-    # 获取正则表达式
-    auto_review_regex = SysConfig().get('auto_review_regex',
-                                        '^alter|^create|^drop|^truncate|^rename|^delete')
-    p = re.compile(auto_review_regex)
-
-    # 判断是否匹配到需要手动审核的语句
-    is_autoreview = True
-    for statement in sqlparse.split(sql_content):
-        # 删除注释语句
-        statement = sqlparse.format(statement, strip_comments=True)
-        if p.match(statement.strip().lower()):
-            is_autoreview = False
-            break
-        if is_autoreview:
-            # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
-            instance = Instance.objects.get(instance_name=instance_name)
-            review_engine = get_engine(instance=instance)
-            inception_review = review_engine.execute_check(db_name=db_name, sql=sql_content).to_dict()
-            all_affected_rows = 0
-            for review_result in inception_review:
-                sql = review_result.get('sql', '')
-                affected_rows = review_result.get('affected_rows', 0)
-                if re.match(r"^update", sql.strip().lower()):
-                    all_affected_rows = all_affected_rows + int(affected_rows)
-            if int(all_affected_rows) > int(SysConfig().get('auto_review_max_update_rows', 50)):
-                is_autoreview = False
-
-    # inception不支持语法都需要审批
-    if is_manual == 1:
-        is_autoreview = False
-    return is_autoreview
+        # 判断是否匹配到需要手动审核的语句
+        auto_review = True
+        sql_content = workflow.sqlworkflowcontent.sql_content
+        for statement in sqlparse.split(sql_content):
+            # 删除注释语句
+            statement = sqlparse.format(statement, strip_comments=True)
+            if p.match(statement.strip()):
+                auto_review = False
+                break
+            if auto_review:
+                # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
+                review_engine = get_engine(instance=workflow.instance)
+                inception_review = review_engine.execute_check(db_name=workflow.db_name, sql=sql_content).to_dict()
+                all_affected_rows = 0
+                for review_result in inception_review:
+                    sql = review_result.get('sql', '')
+                    affected_rows = review_result.get('affected_rows', 0)
+                    if re.match(r"^update", sql.strip().lower()):
+                        all_affected_rows = all_affected_rows + int(affected_rows)
+                if int(all_affected_rows) > int(SysConfig().get('auto_review_max_update_rows', 50)):
+                    auto_review = False
+    else:
+        auto_review = False
+    return auto_review
 
 
 def can_execute(user, workflow_id):
