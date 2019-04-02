@@ -97,7 +97,8 @@
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name option:selected").text()
+                    instance_name: $("#instance_name option:selected").text(),
+                    resource_type: "database"
                 },
                 complete: function () {
                 },
