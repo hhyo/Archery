@@ -28,31 +28,25 @@ def lists(request):
     else:
         auth_group_ids = [group.id for group in Group.objects.filter(user=user)]
 
-    # 只返回当前待自己审核的数据
-    if workflow_type == 0:
-        audit_obj = WorkflowAudit.objects.filter(
-            workflow_title__icontains=search,
-            current_status=WorkflowDict.workflow_status['audit_wait'],
-            group_id__in=group_ids,
-            current_audit__in=auth_group_ids
-        )
-    else:
-        audit_obj = WorkflowAudit.objects.filter(
-            workflow_title__icontains=search,
-            workflow_type=workflow_type,
-            current_status=WorkflowDict.workflow_status['audit_wait'],
-            group_id__in=group_ids,
-            current_audit__in=auth_group_ids
-        )
+    # 只返回所在资源组当前待自己审核的数据
+    workflow_audit = WorkflowAudit.objects.filter(
+        workflow_title__icontains=search,
+        current_status=WorkflowDict.workflow_status['audit_wait'],
+        group_id__in=group_ids,
+        current_audit__in=auth_group_ids
+    )
+    # 过滤工单类型
+    if workflow_type != 0:
+        workflow_audit.filter(workflow_type=workflow_type)
 
-    audit_list_count = audit_obj.count()
-    audit_list = audit_obj.order_by('-audit_id')[offset:limit].values(
-            'audit_id', 'workflow_type',
-            'workflow_title', 'create_user_display',
-            'create_time', 'current_status',
-            'audit_auth_groups',
-            'current_audit',
-            'group_name')
+    audit_list_count = workflow_audit.count()
+    audit_list = workflow_audit.order_by('-audit_id')[offset:limit].values(
+        'audit_id', 'workflow_type',
+        'workflow_title', 'create_user_display',
+        'create_time', 'current_status',
+        'audit_auth_groups',
+        'current_audit',
+        'group_name')
 
     # QuerySet 序列化
     rows = [row for row in audit_list]

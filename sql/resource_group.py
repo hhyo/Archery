@@ -23,7 +23,7 @@ def group(request):
     limit = offset + limit
     search = request.POST.get('search', '')
 
-    # 全部工单里面包含搜索条件
+    # 过滤搜索条件
     group_obj = ResourceGroup.objects.filter(group_name__icontains=search)
     group_count = group_obj.count()
     group_list = group_obj[offset:limit].values("group_id", "group_name", "ding_webhook")
@@ -98,14 +98,18 @@ def instances(request):
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     type = request.POST.get('type')
+    db_type = request.POST.getlist('db_type[]')
     # 先获取资源组关联所有实例列表
     instance_ids = [group['object_id'] for group in
                     ResourceGroupRelations.objects.filter(group_id=group_id, object_type=1).values('object_id')]
 
     # 获取实例信息
-    instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'type', 'db_type',
-                                                                                  'instance_name')
-    rows = [row for row in instances_ob]
+    instances = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'type', 'db_type',
+                                                                               'instance_name')
+    # 过滤db_type
+    if db_type:
+        instances = instances.filter(db_type=db_type)
+    rows = [row for row in instances]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
