@@ -30,11 +30,11 @@ class PgSQLEngine(EngineBase):
 
     @property
     def name(self):
-        return 'Redis'
+        return 'PgSQL'
 
     @property
     def info(self):
-        return 'Redis engine'
+        return 'PgSQL engine'
 
     def get_all_databases(self):
         """
@@ -129,7 +129,7 @@ class PgSQLEngine(EngineBase):
             result['msg'] = '没有有效的SQL语句'
         if re.match(r"^select", sql, re.I) is None:
             result['bad_query'] = True
-            result['msg'] = '不止的支持查询语法类型!'
+            result['msg'] = '不支持的查询语法类型!'
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
@@ -170,7 +170,7 @@ class PgSQLEngine(EngineBase):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
                     return f"{sql.rstrip(';')} limit {limit_num};"
-        return sql.strip()
+        return f"{sql.rstrip(';')};"
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """不做脱敏"""

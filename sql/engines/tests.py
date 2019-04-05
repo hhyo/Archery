@@ -5,12 +5,14 @@ from unittest.mock import patch, Mock, ANY
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from common.config import SysConfig
 from sql.engines import EngineBase
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
 from sql.engines.redis import RedisEngine
 from sql.engines.pgsql import PgSQLEngine
+from sql.engines.inception import InceptionEngine, _repair_json_str
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -146,15 +148,31 @@ class TestMssql(TestCase):
 
 class TestMysql(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.ins1 = Instance(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
-                            port=1366, user='ins_user', password='some_pass')
-        cls.ins1.save()
+    def setUp(self):
+        self.ins1 = Instance(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
+                             port=1366, user='ins_user', password='some_pass')
+        self.ins1.save()
+        self.sys_config = SysConfig()
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup='是',
+            instance=self.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.ins1.delete()
+    def tearDown(self):
+        self.ins1.delete()
+        self.sys_config.replace(json.dumps({}))
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
 
     @patch('MySQLdb.connect')
     def testGetConnection(self, connect):
@@ -216,6 +234,21 @@ class TestMysql(TestCase):
         check_result = new_engine.query_check(db_name='some_db', sql=sql_without_limit)
         self.assertEqual(check_result['filtered_sql'], 'select user from usertable')
 
+    def test_query_check_wrong_sql(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        wrong_sql = '-- 测试'
+        check_result = new_engine.query_check(db_name='some_db', sql=wrong_sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': '-- 测试', 'has_star': True})
+
+    def test_query_check_update_sql(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        update_sql = 'update user set id=0'
+        check_result = new_engine.query_check(db_name='some_db', sql=update_sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': 'update user set id=0',
+                              'has_star': False})
+
     def test_filter_sql_with_delimiter(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable;'
@@ -227,6 +260,90 @@ class TestMysql(TestCase):
         sql_without_limit = 'select user from usertable'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
         self.assertEqual(check_result, 'select user from usertable limit 100;')
+
+    def test_filter_sql_with_limit(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 10;')
+
+    @patch('sql.engines.mysql.data_masking', return_value=ResultSet())
+    def test_query_masking(self, _data_masking):
+        query_result = ResultSet()
+        new_engine = MysqlEngine(instance=self.ins1)
+        masking_result = new_engine.query_masking(db_name='archery', sql='select 1', resultset=query_result)
+        self.assertIsInstance(masking_result, ResultSet)
+
+    @patch('sql.engines.mysql.data_masking', return_value=ResultSet())
+    def test_query_masking_not_select(self, _data_masking):
+        query_result = ResultSet()
+        new_engine = MysqlEngine(instance=self.ins1)
+        masking_result = new_engine.query_masking(db_name='archery', sql='explain select 1', resultset=query_result)
+        self.assertEqual(masking_result, query_result)
+
+    def test_execute_check_select_sql(self):
+        sql = 'select * from user'
+        row = ReviewResult(id=1, errlevel=2,
+                           stagestatus='驳回高危SQL',
+                           errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
+                           sql=sql)
+        new_engine = MysqlEngine(instance=self.ins1)
+        check_result = new_engine.execute_check(db_name='archery', sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    def test_execute_check_critical_sql(self):
+        self.sys_config.set('critical_ddl_regex', '^|update')
+        self.sys_config.get_all_config()
+        sql = 'update user set id=1'
+        row = ReviewResult(id=1, errlevel=2,
+                           stagestatus='驳回高危SQL',
+                           errormessage='禁止提交匹配' + '^|update' + '条件的语句！',
+                           sql=sql)
+        new_engine = MysqlEngine(instance=self.ins1)
+        check_result = new_engine.execute_check(db_name='archery', sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_execute_check_normal_sql(self, _inception_engine):
+        sql = 'update user set id=1'
+        row = ReviewResult(id=1,
+                           errlevel=0,
+                           stagestatus='Audit completed',
+                           errormessage='None',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0, )
+        _inception_engine.return_value.execute_check.return_value = ReviewSet(full_sql=sql, rows=[row])
+        new_engine = MysqlEngine(instance=self.ins1)
+        check_result = new_engine.execute_check(db_name='archery', sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_execute_check_normal_sql_with_Exception(self, _inception_engine):
+        sql = 'update user set id=1'
+        _inception_engine.return_value.execute_check.side_effect = RuntimeError()
+        new_engine = MysqlEngine(instance=self.ins1)
+        with self.assertRaises(RuntimeError):
+            new_engine.execute_check(db_name=0, sql=sql)
+
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_execute_workflow(self, _inception_engine):
+        sql = 'update user set id=1'
+        _inception_engine.return_value.execute.return_value = ReviewSet(full_sql=sql)
+        new_engine = MysqlEngine(instance=self.ins1)
+        execute_result = new_engine.execute_workflow(self.wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
+    def test_execute(self, _connect, _cursor, _execute):
+        new_engine = MysqlEngine(instance=self.ins1)
+        execute_result = new_engine.execute(self.wf)
+        self.assertIsInstance(execute_result, ResultSet)
 
 
 class TestRedis(TestCase):
@@ -373,6 +490,16 @@ class TestPgSQL(TestCase):
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
+    @patch('psycopg2.connect.cursor.execute')
+    @patch('psycopg2.connect.cursor')
+    @patch('psycopg2.connect')
+    def test_query_not_limit(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        new_engine = PgSQLEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertListEqual(query_result.rows, [(1,)])
+
     @patch('sql.engines.pgsql.PgSQLEngine.query',
            return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))
     def test_get_all_databases(self, _query):
@@ -412,7 +539,7 @@ class TestPgSQL(TestCase):
         new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.query_check(db_name='archery', sql=sql)
         self.assertDictEqual(check_result,
-                             {'msg': '不止的支持查询语法类型!', 'bad_query': True, 'filtered_sql': sql.strip(), 'has_star': False})
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': sql.strip(), 'has_star': False})
 
     def test_query_check_star_sql(self):
         sql = "select * from xx "
@@ -432,6 +559,12 @@ class TestPgSQL(TestCase):
         new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.filter_sql(sql=sql, limit_num=100)
         self.assertEqual(check_result, "select * from xx limit 100;")
+
+    def test_filter_sql_with_limit(self):
+        sql = "select * from xx limit 10"
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.filter_sql(sql=sql, limit_num=1)
+        self.assertEqual(check_result, "select * from xx limit 10;")
 
     def test_query_masking(self):
         query_result = ResultSet()
@@ -462,3 +595,148 @@ class TestModel(TestCase):
             review_set1.rows += [i]
         brand_new_review_set = ReviewSet()
         self.assertEqual(brand_new_review_set.rows, [])
+
+
+class TestInception(TestCase):
+    def setUp(self):
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
+                                           port=3306, user='ins_user', password='some_pass')
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup='是',
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
+
+    def tearDown(self):
+        self.ins.delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+
+    @patch('MySQLdb.connect')
+    def test_get_connection(self, _connect):
+        new_engine = InceptionEngine()
+        new_engine.get_connection()
+        _connect.assert_called_once()
+
+    @patch('MySQLdb.connect')
+    def test_get_backup_connection(self, _connect):
+        new_engine = InceptionEngine()
+        new_engine.get_backup_connection()
+        _connect.assert_called_once()
+
+    def test_execute_check_critical_sql(self):
+        sql = 'alter table user'
+        row = ReviewResult(id=1, errlevel=2, stagestatus='SQL语法错误',
+                           errormessage='ALTER TABLE 必须带有选项',
+                           sql=sql)
+        new_engine = InceptionEngine()
+        check_result = new_engine.execute_check(db_name=0, sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_execute_check_normal_sql(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 0, 'Audit completed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row])
+        new_engine = InceptionEngine()
+        check_result = new_engine.execute_check(instance=self.ins, db_name=0, sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_execute_exception(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 0, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
+        column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
+                       'backup_dbname', 'execute_time', 'sqlsha1']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
+        new_engine = InceptionEngine()
+        execute_result = new_engine.execute(workflow=self.wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.status, 'workflow_exception')
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_execute_finish(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 0, 'Execute Successfully', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
+        column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
+                       'backup_dbname', 'execute_time', 'sqlsha1']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
+        new_engine = InceptionEngine()
+        execute_result = new_engine.execute(workflow=self.wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.status, 'workflow_finish')
+
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
+    def test_query(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        new_engine = InceptionEngine()
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
+    def test_query_not_limit(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        new_engine = PgSQLEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
+        self.assertIsInstance(query_result, ResultSet)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_query_print(self, _query):
+        sql = 'update user set id=100'
+        row = [1,
+               'select * from sql_instance limit 100',
+               0,
+               '{"command":"select","select_list":[{"type":"FIELD_ITEM","field":"*"}],"table_ref":[{"db":"archery","table":"sql_instance"}],"limit":{"limit":[{"type":"INT_ITEM","value":"100"}]}}',
+               'None']
+        column_list = ['ID', 'statement', 'errlevel', 'query_tree', 'errmsg']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
+        new_engine = InceptionEngine()
+        print_result = new_engine.query_print(self.ins, db_name=None, sql=sql)
+        self.assertDictEqual(print_result, json.loads(_repair_json_str(row[3])))
+
+    @patch('MySQLdb.connect')
+    def test_get_rollback_list(self, _connect):
+        self.wf.sqlworkflowcontent.execute_result = """[{
+            "id": 1,
+            "stage": "RERUN",
+            "errlevel": 0,
+            "stagestatus": "Execute Successfully",
+            "errormessage": "None",
+            "sql": "use archer_test",
+            "affected_rows": 0,
+            "sequence": "'1554135032_13038_0'",
+            "backup_dbname": "None",
+            "execute_time": "0.000",
+            "sqlsha1": "",
+            "actual_affected_rows": 0
+        }, {
+            "id": 2,
+            "stage": "EXECUTED",
+            "errlevel": 0,
+            "stagestatus": "Execute Successfully Backup successfully",
+            "errormessage": "None",
+            "sql": "insert into tt1 (user_name)values('A'),('B'),('C')",
+            "affected_rows": 3,
+            "sequence": "'1554135032_13038_1'",
+            "backup_dbname": "mysql_3306_archer_test",
+            "execute_time": "0.000",
+            "sqlsha1": "",
+            "actual_affected_rows": 3
+        }]"""
+        self.wf.sqlworkflowcontent.save()
+        new_engine = InceptionEngine()
+        rollback_sql = new_engine.get_rollback(self.wf)

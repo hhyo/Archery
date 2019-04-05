@@ -114,7 +114,7 @@ class MysqlEngine(EngineBase):
             result['msg'] = '没有有效的SQL语句'
         if re.match(r"^select|^show|^explain", sql, re.I) is None:
             result['bad_query'] = True
-            result['msg'] = '不止的支持查询语法类型!'
+            result['msg'] = '不支持的查询语法类型!'
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
@@ -127,7 +127,7 @@ class MysqlEngine(EngineBase):
             if re.search(r"limit\s+(\d+)$", sql_lower) is None:
                 if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
                     return f"{sql.rstrip(';')} limit {limit_num};"
-        return sql.strip()
+        return f"{sql.rstrip(';')};"
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -200,7 +200,7 @@ class MysqlEngine(EngineBase):
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
         inception_engine = InceptionEngine()
-        return inception_engine.get_rollback_list(workflow.id)
+        return inception_engine.get_rollback(workflow)
 
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""

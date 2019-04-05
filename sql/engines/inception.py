@@ -50,13 +50,14 @@ class InceptionEngine(EngineBase):
             statement = sqlparse.format(statement, strip_comments=True)
             if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
                         statement.lower() + ";"):
-                result = ReviewSet(
-                    id=line, errlevel=2, stagestatus='SQL语法错误',
-                    errormessage='ALTER TABLE 必须带有选项',
-                    sql=statement)
+                result = ReviewResult(id=line,
+                                      errlevel=2,
+                                      stagestatus='SQL语法错误',
+                                      errormessage='ALTER TABLE 必须带有选项',
+                                      sql=statement)
                 check_result.is_critical = True
             else:
-                result = ReviewSet(id=line, errlevel=0, sql=statement)
+                result = ReviewResult(id=line, errlevel=0, sql=statement)
             check_result.rows += [result]
             line += 1
         if check_result.is_critical:
@@ -143,7 +144,7 @@ class InceptionEngine(EngineBase):
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且stagestatus列没有包含Execute Successfully字样，则最终执行结果为有异常.
         execute_result.status = "workflow_finish"
         for sqlRow in execute_result.rows:
-            if sqlRow.errlevel in (1, 2) and re.match(r"\w*Execute Successfully\w*", sqlRow.stagestatus) is None:
+            if sqlRow.errlevel in (1, 2) or not re.match(r"\w*Execute Successfully\w*", sqlRow.stagestatus):
                 execute_result.status = "workflow_exception"
                 execute_result.error = "Line {0} has error/warning: {1}".format(sqlRow.id, sqlRow.errormessage)
                 break
@@ -191,12 +192,11 @@ class InceptionEngine(EngineBase):
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 
-    def get_rollback_list(self, workflow_id):
+    def get_rollback(self, workflow):
         """
         获取回滚语句，并且按照执行顺序倒序展示
         """
-        workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-        list_execute_result = json.loads(workflow_detail.sqlworkflowcontent.execute_result)
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
         list_execute_result.reverse()
         list_backup_sql = []
         # 创建连接
