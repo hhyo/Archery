@@ -33,8 +33,6 @@ from sql.engines import get_engine
 logger = logging.getLogger('default')
 
 
-# TODO 清理工单上线内和engines无关的代码，各方法在engines中实现，工单只负责状态流转，方便接入不同数据库
-
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sql_workflow_list(request):
     """
