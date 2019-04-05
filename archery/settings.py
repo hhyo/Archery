@@ -108,7 +108,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-###############以下部分需要用户根据自己环境自行修改###################
+# ##############以下部分需要用户根据自己环境自行修改###################
+
+# SESSION 设置
+SESSION_COOKIE_AGE = 60 * 300  # 300分钟
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 
 # 该项目本身的mysql数据库地址
 DATABASES = {
@@ -152,7 +157,8 @@ Q_CLUSTER = {
     'save_limit': 0,
     'queue_limit': 50,
     'label': 'Django Q',
-    'django_redis': 'default'
+    'django_redis': 'default',
+    'sync': False  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
