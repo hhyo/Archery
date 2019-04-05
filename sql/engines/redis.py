@@ -121,7 +121,7 @@ class RedisEngine(EngineBase):
             execute_result.rows.append(ReviewResult(
                 id=1,
                 errlevel=2,
-                stagestatus='Execute failed',
+                stagestatus='Execute Failed',
                 errormessage=f'异常信息：{e}',
                 sql=sql,
                 affected_rows=0,

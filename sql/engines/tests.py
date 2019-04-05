@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from sql.engines import EngineBase
-from sql.engines.models import ResultSet, ReviewSet
+from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
 from sql.engines.redis import RedisEngine
@@ -45,7 +45,6 @@ class TestEngineBase(TestCase):
                 'id': 1,
                 'sql': 'some_content'
             }]))
-        cls.wf1.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -240,6 +239,8 @@ class TestRedis(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.ins.delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
 
     @patch('redis.Redis')
     def test_get_connection(self, _conn):
@@ -298,6 +299,51 @@ class TestRedis(TestCase):
         new_engine = RedisEngine(instance=self.ins)
         masking_result = new_engine.query_masking(db_name=0, sql='', resultset=query_result)
         self.assertEqual(masking_result, query_result)
+
+    def test_execute_check(self):
+        sql = 'set 1 1'
+        row = ReviewResult(id=1,
+                           errlevel=0,
+                           stagestatus='Audit completed',
+                           errormessage='None',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0,
+                           full_sql=sql)
+        new_engine = RedisEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name=0, sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch('redis.Redis.execute_command', return_value='text')
+    def test_execute_workflow_success(self, _execute_command):
+        sql = 'set 1 1'
+        row = ReviewResult(id=1,
+                           errlevel=0,
+                           stagestatus='Execute Successfully',
+                           errormessage='None',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0,
+                           full_sql=sql)
+        wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup='是',
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = RedisEngine(instance=self.ins)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.rows[0].__dict__, row.__dict__)
 
 
 class TestPgSQL(TestCase):
@@ -358,7 +404,7 @@ class TestPgSQL(TestCase):
            return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))
     def test_describe_table(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
-        describe = new_engine.describe_table(db_name='archery', schema_name='archery',tb_name='text')
+        describe = new_engine.describe_table(db_name='archery', schema_name='archery', tb_name='text')
         self.assertIsInstance(describe, ResultSet)
 
     def test_query_check_disable_sql(self):
