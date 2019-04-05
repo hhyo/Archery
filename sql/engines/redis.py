@@ -11,7 +11,7 @@ import redis
 import logging
 import traceback
 from . import EngineBase
-from .models import ResultSet
+from .models import ResultSet, ReviewSet, ReviewResult
 
 __author__ = 'hhyo'
 
@@ -91,3 +91,55 @@ class RedisEngine(EngineBase):
     def query_masking(self, db_name=None, sql='', resultset=None):
         """不做脱敏"""
         return resultset
+
+    def execute_check(self, db_name=None, sql=''):
+        """上线单执行前的检查, 返回Review set"""
+        check_result = ReviewSet(full_sql=sql)
+        result = ReviewResult(id=1,
+                              errlevel=0,
+                              stagestatus='Audit completed',
+                              errormessage='None',
+                              sql=sql,
+                              affected_rows=0,
+                              execute_time=0, )
+        check_result.rows += [result]
+        return check_result
+
+    def execute_workflow(self, workflow):
+        """执行上线单，返回Review set"""
+        sql = workflow.sqlworkflowcontent.sql_content
+        execute_result = ReviewSet(full_sql=sql)
+        try:
+            conn = self.get_connection()
+            if workflow.db_name:
+                conn.execute_command(f"select {workflow.db_name}")
+            conn.execute_command(workflow.sqlworkflowcontent.sql_content)
+        except Exception as e:
+            logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            execute_result.error = str(e)
+            execute_result.status = "workflow_exception"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+        else:
+            execute_result.status = "workflow_finish"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Execute Successfully',
+                errormessage='None',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+        finally:
+            workflow.sqlworkflowcontent.execute_result = execute_result.json()
+            workflow.sqlworkflowcontent.save()
+            workflow.save()
+        return execute_result

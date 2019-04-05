@@ -46,6 +46,10 @@
                                         class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
                                         data-live-search="true" data-placeholder="请选择实例" required>
                                     <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -564,12 +568,22 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data['data'];
-                        $("#instance_name").empty();
+                        $("#optgroup-mysql").empty();
+                        $("#optgroup-mssql").empty();
+                        $("#optgroup-redis").empty();
+                        $("#optgroup-pgsql").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                            $("#instance_name").append(instance);
+                            if (result[i]['db_type'] === 'mysql') {
+                                $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mssql') {
+                                $("#optgroup-mssql").append(instance);
+                            } else if (result[i]['db_type'] === 'redis') {
+                                $("#optgroup-redis").append(instance);
+                            } else if (result[i]['db_type'] === 'pgsql') {
+                                $("#optgroup-pgsql").append(instance);
+                            }
                         }
-                        $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
                         $('#instance_name').selectpicker('render');
                         $('#instance_name').selectpicker('refresh');
                         $("#db_name").empty();
