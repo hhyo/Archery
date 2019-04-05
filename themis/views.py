@@ -125,7 +125,7 @@ class SqlReRuleSetInfoIndex(BaseHandler):
         任务发布界面之ip地址显示
         """
         # 获取实例列表
-        instances = Instance.objects.filter(type='master')
+        instances = Instance.objects.filter(type='master', db_type='mysql')
         return render(request, "rule_set_info.html", {'instances': instances})
 
 
