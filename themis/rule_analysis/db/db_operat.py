@@ -2,6 +2,9 @@
 import MySQLdb
 from django.db import connection
 from sql.models import Instance
+import logging
+
+logger = logging.getLogger('default')
 
 
 class DbOperat(object):
@@ -32,9 +35,14 @@ class DbOperat(object):
         return self.cursor
 
     def execute(self, sql):
-        self.cursor.execute(sql)
-        results = self.cursor.fetchall()
-        return results
+        try:
+            self.cursor.execute(sql)
+            results = self.cursor.fetchall()
+        except Exception as e:
+            logger.error(f"Themis执行MySQL语句出错，语句：{sql}，错误信息：{e}")
+            raise Exception(e)
+        else:
+            return results
 
     def close(self):
         self.cursor.close()

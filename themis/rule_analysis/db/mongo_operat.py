@@ -2,6 +2,9 @@
 
 import pymongo
 from django.conf import settings
+import logging
+
+logger = logging.getLogger('default')
 
 
 class MongoOperat(object):
@@ -44,7 +47,11 @@ class MongoOperat(object):
             rule_cmd = "db.rule.find({'db_type' : 'O'})"
             client.command(rule_cmd)
         """
-        self.db.command("eval", rule_cmd, nolock)
+        try:
+            self.db.command("eval", rule_cmd, nolock)
+        except Exception as e:
+            logger.error(f"Themis执行Mongo命令出错，命令：{rule_cmd}，错误信息：{e}")
+            raise Exception(e)
 
     def find(self, collection, sql, condition=None):
         result = self.get_collection(collection).find(sql, condition)
