@@ -132,7 +132,7 @@ class WorkflowLogAdmin(admin.ModelAdmin):
 # 实例参数配置表
 @admin.register(ParamTemplate)
 class ParamTemplateAdmin(admin.ModelAdmin):
-    list_display = ('db_type', 'variable_name', 'default_value', 'editable', 'valid_values', 'description')
+    list_display = ('db_type', 'variable_name', 'default_value', 'editable', 'valid_values')
     search_fields = ('variable_name',)
     list_filter = ('db_type', 'editable')
 
