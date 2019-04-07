@@ -5,9 +5,18 @@
     <div id="toolbar" class="form-inline">
         <div class="form-group bootstrap-select ">
             <select id="type" class="dropdown-menu-right selectpicker ">
-                <option value="" selected="selected">全部</option>
+                <option value="" selected="selected">全部实例类型</option>
                 <option value="master">MASTER</option>
                 <option value="slave">SLAVE</option>
+            </select>
+        </div>
+        <div class="form-group bootstrap-select ">
+            <select id="db_type" class="dropdown-menu-right selectpicker ">
+                <option value="" selected="selected">全部数据库类型</option>
+                <option value="mysql">MySQL</option>
+                <option value="mssql">MsSQL</option>
+                <option value="redis">Redis</option>
+                <option value="pgsql">PgSQL</option>
             </select>
         </div>
         <div class="form-group ">
@@ -99,7 +108,8 @@
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search,
-                            type: $("#type").val()
+                            type: $("#type").val(),
+                            db_type: $("#db_type").val()
                         }
                     },
                 columns: [
@@ -232,6 +242,10 @@
 
         //筛选变动自动刷新
         $("#type").change(function () {
+            instancelist();
+        });
+
+        $("#db_type").change(function () {
             instancelist();
         });
 

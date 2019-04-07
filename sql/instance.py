@@ -20,16 +20,23 @@ def lists(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     type = request.POST.get('type')
+    db_type = request.POST.get('db_type')
     limit = offset + limit
     search = request.POST.get('search', '')
 
+    instances = Instance.objects.all()
+    # 过滤搜索
+    if search:
+        instances = instances.filter(nstance_name__icontains=search)
+    # 过滤实例类型
     if type:
-        instances_obj = Instance.objects.filter(instance_name__icontains=search, type=type)
-    else:
-        instances_obj = Instance.objects.filter(instance_name__icontains=search)
+        instances = instances.filter(type=type)
+    # 过滤数据库类型
+    if db_type:
+        instances = instances.filter(db_type=db_type)
 
-    count = instances_obj.count()
-    instances = instances_obj[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
+    count = instances.count()
+    instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
     # QuerySet 序列化
     rows = [row for row in instances]
 
