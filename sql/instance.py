@@ -11,7 +11,7 @@ from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
-from .models import Instance
+from .models import Instance, ParamTemplate, ParamHistory
 
 
 # 获取实例列表
@@ -71,6 +71,118 @@ def users(request):
     result = {'status': 0, 'msg': 'ok', 'rows': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+@permission_required('sql.param_view', raise_exception=True)
+def param_list(request):
+    """
+    获取实例参数列表
+    :param request:
+    :return:
+    """
+    instance_id = request.POST.get('instance_id')
+    editable = True if request.POST.get('editable') else False
+    search = request.POST.get('search', '')
+    try:
+        ins = Instance.objects.get(id=instance_id)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    # 获取已配置参数列表
+    cnf_params = dict()
+    for param in ParamTemplate.objects.filter(variable_name__contains=search).values(
+            'variable_name', 'default_value', 'valid_values', 'description', 'editable'):
+        param['variable_name'] = param['variable_name'].lower()
+        cnf_params[param['variable_name']] = param
+    # 获取实例参数列表
+    engine = get_engine(instance=ins)
+    ins_variables = engine.get_variables()
+    # 处理结果
+    rows = list()
+    for variable in ins_variables.rows:
+        variable_name = variable[0].lower()
+        row = {
+            'variable_name': variable_name,
+            'runtime_value': variable[1],
+            'editable': False,
+        }
+        if variable_name in cnf_params.keys():
+            row = dict(row, **cnf_params[variable_name])
+        rows.append(row)
+    # 过滤参数
+    if editable:
+        rows = [row for row in rows if row['editable']]
+    else:
+        rows = [row for row in rows if not row['editable']]
+    return HttpResponse(json.dumps(rows, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
+
+
+@permission_required('sql.param_history', raise_exception=True)
+def param_history(request):
+    """实例参数修改历史"""
+    limit = int(request.POST.get('limit'))
+    offset = int(request.POST.get('offset'))
+    limit = offset + limit
+    instance_id = request.POST.get('instance_id')
+    search = request.POST.get('search', '')
+    phs = ParamHistory.objects.filter(instance__id=instance_id)
+    if search:
+        phs = phs.filter()
+    else:
+        phs = ParamHistory.objects.filter(variable_name__contains=search)
+    count = phs.count()
+    phs = phs[offset:limit].values("instance__instance_name", "variable_name", "old_var", "new_var",
+                                   "user_display", "update_time")
+    # QuerySet 序列化
+    rows = [row for row in phs]
+
+    result = {"total": count, "rows": rows}
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
+
+
+@permission_required('sql.param_edit', raise_exception=True)
+def param_edit(request):
+    user = request.user
+    instance_id = request.POST.get('instance_id')
+    variable_name = request.POST.get('variable_name')
+    variable_value = request.POST.get('runtime_value')
+
+    try:
+        ins = Instance.objects.get(id=instance_id)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
+    # 修改参数
+    engine = get_engine(instance=ins)
+    # 校验是否配置模板
+    if not ParamTemplate.objects.filter(variable_name=variable_name).exists():
+        result = {'status': 1, 'msg': '请先在参数模板中配置该参数！', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    # 获取当前运行参数值
+    runtime_value = engine.get_variables(variables=[variable_name]).rows[0][1]
+    if variable_name == runtime_value:
+        result = {'status': 1, 'msg': '参数值与实际运行值一致，未调整！', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    set_result = engine.set_variable(variable_name=variable_name, variable_value=variable_value)
+    if set_result.error:
+        result = {'status': 1, 'msg': f'设置错误，错误信息：{set_result.error}', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    # 修改成功的保存修改记录
+    else:
+        ParamHistory.objects.create(
+            instance=ins,
+            variable_name=variable_name,
+            old_var=runtime_value,
+            new_var=variable_value,
+            set_sql=set_result.full_sql,
+            user_name=user.username,
+            user_display=user.display
+        )
+        result = {'status': 0, 'msg': '修改成功', 'data': []}
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 # 对比实例schema信息

@@ -303,6 +303,15 @@ def instanceuser(request, instance_id):
     return render(request, 'instanceuser.html', {'instance_id': instance_id})
 
 
+# 实例参数管理页面
+@permission_required('sql.menu_param', raise_exception=True)
+def instance_param(request):
+    # 获取用户关联实例列表
+    instances = user_instances(request.user, type='all', db_type='mysql')
+    context = {'tab': 'param_tab', 'instances': instances}
+    return render(request, 'param.html', context)
+
+
 # binlog2sql页面
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):

@@ -4,6 +4,7 @@ import traceback
 import MySQLdb
 import re
 import sqlparse
+from MySQLdb.connections import numeric_part
 
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
@@ -29,6 +30,11 @@ class MysqlEngine(EngineBase):
     @property
     def info(self):
         return 'MySQL engine'
+
+    @property
+    def server_version(self):
+        version = self.query(sql="select @@version").rows[0][0]
+        return tuple([numeric_part(n) for n in version.split('.')[:3]])
 
     # 连进指定的mysql实例里，读取所有databases并返回
     def get_all_databases(self):
@@ -197,11 +203,6 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
-    def get_rollback(self, workflow):
-        """通过inception获取回滚语句列表"""
-        inception_engine = InceptionEngine()
-        return inception_engine.get_rollback(workflow)
-
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
@@ -218,6 +219,26 @@ class MysqlEngine(EngineBase):
         if close_conn:
             self.close()
         return result
+
+    def get_rollback(self, workflow):
+        """通过inception获取回滚语句列表"""
+        inception_engine = InceptionEngine()
+        return inception_engine.get_rollback(workflow)
+
+    def get_variables(self, variables=None):
+        """获取实例参数"""
+        if variables:
+            variables = "','".join(variables) if isinstance(variables, list) else "','".join(list(variables))
+            db = 'performance_schema' if self.server_version > (5, 7) else 'information_schema'
+            sql = f"""select * from {db}.global_variables where variable_name in ('{variables}');"""
+        else:
+            sql = "show global variables;"
+        return self.query(sql=sql)
+
+    def set_variable(self, variable_name, variable_value):
+        """修改实例参数值"""
+        sql = f"""set global {variable_name}={variable_value};"""
+        return self.query(sql=sql)
 
     def close(self):
         if self.conn:

@@ -44,6 +44,7 @@ urlpatterns = [
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
     path('instanceuser/<int:instance_id>/', views.instanceuser),
+    path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
     path('config/', views.config),
@@ -78,6 +79,10 @@ urlpatterns = [
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
     path('instance/describetable/', instance.describe),
+
+    path('param/list/', instance.param_list),
+    path('param/history/', instance.param_history),
+    path('param/save/', instance.param_edit),
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
