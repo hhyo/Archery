@@ -75,9 +75,13 @@ def detail(request, workflow_id):
         is_can_cancel = can_cancel(request.user, workflow_id)
 
         # 获取审核日志
-        audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-        last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        try:
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        except Exception as e:
+            logger.debug(f'无审核日志记录，错误信息{e}')
+            last_operation_info = ''
     else:
         audit_auth_group = '系统自动驳回'
         current_audit_auth_group = '系统自动驳回'
@@ -301,6 +305,15 @@ def instance(request):
 @permission_required('sql.menu_instance', raise_exception=True)
 def instanceuser(request, instance_id):
     return render(request, 'instanceuser.html', {'instance_id': instance_id})
+
+
+# 实例参数管理页面
+@permission_required('sql.menu_param', raise_exception=True)
+def instance_param(request):
+    # 获取用户关联实例列表
+    instances = user_instances(request.user, type='all', db_type='mysql')
+    context = {'tab': 'param_tab', 'instances': instances}
+    return render(request, 'param.html', context)
 
 
 # binlog2sql页面

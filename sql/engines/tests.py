@@ -345,6 +345,31 @@ class TestMysql(TestCase):
         execute_result = new_engine.execute(self.wf)
         self.assertIsInstance(execute_result, ResultSet)
 
+    @patch.object(MysqlEngine, 'query')
+    def test_server_version(self, _query):
+        _query.return_value.rows = (('5.7.20',),)
+        new_engine = MysqlEngine(instance=self.ins1)
+        server_version = new_engine.server_version
+        self.assertTupleEqual(server_version, (5, 7, 20))
+
+    @patch.object(MysqlEngine, 'query')
+    def test_get_variables_not_filter(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.get_variables()
+        _query.assert_called_once()
+
+    @patch.object(MysqlEngine, 'query')
+    def test_get_variables_filter(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.get_variables(variables=['binlog_format'])
+        _query.assert_called()
+
+    @patch.object(MysqlEngine, 'query')
+    def test_set_variable(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.set_variable('binlog_format', 'ROW')
+        _query.assert_called_once()
+
 
 class TestRedis(TestCase):
     @classmethod
@@ -655,7 +680,7 @@ class TestInception(TestCase):
     @patch('sql.engines.inception.InceptionEngine.query')
     def test_execute_exception(self, _query):
         sql = 'update user set id=100'
-        row = [1, 'CHECKED', 0, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
+        row = [1, 'CHECKED', 1, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
         column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                        'backup_dbname', 'execute_time', 'sqlsha1']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)

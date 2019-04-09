@@ -14,7 +14,7 @@ from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet
 from sql.utils.execute_sql import execute_callback
 from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
-    ResourceGroup, ResourceGroupRelations
+    ResourceGroup, ResourceGroupRelations, ParamTemplate
 
 User = get_user_model()
 
@@ -1359,3 +1359,144 @@ class TestBinLog(TestCase):
         _query.return_value.error = '清理失败'
         r = self.client.post(path='/binlog/del_log/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 2, 'msg': '清理失败,Error:清理失败', 'data': ''})
+
+
+class TestParam(TransactionTestCase):
+    """
+    测试实例参数修改
+    """
+
+    def setUp(self):
+        self.superuser = User(username='super', is_superuser=True)
+        self.superuser.save()
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+                               host=settings.DATABASES['default']['HOST'],
+                               port=settings.DATABASES['default']['PORT'],
+                               user=settings.DATABASES['default']['USER'],
+                               password=settings.DATABASES['default']['PASSWORD'])
+        self.master.save()
+        self.client = Client()
+        self.client.force_login(self.superuser)
+
+    def tearDown(self):
+        self.superuser.delete()
+        self.master.delete()
+        ParamTemplate.objects.all().delete()
+
+    def test_param_list_instance_not_exist(self):
+        """
+        测试获取参数列表，实例不存在
+        :return:
+        """
+        data = {
+            "instance_id": 0
+        }
+        r = self.client.post(path='/param/list/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+
+    @patch('sql.engines.mysql.MysqlEngine.get_variables')
+    @patch('sql.engines.get_engine')
+    def test_param_list_instance_exist(self, _get_engine, _get_variables):
+        """
+        测试获取参数列表，实例存在
+        :return:
+        """
+        data = {
+            "instance_id": self.master.id,
+            "editable": True
+        }
+        r = self.client.post(path='/param/list/', data=data)
+        self.assertIsInstance(json.loads(r.content), list)
+
+    def test_param_history(self):
+        """
+        测试获取参数修改历史
+        :return:
+        """
+        data = {"instance_id": self.master.id,
+                "search": "binlog",
+                "limit": 14,
+                "offset": 0}
+        r = self.client.post(path='/param/history/', data=data)
+        self.assertEqual(json.loads(r.content), {'rows': [], 'total': 0})
+
+    @patch('sql.engines.mysql.MysqlEngine.set_variable')
+    @patch('sql.engines.mysql.MysqlEngine.get_variables')
+    @patch('sql.engines.get_engine')
+    def test_param_edit_variable_not_config(self, _get_engine, _get_variables, _set_variable):
+        """
+        测试参数修改，参数未在模板配置
+        :return:
+        """
+        data = {"instance_id": self.master.id,
+                "variable_name": "1",
+                "variable_value": "false"}
+        r = self.client.post(path='/param/edit/', data=data)
+        self.assertEqual(json.loads(r.content), {'data': [], 'msg': '请先在参数模板中配置该参数！', 'status': 1})
+
+    @patch('sql.engines.mysql.MysqlEngine.set_variable')
+    @patch('sql.engines.mysql.MysqlEngine.get_variables')
+    @patch('sql.engines.get_engine')
+    def test_param_edit_variable_not_change(self, _get_engine, _get_variables, _set_variable):
+        """
+        测试参数修改，已在参数模板配置，但是值无变化
+        :return:
+        """
+        _get_variables.return_value.rows = (('binlog_format', 'ROW'),)
+        _set_variable.return_value.error = None
+        _set_variable.return_value.full_sql = "set global binlog_format='STATEMENT';"
+
+        ParamTemplate.objects.create(db_type='mysql',
+                                     variable_name='binlog_format',
+                                     default_value='ROW',
+                                     editable=True)
+        data = {"instance_id": self.master.id,
+                "variable_name": "binlog_format",
+                "runtime_value": "ROW"}
+        r = self.client.post(path='/param/edit/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '参数值与实际运行值一致，未调整！', 'data': []})
+
+    @patch('sql.engines.mysql.MysqlEngine.set_variable')
+    @patch('sql.engines.mysql.MysqlEngine.get_variables')
+    @patch('sql.engines.get_engine')
+    def test_param_edit_variable_change(self, _get_engine, _get_variables, _set_variable):
+        """
+        测试参数修改，已在参数模板配置，且值有变化
+        :return:
+        """
+        _get_variables.return_value.rows = (('binlog_format', 'ROW'),)
+        _set_variable.return_value.error = None
+        _set_variable.return_value.full_sql = "set global binlog_format='STATEMENT';"
+
+        ParamTemplate.objects.create(db_type='mysql',
+                                     variable_name='binlog_format',
+                                     default_value='ROW',
+                                     editable=True)
+        data = {"instance_id": self.master.id,
+                "variable_name": "binlog_format",
+                "runtime_value": "STATEMENT"}
+        r = self.client.post(path='/param/edit/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 0, 'msg': '修改成功，请手动持久化到配置文件！', 'data': []})
+
+    @patch('sql.engines.mysql.MysqlEngine.set_variable')
+    @patch('sql.engines.mysql.MysqlEngine.get_variables')
+    @patch('sql.engines.get_engine')
+    def test_param_edit_variable_error(self, _get_engine, _get_variables, _set_variable):
+        """
+        测试参数修改，已在参数模板配置，修改抛错
+        :return:
+        """
+        _get_variables.return_value.rows = (('binlog_format', 'ROW'),)
+        _set_variable.return_value.error = '修改报错'
+        _set_variable.return_value.full_sql = "set global binlog_format='STATEMENT';"
+
+        ParamTemplate.objects.create(db_type='mysql',
+                                     variable_name='binlog_format',
+                                     default_value='ROW',
+                                     editable=True)
+        data = {"instance_id": self.master.id,
+                "variable_name": "binlog_format",
+                "runtime_value": "STATEMENT"}
+        r = self.client.post(path='/param/edit/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '设置错误，错误信息：修改报错', 'data': []})

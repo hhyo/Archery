@@ -69,16 +69,17 @@ class ResourceGroupRelations(models.Model):
         verbose_name_plural = u'资源组对象管理'
 
 
+DB_TYPE_CHOICES = (
+    ('mysql', 'MySQL'),
+    ('mssql', 'MsSQL'),
+    ('redis', 'Redis'),
+    ('pgsql', 'PgSQL'),)
+
+
 class Instance(models.Model):
     """
     各个线上实例配置
     """
-    DB_TYPE_CHOICES = (
-        ('mysql', 'MySQL'),
-        ('mssql', 'MsSQL'),
-        ('redis', 'Redis'),
-        ('pgsql', 'PgSQL'),)
-
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
     db_type = models.CharField('数据库类型', max_length=10, choices=DB_TYPE_CHOICES)
@@ -401,6 +402,48 @@ class DataMaskingRules(models.Model):
         verbose_name_plural = u'脱敏规则配置'
 
 
+class ParamTemplate(models.Model):
+    """
+    实例参数模板配置
+    """
+    db_type = models.CharField('数据库类型', max_length=10, choices=DB_TYPE_CHOICES)
+    variable_name = models.CharField('参数名', max_length=64)
+    default_value = models.CharField('默认参数值', max_length=1024)
+    editable = models.BooleanField('是否支持修改', default=False)
+    valid_values = models.CharField('有效参数值，范围参数[1-65535]，值参数[ON|OFF]', max_length=1024, blank=True)
+    description = models.CharField('参数描述', max_length=1024, blank=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_time = models.DateTimeField('系统时间修改', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'param_template'
+        unique_together = ('db_type', 'variable_name')
+        verbose_name = u'实例参数模板配置'
+        verbose_name_plural = u'实例参数模板配置'
+
+
+class ParamHistory(models.Model):
+    """
+    可在线修改的动态参数配置
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    variable_name = models.CharField('参数名', max_length=64)
+    old_var = models.CharField('修改前参数值', max_length=1024)
+    new_var = models.CharField('修改后参数值', max_length=1024)
+    set_sql = models.CharField('在线变更配置执行的SQL语句', max_length=1024)
+    user_name = models.CharField('修改人', max_length=30)
+    user_display = models.CharField('修改人中文名', max_length=50)
+    update_time = models.DateTimeField('修改时间', auto_now_add=True)
+
+    class Meta:
+        managed = True
+        ordering = ['-update_time']
+        db_table = 'param_history'
+        verbose_name = u'实例参数修改历史'
+        verbose_name_plural = u'实例参数修改历史'
+
+
 class Config(models.Model):
     """
     配置信息表
@@ -490,6 +533,7 @@ class Permission(models.Model):
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_instance', '菜单 实例管理'),
+            ('menu_param', '菜单 参数配置'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
@@ -510,6 +554,8 @@ class Permission(models.Model):
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
             ('trxandlocks_view', '查看锁信息'),
+            ('param_view', '查看实例参数列表'),
+            ('param_edit', '修改实例参数'),
         )
 
 

@@ -88,6 +88,8 @@
     <script>
         // 问题诊断--进程列表
         function get_process_list() {
+            $("#command-div").show();
+            $("#process-toolbar").show();
             if ($("#instance_name").val()) {
                 //初始化table
                 $('#process-list').bootstrapTable('destroy').bootstrapTable({
@@ -199,6 +201,8 @@
 
         // 问题诊断--表空间列表
         function get_space_list() {
+            $("#command-div").hide();
+            $("#process-toolbar").hide();
             if ($("#instance_name").val()) {
                 //初始化table
                 $('#tablespace-list').bootstrapTable('destroy').bootstrapTable({
@@ -290,6 +294,8 @@
 
         // 问题诊断--锁等待列表
         function get_trxandlocks_list() {
+            $("#command-div").hide();
+            $("#process-toolbar").hide();
             if ($("#instance_name").val()) {
                 //初始化table
                 $('#trxandlocks-list').bootstrapTable('destroy').bootstrapTable({
@@ -492,16 +498,10 @@
                 if ($("#instance_name").val()) {
                     if (active_li_id === 'process_tab') {
                         get_process_list();
-                        $("#command-div").show();
-                        $("#process-toolbar").show();
                     } else if (active_li_id === 'space_tab') {
                         get_space_list();
-                        $("#command-div").hide();
-                        $("#process-toolbar").hide();
                     } else if (active_li_id === 'trxandlocks_tab') {
                         get_trxandlocks_list();
-                        $("#command-div").hide();
-                        $("#process-toolbar").hide();
                     }
                 }
             });
@@ -513,24 +513,16 @@
             var active_li_id = sessionStorage.getItem('diagnostic_active_li_id');
             if (active_li_id === 'process_tab') {
                 get_process_list();
-                $("#command-div").show();
-                $("#process-toolbar").show();
             } else if (active_li_id === 'space_tab') {
                 get_space_list();
-                $("#command-div").hide();
-                $("#process-toolbar").hide();
             } else if (active_li_id === 'trxandlocks_tab') {
                 get_trxandlocks_list();
-                $("#command-div").hide();
-                $("#process-toolbar").hide();
             }
         });
 
         //请求类型变动时自动刷新
         $("#command").change(function () {
             get_process_list();
-            $("#command-div").show();
-            $("#process-toolbar").show();
         });
     </script>
 {% endblock %}

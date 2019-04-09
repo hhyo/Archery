@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
-    WorkflowAudit, WorkflowLog
+    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory
 
 
 # 用户管理
@@ -17,10 +17,10 @@ class UsersAdmin(UserAdmin):
     ordering = ('id',)
     # 编辑页显示内容
     fieldsets = (
-        (('认证信息'), {'fields': ('username', 'password')}),
-        (('个人信息'), {'fields': ('display', 'email')}),
-        (('权限信息'), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
-        (('其他信息'), {'fields': ('last_login', 'date_joined')}),
+        (('认证信息',), {'fields': ('username', 'password')}),
+        (('个人信息',), {'fields': ('display', 'email')}),
+        (('权限信息',), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+        (('其他信息',), {'fields': ('last_login', 'date_joined')}),
     )
     # 添加页显示内容
     add_fieldsets = (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
@@ -127,6 +127,22 @@ class WorkflowLogAdmin(admin.ModelAdmin):
     list_display = (
         'operation_type_desc', 'operation_info', 'operator_display', 'operation_time',)
     list_filter = ('operation_type_desc', 'operator_display')
+
+
+# 实例参数配置表
+@admin.register(ParamTemplate)
+class ParamTemplateAdmin(admin.ModelAdmin):
+    list_display = ('db_type', 'variable_name', 'default_value', 'editable', 'valid_values')
+    search_fields = ('variable_name',)
+    list_filter = ('db_type', 'editable')
+
+
+# 实例参数修改历史
+@admin.register(ParamHistory)
+class ParamHistoryAdmin(admin.ModelAdmin):
+    list_display = ('instance', 'variable_name', 'old_var', 'new_var', 'user_display', 'update_time')
+    search_fields = ('variable_name',)
+    list_filter = ('instance', 'user_display')
 
 
 # 阿里云的认证信息
