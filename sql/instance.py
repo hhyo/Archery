@@ -127,9 +127,8 @@ def param_history(request):
     instance_id = request.POST.get('instance_id')
     search = request.POST.get('search', '')
     phs = ParamHistory.objects.filter(instance__id=instance_id)
+    # 过滤搜索条件
     if search:
-        phs = phs.filter()
-    else:
         phs = ParamHistory.objects.filter(variable_name__contains=search)
     count = phs.count()
     phs = phs[offset:limit].values("instance__instance_name", "variable_name", "old_var", "new_var",
@@ -163,7 +162,7 @@ def param_edit(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 获取当前运行参数值
     runtime_value = engine.get_variables(variables=[variable_name]).rows[0][1]
-    if variable_name == runtime_value:
+    if variable_value == runtime_value:
         result = {'status': 1, 'msg': '参数值与实际运行值一致，未调整！', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
     set_result = engine.set_variable(variable_name=variable_name, variable_value=variable_value)
@@ -181,7 +180,7 @@ def param_edit(request):
             user_name=user.username,
             user_display=user.display
         )
-        result = {'status': 0, 'msg': '修改成功', 'data': []}
+        result = {'status': 0, 'msg': '修改成功，请手动持久化到配置文件！', 'data': []}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 

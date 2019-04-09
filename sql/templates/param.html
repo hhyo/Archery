@@ -11,18 +11,20 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
-                <button id="btn_add_param" type="button" class="form-control btn btn-default"
+                <button id="btn_add_param" type="button" class="btn btn-default"
                         onclick="window.location.href='/admin/sql/paramtemplate/add/'">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     添加参数
                 </button>
-                <div id="editable-div" style="display: none" class="form-group">
-                    <select id=editable class="form-control selectpicker" data-live-search="true">
-                        <option value="is-empty" disabled="">是否支持修改</option>
-                        <option value="true" selected="selected">是</option>
-                        <option value=''>否</option>
-                    </select>
-                </div>
+            </div>
+            <div id="editable-div" style="display: none" class="form-group">
+                <select id=editable class="form-control selectpicker" data-live-search="true">
+                    <option value="is-empty" disabled="">是否支持修改</option>
+                    <option value="true" selected="selected">是</option>
+                    <option value=''>否</option>
+                </select>
+            </div>
+            <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
@@ -101,7 +103,7 @@
                         if (row.editable) {
                             $.ajax({
                                 type: "post",
-                                url: "/param/save/",
+                                url: "/param/edit/",
                                 data: {
                                     instance_id: $("#instance").val(),
                                     variable_name: row.variable_name,

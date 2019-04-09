@@ -82,7 +82,7 @@ urlpatterns = [
 
     path('param/list/', instance.param_list),
     path('param/history/', instance.param_history),
-    path('param/save/', instance.param_edit),
+    path('param/edit/', instance.param_edit),
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
