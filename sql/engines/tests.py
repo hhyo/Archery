@@ -680,7 +680,7 @@ class TestInception(TestCase):
     @patch('sql.engines.inception.InceptionEngine.query')
     def test_execute_exception(self, _query):
         sql = 'update user set id=100'
-        row = [1, 'CHECKED', 0, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
+        row = [1, 'CHECKED', 1, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
         column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                        'backup_dbname', 'execute_time', 'sqlsha1']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
