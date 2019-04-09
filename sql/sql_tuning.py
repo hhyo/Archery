@@ -66,9 +66,8 @@ class SqlTuning(object):
 
     def sys_parameter(self):
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = self.sql_variable.replace('performance_schema', 'information_schema')
         else:
             sql = self.sql_variable
@@ -76,9 +75,8 @@ class SqlTuning(object):
 
     def optimizer_switch(self):
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = self.sql_optimizer_switch.replace('performance_schema', 'information_schema')
         else:
             sql = self.sql_optimizer_switch
@@ -116,9 +114,8 @@ class SqlTuning(object):
         sql_profiling = "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1"
 
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = sql_profiling.replace('performance_schema', 'information_schema')
         else:
             sql = sql_profiling
