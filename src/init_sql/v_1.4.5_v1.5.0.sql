@@ -2,7 +2,6 @@
 set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 参数配置', @content_type_id, 'menu_param');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('查看实例参数列表', @content_type_id, 'param_view');
-INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('查看实例参数修改历史', @content_type_id, 'param_history');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('修改实例参数', @content_type_id, 'param_edit');
 
 

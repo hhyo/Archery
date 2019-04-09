@@ -533,6 +533,7 @@ class Permission(models.Model):
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_instance', '菜单 实例管理'),
+            ('menu_param', '菜单 参数配置'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
@@ -553,6 +554,8 @@ class Permission(models.Model):
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
             ('trxandlocks_view', '查看锁信息'),
+            ('param_view', '查看实例参数列表'),
+            ('param_edit', '修改实例参数'),
         )
 
 

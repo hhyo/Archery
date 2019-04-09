@@ -118,7 +118,7 @@ def param_list(request):
                         content_type='application/json')
 
 
-@permission_required('sql.param_history', raise_exception=True)
+@permission_required('sql.param_view', raise_exception=True)
 def param_history(request):
     """实例参数修改历史"""
     limit = int(request.POST.get('limit'))
