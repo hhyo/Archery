@@ -77,7 +77,7 @@ class RedisEngine(EngineBase):
                 result_set.affected_rows = len(rows)
             else:
                 result_set.rows = tuple([[rows]])
-                result_set.affected_rows = 1
+                result_set.affected_rows = 1 if rows else 0
             if limit_num > 0:
                 result_set.rows = result_set.rows[0:limit_num]
         except Exception as e:
