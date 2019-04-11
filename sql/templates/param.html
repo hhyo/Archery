@@ -38,10 +38,12 @@
     <div id="tab-content" class="tab-content">
         <div id="param_table" role="tabpanel" class="tab-pane fade in active table-responsive">
             <table id="param-list" data-toggle="table" class="table table-hover"
-                   style="table-layout:fixed;word-break: break-word"></table>
+                   style="table-layout:fixed;word-break:break-word;overflow:hidden;"></table>
         </div>
         <div id="history_table" role="tabpanel" class="tab-pane fade table-responsive">
-            <table id="history-list" data-toggle="table" class="table table-hover"></table>
+            <table id="history-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
         </div>
     </div>
 {% endblock content %}
