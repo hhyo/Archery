@@ -9,8 +9,10 @@ import re
 logger = logging.getLogger('default')
 
 
-# 脱敏数据
+# TODO 待优化，没想好
+
 def data_masking(instance, db_name, sql, sql_result):
+    """脱敏数据"""
     try:
         # 通过inception获取语法树,并进行解析
         inception_engine = InceptionEngine()
@@ -27,18 +29,14 @@ def data_masking(instance, db_name, sql, sql_result):
             column_list = sql_result.column_list
             table_hit_column = dict()
             for column_info in table_hit_columns:
-                table_hit_column_info = {}
-                rule_type = column_info['rule_type']
-                table_hit_column_info[column_info['column_name']] = rule_type
-                table_hit_column.update(table_hit_column_info)
-
+                table_hit_column[column_info['column_name']] = column_info['rule_type']
             for index, item in enumerate(column_list):
                 if item in table_hit_column.keys():
-                    column = dict()
-                    column['column_name'] = item
-                    column['index'] = index
-                    column['rule_type'] = table_hit_column.get(item)
-                    hit_columns.append(column)
+                    hit_columns.append({
+                        "column_name": item,
+                        "index": index,
+                        "rule_type": table_hit_column.get(item)
+                    })
 
         # 对命中规则列hit_columns的数据进行脱敏
         # 获取全部脱敏规则信息，减少循环查询，提升效率
@@ -71,8 +69,8 @@ def analyze_query_tree(query_tree, instance):
             hit = True
     # 不存在脱敏字段则直接跳过规则解析
     if not hit:
-        table_hit_columns = None
-        hit_columns = None
+        table_hit_columns = []
+        hit_columns = []
     else:
         # 遍历select_list
         columns = []
@@ -102,8 +100,7 @@ def analyze_query_tree(query_tree, instance):
             if '*' in select_index:
                 # 涉及表命中的列
                 for table in table_ref:
-                    hit_columns_info = hit_table(masking_columns, instance, table['db'],
-                                                 table['table'])
+                    hit_columns_info = hit_table(masking_columns, instance, table['db'], table['table'])
                     table_hit_columns.extend(hit_columns_info)
                 # 几种不同查询格式
                 # [*]
@@ -177,13 +174,14 @@ def hit_column(masking_columns, instance, table_schema, table_name, column_name)
     column_info = masking_columns.filter(instance=instance, table_schema=table_schema,
                                          table_name=table_name, column_name=column_name)
 
-    hit_column_info = dict()
-    hit_column_info['instance_name'] = instance.instance_name
-    hit_column_info['table_schema'] = table_schema
-    hit_column_info['table_name'] = table_name
-    hit_column_info['column_name'] = column_name
-    hit_column_info['rule_type'] = 0
-    hit_column_info['is_hit'] = False
+    hit_column_info = {
+        "instance_name": instance.instance_name,
+        "table_schema": table_schema,
+        "table_name": table_name,
+        "column_name": column_name,
+        "rule_type": 0,
+        "is_hit": False
+    }
 
     # 命中规则
     if column_info:
@@ -200,14 +198,14 @@ def hit_table(masking_columns, instance, table_schema, table_name):
     # 命中规则列
     hit_columns_info = []
     for column in columns_info:
-        hit_column_info = dict()
-        hit_column_info['instance_name'] = instance.instance_name
-        hit_column_info['table_schema'] = table_schema
-        hit_column_info['table_name'] = table_name
-        hit_column_info['is_hit'] = True
-        hit_column_info['column_name'] = column.column_name
-        hit_column_info['rule_type'] = column.rule_type
-        hit_columns_info.append(hit_column_info)
+        hit_columns_info.append({
+            "instance_name": instance.instance_name,
+            "table_schema": table_schema,
+            "table_name": table_name,
+            "is_hit": True,
+            "column_name": column.column_name,
+            "rule_type": column.rule_type
+        })
     return hit_columns_info
 
 
