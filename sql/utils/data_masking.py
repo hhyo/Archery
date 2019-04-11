@@ -49,8 +49,8 @@ def data_masking(instance, db_name, sql, sql_result):
                     rows[idx] = list(item)
                     rows[idx][index] = regex(masking_rules, column['rule_type'], rows[idx][index])
                 sql_result.rows = rows
-        # 脱敏结果
-        sql_result.is_masked = True
+            # 脱敏结果
+            sql_result.is_masked = True
     return sql_result
 
 
