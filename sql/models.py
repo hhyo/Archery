@@ -133,7 +133,7 @@ class SqlWorkflow(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField('数据库', max_length=64)
     syntax_type = models.IntegerField('工单类型 0、未知，1、DDL，2、DML', choices=((0, '其他'), (1, 'DDL'), (2, 'DML')), default=0)
-    is_backup = models.BooleanField('是否备份', default=True)
+    is_backup = models.BooleanField('是否备份', choices=((0, '否'), (1, '是'),), default=True)
     engineer = models.CharField('发起人', max_length=30)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
@@ -172,7 +172,8 @@ class SqlWorkflowContent(models.Model):
         verbose_name_plural = u'SQL工单内容'
 
 
-workflow_type_choices = (('sql_query', _('sql_query')), ('sql_review', _('sql_review')))
+workflow_type_choices = ((1, _('sql_query')), (2, _('sql_review')))
+workflow_status_choices = ((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消'))
 
 
 class WorkflowAudit(models.Model):
@@ -189,7 +190,7 @@ class WorkflowAudit(models.Model):
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     current_audit = models.CharField('当前审批权限组', max_length=20)
     next_audit = models.CharField('下级审批权限组', max_length=20)
-    current_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')))
+    current_status = models.IntegerField('审核状态', choices=workflow_status_choices)
     create_user = models.CharField('申请人', max_length=30)
     create_user_display = models.CharField('申请人中文名', max_length=50, default='')
     create_time = models.DateTimeField('申请时间', auto_now_add=True)
@@ -214,7 +215,7 @@ class WorkflowAuditDetail(models.Model):
     audit_id = models.IntegerField('审核主表id')
     audit_user = models.CharField('审核人', max_length=30)
     audit_time = models.DateTimeField('审核时间')
-    audit_status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
+    audit_status = models.IntegerField('审核状态', choices=workflow_status_choices)
     remark = models.CharField('审核备注', default='', max_length=140)
     sys_time = models.DateTimeField('系统时间', auto_now=True)
 
@@ -235,7 +236,7 @@ class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
-    workflow_type = models.IntegerField('审批类型', choices=((1, '查询权限申请'), (2, 'SQL上线申请')))
+    workflow_type = models.IntegerField('审批类型', choices=workflow_type_choices)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -291,7 +292,7 @@ class QueryPrivilegesApply(models.Model):
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
-    status = models.IntegerField('审核状态', choices=((0, '待审核'), (1, '审核通过'), (2, '审核不通过'), (3, '审核取消')), )
+    status = models.IntegerField('审核状态', choices=workflow_status_choices)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -360,13 +361,15 @@ class QueryLog(models.Model):
         verbose_name_plural = u'查询日志'
 
 
+rule_type_choices = ((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他'))
+
+
 class DataMaskingColumns(models.Model):
     """
     脱敏字段配置
     """
     column_id = models.AutoField('字段id', primary_key=True)
-    rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')))
+    rule_type = models.IntegerField('规则类型', choices=rule_type_choices)
     active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     table_schema = models.CharField('字段所在库名', max_length=64)
@@ -387,9 +390,7 @@ class DataMaskingRules(models.Model):
     """
     脱敏规则配置
     """
-    rule_type = models.IntegerField('规则类型',
-                                    choices=((1, '手机号'), (2, '证件号码'), (3, '银行卡'), (4, '邮箱'), (5, '金额'), (6, '其他')),
-                                    unique=True)
+    rule_type = models.IntegerField('规则类型', choices=rule_type_choices, unique=True)
     rule_regex = models.CharField('规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替', max_length=255)
     hide_group = models.IntegerField('需要隐藏的组')
     rule_desc = models.CharField('规则描述', max_length=100, default='', blank=True)
