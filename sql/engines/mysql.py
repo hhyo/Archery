@@ -160,6 +160,7 @@ class MysqlEngine(EngineBase):
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
                 check_result.rows += [result]
+                check_result.error_count += 1
         # 高危SQL检查
         if not check_result.is_critical and archer_config.get('critical_ddl_regex'):
             # 如果启用critical_ddl 的检查
@@ -176,6 +177,7 @@ class MysqlEngine(EngineBase):
                                           errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                                           sql=statement)
                     check_result.is_critical = True
+                    check_result.error_count += 1
                 else:
                     result = ReviewResult(id=line, errlevel=0, sql=statement)
                 check_result.rows += [result]
