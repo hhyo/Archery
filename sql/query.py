@@ -97,9 +97,10 @@ def query(request):
                 if masking_result.error and SysConfig().get('query_check'):
                     result['status'] = 1
                     result['msg'] = masking_result.error
-                # 脱敏出错，关闭query_check，忽略错误信息，返回未脱敏数据
+                # 脱敏出错，关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 elif masking_result.error and not SysConfig().get('query_check'):
                     query_result.error = None
+                    priv_check = False
                     result['data'] = query_result.__dict__
                 # 正常脱敏
                 else:
@@ -110,9 +111,10 @@ def query(request):
                 if SysConfig().get('query_check'):
                     result['status'] = 1
                     result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{e}'
-                # 关闭query_check，忽略错误信息，返回未脱敏数据
+                # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
                     query_result.error = None
+                    priv_check = False
                     result['data'] = query_result.__dict__
         # 无需脱敏的语句
         else:

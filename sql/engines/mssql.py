@@ -148,7 +148,7 @@ class MssqlEngine(EngineBase):
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
             filtered_result = brute_mask(resultset)
-            filtered_result.is_masked = 1
+            filtered_result.is_masked = True
         else:
             filtered_result = resultset
         return filtered_result

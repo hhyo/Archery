@@ -81,9 +81,9 @@ class ResultSet:
         self.full_sql = full_sql
         self.is_execute = False
         self.checked = None
-        self.is_masked = 2
+        self.is_masked = False
         self.query_time = ''
-        self.mask_rule_hit = 0
+        self.mask_rule_hit = False
         self.mask_time = ''
         self.warning = None
         self.error = None

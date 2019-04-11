@@ -19,7 +19,7 @@ def data_masking(instance, db_name, sql, sql_result):
         query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql)
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns, hit_columns = analyze_query_tree(query_tree, instance)
-        sql_result.mask_rule_hit = 1 if table_hit_columns or hit_columns else 2
+        sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
     except Exception as msg:
         sql_result.error = str(msg)
         sql_result.status = 1
@@ -50,7 +50,7 @@ def data_masking(instance, db_name, sql, sql_result):
                     rows[idx][index] = regex(masking_rules, column['rule_type'], rows[idx][index])
                 sql_result.rows = rows
         # 脱敏结果
-        sql_result.is_masked = 1
+        sql_result.is_masked = True
     return sql_result
 
 
@@ -60,7 +60,7 @@ def analyze_query_tree(query_tree, instance):
     table_ref = query_tree.get('table_ref', [])
 
     # 获取全部激活的脱敏字段信息，减少循环查询，提升效率
-    masking_columns = DataMaskingColumns.objects.filter(active=1)
+    masking_columns = DataMaskingColumns.objects.filter(active=True)
 
     # 判断语句涉及的表是否存在脱敏字段配置
     hit = False

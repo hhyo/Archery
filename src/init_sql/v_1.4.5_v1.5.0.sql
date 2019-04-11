@@ -4,11 +4,25 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 �
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('查看实例参数列表', @content_type_id, 'param_view');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('修改实例参数', @content_type_id, 'param_edit');
 
--- 修改是否备份
+-- 修改布尔值
+-- sql_workflow.is_backup
 UPDATE sql_workflow SET is_backup=1 WHERE is_backup='是';
 UPDATE sql_workflow SET is_backup=0 WHERE is_backup='否';
-ALTER TABLE archery.sql_workflow
+ALTER TABLE sql_workflow
   MODIFY is_backup TINYINT NOT NULL DEFAULT 1 COMMENT '是否备份';
+
+-- data_masking_columns.active
+ALTER TABLE data_masking_columns
+  MODIFY active TINYINT NOT NULL DEFAULT 0 COMMENT '激活状态';
+
+-- query_log.masking
+UPDATE query_log SET priv_check=0 WHERE priv_check=2;
+UPDATE query_log SET hit_rule=0 WHERE hit_rule=2;
+UPDATE query_log SET masking=0 WHERE masking=2;
+ALTER TABLE query_log
+  MODIFY priv_check TINYINT NOT NULL DEFAULT 0 COMMENT '查询权限是否正常校验',
+  MODIFY hit_rule TINYINT NOT NULL DEFAULT 0 COMMENT '查询是否命中脱敏规则',
+  MODIFY masking TINYINT NOT NULL DEFAULT 0 COMMENT '查询结果是否正常脱敏';
 
 -- 用户名和密码增加默认值
 ALTER TABLE sql_instance

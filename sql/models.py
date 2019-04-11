@@ -133,7 +133,7 @@ class SqlWorkflow(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField('数据库', max_length=64)
     syntax_type = models.IntegerField('工单类型 0、未知，1、DDL，2、DML', choices=((0, '其他'), (1, 'DDL'), (2, 'DML')), default=0)
-    is_backup = models.BooleanField('是否备份', choices=((0, '否'), (1, '是'),), default=True)
+    is_backup = models.BooleanField('是否备份', choices=((False, '否'), (True, '是'),), default=True)
     engineer = models.CharField('发起人', max_length=30)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
@@ -348,9 +348,9 @@ class QueryLog(models.Model):
     # TODO 改为user 外键
     username = models.CharField('操作人', max_length=30)
     user_display = models.CharField('操作人中文名', max_length=50, default='')
-    priv_check = models.IntegerField('查询权限是否正常校验', choices=((1, ' 正常'), (2, '跳过'),), default=0)
-    hit_rule = models.IntegerField('查询是否命中脱敏规则', choices=((0, '未知'), (1, '命中'), (2, '未命中'),), default=0)
-    masking = models.IntegerField('查询结果是否正常脱敏', choices=((1, '是'), (2, '否'),), default=0)
+    priv_check = models.BooleanField('查询权限是否正常校验', choices=((False, '跳过'), (True, '正常'),), default=False)
+    hit_rule = models.IntegerField('查询是否命中脱敏规则', choices=((False, '未命中/未知'), (True, '命中')), default=False)
+    masking = models.BooleanField('查询结果是否正常脱敏', choices=((False, '否'), (True, '是'),), default=False)
     create_time = models.DateTimeField('操作时间', auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -370,7 +370,7 @@ class DataMaskingColumns(models.Model):
     """
     column_id = models.AutoField('字段id', primary_key=True)
     rule_type = models.IntegerField('规则类型', choices=rule_type_choices)
-    active = models.IntegerField('激活状态', choices=((0, '未激活'), (1, '激活')))
+    active = models.BooleanField('激活状态', choices=((False, '未激活'), (True, '激活')))
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     table_schema = models.CharField('字段所在库名', max_length=64)
     table_name = models.CharField('字段所在表名', max_length=64)
@@ -466,7 +466,7 @@ class AliyunAccessKey(models.Model):
     """
     ak = models.CharField(max_length=50)
     secret = models.CharField(max_length=100)
-    is_enable = models.IntegerField(choices=((1, '启用'), (2, '禁用')))
+    is_enable = models.BooleanField(choices=((1, '启用'), (2, '禁用')))
     remark = models.CharField(max_length=50, default='', blank=True)
 
     @property

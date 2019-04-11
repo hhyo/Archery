@@ -251,7 +251,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 100}})
+        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -266,7 +266,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1, 'msg': '你无test_archery.sql_users表的查询权限！请先到查询权限管理进行申请',
-                                 'data': {'priv_check': 1, 'limit_num': 0}})
+                                 'data': {'priv_check': True, 'limit_num': 0}})
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -280,7 +280,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=10)
@@ -294,7 +294,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+        self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -312,7 +312,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
                                  'msg': "你无test_archery数据库的查询权限！请先到查询权限管理进行申请",
-                                 'data': {'priv_check': 1, 'limit_num': 0}})
+                                 'data': {'priv_check': True, 'limit_num': 0}})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -330,7 +330,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
                                  'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：'RuntimeError' object is not iterable",
-                                 'data': {'priv_check': 1, 'limit_num': 0}})
+                                 'data': {'priv_check': True, 'limit_num': 0}})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -346,7 +346,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 2}, 'msg': 'ok', 'status': 0})
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': False}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
@@ -360,7 +360,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': 1}, 'msg': 'ok', 'status': 0})
+        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_not_mysql_db_priv_not_exist(self, __db_priv):
@@ -374,7 +374,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 0, 'priv_check': 1},
+        self.assertDictEqual(r, {'data': {'limit_num': 0, 'priv_check': True},
                                  'msg': '你无test_archery数据库的查询权限！请先到查询权限管理进行申请',
                                  'status': 1})
 
@@ -645,7 +645,7 @@ class TestQuery(TestCase):
 
         _query.return_value = q_result
         _query_masking.return_value = q_result
-        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
                                     'db_name': some_db,
@@ -669,7 +669,7 @@ class TestQuery(TestCase):
         q_result.column_list = ['some']
         _query.return_value = q_result
         _query_masking.return_value = q_result
-        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': sql_without_limit,
                                     'db_name': some_db,
@@ -696,7 +696,7 @@ class TestQuery(TestCase):
         some_limit = 100
         sql_with_star = 'select * from some_table'
         some_db = 'some_db'
-        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': 1}}
+        _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
         archer_config = SysConfig()
         archer_config.set('disable_star', True)
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,

@@ -42,7 +42,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     :param limit_num:
     :return:
     """
-    result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': 1, 'limit_num': 0}}
+    result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 0}}
     # 管理员不做权限校验，仅获取limit值信息
     if user.is_superuser:
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
@@ -77,7 +77,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
                 # 获取查询库的最小limit限制，和前端传参作对比，取最小值
                 priv_limit = _priv_limit(user, instance, db_name=db_name)
                 result['data']['limit_num'] = min(priv_limit, limit_num)
-                result['data']['priv_check'] = 2
+                result['data']['priv_check'] = False
                 return result
         else:
             # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
