@@ -736,7 +736,7 @@ class TestWorkflowView(TransactionTestCase):
             audit_auth_groups='some_group',
             create_time=self.now - timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=self.master1,
             db_name='some_db',
             syntax_type=1,
@@ -758,7 +758,7 @@ class TestWorkflowView(TransactionTestCase):
             audit_auth_groups='some_group',
             create_time=self.now - timedelta(days=1),
             status='workflow_manreviewing',
-            is_backup='是',
+            is_backup=True,
             instance=self.master1,
             db_name='some_db',
             syntax_type=1
@@ -890,7 +890,7 @@ class TestWorkflowView(TransactionTestCase):
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
             'db_name': 'some_db',
-            'is_backup': '是',
+            'is_backup': True,
             'notify_users': ''
         }
         mock_user_instances.return_value.get.return_value = None
@@ -1070,7 +1070,7 @@ class TestAsync(TestCase):
             audit_auth_groups='some_group',
             create_time=self.now - timedelta(days=1),
             status='workflow_executing',
-            is_backup='是',
+            is_backup=True,
             instance=self.master1,
             db_name='some_db',
             syntax_type=1,

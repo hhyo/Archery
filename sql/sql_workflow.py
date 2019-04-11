@@ -126,7 +126,7 @@ def submit(request):
     instance_name = request.POST['instance_name']
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
-    is_backup = request.POST['is_backup']
+    is_backup = True if request.POST['is_backup'] == 'True' else False
     notify_users = request.POST.getlist('notify_users')
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
 

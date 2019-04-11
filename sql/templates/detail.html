@@ -75,7 +75,11 @@
                 {{ workflow_detail.finish_time }}
             </td>
             <td>
-                {{ workflow_detail.is_backup }}
+                {% if workflow_detail.is_backup %}
+                    是
+                {% else %}
+                    否
+                {% endif %}
             </td>
             <td>
                 {% if workflow_detail.status == "workflow_finish" %}
@@ -160,7 +164,7 @@
         </form>
     {% endif %}
     <!--查看回滚按钮-->
-    {% if workflow_detail.is_backup == '是' %}
+    {% if workflow_detail.is_backup %}
         {% if  workflow_detail.status == 'workflow_finish' or  workflow_detail.status == 'workflow_exception' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}

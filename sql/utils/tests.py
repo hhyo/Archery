@@ -110,7 +110,7 @@ class TestSQLReview(TestCase):
             audit_auth_groups='audit_auth_groups',
             create_time=datetime.datetime.now(),
             status='workflow_review_pass',
-            is_backup='是',
+            is_backup=True,
             instance=self.master,
             db_name='db_name',
             syntax_type=1,

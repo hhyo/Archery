@@ -133,7 +133,7 @@ class SqlWorkflow(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField('数据库', max_length=64)
     syntax_type = models.IntegerField('工单类型 0、未知，1、DDL，2、DML', choices=((0, '其他'), (1, 'DDL'), (2, 'DML')), default=0)
-    is_backup = models.CharField('是否备份', choices=(('否', '否'), ('是', '是')), max_length=20)
+    is_backup = models.BooleanField('是否备份', default=True)
     engineer = models.CharField('发起人', max_length=30)
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)

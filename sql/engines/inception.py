@@ -91,7 +91,7 @@ class InceptionEngine(EngineBase):
         instance = workflow.instance
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         inception_engine = InceptionEngine()
-        if workflow.is_backup == '是':
+        if workflow.is_backup:
             str_backup = "--enable-remote-backup"
         else:
             str_backup = "--disable-remote-backup"

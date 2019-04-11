@@ -338,7 +338,7 @@ class ChartTest(TestCase):
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=cls.slave1,
             db_name='some_db',
             syntax_type=1
@@ -353,7 +353,7 @@ class ChartTest(TestCase):
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=2),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=cls.slave1,
             db_name='some_db',
             syntax_type=2

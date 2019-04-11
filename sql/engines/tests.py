@@ -35,7 +35,7 @@ class TestEngineBase(TestCase):
             audit_auth_groups='some_group',
             create_time=datetime.now() - timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=cls.ins1,
             db_name='some_db',
             syntax_type=1
@@ -161,7 +161,7 @@ class TestMysql(TestCase):
             audit_auth_groups='some_group',
             create_time=datetime.now() - timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=self.ins1,
             db_name='some_db',
             syntax_type=1
@@ -476,7 +476,7 @@ class TestRedis(TestCase):
             audit_auth_groups='some_group',
             create_time=datetime.now() - timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=self.ins,
             db_name='some_db',
             syntax_type=1
@@ -634,7 +634,7 @@ class TestInception(TestCase):
             audit_auth_groups='some_group',
             create_time=datetime.now() - timedelta(days=1),
             status='workflow_finish',
-            is_backup='是',
+            is_backup=True,
             instance=self.ins,
             db_name='some_db',
             syntax_type=1

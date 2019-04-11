@@ -4,6 +4,11 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 �
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('查看实例参数列表', @content_type_id, 'param_view');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('修改实例参数', @content_type_id, 'param_edit');
 
+-- 修改是否备份
+UPDATE sql_workflow SET is_backup=1 WHERE is_backup='是';
+UPDATE sql_workflow SET is_backup=0 WHERE is_backup='否';
+ALTER TABLE archery.sql_workflow
+  MODIFY is_backup TINYINT NOT NULL DEFAULT 1 COMMENT '是否备份';
 
 -- 用户名和密码增加默认值
 ALTER TABLE sql_instance
