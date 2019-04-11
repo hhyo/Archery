@@ -15,7 +15,7 @@ logger = logging.getLogger('default')
 class Aliyun(object):
     def __init__(self):
         try:
-            auth = AliyunAccessKey.objects.get(is_enable=1)
+            auth = AliyunAccessKey.objects.get(is_enable=True)
             ak = auth.raw_ak
             secret = auth.raw_secret
         except Exception:

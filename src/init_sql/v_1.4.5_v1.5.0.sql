@@ -24,6 +24,16 @@ ALTER TABLE query_log
   MODIFY hit_rule TINYINT NOT NULL DEFAULT 0 COMMENT '查询是否命中脱敏规则',
   MODIFY masking TINYINT NOT NULL DEFAULT 0 COMMENT '查询结果是否正常脱敏';
 
+-- aliyun_access_key.is_enable
+UPDATE aliyun_access_key SET is_enable=0 WHERE is_enable=2;
+ALTER TABLE aliyun_access_key
+  MODIFY is_enable TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用';
+
+-- aliyun_rds_config.is_enable
+UPDATE aliyun_rds_config SET is_enable=0 WHERE is_enable=2;
+ALTER TABLE aliyun_rds_config
+  MODIFY is_enable TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用';
+
 -- 用户名和密码增加默认值
 ALTER TABLE sql_instance
   MODIFY `user` VARCHAR(200) NOT NULL DEFAULT '' COMMENT '用户名',

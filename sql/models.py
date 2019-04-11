@@ -349,7 +349,7 @@ class QueryLog(models.Model):
     username = models.CharField('操作人', max_length=30)
     user_display = models.CharField('操作人中文名', max_length=50, default='')
     priv_check = models.BooleanField('查询权限是否正常校验', choices=((False, '跳过'), (True, '正常'),), default=False)
-    hit_rule = models.IntegerField('查询是否命中脱敏规则', choices=((False, '未命中/未知'), (True, '命中')), default=False)
+    hit_rule = models.BooleanField('查询是否命中脱敏规则', choices=((False, '未命中/未知'), (True, '命中')), default=False)
     masking = models.BooleanField('查询结果是否正常脱敏', choices=((False, '否'), (True, '是'),), default=False)
     create_time = models.DateTimeField('操作时间', auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -466,7 +466,7 @@ class AliyunAccessKey(models.Model):
     """
     ak = models.CharField(max_length=50)
     secret = models.CharField(max_length=100)
-    is_enable = models.BooleanField(choices=((1, '启用'), (2, '禁用')))
+    is_enable = models.BooleanField(choices=((False, '禁用'), (True, '启用')))
     remark = models.CharField(max_length=50, default='', blank=True)
 
     @property
@@ -500,7 +500,7 @@ class AliyunRdsConfig(models.Model):
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
-    is_enable = models.IntegerField('是否启用', choices=((1, '启用'), (2, '禁用')))
+    is_enable = models.BooleanField('是否启用', choices=((False, '禁用'), (True, '启用')))
 
     def __int__(self):
         return self.rds_dbinstanceid
