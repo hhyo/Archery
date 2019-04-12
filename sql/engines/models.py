@@ -93,7 +93,7 @@ class ResultSet:
             self.rows = []
         else:
             self.rows = rows
-        self.column_list = column_list
+        self.column_list = column_list if column_list else []
         self.status = status
         self.affected_rows = affected_rows
 

@@ -133,14 +133,14 @@
                             </div>
                             <div class="panel-body">
                                 <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                             <div class="panel-heading" style="background-color: dimgrey; color: white">
                                 OPTIMIZER SWITCH
                             </div>
                             <div class="panel-body">
                                 <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                         </div>
                         <div id="div_sql_plan" class="panel panel-default base_info"
@@ -150,14 +150,14 @@
                             </div>
                             <div class="panel-body">
                                 <table id="tb_plan" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                             <div class="panel-heading" style="background-color: darkseagreen; color: white">
                                 OPTIMIZER REWRITE SQL
                             </div>
                             <div class="panel-body">
                                 <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                         </div>
                         <div id="div_obj_stat" class="panel panel-default base_info"
@@ -178,19 +178,19 @@
                                     SESSION STATUS (DIFFERENT)
                                 </div>
                                 <table id="tb_session_status" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     SQL PROFILING(DETAIL)
                                 </div>
                                 <table id="tb_sql_profiling_detail" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     SQL PROFILING(SUMMARY)
                                 </div>
                                 <table id="tb_sql_profiling_summary" data-toggle="table" class="table table-condensed"
-                                       style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
                                 <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     EXECUTE TIME
@@ -204,17 +204,17 @@
                             TABLE STRUCTURE
                         </div>
                         <table id="tb_table_structure" data-toggle="table" class="table table-condensed"
-                               style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                         <br>
-                        <div class="panel-heading" style="background-color: cornflowerblue; color: white">TABLE INFO
+                        <div class="panel-heading" style="background-color: lightblue; color: white">TABLE INFO
                         </div>
                         <table id="tb_table_info" data-toggle="table" class="table table-condensed"
-                               style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                         <br>
-                        <div class="panel-heading" style="background-color: cornflowerblue; color: white">INDEX INFO
+                        <div class="panel-heading" style="background-color: lightblue; color: white">INDEX INFO
                         </div>
                         <table id="tb_index_info" data-toggle="table" class="table table-condensed"
-                               style="table-layout:fixed;word-break: break-word;overflow:hidden;"></table>
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                         <br>
                     </div>
                 </div>
@@ -340,7 +340,7 @@
                     }
                 },
                 success: function (data) {
-                    if (data.status == 0) {
+                    if (data.status === 0) {
                         var result = data.data;
                         $("#db_name").empty();
                         for (var i = 0; i < result.length; i++) {
@@ -399,7 +399,7 @@
                     $('input[type=button]').prop('disabled', false);
                 },
                 success: function (data) {
-                    if (data.status == 0) {
+                    if (data.status === 0) {
                         var result = data.data;
                         result = result.replace(/\n/g, '<br>');
                         alertStyle = "alert-success";
@@ -445,7 +445,7 @@
                     $('input[type=button]').prop('disabled', false);
                 },
                 success: function (data) {
-                    if (data.status == 0) {
+                    if (data.status === 0) {
                         var result = data.data;
                         if (result['Error']) {
                             alertStyle = "alert-danger";
@@ -540,7 +540,7 @@
                         });
                         //增加的代码，用于个性化输出table
                         rendererMD.table = function (header, body) {
-                            return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
+                            return '<div class="table-responsive"><table class="table table-condensed" style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + header + body + '</table></div>'
                         };
                         $("#soar-result-col").html(marked(report));
                         $("#soar-table").bootstrapTable('refresh');
@@ -583,7 +583,7 @@
                     $('input[type=button]').prop('disabled', false);
                 },
                 success: function (data) {
-                    if (data.status == 0) {
+                    if (data.status === 0) {
                         var result = data.data;
                         if (result['Error']) {
                             alertStyle = "alert-danger";
@@ -714,84 +714,88 @@
                                 var template = $(div_obj_stat_tmp).html();
                                 $("#div_obj_stat-panel-body").empty();
                                 $.each(result['object_statistics'], function (i, result) {
-                                    $("#div_obj_stat-panel-body").append(template);
-                                    var tb_table_structure_id = 'tb_table_structure_' + i;
-                                    var tb_table_info_id = 'tb_table_info_' + i;
-                                    var tb_index_info_id = 'tb_index_info_' + i;
-                                    $('#tb_table_structure').attr('id', tb_table_structure_id);
-                                    $('#tb_table_info').attr('id', tb_table_info_id);
-                                    $('#tb_index_info').attr('id', tb_index_info_id);
+                                    if (result['structure']['column_list'].length > 0) {
+                                        $("#div_obj_stat-panel-body").append(template);
+                                        var tb_table_structure_id = 'tb_table_structure_' + i;
+                                        var tb_table_info_id = 'tb_table_info_' + i;
+                                        var tb_index_info_id = 'tb_index_info_' + i;
+                                        $('#tb_table_structure').attr('id', tb_table_structure_id);
+                                        $('#tb_table_info').attr('id', tb_table_info_id);
+                                        $('#tb_index_info').attr('id', tb_index_info_id);
 
-                                    //===== TABLE STRUCTURE =====
-                                    //异步获取要动态生成的列
-                                    var columns = [];
-                                    $.each(result['structure']['column_list'], function (i, column) {
-                                        columns.push({
-                                            "field": i,
-                                            "title": column,
-                                            formatter: function (value, row, index) {
-                                                if (value.length > 200) {
-                                                    var sql = value.substr(0, 200) + '...';
-                                                    return sql;
-                                                } else {
-                                                    return value
+                                        //===== TABLE STRUCTURE =====
+                                        //异步获取要动态生成的列
+                                        var columns = [];
+                                        $.each(result['structure']['column_list'], function (i, column) {
+                                            columns.push({
+                                                "field": i,
+                                                "title": column,
+                                                formatter: function (value, row, index) {
+                                                    if (value.length > 200) {
+                                                        var sql = value.substr(0, 200) + '...';
+                                                        return sql;
+                                                    } else {
+                                                        return value
+                                                    }
                                                 }
-                                            }
-                                        })
-                                    });
-                                    //初始化查询结果
-                                    $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
-                                        escape: false,
-                                        data: result['structure']['rows'],
-                                        columns: columns,
-                                        detailView: true,   //是否显示父子表
-                                        //格式化详情
-                                        detailFormatter: function (index, row) {
-                                            var html = [];
-                                            $.each(row, function (key, value) {
-                                                if (index === 0) {
-                                                    var sql = window.sqlFormatter.format(value);
-                                                    //替换所有的换行符
-                                                    sql = sql.replace(/\r\n/g, "<br>");
-                                                    sql = sql.replace(/\n/g, "<br>");
-                                                    //替换所有的空格
-                                                    sql = sql.replace(/\s/g, "&nbsp;");
-                                                    html.push('<span>' + sql + '</span>');
-                                                }
-                                            });
-                                            return html.join('');
-                                        },
-                                    });
-                                    //===== TABLE INFO =====
-                                    //异步获取要动态生成的列
-                                    var columns = [];
-                                    $.each(result['tableinfo']['column_list'], function (i, column) {
-                                        columns.push({
-                                            "field": i,
-                                            "title": column
-                                        })
-                                    });
-                                    //初始化查询结果
-                                    $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
-                                        escape: false,
-                                        data: result['tableinfo']['rows'],
-                                        columns: columns
-                                    });
-                                    //===== INDEX INFO =====
-                                    //异步获取要动态生成的列
-                                    var columns = [];
-                                    $.each(result['indexinfo']['column_list'], function (i, column) {
-                                        columns.push({
-                                            "field": i,
-                                            "title": column
-                                        })
-                                    });
-                                    //初始化查询结果
-                                    $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
-                                        escape: false,
-                                        data: result['indexinfo']['rows'],
-                                        columns: columns
-                                    });
+                                            })
+                                        });
+                                        //初始化查询结果
+                                        $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
+                                            escape: false,
+                                            data: result['structure']['rows'],
+                                            columns: columns,
+                                            detailView: true,   //是否显示父子表
+                                            //格式化详情
+                                            detailFormatter: function (index, row) {
+                                                var html = [];
+                                                $.each(row, function (key, value) {
+                                                    if (index === 0) {
+                                                        var sql = window.sqlFormatter.format(value);
+                                                        //替换所有的换行符
+                                                        sql = sql.replace(/\r\n/g, "<br>");
+                                                        sql = sql.replace(/\n/g, "<br>");
+                                                        //替换所有的空格
+                                                        sql = sql.replace(/\s/g, "&nbsp;");
+                                                        html.push('<span>' + sql + '</span>');
+                                                    }
+                                                });
+                                                return html.join('');
+                                            },
+                                        });
+                                        //===== TABLE INFO =====
+                                        //异步获取要动态生成的列
+                                        var columns = [];
+                                        $.each(result['table_info']['column_list'], function (i, column) {
+                                            columns.push({
+                                                "field": i,
+                                                "title": column
+                                            })
+                                        });
+                                        //初始化查询结果
+                                        $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
+                                            escape: false,
+                                            data: result['table_info']['rows'],
+                                            columns: columns
+                                        });
+                                        //===== INDEX INFO =====
+                                        //异步获取要动态生成的列
+                                        var columns = [];
+                                        $.each(result['index_info']['column_list'], function (i, column) {
+                                            columns.push({
+                                                "field": i,
+                                                "title": column
+                                            })
+                                        });
+                                        //初始化查询结果
+                                        $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
+                                            escape: false,
+                                            data: result['index_info']['rows'],
+                                            columns: columns
+                                        });
+                                    } else {
+                                        $("#div_obj_stat-panel-body").append("<p>解析表出错或者表不存在，无法展示表信息</p>");
+                                    }
                                 });
                             } else {
                                 $("#div_obj_stat").hide();

@@ -91,16 +91,17 @@ class SqlTuning(object):
     def object_statistics(self):
         object_statistics = []
         for index, table_name in enumerate(self.__extract_tables()):
-            table_statistics = dict()
-            table_statistics['structure'] = self.engine.query(db_name=self.db_name, sql="show create table {};".format(
-                table_name), close_conn=False).to_sep_dict()
-
-            table_statistics['tableinfo'] = self.engine.query(sql=self.sql_table_info % (self.db_name, table_name),
-                                                              close_conn=False).to_sep_dict()
-
-            table_statistics['indexinfo'] = self.engine.query(sql=self.sql_table_index % (self.db_name, table_name),
-                                                              close_conn=False).to_sep_dict()
-            object_statistics.append(table_statistics)
+            object_statistics.append({
+                "structure": self.engine.query(
+                    db_name=self.db_name, sql=f"show create table {table_name};",
+                    close_conn=False).to_sep_dict(),
+                "table_info": self.engine.query(
+                    sql=self.sql_table_info % (self.db_name, table_name),
+                    close_conn=False).to_sep_dict(),
+                "index_info": self.engine.query(
+                    sql=self.sql_table_index % (self.db_name, table_name),
+                    close_conn=False).to_sep_dict()
+            })
         return object_statistics
 
     def exec_sql(self):
@@ -111,7 +112,12 @@ class SqlTuning(object):
                   "PROFILING_DETAIL": {'column_list': [], 'rows': []},
                   "PROFILING_SUMMARY": {'column_list': [], 'rows': []}
                   }
-        sql_profiling = "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1"
+        sql_profiling = """select concat(upper(left(variable_name,1)),
+                            substring(lower(variable_name),
+                            2,
+                            (length(variable_name)-1))) var_name,
+                            variable_value var_value 
+                        from performance_schema.session_status order by 1"""
 
         # 获取mysql版本信息
         server_version = self.engine.server_version

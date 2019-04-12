@@ -216,7 +216,7 @@ class MysqlEngine(EngineBase):
             conn.commit()
             cursor.close()
         except Exception as e:
-            logger.error(traceback.format_exc())
+            logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
         if close_conn:
             self.close()
