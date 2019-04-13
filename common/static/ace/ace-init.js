@@ -3,7 +3,7 @@ editor = ace.edit("sql_content_editor");
 
 //设置风格和语言（更多风格和语言，请到github上相应目录查看）
 theme = "textmate";
-language = "sql";
+language = "mysql"; // TODO 可以按照实例类型自动变更
 editor.setTheme("ace/theme/" + theme);
 editor.session.setMode("ace/mode/" + language);
 editor.$blockScrolling = Infinity;
