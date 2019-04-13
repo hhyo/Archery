@@ -25,6 +25,8 @@ def get_syntax_type(sql):
         syntax_type = 'DDL'
     elif syntax_type == 'Token.Keyword.DML':
         syntax_type = 'DML'
+    else:
+        syntax_type = None
     return syntax_type
 
 
