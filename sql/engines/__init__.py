@@ -71,10 +71,8 @@ class EngineBase:
         """获取工单回滚语句"""
 
 
-def get_engine(instance=None, workflow=None):
+def get_engine(instance=None):
     """获取数据库操作engine"""
-    if workflow:
-        instance = workflow.instance
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
         return MysqlEngine(instance=instance)
