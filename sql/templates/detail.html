@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h4 style="display: inline;">单子名称：<span>{{ workflow_detail.workflow_name }}</span></h4>
+    <h4 style="display: inline;"><span>{{ workflow_detail.workflow_name }}</span></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflow_detail.engineer %}
@@ -13,7 +13,8 @@
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
-    <table data-toggle="table" class="table table-striped table-hover">
+    <table data-toggle="table" class="table table-striped table-hover"
+           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
@@ -100,10 +101,12 @@
         </tbody>
     </table>
     <br>
-    <table id="tb-detail" data-toggle="table" class="table table-condensed"></table>
+    <table id="tb-detail" data-toggle="table" class="table table-condensed"
+           style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
     <!--最后操作信息-->
     {% if last_operation_info %}
-        <table data-toggle="table" class="table table-striped table-hover">
+        <table data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
             <thead>
             <tr>
                 <th>

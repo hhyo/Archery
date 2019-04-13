@@ -39,11 +39,14 @@
     <div id="tab-content" class="tab-content">
         <!-- 慢日志统计-->
         <div id="slowsql" role="tabpanel" class="tab-pane fade in active table-responsive">
-            <table id="slowsql-list" data-toggle="table" class="table table-hover"></table>
+            <table id="slowsql-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
+
         </div>
         <!-- 慢日志明细-->
         <div id="slowsqlinfo" role="tabpanel" class="tab-pane fade table-responsive">
-            <table id="slowsqlinfo-list" data-toggle="table" class="table table-hover"></table>
+            <table id="slowsqlinfo-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
         </div>
     </div>
 {% endblock content %}
