@@ -81,26 +81,34 @@ def query(request):
         # 对查询sql增加limit限制或者改写语句
         sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
 
-        # 执行查询语句
+        # 执行查询语句，timeout=max_execution_time
         max_execution_time = int(config.get('max_execution_time', 60))
         query_task_id = async_task(query_engine.query, db_name=str(db_name), sql=sql_content, limit_num=limit_num,
-                                   timeout=max_execution_time)
-        # 等待执行结果，仅等待max_execution_time时长
-        query_task = fetch(query_task_id, wait=max_execution_time * 1000)
+                                   timeout=max_execution_time, cached=60)
+        # 等待执行结果，max_execution_time后还没有返回结果代表将会被终止
+        query_task = fetch(query_task_id, wait=max_execution_time * 1000, cached=True)
         # 在max_execution_time内执行结束
         if query_task:
-            query_result = query_task.result
-            query_result.query_time = query_task.time_taken()
+            if query_task.success:
+                query_result = query_task.result
+                query_result.query_time = query_task.time_taken()
+            else:
+                query_result = ResultSet(full_sql=sql_content)
+                query_result.error = query_task.result
         # 等待超时，async_task主动关闭连接
         else:
             query_result = ResultSet(full_sql=sql_content)
-            query_result.error = '查询超时，已被主动终止!'
+            query_result.error = f'查询时间超过 {max_execution_time} 秒，已被主动终止，请优化语句或者联系管理员。'
 
-        # 数据脱敏，仅对查询无错误的结果集进行脱敏
-        if config.get('data_masking') and query_result.error is None:
+        # 查询异常
+        if query_result.error:
+            result['status'] = 1
+            result['msg'] = query_result.error
+        # 数据脱敏，仅对查询无错误的结果集进行脱敏，并且按照query_check配置是否返回
+        elif config.get('data_masking'):
             query_masking_task_id = async_task(query_engine.query_masking, db_name=db_name, sql=sql_content,
-                                               resultset=query_result)
-            query_masking_task = fetch(query_masking_task_id, wait=-1)
+                                               resultset=query_result, cached=60)
+            query_masking_task = fetch(query_masking_task_id, wait=60 * 1000, cached=True)
             if query_masking_task.success:
                 masking_result = query_masking_task.result
                 masking_result.mask_time = query_masking_task.time_taken()
@@ -131,11 +139,7 @@ def query(request):
                     result['data'] = query_result.__dict__
         # 无需脱敏的语句
         else:
-            if query_result.error:
-                result['status'] = 1
-                result['msg'] = query_result.error
-            else:
-                result['data'] = query_result.__dict__
+            result['data'] = query_result.__dict__
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
