@@ -12,7 +12,7 @@ from django.urls import reverse
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.utils.jobs import job_info
+from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
     QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES
@@ -94,7 +94,7 @@ def detail(request, workflow_id):
     # 获取定时执行任务信息
     if workflow_detail.status == 'workflow_timingtask':
         job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
-        job = job_info(job_id)
+        job = task_info(job_id)
         if job:
             run_date = job.next_run
         else:
