@@ -651,7 +651,8 @@ class TestQuery(TransactionTestCase):
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        _async_task.assert_called_once_with(_query, db_name=some_db, sql=some_sql, limit_num=some_limit, timeout=60)
+        _async_task.assert_called_once_with(_query, db_name=some_db, sql=some_sql, limit_num=some_limit, timeout=60,
+                                            cached=60)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -678,7 +679,7 @@ class TestQuery(TransactionTestCase):
                                     'db_name': some_db,
                                     'limit_num': some_limit})
         _async_task.assert_called_once_with(_query, db_name=some_db, sql=sql_with_limit, limit_num=some_limit,
-                                            timeout=60)
+                                            timeout=60, cached=60)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -692,7 +693,7 @@ class TestQuery(TransactionTestCase):
                                 'db_name': some_db,
                                 'limit_num': some_limit})
         _async_task.assert_called_once_with(_query, db_name=some_db, sql=filtered_sql_with_star, limit_num=some_limit,
-                                            timeout=60)
+                                            timeout=60, cached=60)
 
     @patch('sql.query.query_priv_check')
     def testStarOptionOn(self, _priv_check):
