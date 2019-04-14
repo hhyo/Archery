@@ -7,7 +7,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog
-from sql.utils import jobs
+from sql.utils import tasks
 
 urlpatterns = [
     path('', views.sqlworkflow),
@@ -53,7 +53,7 @@ urlpatterns = [
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
-    path('del_sqlcronjob/', jobs.del_sqlcronjob),
+    path('del_sqlcronjob/', tasks.del_schedule),
 
     path('sql_analyze/generate/', sql_analyze.generate),
     path('sql_analyze/analyze/', sql_analyze.analyze),

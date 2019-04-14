@@ -10,12 +10,13 @@ from django.core import serializers
 from django.db import connection, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse
+from django_q.tasks import async_task, fetch
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.query_privileges import query_priv_check
 from .models import QueryLog, Instance
-from sql.engines import get_engine
+from sql.engines import get_engine, ResultSet
 
 logger = logging.getLogger('default')
 
@@ -48,6 +49,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     try:
+        config = SysConfig()
         # 查询前的检查，禁用语句检查，语句切分
         query_engine = get_engine(instance=instance)
         query_check_info = query_engine.query_check(db_name=db_name, sql=sql_content)
@@ -56,7 +58,7 @@ def query(request):
             result['status'] = 1
             result['msg'] = query_check_info.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')
-        if query_check_info.get('has_star') and SysConfig().get('disable_star') is True:
+        if query_check_info.get('has_star') and config.get('disable_star') is True:
             # 引擎内部判断为有 * 且禁止 * 选项打开
             result['status'] = 1
             result['msg'] = query_check_info.get('msg')
@@ -79,38 +81,49 @@ def query(request):
         # 对查询sql增加limit限制或者改写语句
         sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
 
-        # 执行查询语句,统计执行时间
-        t_start = time.time()
-        query_result = query_engine.query(db_name=str(db_name), sql=sql_content, limit_num=limit_num)
-        t_end = time.time()
-        query_result.query_time = "%5s" % "{:.4f}".format(t_end - t_start)
+        # 执行查询语句
+        max_execution_time = int(config.get('max_execution_time', 60))
+        query_task_id = async_task(query_engine.query, db_name=str(db_name), sql=sql_content, limit_num=limit_num,
+                                   timeout=max_execution_time)
+        # 等待执行结果，仅等待max_execution_time时长
+        query_task = fetch(query_task_id, wait=max_execution_time * 1000)
+        # 在max_execution_time内执行结束
+        if query_task:
+            query_result = query_task.result
+            query_result.query_time = query_task.time_taken()
+        # 等待超时，async_task主动关闭连接
+        else:
+            query_result = ResultSet(full_sql=sql_content)
+            query_result.error = '查询超时，已被主动终止!'
 
         # 数据脱敏，仅对查询无错误的结果集进行脱敏
-        if SysConfig().get('data_masking') and query_result.error is None:
-            try:
-                # 记录脱敏时间
-                t_start = time.time()
-                masking_result = query_engine.query_masking(db_name=db_name, sql=sql_content, resultset=query_result)
-                t_end = time.time()
-                masking_result.mask_time = "%5s" % "{:.4f}".format(t_end - t_start)
-                # 脱敏出错，并且开启query_check，直接返回异常，禁止执行
-                if masking_result.error and SysConfig().get('query_check'):
-                    result['status'] = 1
-                    result['msg'] = masking_result.error
-                # 脱敏出错，关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
-                elif masking_result.error and not SysConfig().get('query_check'):
-                    query_result.error = None
-                    priv_check = False
-                    result['data'] = query_result.__dict__
+        if config.get('data_masking') and query_result.error is None:
+            query_masking_task_id = async_task(query_engine.query_masking, db_name=db_name, sql=sql_content,
+                                               resultset=query_result)
+            query_masking_task = fetch(query_masking_task_id, wait=-1)
+            if query_masking_task.success:
+                masking_result = query_masking_task.result
+                masking_result.mask_time = query_masking_task.time_taken()
+                # 脱敏出错
+                if masking_result.error:
+                    # 开启query_check，直接返回异常，禁止执行
+                    if config.get('query_check'):
+                        result['status'] = 1
+                        result['msg'] = masking_result.error
+                    # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
+                    else:
+                        query_result.error = None
+                        priv_check = False
+                        result['data'] = query_result.__dict__
                 # 正常脱敏
                 else:
                     result['data'] = masking_result.__dict__
-            except Exception as e:
+            else:
                 logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
-                if SysConfig().get('query_check'):
+                if config.get('query_check'):
                     result['status'] = 1
-                    result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{e}'
+                    result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{query_masking_task.result}'
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
                     query_result.error = None

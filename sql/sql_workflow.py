@@ -21,9 +21,8 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.notify import notify_for_audit
 from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.jobs import add_sqlcronjob, del_sqlcronjob
+from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
-from sql.utils.sql_utils import get_syntax_type
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -308,7 +307,7 @@ def timing_task(request):
         return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
+    task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
 
     # 使用事务保持数据一致性
     try:
@@ -317,7 +316,7 @@ def timing_task(request):
             workflow_detail.status = 'workflow_timingtask'
             workflow_detail.save()
             # 调用添加定时任务
-            add_sqlcronjob(job_id, run_date, workflow_id)
+            add_sql_schedule(task_name, run_date, workflow_id)
             # 增加工单日志
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type[
@@ -396,10 +395,10 @@ def cancel(request):
                 else:
                     raise PermissionDenied
 
-            # 删除定时执行job
+            # 删除定时执行task
             if workflow_detail.status == 'workflow_timingtask':
-                job_id = Const.workflowJobprefix['sqlreview'] + '-' + str(workflow_id)
-                del_sqlcronjob(job_id)
+                task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
+                del_schedule(task_name)
             # 将流程状态修改为人工终止流程
             workflow_detail.status = 'workflow_abort'
             workflow_detail.save()
