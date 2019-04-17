@@ -421,7 +421,7 @@ class TestRedis(TestCase):
         safe_cmd = "keys 1*"
         new_engine = RedisEngine(instance=self.ins)
         check_result = new_engine.query_check(db_name=0, sql=safe_cmd)
-        self.assertDictEqual(check_result, {'msg': '', 'bad_query': False, 'filtered_sql': safe_cmd, 'has_star': False})
+        self.assertDictEqual(check_result, {'msg': '禁止执行该命令！', 'bad_query': True, 'filtered_sql': safe_cmd, 'has_star': False})
 
     def test_query_check_danger_cmd(self):
         safe_cmd = "keys *"
