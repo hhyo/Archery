@@ -45,7 +45,7 @@ class RedisEngine(EngineBase):
         """提交查询前的检查"""
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         safe_cmd = ["exists", "ttl", "pttl", "type", "get", "mget", "strlen",
-                    "hgetall", "hexists", "hget", "hmget", "keys", "hkeys", "hvals",
+                    "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
                     "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
@@ -53,9 +53,6 @@ class RedisEngine(EngineBase):
             if re.match(fr'^{cmd}', sql.strip(), re.I):
                 result['bad_query'] = False
                 break
-        # 禁止keys *
-        if re.match(r'^keys\s+\*', sql.strip(), re.I):
-            result['bad_query'] = True
         if result['bad_query']:
             result['msg'] = "禁止执行该命令！"
         return result
