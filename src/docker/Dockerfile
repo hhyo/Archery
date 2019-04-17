@@ -53,7 +53,7 @@ RUN cd /opt \
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel unixODBC-devel gettext nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.5.0 \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.5.1 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
