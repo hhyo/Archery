@@ -10,4 +10,4 @@ settings=${1:-"archery.settings"}
 ip=${2:-"127.0.0.1"}
 port=${3:-8000}
 
-gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archery.err -b ${ip}:${port}  archery.wsgi:application
+gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --error-logfile=/tmp/archery.err -b ${ip}:${port}  archery.wsgi:application &
