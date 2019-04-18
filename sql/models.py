@@ -108,7 +108,12 @@ class Instance(models.Model):
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
         if self.password:
-            self.password = pc.encrypt(self.password)
+            if self.id:
+                old_password = Instance.objects.get(id=self.id).password
+            else:
+                old_password = ''
+            # 密码有变动才再次加密保存
+            self.password = pc.encrypt(self.password) if old_password != self.password else self.password
         super(Instance, self).save(*args, **kwargs)
 
 
@@ -186,7 +191,7 @@ class WorkflowAudit(models.Model):
     workflow_id = models.BigIntegerField('关联业务id')
     workflow_type = models.IntegerField('申请类型', choices=workflow_type_choices)
     workflow_title = models.CharField('申请标题', max_length=50)
-    workflow_remark = models.CharField('申请备注', default='', max_length=140)
+    workflow_remark = models.CharField('申请备注', default='', max_length=140, blank=True)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
     current_audit = models.CharField('当前审批权限组', max_length=20)
     next_audit = models.CharField('下级审批权限组', max_length=20)
@@ -489,8 +494,16 @@ class AliyunAccessKey(models.Model):
 
     def save(self, *args, **kwargs):
         pc = Prpcrypt()  # 初始化
-        self.ak = pc.encrypt(self.ak)
-        self.secret = pc.encrypt(self.secret)
+        if self.id:
+            old_info = AliyunAccessKey.objects.get(id=self.id)
+            old_ak = old_info.ak
+            old_secret = old_info.secret
+        else:
+            old_ak = ''
+            old_secret = ''
+        # 加密信息有变动才再次加密保存
+        self.ak = pc.encrypt(self.ak) if old_ak != self.ak else self.ak
+        self.secret = pc.encrypt(self.secret) if old_secret != self.secret else self.secret
         super(AliyunAccessKey, self).save(*args, **kwargs)
 
 
