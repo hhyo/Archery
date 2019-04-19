@@ -29,19 +29,19 @@ class EngineBase:
         return 'Base engine'
 
     def get_all_databases(self):
-        """获取数据库列表, 返回一个list"""
-        return []
+        """获取数据库列表, 返回一个ResultSet，rows=list"""
+        return ResultSet()
 
     def get_all_tables(self, db_name):
-        """获取table 列表, 返回一个list"""
-        return []
+        """获取table 列表, 返回一个ResultSet，rows=list"""
+        return ResultSet()
 
     def get_all_columns_by_tb(self, db_name, tb_name):
-        """获取所有字段, 返回一个list"""
-        return []
+        """获取所有字段, 返回一个ResultSet，rows=list"""
+        return ResultSet()
 
     def describe_table(self, db_name, tb_name):
-        """获取表结构, 返回一个 ResultSet"""
+        """获取表结构, 返回一个 ResultSet，rows=list"""
         return ResultSet()
 
     def query_check(self, db_name=None, sql=''):

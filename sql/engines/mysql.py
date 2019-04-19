@@ -36,27 +36,29 @@ class MysqlEngine(EngineBase):
         version = self.query(sql="select @@version").rows[0][0]
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
 
-    # 连进指定的mysql实例里，读取所有databases并返回
     def get_all_databases(self):
+        """获取数据库列表, 返回一个ResultSet"""
         sql = "show databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
                    if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
-        return db_list
+        result.rows = db_list
+        return result
 
-    # 连进指定的mysql实例里，读取所有tables并返回
     def get_all_tables(self, db_name):
+        """获取table 列表, 返回一个ResultSet"""
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
-        return tb_list
+        result.rows = tb_list
+        return result
 
-    # 连进指定的mysql实例里，读取所有Columns并返回
     def get_all_columns_by_tb(self, db_name, tb_name):
-        """return list [columns]"""
+        """获取所有字段, 返回一个ResultSet"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
-        return column_list
+        result.rows = column_list
+        return result
 
     def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""

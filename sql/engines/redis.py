@@ -36,10 +36,12 @@ class RedisEngine(EngineBase):
         获取数据库列表
         :return:
         """
+        result = ResultSet(full_sql='CONFIG GET databases')
         conn = self.get_connection()
         rows = conn.config_get('databases')['databases']
         db_list = [str(x) for x in range(int(rows))]
-        return db_list
+        result.rows = db_list
+        return result
 
     def query_check(self, db_name=None, sql='', limit_num=0):
         """提交查询前的检查"""

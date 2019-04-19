@@ -17,32 +17,36 @@ class MssqlEngine(EngineBase):
         connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0};PORT={1};UID={2};PWD={3};
         client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
                                                                           self.port, self.user, self.password)
-        conn = pyodbc.connect(connstr)
-        return conn
+        if self.conn:
+            return self.conn
+        self.conn = pyodbc.connect(connstr)
+        return self.conn
 
     def get_all_databases(self):
-        """连进指定的mssql实例里，读取所有databases并返回"""
+        """获取数据库列表, 返回一个ResultSet"""
         sql = "SELECT name FROM master.sys.databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
                    if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
-        return db_list
+        result.rows = db_list
+        return result
 
-    # 连进指定的mysql实例里，读取所有tables并返回
     def get_all_tables(self, db_name):
-        """return List [tables]"""
+        """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
-        return tb_list
+        result.rows = tb_list
+        return result
 
     def get_all_columns_by_tb(self, db_name, tb_name):
-        """return list [columns]"""
+        """获取所有字段, 返回一个ResultSet"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
-        return column_list
+        result.rows = column_list
+        return result
 
     def describe_table(self, db_name, tb_name):
         """return ResultSet"""
@@ -139,7 +143,8 @@ class MssqlEngine(EngineBase):
             logger.error(f"MsSQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
-            conn.close()
+            if close_conn:
+                self.close()
         return result_set
 
     def query_masking(self, db_name=None, sql='', resultset=None):
@@ -152,3 +157,8 @@ class MssqlEngine(EngineBase):
         else:
             filtered_result = resultset
         return filtered_result
+
+    def close(self):
+        if self.conn:
+            self.conn.close()
+            self.conn = None

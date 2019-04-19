@@ -43,7 +43,8 @@ class PgSQLEngine(EngineBase):
         """
         result = self.query(sql=f"SELECT datname FROM pg_database;")
         db_list = [row[0] for row in result.rows if row[0] not in ['postgres', 'template0', 'template1']]
-        return db_list
+        result.rows = db_list
+        return result
 
     def get_all_schemas(self, db_name):
         """
@@ -51,10 +52,11 @@ class PgSQLEngine(EngineBase):
         :return:
         """
         result = self.query(db_name=db_name, sql=f"select schema_name from information_schema.schemata;")
-        db_list = [row[0] for row in result.rows if row[0] not in ['information_schema',
-                                                                   'pg_catalog', 'pg_toast_temp_1',
-                                                                   'pg_temp_1', 'pg_toast']]
-        return db_list
+        schema_list = [row[0] for row in result.rows if row[0] not in ['information_schema',
+                                                                       'pg_catalog', 'pg_toast_temp_1',
+                                                                       'pg_temp_1', 'pg_toast']]
+        result.rows = schema_list
+        return result
 
     def get_all_tables(self, db_name, schema_name=None):
         """
@@ -69,7 +71,8 @@ class PgSQLEngine(EngineBase):
         and table_schema ='{schema_name}';"""
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
-        return tb_list
+        result.rows = tb_list
+        return result
 
     def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
         """
@@ -86,7 +89,8 @@ class PgSQLEngine(EngineBase):
         and table_schema ='{schema_name}';"""
         result = self.query(db_name=db_name, sql=sql)
         column_list = [row[0] for row in result.rows]
-        return column_list
+        result.rows = column_list
+        return result
 
     def describe_table(self, db_name, tb_name, schema_name=None):
         """

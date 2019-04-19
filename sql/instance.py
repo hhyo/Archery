@@ -304,10 +304,15 @@ def instance_resource(request):
                 resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
         else:
             raise TypeError('不支持的资源类型或者参数不完整！')
-        result['data'] = resource
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
+    else:
+        if resource.error:
+            result['status'] = 1
+            result['msg'] = resource.error
+        else:
+            result['data'] = resource.rows
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
