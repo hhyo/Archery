@@ -13,13 +13,12 @@
 
 [文档](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
 
-
 </div>
 
 
 介绍
 ============
-Archery是[archer](https://github.com/jly8866/archer)的一个分支项目，定位于SQL审核查询平台，附加部分日常DB运维功能，[功能列表](https://github.com/hhyo/Archery/wiki/功能列表)
+Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，附加部分DB运维功能，所有功能都兼容手机端操作，[功能列表](https://github.com/hhyo/Archery/wiki/功能列表)
 
 开发计划
 ==============
@@ -71,6 +70,12 @@ http://127.0.0.1:9123/
 手动安装
 ===============
 [部署说明](https://github.com/hhyo/archery/wiki/部署#手动部署)
+
+运行测试
+===============
+```
+python run manage.py test -v 3
+```
 
 依赖清单
 ===============
