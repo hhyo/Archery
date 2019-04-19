@@ -36,9 +36,10 @@ https://github.com/hhyo/archery/projects
 Archery镜像：https://hub.docker.com/r/hhyo/archery    
 Inception镜像: https://hub.docker.com/r/hhyo/inception
 #### 准备运行配置
-具体可参考：https://github.com/hhyo/archery/raw/master/src/docker/install.zip
+具体可参考：https://github.com/hhyo/Archery/tree/master/src/docker-compose
 
 #### 启动
+进入docker-compose文件夹
 
 ```bash
 #启动
