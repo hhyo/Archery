@@ -101,7 +101,7 @@ class TestMssql(TestCase):
         mock_query.return_value = db_result
         new_engine = MssqlEngine(instance=self.ins1)
         dbs = new_engine.get_all_databases()
-        self.assertEqual(dbs, ['db_1', 'db_2'])
+        self.assertEqual(dbs.rows, ['db_1', 'db_2'])
 
     @patch.object(MssqlEngine, 'query')
     def testAllTables(self, mock_query):
@@ -111,7 +111,7 @@ class TestMssql(TestCase):
         new_engine = MssqlEngine(instance=self.ins1)
         tables = new_engine.get_all_tables('some_db')
         mock_query.assert_called_once_with(db_name='some_db', sql=ANY)
-        self.assertEqual(tables, ['tb_1', 'tb_2'])
+        self.assertEqual(tables.rows, ['tb_1', 'tb_2'])
 
     @patch.object(MssqlEngine, 'query')
     def testAllColumns(self, mock_query):
@@ -120,7 +120,7 @@ class TestMssql(TestCase):
         mock_query.return_value = db_result
         new_engine = MssqlEngine(instance=self.ins1)
         dbs = new_engine.get_all_columns_by_tb('some_db', 'some_tb')
-        self.assertEqual(dbs, ['col_1', 'col_2'])
+        self.assertEqual(dbs.rows, ['col_1', 'col_2'])
 
     @patch.object(MssqlEngine, 'query')
     def testDescribe(self, mock_query):
@@ -201,7 +201,7 @@ class TestMysql(TestCase):
         mock_query.return_value = db_result
         new_engine = MysqlEngine(instance=self.ins1)
         dbs = new_engine.get_all_databases()
-        self.assertEqual(dbs, ['db_1', 'db_2'])
+        self.assertEqual(dbs.rows, ['db_1', 'db_2'])
 
     @patch.object(MysqlEngine, 'query')
     def testAllTables(self, mock_query):
@@ -211,7 +211,7 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         tables = new_engine.get_all_tables('some_db')
         mock_query.assert_called_once_with(db_name='some_db', sql=ANY)
-        self.assertEqual(tables, ['tb_1', 'tb_2'])
+        self.assertEqual(tables.rows, ['tb_1', 'tb_2'])
 
     @patch.object(MysqlEngine, 'query')
     def testAllColumns(self, mock_query):
@@ -220,7 +220,7 @@ class TestMysql(TestCase):
         mock_query.return_value = db_result
         new_engine = MysqlEngine(instance=self.ins1)
         dbs = new_engine.get_all_columns_by_tb('some_db', 'some_tb')
-        self.assertEqual(dbs, ['col_1', 'col_2'])
+        self.assertEqual(dbs.rows, ['col_1', 'col_2'])
 
     @patch.object(MysqlEngine, 'query')
     def testDescribe(self, mock_query):
@@ -415,7 +415,7 @@ class TestRedis(TestCase):
     def test_get_all_databases(self, _config_get):
         new_engine = RedisEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
-        self.assertListEqual(dbs, ['0', '1', '2', '3'])
+        self.assertListEqual(dbs.rows, ['0', '1', '2', '3'])
 
     def test_query_check_safe_cmd(self):
         safe_cmd = "keys 1*"
@@ -530,27 +530,27 @@ class TestPgSQL(TestCase):
     def test_get_all_databases(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
-        self.assertListEqual(dbs, ['archery'])
+        self.assertListEqual(dbs.rows, ['archery'])
 
     @patch('sql.engines.pgsql.PgSQLEngine.query',
            return_value=ResultSet(rows=[('information_schema',), ('archery',), ('pg_catalog',)]))
     def test_get_all_schemas(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
         schemas = new_engine.get_all_schemas(db_name='archery')
-        self.assertListEqual(schemas, ['archery'])
+        self.assertListEqual(schemas.rows, ['archery'])
 
     @patch('sql.engines.pgsql.PgSQLEngine.query', return_value=ResultSet(rows=[('test',), ('test2',)]))
     def test_get_all_tables(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
         tables = new_engine.get_all_tables(db_name='archery', schema_name='archery')
-        self.assertListEqual(tables, ['test2'])
+        self.assertListEqual(tables.rows, ['test2'])
 
     @patch('sql.engines.pgsql.PgSQLEngine.query',
            return_value=ResultSet(rows=[('id',), ('name',)]))
     def test_get_all_columns_by_tb(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
         columns = new_engine.get_all_columns_by_tb(db_name='archery', tb_name='test2', schema_name='archery')
-        self.assertListEqual(columns, ['id', 'name'])
+        self.assertListEqual(columns.rows, ['id', 'name'])
 
     @patch('sql.engines.pgsql.PgSQLEngine.query',
            return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))

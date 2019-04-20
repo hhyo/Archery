@@ -74,7 +74,7 @@ http://127.0.0.1:9123/
 运行测试
 ===============
 ```
-python run manage.py test -v 3
+python manage.py test -v 3
 ```
 
 依赖清单

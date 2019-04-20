@@ -248,11 +248,6 @@
             if (analyze_text !== "undefined") {
                 $('#btn-analyze').addClass('disabled');
                 $('#btn-analyze').prop('disabled', true);
-                if ($('#instance_name').val() && $('#db_name').val()) {
-                    alert('已提交SOAR分析，请耐心等待分析结果!');
-                } else {
-                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
-                }
                 //初始化table
                 $('#analyze-sql').bootstrapTable('destroy').bootstrapTable({
                     escape: true,
@@ -358,6 +353,12 @@
                         return res;
                     }
                 });
+                // 提示信息
+                if ($('#instance_name').val() && $('#db_name').val()) {
+                    alert('已提交SOAR分析，请耐心等待分析结果!');
+                } else {
+                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
+                }
             } else {
                 alert('请先解析SQL/MyBatis3 Mapper XML文件');
             }

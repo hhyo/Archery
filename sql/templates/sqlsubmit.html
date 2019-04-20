@@ -59,7 +59,7 @@
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div id="div-backup" class="form-group">
                                 <select id="is_backup" name="is_backup"
                                         class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
                                         data-placeholder="请选择是否要备份" required>
@@ -205,6 +205,14 @@
     <script>
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
+            // 仅MySQL支持备份
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            if (optgroup === "MySQL") {
+                $("#div-backup").show()
+            } else {
+                $("#div-backup").hide();
+                $("#is_backup").val('False')
+            }
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
@@ -631,8 +639,8 @@
             // 初始化上传控件
             init_upload();
             // 提示信息
-            editor.setValue("-- 请在此提交SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n");
-            //editor.clearSelection();
+            //editor.setValue("-- 请在此提交SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n");
+            //editor.focus();  //获取焦点
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
             $("#btn-submitsql").prop('disabled', true);
@@ -656,7 +664,6 @@
                 $("#workflow_name").val(sessionStorage.removeItem('editWorkflowNname'));
                 sessionStorage.removeItem('editGroup');
                 sessionStorage.removeItem('editSqlContent');
-                editor.clearSelection();
                 sessionStorage.removeItem('editClustername');
                 sessionStorage.removeItem('editIsbackup');
             }
