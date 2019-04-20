@@ -8,7 +8,6 @@ import sqlparse
 from django.db import connection, OperationalError
 
 from common.config import SysConfig
-from sql.models import SqlWorkflow
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -71,8 +70,7 @@ class InceptionEngine(EngineBase):
                             use {db_name};
                             {sql}
                             inception_magic_commit;"""
-        inception_engine = InceptionEngine()
-        inception_result = inception_engine.query(sql=inception_sql)
+        inception_result = self.query(sql=inception_sql)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
@@ -90,7 +88,6 @@ class InceptionEngine(EngineBase):
         """执行上线单"""
         instance = workflow.instance
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
-        inception_engine = InceptionEngine()
         if workflow.is_backup:
             str_backup = "--enable-remote-backup"
         else:
@@ -102,33 +99,20 @@ class InceptionEngine(EngineBase):
                          use {workflow.db_name};
                          {workflow.sqlworkflowcontent.sql_content}
                          inception_magic_commit;"""
-        split_result = inception_engine.query(sql=sql_split)
+        split_result = self.query(sql=sql_split)
 
-        execute_result.rows = []
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
             sql_tmp = splitRow[1]
             sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
-                                --port={instance.port};--enable-execute;--enable-ignore-warnings;{str_backup};*/\
-                                inception_magic_start;\
-                                {sql_tmp}\
+                                --port={instance.port};--enable-execute;--enable-ignore-warnings;{str_backup};*/
+                                inception_magic_start;
+                                {sql_tmp}
                                 inception_magic_commit;"""
-            one_line_execute_result = inception_engine.query(sql=sql_execute, close_conn=False)
-            # 执行, 把结果转换为ReviewSet
-            for sqlRow in one_line_execute_result.to_dict():
-                execute_result.rows.append(ReviewResult(
-                    id=sqlRow['ID'],
-                    stage=sqlRow['stage'],
-                    errlevel=sqlRow['errlevel'],
-                    stagestatus=sqlRow['stagestatus'],
-                    errormessage=sqlRow['errormessage'],
-                    sql=sqlRow['SQL'],
-                    affected_rows=sqlRow['Affected_rows'],
-                    actual_affected_rows=sqlRow['Affected_rows'],
-                    sequence=sqlRow['sequence'],
-                    backup_dbname=sqlRow['backup_dbname'],
-                    execute_time=sqlRow['execute_time'],
-                    sqlsha1=sqlRow['sqlsha1']))
+            one_line_execute_result = self.query(sql=sql_execute, close_conn=False)
+            # 把结果转换为ReviewSet
+            for r in one_line_execute_result.rows:
+                execute_result.rows += [ReviewResult(inception_result=r)]
 
             # 每执行一次，就将执行结果更新到工单的execute_result，便于展示执行进度和保存执行信息
             workflow.sqlworkflowcontent.execute_result = execute_result.json()
@@ -141,12 +125,12 @@ class InceptionEngine(EngineBase):
                 workflow.sqlworkflowcontent.save()
                 workflow.save()
 
-        # 如果发现任何一个行执行结果里有errLevel为1或2，并且stagestatus列没有包含Execute Successfully字样，则最终执行结果为有异常.
+        # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         execute_result.status = "workflow_finish"
-        for sqlRow in execute_result.rows:
-            if sqlRow.errlevel in (1, 2) and not re.search(r"Execute Successfully", sqlRow.stagestatus):
+        for r in execute_result.rows:
+            if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
                 execute_result.status = "workflow_exception"
-                execute_result.error = "Line {0} has error/warning: {1}".format(sqlRow.id, sqlRow.errormessage)
+                execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
         return execute_result
 
@@ -162,11 +146,7 @@ class InceptionEngine(EngineBase):
                 rows = cursor.fetchall()
             fields = cursor.description
 
-            column_list = []
-            if fields:
-                for i in fields:
-                    column_list.append(i[0])
-            result_set.column_list = column_list
+            result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
             result_set.affected_rows = effect_row
         if close_conn:
@@ -194,9 +174,10 @@ class InceptionEngine(EngineBase):
 
     def get_rollback(self, workflow):
         """
-        获取回滚语句，并且按照执行顺序倒序展示
+        获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
         list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []
         # 创建连接
@@ -211,29 +192,31 @@ class InceptionEngine(EngineBase):
                     backup_db_name = row[8]
                     sequence = row[7]
                     sql = row[5]
+                # 新数据
                 else:
-                    if row.get('backup_dbname') == 'None':
+                    if row.get('backup_dbname') in ('None', ''):
                         continue
                     backup_db_name = row.get('backup_dbname')
                     sequence = row.get('sequence')
                     sql = row.get('sql')
+                # 获取备份表名
                 opid_time = sequence.replace("'", "")
                 sql_table = f"""select tablename 
-                                    from {backup_db_name}.$_$Inception_backup_information$_$ 
-                                 where opid_time='{opid_time}';"""
+                                from {backup_db_name}.$_$Inception_backup_information$_$ 
+                                where opid_time='{opid_time}';"""
+
                 cur.execute(sql_table)
                 list_tables = cur.fetchall()
                 if list_tables:
+                    # 获取备份语句
                     table_name = list_tables[0][0]
                     sql_back = f"""select rollback_statement 
-                                       from {backup_db_name}.{table_name} 
-                                    where opid_time='{opid_time}'"""
+                                   from {backup_db_name}.{table_name} 
+                                   where opid_time='{opid_time}'"""
                     cur.execute(sql_back)
                     list_backup = cur.fetchall()
-                    block_rollback_sql_list = [sql]
-                    block_rollback_sql = '\n'.join([back_info[0] for back_info in list_backup])
-                    block_rollback_sql_list.append(block_rollback_sql)
-                    list_backup_sql.append(block_rollback_sql_list)
+                    # 拼接成回滚语句列表,['源语句'，'回滚语句']
+                    list_backup_sql.append([sql, '\n'.join([back_info[0] for back_info in list_backup])])
             except Exception as e:
                 logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)

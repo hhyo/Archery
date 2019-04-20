@@ -132,11 +132,7 @@ class MssqlEngine(EngineBase):
                 rows = cursor.fetchall()
             fields = cursor.description
 
-            column_list = []
-            if fields:
-                for i in fields:
-                    column_list.append(i[0])
-            result_set.column_list = column_list
+            result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:

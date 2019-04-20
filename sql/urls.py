@@ -63,6 +63,7 @@ urlpatterns = [
     path('config/change/', config.change_config),
 
     path('check/inception/', check.inception),
+    path('check/go_inception/', check.go_inception),
     path('check/email/', check.email),
     path('check/instance/', check.instance),
 
