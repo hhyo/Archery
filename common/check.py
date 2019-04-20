@@ -2,7 +2,7 @@
 import logging
 import traceback
 
-import MySQLdb
+import pymysql
 import simplejson as json
 from django.http import HttpResponse
 
@@ -26,28 +26,70 @@ def inception(request):
     inception_remote_backup_password = request.POST.get('inception_remote_backup_password', '')
 
     try:
-        conn = MySQLdb.connect(host=inception_host, port=int(inception_port), charset='utf8')
+        conn = pymysql.connect(host=inception_host, port=int(inception_port), charset='utf8mb4')
         cur = conn.cursor()
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = '无法连接inception\n{}'.format(str(e))
+        result['msg'] = '无法连接Inception\n{}'.format(str(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
     else:
         cur.close()
         conn.close()
 
     try:
-        conn = MySQLdb.connect(host=inception_remote_backup_host,
+        conn = pymysql.connect(host=inception_remote_backup_host,
                                port=int(inception_remote_backup_port),
                                user=inception_remote_backup_user,
                                password=inception_remote_backup_password,
-                               charset='utf8')
+                               charset='utf8mb4')
         cur = conn.cursor()
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = '无法连接inception备份库\n{}'.format(str(e))
+        result['msg'] = '无法连接Inception备份库\n{}'.format(str(e))
+    else:
+        cur.close()
+        conn.close()
+
+    # 返回结果
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+# 检测inception配置
+@superuser_required
+def go_inception(request):
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+    go_inception_host = request.POST.get('go_inception_host', '')
+    go_inception_port = request.POST.get('go_inception_port', '')
+    inception_remote_backup_host = request.POST.get('inception_remote_backup_host', '')
+    inception_remote_backup_port = request.POST.get('inception_remote_backup_port', '')
+    inception_remote_backup_user = request.POST.get('inception_remote_backup_user', '')
+    inception_remote_backup_password = request.POST.get('inception_remote_backup_password', '')
+
+    try:
+        conn = pymysql.connect(host=go_inception_host, port=int(go_inception_port), charset='utf8mb4')
+        cur = conn.cursor()
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        result['status'] = 1
+        result['msg'] = '无法连接Inception\n{}'.format(str(e))
+        return HttpResponse(json.dumps(result), content_type='application/json')
+    else:
+        cur.close()
+        conn.close()
+
+    try:
+        conn = pymysql.connect(host=inception_remote_backup_host,
+                               port=int(inception_remote_backup_port),
+                               user=inception_remote_backup_user,
+                               password=inception_remote_backup_password,
+                               charset='utf8mb4')
+        cur = conn.cursor()
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        result['status'] = 1
+        result['msg'] = '无法连接Inception备份库\n{}'.format(str(e))
     else:
         cur.close()
         conn.close()

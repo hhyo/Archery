@@ -19,14 +19,15 @@ def get_syntax_type(sql):
     :param sql:
     :return:
     """
-    statement = sqlparse.parse(sql)[0]
-    syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
-    if syntax_type == 'Token.Keyword.DDL':
-        syntax_type = 'DDL'
-    elif syntax_type == 'Token.Keyword.DML':
-        syntax_type = 'DML'
-    else:
-        syntax_type = None
+    parser = sqlparse.parse(sql)
+    syntax_type = None
+    if parser:
+        statement = sqlparse.parse(sql)[0]
+        syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
+        if syntax_type == 'Token.Keyword.DDL':
+            syntax_type = 'DDL'
+        elif syntax_type == 'Token.Keyword.DML':
+            syntax_type = 'DML'
     return syntax_type
 
 

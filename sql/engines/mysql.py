@@ -6,6 +6,7 @@ import re
 import sqlparse
 from MySQLdb.connections import numeric_part
 
+from sql.engines.goinception import GoInceptionEngine
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
@@ -94,11 +95,7 @@ class MysqlEngine(EngineBase):
                 rows = cursor.fetchall()
             fields = cursor.description
 
-            column_list = []
-            if fields:
-                for i in fields:
-                    column_list.append(i[0])
-            result_set.column_list = column_list
+            result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
@@ -149,7 +146,7 @@ class MysqlEngine(EngineBase):
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
-        archer_config = SysConfig()
+        config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
         # 禁用语句检查
         line = 1
@@ -164,9 +161,9 @@ class MysqlEngine(EngineBase):
                 check_result.rows += [result]
                 check_result.error_count += 1
         # 高危SQL检查
-        if not check_result.is_critical and archer_config.get('critical_ddl_regex'):
+        if not check_result.is_critical and config.get('critical_ddl_regex'):
             # 如果启用critical_ddl 的检查
-            critical_ddl_regex = archer_config.get('critical_ddl_regex')
+            critical_ddl_regex = config.get('critical_ddl_regex')
             p = re.compile(critical_ddl_regex)
             # 逐行匹配正则
             line = 1
@@ -188,6 +185,13 @@ class MysqlEngine(EngineBase):
         if check_result.is_critical:
             return check_result
         # 通过检测的再进行inception检查
+        elif config.get('go_inception'):
+            try:
+                inception_engine = GoInceptionEngine()
+                check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+            except Exception as e:
+                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
+                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
         else:
             try:
                 inception_engine = InceptionEngine()
@@ -203,6 +207,9 @@ class MysqlEngine(EngineBase):
         if workflow.is_manual == 1:
             return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
         # inception执行
+        elif SysConfig().get('go_inception'):
+            inception_engine = GoInceptionEngine()
+            return inception_engine.execute(workflow)
         else:
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)

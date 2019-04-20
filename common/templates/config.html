@@ -54,75 +54,121 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_incption' class='btn-sm btn-info'>测试inception连接</button>
+                        <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
+                        <button id='check_goincption' class='btn-sm btn-info' style="display: none">测试goInception连接
+                        </button>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="inception_host"
-                                       class="col-sm-4 control-label">INCEPTION_HOST</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="inception_host"
-                                           key="inception_host"
-                                           value="{{ config.inception_host }}"
-                                           placeholder="Inception地址">
+                                <label for="go_inception"
+                                       class="col-sm-4 control-label">GO_INCEPTION</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="go_inception"
+                                                   key="go_inception"
+                                                   value="{{ config.go_inception }}"
+                                                   type="checkbox">
+                                            是否启用goInception
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="inception_port"
-                                       class="col-sm-4 control-label">INCEPTION_PORT</label>
-                                <div class="col-sm-5">
-                                    <input type="number" class="form-control"
-                                           id="inception_port"
-                                           key="inception_port"
-                                           value="{{ config.inception_port }}"
-                                           placeholder="Inception端口">
+                            <div id="div-inception-config">
+                                <div class="form-group">
+                                    <label for="inception_host"
+                                           class="col-sm-4 control-label">INCEPTION_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="inception_host"
+                                               key="inception_host"
+                                               value="{{ config.inception_host }}"
+                                               placeholder="Inception地址">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inception_port"
+                                           class="col-sm-4 control-label">INCEPTION_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                               id="inception_port"
+                                               key="inception_port"
+                                               value="{{ config.inception_port }}"
+                                               placeholder="Inception端口">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inception_remote_backup_host"
+                                           class="col-sm-4 control-label">REMOTE_BACKUP_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="inception_remote_backup_host"
+                                               key="inception_remote_backup_host"
+                                               value="{{ config.inception_remote_backup_host }}"
+                                               placeholder="Inception备份库地址">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inception_remote_backup_port"
+                                           class="col-sm-4 control-label">REMOTE_BACKUP_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                               id="inception_remote_backup_port"
+                                               key="inception_remote_backup_port"
+                                               value="{{ config.inception_remote_backup_port }}"
+                                               placeholder="Inception备份库端口">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inception_remote_backup_user"
+                                           class="col-sm-4 control-label">REMOTE_BACKUP_USER</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" autocomplete="new-password" class="form-control"
+                                               id="inception_remote_backup_user"
+                                               key="inception_remote_backup_user"
+                                               value="{{ config.inception_remote_backup_user }}"
+                                               placeholder="Inception备份库用户">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inception_remote_backup_password"
+                                           class="col-sm-4 control-label">REMOTE_BACKUP_PASSWORD</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" autocomplete="new-password" class="form-control"
+                                               id="inception_remote_backup_password"
+                                               key="inception_remote_backup_password"
+                                               value="{{ config.inception_remote_backup_password }}"
+                                               placeholder="Inception备份库用户密码">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="inception_remote_backup_host"
-                                       class="col-sm-4 control-label">REMOTE_BACKUP_HOST</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="inception_remote_backup_host"
-                                           key="inception_remote_backup_host"
-                                           value="{{ config.inception_remote_backup_host }}"
-                                           placeholder="Inception备份库地址">
+
+                            <div id="div-go-inception-config" style="display: none">
+                                <hr/>
+                                <div class="form-group">
+                                    <label for="go_inception_host"
+                                           class="col-sm-4 control-label">GO_INCEPTION_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="go_inception_host"
+                                               key="go_inception_host"
+                                               value="{{ config.go_inception_host }}"
+                                               placeholder="goInception地址">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="go_inception_port"
+                                           class="col-sm-4 control-label">GO_INCEPTION_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                               id="go_inception_port"
+                                               key="go_inception_port"
+                                               value="{{ config.go_inception_port }}"
+                                               placeholder="goInception端口">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="inception_remote_backup_port"
-                                       class="col-sm-4 control-label">REMOTE_BACKUP_PORT</label>
-                                <div class="col-sm-5">
-                                    <input type="number" class="form-control"
-                                           id="inception_remote_backup_port"
-                                           key="inception_remote_backup_port"
-                                           value="{{ config.inception_remote_backup_port }}"
-                                           placeholder="Inception备份库端口">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="inception_remote_backup_user"
-                                       class="col-sm-4 control-label">REMOTE_BACKUP_USER</label>
-                                <div class="col-sm-5">
-                                    <input type="text" autocomplete="new-password" class="form-control"
-                                           id="inception_remote_backup_user"
-                                           key="inception_remote_backup_user"
-                                           value="{{ config.inception_remote_backup_user }}"
-                                           placeholder="Inception备份库用户">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="inception_remote_backup_password"
-                                       class="col-sm-4 control-label">REMOTE_BACKUP_PASSWORD</label>
-                                <div class="col-sm-5">
-                                    <input type="password" autocomplete="new-password" class="form-control"
-                                           id="inception_remote_backup_password"
-                                           key="inception_remote_backup_password"
-                                           value="{{ config.inception_remote_backup_password }}"
-                                           placeholder="Inception备份库用户密码">
-                                </div>
-                            </div>
+
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
@@ -564,6 +610,9 @@
                     $("#div-mail-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
+                } else if ($(this).attr("id") === 'go_inception') {
+                    $("#div-go-inception-config").show();
+                    $("#check_goincption").show()
                 }
             } else {
                 $(this).val(false);
@@ -572,6 +621,9 @@
                     $("#div-mail-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
+                } else if ($(this).attr("id") === 'go_inception') {
+                    $("#div-go-inception-config").hide();
+                    $("#check_goincption").hide()
                 }
             }
         });
@@ -724,6 +776,39 @@
                 complete: function () {
                     $("#check_incption").removeClass('disabled');
                     $("#check_incption").prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        alert('inception和备份库测试连接成功，请点击保存生效！')
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        // 检测goInception
+        $("#check_goincption").click(function () {
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
+            $.ajax({
+                type: "post",
+                url: "/check/go_inception/",
+                dataType: "json",
+                data: {
+                    go_inception_host: $("#go_inception_host").val(),
+                    go_inception_port: $("#go_inception_port").val(),
+                    inception_remote_backup_host: $("#inception_remote_backup_host").val(),
+                    inception_remote_backup_port: $("#inception_remote_backup_port").val(),
+                    inception_remote_backup_user: $("#inception_remote_backup_user").val(),
+                    inception_remote_backup_password: $("#inception_remote_backup_password").val(),
+                },
+                complete: function () {
+                    $("#check_goincption").removeClass('disabled');
+                    $("#check_goincption").prop('disabled', false);
                 },
                 success: function (data) {
                     if (data.status === 0) {

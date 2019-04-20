@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from common.config import SysConfig
 from sql.engines import EngineBase
+from sql.engines.goinception import GoInceptionEngine
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
@@ -421,7 +422,8 @@ class TestRedis(TestCase):
         safe_cmd = "keys 1*"
         new_engine = RedisEngine(instance=self.ins)
         check_result = new_engine.query_check(db_name=0, sql=safe_cmd)
-        self.assertDictEqual(check_result, {'msg': '禁止执行该命令！', 'bad_query': True, 'filtered_sql': safe_cmd, 'has_star': False})
+        self.assertDictEqual(check_result,
+                             {'msg': '禁止执行该命令！', 'bad_query': True, 'filtered_sql': safe_cmd, 'has_star': False})
 
     def test_query_check_danger_cmd(self):
         safe_cmd = "keys *"
@@ -715,7 +717,7 @@ class TestInception(TestCase):
     @patch('MySQLdb.connect')
     def test_query_not_limit(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
-        new_engine = PgSQLEngine(instance=self.ins)
+        new_engine = InceptionEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
         self.assertIsInstance(query_result, ResultSet)
 
@@ -764,4 +766,87 @@ class TestInception(TestCase):
         }]"""
         self.wf.sqlworkflowcontent.save()
         new_engine = InceptionEngine()
-        rollback_sql = new_engine.get_rollback(self.wf)
+        new_engine.get_rollback(self.wf)
+
+
+class TestGoInception(TestCase):
+    def setUp(self):
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+                                           host='some_host',
+                                           port=3306, user='ins_user', password='some_pass')
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=True,
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
+
+    def tearDown(self):
+        self.ins.delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+
+    @patch('pymysql.connect')
+    def test_get_connection(self, _connect):
+        new_engine = GoInceptionEngine()
+        new_engine.get_connection()
+        _connect.assert_called_once()
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_execute_check_normal_sql(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 0, 'Audit completed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '', '']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row])
+        new_engine = GoInceptionEngine()
+        check_result = new_engine.execute_check(instance=self.ins, db_name=0, sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_execute_exception(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 1, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '', '']
+        column_list = ['order_id', 'stage', 'error_level', 'stage_status', 'error_message', 'sql',
+                       'affected_rows', 'sequence', 'backup_dbname', 'execute_time', 'sqlsha1', 'backup_time']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
+        new_engine = GoInceptionEngine()
+        execute_result = new_engine.execute(workflow=self.wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.status, 'workflow_exception')
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_execute_finish(self, _query):
+        sql = 'update user set id=100'
+        row = [1, 'CHECKED', 0, 'Execute Successfully', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '', '']
+        column_list = ['order_id', 'stage', 'error_level', 'stage_status', 'error_message', 'sql',
+                       'affected_rows', 'sequence', 'backup_dbname', 'execute_time', 'sqlsha1', 'backup_time']
+        _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
+        new_engine = GoInceptionEngine()
+        execute_result = new_engine.execute(workflow=self.wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.status, 'workflow_finish')
+
+    @patch('pymysql.connect.cursor.execute')
+    @patch('pymysql.connect.cursor')
+    @patch('pymysql.connect')
+    def test_query(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        new_engine = GoInceptionEngine()
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
+        self.assertIsInstance(query_result, ResultSet)
+
+    @patch('pymysql.connect.cursor.execute')
+    @patch('pymysql.connect.cursor')
+    @patch('pymysql.connect')
+    def test_query_not_limit(self, _conn, _cursor, _execute):
+        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        new_engine = GoInceptionEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
+        self.assertIsInstance(query_result, ResultSet)

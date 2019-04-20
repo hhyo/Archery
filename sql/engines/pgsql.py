@@ -152,11 +152,8 @@ class PgSQLEngine(EngineBase):
             else:
                 rows = cursor.fetchall()
             fields = cursor.description
-            column_list = []
-            if fields:
-                for i in fields:
-                    column_list.append(i[0])
-            result_set.column_list = column_list
+
+            result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
