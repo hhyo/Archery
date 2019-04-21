@@ -50,10 +50,14 @@ RUN cd /opt \
     && git clone https://github.com/danfengcao/binlog2sql.git \
     && mv binlog2sql/binlog2sql/ tmp_binlog2sql \
     && rm -rf binlog2sql
+#msodbc
+RUN cd /opt \
+    && curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo \
+    && ACCEPT_EULA=Y yum -y install msodbcsql17 \
+    && yum -y install unixODBC-devel
 #archery
 RUN cd /opt \
-    && ACCEPT_EULA=Y yum -y install msodbcsql17 \
-    && yum -y install openldap-devel unixODBC-devel gettext nginx \
+    && yum -y install openldap-devel gettext nginx \
     && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.5.2 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
