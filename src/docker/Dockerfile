@@ -52,8 +52,9 @@ RUN cd /opt \
     && rm -rf binlog2sql
 #archery
 RUN cd /opt \
+    && ACCEPT_EULA=Y yum -y install msodbcsql17 \
     && yum -y install openldap-devel unixODBC-devel gettext nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.5.1 \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.5.2 \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \

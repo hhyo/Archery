@@ -110,7 +110,7 @@ python manage.py test -v 3
 - 启动管理 [gunicorn](https://github.com/benoitc/gunicorn)
 ### 功能依赖
 - 可视化 [pyecharts](https://github.com/pyecharts/pyecharts)
-- MySQL审核/语法树解析 [inception](https://github.com/hhyo/inception)
+- MySQL审核/执行 [goInception](https://github.com/hanchuanchuan/goInception)|[inception](https://github.com/hhyo/inception)
 - 数据库审核 [Themis](https://github.com/CreditEaseDBA/Themis)
 - MySQL索引优化 [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
 - SQL优化/压缩 [SOAR](https://github.com/XiaoMi/soar)
