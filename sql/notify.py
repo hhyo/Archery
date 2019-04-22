@@ -140,7 +140,7 @@ def notify_for_audit(audit_id, msg_type=0, **kwargs):
 
 def notify_for_execute(workflow):
     """
-    工单执行结束的通知，仅支持邮件
+    工单执行结束的通知
     :param workflow:
     :return:
     """
@@ -219,7 +219,7 @@ def notify_for_binlog2sql(task):
 
     # 发送邮件通知
     if task.success:
-        msg_title = '[Archery]Binlog2SQL执行结束'
+        msg_title = '[Archery 通知]Binlog2SQL 执行结束'
         msg_content = f'解析的SQL文件为{task.result[1]}，请到指定目录查看'
         msg_to = [task.result[0].email]
         MsgSender().send_email(msg_title, msg_content, msg_to)

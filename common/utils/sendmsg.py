@@ -90,7 +90,7 @@ class MsgSender(object):
 
             # 消息内容:
             main_msg['Subject'] = Header(subject, "utf-8").encode()
-            main_msg['From'] = formataddr(["archery 通知", self.MAIL_REVIEW_FROM_ADDR])
+            main_msg['From'] = formataddr(["Archery 通知", self.MAIL_REVIEW_FROM_ADDR])
             main_msg['To'] = ','.join(to)
             main_msg['Cc'] = ', '.join(str(cc) for cc in list_cc)
             main_msg['Date'] = email.utils.formatdate()
