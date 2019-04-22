@@ -117,6 +117,90 @@
                     </ul>
                     <!-- Tab panes -->
                     <div id="tab-content" class="form-group tab-content">
+                        <div id="redis_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="key" name="operate" checked
+                                                   onclick="show(this)"> <i> Key操作 </i></label>
+                                    <label> <input type="radio" value="string" name="operate"
+                                                   onclick="show(this)"> <i> String </i></label>
+                                    <label> <input type="radio" value="hash" name="operate"
+                                                   onclick="show(this)"> <i> Hash </i></label>
+                                    <label> <input type="radio" value="set" name="operate"
+                                                   onclick="show(this)"> <i> Set </i></label>
+                                </div>
+
+                                <div id="keyHelp" class="alert alert-info" style="display: block">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、exists key　检查key是否存在，若key存在返回1，否则返回0</i></br>
+                                    <i> 2、keys pattern 查找所有符合给定模式的key，通常用于查找key</i></br>
+                                    <i> 3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除</i></br>
+                                    <i> 4、ttl key 以秒为单位返回key的剩余生存时间（time to
+                                        live），当key不存在时返回-2，当key存在未设置生存时间时返回-1</i></br>
+                                    <i> 5、pttl key 这个命令和ttl类似，它以毫秒为单位返回key的剩余生存时间</i></br>
+                                    <i> 6、move key db 将key移动到指定数据库中</i></br>
+                                    <i> 7、type key
+                                        返回key存储的值的类型，返回none（不存在）、string（字符串）、list（列表）、set（集合）、zset（有序集合）、hash（哈希表）</i>
+                                </div>
+
+                                <div id="stringHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误</i></br>
+                                    <i> 2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil</i></br>
+                                    <i> 3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误</i></br>
+                                    <i> 4、append key value 将指定的值追加到key末尾，若key不存在，则创建并赋值，返回追加后的字符串长度</i></br>
+                                    <i> 5、set key value [ex seconds] [px milliseconds] [nx|xx]
+                                        为key设置值,ex和px均为设置过期时间只不过单位不同，nx表示只有key不存在时才进行操作，xx表示只有key存在时才进行操作</i></br>
+                                    <i> 6、setex key seconds value 设置带生存时间的key的值，以秒为单位</i></br>
+                                    <i> 7、setnx key value 为key设置值，若key已存在则不进行任何操作</i></br>
+                                    <i> 8、mset key value [key value...]
+                                        为一组或多组key设置值，该操作为原子操作，要么一组都设置成功，要么一组都设置失败</i></br>
+                                    <i> 9、msetnx key value [key value...] 与mset不同的是msetnx中的key必须是不存在的，若有一个已存在则会整体失败</i>
+                                </div>
+
+                                <div id="hashHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、hgetall key 获取hash表中所有field的值</i></br>
+                                    <i> 2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0</i></br>
+                                    <i> 3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil</i></br>
+                                    <i> 4、hmget key field[field...]
+                                        获取hash表中多个指定field的值，若key不存在返回空，若field不存在返回nil</i></br>
+                                    <i> 5、hkeys key 返回hash表中的所有field，若key不存在返回空</i></br>
+                                    <i> 6、hvals key 返回hash表中的所有val，若key不存在返回空</i></br>
+                                    <i> 7、hdel key field[field...] 删除hash表中指定field，若key或field不存在则会忽略</i></br>
+                                    <i> 8、hset key field value
+                                        将field-value设置到hash表中，若key不存在会新建hash表再赋值，若field已存在则会覆盖现有值</i></br>
+                                    <i> 9、hsetnx key field value 和hset类似，但是hsetnx要求field不存在才能进行此操作，否则会返回0</i>
+                                </div>
+
+                                <div id="setHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                                    <i> 2、scard key 返回集合key中元素的个数</i></br>
+                                    <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
+                                    <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
+                                    <i> 5、spop key 移除并返回集合中的一个随机元素，当key不存在时返回NULL</i></br>
+                                    <i> 6、sismember key member 判断member在key中是否已存在返回0或1</i></br>
+                                    <i> 7、sadd key member[member...] 将一个或多个member元素加入到集合key中，若member已存在那么会忽略此元素</i></br>
+                                    <i> 8、smove source destination member
+                                        将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作</i></br>
+                                    <i> 9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略</i>
+                                </div>
+                            </div>
+                        </div>
                         <div id="sql_log_result" role="tabpanel"
                              class="form-group tab-pane fade in active table-responsive">
                             <table id="sql-log" data-toggle="table" class="form-group table table-condensed"
@@ -200,7 +284,7 @@
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
                             //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
+                            sql = sql.replace(/\s/g, " ");
                             html.push('<span>' + sql + '</span>');
                         }
                     });
@@ -258,6 +342,24 @@
     </script>
     <!-- 执行结果  -->
     <script>
+        // 添加redis帮助页
+        function redis_help_tab_add() {
+
+            //增加执行结果tab页
+            var li = document.createElement("li"); //创建li
+            li.setAttribute("id", "redis_help_tab");
+            li.setAttribute("role", "presentation");
+
+            var href_a = document.createElement("a"); //创建li中的链接a
+            href_a.setAttribute("href", "#redis_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
+            li.appendChild(href_a);//将a添加到li
+            $("#nav-tabs").prepend(li);//li添加到ul
+            $("#nav-tabs a:first").tab('show')
+        }
+
         //添加执行结果页面
         function tab_add(tab_title) {
             var tab_number = sessionStorage.getItem('tab_num');
@@ -438,7 +540,7 @@
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
                                         //替换所有的空格
-                                        sql = sql.replace(/\s/g, "&nbsp;");
+                                        sql = sql.replace(/\s/g, " ");
                                         return sql;
 
                                     }
@@ -550,9 +652,12 @@
             // 仅MySQL支持限制到表级权限
             var optgroup = $('#instance_name :selected').parent().attr('label');
             if (optgroup === "Redis") {
-                $("#div-table_name").hide()
+                $("#div-table_name").hide();
+                redis_help_tab_add();
             } else {
-                $("#div-table_name").show()
+                $("#div-table_name").show();
+                $("#redis_help_tab").remove();
+                $("#nav-tabs a:last").tab('show');
             }
             // PgSQL需要选择模式再获取表
             if (optgroup === "PgSQL") {
@@ -755,5 +860,29 @@
                 $("#instance_name").selectpicker('val', myObject.sql_query_instance_name).trigger("change");
             }
         });
+
+        function show(o) {
+            if (o.value == "key") {
+                document.getElementById("keyHelp").style.display = "block";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "string") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "block";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "hash") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "block";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "set") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "block";
+            }
+        }
     </script>
 {% endblock %}
