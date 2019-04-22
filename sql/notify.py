@@ -182,7 +182,7 @@ def notify_for_execute(workflow):
         MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
     # DDL通知
-    if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
+    if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == '工单已正常结束':
         # 判断上线语句是否存在DDL，存在则通知相关人员
         if workflow.syntax_type == 1:
             # 消息内容通知
