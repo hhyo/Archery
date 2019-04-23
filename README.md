@@ -34,8 +34,8 @@ https://github.com/hhyo/archery/projects
 | archer | archer |
 
 ### Docker
-Archery镜像：https://hub.docker.com/r/hhyo/archery
-goInception镜像：https://hub.docker.com/r/hanchuanchuan/goinception
+Archery镜像：https://hub.docker.com/r/hhyo/archery    
+goInception镜像：https://hub.docker.com/r/hanchuanchuan/goinception    
 Inception镜像: https://hub.docker.com/r/hhyo/inception
 #### 准备运行配置
 具体可参考：https://github.com/hhyo/Archery/tree/master/src/docker-compose
@@ -108,7 +108,6 @@ python manage.py test -v 3
 - LDAP [django-auth-ldap](https://github.com/django-auth-ldap/django-auth-ldap)
 - 序列化 [simplejson](https://github.com/simplejson/simplejson)
 - 时间处理 [python-dateutil](https://github.com/paxan/python-dateutil)
-- 启动管理 [gunicorn](https://github.com/benoitc/gunicorn)
 ### 功能依赖
 - 可视化 [pyecharts](https://github.com/pyecharts/pyecharts)
 - MySQL审核/执行 [goInception](https://github.com/hanchuanchuan/goInception)|[inception](https://github.com/hhyo/inception)
@@ -128,7 +127,13 @@ python manage.py test -v 3
 
 贡献代码
 ===============
-可查阅主页的开发计划以及依赖清单，在对应issues中回复，或者直接提交PR
+可查阅主页的开发计划以及依赖清单，在对应issues中回复，或者直接提交PR  
+贡献包括但不限于以下方式：
+- Wiki文档（开放编辑）
+- Bug修复
+- 新功能提交
+- 代码优化
+- 测试用例完善
 
 问题反馈
 ===============
