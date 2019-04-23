@@ -1,0 +1,96 @@
+# TiDB Configuration.
+
+# TiDB server host.
+host = "0.0.0.0"
+
+# tidb server advertise IP.
+advertise_address = ""
+
+# TiDB server port.
+port = 4000
+
+# path = ""
+
+[inc]
+check_autoincrement_datatype            =true                                     
+check_autoincrement_init_value          =true                                     
+check_autoincrement_name                =true                                     
+check_column_comment                    =true                                      
+check_column_default_value              =true                                     
+check_dml_limit                         =true                                     
+check_dml_orderby                       =true                                     
+check_dml_where                         =true                                     
+check_identifier                        =true                                     
+check_index_prefix                      =true                                      
+check_insert_field                      =true                                     
+check_primary_key                       =true                                     
+check_table_comment                     =true                                      
+check_timestamp_default                 =true                                     
+check_timestamp_count                   =true                                      
+enable_autoincrement_unsigned           =true                                     
+enable_blob_type                        =true                                     
+enable_column_charset                   =true                                     
+enable_drop_database                    =true                                     
+enable_drop_table                       =true                                      
+enable_enum_set_bit                     =true                                     
+enable_fingerprint                      =true                                      
+enable_foreign_key                      =true                                     
+enable_identifer_keyword                =true                                     
+enable_not_innodb                       =true                                     
+enable_nullable                         =true                                     
+enable_orderby_rand                     =true                                     
+enable_partition_table                  =true                                     
+enable_pk_columns_only_int              =true                                     
+enable_select_star                      =true                                     
+enable_set_charset                      =true                                     
+max_char_length                         =0                                         
+max_keys                                =3                                         
+max_key_parts                           =3                                         
+max_update_rows                         =5000                                      
+max_primary_key_parts                   =3                                         
+merge_alter_table                       =true                                     
+
+
+
+backup_host = "mysql"
+backup_port = 3306
+backup_user = "root"
+backup_password = "123456"
+
+
+# 安全更新是否开启.
+# -1 表示不做操作,基于远端数据库 [默认值]
+# 0  表示关闭安全更新
+# 1  表示开启安全更新
+sql_safe_updates = 0
+
+# lang = "en-US"
+lang = "zh-CN"
+
+[osc]
+osc_on = false
+osc_min_table_size = 16
+osc_print_none = false
+osc_bin_dir = "/usr/local/bin"
+
+[ghost]
+
+ghost_on = false
+ghost_allow_on_master = true
+ghost_assume_rbr = true
+ghost_chunk_size = 1000
+ghost_concurrent_rowcount = true
+ghost_cut_over = "atomic"
+ghost_cut_over_lock_timeout_seconds = 3
+ghost_default_retries = 60
+ghost_heartbeat_interval_millis = 500
+ghost_max_lag_millis = 1500
+ghost_approve_renamed_columns = true
+ghost_exponential_backoff_max_interval = 64
+ghost_dml_batch_size = 10
+
+[log]
+# Log level: debug, info, warn, error, fatal.
+level = "error"
+# Log format, one of json, text, console.
+format = "console"
