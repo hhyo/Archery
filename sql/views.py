@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
+from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
 from sql.engines.models import ReviewResult, ReviewSet
@@ -26,8 +27,13 @@ import logging
 logger = logging.getLogger('default')
 
 
-# 登录页面
+def index(request):
+    index_path_url = SysConfig().get('index_path_url', 'sqlworkflow')
+    return HttpResponseRedirect(f"/{index_path_url.strip('/')}/")
+
+
 def login(request):
+    """登录页面"""
     if request.user and request.user.is_authenticated:
         return HttpResponseRedirect('/')
     return render(request, 'login.html')

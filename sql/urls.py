@@ -10,9 +10,9 @@ from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_d
 from sql.utils import tasks
 
 urlpatterns = [
-    path('', views.sqlworkflow),
+    path('', views.index),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
-    path('index/', views.sqlworkflow),
+    path('index/', views.index),
     path('login/', views.login, name='login'),
     path('logout/', auth.sign_out),
     path('signup/', auth.sign_up),

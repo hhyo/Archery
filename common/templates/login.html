@@ -207,7 +207,7 @@
             },
             success: function (data) {
                 if (data.status == 0) {
-                    $(location).attr('href', '/sqlworkflow/');
+                    $(location).attr('href', '/index/');
                 } else {
                     $('#wrongpwd-modal-body').html(data.msg);
                     $('#wrongpwd-modal').modal({

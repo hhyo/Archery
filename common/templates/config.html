@@ -352,7 +352,7 @@
                                            id="archery_base_url"
                                            key="archery_base_url"
                                            value="{{ config.archery_base_url }}"
-                                           placeholder="系统首页地址, 用于钉钉和邮件发送链接使用，http://archery.com">
+                                           placeholder="系统HOST地址, 用于通知链接，如https://archery.com">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -454,6 +454,17 @@
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>
                         <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="index_path_url"
+                                       class="col-sm-4 control-label">INDEX_PATH_URL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="index_path_url"
+                                           key="index_path_url"
+                                           value="{{ config.index_path_url }}"
+                                           placeholder="系统首页路径，默认SQL工单页面：sqlworkflow">
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="lock_time_threshold"
                                        class="col-sm-4 control-label">SCHEMASYNC</label>
