@@ -43,7 +43,7 @@ def query(request):
         return result
 
     # 服务器端参数验证
-    if not (sql_content and db_name and instance_name and limit_num):
+    if None in [sql_content, db_name, instance_name, limit_num]:
         result['status'] = 1
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')

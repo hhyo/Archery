@@ -46,7 +46,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     # 管理员不做权限校验，仅获取limit值信息
     if user.is_superuser:
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
-        result['data']['limit_num'] = min(priv_limit, limit_num)
+        result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
 
     # mysql可以校验到表级权限
@@ -76,7 +76,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             else:
                 # 获取查询库的最小limit限制，和前端传参作对比，取最小值
                 priv_limit = _priv_limit(user, instance, db_name=db_name)
-                result['data']['limit_num'] = min(priv_limit, limit_num)
+                result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
                 result['data']['priv_check'] = False
                 return result
         else:
@@ -84,7 +84,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             # 循环获取，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
             for table in table_ref:
                 priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
-                limit_num = min(priv_limit, limit_num)
+                limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
             result['data']['limit_num'] = limit_num
             return result
     # 其他数据库仅校验到库权限
@@ -97,7 +97,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         # 有库权限则获取对应limit值
         else:
             priv_limit = _priv_limit(user, instance, db_name=db_name)
-            result['data']['limit_num'] = min(priv_limit, limit_num)
+            result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
             return result
 
 
