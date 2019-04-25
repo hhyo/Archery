@@ -100,8 +100,8 @@ class TestUser(TestCase):
         self.assertTemplateUsed(r, 'login.html')
         c.force_login(self.u1)
         # 登录后直接跳首页
-        r = c.get('/login/', follow=False)
-        self.assertRedirects(r, '/')
+        r = c.get('/login/', follow=True)
+        self.assertRedirects(r, '/sqlworkflow/')
 
 
 class TestQueryPrivilegesCheck(TestCase):
