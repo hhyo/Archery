@@ -5,7 +5,7 @@ RUN cd /opt \
     && git clone https://github.com/GiftLee/Archery.git && cd Archery  \
     && source /opt/venv4archery/bin/activate \
     && pip3 install pytest-runner \
-    && pip3 install -r /opt/Archery/requirements.txt  -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com \
+    && pip3 install -r /opt/Archery/re.txt  -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com \
     && cp /opt/Archery/src/docker/nginx.conf /etc/nginx/ \
     && mv /opt/sqladvisor /opt/Archery/src/plugins/ \
     && mv /opt/soar /opt/Archery/src/plugins/ \
