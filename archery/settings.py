@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     'sql',
     'themis',
     'common',
+    'inspur',
 )
 
 MIDDLEWARE = (
@@ -121,7 +122,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'archery',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'inspur',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {

@@ -1,0 +1,591 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+.row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    flex-wrap: wrap;
+}
+.row > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+}
+</style>
+    <br class="row clearfix">
+        <form id="form-sqlquery" action="" method="post" class="form-horizontal" role="form">
+            {% csrf_token %}
+            <div class="col-md-12 column">
+                <pre id="sql_content_editor" class="ace_editor " style="min-height:150px"></pre>
+                <div class="text-info">
+                <li>目前仅支持delete、alter等操作，多个sql之间要用分号;隔开。</li>
+                <li><FONT COLOR=FF0000 size="5">delete、alter更新操作已设置set sql_log_bin = 0;默认不会主从同步。</FONT></li>
+                </div>
+            </div>
+        <hr  width="100%" style="margin-top:-5px;border:1px solid black;" />
+        <div class="row">
+            <div class="col-md-offset-5">
+                   <div class="form-group">
+                    <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL更新"  />
+            
+                   </div>
+             </div>
+        </div>
+        <hr  width="100%" style="margin-top:-5px;border:1px solid black;" />
+            <!--placeholder="请输入"-->
+            <form action="/sqlupdate1/">
+                <input  type="text" name="fiter"  value="请输入数据库名称！"  id="key" />
+                <input type="submit"  id='fiter' value="筛选"  />
+            </form>
+        </br>
+            <div class="container-fluid">
+
+                <div class="row">
+
+                  {% for instance in database_list %}
+
+                      <div class="col-xs-6 col-md-4"  style="background-color: #FEFDE1;box-shadow:  inset 1px -1px 1px #419641, inset -1px 1px 1px #419641;">
+
+                          <label for="{{ instance }}" class="-bold"  style="color: #b92c28 " >实例名：{{ instance.instance }}</label><br />
+                  {% for db in instance.database %}
+                           <div class="p-2 flex-fill">
+
+                                    <input value="{{ db }}" instance="{{ instance.instance }}" type="checkbox" id="{{ instance }}.{{ db }}" name="db_name"   class="styled"/>
+                                    <label for="{{ instance }}.{{ db }}" class="fa fa-database colorpicker">数据库名：{{ db }}</label><br />
+                           </div>
+
+
+
+                  {% endfor %}
+
+                                </div>
+                  {% endfor %}
+
+                                </div>
+
+                </div>
+
+                <div>
+                </div>
+        </form></br>
+<!--        <div class="row">
+                <div class="form-group">
+                    <center><input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL更新" /></center>
+                </div>
+        </div>
+
+
+        </form>
+-->
+    </div>
+    <br>
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li class="active" id="sqllog_tab">
+            <a href="#sql_log_result" role="tab" data-toggle="tab">更新历史</a>
+        </li>
+        <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
+            <span class="glyphicon glyphicon-minus"></span>
+        </button>
+        <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
+            <span class="glyphicon glyphicon-plus"></span>
+        </button>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <div id="sql_log_result" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="sql-log" data-toggle="table" class="table table-condensed"></table>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'ace/ace.js' %}"></script>
+    <script src="{% static 'ace/ext-language_tools.js' %}"></script>
+    <script src="{% static 'ace/mode-sql.js' %}"></script>
+    <script src="{% static 'ace/theme-github.js' %}"></script>
+    <script src="{% static 'ace/snippets/sql.js' %}"></script>
+    <script src="{% static 'ace/ace-init.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
+    <!-- 查询历史  -->
+    <script>
+
+
+            $(document).ready(function() {
+
+                //alert(storage.retrieve("fiter"))
+                $("#btn-sqlquery").click(function () {
+                        if (sqlquery_validate()) {
+                            $('input[type=button]').addClass('disabled');
+                            $('input[type=button]').prop('disabled', true);
+                            sqlquery();
+                        }
+                    }
+                );
+
+
+                // $(document).ready(function(){
+                $("#fiter").click(function () {
+                    return
+                    //if (sqlquery_validate()) {
+                    //    $('input[type=button]').addClass('disabled');
+                    //   $('input[type=button]').prop('disabled', true);
+                    //   sqlquery();
+
+
+                    fiter = $("#key").val();
+                    storage.save(fiter, fiter);
+                    //alert(storage.retrieve("fiter"))
+                    //window.location.reload()
+                    //alert(fiter)
+                    //提交请求
+                    $.ajax({
+                            type: "post",
+                            url: "/sqlupdate1/",
+                            dataType: "json",
+                            async:false,
+                            data: {
+                                fiter: JSON.stringify(fiter)
+
+                            },
+                            success:  function () {
+                              window.location.reload()
+                            },
+                            complete: function () {
+
+                                $('input[type=button]').removeClass('disabled');
+                                $('input[type=button]').prop('disabled', false);
+
+                            }
+
+                        }
+                    );
+                })
+                    function sqlquery_validate() {
+                        var result = true;
+                        var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                        if (select_sqlContent) {
+                            var sqlContent = select_sqlContent
+                        }
+                        else {
+                            var sqlContent = editor.getValue();
+
+                        }
+                        // var instance_name = $("#instance_name").val();
+                        // var db_name = $("#db_name").val();
+
+
+                        if (sqlContent === null || sqlContent.trim() === "") {
+                            alert("SQL内容不能为空！");
+                            return result = false;
+                        } else if (typeof db_list === 'undefined') {
+                            alert("请选择数据库");
+                            //return result = false;
+                            // } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
+                            //     alert("请选择数据库！");
+                            //     return result = false;
+                        }
+                        return result;
+                    }
+
+                    function sqlquery(sql) {
+                        var columns = [];
+                        var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                        if (select_sqlContent) {
+                            sqlContent = select_sqlContent
+                        }
+                        else {
+                            var sqlContent = editor.getValue();
+
+                        }
+
+
+                        //处理SQL，去除注释、空行等
+                        sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
+                        sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
+                        sqlContent = sqlContent.trim();
+
+
+                        //提交请求
+                        $.ajax({
+                            type: "post",
+                            url: "/update1/",
+                            dataType: "json",
+                            //async:false,
+                            data: {
+                                db_list: JSON.stringify(db_list),
+                                sql_content: sqlContent
+                            },
+                            success: function (data) {
+                                // if($.isEmptyObject(JSON.stringify(data))===false) {
+                                //alert(JSON.stringify(data.msg))
+                                data.msg = data.msg.toString().replace(/[\'\"\\\/\b\f\n\r\t]/g, '');
+                                if (!$.isEmptyObject(data.msg)) {
+                                    // for(msg  in JSON.stringify(data.msg))
+                                    alert(data.msg);
+                                }
+                                if (data.msg=='ok') {
+                                    // for(msg  in JSON.stringify(data.msg))
+                                 alert("SQL执行完毕！");
+                                }
+
+                            },
+                            complete: function () {
+
+                                $('input[type=button]').removeClass('disabled');
+                                $('input[type=button]').prop('disabled', false);
+
+                            }
+
+                            //alert(sql_result);
+
+
+                            //}
+
+                        })
+                    }
+
+                    function isEmpty(obj) {
+                        if (typeof obj == "undefined" || obj == null || obj == "") {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    //var db_list = new Array();
+                    $(function () {
+                        $("input[name=db_name]").click(function () { //获得所有的name=names的input，并给他们添加click监听事件
+                            //db_list = new Array();
+                            db_list = {};
+                            $("input[name=db_name]:checked").each(function (key, value) {
+                                db_list[key] = {};
+                                db_list[key]['instance'] = $(value).attr("instance");
+                                db_list[key]['db'] = $(value).val();
+
+                                //var db = $(value).val();
+                                //var instance= $(value).attr("instance");
+                                //db_list.push(({
+                                //    "instance":instance,
+                                //   "db": db
+                                //   })
+                                //  )
+                            });
+                            ///db_list=JSON.stringify(db_list);
+
+                            // alert(JSON.stringify(db_list));
+                            //return db_list;
+                            // $("#getnames").text("选中" + arr.length + "项：" + arr.join(","));//更新到p层上
+
+                        });
+                    });
+                })
+
+
+                $(function () {
+
+                    //搜索框
+                    $('#key').focus(function () {
+                        if ($(this).val() == '请输入数据库名称！') {
+                            $(this).val("");
+                        }
+                    });
+                    $('#key').blur(function () {
+                        if ($(this).val() == "") {
+                            $(this).val('请输入数据库名称！');
+                        }
+                    });
+                });
+
+
+
+    </script>
+    <script>
+
+
+
+
+
+//获取查询列表
+        function get_querylog() {
+            //采取异步请求
+            //初始化table
+            $('#sql-log').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/update/updatelog/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                       //每页的记录行数（*）
+                pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    ignoreColumn: [0],  //忽略某些列的索引数组
+                    fileName: 'sqllog'  //文件名称设置
+                },
+                search: true,                       //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                   //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",                //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //获取查询列表请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search
+                        }
+                    },
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'sqllog') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                columns: [{
+                    title: '用户',
+                    field: 'username'
+                }, {
+                    title: '实例',
+                    field: 'instance_name'
+                }, {
+                    title: '数据库',
+                    field: 'db_name'
+                }, {
+                    title: '更新时间',
+                    field: 'create_time'
+                }, {
+                    title: 'sql语句',
+                    field: 'sqllog',
+                    formatter: function (value, row, index) {
+                        if (value.length > 50) {
+                            var sql = value.substr(0, 50) + '...';
+                            return sql;
+                        }
+                        else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '执行结果',
+                    field: 'effect_row'
+                }, {
+                    title: '耗时(秒)',
+                    field: 'cost_time'
+                }],
+                onLoadSuccess: function () {
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                },
+                responseHandler: function (res) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return res;
+                }
+            });
+        }
+    </script>
+    <!-- 执行结果  -->
+    <script>
+        //添加执行结果页面
+        function tab_add() {
+            var tab_number = sessionStorage.getItem('tab_num');
+
+            //增加执行结果tab页
+            var li = document.createElement("li"); //创建li
+            li.setAttribute("id", "execute_result_tab" + (Number(tab_number) + 1));
+            li.setAttribute("role", "presentation");
+
+            var href_a = document.createElement("a"); //创建li中的链接a
+            href_a.setAttribute("href", "#sqlquery_result" + (Number(tab_number) + 1));
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+            li.appendChild(href_a);//将a添加到li
+            $("#nav-tabs").append(li);//li添加到ul
+
+            //执行结果tab数量加1
+            sessionStorage.setItem('tab_num', Number(tab_number) + 1);
+            //重新获取tab数
+            tab_number = sessionStorage.getItem('tab_num');
+
+            //增加查询结果显示div
+            var div =
+                "<div id=\"sqlquery_result" + tab_number + "\" role=\"tabpanel\" class=\"tab-pane fade table-responsive\">\n" +
+                "    <div id=\"cost_time" + tab_number + "\" class=\"navbar-text\" >\n" +
+                "        <small>查询时间 : <strong id=\"time" + tab_number + "\"> sec </strong></small>\n" +
+                "    </div>\n" +
+                "    <div id=\"masking_cost_time" + tab_number + "\" class=\"navbar-text\" >\n" +
+                "        <small>脱敏时间 : <strong id=\"masking_time" + tab_number + "\"> sec </strong></small>\n" +
+                "    </div>\n" +
+                "    <table id=\"query_result" + tab_number + "\" data-toggle=\"table\" class=\"table table-condensed\"\n" +
+                "           style=\"table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\"></table>\n" +
+                "</div>\t";
+            $("#tab-content").append(div);//div添加到div
+
+            //激活添加的tab
+            $("#nav-tabs a:last").tab('show')
+
+        }
+
+        //删除执行结果页面
+        function tab_remove() {
+            var tab_number = sessionStorage.getItem('tab_num');
+            var active_li_id = sessionStorage.getItem('active_li_id');
+
+            if (active_li_id === 'sqllog_tab') {
+                //alert("查询历史tab不允许删除")
+            }
+            //非查询历史时，删除当前激活的tab
+            else if (active_li_id.match(/^execute_result_tab*/)) {
+                //sqlquery_result的tab数量大于0才执行
+                if (Number(tab_number) > 0) {
+                    var n = active_li_id.split("execute_result_tab")[1];
+                    $("#" + active_li_id).remove();
+                    $("#" + 'sqlquery_result' + n).remove();
+
+                    //激活最后一个tab
+                    $("#nav-tabs a:last").tab('show');
+                    sessionStorage.setItem('tab_num', Number(tab_number) - 1);
+                    //页面只剩下最后一个查询tab，则激活历史查询页
+                }
+            }
+        }
+
+
+
+            //先做表单验证，验证成功再成功提交格式化sql
+            $("#btn-format").click(function () {
+                    var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                    if (select_sqlContent) {
+                        var sqlContent = select_sqlContent
+                    }
+                    else {
+                        var sqlContent = editor.getValue();
+
+                    }
+                    var sqlContent = window.sqlFormatter.format(sqlContent);
+                    editor.setValue(sqlContent);
+                    editor.clearSelection();
+                }
+            )
+
+            //将数据通过ajax提交给后端进行检查
+
+    </script>
+    <!-- common -->
+    <script>
+
+
+
+
+        //激活标签页时保存当前标签页的id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                //当前激活的标签id
+                sessionStorage.setItem('active_li_id', $(e.target).parents().attr('id'));
+                if ($(e.target).parents().attr('id') === 'sqllog_tab') {
+                    get_querylog();
+                }
+            });
+        });
+
+        //初始化
+        $(document).ready(function () {
+            //重置执行结果的tab数量
+            sessionStorage.setItem('tab_num', 0);
+            //设置当前激活的标签id
+            sessionStorage.setItem('active_li_id', 'sqllog_tab');
+            //默认获取查询历史
+            get_querylog();
+
+            //填充实例名
+            $('#instance_name').selectpicker();
+            var myObject = {};
+            myObject.sql_query_instance_name = sessionStorage.getItem('sql_query_instance_name');
+            if (myObject.sql_query_instance_name) {
+                $("#instance_name").selectpicker('val', myObject.sql_query_instance_name).trigger("change");
+            }
+        });
+
+
+
+    </script>
+
+    <script>
+    (function (w) {
+        var isSupportLocalStorage = !!window.localStorage, isSupportBehavior = false;
+        if (!isSupportLocalStorage) {
+            var dataObj = document.createElement('input');
+            dataObj.type = 'hidden';
+            document.body.appendChild(dataObj);
+            isSupportBehavior = !!dataObj.addBehavior;
+            isSupportBehavior && dataObj.addBehavior('#default#userData');
+        }
+        var configs = { storeName: 'editorContent' };
+        w.storage = {
+            retrieve: function (name) {
+                if (!isSupportLocalStorage && isSupportBehavior) {
+                    dataObj.load(configs.storeName);
+                    return dataObj.getAttribute(name);
+                } else {
+                    return w.localStorage.getItem(name);
+                }
+                return null;
+            },
+            save: function (name, value) {
+                if (!isSupportLocalStorage && isSupportBehavior) {
+                    dataObj.setAttribute(name, value);
+                    dataObj.save(configs.storeName);
+                    return true;
+                } else {
+                    w.localStorage.setItem(name, value);
+                    return true;
+                }
+                return false;
+            }
+        };
+    })(window);
+
+               // storage.save("fiter", fiter);
+              // alert(storage.retrieve("fiter"))
+
+
+</script>
+
+
+{% endblock %}
