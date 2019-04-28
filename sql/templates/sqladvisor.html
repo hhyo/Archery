@@ -44,8 +44,8 @@
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true" data-placeholder="请选择优化方式:" required>
                                     <option value="is-empty" disabled="">请选择优化方式:</option>
-                                    <option value="1" selected="selected">SQLAdvisor</option>
-                                    <option value="3">SOAR</option>
+                                    <option value="1" selected="selected">SOAR</option>
+                                    <option value="3">SQLAdvisor</option>
                                     <option value="2">SQLTuning</option>
                                 </select>
                             </div>
@@ -235,7 +235,7 @@
     <script>
         //判断页面显示
         $("#tools").change(function () {
-            //SQLAdvisor
+            //SOAR
             if ($("#tools").val() === '1') {
                 $("#div_tuning").hide();
                 $("#div_verbose").show();
@@ -246,7 +246,7 @@
                 $("#div_tuning").show();
                 $("#div_verbose").hide();
             }
-            //SOAR
+            //SQLAdvisor
             else if ($("#tools").val() === '3') {
                 $("#div_tuning").hide();
                 $("#div_verbose").hide();
@@ -280,11 +280,11 @@
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
                     if ($("#tools").val() === '1') {
-                        sqladvisor();
+                        soar();
                     } else if (($("#tools").val() === '2')) {
                         tunning();
                     } else if (($("#tools").val() === '3')) {
-                        soar();
+                        sqladvisor();
                     }
                 }
             }
@@ -336,7 +336,7 @@
                     //适配从慢查询过来的优化请求
                     var pathname = window.location.pathname;
                     if (pathname === "/slowquery_advisor/") {
-                        sqladvisor();
+                        soar();
                     }
                 },
                 success: function (data) {
