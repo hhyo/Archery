@@ -1,3 +1,4 @@
+-- 此SQL语句仅完善注释信息，不做任何定义变更，请按需使用
 ALTER TABLE
   aliyun_access_key COMMENT '阿里云认证信息',
     MODIFY  `ak` VARCHAR (50) NOT NULL COMMENT 'AccessKey',
