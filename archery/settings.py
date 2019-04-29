@@ -87,7 +87,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
-AUTH_USER_MODEL = "sql.users"
+AUTH_USER_MODEL = "sql.Users"
 
 # 密码校验
 AUTH_PASSWORD_VALIDATORS = [
@@ -108,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# ##############以下部分需要用户根据自己环境自行修改###################
+############### 以下部分需要用户根据自己环境自行修改 ###################
 
 # SESSION 设置
 SESSION_COOKIE_AGE = 60 * 300  # 300分钟
@@ -175,9 +175,6 @@ CACHES = {
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
-    import ldap
-    from django_auth_ldap.config import LDAPSearch
-
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
         'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序

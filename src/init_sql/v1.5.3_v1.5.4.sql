@@ -1,0 +1,1 @@
+ALTER TABLE param_history CHANGE update_time create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '参数修改时间';
