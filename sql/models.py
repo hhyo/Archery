@@ -440,11 +440,11 @@ class ParamHistory(models.Model):
     set_sql = models.CharField('在线变更配置执行的SQL语句', max_length=1024)
     user_name = models.CharField('修改人', max_length=30)
     user_display = models.CharField('修改人中文名', max_length=50)
-    update_time = models.DateTimeField('修改时间', auto_now_add=True)
+    create_time = models.DateTimeField('参数被修改时间点', auto_now_add=True)
 
     class Meta:
         managed = True
-        ordering = ['-update_time']
+        ordering = ['-create_time']
         db_table = 'param_history'
         verbose_name = u'实例参数修改历史'
         verbose_name_plural = u'实例参数修改历史'

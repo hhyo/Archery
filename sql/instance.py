@@ -132,7 +132,7 @@ def param_history(request):
         phs = ParamHistory.objects.filter(variable_name__contains=search)
     count = phs.count()
     phs = phs[offset:limit].values("instance__instance_name", "variable_name", "old_var", "new_var",
-                                   "user_display", "update_time")
+                                   "user_display", "create_time")
     # QuerySet 序列化
     rows = [row for row in phs]
 
