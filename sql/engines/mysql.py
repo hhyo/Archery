@@ -21,7 +21,7 @@ class MysqlEngine(EngineBase):
         if self.conn:
             return self.conn
         self.conn = MySQLdb.connect(host=self.host,
-                                    port=self.port, user=self.user, passwd=self.password, charset='utf8')
+                                    port=self.port, user=self.user, passwd=self.password, charset='utf8mb4')
         return self.conn
 
     @property
