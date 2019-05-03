@@ -22,7 +22,7 @@ class InceptionEngine(EngineBase):
         archer_config = SysConfig()
         inception_host = archer_config.get('inception_host')
         inception_port = int(archer_config.get('inception_port', 6669))
-        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8')
+        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4')
         return self.conn
 
     @staticmethod
@@ -36,7 +36,7 @@ class InceptionEngine(EngineBase):
                                port=backup_port,
                                user=backup_user,
                                passwd=backup_password,
-                               charset='utf8')
+                               charset='utf8mb4')
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
