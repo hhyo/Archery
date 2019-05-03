@@ -2,21 +2,29 @@
 
 {% block content %}
     <!-- 自定义操作按钮-->
-    <div id="toolbar" class="form-inline">
-        <div class="form-group bootstrap-select ">
-            <select id="type" class="dropdown-menu-right selectpicker ">
-                <option value="" selected="selected">全部实例类型</option>
+    <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group">
+            <select id="type" class="form-control selectpicker">
+                <option value="" selected="selected">实例类型</option>
                 <option value="master">MASTER</option>
                 <option value="slave">SLAVE</option>
             </select>
         </div>
-        <div class="form-group bootstrap-select ">
-            <select id="db_type" class="dropdown-menu-right selectpicker ">
-                <option value="" selected="selected">全部数据库类型</option>
+        <div class="form-group">
+            <select id="db_type" class="form-control selectpicker">
+                <option value="" selected="selected">数据库类型</option>
                 <option value="mysql">MySQL</option>
                 <option value="mssql">MsSQL</option>
                 <option value="redis">Redis</option>
                 <option value="pgsql">PgSQL</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <select id="tags" class="form-control selectpicker" data-live-search="true"
+                    multiple data-selected-text-format="count > 2" data-none-selected-text="标签筛选">
+                {% for tag in tags %}
+                    <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="form-group ">
@@ -66,6 +74,12 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        //选择控件初始化
+        $("#tag").selectpicker({
+            countSelectedText: "已选中{0}项",
+            selectedTextFormat: "count > 2"
+        });
+
         //获取列表
         function instancelist() {
             //采取异步请求
@@ -109,7 +123,8 @@
                             offset: params.offset,
                             search: params.search,
                             type: $("#type").val(),
-                            db_type: $("#db_type").val()
+                            db_type: $("#db_type").val(),
+                            tags: $("#tags").val(),
                         }
                     },
                 columns: [
@@ -246,6 +261,10 @@
         });
 
         $("#db_type").change(function () {
+            instancelist();
+        });
+
+         $("#tags").change(function () {
             instancelist();
         });
 

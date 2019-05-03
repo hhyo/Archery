@@ -117,6 +117,37 @@ class Instance(models.Model):
         super(Instance, self).save(*args, **kwargs)
 
 
+class InstanceTag(models.Model):
+    """实例标签配置"""
+    tag_code = models.CharField('标签代码', max_length=20, unique=True)
+    tag_name = models.CharField('标签名称', max_length=20, unique=True)
+    active = models.BooleanField('激活状态', default=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+
+    def __str__(self):
+        return self.tag_name
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance_tag'
+        verbose_name = u'实例标签'
+        verbose_name_plural = u'实例标签'
+
+
+class InstanceTagRelations(models.Model):
+    """实例标签关系"""
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    instance_tag = models.ForeignKey(InstanceTag, on_delete=models.CASCADE)
+    active = models.BooleanField('激活状态', default=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance_tag_relations'
+        verbose_name = u'实例标签关系'
+        verbose_name_plural = u'实例标签关系'
+
+
 SQL_WORKFLOW_CHOICES = (
     ('workflow_finish', _('workflow_finish')),
     ('workflow_abort', _('workflow_abort')),

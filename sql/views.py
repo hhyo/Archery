@@ -16,7 +16,7 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -304,7 +304,9 @@ def groupmgmt(request, group_id):
 # 实例管理页面
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
-    return render(request, 'instance.html')
+    # 获取实例标签
+    tags = InstanceTag.objects.filter(active=True)
+    return render(request, 'instance.html', {'tags': tags})
 
 
 # 实例用户管理页面

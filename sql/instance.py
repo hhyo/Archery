@@ -14,13 +14,14 @@ from sql.plugins.schemasync import SchemaSync
 from .models import Instance, ParamTemplate, ParamHistory
 
 
-# 获取实例列表
 @permission_required('sql.menu_instance', raise_exception=True)
 def lists(request):
+    """获取实例列表"""
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     type = request.POST.get('type')
     db_type = request.POST.get('db_type')
+    tags = request.POST.getlist('tags[]')
     limit = offset + limit
     search = request.POST.get('search', '')
 
@@ -34,6 +35,10 @@ def lists(request):
     # 过滤数据库类型
     if db_type:
         instances = instances.filter(db_type=db_type)
+    # 过滤标签，返回同时包含全部标签的实例，循环会生成多表JOIN，如果数据量大会存在效率问题
+    if tags:
+        for tag in tags:
+            instances = instances.filter(instancetagrelations__instance_tag=tag)
 
     count = instances.count()
     instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
@@ -45,9 +50,9 @@ def lists(request):
                         content_type='application/json')
 
 
-# 获取实例用户列表
 @permission_required('sql.menu_instance', raise_exception=True)
 def users(request):
+    """获取实例用户列表"""
     instance_id = request.POST.get('instance_id')
     try:
         instance = Instance.objects.get(id=instance_id)
@@ -184,9 +189,9 @@ def param_edit(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 对比实例schema信息
 @permission_required('sql.menu_schemasync', raise_exception=True)
 def schemasync(request):
+    """对比实例schema信息"""
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     target_instance_name = request.POST.get('target_instance_name')
@@ -317,6 +322,7 @@ def instance_resource(request):
 
 
 def describe(request):
+    """获取表结构"""
     instance_name = request.POST.get('instance_name')
     try:
         instance = Instance.objects.get(instance_name=instance_name)

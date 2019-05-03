@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
-    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory
+    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
 # 用户管理
@@ -39,9 +39,18 @@ class ResourceGroupRelationsAdmin(admin.ModelAdmin):
     list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
-# 阿里云实例配置
-class AliRdsConfigInline(admin.TabularInline):
-    model = AliyunRdsConfig
+# 实例标签配置
+@admin.register(InstanceTag)
+class InstanceTagAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tag_code', 'tag_name', 'active', 'create_time')
+    list_display_links = ('id', 'tag_code',)
+
+
+# 实例标签关系配置
+@admin.register(InstanceTagRelations)
+class InstanceTagRelationsAdmin(admin.ModelAdmin):
+    list_display = ('instance', 'instance_tag', 'active', 'create_time')
+    list_filter = ('instance', 'instance_tag', 'active')
 
 
 # 实例管理
@@ -49,8 +58,17 @@ class AliRdsConfigInline(admin.TabularInline):
 class InstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
-    list_filter = ('db_type', 'type',)
-    inlines = [AliRdsConfigInline]
+    list_filter = ('db_type', 'type')
+
+    # 阿里云实例关系配置
+    class AliRdsConfigInline(admin.TabularInline):
+        model = AliyunRdsConfig
+
+    # 实例标签关系配置
+    class InstanceTagRelationsInline(admin.TabularInline):
+        model = InstanceTagRelations
+
+    inlines = [InstanceTagRelationsInline, AliRdsConfigInline]
 
 
 # SQL工单内容
