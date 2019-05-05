@@ -87,7 +87,7 @@ class MysqlEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute('use {}'.format(db_name))
+                cursor.execute('use `{}`'.format(db_name))
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
