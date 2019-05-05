@@ -38,7 +38,7 @@ def lists(request):
     # 过滤标签，返回同时包含全部标签的实例，循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
-            instances = instances.filter(instancetagrelations__instance_tag=tag)
+            instances = instances.filter(instancetagrelations__instance_tag=tag, instancetagrelations__active=True)
 
     count = instances.count()
     instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")

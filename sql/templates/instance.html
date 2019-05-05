@@ -74,12 +74,6 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
-        //选择控件初始化
-        $("#tag").selectpicker({
-            countSelectedText: "已选中{0}项",
-            selectedTextFormat: "count > 2"
-        });
-
         //获取列表
         function instancelist() {
             //采取异步请求
@@ -264,7 +258,7 @@
             instancelist();
         });
 
-         $("#tags").change(function () {
+        $("#tags").change(function () {
             instancelist();
         });
 

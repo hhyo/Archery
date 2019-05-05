@@ -173,8 +173,10 @@ def dashboard(request):
 # SQL在线查询页面
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
+    # 获取实例支持查询的标签id
+    tag_id = InstanceTag.objects.get(tag_code='can_read').id
     # 获取用户关联实例列表
-    instances = [slave for slave in user_instances(request.user, type='slave', db_type='all')]
+    instances = [slave for slave in user_instances(request.user, type='all', db_type='all', tags=[tag_id])]
 
     context = {'instances': instances}
     return render(request, 'sqlquery.html', context)
