@@ -44,6 +44,8 @@ class ResourceGroupRelationsAdmin(admin.ModelAdmin):
 class InstanceTagAdmin(admin.ModelAdmin):
     list_display = ('id', 'tag_code', 'tag_name', 'active', 'create_time')
     list_display_links = ('id', 'tag_code',)
+    fieldsets = ('不支持修改标签代码', {'fields': ('tag_name', 'active'), }),
+    add_fieldsets = (None, {'fields': ('tag_code', 'tag_name', 'active'), }),
 
 
 # 实例标签关系配置

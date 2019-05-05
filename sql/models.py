@@ -144,6 +144,7 @@ class InstanceTagRelations(models.Model):
     class Meta:
         managed = True
         db_table = 'sql_instance_tag_relations'
+        unique_together = ('instance', 'instance_tag')
         verbose_name = u'实例标签关系'
         verbose_name_plural = u'实例标签关系'
 
