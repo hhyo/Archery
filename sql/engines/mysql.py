@@ -20,8 +20,12 @@ class MysqlEngine(EngineBase):
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
-        self.conn = MySQLdb.connect(host=self.host,
-                                    port=self.port, user=self.user, passwd=self.password, charset='utf8mb4')
+        if db_name:
+            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
+                                        db=db_name, charset='utf8mb4')
+        else:
+            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
+                                        charset='utf8mb4')
         return self.conn
 
     @property
@@ -84,10 +88,8 @@ class MysqlEngine(EngineBase):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.get_connection()
+            conn = self.get_connection(db_name=db_name)
             cursor = conn.cursor()
-            if db_name:
-                cursor.execute('use `{}`'.format(db_name))
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
@@ -217,7 +219,7 @@ class MysqlEngine(EngineBase):
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
-        conn = self.get_connection()
+        conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):

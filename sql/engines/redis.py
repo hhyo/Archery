@@ -20,7 +20,8 @@ logger = logging.getLogger('default')
 
 class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
-        return redis.Redis(host=self.host, port=self.port, db=0, password=self.password,
+        db_name = db_name or 0
+        return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
                                 encoding_errors='ignore', decode_responses=True)
 
     @property
@@ -62,9 +63,7 @@ class RedisEngine(EngineBase):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.get_connection()
-            if db_name:
-                conn.execute_command(f"select {db_name}")
+            conn = self.get_connection(db_name=db_name)
             rows = conn.execute_command(sql)
             result_set.column_list = ['Result']
             if isinstance(rows, list):
@@ -105,9 +104,7 @@ class RedisEngine(EngineBase):
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
         try:
-            conn = self.get_connection()
-            if workflow.db_name:
-                conn.execute_command(f"select {workflow.db_name}")
+            conn = self.get_connection(db_name=workflow.db_name)
             conn.execute_command(workflow.sqlworkflowcontent.sql_content)
         except Exception as e:
             logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
