@@ -67,7 +67,7 @@ class InceptionEngine(EngineBase):
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
                             --port={instance.port};--enable-check=1;*/
                             inception_magic_start;
-                            use {db_name};
+                            use `{db_name}`;
                             {sql}
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
@@ -96,7 +96,7 @@ class InceptionEngine(EngineBase):
         sql_split = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host}; 
                          --port={instance.port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
-                         use {workflow.db_name};
+                         use `{workflow.db_name}`;
                          {workflow.sqlworkflowcontent.sql_content}
                          inception_magic_commit;"""
         split_result = self.query(sql=sql_split)
@@ -160,7 +160,7 @@ class InceptionEngine(EngineBase):
         sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
                           --port={instance.port};--enable-query-print;*/
                           inception_magic_start;\
-                          use {db_name};
+                          use `{db_name}`;
                           {sql}
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
