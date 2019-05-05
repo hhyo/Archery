@@ -29,7 +29,7 @@ class GoInceptionEngine(EngineBase):
         check_result.rows = []
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--check=1;*/
                             inception_magic_start;
-                            use {db_name};
+                            use `{db_name}`;
                             {sql}
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
@@ -58,7 +58,7 @@ class GoInceptionEngine(EngineBase):
         # 提交inception执行
         sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
                             inception_magic_start;
-                            use {workflow.db_name};
+                            use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content}
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
