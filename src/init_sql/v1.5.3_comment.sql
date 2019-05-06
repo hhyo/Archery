@@ -236,7 +236,7 @@ ALTER TABLE
 ALTER TABLE
   sql_users COMMENT '用户管理-用户信息',
     MODIFY  `password` VARCHAR (128) NOT NULL COMMENT '密码',
-    MODIFY  `last_login` datetime (6) NOT NULL COMMENT '上次登录',
+    MODIFY  `last_login` datetime (6) DEFAULT NULL COMMENT '上次登录',
     MODIFY  `is_superuser` TINYINT (4) NOT NULL COMMENT '超级用户状态:1是,0否',
     MODIFY  `username` VARCHAR (150) NOT NULL COMMENT '用户名',
     MODIFY  `first_name` VARCHAR (30) NOT NULL COMMENT '名,无值',
