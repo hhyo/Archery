@@ -41,16 +41,23 @@
                                             {% endif %}
                                         {% endfor %}
                                     </optgroup>
-                                    <optgroup id="optgroup-redis" label="PgSQL">
+                                    <optgroup id="optgroup-pgsql" label="PgSQL">
                                         {% for instance in instances %}
                                             {% if instance.db_type == 'pgsql' %}
                                                 <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
                                             {% endif %}
                                         {% endfor %}
                                     </optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle">
+                                        {% for instance in instances %}
+                                            {% if instance.db_type == 'oracle' %}
+                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div id="div-db_name" class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true" data-placeholder="请选择数据库:" required>
@@ -435,8 +442,10 @@
         //表单验证
         function sqlquery_validate() {
             var result = true;
+            var optgroup = $('#instance_name :selected').parent().attr('label');
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
+            var schema_name = $("#schema_name").val();
             var sqlContent = editor.getValue();
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
@@ -445,10 +454,16 @@
             if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
                 alert("请选择实例！");
                 return result = false;
-            } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
+            }
+            if (optgroup !== "Oracle" && (db_name === null || db_name === $("#db_name").attr("data-placeholder"))) {
                 alert("请选择数据库！");
                 return result = false;
-            } else if (sqlContent === null || sqlContent.trim() === "") {
+            }
+            if ((optgroup === "PgSQL" || optgroup === "Oracle") && (schema_name === null || schema_name === $("#db_name").attr("data-placeholder"))) {
+                alert("请选择模式！");
+                return result = false;
+            }
+            if (sqlContent === null || sqlContent.trim() === "") {
                 alert("SQL内容不能为空！");
                 return result = false;
             }
@@ -637,6 +652,7 @@
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
                     $('input[type=button]').prop('disabled', false);
+                    $('#sql-log').bootstrapTable('refresh');
                 },
                 success: function (data) {
                     display_data(data)
@@ -656,36 +672,62 @@
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
 
-            // 仅MySQL支持限制到表级权限
             var optgroup = $('#instance_name :selected').parent().attr('label');
+            // 仅MySQL支持限制到表级权限
+            if (optgroup === "MySQL") {
+                $("#btn-format").attr('disabled',false);
+                $("#btn-explain").attr('disabled',false);
+            }
+            // MsSQL 禁用执行计划
+            if (optgroup === "MsSQL") {
+                $("#btn-format").attr('disabled',false);
+                $("#btn-explain").attr('disabled',true);
+            }
+            // Redis 禁用美化、执行计划
             if (optgroup === "Redis") {
                 $("#div-table_name").hide();
                 $("#btn-format").attr('disabled',true);
                 $("#btn-explain").attr('disabled',true);
-                redis_help_tab_add()
+                redis_help_tab_add();
             } else {
                 $("#div-table_name").show();
                 $("#redis_help_tab").remove();
-                $("#btn-format").attr('disabled',false);
-                $("#btn-explain").attr('disabled',false);
                 $("#nav-tabs a:last").tab('show');
             }
-            // PgSQL需要选择模式再获取表
+
+            // PgSQL 需要选择模式再获取表
             if (optgroup === "PgSQL") {
-                $("#div-schema_name").show()
+                $("#div-schema_name").show();
+                $("#btn-format").attr('disabled',false);
+                $("#btn-explain").attr('disabled',true);
             } else {
-                $("#div-schema_name").hide()
+                $("#div-schema_name").hide();
+            }
+            // Oracle 不需要数据库，只需要模式
+            if (optgroup === "Oracle") {
+                $("#div-db_name").hide();
+                $("#div-schema_name").show();
+                $("#btn-format").attr('disabled',false);
+                $("#btn-explain").attr('disabled',true);
+            } else {
+                $("#div-db_name").show();
+                $("#div-schema_name").hide();
             }
 
+            var resource_type = "database";
+            if (optgroup === "Oracle") {
+                //获取schema
+                resource_type = "schema"
+            }
             sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
-            //将数据通过ajax提交给获取db_name
+            //将数据通过ajax提交给获取db_name或schema
             $.ajax({
                 type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    resource_type: "database"
+                    resource_type: resource_type
                 },
                 complete: function () {
                 },
@@ -693,19 +735,37 @@
                     if (data.status === 0) {
                         var result = data.data;
                         var dbs = [];
-                        for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            $("#db_name").append(name);
-                            dbs.push({
-                                name: result[i],
-                                value: result[i],
-                                caption: result[i],
-                                meta: 'databases',
-                                score: '100'
-                            })
+                        if (resource_type === "database") {
+                            for (var i = 0; i < result.length; i++) {
+                                var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                                $("#db_name").append(name);
+                                dbs.push({
+                                    name: result[i],
+                                    value: result[i],
+                                    caption: result[i],
+                                    meta: 'databases',
+                                    score: '100'
+                                })
+                            }
+                            $('#db_name').selectpicker('render');
+                            $('#db_name').selectpicker('refresh');
+                        } else {
+                            $("#schema_name").empty();
+                            $("#schema_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择模式:</option>");
+                            for (var i = 0; i < result.length; i++) {
+                                var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                                $("#schema_name").append(name);
+                                dbs.push({
+                                    name: result[i],
+                                    value: result[i],
+                                    caption: result[i],
+                                    meta: 'databases',
+                                    score: '100'
+                                })
+                            }
+                            $('#schema_name').selectpicker('render');
+                            $('#schema_name').selectpicker('refresh');
                         }
-                        $('#db_name').selectpicker('render');
-                        $('#db_name').selectpicker('refresh');
                         //自动补全提示
                         setCompleteData(dbs)
                     } else {
@@ -733,7 +793,7 @@
             // PgSQL需要选择模式再获取表
             var optgroup = $('#instance_name :selected').parent().attr('label');
             var resource_type = "table";
-            if (optgroup === "PgSQL") {
+            if (optgroup === "PgSQL" || optgroup === "Oracle") {
                 //获取schema
                 resource_type = "schema"
             }
@@ -752,7 +812,6 @@
                     if (data.status === 0) {
                         var result = data.data;
                         if (resource_type === "table") {
-                            $("#table_name").empty();
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
                                 $("#table_name").append(name);
@@ -763,7 +822,6 @@
                             $("#schema_name").val('');
                             setTablesCompleteData(result)
                         } else {
-                            $("#schema_name").empty();
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
                                 $("#schema_name").append(name);

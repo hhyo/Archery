@@ -47,7 +47,8 @@ class AliRdsConfigInline(admin.TabularInline):
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
+    list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'password', 'service_name',
+                    'sid', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type',)
     inlines = [AliRdsConfigInline]
