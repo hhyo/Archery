@@ -1,89 +1,108 @@
 # -*- coding: UTF-8 -*-
+# https://stackoverflow.com/questions/7942520/relationship-between-catalog-schema-user-and-database-instance
 import logging
 import traceback
 import re
 import sqlparse
 
 from . import EngineBase
-import pyodbc
+import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import brute_mask
 
 logger = logging.getLogger('default')
 
 
-class MssqlEngine(EngineBase):
+class OracleEngine(EngineBase):
     def get_connection(self, db_name=None):
-        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0};PORT={1};UID={2};PWD={3};
-        client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
-                                                                          self.port, self.user, self.password)
         if self.conn:
             return self.conn
-        self.conn = pyodbc.connect(connstr)
+        if self.sid:
+            dsn = cx_Oracle.makedsn(self.host, self.port, self.sid)
+            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn)
+        elif self.service_name:
+            dsn = cx_Oracle.makedsn(self.host, self.port, service_name=self.service_name)
+            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn)
+        else:
+            self.conn = None
         return self.conn
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
-        sql = "SELECT name FROM master.sys.databases"
+        sql = "select name from v$database"
         result = self.query(sql=sql)
-        db_list = [row[0] for row in result.rows
-                   if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+        db_list = [row[0] for row in result.rows]
         result.rows = db_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_instances(self):
+        """获取实例列表, 返回一个ResultSet"""
+        sql = "select instance_name from v$instance"
+        result = self.query(sql=sql)
+        instance_list = [row[0] for row in result.rows]
+        result.rows = instance_list
+        return result
+
+    def get_all_schemas(self):
+        """
+        获取模式列表
+        :return:
+        """
+        result = self.query(sql="select username from sys.dba_users")
+        schema_list = [row[0] for row in result.rows if row[0] not in ['ORACLE_OCM', 'DIP', 'DBSNMP', 'APPQOSSYS',
+                                                                       'MGMT_VIEW', 'SYS', 'SYSTEM', 'OUTLN']]
+        result.rows = schema_list
+        return result
+
+    def get_all_tables(self, schema_name):
         """获取table 列表, 返回一个ResultSet"""
-        sql = """SELECT TABLE_NAME
-        FROM {0}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"""select
+        TABLE_NAME
+        from dba_tab_privs
+        where grantee in ('{schema_name}')
+        union
+        select
+        OBJECT_NAME
+        from dba_objects
+        WHERE OWNER IN ('{schema_name}') and object_type in ('TABLE')
+        """
+        result = self.query(sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, schema_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(db_name, tb_name)
+        result = self.describe_table(schema_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, schema_name, tb_name):
         """return ResultSet"""
-        sql = r"""select
-        c.name ColumnName,
-        t.name ColumnType,
-        c.length  ColumnLength,
-        c.scale   ColumnScale,
-        c.isnullable ColumnNull,
-            case when i.id is not null then 'Y' else 'N' end TablePk
-        from (select name,id,uid from {0}..sysobjects where (xtype='U' or xtype='V') ) o 
-        inner join {0}..syscolumns c on o.id=c.id 
-        inner join {0}..systypes t on c.xtype=t.xusertype 
-        left join {0}..sysusers u on u.uid=o.uid
-        left join (select name,id,uid,parent_obj from {0}..sysobjects where xtype='PK' )  opk on opk.parent_obj=o.id 
-        left join (select id,name,indid from {0}..sysindexes) ie on ie.id=o.id and ie.name=opk.name
-        left join {0}..sysindexkeys i on i.id=o.id and i.colid=c.colid and i.indid=ie.indid
-        WHERE O.name NOT LIKE 'MS%' AND O.name NOT LIKE 'SY%'
-        and O.name='{1}'
-        order by o.name,c.colid""".format(db_name, tb_name)
+        # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
+        sql = f"""SELECT
+        column_name,
+        data_type,
+        data_length,
+        nullable,
+        data_default
+        FROM all_tab_cols
+        WHERE table_name = '{tb_name}'
+        """
         result = self.query(sql=sql)
         return result
 
     def query_check(self, db_name=None, sql=''):
         # 查询语句的检查、注释去除、切分
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format",
-                           "len", "nchar", "patindex", "quotename", "replace", "replicate",
-                           "reverse", "right", "soundex", "space", "str", "string_agg",
-                           "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sql.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
-            result['filtered_sql'] = sql.strip()
+            result['filtered_sql'] = re.sub(r';$', '', sql.strip())
             sql_lower = sql.lower()
         except IndexError:
             result['has_star'] = True
@@ -100,11 +119,6 @@ class MssqlEngine(EngineBase):
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'
             result['bad_query'] = True
-        for keyword in banned_keywords:
-            pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
-            if re.search(pattern, sql_lower) is not None:
-                keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
-                result['bad_query'] = True
         if result.get('bad_query'):
             result['msg'] = keyword_warning
         return result
@@ -113,18 +127,21 @@ class MssqlEngine(EngineBase):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
-            if sql_lower.find(' top ') == -1:
-                return sql_lower.replace('select', 'select top {}'.format(limit_num))
+            if sql_lower.find(' rownum ') == -1:
+                if sql_lower.find(' where ') == -1:
+                    return f"{sql.rstrip(';')} WHERE ROWNUM <= {limit_num}"
+                else:
+                    return f"{sql.rstrip(';')} AND ROWNUM <= {limit_num}"
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, schema_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            if db_name:
-                cursor.execute('use [{}];'.format(db_name))
+            # if schema_name:
+            #     cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {schema_name}")
             cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
@@ -136,14 +153,14 @@ class MssqlEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.error(f"MsSQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.error(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
                 self.close()
         return result_set
 
-    def query_masking(self, db_name=None, sql='', resultset=None):
+    def query_masking(self, schema_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏

@@ -295,16 +295,23 @@ def instance_resource(request):
         query_engine = get_engine(instance=instance)
         if resource_type == 'database':
             resource = query_engine.get_all_databases()
-        elif resource_type == 'schema' and db_name:
-            resource = query_engine.get_all_schemas(db_name=db_name)
-        elif resource_type == 'table' and db_name:
-            if schema_name:
+        elif resource_type == 'schema':
+            if instance.db_type == 'pgsql':
+                resource = query_engine.get_all_schemas(db_name=db_name)
+            elif instance.db_type == 'oracle':
+                resource = query_engine.get_all_schemas()
+        elif resource_type == 'table':
+            if instance.db_type == 'pgsql':
                 resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+            elif instance.db_type == 'oracle':
+                resource = query_engine.get_all_tables(schema_name=schema_name)
             else:
                 resource = query_engine.get_all_tables(db_name=db_name)
-        elif resource_type == 'column' and db_name and tb_name:
-            if schema_name:
+        elif resource_type == 'column':
+            if instance.db_type == 'pgsql':
                 resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+            elif instance.db_type == 'oracle':
+                resource = query_engine.get_all_columns_by_tb(schema_name=schema_name, tb_name=tb_name)
             else:
                 resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
         else:
@@ -336,8 +343,10 @@ def describe(request):
 
     try:
         query_engine = get_engine(instance=instance)
-        if schema_name:
+        if instance.db_type == "pgsql":
             query_result = query_engine.describe_table(db_name, tb_name, schema_name)
+        elif instance.db_type == "oracle":
+            query_result = query_engine.describe_table(schema_name, tb_name)
         else:
             query_result = query_engine.describe_table(db_name, tb_name)
         result['data'] = query_result.__dict__

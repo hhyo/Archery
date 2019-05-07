@@ -14,6 +14,9 @@ class EngineBase:
             self.port = int(instance.port)
             self.user = instance.user
             self.password = instance.raw_password
+        if instance.db_type == "oracle":
+            self.service_name = instance.service_name
+            self.sid = instance.sid
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
