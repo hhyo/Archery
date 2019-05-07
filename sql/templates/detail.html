@@ -83,7 +83,7 @@
                 {% endif %}
             </td>
             <td>
-                {% if workflow_detail.status == "workflow_finish" %}
+                {% if workflow_detail.status == "workflow_finish" or workflow_detail.status == "workflow_finish_manual"%}
                     <font color="green">
                 {% else %}
                     <font color="red">
