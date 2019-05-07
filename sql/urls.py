@@ -24,6 +24,7 @@ urlpatterns = [
     path('autoreview/', sql_workflow.submit),
     path('passed/', sql_workflow.passed),
     path('execute/', sql_workflow.execute),
+    path('execute-manual/', sql_workflow.execute_manual),
     path('timingtask/', sql_workflow.timing_task),
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),

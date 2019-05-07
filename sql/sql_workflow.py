@@ -282,6 +282,39 @@ def execute(request):
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
+def execute_manual(request):
+    """
+    执行SQL
+    :param request:
+    :return:
+    """
+    # 校验多个权限
+    if not (request.user.has_perm('sql.sql_execute') or request.user.has_perm('sql.sql_execute_for_resource_group')):
+        raise PermissionDenied
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    if workflow_id == 0:
+        context = {'errMsg': 'workflow_id参数为空.'}
+        return render(request, 'error.html', context)
+
+    if can_execute(request.user, workflow_id) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    # 将流程状态修改为执行中
+    SqlWorkflow(id=workflow_id, status='workflow_finish_manual').save(update_fields=['status'])
+
+    # 增加工单日志
+    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    Audit.add_log(audit_id=audit_id,
+                  operation_type=5,
+                  operation_type_desc='执行工单',
+                  operation_info="人工操作执行",
+                  operator=request.user.username,
+                  operator_display=request.user.display
+                  )
+
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 def timing_task(request):
     """
