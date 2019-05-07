@@ -88,3 +88,6 @@ def get_engine(instance=None):
     elif instance.db_type == 'pgsql':
         from .pgsql import PgSQLEngine
         return PgSQLEngine(instance=instance)
+    elif instance.db_type == 'oracle':
+        from .oracle import OracleEngine
+        return OracleEngine(instance=instance)
