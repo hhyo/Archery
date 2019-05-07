@@ -300,16 +300,16 @@ def execute_manual(request):
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
 
-    # 将流程状态修改为执行中
+    # 将流程状态修改为手工执行完成
     SqlWorkflow(id=workflow_id, status='workflow_finish_manual').save(update_fields=['status'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,
-                  operation_type=5,
-                  operation_type_desc='执行工单',
-                  operation_info="人工操作执行",
+                  operation_type=6,
+                  operation_type_desc='手工执行',
+                  operation_info="手工执行sql",
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
