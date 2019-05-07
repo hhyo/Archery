@@ -752,7 +752,6 @@
                     if (data.status === 0) {
                         var result = data.data;
                         if (resource_type === "table") {
-                            $("#table_name").empty();
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
                                 $("#table_name").append(name);
@@ -763,7 +762,6 @@
                             $("#schema_name").val('');
                             setTablesCompleteData(result)
                         } else {
-                            $("#schema_name").empty();
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
                                 $("#schema_name").append(name);

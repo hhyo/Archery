@@ -130,7 +130,7 @@ DATABASES = {
         },
         'TEST': {
             'NAME': 'test_archery',
-            'CHARSET': 'utf8',
+            'CHARSET': 'utf8mb4',
         },
     }
 }
