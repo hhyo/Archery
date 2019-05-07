@@ -16,7 +16,7 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -173,8 +173,10 @@ def dashboard(request):
 # SQL在线查询页面
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
+    # 获取实例支持查询的标签id
+    tag_id = InstanceTag.objects.get(tag_code='can_read').id
     # 获取用户关联实例列表
-    instances = [slave for slave in user_instances(request.user, type='slave', db_type='all')]
+    instances = [slave for slave in user_instances(request.user, type='all', db_type='all', tags=[tag_id])]
 
     context = {'instances': instances}
     return render(request, 'sqlquery.html', context)
@@ -304,7 +306,9 @@ def groupmgmt(request, group_id):
 # 实例管理页面
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
-    return render(request, 'instance.html')
+    # 获取实例标签
+    tags = InstanceTag.objects.filter(active=True)
+    return render(request, 'instance.html', {'tags': tags})
 
 
 # 实例用户管理页面

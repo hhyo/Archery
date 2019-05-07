@@ -2,9 +2,9 @@
 
 {% block content %}
     <!-- 自定义操作按钮-->
-    <div id="toolbar" class="form-inline">
-        <div class="form-group bootstrap-select ">
-            <select id="navStatus" class="dropdown-menu-right selectpicker ">
+    <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group">
+            <select id="navStatus" class="form-control selectpicker">
                 <option value="all" selected="selected">全部工单</option>{% for status, status_display in status_list %}
                 <option value="{{ status }}">{{ status_display }}</option>{% endfor %}
             </select>
