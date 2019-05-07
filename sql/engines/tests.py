@@ -13,6 +13,7 @@ from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
 from sql.engines.redis import RedisEngine
 from sql.engines.pgsql import PgSQLEngine
+from sql.engines.oracle import OracleEngine
 from sql.engines.inception import InceptionEngine, _repair_json_str
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
@@ -850,3 +851,38 @@ class TestGoInception(TestCase):
         new_engine = GoInceptionEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
         self.assertIsInstance(query_result, ResultSet)
+
+
+class TestOracle(TestCase):
+    """Oracle 测试"""
+    def setUp(self):
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='oracle',
+                                           host='some_host', port=3306, user='ins_user', password='some_pass',
+                                           sid='some_id')
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=True,
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
+
+    def tearDown(self):
+        self.ins.delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+
+    @patch('cx_Oracle.makedsn')
+    @patch('cx_Oracle.connect')
+    def test_get_connection(self, _connect, _makedsn):
+        new_engine = OracleEngine(self.ins)
+        new_engine.get_connection()
+        _connect.assert_called_once()
+        _makedsn.assert_called_once()

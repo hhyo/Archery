@@ -14,6 +14,12 @@ logger = logging.getLogger('default')
 
 
 class OracleEngine(EngineBase):
+    
+    def __init__(self, instance=None):
+        super(OracleEngine, self).__init__(instance=instance)
+        self.service_name = instance.service_name
+        self.sid = instance.sid
+    
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
