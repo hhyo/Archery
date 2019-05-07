@@ -236,7 +236,7 @@ ALTER TABLE
 ALTER TABLE
   sql_users COMMENT '用户管理-用户信息',
     MODIFY  `password` VARCHAR (128) NOT NULL COMMENT '密码',
-    MODIFY  `last_login` datetime (6) NOT NULL COMMENT '上次登录',
+    MODIFY  `last_login` datetime (6) DEFAULT NULL COMMENT '上次登录',
     MODIFY  `is_superuser` TINYINT (4) NOT NULL COMMENT '超级用户状态:1是,0否',
     MODIFY  `username` VARCHAR (150) NOT NULL COMMENT '用户名',
     MODIFY  `first_name` VARCHAR (30) NOT NULL COMMENT '名,无值',
@@ -269,11 +269,7 @@ ALTER TABLE
 
 
 ALTER TABLE
-  sql_workflow_content COMMENT 'SQL工单内容-存放各个SQL上线工单的SQL|审核|执行内容,可定期归档或清理历史数据,也可通过 alter table sql_workflow_content row_format=compressed;
-
-
-
- 来进行压缩',
+  sql_workflow_content COMMENT 'SQL工单内容-存放各个SQL上线工单的SQL|审核|执行内容,可定期归档或清理历史数据,也可通过 alter table sql_workflow_content row_format=compressed 来进行压缩',
     MODIFY  `workflow_id` INT (11) NOT NULL COMMENT 'SQL工单ID',
     MODIFY  `sql_content` LONGTEXT NOT NULL COMMENT '提交的SQL文本',
     MODIFY  `review_content` LONGTEXT NOT NULL COMMENT '自动审核内容的JSON格式',

@@ -74,8 +74,9 @@
                                         class="selectpicker show-tick form-control bs-select-hidden "
                                         multiple="multiple"
                                         data-name="通知人"
-                                        data-live-search="true" data-placeholder="可选择通知人(邮件抄送)">
-                                    <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
+                                        data-live-search="true"
+                                        data-selected-text-format="count > 2"
+                                        data-none-selected-text="可选择通知人(邮件抄送)">
                                     {% for user_info in active_user %}
                                         <option value="{{ user_info.username }}">{{ user_info.display }}</option>
                                     {% endfor %}
@@ -148,13 +149,6 @@
 
     <!--upload -->
     <script>
-        //选择控件初始化
-        $("#notify_users").selectpicker({
-            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
-            selectedTextFormat: "count > 3"
-        });
-
         //初始化上传控件
         function init_upload() {
             $("#sql-upload").fileinput({
@@ -548,7 +542,7 @@
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 'master'
+                    tag_code: 'can_write'
                 },
                 complete: function () {
                     var pathname = window.location.pathname;

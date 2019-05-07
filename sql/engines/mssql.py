@@ -124,7 +124,7 @@ class MssqlEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute('use {};'.format(db_name))
+                cursor.execute('use [{}];'.format(db_name))
             cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))

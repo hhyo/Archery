@@ -12,7 +12,7 @@ class DbOperat(object):
     数据库连接模块，支持mysql的连接
     """
 
-    def __init__(self, instance_name, db_name, flag=True, charset="utf8"):
+    def __init__(self, instance_name, db_name, flag=True, charset="utf8mb4"):
         try:
             instance_info = Instance.objects.get(instance_name=instance_name)
         except Exception:
@@ -52,7 +52,7 @@ class DbOperat(object):
         return MySQLdb.escape_string(string)
 
     def new_connect(self, host, port, db, user, passwd):
-        self.conn = MySQLdb.connect(host=host, port=port, user=user, passwd=passwd, db=db, charset="utf8")
+        self.conn = MySQLdb.connect(host=host, port=port, user=user, passwd=passwd, db=db, charset="utf8mb4")
         self.cursor = self.conn.cursor()
 
 
