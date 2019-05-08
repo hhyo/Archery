@@ -144,12 +144,14 @@
     {% if is_can_execute %}
         <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
             {% csrf_token %}
+            <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" id="btnExecuteOnly" class="btn btn-danger"
                    value="立即执行"/>
         </form>
-        <form id="from-execute-manual" action="/execute-manual/" method="post" style="display:inline-block;">
+        <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
             {% csrf_token %}
+            <input type="hidden" name="mode" value="manual">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" id="btnExecuteOnly-manual" class="btn btn-danger"
                    value="手动执行"/>

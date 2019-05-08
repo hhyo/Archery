@@ -262,59 +262,37 @@ def execute(request):
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
-
-    # 将流程状态修改为执行中
-    SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
+    # 查看从那个按钮进来的来卓对应的日志和状态修改
+    mode = request.POST.get('mode')
+    if mode == "auto":
+        status = "workflow_executing"
+        operation_type = 5
+        operation_type_desc = '执行工单'
+        operation_info = "自动操作执行"
+    else:
+        status = "workflow_workflow_finish_manual"
+        operation_type = 6
+        operation_type_desc = '手工工单'
+        operation_info = "手动执行"
+    # 将流程状态修改为对应状态
+    SqlWorkflow(id=workflow_id, status=status).save(update_fields=['status'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,
-                  operation_type=5,
-                  operation_type_desc='执行工单',
-                  operation_info="人工操作执行",
+                  operation_type=operation_type,
+                  operation_type_desc=operation_type_desc,
+                  operation_info=operation_info,
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
+    if mode == "auto":
     # 加入执行队列
-    async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
-               timeout=-1)
+        async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',timeout=-1)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
-def execute_manual(request):
-    """
-    执行SQL
-    :param request:
-    :return:
-    """
-    # 校验多个权限
-    if not (request.user.has_perm('sql.sql_execute') or request.user.has_perm('sql.sql_execute_for_resource_group')):
-        raise PermissionDenied
-    workflow_id = int(request.POST.get('workflow_id', 0))
-    if workflow_id == 0:
-        context = {'errMsg': 'workflow_id参数为空.'}
-        return render(request, 'error.html', context)
-
-    if can_execute(request.user, workflow_id) is False:
-        context = {'errMsg': '你无权操作当前工单！'}
-        return render(request, 'error.html', context)
-
-    # 将流程状态修改为手工执行完成
-    SqlWorkflow(id=workflow_id, status='workflow_finish_manual').save(update_fields=['status'])
-
-    # 增加工单日志
-    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Audit.add_log(audit_id=audit_id,
-                  operation_type=6,
-                  operation_type_desc='手工执行',
-                  operation_info="手工执行sql",
-                  operator=request.user.username,
-                  operator_display=request.user.display
-                  )
-
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 def timing_task(request):
     """

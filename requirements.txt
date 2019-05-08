@@ -22,3 +22,4 @@ pyecharts_snapshot==0.1.7
 aliyun-python-sdk-core==2.3.5
 aliyun-python-sdk-core-v3==2.5.3
 aliyun-python-sdk-rds==2.1.1
+cx-Oracle==7.1.3
