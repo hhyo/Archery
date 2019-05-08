@@ -879,7 +879,7 @@ class TestWorkflowView(TransactionTestCase):
         mock_detail_by_id = 123
         r = c.post('/execute/', data={'workflow_id': self.wf2.id, 'mode': 'manual'})
         self.wf2.refresh_from_db()
-        self.assertEqual('workflow_finish_manual', self.wf2.status)
+        self.assertEqual('workflow_finish', self.wf2.status)
 
     @patch('sql.sql_workflow.Audit.add_log')
     @patch('sql.sql_workflow.Audit.detail_by_workflow_id')

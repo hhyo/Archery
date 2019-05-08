@@ -271,7 +271,7 @@ def execute(request):
         operation_info = "自动操作执行"
         finish_time = None
     else:
-        status = "workflow_finish_manual"
+        status = "workflow_finish"
         operation_type = 6
         operation_type_desc = '手工工单'
         operation_info = "手动执行"

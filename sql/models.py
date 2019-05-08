@@ -157,7 +157,6 @@ SQL_WORKFLOW_CHOICES = (
     ('workflow_timingtask', _('workflow_timingtask')),
     ('workflow_executing', _('workflow_executing')),
     ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
-    ('workflow_finish_manual', _('workflow_finish_manual')),
     ('workflow_exception', _('workflow_exception')))
 
 
