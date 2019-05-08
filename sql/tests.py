@@ -825,13 +825,13 @@ class TestWorkflowView(TransactionTestCase):
         r = c.get('/detail/{}/'.format(self.wf1.id))
         self.assertContains(r, expected_status_display)
         self.assertContains(r, exepcted_status)
-        self.assertContains(r, '执行结果解析失败')
+        self.assertContains(r, 'Json decode failed.')
 
         # 执行详情为空
         self.wfc1.execute_result = ''
         self.wfc1.save()
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        self.assertContains(r, '未收集到执行结果')
+        self.assertContains(r, 'No valid execution result.')
 
     def testWorkflowListView(self):
         c = Client()
