@@ -108,12 +108,25 @@ def detail(request, workflow_id):
     else:
         run_date = ''
 
-    #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-    if isinstance(json.loads(rows)[0], list):
-        review_result = ReviewSet()
-        for r in json.loads(rows):
-            review_result.rows += [ReviewResult(inception_result=r)]
+    review_result = ReviewSet()
+    loaded_data = ''
+    try:
+        loaded_data = json.loads(rows)
+    except json.errors.JSONDecodeError:
+        review_result.rows += [ReviewResult(
+            errormessage="执行结果解析失败, 请联系管理员"
+        )]
         rows = review_result.json()
+    if loaded_data and isinstance(loaded_data, list):
+        #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+        if isinstance(loaded_data[-1], list):
+            for r in json.loads(rows):
+                review_result.rows += [ReviewResult(inception_result=r)]
+            rows = review_result.json()
+    else:
+        review_result.rows += [ReviewResult(
+            errormessage="未收集到执行结果, 可能是手工执行工单"
+        )]
 
     context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
