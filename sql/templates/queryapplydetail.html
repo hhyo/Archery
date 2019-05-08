@@ -32,9 +32,6 @@
                 数据库
             </th>
             <th>
-                模式
-            </th>
-            <th>
                 结果集
             </th>
             <th>
@@ -72,9 +69,6 @@
                 {{ workflow_detail.db_list| slice:"124" }}
             </td>
             <td>
-                {{ workflow_detail.schema_list| slice:"30" }}
-            </td>
-            <td>
                 {{ workflow_detail.limit_num }}
             </td>
             <td>
@@ -105,23 +99,15 @@
         <div class="panel-heading">
             {% if workflow_detail.priv_type == 1 %}
                 数据库清单
-            {% endif %}
-            {% if workflow_detail.priv_type == 2 %}
+            {% elif workflow_detail.priv_type == 2 %}
                 表清单
-            {% endif %}
-            {% if workflow_detail.priv_type == 3 %}
-                模式清单
             {% endif %}
         </div>
         <div class="panel-body">
             {% if workflow_detail.priv_type == 1 %}
                 {% format_str workflow_detail.db_list %}
-            {% endif %}
-            {% if workflow_detail.priv_type == 2 %}
+            {% elif workflow_detail.priv_type == 2 %}
                 {% format_str workflow_detail.table_list %}
-            {% endif %}
-            {% if workflow_detail.priv_type == 3 %}
-                {% format_str workflow_detail.schema_list %}
             {% endif %}
         </div>
     </div>

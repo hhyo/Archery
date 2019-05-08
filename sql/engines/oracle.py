@@ -34,6 +34,10 @@ class OracleEngine(EngineBase):
         return self.conn
 
     def get_all_databases(self):
+        """获取数据库列表， 返回resultSet 供上层调用， 底层实际上是获取oracle的schema列表"""
+        return self._get_all_schemas()
+
+    def _get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
         sql = "select name from v$database"
         result = self.query(sql=sql)
@@ -41,7 +45,7 @@ class OracleEngine(EngineBase):
         result.rows = db_list
         return result
 
-    def get_all_instances(self):
+    def _get_all_instances(self):
         """获取实例列表, 返回一个ResultSet"""
         sql = "select instance_name from v$instance"
         result = self.query(sql=sql)
@@ -49,7 +53,7 @@ class OracleEngine(EngineBase):
         result.rows = instance_list
         return result
 
-    def get_all_schemas(self):
+    def _get_all_schemas(self):
         """
         获取模式列表
         :return:
@@ -140,7 +144,7 @@ class OracleEngine(EngineBase):
                     return f"{sql.rstrip(';')} AND ROWNUM <= {limit_num}"
         return sql.strip()
 
-    def query(self, schema_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:

@@ -44,11 +44,13 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 data-placeholder="请选择实例:" required>
                             <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                            // TODO 使用models中的choices 渲染
                             <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                             <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                             <optgroup id="optgroup-redis" label="Redis"></optgroup>
                             <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                             <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+
                         </select>
                     </div>
                     <div class="form-group">
@@ -69,19 +71,7 @@
                             <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
-                    <div id="schema_name_div" class="form-group" style="display: none">
-                        <select id="schema_name" name="schema_name"
-                                class="form-control selectpicker show-tick bs-select-hidden"
-                                data-live-search="true" data-placeholder="请选择模式:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择模式:</option>
-                        </select>
-                    </div>
-                    <div id="schema_name_multiple_div" class="form-group" style="display: none">
-                        <select id="schema_name_multiple" name="schema_name" data-live-search="true" multiple="multiple"
-                                class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择模式:</option>
-                        </select>
-                    </div>
+
                     <div id="table_div" class="form-group">
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
@@ -275,17 +265,7 @@
                 //格式化详情
                 detailFormatter: function (index, row) {
                     var html = [];
-                    if (row.priv_type === 1) {
-                        $.each(row, function (key, value) {
-                            if (key === 'db_list') {
-                                var sql = '数据库清单：<br>' + value;
-                                //替换间隔符为换行符
-                                sql = sql.replace(/,/g, "<br>");
-                                html.push('<span>' + sql + '</span>');
-                            }
-                        });
-                        return html.join('');
-                    } else if (row.priv_type === 2) {
+                    if (row.priv_type === 2) {
                         $.each(row, function (key, value) {
                             if (key === 'table_list') {
                                 var sql = '表清单：<br>' + value;
@@ -295,10 +275,10 @@
                             }
                         });
                         return html.join('');
-                    } else if (row.priv_type === 3) {
+                    } else {
                         $.each(row, function (key, value) {
-                            if (key === 'schema_list') {
-                                var sql = '模式清单：<br>' + value;
+                            if (key === 'db_list') {
+                                var sql = '数据库清单：<br>' + value;
                                 //替换间隔符为换行符
                                 sql = sql.replace(/,/g, "<br>");
                                 html.push('<span>' + sql + '</span>');
@@ -336,26 +316,13 @@
                         }
                     }
                 }, {
-                    title: '模式',
-                    field: 'schema_list',
-                    formatter: function (value, row, index) {
-                        if (value.length > 30) {
-                            var schema_list = value.substr(0, 30) + '...';
-                            return schema_list;
-                        } else {
-                            return value
-                        }
-                    }
-                }, {
                     title: '权限级别',
                     field: 'priv_type',
                     formatter: function (value, row, index) {
                         if (value === 1) {
                             return 'DATABASE';
-                        } else if (value === 2) {
-                            return 'TABLE';
                         } else {
-                            return 'SCHEMA';
+                            return 'TABLE';
                         }
                     }
                 }, {
@@ -405,29 +372,21 @@
 
         //实例变更获取数据库列表/权限类型
         $("#instance_name").change(function () {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            if ( optgroup === "Oracle" ) {
-                var resource_type = "schema";
-            } else {
-                var resource_type = "database";
-            }
             $.ajax({
                 type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    resource_type: resource_type
+                    resource_type: "database"
                 },
                 complete: function () {
                     // 仅MySQL支持限制到表级权限
+                    var optgroup = $('#instance_name :selected').parent().attr('label');
                     $("#priv_type").empty();
                     if (optgroup === "MySQL") {
                         $('#priv_type').append("<option value=\"1\">DATABASE</option>");
                         $('#priv_type').append("<option value=\"2\" selected=\"selected\">TABLE</option>");
-                    } else if (optgroup === "Oracle") {
-                            $('#priv_type').append("<option value=\"3\" selected=\"selected\">Schema</option>");
-                            $('#priv_type').append("<option value=\"2\" selected=\"selected\">TABLE</option>");
                     } else {
                         $('#priv_type').append("<option value=\"1\" selected=\"selected\">DATABASE</option>");
                     }
@@ -439,34 +398,18 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        if ( optgroup === "Oracle" ) {
-                            $("#schema_name").empty();
-                            $("#schema_name_multiple").empty();
-                            for (var i = 0; i < result.length; i++) {
-                                var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                                $("#schema_name").append(name);
-                                $("#schema_name_multiple").append(name);
-                            }
-                            $('#schema_name').prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择模式:</option>");
-                            $('#schema_name').selectpicker('render');
-                            $('#schema_name').selectpicker('refresh');
-                            $('#schema_name_multiple').prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择模式:</option>");
-                            $('#schema_name_multiple').selectpicker('render');
-                            $('#schema_name_multiple').selectpicker('refresh');
-                        } else {
-                            $("#db_name").empty();
-                            $("#db_name_multiple").empty();
-                            for (var i = 0; i < result.length; i++) {
-                                var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                                $("#db_name").append(name);
-                                $("#db_name_multiple").append(name);
-                            }
-                            $('#db_name').prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
-                            $('#db_name').selectpicker('render');
-                            $('#db_name').selectpicker('refresh');
-                            $('#db_name_multiple').selectpicker('render');
-                            $('#db_name_multiple').selectpicker('refresh');
+                        $("#db_name").empty();
+                        $("#db_name_multiple").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                            $("#db_name_multiple").append(name);
                         }
+                        $('#db_name').prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                        $('#db_name_multiple').selectpicker('render');
+                        $('#db_name_multiple').selectpicker('refresh');
                     } else {
                         alert(data.msg);
                     }
@@ -510,78 +453,19 @@
             });
         });
 
-        //模式变更获取表
-        $("#schema_name").change(function () {
-            $("#table_name").empty();
-            $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看表结构:</option>");
-            $('#table_name').selectpicker('render');
-            $('#table_name').selectpicker('refresh');
-            //获取table
-            $.ajax({
-                type: "post",
-                url: "/instance/instance_resource/",
-                dataType: "json",
-                data: {
-                    instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
-                    schema_name: $("#schema_name").val(),
-                    resource_type: "table"
-                },
-                complete: function () {
-                    $("#schema_name").attr('disabled', false);
-                },
-                success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        for (var i = 0; i < result.length; i++) {
-                            var name = "<option>" + result[i] + "</option>";
-                            $("#table_name").append(name);
-                        }
-                        $('#table_name').selectpicker('render');
-                        $('#table_name').selectpicker('refresh');
-                    } else {
-                        alert(data.msg);
-                    }
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    alert(errorThrown);
-                }
-            });
-        });
-
         //判断页面显示
         $("#priv_type").change(function () {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
             //库权限
             if ($("#priv_type").val() === '1') {
+                $("#table_div").hide();
                 $("#db_name_div").hide();
                 $("#db_name_multiple_div").show();
-                $("#schema_name_div").hide();
-                $("#schema_name_multiple_div").hide();
-                $("#table_div").hide();
             }
             //表权限
             else if ($("#priv_type").val() === '2') {
-                if (optgroup == "Oracle") {
-                    $("#db_name_div").hide();
-                    $("#db_name_multiple_div").hide();
-                    $("#schema_name_div").show();
-                    $("#schema_name_multiple_div").hide();
-                } else {
-                    $("#db_name_div").show();
-                    $("#db_name_multiple_div").hide();
-                    $("#schema_name_div").hide();
-                    $("#schema_name_multiple_div").hide();
-                }
                 $("#table_div").show();
-            }
-            //模式权限
-            else if ($("#priv_type").val() === '3') {
-                $("#table_div").hide();
-                $("#db_name_div").hide();
+                $("#db_name_div").show();
                 $("#db_name_multiple_div").hide();
-                $("#schema_name_div").hide();
-                $("#schema_name_multiple_div").show();
             }
         });
 
@@ -600,8 +484,6 @@
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var db_name_multiple = $("#db_name_multiple").val();
-            var schema_name = $("#schema_name").val();
-            var schema_name_multiple = $("#schema_name_multiple").val();
             var table_name = $("#table_name").val();
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
@@ -619,15 +501,7 @@
                         return false
                     }
                 } else if (priv_type === '2') {
-                    //
-                    if (title && group_name && workflow_auditors && instance_name && (db_name || schema_name) && table_name && valid_date && limit_num) {
-                        return true
-                    } else {
-                        alert("信息填写不完整，或者未配置审批流程");
-                        return false
-                    }
-                } else if (priv_type === '3') {
-                    if (title && group_name && workflow_auditors && instance_name && schema_name_multiple && valid_date && limit_num) {
+                    if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
                     } else {
                         alert("信息填写不完整，或者未配置审批流程");
@@ -647,8 +521,6 @@
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var db_name_multiple = $("#db_name_multiple").val();
-            var schema_name = $("#schema_name").val();
-            var schema_name_multiple = $("#schema_name_multiple").val();
             var table_list = $("#table_name").val();
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
@@ -662,6 +534,7 @@
                 var date = new Date();
                 if (valid_date === 'day') {
                     valid_date = addDate(date, 1);
+
                 } else if (valid_date === 'week') {
                     valid_date = addDate(date, 7);
                 } else if (valid_date === 'month') {
@@ -686,8 +559,6 @@
                         priv_type: priv_type,
                         db_name: db_name,
                         db_list: db_name_multiple,
-                        schema_name: schema_name,
-                        schema_list: schema_name_multiple,
                         table_list: table_list,
                         valid_date: valid_date,
                         limit_num: limit_num,

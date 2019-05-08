@@ -31,7 +31,6 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
-    schema_name = request.POST.get('schema_name')
     limit_num = int(request.POST.get('limit_num', 0))
     user = request.user
 
@@ -44,7 +43,7 @@ def query(request):
         return result
 
     # 服务器端参数验证
-    if None in [sql_content, instance_name, limit_num]:
+    if None in [sql_content, db_name, instance_name, limit_num]:
         result['status'] = 1
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -67,7 +66,7 @@ def query(request):
         sql_content = query_check_info['filtered_sql']
 
         # 查询权限校验，并且获取limit_num
-        priv_check_info = query_priv_check(user, instance, db_name, schema_name, sql_content, limit_num)
+        priv_check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
         if priv_check_info['status'] == 0:
             limit_num = priv_check_info['data']['limit_num']
             priv_check = priv_check_info['data']['priv_check']
@@ -83,12 +82,8 @@ def query(request):
 
         # 执行查询语句，timeout=max_execution_time
         max_execution_time = int(config.get('max_execution_time', 60))
-        if instance.db_type == "oracle":
-            query_task_id = async_task(query_engine.query, schema_name=schema_name, sql=sql_content, limit_num=limit_num,
-                                       timeout=max_execution_time, cached=60)
-        else:
-            query_task_id = async_task(query_engine.query, db_name=str(db_name), sql=sql_content, limit_num=limit_num,
-                                       timeout=max_execution_time, cached=60)
+        query_task_id = async_task(query_engine.query, db_name=str(db_name), sql=sql_content, limit_num=limit_num,
+                                   timeout=max_execution_time, cached=60)
         # 等待执行结果，max_execution_time后还没有返回结果代表将会被终止
         query_task = fetch(query_task_id, wait=max_execution_time * 1000, cached=True)
         # 在max_execution_time内执行结束
@@ -110,12 +105,8 @@ def query(request):
             result['msg'] = query_result.error
         # 数据脱敏，仅对查询无错误的结果集进行脱敏，并且按照query_check配置是否返回
         elif config.get('data_masking'):
-            if instance.db_type == "oracle":
-                query_masking_task_id = async_task(query_engine.query_masking, schema_name=schema_name, sql=sql_content,
-                                                   resultset=query_result, cached=60)
-            else:
-                query_masking_task_id = async_task(query_engine.query_masking, db_name=db_name, sql=sql_content,
-                                                   resultset=query_result, cached=60)
+            query_masking_task_id = async_task(query_engine.query_masking, db_name=db_name, sql=sql_content,
+                                               resultset=query_result, cached=60)
             query_masking_task = fetch(query_masking_task_id, wait=60 * 1000, cached=True)
             if query_masking_task.success:
                 masking_result = query_masking_task.result
