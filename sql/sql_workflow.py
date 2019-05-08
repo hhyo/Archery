@@ -262,7 +262,7 @@ def execute(request):
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
-    # 查看从那个按钮进来的来卓对应的日志和状态修改
+    # 根据执行模式进行对应修改
     mode = request.POST.get('mode')
     if mode == "auto":
         status = "workflow_executing"
@@ -277,7 +277,7 @@ def execute(request):
         operation_info = "手动执行"
         finish_time = datetime.datetime.now()
     # 将流程状态修改为对应状态
-    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status','finish_time'])
+    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
@@ -290,8 +290,9 @@ def execute(request):
                   operator_display=request.user.display
                   )
     if mode == "auto":
-    # 加入执行队列
-        async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',timeout=-1)
+        # 加入执行队列
+        async_task('sql.utils.execute_sql.execute', workflow_id,
+                   hook='sql.utils.execute_sql.execute_callback', timeout=-1)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
