@@ -262,23 +262,37 @@ def execute(request):
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
-
-    # 将流程状态修改为执行中
-    SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
+    # 根据执行模式进行对应修改
+    mode = request.POST.get('mode')
+    if mode == "auto":
+        status = "workflow_executing"
+        operation_type = 5
+        operation_type_desc = '执行工单'
+        operation_info = "自动操作执行"
+        finish_time = None
+    else:
+        status = "workflow_finish_manual"
+        operation_type = 6
+        operation_type_desc = '手工工单'
+        operation_info = "手动执行"
+        finish_time = datetime.datetime.now()
+    # 将流程状态修改为对应状态
+    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,
-                  operation_type=5,
-                  operation_type_desc='执行工单',
-                  operation_info="人工操作执行",
+                  operation_type=operation_type,
+                  operation_type_desc=operation_type_desc,
+                  operation_info=operation_info,
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
-    # 加入执行队列
-    async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
-               timeout=-1)
+    if mode == "auto":
+        # 加入执行队列
+        async_task('sql.utils.execute_sql.execute', workflow_id,
+                   hook='sql.utils.execute_sql.execute_callback', timeout=-1)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 

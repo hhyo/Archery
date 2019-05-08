@@ -83,7 +83,7 @@
                 {% endif %}
             </td>
             <td>
-                {% if workflow_detail.status == "workflow_finish" %}
+                {% if workflow_detail.status == "workflow_finish" or workflow_detail.status == "workflow_finish_manual" %}
                     <font color="green">
                 {% else %}
                     <font color="red">
@@ -144,9 +144,17 @@
     {% if is_can_execute %}
         <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
             {% csrf_token %}
+            <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="button" id="btnExecuteOnly" class="btn btn-danger"
                    value="立即执行"/>
+        </form>
+        <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="mode" value="manual">
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="button" id="btnExecuteOnly-manual" class="btn btn-danger"
+                   value="手动执行"/>
         </form>
     {% endif %}
     <!--定时执行按钮-->
@@ -311,6 +319,22 @@
                 var isContinue = confirm("请确认是否立即执行？");
             }
             var formExecuteOnly = $("#from-execute");
+            if (isContinue) {
+                var element = $(this);
+                var sqlNum = element.val();
+                formExecuteOnly.submit();
+                loading(this)
+            }
+        });
+
+        // 执行确认手工执行
+        $("#btnExecuteOnly-manual").click(function () {
+            if ({{ workflow_detail.is_manual }}) {
+                var isContinue = confirm("平台不支持该语句备份，将不会自动备份数据，请确认是否立即执行？");
+            } else {
+                var isContinue = confirm("请确认是否立即执行？");
+            }
+            var formExecuteOnly = $("#from-execute-manual");
             if (isContinue) {
                 var element = $(this);
                 var sqlNum = element.val();

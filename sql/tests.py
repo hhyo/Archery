@@ -719,6 +719,8 @@ class TestWorkflowView(TransactionTestCase):
     def setUp(self):
         self.now = datetime.now()
         can_view_permission = Permission.objects.get(codename='menu_sqlworkflow')
+        can_execute_permission = Permission.objects.get(codename='sql_execute')
+        can_execute_resource_permission = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.u1 = User(username='some_user', display='用户1')
         self.u1.save()
         self.u1.user_permissions.add(can_view_permission)
@@ -728,6 +730,9 @@ class TestWorkflowView(TransactionTestCase):
         self.u3 = User(username='some_user3', display='用户3')
         self.u3.save()
         self.u3.user_permissions.add(can_view_permission)
+        self.executor1 = User(username='some_executor', display='执行者')
+        self.executor1.save()
+        self.executor1.user_permissions.add(can_view_permission, can_execute_permission, can_execute_resource_permission)
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
@@ -858,6 +863,23 @@ class TestWorkflowView(TransactionTestCase):
         self.assertRedirects(r, '/detail/{}/'.format(self.wf1.id), fetch_redirect_response=False)
         self.wf1.refresh_from_db()
         self.assertEqual(self.wf1.status, 'workflow_review_pass')
+
+    @patch('sql.sql_workflow.Audit.add_log')
+    @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
+    @patch('sql.sql_workflow.can_execute')
+    def test_workflow_execute(self, mock_can_excute, mock_detail_by_id, mock_add_log):
+        c = Client()
+        c.force_login(self.executor1)
+        r = c.post('/execute/')
+        self.assertContains(r, 'workflow_id参数为空.')
+        mock_can_excute.return_value = False
+        r = c.post('/execute/', data={'workflow_id': self.wf2.id})
+        self.assertContains(r, '你无权操作当前工单！')
+        mock_can_excute.return_value = True
+        mock_detail_by_id = 123
+        r = c.post('/execute/', data={'workflow_id': self.wf2.id, 'mode': 'manual'})
+        self.wf2.refresh_from_db()
+        self.assertEqual('workflow_finish_manual', self.wf2.status)
 
     @patch('sql.sql_workflow.Audit.add_log')
     @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
