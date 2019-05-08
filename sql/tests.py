@@ -819,6 +819,20 @@ class TestWorkflowView(TransactionTestCase):
         exepcted_status = r"""id="workflow_detail_status">workflow_finish"""
         self.assertContains(r, exepcted_status)
 
+        # 测试执行详情解析失败
+        self.wfc1.execute_result = 'cannotbedecode:1,:'
+        self.wfc1.save()
+        r = c.get('/detail/{}/'.format(self.wf1.id))
+        self.assertContains(r, expected_status_display)
+        self.assertContains(r, exepcted_status)
+        self.assertContains(r, '执行结果解析失败')
+
+        # 执行详情为空
+        self.wfc1.execute_result = ''
+        self.wfc1.save()
+        r = c.get('/detail/{}/'.format(self.wf1.id))
+        self.assertContains(r, '未收集到执行结果')
+
     def testWorkflowListView(self):
         c = Client()
         c.force_login(self.superuser1)
