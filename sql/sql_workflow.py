@@ -269,13 +269,15 @@ def execute(request):
         operation_type = 5
         operation_type_desc = '执行工单'
         operation_info = "自动操作执行"
+        finish_time = None
     else:
-        status = "workflow_workflow_finish_manual"
+        status = "workflow_finish_manual"
         operation_type = 6
         operation_type_desc = '手工工单'
         operation_info = "手动执行"
+        finish_time = datetime.datetime.now()
     # 将流程状态修改为对应状态
-    SqlWorkflow(id=workflow_id, status=status).save(update_fields=['status'])
+    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status','finish_time'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
