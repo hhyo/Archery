@@ -109,30 +109,30 @@ def detail(request, workflow_id):
         run_date = ''
 
     review_result = ReviewSet()
-    loaded_rows = ''
     if rows:
         try:
+            # 检验rows能不能正常解析
             loaded_rows = json.loads(rows)
-        except json.errors.JSONDecodeError:
+            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+            if isinstance(loaded_rows[-1], list):
+                for r in loaded_rows:
+                    review_result.rows += [ReviewResult(inception_result=r)]
+                rows = review_result.json()
+        except json.decoder.JSONDecodeError:
             review_result.rows += [ReviewResult(
                 # 迫于无法单元测试这里加上英文报错信息
                 errormessage="Json decode failed."
                              "执行结果Json解析失败, 请联系管理员"
             )]
-            loaded_rows = review_result.json()
-        #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-        if isinstance(loaded_rows[-1], list):
-            for r in json.loads(loaded_rows):
-                review_result.rows += [ReviewResult(inception_result=r)]
-            loaded_rows = review_result.json()
+            rows = review_result.json()
     else:
         review_result.rows += [ReviewResult(
             errormessage="No valid execution result."
                          "未收集到执行结果, 可能是手工执行工单"
         )]
-        loaded_rows = review_result.json()
+        rows = review_result.json()
 
-    context = {'workflow_detail': workflow_detail, 'rows': loaded_rows, 'last_operation_info': last_operation_info,
+    context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
