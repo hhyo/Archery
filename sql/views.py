@@ -61,8 +61,7 @@ def submit_sql(request):
 # 展示SQL工单详细页面
 def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    if workflow_detail.status in ['workflow_finish', 'workflow_exception'] \
-            and workflow_detail.is_manual == 0:
+    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
         rows = workflow_detail.sqlworkflowcontent.execute_result
     else:
         rows = workflow_detail.sqlworkflowcontent.review_content
@@ -108,6 +107,9 @@ def detail(request, workflow_id):
     else:
         run_date = ''
 
+    # 获取是否开启手工执行确认
+    manual = SysConfig().get('manual')
+
     review_result = ReviewSet()
     if rows:
         try:
@@ -126,15 +128,11 @@ def detail(request, workflow_id):
             )]
             rows = review_result.json()
     else:
-        review_result.rows += [ReviewResult(
-            errormessage="No valid execution result."
-                         "未收集到执行结果, 可能是手工执行工单"
-        )]
-        rows = review_result.json()
+        rows = workflow_detail.sqlworkflowcontent.review_content
 
     context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
-               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
+               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
     return render(request, 'detail.html', context)
 

@@ -274,7 +274,7 @@ def execute(request):
         status = "workflow_finish"
         operation_type = 6
         operation_type_desc = '手工工单'
-        operation_info = "手动执行"
+        operation_info = "确认手工执行结束"
         finish_time = datetime.datetime.now()
     # 将流程状态修改为对应状态
     SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
