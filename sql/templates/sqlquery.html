@@ -19,6 +19,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-live-search="true"
                                         data-placeholder="请选择实例:" required>
+                                    // TODO 实例中的筛选可以在python代码中， 使用filter实现， 这种实现可能有效率问题。
                                     <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                                     <optgroup id="optgroup-mysql" label="MySQL">
                                         {% for instance in instances %}
@@ -41,9 +42,16 @@
                                             {% endif %}
                                         {% endfor %}
                                     </optgroup>
-                                    <optgroup id="optgroup-redis" label="PgSQL">
+                                    <optgroup id="optgroup-pgsql" label="PgSQL">
                                         {% for instance in instances %}
                                             {% if instance.db_type == 'pgsql' %}
+                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup id="optgroup-oracle" label="PgSQL">
+                                        {% for instance in instances %}
+                                            {% if instance.db_type == 'oracle' %}
                                                 <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
                                             {% endif %}
                                         {% endfor %}

@@ -1,3 +1,8 @@
+-- 增加oracle实例相关字段
+ALTER TABLE sql_instance
+  ADD `sid` varchar(50) DEFAULT NULL COMMENT 'Oracle sid' AFTER password,
+  ADD `service_name` varchar(50) DEFAULT NULL COMMENT 'Oracle Service name' AFTER password;
+
 -- 变更字段名
 ALTER TABLE param_history CHANGE update_time create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '参数修改时间';
 
