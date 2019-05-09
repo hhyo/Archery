@@ -732,7 +732,8 @@ class TestWorkflowView(TransactionTestCase):
         self.u3.user_permissions.add(can_view_permission)
         self.executor1 = User(username='some_executor', display='执行者')
         self.executor1.save()
-        self.executor1.user_permissions.add(can_view_permission, can_execute_permission, can_execute_resource_permission)
+        self.executor1.user_permissions.add(can_view_permission, can_execute_permission,
+                                            can_execute_resource_permission)
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
@@ -828,10 +829,14 @@ class TestWorkflowView(TransactionTestCase):
         self.assertContains(r, 'Json decode failed.')
 
         # 执行详情为空
+        self.wfc1.review_content = [
+            {"id": 1, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",
+             "sql": "use archery", "affected_rows": 0, "sequence": "'0_0_0'", "backup_dbname": "None",
+             "execute_time": "0", "sqlsha1": "", "actual_affected_rows": ""}]
         self.wfc1.execute_result = ''
         self.wfc1.save()
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        self.assertContains(r, 'No valid execution result.')
+        self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
         c = Client()
