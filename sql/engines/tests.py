@@ -241,7 +241,7 @@ class TestMysql(TestCase):
         wrong_sql = '-- 测试'
         check_result = new_engine.query_check(db_name='some_db', sql=wrong_sql)
         self.assertDictEqual(check_result,
-                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': '-- 测试', 'has_star': True})
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': '-- 测试', 'has_star': False})
 
     def test_query_check_update_sql(self):
         new_engine = MysqlEngine(instance=self.ins1)
