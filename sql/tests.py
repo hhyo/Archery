@@ -330,7 +330,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
                                  'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：'RuntimeError' object is not iterable",
-                                 'data': {'priv_check': True, 'limit_num': 0}})
+                                 'data': {'priv_check': True, 'limit_num': 100}})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
     @patch('sql.query_privileges._tb_priv', return_value=False)

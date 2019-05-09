@@ -26,6 +26,7 @@ from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, Resource
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.workflow_audit import Audit
+from sql.utils.sql_utils import extract_tables
 
 logger = logging.getLogger('default')
 
@@ -49,56 +50,56 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
 
-    # mysql可以校验到表级权限
-    if instance.db_type == 'mysql':
-        try:
-            # 首先使用inception的语法树打印获取查询涉及的的表
-            table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
-            # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
-            for table in table_ref:
-                # 既无库权限也无表权限
-                if not _db_priv(user, instance, table['db']) and not _tb_priv(user, instance, db_name, table['table']):
-                    result['status'] = 1
-                    result['msg'] = f"你无{db_name}.{table['table']}表的查询权限！请先到查询权限管理进行申请"
-                    return result
-        except Exception as msg:
-            # 获取表数据报错，仅校验当前库权限
+    try:
+        # 尝试使用Inception校验表权限
+        table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
+        # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
+        for table in table_ref:
+            # 既无库权限也无表权限
+            if not _db_priv(user, instance, table['db']) and not _tb_priv(user, instance, db_name, table['table']):
+                result['status'] = 1
+                result['msg'] = f"你无{db_name}.{table['table']}表的查询权限！请先到查询权限管理进行申请"
+                return result
+        # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
+        # 循环获取，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
+        for table in table_ref:
+            priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
+            limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
+        result['data']['limit_num'] = limit_num
+    except Exception as msg:
+        # 表权限校验失败再次校验库权限
+        # 先获取查询语句涉及的库
+        if instance.db_type == 'redis':
+            dbs = [db_name]
+        else:
+            dbs = [i['schema'] for i in extract_tables(sql_content) if i['schema'] is not None]
+            dbs.append(db_name)
+        # 库去重
+        dbs = list(set(dbs))
+        # 校验库权限，无库权限直接返回
+        for db_name in dbs:
             if not _db_priv(user, instance, db_name):
                 result['status'] = 1
                 result['msg'] = f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
                 return result
-            # 开启query_check，禁止执行，直接抛出异常
+        # 有所有库权限则获取最小limit值
+        for db_name in dbs:
+            priv_limit = _priv_limit(user, instance, db_name=db_name)
+            limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
+        result['data']['limit_num'] = limit_num
+
+        # 实例为mysql的，需要判断query_check状态
+        if instance.db_type == 'mysql':
+            # 开启query_check，则禁止执行
             if SysConfig().get('query_check'):
                 result['status'] = 1
                 result['msg'] = f"无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：{msg}"
                 return result
-            # 关闭query_check，忽略错误继续执行，标记权限校验为跳过
+            # 关闭query_check，标记权限校验为跳过，可继续执行
             else:
-                # 获取查询库的最小limit限制，和前端传参作对比，取最小值
-                priv_limit = _priv_limit(user, instance, db_name=db_name)
-                result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
                 result['data']['priv_check'] = False
-                return result
-        else:
-            # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
-            # 循环获取，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
-            for table in table_ref:
-                priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
-                limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
-            result['data']['limit_num'] = limit_num
-            return result
-    # 其他数据库仅校验到库权限
-    else:
-        # 无库权限直接返回
-        if not _db_priv(user, instance, db_name):
-            result['status'] = 1
-            result['msg'] = f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
-            return result
-        # 有库权限则获取对应limit值
-        else:
-            priv_limit = _priv_limit(user, instance, db_name=db_name)
-            result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
-            return result
+
+    return result
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -180,10 +181,11 @@ def query_priv_apply(request):
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user, type='slave', db_type='all').get(instance_name=instance_name)
+        user_instances(request.user, type='all', db_type='all').get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        context = {'errMsg': '你所在组未关联该实例！'}
-        return render(request, 'error.html', context)
+        result['status'] = 1
+        result['msg'] = '你所在组未关联该实例！'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 库权限
     ins = Instance.objects.get(instance_name=instance_name)
@@ -392,6 +394,8 @@ def _table_ref(sql_content, instance, db_name):
     :param db_name:
     :return:
     """
+    if instance.db_type != 'mysql':
+        raise RuntimeError('Inception Error: 仅支持MySQL实例')
     inception_engine = InceptionEngine()
     query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql_content)
     table_ref = query_tree.get('table_ref', [])
