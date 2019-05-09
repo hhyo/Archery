@@ -10,6 +10,7 @@ class EngineBase:
         if instance:
             self.instance = instance
             self.instance_name = instance.instance_name
+            self.sid = instance.sid
             self.host = instance.host
             self.port = int(instance.port)
             self.user = instance.user
@@ -85,3 +86,6 @@ def get_engine(instance=None):
     elif instance.db_type == 'pgsql':
         from .pgsql import PgSQLEngine
         return PgSQLEngine(instance=instance)
+    elif instance.db_type == 'oracle':
+        from .oracle import OracleEngine
+        return OracleEngine(instance=instance)
