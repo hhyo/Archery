@@ -4,6 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
+# 更改翻译文件后务必使用 python manage.py compilemessages 编译翻译文件
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
