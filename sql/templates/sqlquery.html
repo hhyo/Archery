@@ -49,7 +49,7 @@
                                             {% endif %}
                                         {% endfor %}
                                     </optgroup>
-                                    <optgroup id="optgroup-oracle" label="PgSQL">
+                                    <optgroup id="optgroup-oracle" label="Oracle">
                                         {% for instance in instances %}
                                             {% if instance.db_type == 'oracle' %}
                                                 <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
