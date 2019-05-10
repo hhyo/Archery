@@ -14,12 +14,12 @@ logger = logging.getLogger('default')
 
 
 class OracleEngine(EngineBase):
-    
+
     def __init__(self, instance=None):
         super(OracleEngine, self).__init__(instance=instance)
         self.service_name = instance.service_name
         self.sid = instance.sid
-    
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -32,6 +32,20 @@ class OracleEngine(EngineBase):
         else:
             self.conn = None
         return self.conn
+
+    @property
+    def name(self):
+        return 'Oracle'
+
+    @property
+    def info(self):
+        return 'Oracle engine'
+
+    @property
+    def server_version(self):
+        conn = self.get_connection()
+        version = conn.version
+        return tuple([n for n in version.split('.')[:3]])
 
     def get_all_databases(self):
         """获取数据库列表， 返回resultSet 供上层调用， 底层实际上是获取oracle的schema列表"""
@@ -59,36 +73,36 @@ class OracleEngine(EngineBase):
         :return:
         """
         result = self.query(sql="select username from sys.dba_users")
-        schema_list = [row[0] for row in result.rows if row[0] not in ['ORACLE_OCM', 'DIP', 'DBSNMP', 'APPQOSSYS',
-                                                                       'MGMT_VIEW', 'SYS', 'SYSTEM', 'OUTLN']]
+        sysschema = ('AUD_SYS','ANONYMOUS','APEX_030200','APEX_PUBLIC_USER','APPQOSSYS','BI USERS','CTXSYS','DBSNMP','DIP USERS','EXFSYS','FLOWS_FILES','HR USERS','IX USERS','MDDATA','MDSYS','MGMT_VIEW','OE USERS','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS','OWBSYS_AUDIT','PM USERS','SCOTT','SH USERS','SI_INFORMTN_SCHEMA','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SYS','SYSMAN','SYSTEM','WMSYS','XDB','XS$NULL')
+        schema_list = [row[0] for row in result.rows if row[0] not in sysschema]
         result.rows = schema_list
         return result
 
-    def get_all_tables(self, schema_name):
+    def get_all_tables(self, db_name):
         """获取table 列表, 返回一个ResultSet"""
         sql = f"""select
         TABLE_NAME
         from dba_tab_privs
-        where grantee in ('{schema_name}')
+        where grantee in ('{db_name}')
         union
         select
         OBJECT_NAME
         from dba_objects
-        WHERE OWNER IN ('{schema_name}') and object_type in ('TABLE')
+        WHERE OWNER IN ('{db_name}') and object_type in ('TABLE')
         """
         result = self.query(sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, schema_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(schema_name, tb_name)
+        result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, schema_name, tb_name):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
@@ -149,8 +163,8 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            # if schema_name:
-            #     cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {schema_name}")
+            if db_name:
+                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
@@ -168,6 +182,34 @@ class OracleEngine(EngineBase):
             if close_conn:
                 self.close()
         return result_set
+
+    def query_check(self, db_name=None, sql=''):
+        # 查询语句的检查、注释去除、切分
+        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
+        # 删除注释语句，进行语法判断，执行第一条有效sql
+        try:
+            sql = sqlparse.format(sql, strip_comments=True)
+            sql = sqlparse.split(sql)[0]
+            result['filtered_sql'] = sql.strip()
+        except IndexError:
+            result['has_star'] = True
+            result['msg'] = '没有有效的SQL语句'
+        if re.match(r"^select|^show|^explain", sql, re.I) is None:
+            result['bad_query'] = True
+            result['msg'] = '不支持的查询语法类型!'
+        if '*' in sql:
+            result['has_star'] = True
+            result['msg'] = 'SQL语句中含有 * '
+        return result
+
+    def filter_sql(self, sql='', limit_num=0):
+        # 对查询sql增加limit限制，# TODO limit改写待优化
+        sql_lower = sql.lower().rstrip(';').strip()
+        if re.match(r"^select", sql_lower):
+            if re.search(r"limit\s+(\d+)$", sql_lower) is None:
+                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
+                    return f"{sql.rstrip(';')} limit {limit_num};"
+        return f"{sql.rstrip(';')};"
 
     def query_masking(self, schema_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -192,6 +234,46 @@ class OracleEngine(EngineBase):
                               execute_time=0, )
         check_result.rows += [result]
         return check_result
+
+    def execute_workflow(self, workflow,close_conn=True):
+        """执行上线单，返回Review set"""
+        sql = workflow.sqlworkflowcontent.sql_content
+        execute_result = ReviewSet(full_sql=sql)
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(sql)
+        except Exception as e:
+            logger.error(f"Oracle命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            execute_result.error = str(e)
+            execute_result.status = "workflow_exception"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+        else:
+            execute_result.status = "workflow_finish"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Execute Successfully',
+                errormessage='None',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+        finally:
+            workflow.sqlworkflowcontent.execute_result = execute_result.json()
+            workflow.sqlworkflowcontent.save()
+            workflow.save()
+            if close_conn:
+                self.close()
+        return execute_result
 
     def close(self):
         if self.conn:
