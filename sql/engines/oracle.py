@@ -115,7 +115,7 @@ class OracleEngine(EngineBase):
             result['filtered_sql'] = re.sub(r';$', '', sql.strip())
             sql_lower = sql.lower()
         except IndexError:
-            result['has_star'] = True
+            result['bad_query'] = True
             result['msg'] = '没有有效的SQL语句'
             return result
         if re.match(r"^select", sql_lower) is None:
@@ -124,7 +124,6 @@ class OracleEngine(EngineBase):
             return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
-            result['bad_query'] = True
             result['has_star'] = True
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'

@@ -59,7 +59,7 @@ class SqlTuning(object):
 
     def __extract_tables(self):
         """获取sql语句中的表名"""
-        return [i['schema'].replace('`', '').lower() for i in extract_tables(self.sqltext)]
+        return [i['name'].strip('`') for i in extract_tables(self.sqltext)]
 
     def basic_information(self):
         return self.engine.query(sql="select @@version", close_conn=False).to_sep_dict()
