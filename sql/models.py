@@ -385,6 +385,7 @@ class QueryLog(models.Model):
     sqllog = models.TextField('执行的sql查询')
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
+    schema_name = models.CharField('模式名称', max_length=30,default='')
     # TODO 改为user 外键
     username = models.CharField('操作人', max_length=30)
     user_display = models.CharField('操作人中文名', max_length=50, default='')
