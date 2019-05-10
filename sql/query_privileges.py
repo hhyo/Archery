@@ -76,6 +76,8 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             dbs.append(db_name)
         # 库去重
         dbs = list(set(dbs))
+        # 排序
+        dbs.sort()
         # 校验库权限，无库权限直接返回
         for db_name in dbs:
             if not _db_priv(user, instance, db_name):
