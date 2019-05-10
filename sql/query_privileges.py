@@ -72,7 +72,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         if instance.db_type == 'redis':
             dbs = [db_name]
         else:
-            dbs = [i['schema'] for i in extract_tables(sql_content) if i['schema'] is not None]
+            dbs = [i['schema'].strip('`') for i in extract_tables(sql_content) if i['schema'] is not None]
             dbs.append(db_name)
         # 库去重
         dbs = list(set(dbs))
