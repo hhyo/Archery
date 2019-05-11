@@ -17,10 +17,10 @@ class UsersAdmin(UserAdmin):
     ordering = ('id',)
     # 编辑页显示内容
     fieldsets = (
-        (('认证信息',), {'fields': ('username', 'password')}),
-        (('个人信息',), {'fields': ('display', 'email')}),
-        (('权限信息',), {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
-        (('其他信息',), {'fields': ('last_login', 'date_joined')}),
+        ('认证信息', {'fields': ('username', 'password')}),
+        ('个人信息', {'fields': ('display', 'email')}),
+        ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+        ('其他信息', {'fields': ('last_login', 'date_joined')}),
     )
     # 添加页显示内容
     add_fieldsets = (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
@@ -44,8 +44,11 @@ class ResourceGroupRelationsAdmin(admin.ModelAdmin):
 class InstanceTagAdmin(admin.ModelAdmin):
     list_display = ('id', 'tag_code', 'tag_name', 'active', 'create_time')
     list_display_links = ('id', 'tag_code',)
-    fieldsets = ('不支持修改标签代码', {'fields': ('tag_name', 'active'), }),
-    add_fieldsets = (None, {'fields': ('tag_code', 'tag_name', 'active'), }),
+    fieldsets = (None, {'fields': ('tag_code', 'tag_name', 'active'), }),
+
+    # 不支持修改标签代码
+    def get_readonly_fields(self, request, obj=None):
+        return ('tag_code',) if obj else ()
 
 
 # 实例标签关系配置
