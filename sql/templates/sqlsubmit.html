@@ -50,6 +50,7 @@
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
                                     <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -585,6 +586,8 @@
                                 $("#optgroup-redis").append(instance);
                             } else if (result[i]['db_type'] === 'pgsql') {
                                 $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');
