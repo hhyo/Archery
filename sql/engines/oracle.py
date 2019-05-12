@@ -14,12 +14,12 @@ logger = logging.getLogger('default')
 
 
 class OracleEngine(EngineBase):
-    
+
     def __init__(self, instance=None):
         super(OracleEngine, self).__init__(instance=instance)
         self.service_name = instance.service_name
         self.sid = instance.sid
-    
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -32,6 +32,20 @@ class OracleEngine(EngineBase):
         else:
             self.conn = None
         return self.conn
+
+    @property
+    def name(self):
+        return 'Oracle'
+
+    @property
+    def info(self):
+        return 'Oracle engine'
+
+    @property
+    def server_version(self):
+        conn = self.get_connection()
+        version = conn.version
+        return tuple([n for n in version.split('.')[:3]])
 
     def get_all_databases(self):
         """获取数据库列表， 返回resultSet 供上层调用， 底层实际上是获取oracle的schema列表"""
@@ -59,36 +73,36 @@ class OracleEngine(EngineBase):
         :return:
         """
         result = self.query(sql="select username from sys.dba_users")
-        schema_list = [row[0] for row in result.rows if row[0] not in ['ORACLE_OCM', 'DIP', 'DBSNMP', 'APPQOSSYS',
-                                                                       'MGMT_VIEW', 'SYS', 'SYSTEM', 'OUTLN']]
+        sysschema = ('AUD_SYS','ANONYMOUS','APEX_030200','APEX_PUBLIC_USER','APPQOSSYS','BI USERS','CTXSYS','DBSNMP','DIP USERS','EXFSYS','FLOWS_FILES','HR USERS','IX USERS','MDDATA','MDSYS','MGMT_VIEW','OE USERS','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS','OWBSYS_AUDIT','PM USERS','SCOTT','SH USERS','SI_INFORMTN_SCHEMA','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SYS','SYSMAN','SYSTEM','WMSYS','XDB','XS$NULL')
+        schema_list = [row[0] for row in result.rows if row[0] not in sysschema]
         result.rows = schema_list
         return result
 
-    def get_all_tables(self, schema_name):
+    def get_all_tables(self, db_name):
         """获取table 列表, 返回一个ResultSet"""
         sql = f"""select
         TABLE_NAME
         from dba_tab_privs
-        where grantee in ('{schema_name}')
+        where grantee in ('{db_name}')
         union
         select
         OBJECT_NAME
         from dba_objects
-        WHERE OWNER IN ('{schema_name}') and object_type in ('TABLE')
+        WHERE OWNER IN ('{db_name}') and object_type in ('TABLE')
         """
         result = self.query(sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, schema_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(schema_name, tb_name)
+        result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, schema_name, tb_name):
+    def describe_table(self, db_name, tb_name):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
