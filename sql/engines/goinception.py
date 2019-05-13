@@ -30,7 +30,7 @@ class GoInceptionEngine(EngineBase):
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
-                            {sql}
+                            {sql.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
@@ -59,7 +59,7 @@ class GoInceptionEngine(EngineBase):
         sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
                             inception_magic_start;
                             use `{workflow.db_name}`;
-                            {workflow.sqlworkflowcontent.sql_content}
+                            {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
         # 把结果转换为ReviewSet
