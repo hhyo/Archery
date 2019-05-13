@@ -44,8 +44,9 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     :return:
     """
     result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 0}}
-    # 管理员不做权限校验，仅获取limit值信息
-    if user.is_superuser:
+    # 如果有can_query_all_instance, 视为管理员, 仅获取limit值信息
+    # superuser 拥有全部权限, 不需做特别修改
+    if user.has_perm('sql.can_query_all_instances'):
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
         result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
