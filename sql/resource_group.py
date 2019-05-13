@@ -108,9 +108,9 @@ def instances(request):
     # 过滤tag
     if tag_code:
         tag_id = InstanceTag.objects.get(tag_code=tag_code).id
-        instances = Instance.objects.filter(instancetagrelations__instance_tag=tag_id,
-                                            instancetagrelations__active=True
-                                            ).values('id', 'type', 'db_type', 'instance_name')
+        instances = instances.filter(instancetagrelations__instance_tag=tag_id,
+                                     instancetagrelations__active=True
+                                     ).values('id', 'type', 'db_type', 'instance_name')
 
     rows = [row for row in instances]
     result = {'status': 0, 'msg': 'ok', "data": rows}
