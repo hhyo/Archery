@@ -46,7 +46,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     result = {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 0}}
     # 如果有can_query_all_instance, 视为管理员, 仅获取limit值信息
     # superuser 拥有全部权限, 不需做特别修改
-    if user.has_perm('sql.can_query_all_instances'):
+    if user.has_perm('sql.query_all_instances'):
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
         result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
@@ -419,6 +419,7 @@ def _db_priv(user, instance, db_name):
     :param instance: 实例对象
     :param db_name: 库名
     :return: 权限存在则返回对应权限的limit_num，否则返回False
+    TODO 返回统一为 int 类型, 不存在返回0 (虽然其实在python中 0==False)
     """
     # 获取用户库权限
     user_privileges = QueryPrivileges.objects.filter(user_name=user.username, instance=instance, db_name=str(db_name),

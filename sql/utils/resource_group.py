@@ -30,7 +30,7 @@ def user_instances(user, type='all', db_type='all', tags=None):
     # 先获取用户关联资源组列表
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
-    if user.has_perm('sql.can_query_all_instances'):
+    if user.has_perm('sql.query_all_instances'):
         instance_ids = [master['id'] for master in Instance.objects.all().values('id')]
     else:
         # 获取资源组关联的实例列表

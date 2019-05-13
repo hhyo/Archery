@@ -139,7 +139,6 @@ class TestQueryPrivilegesCheck(TestCase):
         self.sys_config.get_all_config()
         r = sql.query_privileges._db_priv(user=self.superuser, instance=self.slave, db_name=self.db_name)
         self.assertEqual(r, 50)
-        r = sql.query_privileges._db_priv(user=self.user_can_query_all, instance=self.slave, db_name=self.db_name)
 
     def test_db_priv_user_priv_not_exist(self):
         """
@@ -256,6 +255,12 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+        r = sql.query_privileges.query_priv_check(user=self.user_can_query_all,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
