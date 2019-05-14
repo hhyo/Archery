@@ -216,7 +216,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            if workflow.db_name and workflow.db_name not in sql:
+            if workflow.db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
             for sql in sql_list:
                 print(sql)
