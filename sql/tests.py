@@ -804,6 +804,7 @@ class TestWorkflowView(TransactionTestCase):
         self.u1.delete()
         self.superuser1.delete()
         self.resource_group1.delete()
+        SysConfig().purge()
 
     def testWorkflowStatus(self):
         c = Client(header={})
@@ -937,6 +938,7 @@ class TestWorkflowView(TransactionTestCase):
     @patch('sql.sql_workflow.get_engine')
     @patch('sql.sql_workflow.user_instances')
     def test_workflow_auto_review_view(self, mock_user_instances, mock_get_engine, mock_audit, mock_async_task):
+        """测试 autoreview/submit view"""
         c = Client()
         c.force_login(self.superuser1)
         request_data = {
@@ -969,6 +971,30 @@ class TestWorkflowView(TransactionTestCase):
         self.assertIn('detail', r.url)
         workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
         self.assertEqual(request_data['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
+
+        # 强制备份测试
+        # 打开备份开关, 对备份不要求
+        request_data_without_backup = {
+            'sql_content': "update some_db set some_key=\'some value\';",
+            'workflow_name': 'some_title_2',
+            'group_name': self.resource_group1.group_name,
+            'group_id': self.resource_group1.group_id,
+            'instance_name': self.master1.instance_name,
+            'db_name': 'some_db',
+            'is_backup': False,
+            'notify_users': ''
+        }
+        archer_config = SysConfig()
+        archer_config.set('enable_backup_switch', 'true')
+        r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
+        self.assertIn('detail', r.url)
+        workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
+        self.assertEqual(request_data_without_backup['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
+
+        # 关闭备份选项, 不允许不备份
+        archer_config.set('enable_backup_switch', 'false')
+        r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
+        self.assertContains(r, '不允许提交不备份工单')
 
 
 class TestOptimize(TestCase):
