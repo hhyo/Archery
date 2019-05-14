@@ -109,6 +109,9 @@ class TestQueryPrivilegesCheck(TestCase):
 
     def setUp(self):
         self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.user_can_query_all = User.objects.create(username='normaluser')
+        query_all_instance_perm = Permission.objects.get(codename='query_all_instances')
+        self.user_can_query_all.user_permissions.add(query_all_instance_perm)
         self.user = User.objects.create(username='user')
         # 使用 travis.ci 时实例和测试service保持一致
         self.slave = Instance.objects.create(instance_name='test_instance', type='slave', db_type='mysql',
@@ -252,6 +255,12 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+        r = sql.query_privileges.query_priv_check(user=self.user_can_query_all,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)

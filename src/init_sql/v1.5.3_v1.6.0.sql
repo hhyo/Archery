@@ -50,4 +50,5 @@ select id,1,1,now() from sql_instance where type='master';
 insert into sql_instance_tag_relations (instance_id, instance_tag_id, active, create_time)
 select id,2,1,now() from sql_instance where type='slave';
 
-
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('可查询所有实例', @content_type_id, 'query_all_instances');

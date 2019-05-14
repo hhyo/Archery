@@ -599,6 +599,7 @@ class Permission(models.Model):
             ('query_mgtpriv', '管理查询权限'),
             ('query_review', '审核查询权限'),
             ('query_submit', '提交SQL查询'),
+            ('query_all_instances', '可查询所有实例'),
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
