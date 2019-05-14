@@ -25,10 +25,10 @@ class OracleEngine(EngineBase):
             return self.conn
         if self.sid:
             dsn = cx_Oracle.makedsn(self.host, self.port, self.sid)
-            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn)
+            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn, encoding="UTF-8", nencoding="UTF-8")
         elif self.service_name:
             dsn = cx_Oracle.makedsn(self.host, self.port, service_name=self.service_name)
-            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn)
+            self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn, encoding="UTF-8", nencoding="UTF-8")
         else:
             self.conn = None
         return self.conn
@@ -73,7 +73,12 @@ class OracleEngine(EngineBase):
         :return:
         """
         result = self.query(sql="select username from sys.dba_users")
-        sysschema = ('AUD_SYS','ANONYMOUS','APEX_030200','APEX_PUBLIC_USER','APPQOSSYS','BI USERS','CTXSYS','DBSNMP','DIP USERS','EXFSYS','FLOWS_FILES','HR USERS','IX USERS','MDDATA','MDSYS','MGMT_VIEW','OE USERS','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS','OWBSYS_AUDIT','PM USERS','SCOTT','SH USERS','SI_INFORMTN_SCHEMA','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SYS','SYSMAN','SYSTEM','WMSYS','XDB','XS$NULL')
+        sysschema = (
+            'AUD_SYS', 'ANONYMOUS', 'APEX_030200', 'APEX_PUBLIC_USER', 'APPQOSSYS', 'BI USERS', 'CTXSYS', 'DBSNMP',
+            'DIP USERS', 'EXFSYS', 'FLOWS_FILES', 'HR USERS', 'IX USERS', 'MDDATA', 'MDSYS', 'MGMT_VIEW', 'OE USERS',
+            'OLAPSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDSYS', 'OUTLN', 'OWBSYS', 'OWBSYS_AUDIT', 'PM USERS',
+            'SCOTT', 'SH USERS', 'SI_INFORMTN_SCHEMA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'SYS',
+            'SYSMAN', 'SYSTEM', 'WMSYS', 'XDB', 'XS$NULL')
         schema_list = [row[0] for row in result.rows if row[0] not in sysschema]
         result.rows = schema_list
         return result
@@ -197,54 +202,65 @@ class OracleEngine(EngineBase):
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
-        result = ReviewResult(id=1,
-                              errlevel=0,
-                              stagestatus='Audit completed',
-                              errormessage='None',
-                              sql=sql,
-                              affected_rows=0,
-                              execute_time=0, )
-        check_result.rows += [result]
+        # 切分语句，追加到检测结果中，默认全部检测通过
+        for statement in sqlparse.split(sql):
+            check_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Audit completed',
+                errormessage='None',
+                sql=statement,
+                affected_rows=0,
+                execute_time=0, ))
         return check_result
 
-    def execute_workflow(self, workflow,close_conn=True):
+    def execute_workflow(self, workflow, close_conn=True):
         """执行上线单，返回Review set"""
-        sql = workflow.sqlworkflowcontent.sql_content.rstrip(';')
-        sql = re.sub('--.*?\n', '', sql)
-        sql_list = sql.split(';')
+        sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
+        line = 1
+        statement = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            # 切换CURRENT_SCHEMA并且记录到执行结果中
             if workflow.db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
-            for sql in sql_list:
-                cursor.execute(sql)
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Execute Successfully',
+                    errormessage='None',
+                    sql=f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}",
+                    affected_rows=cursor.rowcount,
+                    execute_time=0, ))
+                line += 1
+            # 删除注释语句，切分语句逐条执行，追加到执行结果中
+            sql = sqlparse.format(sql, strip_comments=True)
+            for statement in sqlparse.split(sql):
+                statement = statement.rstrip(';')
+                cursor.execute(statement)
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Execute Successfully',
+                    errormessage='None',
+                    sql=statement,
+                    affected_rows=cursor.rowcount,
+                    execute_time=0,
+                ))
+                line += 1
             conn.commit()
         except Exception as e:
-            logger.error(f"Oracle命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.error(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            execute_result.status = "workflow_exception"
+            # 追加报错信息到执行结果中
             execute_result.rows.append(ReviewResult(
-                id=1,
+                id=line,
                 errlevel=2,
                 stagestatus='Execute Failed',
                 errormessage=f'异常信息：{e}',
-                sql=sql,
-                affected_rows=0,
-                execute_time=0,
-            ))
-            workflow.sqlworkflowcontent.execute_result = execute_result.json()
-            workflow.sqlworkflowcontent.save()
-            workflow.save()
-        else:
-            execute_result.status = "workflow_finish"
-            execute_result.rows.append(ReviewResult(
-                id=1,
-                errlevel=0,
-                stagestatus='Execute Successfully',
-                errormessage='None',
-                sql=sql,
+                sql=statement or sql,
                 affected_rows=0,
                 execute_time=0,
             ))
