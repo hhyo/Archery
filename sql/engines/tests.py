@@ -690,7 +690,6 @@ class TestInception(TestCase):
         new_engine = InceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.status, 'workflow_exception')
 
     @patch('sql.engines.inception.InceptionEngine.query')
     def test_execute_finish(self, _query):
@@ -702,7 +701,6 @@ class TestInception(TestCase):
         new_engine = InceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.status, 'workflow_finish')
 
     @patch('MySQLdb.connect.cursor.execute')
     @patch('MySQLdb.connect.cursor')
@@ -820,7 +818,6 @@ class TestGoInception(TestCase):
         new_engine = GoInceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.status, 'workflow_exception')
 
     @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_execute_finish(self, _query):
@@ -832,7 +829,6 @@ class TestGoInception(TestCase):
         new_engine = GoInceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.status, 'workflow_finish')
 
     @patch('pymysql.connect.cursor.execute')
     @patch('pymysql.connect.cursor')

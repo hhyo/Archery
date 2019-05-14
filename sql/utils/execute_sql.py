@@ -56,12 +56,14 @@ def execute_callback(task):
             backup_dbname=None,
             execute_time=0,
             sqlsha1='').__dict__)
-        workflow.sqlworkflowcontent.execute_result = json.dumps(execute_result.rows)
-        workflow.sqlworkflowcontent.save()
     elif task.result.warning or task.result.error:
+        execute_result = task.result
         workflow.status = 'workflow_exception'
     else:
+        execute_result = task.result
         workflow.status = 'workflow_finish'
+    workflow.sqlworkflowcontent.execute_result = execute_result.json()
+    workflow.sqlworkflowcontent.save()
     workflow.save()
 
     # 增加工单日志
