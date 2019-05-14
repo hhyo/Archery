@@ -200,14 +200,8 @@
     <script>
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
-            // 仅MySQL支持备份
             var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (optgroup === "MySQL") {
-                $("#div-backup").show()
-            } else {
-                $("#div-backup").hide();
-                $("#is_backup").val('False')
-            }
+            $("#div-backup").show()
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
