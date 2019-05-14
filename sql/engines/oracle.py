@@ -211,6 +211,7 @@ class OracleEngine(EngineBase):
     def execute_workflow(self, workflow,close_conn=True):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content.rstrip(';')
+        sql = re.sub('--.*?\n', '', sql)
         sql_list = sql.split(';')
         execute_result = ReviewSet(full_sql=sql)
         try:
