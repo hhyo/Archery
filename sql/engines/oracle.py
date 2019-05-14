@@ -163,8 +163,8 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            # if schema_name:
-            #     cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {schema_name}")
+            if db_name:
+                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
@@ -206,6 +206,52 @@ class OracleEngine(EngineBase):
                               execute_time=0, )
         check_result.rows += [result]
         return check_result
+
+    def execute_workflow(self, workflow,close_conn=True):
+        """执行上线单，返回Review set"""
+        sql = workflow.sqlworkflowcontent.sql_content.rstrip(';')
+        sql = re.sub('--.*?\n', '', sql)
+        sql_list = sql.split(';')
+        execute_result = ReviewSet(full_sql=sql)
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            if workflow.db_name:
+                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
+            for sql in sql_list:
+                cursor.execute(sql)
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Oracle命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            execute_result.error = str(e)
+            execute_result.status = "workflow_exception"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+            workflow.sqlworkflowcontent.execute_result = execute_result.json()
+            workflow.sqlworkflowcontent.save()
+            workflow.save()
+        else:
+            execute_result.status = "workflow_finish"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Execute Successfully',
+                errormessage='None',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+        finally:
+            if close_conn:
+                self.close()
+        return execute_result
 
     def close(self):
         if self.conn:
