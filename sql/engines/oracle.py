@@ -219,7 +219,6 @@ class OracleEngine(EngineBase):
             if workflow.db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
             for sql in sql_list:
-                print(sql)
                 cursor.execute(sql)
             conn.commit()
         except Exception as e:
