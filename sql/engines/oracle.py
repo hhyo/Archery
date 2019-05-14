@@ -163,8 +163,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            #是否要限定只能查询所选schema 如果是
-            if db_name and db_name not in sql:
+            if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             cursor.execute(sql)
             if int(limit_num) > 0:
