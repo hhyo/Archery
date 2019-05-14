@@ -134,6 +134,11 @@ def submit(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
+    sys_config = SysConfig()
+    if not sys_config.get('enable_backup_switch') and is_backup is False:
+        context = {'errMsg': '不允许提交不备份工单, 请勾选备份或联系管理员.'}
+        return render(request, 'error.html', context)
+
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
         user_instances(request.user, type='all', db_type='all').get(instance_name=instance_name)
@@ -150,7 +155,7 @@ def submit(request):
         return render(request, 'error.html', context)
 
     # 按照系统配置确定是自动驳回还是放行
-    sys_config = SysConfig()
+
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':

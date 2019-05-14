@@ -66,7 +66,7 @@
                                         data-placeholder="请选择是否要备份" required>
                                     <option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
                                     <option value=True>是</option>
-                                    <option value=False>否</option>
+                                    <option value=False {% if not enable_backup_switch %}disabled=""{% endif %}>否</option>
                                 </select>
                             </div>
                             <!--增加通知人-->

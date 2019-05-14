@@ -54,7 +54,11 @@ def submit_sql(request):
     # 获取所有有效用户，通知对象
     active_user = Users.objects.filter(is_active=1)
 
-    context = {'active_user': active_user, 'group_list': group_list}
+    # 获取系统配置
+    archer_config = SysConfig()
+
+    context = {'active_user': active_user, 'group_list': group_list,
+               'enable_backup_switch': archer_config.get('enable_backup_switch')}
     return render(request, 'sqlsubmit.html', context)
 
 
