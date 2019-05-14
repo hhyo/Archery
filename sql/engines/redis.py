@@ -22,7 +22,7 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or 0
         return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
-                                encoding_errors='ignore', decode_responses=True)
+                           encoding_errors='ignore', decode_responses=True)
 
     @property
     def name(self):
@@ -106,21 +106,6 @@ class RedisEngine(EngineBase):
         try:
             conn = self.get_connection(db_name=workflow.db_name)
             conn.execute_command(workflow.sqlworkflowcontent.sql_content)
-        except Exception as e:
-            logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
-            execute_result.error = str(e)
-            execute_result.status = "workflow_exception"
-            execute_result.rows.append(ReviewResult(
-                id=1,
-                errlevel=2,
-                stagestatus='Execute Failed',
-                errormessage=f'异常信息：{e}',
-                sql=sql,
-                affected_rows=0,
-                execute_time=0,
-            ))
-        else:
-            execute_result.status = "workflow_finish"
             execute_result.rows.append(ReviewResult(
                 id=1,
                 errlevel=0,
@@ -130,8 +115,16 @@ class RedisEngine(EngineBase):
                 affected_rows=0,
                 execute_time=0,
             ))
-        finally:
-            workflow.sqlworkflowcontent.execute_result = execute_result.json()
-            workflow.sqlworkflowcontent.save()
-            workflow.save()
+        except Exception as e:
+            logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            execute_result.error = str(e)
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
         return execute_result
