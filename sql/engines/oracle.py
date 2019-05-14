@@ -211,16 +211,44 @@ class OracleEngine(EngineBase):
     def execute_workflow(self, workflow,close_conn=True):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content.rstrip(';')
+        sql_list = sql.split(';')
         execute_result = ReviewSet(full_sql=sql)
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             if workflow.db_name and workflow.db_name not in sql:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
-            cursor.execute(sql)
+            for sql in sql_list:
+                print(sql)
+                cursor.execute(sql)
+            conn.commit()
         except Exception as e:
             logger.error(f"Oracle命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
+            execute_result.status = "workflow_exception"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=2,
+                stagestatus='Execute Failed',
+                errormessage=f'异常信息：{e}',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
+            workflow.sqlworkflowcontent.execute_result = execute_result.json()
+            workflow.sqlworkflowcontent.save()
+            workflow.save()
+        else:
+            execute_result.status = "workflow_finish"
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Execute Successfully',
+                errormessage='None',
+                sql=sql,
+                affected_rows=0,
+                execute_time=0,
+            ))
         finally:
             if close_conn:
                 self.close()
