@@ -114,17 +114,6 @@ class InceptionEngine(EngineBase):
             for r in one_line_execute_result.rows:
                 execute_result.rows += [ReviewResult(inception_result=r)]
 
-            # 每执行一次，就将执行结果更新到工单的execute_result，便于展示执行进度和保存执行信息
-            workflow.sqlworkflowcontent.execute_result = execute_result.json()
-            try:
-                workflow.sqlworkflowcontent.save()
-                workflow.save()
-            # 防止执行超时
-            except OperationalError:
-                connection.close()
-                workflow.sqlworkflowcontent.save()
-                workflow.save()
-
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         for r in execute_result.rows:
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
