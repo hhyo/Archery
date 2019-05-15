@@ -129,9 +129,9 @@ class OracleEngine(EngineBase):
         star_patter = r"(^|,| )\*( |\(|$)"
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
-            sql = sql.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
             result['filtered_sql'] = re.sub(r';$', '', sql.strip())
+            sql = sqlparse.format(sql, strip_comments=True)
             sql_lower = sql.lower()
         except IndexError:
             result['bad_query'] = True
