@@ -994,7 +994,9 @@ class TestWorkflowView(TransactionTestCase):
         # 关闭备份选项, 不允许不备份
         archer_config.set('enable_backup_switch', 'false')
         r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
-        self.assertContains(r, '不允许提交不备份工单')
+        self.assertIn('detail', r.url)
+        workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
+        self.assertEqual(SqlWorkflow.objects.get(id=workflow_id).is_backup, True)
 
 
 class TestOptimize(TestCase):
