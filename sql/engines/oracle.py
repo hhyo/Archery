@@ -5,6 +5,7 @@ import traceback
 import re
 import sqlparse
 
+from common.utils.timer import FuncTimer
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -225,7 +226,8 @@ class OracleEngine(EngineBase):
             cursor = conn.cursor()
             # 切换CURRENT_SCHEMA并且记录到执行结果中
             if workflow.db_name:
-                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
+                with FuncTimer() as t:
+                    cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
@@ -233,13 +235,15 @@ class OracleEngine(EngineBase):
                     errormessage='None',
                     sql=f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}",
                     affected_rows=cursor.rowcount,
-                    execute_time=0, ))
+                    execute_time=t.cost, ))
                 line += 1
             # 删除注释语句，切分语句逐条执行，追加到执行结果中
             sql = sqlparse.format(sql, strip_comments=True)
             for statement in sqlparse.split(sql):
                 statement = statement.rstrip(';')
-                cursor.execute(statement)
+                with FuncTimer() as t:
+                    cursor.execute(statement)
+                    conn.commit()
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
@@ -247,10 +251,10 @@ class OracleEngine(EngineBase):
                     errormessage='None',
                     sql=statement,
                     affected_rows=cursor.rowcount,
-                    execute_time=0,
+                    execute_time=t.cost,
                 ))
                 line += 1
-            conn.commit()
+
         except Exception as e:
             logger.error(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)

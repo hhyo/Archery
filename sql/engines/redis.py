@@ -10,6 +10,8 @@ import re
 import redis
 import logging
 import traceback
+
+from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 
@@ -105,7 +107,8 @@ class RedisEngine(EngineBase):
         execute_result = ReviewSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=workflow.db_name)
-            conn.execute_command(workflow.sqlworkflowcontent.sql_content)
+            with FuncTimer() as t:
+                conn.execute_command(workflow.sqlworkflowcontent.sql_content)
             execute_result.rows.append(ReviewResult(
                 id=1,
                 errlevel=0,
@@ -113,7 +116,7 @@ class RedisEngine(EngineBase):
                 errormessage='None',
                 sql=sql,
                 affected_rows=0,
-                execute_time=0,
+                execute_time=t.cost,
             ))
         except Exception as e:
             logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
