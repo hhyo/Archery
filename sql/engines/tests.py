@@ -488,7 +488,7 @@ class TestRedis(TestCase):
         new_engine = RedisEngine(instance=self.ins)
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.rows[0].__dict__, row.__dict__)
+        self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
 
 
 class TestPgSQL(TestCase):
