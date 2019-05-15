@@ -136,7 +136,14 @@
                 }, {
                     title: '是否备份',
                     field: 'is_backup',
-                    visible: true // 默认显示
+                    visible: true, // 默认显示
+                    formatter: function (value, row, index) {
+                        if (value === true) {
+                            return '是'
+                        } else {
+                            return '否'
+                        }
+                    }
                 }, {
                     title: '发起时间',
                     field: 'create_time'

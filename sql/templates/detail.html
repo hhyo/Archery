@@ -146,17 +146,17 @@
             {% csrf_token %}
             <input type="hidden" name="mode" value="auto">
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                <input type="button" id="btnExecuteOnly" class="btn btn-danger"
-                       value="立即执行"/>
+            <input type="button" id="btnExecuteOnly" class="btn btn-danger"
+                   value="立即执行"/>
         </form>
         {% if manual %}
-        <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
-            {% csrf_token %}
-            <input type="hidden" name="mode" value="manual">
-            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-            <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
-                   value="手动执行"/>
-        </form>
+            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="mode" value="manual">
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
+                       value="手动执行"/>
+            </form>
         {% endif %}
     {% endif %}
     <!--定时执行按钮-->
@@ -291,7 +291,11 @@
 
         // 执行确认
         $("#btnExecuteOnly").click(function () {
-            var isContinue = confirm("请确认是否立即执行？");
+            if ("{{ workflow_detail.is_backup }}" === 'False') {
+                var isContinue = confirm("该工单未选择备份，将不会自动备份数据，请确认是否立即执行？");
+            } else {
+                var isContinue = confirm("请确认是否立即执行？");
+            }
             var formExecuteOnly = $("#from-execute");
             if (isContinue) {
                 formExecuteOnly.submit();

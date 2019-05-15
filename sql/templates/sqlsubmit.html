@@ -60,14 +60,18 @@
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            <div id="div-backup" class="form-group">
-                                <select id="is_backup" name="is_backup"
-                                        class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
-                                        data-placeholder="请选择是否要备份" required>
-                                    <option value=True>备份SQL</option>
-                                    <option value=False {% if not enable_backup_switch %}disabled=""{% endif %}>不备份SQL</option>
-                                </select>
-                            </div>
+                            {% if enable_backup_switch %}
+                                <div id="div-backup" class="form-group">
+                                    <select id="is_backup" name="is_backup"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-name="是否选择备份"
+                                            data-placeholder="请选择是否要备份" required>
+                                        <option value="is-empty" disabled="">请选择是否需要备份:</option>
+                                        <option value=True selected="selected">备份SQL</option>
+                                        <option value=False>不备份SQL</option>
+                                    </select>
+                                </div>
+                            {% endif %}
                             <!--增加通知人-->
                             <div class="form-group">
                                 <select id="notify_users" name="notify_users"

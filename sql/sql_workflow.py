@@ -125,7 +125,7 @@ def submit(request):
     instance_name = request.POST['instance_name']
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
-    is_backup = True if request.POST['is_backup'] == 'True' else False
+    is_backup = True if request.POST.get('is_backup') == 'True' else False
     notify_users = request.POST.getlist('notify_users')
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
 
@@ -134,10 +134,10 @@ def submit(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
+    # 未开启备份选择项，强制设置备份
     sys_config = SysConfig()
-    if not sys_config.get('enable_backup_switch') and is_backup is False:
-        context = {'errMsg': '不允许提交不备份工单, 请勾选备份或联系管理员.'}
-        return render(request, 'error.html', context)
+    if not sys_config.get('enable_backup_switch'):
+        is_backup = True
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
