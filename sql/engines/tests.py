@@ -71,10 +71,27 @@ class TestMssql(TestCase):
                             port=1366, user='ins_user', password='some_pass')
         cls.ins1.save()
         cls.engine = MssqlEngine(instance=cls.ins1)
+        cls.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=True,
+            backup_tables='aaa',
+            instance=cls.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=cls.wf, sql_content='insert into some_tb values (1)')
 
     @classmethod
     def tearDownClass(cls):
         cls.ins1.delete()
+        cls.wf.delete()
+        SqlWorkflowContent.objects.all().delete()
 
     @patch('sql.engines.mssql.pyodbc.connect')
     def testGetConnection(self, connect):
@@ -146,6 +163,37 @@ class TestMssql(TestCase):
         banned_sql = 'select user from user_table'
         check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
         self.assertEqual(check_result, "select top 10 user from user_table")
+
+    @patch('sql.engines.mssql.MssqlEngine.execute')
+    def test_execute_workflow(self, mock_execute):
+        mock_execute.return_value.error = None
+        new_engine = MssqlEngine(instance=self.ins1)
+        new_engine.execute_workflow(self.wf)
+        # 有多少个备份表, 就需要execute多少次, 另外加上一条实际执行的次数
+        mock_execute.assert_called()
+        self.assertEqual(len(self.wf.backup_tables.split(' ')) +1 , mock_execute.call_count)
+
+    @patch('sql.engines.mssql.MssqlEngine.get_connection')
+    def test_execute(self, mock_connect):
+        mock_cursor = Mock()
+        mock_connect.return_value.cursor = mock_cursor
+        new_engine = MssqlEngine(instance=self.ins1)
+        execute_result = new_engine.execute('some_db', 'some_sql')
+        # 验证结果, 无异常
+        self.assertIsNone(execute_result.error)
+        self.assertEqual('some_sql', execute_result.full_sql)
+        self.assertEqual(2, len(execute_result.rows))
+        mock_cursor.return_value.execute.assert_called()
+        mock_cursor.return_value.commit.assert_called()
+        mock_cursor.reset_mock()
+        # 验证异常
+        mock_cursor.return_value.execute.side_effect = Exception('Boom! some exception!')
+        execute_result = new_engine.execute('some_db', 'some_sql')
+        self.assertIn('Boom! some exception!', execute_result.error)
+        self.assertEqual('some_sql', execute_result.full_sql)
+        self.assertEqual(2, len(execute_result.rows))
+        mock_cursor.return_value.commit.assert_not_called()
+        mock_cursor.return_value.rollback.assert_called()
 
 
 class TestMysql(TestCase):

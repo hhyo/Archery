@@ -7,7 +7,9 @@ import sqlparse
 from . import EngineBase
 import pyodbc
 from .models import ResultSet, ReviewSet, ReviewResult
+from common.config import SysConfig
 from sql.utils.data_masking import brute_mask
+from django.utils import timezone
 
 logger = logging.getLogger('default')
 
@@ -157,15 +159,81 @@ class MssqlEngine(EngineBase):
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
-        result = ReviewResult(id=1,
-                              errlevel=0,
-                              stagestatus='Audit completed',
-                              errormessage='None',
-                              sql=sql,
-                              affected_rows=0,
-                              execute_time=0, )
-        check_result.rows += [result]
+        # 切分语句，追加到检测结果中，默认全部检测通过
+        split_sql = [f"""use [{db_name}]"""] + sqlparse.split(sql)
+        for statement in split_sql:
+            check_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Audit completed',
+                errormessage='None',
+                sql=statement,
+                affected_rows=0,
+                execute_time=0, ))
         return check_result
+
+    def execute_workflow(self, workflow):
+        if workflow.is_backup:
+            # TODO mssql 备份未实现
+            pass
+        return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+
+    def execute(self, db_name=None, sql='', close_conn=True):
+        """执行sql语句 返回 Review set"""
+        execute_result = ReviewSet(full_sql=sql)
+        conn = self.get_connection(db_name=db_name)
+        cursor = conn.cursor()
+        split_sql = [f"""use [{db_name}]"""] + [sql]
+        rowid = 1
+        for statement in split_sql:
+            try:
+                cursor.execute(statement)
+            except Exception as e:
+                logger.error(f"Mssql命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+                execute_result.error = str(e)
+                execute_result.rows.append(ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus='Execute Failed',
+                    errormessage=f'异常信息：{e}',
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                ))
+                break
+            else:
+                execute_result.rows.append(ReviewResult(
+                    id=rowid,
+                    errlevel=0,
+                    stagestatus='Execute Successfully',
+                    errormessage='None',
+                    sql=statement,
+                    affected_rows=cursor.rowcount,
+                    execute_time=0,
+                ))
+            rowid += 1
+        if execute_result.error:
+            # 如果失败, 将剩下的部分加入结果集, 并将语句回滚
+            for statement in split_sql[rowid:]:
+                execute_result.rows.append(ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus='Execute Failed',
+                    errormessage=f'前序语句失败, 未执行',
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                ))
+                rowid += 1
+            cursor.rollback()
+            for row in execute_result.rows:
+                if row.stagestatus == 'Execute Successfully':
+                    row.stagestatus += '\nRollback Successfully'
+        else:
+            cursor.commit()
+        if close_conn:
+            self.close()
+        return execute_result
 
     def close(self):
         if self.conn:

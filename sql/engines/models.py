@@ -66,7 +66,11 @@ class ReviewSet:
     def json(self):
         tmp_list = []
         for r in self.rows:
-            tmp_list += [r.__dict__]
+            if isinstance(r, dict):
+                tmp_list += [r]
+            else:
+                tmp_list += [r.__dict__]
+
         return json.dumps(tmp_list)
 
     def to_dict(self):
