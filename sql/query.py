@@ -63,8 +63,7 @@ def query(request):
             result['status'] = 1
             result['msg'] = query_check_info.get('msg')
             return HttpResponse(json.dumps(result), content_type='application/json')
-        else:
-            sql_content = query_check_info['filtered_sql']
+        sql_content = query_check_info['filtered_sql']
 
         # 查询权限校验，并且获取limit_num
         priv_check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
@@ -214,4 +213,5 @@ def querylog(request):
 
     result = {"total": sql_log_count, "rows": sql_log}
     # 返回查询结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')

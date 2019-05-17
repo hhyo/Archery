@@ -16,7 +16,7 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -54,15 +54,18 @@ def submit_sql(request):
     # 获取所有有效用户，通知对象
     active_user = Users.objects.filter(is_active=1)
 
-    context = {'active_user': active_user, 'group_list': group_list}
+    # 获取系统配置
+    archer_config = SysConfig()
+
+    context = {'active_user': active_user, 'group_list': group_list,
+               'enable_backup_switch': archer_config.get('enable_backup_switch')}
     return render(request, 'sqlsubmit.html', context)
 
 
 # 展示SQL工单详细页面
 def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    if workflow_detail.status in ['workflow_finish', 'workflow_exception'] \
-            and workflow_detail.is_manual == 0:
+    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
         rows = workflow_detail.sqlworkflowcontent.execute_result
     else:
         rows = workflow_detail.sqlworkflowcontent.review_content
@@ -108,16 +111,32 @@ def detail(request, workflow_id):
     else:
         run_date = ''
 
-    #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-    if isinstance(json.loads(rows)[0], list):
-        review_result = ReviewSet()
-        for r in json.loads(rows):
-            review_result.rows += [ReviewResult(inception_result=r)]
-        rows = review_result.json()
+    # 获取是否开启手工执行确认
+    manual = SysConfig().get('manual')
+
+    review_result = ReviewSet()
+    if rows:
+        try:
+            # 检验rows能不能正常解析
+            loaded_rows = json.loads(rows)
+            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+            if isinstance(loaded_rows[-1], list):
+                for r in loaded_rows:
+                    review_result.rows += [ReviewResult(inception_result=r)]
+                rows = review_result.json()
+        except json.decoder.JSONDecodeError:
+            review_result.rows += [ReviewResult(
+                # 迫于无法单元测试这里加上英文报错信息
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
+    else:
+        rows = workflow_detail.sqlworkflowcontent.review_content
 
     context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
-               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group,
+               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
                'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
     return render(request, 'detail.html', context)
 
@@ -173,8 +192,10 @@ def dashboard(request):
 # SQL在线查询页面
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
+    # 获取实例支持查询的标签id
+    tag_id = InstanceTag.objects.get(tag_code='can_read').id
     # 获取用户关联实例列表
-    instances = [slave for slave in user_instances(request.user, type='slave', db_type='all')]
+    instances = [slave for slave in user_instances(request.user, type='all', db_type='all', tags=[tag_id])]
 
     context = {'instances': instances}
     return render(request, 'sqlquery.html', context)
@@ -304,7 +325,9 @@ def groupmgmt(request, group_id):
 # 实例管理页面
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
-    return render(request, 'instance.html')
+    # 获取实例标签
+    tags = InstanceTag.objects.filter(active=True)
+    return render(request, 'instance.html', {'tags': tags})
 
 
 # 实例用户管理页面

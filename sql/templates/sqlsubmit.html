@@ -50,6 +50,7 @@
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
                                     <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -59,23 +60,27 @@
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
-                            <div id="div-backup" class="form-group">
-                                <select id="is_backup" name="is_backup"
-                                        class="selectpicker show-tick form-control bs-select-hidden" data-name="是否选择备份"
-                                        data-placeholder="请选择是否要备份" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择是否要备份:</option>
-                                    <option value=True>是</option>
-                                    <option value=False>否</option>
-                                </select>
-                            </div>
+                            {% if enable_backup_switch %}
+                                <div id="div-backup" class="form-group">
+                                    <select id="is_backup" name="is_backup"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-name="是否选择备份"
+                                            data-placeholder="请选择是否要备份" required>
+                                        <option value="is-empty" disabled="">请选择是否需要备份:</option>
+                                        <option value=True selected="selected">备份SQL</option>
+                                        <option value=False>不备份SQL</option>
+                                    </select>
+                                </div>
+                            {% endif %}
                             <!--增加通知人-->
                             <div class="form-group">
                                 <select id="notify_users" name="notify_users"
                                         class="selectpicker show-tick form-control bs-select-hidden "
                                         multiple="multiple"
                                         data-name="通知人"
-                                        data-live-search="true" data-placeholder="可选择通知人(邮件抄送)">
-                                    <option value="is-empty" disabled="" selected="selected">可选择通知人(邮件抄送):</option>
+                                        data-live-search="true"
+                                        data-selected-text-format="count > 2"
+                                        data-none-selected-text="可选择通知人(邮件抄送)">
                                     {% for user_info in active_user %}
                                         <option value="{{ user_info.username }}">{{ user_info.display }}</option>
                                     {% endfor %}
@@ -148,13 +153,6 @@
 
     <!--upload -->
     <script>
-        //选择控件初始化
-        $("#notify_users").selectpicker({
-            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
-            countSelectedText: "已选中{0}项",
-            selectedTextFormat: "count > 3"
-        });
-
         //初始化上传控件
         function init_upload() {
             $("#sql-upload").fileinput({
@@ -205,14 +203,8 @@
     <script>
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
-            // 仅MySQL支持备份
             var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (optgroup === "MySQL") {
-                $("#div-backup").show()
-            } else {
-                $("#div-backup").hide();
-                $("#is_backup").val('False')
-            }
+            $("#div-backup").show()
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
@@ -548,7 +540,7 @@
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 'master'
+                    tag_code: 'can_write'
                 },
                 complete: function () {
                     var pathname = window.location.pathname;
@@ -591,6 +583,8 @@
                                 $("#optgroup-redis").append(instance);
                             } else if (result[i]['db_type'] === 'pgsql') {
                                 $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');

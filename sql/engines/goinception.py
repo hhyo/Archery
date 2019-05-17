@@ -29,8 +29,8 @@ class GoInceptionEngine(EngineBase):
         check_result.rows = []
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--check=1;*/
                             inception_magic_start;
-                            use {db_name};
-                            {sql}
+                            use `{db_name}`;
+                            {sql.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
@@ -58,30 +58,17 @@ class GoInceptionEngine(EngineBase):
         # 提交inception执行
         sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
                             inception_magic_start;
-                            use {workflow.db_name};
-                            {workflow.sqlworkflowcontent.sql_content}
+                            use `{workflow.db_name}`;
+                            {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
         # 把结果转换为ReviewSet
         for r in inception_result.rows:
             execute_result.rows += [ReviewResult(inception_result=r)]
 
-        # 执行结果更新到工单的execute_result
-        workflow.sqlworkflowcontent.execute_result = execute_result.json()
-        try:
-            workflow.sqlworkflowcontent.save()
-            workflow.save()
-        # 防止执行超时
-        except OperationalError:
-            connection.close()
-            workflow.sqlworkflowcontent.save()
-            workflow.save()
-
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
-        execute_result.status = "workflow_finish"
         for r in execute_result.rows:
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
-                execute_result.status = "workflow_exception"
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
         return execute_result

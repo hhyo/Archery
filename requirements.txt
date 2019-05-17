@@ -5,6 +5,7 @@ requests==2.21.0
 simplejson==3.16.0
 pycryptodome==3.7.3
 sqlparse==0.2.4
+moz_sql_parser==2.44.19084
 mybatis_mapper2sql==0.1.7
 django-auth-ldap==1.6.1
 python-dateutil==2.7.3
@@ -22,3 +23,4 @@ pyecharts_snapshot==0.1.7
 aliyun-python-sdk-core==2.3.5
 aliyun-python-sdk-core-v3==2.5.3
 aliyun-python-sdk-rds==2.1.1
+cx-Oracle==7.1.3

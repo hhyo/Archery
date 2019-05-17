@@ -44,10 +44,13 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 data-placeholder="请选择实例:" required>
                             <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                            // TODO 使用models中的choices 渲染
                             <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                             <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                             <optgroup id="optgroup-redis" label="Redis"></optgroup>
                             <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                            <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+
                         </select>
                     </div>
                     <div class="form-group">
@@ -143,7 +146,7 @@
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 'slave'
+                    tag_code: 'can_read'
                 },
                 complete: function () {
                 },
@@ -154,6 +157,7 @@
                         $("#optgroup-mssql").empty();
                         $("#optgroup-redis").empty();
                         $("#optgroup-pgsql").empty();
+                        $("#optgroup-oracle").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
@@ -164,6 +168,8 @@
                                 $("#optgroup-redis").append(instance);
                             } else if (result[i]['db_type'] === 'pgsql') {
                                 $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');

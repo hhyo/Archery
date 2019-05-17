@@ -41,9 +41,7 @@ class TestSQLUtils(TestCase):
         :return:
         """
         sql = "select * from user.users a join logs.log b on a.id=b.id;"
-        self.assertEqual(extract_tables(sql),
-                         (TableReference(schema='user', name='users', alias='a', is_function=False),
-                          TableReference(schema='logs', name='log', alias='b', is_function=False)))
+        self.assertEqual(extract_tables(sql), [{'name': 'users', 'schema': 'user'}, {'name': 'log', 'schema': 'logs'}])
 
     def test_generate_sql_from_sql(self):
         """

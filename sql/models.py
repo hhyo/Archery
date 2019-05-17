@@ -73,7 +73,8 @@ DB_TYPE_CHOICES = (
     ('mysql', 'MySQL'),
     ('mssql', 'MsSQL'),
     ('redis', 'Redis'),
-    ('pgsql', 'PgSQL'),)
+    ('pgsql', 'PgSQL'),
+    ('oracle', 'Oracle'),)
 
 
 class Instance(models.Model):
@@ -87,6 +88,8 @@ class Instance(models.Model):
     port = models.IntegerField('端口', default=0)
     user = models.CharField('用户名', max_length=100, default='', blank=True)
     password = models.CharField('密码', max_length=300, default='', blank=True)
+    service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
+    sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
@@ -115,6 +118,38 @@ class Instance(models.Model):
             # 密码有变动才再次加密保存
             self.password = pc.encrypt(self.password) if old_password != self.password else self.password
         super(Instance, self).save(*args, **kwargs)
+
+
+class InstanceTag(models.Model):
+    """实例标签配置"""
+    tag_code = models.CharField('标签代码', max_length=20, unique=True)
+    tag_name = models.CharField('标签名称', max_length=20, unique=True)
+    active = models.BooleanField('激活状态', default=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+
+    def __str__(self):
+        return self.tag_name
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance_tag'
+        verbose_name = u'实例标签'
+        verbose_name_plural = u'实例标签'
+
+
+class InstanceTagRelations(models.Model):
+    """实例标签关系"""
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    instance_tag = models.ForeignKey(InstanceTag, on_delete=models.CASCADE)
+    active = models.BooleanField('激活状态', default=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance_tag_relations'
+        unique_together = ('instance', 'instance_tag')
+        verbose_name = u'实例标签关系'
+        verbose_name_plural = u'实例标签关系'
 
 
 SQL_WORKFLOW_CHOICES = (
@@ -292,8 +327,8 @@ class QueryPrivilegesApply(models.Model):
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_list = models.TextField('数据库')  # 逗号分隔的数据库列表
-    table_list = models.TextField('表')  # 逗号分隔的表列表
+    db_list = models.TextField('数据库', default='')  # 逗号分隔的数据库列表
+    table_list = models.TextField('表', default='')  # 逗号分隔的表列表
     valid_date = models.DateField('有效时间')
     limit_num = models.IntegerField('行数限制', default=100)
     priv_type = models.IntegerField('权限类型', choices=((1, 'DATABASE'), (2, 'TABLE'),), default=0)
@@ -440,11 +475,11 @@ class ParamHistory(models.Model):
     set_sql = models.CharField('在线变更配置执行的SQL语句', max_length=1024)
     user_name = models.CharField('修改人', max_length=30)
     user_display = models.CharField('修改人中文名', max_length=50)
-    update_time = models.DateTimeField('修改时间', auto_now_add=True)
+    create_time = models.DateTimeField('参数被修改时间点', auto_now_add=True)
 
     class Meta:
         managed = True
-        ordering = ['-update_time']
+        ordering = ['-create_time']
         db_table = 'param_history'
         verbose_name = u'实例参数修改历史'
         verbose_name_plural = u'实例参数修改历史'
@@ -564,6 +599,7 @@ class Permission(models.Model):
             ('query_mgtpriv', '管理查询权限'),
             ('query_review', '审核查询权限'),
             ('query_submit', '提交SQL查询'),
+            ('query_all_instances', '可查询所有实例'),
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),

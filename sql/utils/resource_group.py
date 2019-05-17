@@ -18,23 +18,25 @@ def user_groups(user):
     return group_list
 
 
-def user_instances(user, type='all', db_type='all'):
+def user_instances(user, type='all', db_type='all', tags=None):
     """
     获取用户实例列表（通过资源组间接关联）
     :param user:
     :param type: 实例类型 all：全部，master主库，salve从库
     :param db_type: 数据库类型, mysql，mssql
+    :param tags: 标签id列表, [1,2]
     :return:
     """
     # 先获取用户关联资源组列表
     group_list = user_groups(user)
     group_ids = [group.group_id for group in group_list]
-    if user.is_superuser == 1:
+    if user.has_perm('sql.query_all_instances'):
         instance_ids = [master['id'] for master in Instance.objects.all().values('id')]
     else:
         # 获取资源组关联的实例列表
         instance_ids = [group['object_id'] for group in
-                        ResourceGroupRelations.objects.filter(group_id__in=group_ids, object_type=1).values('object_id')]
+                        ResourceGroupRelations.objects.filter(group_id__in=group_ids, object_type=1).values(
+                            'object_id')]
     # 过滤type
     if type == 'all':
         instances = Instance.objects.filter(pk__in=instance_ids)
@@ -44,6 +46,11 @@ def user_instances(user, type='all', db_type='all'):
     # 过滤db_type
     if db_type != 'all':
         instances = instances.filter(db_type=db_type)
+
+    # 过滤tag
+    if tags:
+        for tag in tags:
+            instances = instances.filter(instancetagrelations__instance_tag=tag, instancetagrelations__active=True)
 
     return instances
 

@@ -22,7 +22,7 @@ class InceptionEngine(EngineBase):
         archer_config = SysConfig()
         inception_host = archer_config.get('inception_host')
         inception_port = int(archer_config.get('inception_port', 6669))
-        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8')
+        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4')
         return self.conn
 
     @staticmethod
@@ -36,7 +36,7 @@ class InceptionEngine(EngineBase):
                                port=backup_port,
                                user=backup_user,
                                passwd=backup_password,
-                               charset='utf8')
+                               charset='utf8mb4')
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
@@ -67,7 +67,7 @@ class InceptionEngine(EngineBase):
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
                             --port={instance.port};--enable-check=1;*/
                             inception_magic_start;
-                            use {db_name};
+                            use `{db_name}`;
                             {sql}
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
@@ -96,7 +96,7 @@ class InceptionEngine(EngineBase):
         sql_split = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host}; 
                          --port={instance.port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
-                         use {workflow.db_name};
+                         use `{workflow.db_name}`;
                          {workflow.sqlworkflowcontent.sql_content}
                          inception_magic_commit;"""
         split_result = self.query(sql=sql_split)
@@ -114,22 +114,9 @@ class InceptionEngine(EngineBase):
             for r in one_line_execute_result.rows:
                 execute_result.rows += [ReviewResult(inception_result=r)]
 
-            # 每执行一次，就将执行结果更新到工单的execute_result，便于展示执行进度和保存执行信息
-            workflow.sqlworkflowcontent.execute_result = execute_result.json()
-            try:
-                workflow.sqlworkflowcontent.save()
-                workflow.save()
-            # 防止执行超时
-            except OperationalError:
-                connection.close()
-                workflow.sqlworkflowcontent.save()
-                workflow.save()
-
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
-        execute_result.status = "workflow_finish"
         for r in execute_result.rows:
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
-                execute_result.status = "workflow_exception"
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
         return execute_result
@@ -160,7 +147,7 @@ class InceptionEngine(EngineBase):
         sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
                           --port={instance.port};--enable-query-print;*/
                           inception_magic_start;\
-                          use {db_name};
+                          use `{db_name}`;
                           {sql}
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]

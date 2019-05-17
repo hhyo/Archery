@@ -109,6 +109,9 @@ class TestQueryPrivilegesCheck(TestCase):
 
     def setUp(self):
         self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.user_can_query_all = User.objects.create(username='normaluser')
+        query_all_instance_perm = Permission.objects.get(codename='query_all_instances')
+        self.user_can_query_all.user_permissions.add(query_all_instance_perm)
         self.user = User.objects.create(username='user')
         # 使用 travis.ci 时实例和测试service保持一致
         self.slave = Instance.objects.create(instance_name='test_instance', type='slave', db_type='mysql',
@@ -252,6 +255,12 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+        r = sql.query_privileges.query_priv_check(user=self.user_can_query_all,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
+
 
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -311,7 +320,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
-                                 'msg': "你无test_archery数据库的查询权限！请先到查询权限管理进行申请",
+                                 'msg': "你无archery数据库的查询权限！请先到查询权限管理进行申请",
                                  'data': {'priv_check': True, 'limit_num': 0}})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
@@ -330,7 +339,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
                                  'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：'RuntimeError' object is not iterable",
-                                 'data': {'priv_check': True, 'limit_num': 0}})
+                                 'data': {'priv_check': True, 'limit_num': 100}})
 
     @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
     @patch('sql.query_privileges._tb_priv', return_value=False)
@@ -375,7 +384,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 0, 'priv_check': True},
-                                 'msg': '你无test_archery数据库的查询权限！请先到查询权限管理进行申请',
+                                 'msg': '你无archery数据库的查询权限！请先到查询权限管理进行申请',
                                  'status': 1})
 
 
@@ -719,6 +728,8 @@ class TestWorkflowView(TransactionTestCase):
     def setUp(self):
         self.now = datetime.now()
         can_view_permission = Permission.objects.get(codename='menu_sqlworkflow')
+        can_execute_permission = Permission.objects.get(codename='sql_execute')
+        can_execute_resource_permission = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.u1 = User(username='some_user', display='用户1')
         self.u1.save()
         self.u1.user_permissions.add(can_view_permission)
@@ -728,6 +739,10 @@ class TestWorkflowView(TransactionTestCase):
         self.u3 = User(username='some_user3', display='用户3')
         self.u3.save()
         self.u3.user_permissions.add(can_view_permission)
+        self.executor1 = User(username='some_executor', display='执行者')
+        self.executor1.save()
+        self.executor1.user_permissions.add(can_view_permission, can_execute_permission,
+                                            can_execute_resource_permission)
         self.superuser1 = User(username='super1', is_superuser=True)
         self.superuser1.save()
         self.master1 = Instance(instance_name='test_master_instance', type='master', db_type='mysql',
@@ -789,6 +804,7 @@ class TestWorkflowView(TransactionTestCase):
         self.u1.delete()
         self.superuser1.delete()
         self.resource_group1.delete()
+        SysConfig().purge()
 
     def testWorkflowStatus(self):
         c = Client(header={})
@@ -813,6 +829,24 @@ class TestWorkflowView(TransactionTestCase):
         self.assertContains(r, expected_status_display)
         exepcted_status = r"""id="workflow_detail_status">workflow_finish"""
         self.assertContains(r, exepcted_status)
+
+        # 测试执行详情解析失败
+        self.wfc1.execute_result = 'cannotbedecode:1,:'
+        self.wfc1.save()
+        r = c.get('/detail/{}/'.format(self.wf1.id))
+        self.assertContains(r, expected_status_display)
+        self.assertContains(r, exepcted_status)
+        self.assertContains(r, 'Json decode failed.')
+
+        # 执行详情为空
+        self.wfc1.review_content = [
+            {"id": 1, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",
+             "sql": "use archery", "affected_rows": 0, "sequence": "'0_0_0'", "backup_dbname": "None",
+             "execute_time": "0", "sqlsha1": "", "actual_affected_rows": ""}]
+        self.wfc1.execute_result = ''
+        self.wfc1.save()
+        r = c.get('/detail/{}/'.format(self.wf1.id))
+        self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
         c = Client()
@@ -861,6 +895,23 @@ class TestWorkflowView(TransactionTestCase):
 
     @patch('sql.sql_workflow.Audit.add_log')
     @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
+    @patch('sql.sql_workflow.can_execute')
+    def test_workflow_execute(self, mock_can_excute, mock_detail_by_id, mock_add_log):
+        c = Client()
+        c.force_login(self.executor1)
+        r = c.post('/execute/')
+        self.assertContains(r, 'workflow_id参数为空.')
+        mock_can_excute.return_value = False
+        r = c.post('/execute/', data={'workflow_id': self.wf2.id})
+        self.assertContains(r, '你无权操作当前工单！')
+        mock_can_excute.return_value = True
+        mock_detail_by_id = 123
+        r = c.post('/execute/', data={'workflow_id': self.wf2.id, 'mode': 'manual'})
+        self.wf2.refresh_from_db()
+        self.assertEqual('workflow_finish', self.wf2.status)
+
+    @patch('sql.sql_workflow.Audit.add_log')
+    @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
     @patch('sql.sql_workflow.Audit.audit')
     # patch view里的can_cancel 而不是原始位置的can_cancel ,因为在调用时, 已经 import 了真的 can_cancel ,会导致mock失效
     # 在import 静态函数时需要注意这一点, 动态对象因为每次都会重新生成,也可以 mock 原函数/方法/对象
@@ -887,6 +938,7 @@ class TestWorkflowView(TransactionTestCase):
     @patch('sql.sql_workflow.get_engine')
     @patch('sql.sql_workflow.user_instances')
     def test_workflow_auto_review_view(self, mock_user_instances, mock_get_engine, mock_audit, mock_async_task):
+        """测试 autoreview/submit view"""
         c = Client()
         c.force_login(self.superuser1)
         request_data = {
@@ -919,6 +971,32 @@ class TestWorkflowView(TransactionTestCase):
         self.assertIn('detail', r.url)
         workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
         self.assertEqual(request_data['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
+
+        # 强制备份测试
+        # 打开备份开关, 对备份不要求
+        request_data_without_backup = {
+            'sql_content': "update some_db set some_key=\'some value\';",
+            'workflow_name': 'some_title_2',
+            'group_name': self.resource_group1.group_name,
+            'group_id': self.resource_group1.group_id,
+            'instance_name': self.master1.instance_name,
+            'db_name': 'some_db',
+            'is_backup': False,
+            'notify_users': ''
+        }
+        archer_config = SysConfig()
+        archer_config.set('enable_backup_switch', 'true')
+        r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
+        self.assertIn('detail', r.url)
+        workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
+        self.assertEqual(request_data_without_backup['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
+
+        # 关闭备份选项, 不允许不备份
+        archer_config.set('enable_backup_switch', 'false')
+        r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
+        self.assertIn('detail', r.url)
+        workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
+        self.assertEqual(SqlWorkflow.objects.get(id=workflow_id).is_backup, True)
 
 
 class TestOptimize(TestCase):

@@ -1,0 +1,22 @@
+[
+  {
+    "model": "sql.InstanceTag",
+    "pk": 1,
+    "fields": {
+      "tag_code": "can_write",
+      "tag_name": "支持上线",
+      "active": true,
+      "create_time": "2019-05-03"
+    }
+  },
+  {
+    "model": "sql.InstanceTag",
+    "pk": 2,
+    "fields": {
+      "tag_code": "can_read",
+      "tag_name": "支持查询",
+      "active": true,
+      "create_time": "2019-05-03"
+    }
+  }
+]

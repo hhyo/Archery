@@ -18,6 +18,14 @@ class ConfigOpsTests(TestCase):
     def setUp(self):
         pass
 
+    def test_purge(self):
+        archer_config = SysConfig()
+        archer_config.set('some_key','some_value')
+        archer_config.purge()
+        self.assertEqual({}, archer_config.sys_config)
+        archer_config2 = SysConfig()
+        self.assertEqual({}, archer_config2.sys_config)
+
     def test_replace_configs(self):
         archer_config = SysConfig()
         new_config = json.dumps(

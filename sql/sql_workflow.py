@@ -125,7 +125,7 @@ def submit(request):
     instance_name = request.POST['instance_name']
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
-    is_backup = True if request.POST['is_backup'] == 'True' else False
+    is_backup = True if request.POST.get('is_backup') == 'True' else False
     notify_users = request.POST.getlist('notify_users')
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
 
@@ -134,9 +134,14 @@ def submit(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
+    # 未开启备份选择项，强制设置备份
+    sys_config = SysConfig()
+    if not sys_config.get('enable_backup_switch'):
+        is_backup = True
+
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        user_instances(request.user, type='master', db_type='all').get(instance_name=instance_name)
+        user_instances(request.user, type='all', db_type='all').get(instance_name=instance_name)
     except instance.DoesNotExist:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
@@ -150,7 +155,7 @@ def submit(request):
         return render(request, 'error.html', context)
 
     # 按照系统配置确定是自动驳回还是放行
-    sys_config = SysConfig()
+
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':
@@ -262,23 +267,37 @@ def execute(request):
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
-
-    # 将流程状态修改为执行中
-    SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
+    # 根据执行模式进行对应修改
+    mode = request.POST.get('mode')
+    if mode == "auto":
+        status = "workflow_executing"
+        operation_type = 5
+        operation_type_desc = '执行工单'
+        operation_info = "自动操作执行"
+        finish_time = None
+    else:
+        status = "workflow_finish"
+        operation_type = 6
+        operation_type_desc = '手工工单'
+        operation_info = "确认手工执行结束"
+        finish_time = datetime.datetime.now()
+    # 将流程状态修改为对应状态
+    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
 
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
     Audit.add_log(audit_id=audit_id,
-                  operation_type=5,
-                  operation_type_desc='执行工单',
-                  operation_info="人工操作执行",
+                  operation_type=operation_type,
+                  operation_type_desc=operation_type_desc,
+                  operation_info=operation_info,
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
-    # 加入执行队列
-    async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
-               timeout=-1)
+    if mode == "auto":
+        # 加入执行队列
+        async_task('sql.utils.execute_sql.execute', workflow_id,
+                   hook='sql.utils.execute_sql.execute_callback', timeout=-1)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 

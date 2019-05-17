@@ -10,6 +10,8 @@ import re
 import redis
 import logging
 import traceback
+
+from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 
@@ -20,8 +22,9 @@ logger = logging.getLogger('default')
 
 class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
-        return redis.Redis(host=self.host, port=self.port, db=0, password=self.password,
-                                encoding_errors='ignore', decode_responses=True)
+        db_name = db_name or 0
+        return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
+                           encoding_errors='ignore', decode_responses=True)
 
     @property
     def name(self):
@@ -45,13 +48,12 @@ class RedisEngine(EngineBase):
 
     def query_check(self, db_name=None, sql='', limit_num=0):
         """提交查询前的检查"""
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        safe_cmd = ["exists", "ttl", "pttl", "type", "get", "mget", "strlen",
+        result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
+        safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
                     "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
                     "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
-            result['bad_query'] = True
             if re.match(fr'^{cmd}', sql.strip(), re.I):
                 result['bad_query'] = False
                 break
@@ -63,9 +65,7 @@ class RedisEngine(EngineBase):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.get_connection()
-            if db_name:
-                conn.execute_command(f"select {db_name}")
+            conn = self.get_connection(db_name=db_name)
             rows = conn.execute_command(sql)
             result_set.column_list = ['Result']
             if isinstance(rows, list):
@@ -106,14 +106,21 @@ class RedisEngine(EngineBase):
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
         try:
-            conn = self.get_connection()
-            if workflow.db_name:
-                conn.execute_command(f"select {workflow.db_name}")
-            conn.execute_command(workflow.sqlworkflowcontent.sql_content)
+            conn = self.get_connection(db_name=workflow.db_name)
+            with FuncTimer() as t:
+                conn.execute_command(workflow.sqlworkflowcontent.sql_content)
+            execute_result.rows.append(ReviewResult(
+                id=1,
+                errlevel=0,
+                stagestatus='Execute Successfully',
+                errormessage='None',
+                sql=sql,
+                affected_rows=0,
+                execute_time=t.cost,
+            ))
         except Exception as e:
             logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            execute_result.status = "workflow_exception"
             execute_result.rows.append(ReviewResult(
                 id=1,
                 errlevel=2,
@@ -123,19 +130,4 @@ class RedisEngine(EngineBase):
                 affected_rows=0,
                 execute_time=0,
             ))
-        else:
-            execute_result.status = "workflow_finish"
-            execute_result.rows.append(ReviewResult(
-                id=1,
-                errlevel=0,
-                stagestatus='Execute Successfully',
-                errormessage='None',
-                sql=sql,
-                affected_rows=0,
-                execute_time=0,
-            ))
-        finally:
-            workflow.sqlworkflowcontent.execute_result = execute_result.json()
-            workflow.sqlworkflowcontent.save()
-            workflow.save()
         return execute_result

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
-from sql.models import ResourceGroup, ResourceGroupRelations, Users, Instance
+from sql.models import ResourceGroup, ResourceGroupRelations, Users, Instance, InstanceTag
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
@@ -97,18 +97,21 @@ def instances(request):
     """获取资源组关联实例列表"""
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
-    type = request.POST.get('type')
-    db_type = request.POST.getlist('db_type[]')
+    tag_code = request.POST.get('tag_code')
+
     # 先获取资源组关联所有实例列表
     instance_ids = [group['object_id'] for group in
                     ResourceGroupRelations.objects.filter(group_id=group_id, object_type=1).values('object_id')]
 
-    # 获取实例信息
-    instances = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'type', 'db_type',
-                                                                               'instance_name')
-    # 过滤db_type
-    if db_type:
-        instances = instances.filter(db_type=db_type)
+    instances = Instance.objects.filter(pk__in=instance_ids)
+
+    # 过滤tag
+    if tag_code:
+        tag_id = InstanceTag.objects.get(tag_code=tag_code).id
+        instances = instances.filter(instancetagrelations__instance_tag=tag_id,
+                                     instancetagrelations__active=True
+                                     ).values('id', 'type', 'db_type', 'instance_name')
+
     rows = [row for row in instances]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
