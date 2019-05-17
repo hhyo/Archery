@@ -7,7 +7,7 @@ pycryptodome==3.8.1
 sqlparse==0.2.4
 moz_sql_parser==2.44.19084
 mybatis_mapper2sql==0.1.8
-django-auth-ldap==1.6.1
+django-auth-ldap==1.2.16
 python-dateutil==2.7.3
 pymongo==3.8.0
 psycopg2-binary==2.8.2
