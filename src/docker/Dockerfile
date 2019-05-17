@@ -1,7 +1,7 @@
 FROM docker.io/centos:7
 
 #python3.6
-RUN yum -y install wget gcc make zlib-devel openssl openssl-devel \
+RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
     && wget "https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tar.xz" \
     && tar -xvJf Python-3.6.5.tar.xz \
