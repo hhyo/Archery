@@ -39,7 +39,7 @@ class Binlog2Sql(Plugin):
                 elif name in parse_mode_options and value:
                     cmd_args += f' --{name}'
                 elif name in range_options and value:
-                    cmd_args += f' --{name}={value}'
+                    cmd_args += f" --{name}='{value}'"
                 elif name in filter_options and value:
                     if name == 'only-dml':
                         cmd_args += f' --{name}'

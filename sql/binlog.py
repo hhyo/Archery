@@ -86,7 +86,7 @@ def binlog2sql(request):
     no_pk = True if request.POST.get('no_pk') == 'true' else False
     flashback = True if request.POST.get('flashback') == 'true' else False
     back_interval = 0 if request.POST.get('back_interval') == '' else int(request.POST.get('back_interval'))
-    num = 500 if request.POST.get('num') == '' else int(request.POST.get('num'))
+    num = 30 if request.POST.get('num') == '' else int(request.POST.get('num'))
     start_file = request.POST.get('start_file')
     start_pos = request.POST.get('start_pos') if request.POST.get('start_pos') == '' else int(
         request.POST.get('start_pos'))
@@ -149,17 +149,23 @@ def binlog2sql(request):
                 rows.append(row_info)
             else:
                 break
+        if rows.__len__() == 0:
+            # 判断是否有异常
+            stderr = p.stderr.read()
+            if stderr:
+                result['status'] = 1
+                result['msg'] = stderr
+                return HttpResponse(json.dumps(result), content_type='application/json')
         # 终止子进程
         p.kill()
         result['data'] = rows
-    except RuntimeError as e:
+    except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
         result['msg'] = str(e)
 
     # 异步保存到文件，去除conn_options避免展示密码信息
     if save_sql:
-        args['conn_options'] = ''
         async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql)
 
     # 返回查询结果
@@ -176,7 +182,6 @@ def binlog2sql_file(args, user):
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
-    args['conn_options'] = fr"-h{instance.host} -u{instance.user} -p'{instance.raw_password}' -P{instance.port} "
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
     if args.get('flashback'):
