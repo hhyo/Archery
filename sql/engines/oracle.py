@@ -31,7 +31,7 @@ class OracleEngine(EngineBase):
             dsn = cx_Oracle.makedsn(self.host, self.port, service_name=self.service_name)
             self.conn = cx_Oracle.connect(self.user, self.password, dsn=dsn, encoding="UTF-8", nencoding="UTF-8")
         else:
-            self.conn = None
+            raise ValueError('sid 和 dsn 均未填写, 请联系管理页补充该实例配置.')
         return self.conn
 
     @property
