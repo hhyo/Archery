@@ -878,7 +878,27 @@ class TestOracle(TestCase):
     @patch('cx_Oracle.makedsn')
     @patch('cx_Oracle.connect')
     def test_get_connection(self, _connect, _makedsn):
+        # 填写 sid 测试
         new_engine = OracleEngine(self.ins)
         new_engine.get_connection()
         _connect.assert_called_once()
         _makedsn.assert_called_once()
+        # 填写 service_name 测试
+        _connect.reset_mock()
+        _makedsn.reset_mock()
+        self.ins.service_name = 'some_service'
+        self.ins.sid = ''
+        self.ins.save()
+        new_engine = OracleEngine(self.ins)
+        new_engine.get_connection()
+        _connect.assert_called_once()
+        _makedsn.assert_called_once()
+        # 都不填写, 检测 ValueError
+        _connect.reset_mock()
+        _makedsn.reset_mock()
+        self.ins.service_name = ''
+        self.ins.sid = ''
+        self.ins.save()
+        new_engine = OracleEngine(self.ins)
+        with self.assertRaises(ValueError):
+            new_engine.get_connection()
