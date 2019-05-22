@@ -204,42 +204,33 @@ class OracleEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
         # 切分语句，追加到检测结果中，默认全部检测通过
+        line = 1
         for statement in sqlparse.split(sql):
             check_result.rows.append(ReviewResult(
-                id=1,
+                id=line,
                 errlevel=0,
                 stagestatus='Audit completed',
                 errormessage='None',
                 sql=statement,
                 affected_rows=0,
                 execute_time=0, ))
+            line += 1
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
+        # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
+        sql = sqlparse.format(sql, strip_comments=True)
+        split_sql = [f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name};"] + sqlparse.split(sql)
         line = 1
         statement = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            # 切换CURRENT_SCHEMA并且记录到执行结果中
-            if workflow.db_name:
-                with FuncTimer() as t:
-                    cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
-                execute_result.rows.append(ReviewResult(
-                    id=line,
-                    errlevel=0,
-                    stagestatus='Execute Successfully',
-                    errormessage='None',
-                    sql=f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}",
-                    affected_rows=cursor.rowcount,
-                    execute_time=t.cost, ))
-                line += 1
-            # 删除注释语句，切分语句逐条执行，追加到执行结果中
-            sql = sqlparse.format(sql, strip_comments=True)
-            for statement in sqlparse.split(sql):
+            # 逐条执行切分语句，追加到执行结果中
+            for statement in split_sql:
                 statement = statement.rstrip(';')
                 with FuncTimer() as t:
                     cursor.execute(statement)
@@ -254,11 +245,10 @@ class OracleEngine(EngineBase):
                     execute_time=t.cost,
                 ))
                 line += 1
-
         except Exception as e:
             logger.error(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            # 追加报错信息到执行结果中
+            # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(
                 id=line,
                 errlevel=2,
@@ -268,6 +258,19 @@ class OracleEngine(EngineBase):
                 affected_rows=0,
                 execute_time=0,
             ))
+            line += 1
+            # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
+            for statement in split_sql[line - 1:]:
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Audit completed',
+                    errormessage=f'前序语句失败, 未执行',
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                ))
+                line += 1
         finally:
             if close_conn:
                 self.close()
