@@ -22,6 +22,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
 
 # Application definition
 INSTALLED_APPS = (
+    'simpleui',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -123,7 +124,7 @@ DATABASES = {
         'NAME': 'archery',
         'USER': 'root',
         'PASSWORD': 'inspur',
-        'HOST': '127.0.0.1',
+        'HOST': '192.168.99.100',
         'PORT': '3306',
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -142,7 +143,7 @@ MONGODB_DATABASES = {
         "NAME": 'themis',
         "USER": '',
         "PASSWORD": '',
-        "HOST": '127.0.0.1',
+        "HOST": '10.0.67.75',
         "PORT": 27017,
     },
 }
@@ -159,14 +160,14 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'label': 'Django Q',
     'django_redis': 'default',
-    'sync': False  # 本地调试可以修改为True，使用同步模式
+    'sync': True  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
+        "LOCATION": "redis://192.168.99.100:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

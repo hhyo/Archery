@@ -35,12 +35,9 @@ def sqlupdate1(request):
     for instance_name in instances:
             query_engine = get_engine(instance=instance_name)
             db_list = query_engine.get_all_databases().rows
-            print(db_list)
             if dbfiter=='liu':
                 instance_list = {'instance': instance_name, 'database': db_list}
-                print(instance_list)
                 database_list.append(instance_list)
-                print(database_list)
             else:
 
                 for db in db_list:
