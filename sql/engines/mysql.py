@@ -157,7 +157,7 @@ class MysqlEngine(EngineBase):
             if re.match(r"^select", statement.lower()):
                 check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
-                                      stagestatus='驳回高危SQL',
+                                      stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
                 check_result.rows += [result]

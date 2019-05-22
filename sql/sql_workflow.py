@@ -118,8 +118,6 @@ def submit(request):
     sql_content = request.POST['sql_content'].strip()
     workflow_title = request.POST['workflow_name']
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
-    # 工单表中可以考虑不存储资源组相关信息
-    # 工单和实例关联， 实例和资源组关联， 资源组和用户关联。（reply 一个实例可以被多个资源组关联，无法去除）
     group_name = request.POST['group_name']
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     instance_name = request.POST['instance_name']
@@ -134,7 +132,7 @@ def submit(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
-    # 未开启备份选择项，强制设置备份
+    # 未开启备份选项，强制设置备份
     sys_config = SysConfig()
     if not sys_config.get('enable_backup_switch'):
         is_backup = True
@@ -155,7 +153,6 @@ def submit(request):
         return render(request, 'error.html', context)
 
     # 按照系统配置确定是自动驳回还是放行
-
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':

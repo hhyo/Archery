@@ -129,7 +129,7 @@ class PgSQLEngine(EngineBase):
             sql = sqlparse.split(sql)[0]
             result['filtered_sql'] = sql.strip()
         except IndexError:
-            result['has_star'] = True
+            result['bad_query'] = True
             result['msg'] = '没有有效的SQL语句'
         if re.match(r"^select", sql, re.I) is None:
             result['bad_query'] = True
