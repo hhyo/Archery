@@ -286,7 +286,7 @@ class TestMysql(TestCase):
     def test_execute_check_select_sql(self):
         sql = 'select * from user'
         row = ReviewResult(id=1, errlevel=2,
-                           stagestatus='驳回高危SQL',
+                           stagestatus='驳回不支持语句',
                            errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                            sql=sql)
         new_engine = MysqlEngine(instance=self.ins1)

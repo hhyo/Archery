@@ -55,6 +55,8 @@ RUN cd /opt \
     && curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 \
     && yum -y install unixODBC-devel
+#oracle instantclient
+RUN yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
