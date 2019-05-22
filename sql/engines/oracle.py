@@ -7,6 +7,7 @@ import sqlparse
 
 from common.config import SysConfig
 from common.utils.timer import FuncTimer
+from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -149,7 +150,7 @@ class OracleEngine(EngineBase):
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'
             result['bad_query'] = True
-        if result.get('bad_query'):
+        if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result
 
@@ -205,53 +206,45 @@ class OracleEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
-        # 禁用语句检查
+        # 禁用/高危语句检查
         line = 1
+        critical_ddl_regex = config.get('critical_ddl_regex', '')
+        p = re.compile(critical_ddl_regex)
+        check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
         for statement in sqlparse.split(sql):
             statement = sqlparse.format(statement, strip_comments=True)
+            # 禁用语句
             if re.match(r"^select", statement.lower()):
                 check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
-                check_result.rows += [result]
+            # 高危语句
+            elif critical_ddl_regex and p.match(statement.strip().lower()):
+                check_result.is_critical = True
+                result = ReviewResult(id=line, errlevel=2,
+                                      stagestatus='驳回高危SQL',
+                                      errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
+                                      sql=statement)
+
+            # 正常语句
+            else:
+                result = ReviewResult(id=line, errlevel=0,
+                                      stagestatus='Audit completed',
+                                      errormessage='None',
+                                      sql=statement,
+                                      affected_rows=0,
+                                      execute_time=0, )
+            # 判断工单类型
+            if get_syntax_type(statement) == 'DDL':
+                check_result.syntax_type = 1
+            check_result.rows += [result]
+
+            # 遇到禁用和高危语句直接返回，提高效率
+            if check_result.is_critical:
                 check_result.error_count += 1
-        # 高危SQL检查
-        if not check_result.is_critical and config.get('critical_ddl_regex'):
-            # 如果启用critical_ddl 的检查
-            critical_ddl_regex = config.get('critical_ddl_regex')
-            p = re.compile(critical_ddl_regex)
-            # 逐行匹配正则
-            line = 1
-            for statement in sqlparse.split(sql):
-                # 删除注释语句
-                statement = sqlparse.format(statement, strip_comments=True)
-                if p.match(statement.strip().lower()):
-                    result = ReviewResult(id=line, errlevel=2,
-                                          stagestatus='驳回高危SQL',
-                                          errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                                          sql=statement)
-                    check_result.is_critical = True
-                    check_result.error_count += 1
-                else:
-                    result = ReviewResult(id=line, errlevel=0, sql=statement)
-                check_result.rows += [result]
-                line += 1
-        # 高危/禁用语句直接返回
-        if check_result.is_critical:
-            return check_result
-        # 非高危/禁用语句，追加到检测结果中
-        line = 1
-        for statement in sqlparse.split(sql):
-            check_result.rows.append(ReviewResult(
-                id=line,
-                errlevel=0,
-                stagestatus='Audit completed',
-                errormessage='None',
-                sql=statement,
-                affected_rows=0,
-                execute_time=0, ))
+                return check_result
             line += 1
         return check_result
 
