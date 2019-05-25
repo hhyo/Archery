@@ -19,12 +19,13 @@ from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroupRelations, WorkflowLog, \
-    WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, QueryPrivilegesApply
+    WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel
 from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.workflow_audit import Audit
+from sql.utils.data_masking import data_masking, brute_mask
 
 User = get_user_model()
 __author__ = 'hhyo'
@@ -962,3 +963,209 @@ class TestAudit(TestCase):
         """测试获取工单日志"""
         r = Audit.logs(self.audit.audit_id).first()
         self.assertEqual(r, self.wl)
+
+
+class TestDataMasking(TestCase):
+    def setUp(self):
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.user = User.objects.create(username='user')
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+                                           host='some_host',
+                                           port=3306, user='ins_user', password='some_pass')
+        self.sys_config = SysConfig()
+        self.wf1 = SqlWorkflow.objects.create(
+            workflow_name='workflow_name',
+            group_id=1,
+            group_name='group_name',
+            engineer=self.superuser.username,
+            engineer_display=self.superuser.display,
+            audit_auth_groups='audit_auth_groups',
+            create_time=datetime.datetime.now(),
+            status='workflow_review_pass',
+            is_backup=True,
+            instance=self.ins,
+            db_name='db_name',
+            syntax_type=1,
+        )
+        DataMaskingRules.objects.create(
+            rule_type=1,
+            rule_regex='(.{3})(.*)(.{4})',
+            hide_group=2)
+        DataMaskingColumns.objects.create(
+            rule_type=1,
+            active=True,
+            instance=self.ins,
+            table_schema='archer_test',
+            table_name='users',
+            column_name='phone')
+
+    def tearDown(self):
+        User.objects.all().delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+        DataMaskingColumns.objects.all().delete()
+        DataMaskingRules.objects.all().delete()
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_not_hit_rules(self, _inception):
+        DataMaskingColumns.objects.all().delete()
+        DataMaskingRules.objects.all().delete()
+        _inception.return_value.query_print.return_value = {'command': 'select',
+                                                            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
+                                                            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+                                                            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select phone from users;"""
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        self.assertEqual(r, query_result)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_not_exists_star(self, _inception):
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'email'},
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'id_number'}],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select phone from users;"""
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_exists_star(self, _inception):
+        """[*]"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select * from users;"""
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_star_and_column(self, _inception):
+        """[*,column_a]"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'},
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select *,phone from users;"""
+        rows = (('18888888888', '18888888888',),
+                ('18888888889', '18888888889',),)
+        query_result = ReviewSet(column_list=['phone', 'phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****8888', '188****8888', ],
+                            ['188****8889', '188****8889', ]]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_column_and_star(self, _inception):
+        """[column_a, *]"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select phone,* from users;"""
+        rows = (('18888888888', '18888888888',),
+                ('18888888889', '18888888889',))
+        query_result = ReviewSet(column_list=['phone', 'phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****8888', '188****8888', ],
+                            ['188****8889', '188****8889', ]]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_column_and_star_and_column(self, _inception):
+        """[column_a,a.*,column_b]"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select phone,*,phone from users;"""
+        rows = (('18888888888', '18888888888', '18888888888',),
+                ('18888888889', '18888888889', '18888888889',))
+        query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****8888', '188****8888', '188****8888', ],
+                            ['188****8889', '188****8889', '188****8889', ]]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_hit_rules_star_and_column_and_star(self, _inception):
+        """[a.*, column_a, b.*]"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'},
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select *,phone,* from users;"""
+        rows = (('18888888888', '18888888888', '18888888888',),
+                ('18888888889', '18888888889', '18888888889',))
+        query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        self.assertEqual(r.rows, rows)
+        self.assertEqual(r.status, 1)
+        self.assertEqual(r.error, '不支持select信息为[a.*, column_a, b.*]格式的查询脱敏！')
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_does_not_support_aggregate(self, _inception):
+        """不支持的语法"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select', 'select_list': [{
+                'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': 'concat',
+                'args': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+                         {'type': 'INT_ITEM', 'value': '1'}]}],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select concat(phone,1) from users;"""
+        rows = []
+        query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        self.assertEqual(r.rows, rows)
+        self.assertEqual(r.status, 1)
+        self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+
+    @patch('sql.utils.data_masking.InceptionEngine')
+    def test_data_masking_does_not_support_fuc(self, _inception):
+        """不支持的语法"""
+        _inception.return_value.query_print.return_value = {
+            'command': 'select', 'select_list': [{
+                'type': 'aggregate', 'agg_type': 'max',
+                'aggregate': {'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': '+',
+                              'args': [{'type': 'FIELD_ITEM', 'db': 'archer_test',
+                                        'table': 'users', 'field': 'phone'},
+                                       {'type': 'INT_ITEM', 'value': '1'}]}}],
+            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        sql = """select max(phone+1) from users;"""
+        rows = []
+        query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
+        r = data_masking(self.ins, 'archery', sql, query_result)
+        self.assertEqual(r.rows, rows)
+        self.assertEqual(r.status, 1)
+        self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+
+    def test_brute_mask(self):
+        sql = """select * from users;"""
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
+        r = brute_mask(query_result)
+        mask_result_rows = [('188****8888',), ('188****8889',), ('188****8810',)]
+        self.assertEqual(r.rows, mask_result_rows)
