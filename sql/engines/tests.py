@@ -892,6 +892,7 @@ class TestOracle(TestCase):
 
     def tearDown(self):
         self.ins.delete()
+        self.sys_config.purge()
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 

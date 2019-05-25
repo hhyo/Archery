@@ -35,7 +35,7 @@ def lists(request):
     # 过滤数据库类型
     if db_type:
         instances = instances.filter(db_type=db_type)
-    # 过滤标签，返回同时包含全部标签的实例，循环会生成多表JOIN，如果数据量大会存在效率问题
+    # 过滤标签，返回同时包含全部标签的实例，TODO 循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
             instances = instances.filter(instancetagrelations__instance_tag=tag, instancetagrelations__active=True)
