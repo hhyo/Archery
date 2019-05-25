@@ -5,7 +5,6 @@ import traceback
 import MySQLdb
 import simplejson as json
 import sqlparse
-from django.db import connection, OperationalError
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
