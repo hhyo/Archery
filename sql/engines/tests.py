@@ -177,6 +177,12 @@ class TestMysql(TestCase):
         SqlWorkflowContent.objects.all().delete()
 
     @patch('MySQLdb.connect')
+    def test_engine_base_info(self, _conn):
+        new_engine = MysqlEngine(instance=self.ins1)
+        self.assertEqual(new_engine.name, 'MySQL')
+        self.assertEqual(new_engine.info, 'MySQL engine')
+
+    @patch('MySQLdb.connect')
     def testGetConnection(self, connect):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.get_connection()
@@ -387,6 +393,12 @@ class TestRedis(TestCase):
         SqlWorkflowContent.objects.all().delete()
 
     @patch('redis.Redis')
+    def test_engine_base_info(self, _conn):
+        new_engine = RedisEngine(instance=self.ins)
+        self.assertEqual(new_engine.name, 'Redis')
+        self.assertEqual(new_engine.info, 'Redis engine')
+
+    @patch('redis.Redis')
     def test_get_connection(self, _conn):
         new_engine = RedisEngine(instance=self.ins)
         new_engine.get_connection()
@@ -501,6 +513,12 @@ class TestPgSQL(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.ins.delete()
+
+    @patch('psycopg2.connect')
+    def test_engine_base_info(self, _conn):
+        new_engine = PgSQLEngine(instance=self.ins)
+        self.assertEqual(new_engine.name, 'PgSQL')
+        self.assertEqual(new_engine.info, 'PgSQL engine')
 
     @patch('psycopg2.connect')
     def test_get_connection(self, _conn):
@@ -905,13 +923,21 @@ class TestOracle(TestCase):
         with self.assertRaises(ValueError):
             new_engine.get_connection()
 
+    @patch('cx_Oracle.connect')
+    def test_engine_base_info(self, _conn):
+        new_engine = OracleEngine(instance=self.ins)
+        self.assertEqual(new_engine.name, 'Oracle')
+        self.assertEqual(new_engine.info, 'Oracle engine')
+        _conn.return_value.version = '12.1.0.2.0'
+        self.assertTupleEqual(new_engine.server_version, ('12', '1', '0'))
+
     @patch('cx_Oracle.connect.cursor.execute')
     @patch('cx_Oracle.connect.cursor')
     @patch('cx_Oracle.connect')
     def test_query(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchmany.return_value = [(1,)]
         new_engine = OracleEngine(instance=self.ins)
-        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
+        query_result = new_engine.query(db_name='archery', sql='select 1', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
@@ -930,6 +956,20 @@ class TestOracle(TestCase):
     def test_get_all_databases(self, _query):
         new_engine = OracleEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
+        self.assertListEqual(dbs.rows, ['archery'])
+
+    @patch('sql.engines.oracle.OracleEngine.query',
+           return_value=ResultSet(rows=[('AUD_SYS',), ('archery',), ('ANONYMOUS',)]))
+    def test__get_all_databases(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        dbs = new_engine._get_all_databases()
+        self.assertListEqual(dbs.rows, ['AUD_SYS', 'archery', 'ANONYMOUS'])
+
+    @patch('sql.engines.oracle.OracleEngine.query',
+           return_value=ResultSet(rows=[('archery',)]))
+    def test__get_all_instances(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        dbs = new_engine._get_all_instances()
         self.assertListEqual(dbs.rows, ['archery'])
 
     @patch('sql.engines.oracle.OracleEngine.query',
@@ -960,19 +1000,35 @@ class TestOracle(TestCase):
         self.assertIsInstance(describe, ResultSet)
 
     def test_query_check_disable_sql(self):
-        sql = "update xxx set a=1 "
+        sql = "update xxx set a=1;"
         new_engine = OracleEngine(instance=self.ins)
         check_result = new_engine.query_check(db_name='archery', sql=sql)
         self.assertDictEqual(check_result,
-                             {'msg': '仅支持^select语法!', 'bad_query': True, 'filtered_sql': sql.strip(),
+                             {'msg': '仅支持^select语法!', 'bad_query': True, 'filtered_sql': sql.strip(';'),
                               'has_star': False})
 
     def test_query_check_star_sql(self):
-        sql = "select * from xx "
+        sql = "select * from xx;"
         new_engine = OracleEngine(instance=self.ins)
         check_result = new_engine.query_check(db_name='archery', sql=sql)
         self.assertDictEqual(check_result,
-                             {'msg': '禁止使用 * 关键词\n', 'bad_query': False, 'filtered_sql': sql.strip(), 'has_star': True})
+                             {'msg': '禁止使用 * 关键词\n', 'bad_query': False, 'filtered_sql': sql.strip(';'),
+                              'has_star': True})
+
+    def test_query_check_IndexError(self):
+        sql = ""
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name='archery', sql=sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '没有有效的SQL语句', 'bad_query': True, 'filtered_sql': sql.strip(), 'has_star': False})
+
+    def test_query_check_plus(self):
+        sql = "select 100+1 from tb;"
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name='archery', sql=sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '禁止使用 + 关键词\n', 'bad_query': True, 'filtered_sql': sql.strip(';'),
+                              'has_star': False})
 
     def test_filter_sql_with_delimiter(self):
         sql = "select * from xx;"
@@ -980,14 +1036,20 @@ class TestOracle(TestCase):
         check_result = new_engine.filter_sql(sql=sql, limit_num=100)
         self.assertEqual(check_result, "select * from xx WHERE ROWNUM <= 100")
 
+    def test_filter_sql_with_delimiter_and_where(self):
+        sql = "select * from xx where id>1;"
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
+        self.assertEqual(check_result, "select * from xx where id>1 AND ROWNUM <= 100")
+
     def test_filter_sql_without_delimiter(self):
-        sql = "select * from xx"
+        sql = "select * from xx;"
         new_engine = OracleEngine(instance=self.ins)
         check_result = new_engine.filter_sql(sql=sql, limit_num=100)
         self.assertEqual(check_result, "select * from xx WHERE ROWNUM <= 100")
 
     def test_filter_sql_with_limit(self):
-        sql = "select * from xx limit 10"
+        sql = "select * from xx limit 10;"
         new_engine = OracleEngine(instance=self.ins)
         check_result = new_engine.filter_sql(sql=sql, limit_num=1)
         self.assertEqual(check_result, "select * from xx limit 10 WHERE ROWNUM <= 1")
@@ -995,11 +1057,11 @@ class TestOracle(TestCase):
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = OracleEngine(instance=self.ins)
-        masking_result = new_engine.query_masking(schema_name='', sql='', resultset=query_result)
+        masking_result = new_engine.query_masking(schema_name='', sql='select 1', resultset=query_result)
         self.assertEqual(masking_result, query_result)
 
     def test_execute_check_select_sql(self):
-        sql = 'select * from user'
+        sql = 'select * from user;'
         row = ReviewResult(id=1, errlevel=2,
                            stagestatus='驳回不支持语句',
                            errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
@@ -1024,7 +1086,7 @@ class TestOracle(TestCase):
 
     def test_execute_check_normal_sql(self):
         self.sys_config.purge()
-        sql = 'update user set id=1'
+        sql = 'alter table tb set id=1'
         row = ReviewResult(id=1,
                            errlevel=0,
                            stagestatus='Audit completed',
@@ -1068,3 +1130,35 @@ class TestOracle(TestCase):
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
         self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
+    @patch('cx_Oracle.connect.cursor.execute')
+    @patch('cx_Oracle.connect.cursor')
+    @patch('cx_Oracle.connect', return_value=RuntimeError)
+    def test_execute_workflow_exception(self, _conn, _cursor, _execute):
+        sql = 'update user set id=1'
+        row = ReviewResult(id=1,
+                           errlevel=2,
+                           stagestatus='Execute Failed',
+                           errormessage=f'异常信息：{f"Oracle命令执行报错，语句：{sql}"}',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0, )
+        wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=True,
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        with self.assertRaises(AttributeError):
+            new_engine = OracleEngine(instance=self.ins)
+            execute_result = new_engine.execute_workflow(workflow=wf)
+            self.assertIsInstance(execute_result, ReviewSet)
+            self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
