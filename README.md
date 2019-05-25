@@ -50,10 +50,15 @@ cd /opt/archery
 source /opt/venv4archery/bin/activate
 python3 manage.py makemigrations sql  
 python3 manage.py migrate
+
+#数据初始化
 python3 manage.py loaddata initial_data.json
 
 #创建管理用户
 python3 manage.py createsuperuser
+
+#重启服务
+docker restart archery
 
 #日志查看和问题排查
 docker logs archery -f --tail=10
@@ -98,6 +103,7 @@ python manage.py test -v 3
 - MsSQL Connector [pyodbc](https://github.com/mkleehammer/pyodbc)
 - Redis Connector [redis-py](https://github.com/andymccurdy/redis-py)
 - PostgreSQL Connector [psycopg2](https://github.com/psycopg/psycopg2)
+- Oracle Connector [cx_Oracle](https://github.com/oracle/python-cx_Oracle)
 - SQL解析/切分/类型判断 [sqlparse](https://github.com/andialbrecht/sqlparse)
 - MySQL Binlog解析/回滚 [python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 - LDAP [django-auth-ldap](https://github.com/django-auth-ldap/django-auth-ldap)
@@ -105,7 +111,7 @@ python manage.py test -v 3
 - 时间处理 [python-dateutil](https://github.com/paxan/python-dateutil)
 ### 功能依赖
 - 可视化 [pyecharts](https://github.com/pyecharts/pyecharts)
-- MySQL审核/执行 [goInception](https://github.com/hanchuanchuan/goInception)|[inception](https://github.com/hhyo/inception)
+- MySQL审核/执行/备份 [goInception](https://github.com/hanchuanchuan/goInception)|[inception](https://github.com/hhyo/inception)
 - 数据库审核 [Themis](https://github.com/CreditEaseDBA/Themis)
 - MySQL索引优化 [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
 - SQL优化/压缩 [SOAR](https://github.com/XiaoMi/soar)
