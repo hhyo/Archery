@@ -74,7 +74,9 @@ DB_TYPE_CHOICES = (
     ('mssql', 'MsSQL'),
     ('redis', 'Redis'),
     ('pgsql', 'PgSQL'),
-    ('oracle', 'Oracle'),)
+    ('oracle', 'Oracle'),
+    ('inception', 'Inception'),
+    ('goinception', 'goInception'))
 
 
 class Instance(models.Model):
@@ -83,7 +85,7 @@ class Instance(models.Model):
     """
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=10, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=0)
     user = models.CharField('用户名', max_length=100, default='', blank=True)
@@ -447,7 +449,7 @@ class ParamTemplate(models.Model):
     """
     实例参数模板配置
     """
-    db_type = models.CharField('数据库类型', max_length=10, choices=DB_TYPE_CHOICES)
+    db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
     variable_name = models.CharField('参数名', max_length=64)
     default_value = models.CharField('默认参数值', max_length=1024)
     editable = models.BooleanField('是否支持修改', default=False)

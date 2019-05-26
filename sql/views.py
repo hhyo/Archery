@@ -340,7 +340,7 @@ def instanceuser(request, instance_id):
 @permission_required('sql.menu_param', raise_exception=True)
 def instance_param(request):
     # 获取用户关联实例列表
-    instances = user_instances(request.user, type='all', db_type='mysql')
+    instances = user_instances(request.user, type='all', db_type=['mysql', 'inception', 'goinception'])
     context = {'tab': 'param_tab', 'instances': instances}
     return render(request, 'param.html', context)
 
