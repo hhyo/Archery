@@ -24,7 +24,7 @@ class ReviewResult:
             self.sequence = inception_result[7] or ''
             self.backup_dbname = inception_result[8] or ''
             self.execute_time = inception_result[9] or ''
-            self.sqlsha1 = inception_result[10] if len(inception_result) == 10 else ''
+            self.sqlsha1 = inception_result[10] or ''
             self.backup_time = inception_result[11] if len(inception_result) == 12 else ''
             self.actual_affected_rows = ''
         else:
@@ -39,6 +39,7 @@ class ReviewResult:
             self.backup_dbname = kwargs.get('backup_dbname', '')
             self.execute_time = kwargs.get('execute_time', '')
             self.sqlsha1 = kwargs.get('sqlsha1', '')
+            self.backup_time = kwargs.get('backup_time', '')
             self.actual_affected_rows = kwargs.get('actual_affected_rows', '')
 
 

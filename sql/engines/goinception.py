@@ -39,8 +39,10 @@ class GoInceptionEngine(EngineBase):
                 check_result.warning_count += 1
             elif r[2] == 2:  # 错误
                 check_result.error_count += 1
-            if get_syntax_type(r[5]) == 'DDL':
-                check_result.syntax_type = 1
+            # 没有找出DDL语句的才继续执行此判断
+            if check_result.syntax_type == 2:
+                if get_syntax_type(r[5]) == 'DDL':
+                    check_result.syntax_type = 1
         check_result.column_list = inception_result.column_list
         check_result.checked = True
         return check_result
@@ -90,6 +92,16 @@ class GoInceptionEngine(EngineBase):
         if close_conn:
             self.close()
         return result_set
+
+    def osc_control(self, **kwargs):
+        """控制osc执行，获取进度、终止、暂停、恢复等"""
+        sqlsha1 = kwargs.get('sqlsha1')
+        command = kwargs.get('command')
+        if command == 'get':
+            sql = f"inception get osc_percent '{sqlsha1}';"
+        else:
+            sql = f"inception {command} osc '{sqlsha1}';"
+        return self.query(sql=sql)
 
     def close(self):
         if self.conn:

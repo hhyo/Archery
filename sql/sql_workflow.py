@@ -444,3 +444,22 @@ def get_workflow_status(request):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     result = {"status": workflow_detail.status, "msg": "", "data": ""}
     return JsonResponse(result)
+
+
+def osc_control(request):
+    """用于mysql控制osc执行"""
+    workflow_id = request.POST.get('workflow_id')
+    sqlsha1 = request.POST.get('sqlsha1')
+    command = request.POST.get('command')
+    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    execute_engine = get_engine(workflow.instance)
+    try:
+        execute_result = execute_engine.osc_control(command=command, sqlsha1=sqlsha1)
+        rows = execute_result.to_dict()
+        error = execute_result.error
+    except Exception as e:
+        rows = []
+        error = str(e)
+    result = {"total": len(rows), "rows": rows, "msg": error}
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')

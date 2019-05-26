@@ -183,8 +183,10 @@ class MysqlEngine(EngineBase):
                                       affected_rows=0,
                                       execute_time=0, )
             # 判断工单类型
-            if get_syntax_type(statement) == 'DDL':
-                check_result.syntax_type = 1
+            # 没有找出DDL语句的才继续执行此判断
+            if check_result.syntax_type == 2:
+                if get_syntax_type(statement) == 'DDL':
+                    check_result.syntax_type = 1
             check_result.rows += [result]
 
             # 遇到禁用和高危语句直接返回，提高效率
@@ -259,6 +261,17 @@ class MysqlEngine(EngineBase):
         """修改实例参数值"""
         sql = f"""set global {variable_name}={variable_value};"""
         return self.query(sql=sql)
+
+    def osc_control(self, **kwargs):
+        """控制osc执行，获取进度、终止、暂停、恢复等
+            get、kill、pause、resume
+        """
+        if SysConfig().get('go_inception'):
+            go_inception_engine = GoInceptionEngine()
+            return go_inception_engine.osc_control(**kwargs)
+        else:
+            inception_engine = InceptionEngine()
+            return inception_engine.osc_control(**kwargs)
 
     def close(self):
         if self.conn:

@@ -261,7 +261,6 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
 
-
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
@@ -989,7 +988,8 @@ class TestWorkflowView(TransactionTestCase):
         r = c.post('/autoreview/', data=request_data_without_backup, follow=False)
         self.assertIn('detail', r.url)
         workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
-        self.assertEqual(request_data_without_backup['workflow_name'], SqlWorkflow.objects.get(id=workflow_id).workflow_name)
+        self.assertEqual(request_data_without_backup['workflow_name'],
+                         SqlWorkflow.objects.get(id=workflow_id).workflow_name)
 
         # 关闭备份选项, 不允许不备份
         archer_config.set('enable_backup_switch', 'false')
@@ -997,6 +997,34 @@ class TestWorkflowView(TransactionTestCase):
         self.assertIn('detail', r.url)
         workflow_id = int(re.search(r'\/detail\/(\d+)\/', r.url).groups()[0])
         self.assertEqual(SqlWorkflow.objects.get(id=workflow_id).is_backup, True)
+
+    @patch('sql.sql_workflow.get_engine')
+    def test_osc_control(self, _get_engine):
+        c = Client()
+        c.force_login(self.superuser1)
+        request_data = {
+            'workflow_id': self.wf1.id,
+            'sqlsha1': 'sqlsha1',
+            'command': 'get',
+        }
+        _get_engine.return_value.osc_control.return_value = ResultSet()
+        r = c.post('/inception/osc_control/', data=request_data, follow=False)
+        self.assertDictEqual(json.loads(r.content),
+                             {"total": 0, "rows": [], "msg": None})
+
+    @patch('sql.sql_workflow.get_engine')
+    def test_osc_control_exception(self, _get_engine):
+        c = Client()
+        c.force_login(self.superuser1)
+        request_data = {
+            'workflow_id': self.wf1.id,
+            'sqlsha1': 'sqlsha1',
+            'command': 'get',
+        }
+        _get_engine.return_value.osc_control.return_value = RuntimeError
+        r = c.post('/inception/osc_control/', data=request_data, follow=False)
+        self.assertDictEqual(json.loads(r.content),
+                             {"total": 0, "rows": [], "msg": "type object 'RuntimeError' has no attribute 'to_dict'"})
 
 
 class TestOptimize(TestCase):

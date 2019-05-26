@@ -54,6 +54,7 @@ urlpatterns = [
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
+    path('inception/osc_control/', sql_workflow.osc_control),
 
     path('sql_analyze/generate/', sql_analyze.generate),
     path('sql_analyze/analyze/', sql_analyze.analyze),
