@@ -713,27 +713,29 @@
                     default:
                         alert('命令错误！')
                 }
-
-                //发送请求
-                $.ajax({
-                    type: "post",
-                    url: "/inception/osc_control/",
-                    dataType: "json",
-                    data: {
-                        sqlsha1: sqlsha1,
-                        workflow_id: "{{ workflow_detail.id }}",
-                        command: command
-                    },
-                    complete: function () {
-                    },
-                    success: function (data) {
-                        if (data.msg) {
-                            alert(data.msg);
-                        } else {
-                            alert('操作成功！请稍后刷新获取最新状态');
+                if (isContinue) {
+                    //发送请求
+                    $.ajax({
+                        type: "post",
+                        url: "/inception/osc_control/",
+                        dataType: "json",
+                        data: {
+                            sqlsha1: sqlsha1,
+                            workflow_id: "{{ workflow_detail.id }}",
+                            command: command
+                        },
+                        complete: function () {
+                        },
+                        success: function (data) {
+                            if (data.msg) {
+                                alert(data.msg);
+                            } else {
+                                alert('操作成功！请稍后刷新获取最新状态');
+                            }
                         }
-                    }
-                })
+                    })
+                }
+
             } else {
                 alert("请先选择要终止进程")
             }
