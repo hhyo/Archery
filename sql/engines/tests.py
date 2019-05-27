@@ -172,7 +172,7 @@ class TestMysql(TestCase):
 
     def tearDown(self):
         self.ins1.delete()
-        self.sys_config.replace(json.dumps({}))
+        self.sys_config.purge()
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
@@ -376,7 +376,25 @@ class TestMysql(TestCase):
     def test_set_variable(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.set_variable('binlog_format', 'ROW')
-        _query.assert_called_once()
+        _query.assert_called_once_with(sql="set global binlog_format=ROW;")
+
+    @patch('sql.engines.mysql.GoInceptionEngine')
+    def test_osc_go_inception(self, _inception_engine):
+        self.sys_config.set('go_inception', 'true')
+        _inception_engine.return_value.osc_control.return_value = ReviewSet()
+        command = 'get'
+        sqlsha1 = 'xxxxx'
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_osc_inception(self, _inception_engine):
+        self.sys_config.set('go_inception', 'false')
+        _inception_engine.return_value.osc_control.return_value = ReviewSet()
+        command = 'get'
+        sqlsha1 = 'xxxxx'
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
 
 
 class TestRedis(TestCase):
@@ -785,6 +803,36 @@ class TestInception(TestCase):
         new_engine = InceptionEngine()
         new_engine.get_rollback(self.wf)
 
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_osc_get(self, _query):
+        new_engine = InceptionEngine()
+        command = 'get'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception get osc_percent '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_osc_kill(self, _query):
+        new_engine = InceptionEngine()
+        command = 'kill'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception stop alter '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_osc_not_support(self, _query):
+        new_engine = InceptionEngine()
+        command = 'stop'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception stop alter '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        with self.assertRaisesMessage(ValueError, 'pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！'):
+            new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+
 
 class TestGoInception(TestCase):
     def setUp(self):
@@ -865,6 +913,46 @@ class TestGoInception(TestCase):
         new_engine = GoInceptionEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
         self.assertIsInstance(query_result, ResultSet)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_osc_get(self, _query):
+        new_engine = GoInceptionEngine()
+        command = 'get'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception get osc_percent '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_osc_pause(self, _query):
+        new_engine = GoInceptionEngine()
+        command = 'pause'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception {command} osc '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_osc_resume(self, _query):
+        new_engine = GoInceptionEngine()
+        command = 'resume'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception {command} osc '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_osc_kill(self, _query):
+        new_engine = GoInceptionEngine()
+        command = 'kill'
+        sqlsha1 = 'xxxxx'
+        sql = f"inception kill osc '{sqlsha1}';"
+        _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
 
 
 class TestOracle(TestCase):

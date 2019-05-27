@@ -77,8 +77,10 @@ class InceptionEngine(EngineBase):
                 check_result.warning_count += 1
             elif r[2] == 2 or re.match(r"\w*comments\w*", r[4], re.I):  # 错误
                 check_result.error_count += 1
-            if get_syntax_type(r[5]) == 'DDL':
-                check_result.syntax_type = 1
+            # 没有找出DDL语句的才继续执行此判断
+            if check_result.syntax_type == 2:
+                if get_syntax_type(r[5]) == 'DDL':
+                    check_result.syntax_type = 1
         check_result.column_list = inception_result.column_list
         check_result.checked = True
         return check_result
@@ -207,6 +209,18 @@ class InceptionEngine(EngineBase):
                 logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
         return list_backup_sql
+
+    def osc_control(self, **kwargs):
+        """控制osc执行，获取进度、终止、暂停、恢复等"""
+        sqlsha1 = kwargs.get('sqlsha1')
+        command = kwargs.get('command')
+        if command == 'get':
+            sql = f"inception get osc_percent '{sqlsha1}';"
+        elif command == 'kill':
+            sql = f"inception stop alter '{sqlsha1}';"
+        else:
+            raise ValueError('pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！')
+        return self.query(sql=sql)
 
     def close(self):
         if self.conn:
