@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import logging
 import re
+import traceback
 import pymysql
 
 from common.config import SysConfig
@@ -14,6 +15,9 @@ logger = logging.getLogger('default')
 class GoInceptionEngine(EngineBase):
     def get_connection(self, db_name=None):
         if self.conn:
+            return self.conn
+        if hasattr(self, 'instance'):
+            self.conn = pymysql.connect(host=self.host, port=self.port, charset='utf8mb4')
             return self.conn
         archer_config = SysConfig()
         go_inception_host = archer_config.get('go_inception_host')
@@ -78,7 +82,8 @@ class GoInceptionEngine(EngineBase):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()
-        with conn.cursor() as cursor:
+        try:
+            cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
@@ -89,9 +94,25 @@ class GoInceptionEngine(EngineBase):
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
             result_set.affected_rows = effect_row
+        except Exception as e:
+            logger.error(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
+            result_set.error = str(e)
         if close_conn:
             self.close()
         return result_set
+
+    def get_variables(self, variables=None):
+        """获取实例参数"""
+        if variables:
+            sql = f"inception get variables like '{variables[0]}';"
+        else:
+            sql = "inception get variables;"
+        return self.query(sql=sql)
+
+    def set_variable(self, variable_name, variable_value):
+        """修改实例参数值"""
+        sql = f"""inception set {variable_name}={variable_value};"""
+        return self.query(sql=sql)
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""

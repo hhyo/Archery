@@ -95,7 +95,7 @@ def param_list(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 获取已配置参数列表
     cnf_params = dict()
-    for param in ParamTemplate.objects.filter(variable_name__contains=search).values(
+    for param in ParamTemplate.objects.filter(db_type=ins.db_type, variable_name__contains=search).values(
             'variable_name', 'default_value', 'valid_values', 'description', 'editable'):
         param['variable_name'] = param['variable_name'].lower()
         cnf_params[param['variable_name']] = param

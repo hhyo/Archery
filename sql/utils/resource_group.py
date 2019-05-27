@@ -45,7 +45,9 @@ def user_instances(user, type='all', db_type='all', tags=None):
 
     # 过滤db_type
     if db_type != 'all':
-        instances = instances.filter(db_type=db_type)
+        if isinstance(db_type, str):
+            db_type = [db_type]
+        instances = instances.filter(db_type__in=db_type)
 
     # 过滤tag
     if tags:

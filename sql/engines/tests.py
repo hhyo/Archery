@@ -665,6 +665,8 @@ class TestInception(TestCase):
     def setUp(self):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
                                            port=3306, user='ins_user', password='some_pass')
+        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='inception',
+                                               host='some_host', port=6669)
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -682,6 +684,7 @@ class TestInception(TestCase):
 
     def tearDown(self):
         self.ins.delete()
+        self.ins_inc.delete()
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
@@ -833,12 +836,34 @@ class TestInception(TestCase):
         with self.assertRaisesMessage(ValueError, 'pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！'):
             new_engine.osc_control(sqlsha1=sqlsha1, command=command)
 
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_get_variables(self, _query):
+        new_engine = InceptionEngine(instance=self.ins_inc)
+        new_engine.get_variables()
+        sql = f"inception get variables;"
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_get_variables_filter(self, _query):
+        new_engine = InceptionEngine(instance=self.ins_inc)
+        new_engine.get_variables(variables=['inception_osc_on'])
+        sql = f"inception get variables 'inception_osc_on';"
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.inception.InceptionEngine.query')
+    def test_set_variable(self, _query):
+        new_engine = InceptionEngine(instance=self.ins)
+        new_engine.set_variable('inception_osc_on', 'on')
+        _query.assert_called_once_with(sql="inception set inception_osc_on=on;")
+
 
 class TestGoInception(TestCase):
     def setUp(self):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_pass')
+        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='goinception',
+                                               host='some_host', port=4000)
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -856,6 +881,7 @@ class TestGoInception(TestCase):
 
     def tearDown(self):
         self.ins.delete()
+        self.ins_inc.delete()
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
@@ -953,6 +979,26 @@ class TestGoInception(TestCase):
         _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
         _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_get_variables(self, _query):
+        new_engine = GoInceptionEngine(instance=self.ins_inc)
+        new_engine.get_variables()
+        sql = f"inception get variables;"
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_get_variables_filter(self, _query):
+        new_engine = GoInceptionEngine(instance=self.ins_inc)
+        new_engine.get_variables(variables=['inception_osc_on'])
+        sql = f"inception get variables like 'inception_osc_on';"
+        _query.assert_called_once_with(sql=sql)
+
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
+    def test_set_variable(self, _query):
+        new_engine = GoInceptionEngine(instance=self.ins)
+        new_engine.set_variable('inception_osc_on', 'on')
+        _query.assert_called_once_with(sql="inception set inception_osc_on=on;")
 
 
 class TestOracle(TestCase):
