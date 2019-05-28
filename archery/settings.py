@@ -175,6 +175,7 @@ CACHES = {
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
+    import ldap
     from django_auth_ldap.config import LDAPSearch
 
     AUTHENTICATION_BACKENDS = (
