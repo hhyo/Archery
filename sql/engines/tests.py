@@ -20,6 +20,13 @@ from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 User = get_user_model()
 
 
+class TestReviewSet(TestCase):
+    def test_review_set(self):
+        new_review_set = ReviewSet()
+        new_review_set.rows = [{'id': '1679123'}]
+        self.assertIn('1679123', new_review_set.json())
+
+
 class TestEngineBase(TestCase):
     @classmethod
     def setUpClass(cls):
