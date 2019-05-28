@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
-from sql.models import Users, ResourceGroup, ResourceGroupRelations
+from sql.models import Users, ResourceGroup,ResourceGroup2User
 
 logger = logging.getLogger('default')
 
@@ -33,12 +33,10 @@ def init_user(user):
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
         try:
-            new_relation = ResourceGroupRelations(
+            new_relation = ResourceGroup2User(
                 object_type=0,
-                object_id=user.id,
-                object_name=str(user),
-                group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id,
-                group_name=default_resource_group)
+                user_id=user.id,
+                group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id)
             new_relation.save()
         except ResourceGroup.DoesNotExist:
             logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')

@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
+    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, QueryPrivileges, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
@@ -33,10 +33,21 @@ class ResourceGroupAdmin(admin.ModelAdmin):
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
+#TODO 修改的时候 关联对象类型为不可修改
+# 资源组关联用户关系管理
+@admin.register(ResourceGroup2User)
+class ResourceGroup2UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'object_id', 'group_id', 'create_time')
+
+# 资源组关联实例关系管理
+@admin.register(ResourceGroup2Instance)
+class ResourceGroup2InstanceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'object_id', 'group_id', 'create_time')
+
 # 资源组关系管理
-@admin.register(ResourceGroupRelations)
-class ResourceGroupRelationsAdmin(admin.ModelAdmin):
-    list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
+# @admin.register(ResourceGroupRelations)
+# class ResourceGroupRelationsAdmin(admin.ModelAdmin):
+#     list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
 # 实例标签配置
