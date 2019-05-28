@@ -12,7 +12,7 @@ def add_sql_schedule(name, run_date, workflow_id):
     del_schedule(name)
     schedule('sql.utils.execute_sql.execute', workflow_id,
              hook='sql.utils.execute_sql.execute_callback',
-             name=name, schedule_type='O', next_run=run_date, repeats=1)
+             name=name, schedule_type='O', next_run=run_date, repeats=1, timeout=-1)
     logger.debug(f"添加SQL定时执行任务：{name} 执行时间：{run_date}")
 
 

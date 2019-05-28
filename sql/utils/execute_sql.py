@@ -14,6 +14,8 @@ def execute(workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     # 给定时执行的工单增加执行日志
     if workflow_detail.status == 'workflow_timingtask':
+        # 将工单状态修改为执行中
+        SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
         audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
         Audit.add_log(audit_id=audit_id,
