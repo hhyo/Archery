@@ -17,13 +17,18 @@ logger = logging.getLogger('default')
 
 
 def init_user(user):
+    """
+    给用户关联默认资源组和权限组
+    :param user:
+    :return:
+    """
     default_auth_group = SysConfig().get('default_auth_group', '')
     if default_auth_group:
         try:
             group = Group.objects.get(name=default_auth_group)
             user.groups.add(group)
-        except Exception:
-            logger.info('无name为{}的权限组，无法默认关联，请到系统设置进行配置'.format(default_auth_group))
+        except Group.DoesNotExist:
+            logger.info(f'无name为[{default_auth_group}]的权限组，无法默认关联，请到系统设置进行配置')
     # 添加到默认资源组
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
@@ -35,15 +40,17 @@ def init_user(user):
                 group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id,
                 group_name=default_resource_group)
             new_relation.save()
-        except Exception:
-            logger.info('无name为{}的资源组，无法默认关联，请到系统设置进行配置'.format(default_resource_group))
+        except ResourceGroup.DoesNotExist:
+            logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
 
 
 class ArcheryAuth(object):
     def __init__(self, request):
         self.request = request
+        self.sys_config = SysConfig()
 
-    def challenge(self, username=None, password=None):
+    @staticmethod
+    def challenge(username=None, password=None):
         # 仅验证密码, 验证成功返回 user 对象, 清空计数器
         user = authenticate(username=username, password=password)
         # 登录成功
@@ -56,7 +63,7 @@ class ArcheryAuth(object):
     def authenticate(self):
         username = self.request.POST.get('username')
         password = self.request.POST.get('password')
-        # 验证时候在加锁时间内
+        # 确认用户是否已经存在
         try:
             user = Users.objects.get(username=username)
         except Users.DoesNotExist:
@@ -68,28 +75,20 @@ class ArcheryAuth(object):
                 return {'status': 0, 'msg': 'ok', 'data': authenticated_user}
             else:
                 return {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
-
         except:
             logger.error('验证用户密码时报错')
             logger.error(traceback.format_exc())
-            return {'status': 1, 'msg': '服务器错误{}'.format(traceback.format_exc()), 'data': ''}
+            return {'status': 1, 'msg': f'服务器错误{traceback.format_exc()}', 'data': ''}
         # 已存在用户, 验证是否在锁期间
         # 读取配置文件
-        sys_config = SysConfig()
-        if sys_config.get('lock_cnt_threshold'):
-            lock_count = int(sys_config.get('lock_cnt_threshold'))
-        else:
-            lock_count = 5
-        if sys_config.get('lock_time_threshold'):
-            lock_time = int(sys_config.get('lock_time_threshold'))
-        else:
-            lock_time = 60 * 5
+        lock_count = int(self.sys_config.get('lock_cnt_threshold', 5))
+        lock_time = int(self.sys_config.get('lock_time_threshold', 60 * 5))
         # 验证是否在锁, 分了几个if 防止代码太长
         if user.failed_login_count and user.last_login_failed_at:
             if user.failed_login_count >= lock_count:
                 now = datetime.datetime.now()
                 if user.last_login_failed_at + datetime.timedelta(seconds=lock_time) > now:
-                    return {'status': 3, 'msg': '登录失败超过限制，该账号已被锁定!请等候大约{}秒再试'.format(lock_time), 'data': ''}
+                    return {'status': 3, 'msg': f'登录失败超过限制，该账号已被锁定！请等候大约{lock_time}秒再试', 'data': ''}
                 else:
                     # 如果锁已超时, 重置失败次数
                     user.failed_login_count = 0
