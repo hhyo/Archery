@@ -18,7 +18,7 @@ from django_q.models import Schedule
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroupRelations, WorkflowLog, \
+from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroup2User, WorkflowLog, \
     WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel
 from sql.utils.sql_utils import *
@@ -225,7 +225,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=('status',))
         sql_execute_for_resource_group = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.user.user_permissions.add(sql_execute_for_resource_group)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
         r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 

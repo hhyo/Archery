@@ -24,51 +24,6 @@ class Users(AbstractUser):
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
 
-
-class ResourceGroup(models.Model):
-    """
-    资源组
-    """
-    group_id = models.AutoField('组ID', primary_key=True)
-    group_name = models.CharField('组名称', max_length=100, unique=True)
-    group_parent_id = models.BigIntegerField('父级id', default=0)
-    group_sort = models.IntegerField('排序', default=1)
-    group_level = models.IntegerField('层级', default=1)
-    ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
-    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
-    create_time = models.DateTimeField(auto_now_add=True)
-    sys_time = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.group_name
-
-    class Meta:
-        managed = True
-        db_table = 'resource_group'
-        verbose_name = u'资源组管理'
-        verbose_name_plural = u'资源组管理'
-
-
-class ResourceGroupRelations(models.Model):
-    """
-    资源组关系表（用户与组、实例与组等）
-    """
-    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
-    object_id = models.IntegerField('关联对象主键ID', )
-    object_name = models.CharField('关联对象描述，用户名、实例名', max_length=100)
-    group_id = models.IntegerField('组ID')
-    group_name = models.CharField('组名称', max_length=100)
-    create_time = models.DateTimeField(auto_now_add=True)
-    sys_time = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        managed = True
-        db_table = 'resource_group_relations'
-        unique_together = ('object_id', 'group_id', 'object_type')
-        verbose_name = u'资源组对象管理'
-        verbose_name_plural = u'资源组对象管理'
-
-
 DB_TYPE_CHOICES = (
     ('mysql', 'MySQL'),
     ('mssql', 'MsSQL'),
@@ -77,7 +32,6 @@ DB_TYPE_CHOICES = (
     ('oracle', 'Oracle'),
     ('inception', 'Inception'),
     ('goinception', 'goInception'))
-
 
 class Instance(models.Model):
     """
@@ -122,12 +76,60 @@ class Instance(models.Model):
         super(Instance, self).save(*args, **kwargs)
 
 
+class ResourceGroup(models.Model):
+    """
+    资源组
+    """
+    group_id = models.AutoField('组ID', primary_key=True)
+    group_name = models.CharField('组名称', max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField('父级id', default=0)
+    group_sort = models.IntegerField('排序', default=1)
+    group_level = models.IntegerField('层级', default=1)
+    ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
+    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+    users = models.ManyToManyField(Users,through='ResourceGroup2User',through_fields=('group_id','object_id'))
+    instances = models.ManyToManyField(Instance,through='ResourceGroup2Instance',through_fields=('group_id','object_id'))
+
+    def __str__(self):
+        return self.group_name
+
+    class Meta:
+        managed = True
+        db_table = 'resource_group'
+        verbose_name = u'资源组管理'
+        verbose_name_plural = u'资源组管理'
+
+class ResourceGroup2User(models.Model):
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')),default=0)
+    group_id = models.ForeignKey(ResourceGroup,on_delete=models.CASCADE)
+    object_id = models.ForeignKey(Users,on_delete=models.CASCADE)
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        verbose_name = u'资源组关联用户'
+        verbose_name_plural = u'资源组关联用户管理'
+
+class ResourceGroup2Instance(models.Model):
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')),default=1)
+    group_id = models.ForeignKey(ResourceGroup,on_delete=models.CASCADE)
+    object_id = models.ForeignKey(Instance,on_delete=models.CASCADE)
+    create_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        verbose_name = u'资源组关联实例'
+        verbose_name_plural = u'资源组关联实例管理'
+
 class InstanceTag(models.Model):
     """实例标签配置"""
     tag_code = models.CharField('标签代码', max_length=20, unique=True)
     tag_name = models.CharField('标签名称', max_length=20, unique=True)
     active = models.BooleanField('激活状态', default=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    instances = models.ManyToManyField(Instance,through='InstanceTagRelations',through_fields=('instance_tag','instance'))
 
     def __str__(self):
         return self.tag_name
@@ -148,8 +150,6 @@ class InstanceTagRelations(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sql_instance_tag_relations'
-        unique_together = ('instance', 'instance_tag')
         verbose_name = u'实例标签关系'
         verbose_name_plural = u'实例标签关系'
 
