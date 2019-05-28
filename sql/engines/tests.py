@@ -80,7 +80,6 @@ class TestMssql(TestCase):
             create_time=datetime.now() - timedelta(days=1),
             status='workflow_finish',
             is_backup=True,
-            backup_tables='aaa',
             instance=cls.ins1,
             db_name='some_db',
             syntax_type=1
@@ -171,7 +170,7 @@ class TestMssql(TestCase):
         new_engine.execute_workflow(self.wf)
         # 有多少个备份表, 就需要execute多少次, 另外加上一条实际执行的次数
         mock_execute.assert_called()
-        self.assertEqual(len(self.wf.backup_tables.split(' ')) +1 , mock_execute.call_count)
+        self.assertEqual(1, mock_execute.call_count)
 
     @patch('sql.engines.mssql.MssqlEngine.get_connection')
     def test_execute(self, mock_connect):
