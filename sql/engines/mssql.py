@@ -16,7 +16,7 @@ logger = logging.getLogger('default')
 
 class MssqlEngine(EngineBase):
     def get_connection(self, db_name=None):
-        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0};PORT={1};UID={2};PWD={3};
+        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
         client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
                                                                           self.port, self.user, self.password)
         if self.conn:
