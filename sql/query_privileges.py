@@ -70,7 +70,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     except Exception as msg:
         # 表权限校验失败再次校验库权限
         # 先获取查询语句涉及的库
-        if instance.db_type == 'redis':
+        if instance.db_type in ['redis', 'mssql']:
             dbs = [db_name]
         else:
             dbs = [i['schema'].strip('`') for i in extract_tables(sql_content) if i['schema'] is not None]
