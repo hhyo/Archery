@@ -28,7 +28,7 @@ def lists(request):
     instances = Instance.objects.all()
     # 过滤搜索
     if search:
-        instances = instances.filter(nstance_name__icontains=search)
+        instances = instances.filter(instance_name__icontains=search)
     # 过滤实例类型
     if type:
         instances = instances.filter(type=type)
