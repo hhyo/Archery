@@ -376,7 +376,7 @@ class TestQueryPrivilegesCheck(TestCase):
         测试用户权限校验，非mysql实例、普通用户 无库权限
         :return:
         """
-        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
+        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='oracle',
                                   host='some_host', port=3306, user='some_user', password='some_password')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
