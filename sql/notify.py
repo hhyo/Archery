@@ -50,12 +50,16 @@ def notify_for_audit(audit_id, **kwargs):
         workflow_type_display = WorkflowDict.workflow_type['query_display']
         workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
         if workflow_detail.priv_type == 1:
-            workflow_content = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+            workflow_content = '''\n发起时间：{}\n目标实例：{}\n数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                workflow_detail.instance,
                 workflow_detail.db_list,
                 datetime.datetime.strftime(workflow_detail.valid_date, '%Y-%m-%d %H:%M:%S'),
                 workflow_detail.limit_num)
         elif workflow_detail.priv_type == 2:
-            workflow_content = '''数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+            workflow_content = '''\n发起时间：{}\n目标实例：{}\n数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
+                workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                workflow_detail.instance,
                 workflow_detail.db_list,
                 workflow_detail.table_list,
                 datetime.datetime.strftime(workflow_detail.valid_date, '%Y-%m-%d %H:%M:%S'),
@@ -77,9 +81,12 @@ def notify_for_audit(audit_id, **kwargs):
         auth_group_names = Group.objects.get(id=audit_detail.current_audit).name
         msg_to = auth_group_users([auth_group_names], audit_detail.group_id)
         # 消息内容
-        msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n当前审批：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        msg_content = '''发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n审批流程：{}\n当前审批：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+            workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
             workflow_from,
             group_name,
+            workflow_detail.instance,
+            workflow_detail.db_name,
             workflow_auditors,
             current_workflow_auditors,
             workflow_title,
@@ -90,9 +97,12 @@ def notify_for_audit(audit_id, **kwargs):
         # 接收人，仅发送给申请人
         msg_to = [Users.objects.get(username=audit_detail.create_user)]
         # 消息内容
-        msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        msg_content = '''发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+            workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
             workflow_from,
             group_name,
+            workflow_detail.instance,
+            workflow_detail.db_name,
             workflow_auditors,
             workflow_title,
             workflow_url,
@@ -102,7 +112,10 @@ def notify_for_audit(audit_id, **kwargs):
         # 接收人，仅发送给申请人
         msg_to = [Users.objects.get(username=audit_detail.create_user)]
         # 消息内容
-        msg_content = '''工单名称：{}\n工单地址：{}\n驳回原因：{}\n提醒：此工单被审核不通过，请按照驳回原因进行修改！'''.format(
+        msg_content = '''发起时间：{}\n目标实例：{}\n数据库：{}\n工单名称：{}\n工单地址：{}\n驳回原因：{}\n提醒：此工单被审核不通过，请按照驳回原因进行修改！'''.format(
+            workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+            workflow_detail.instance,
+            workflow_detail.db_name,
             workflow_title,
             workflow_url,
             workflow_audit_remark)
@@ -113,9 +126,12 @@ def notify_for_audit(audit_id, **kwargs):
                             audit_detail.audit_auth_groups.split(',')]
         msg_to = auth_group_users(auth_group_names, audit_detail.group_id)
         # 消息内容
-        msg_content = '''发起人：{}\n组：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(
+        msg_content = '''发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n工单名称：{}\n工单地址：{}\n提醒：提交人主动终止流程'''.format(
+            workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
             workflow_from,
             group_name,
+            workflow_detail.instance,
+            workflow_detail.db_name,
             workflow_title,
             workflow_url)
     else:
