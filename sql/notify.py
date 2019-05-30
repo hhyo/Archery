@@ -125,12 +125,11 @@ def notify_for_audit(audit_id, **kwargs):
     msg_to_email = [user.email for user in msg_to if user.email]
     # 发送通知
     msg_sender = MsgSender()
-    logger.info(f'发送消息通知，消息audit_id={audit_id}')
-    logger.info(f'消息标题:{msg_title}\n通知对象：{[user.username for user in msg_to]}\n消息内容：{msg_content}')
     if sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_to_email, list_cc_addr=msg_cc_email)
     if sys_config.get('ding'):
-        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+        if webhook_url:
+            msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
 
 def notify_for_execute(workflow):
@@ -169,14 +168,13 @@ def notify_for_execute(workflow):
 
     # 判断是发送钉钉还是发送邮件
     msg_sender = MsgSender()
-    logger.info(f'发送消息通知，消息audit_id={audit_id}')
-    logger.info(f'消息标题:{msg_title}\n通知对象：{[user.username for user in msg_to + msg_cc]}\n消息内容：{msg_content}')
     if sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_to_email, list_cc_addr=msg_cc_email)
     if sys_config.get('ding'):
         # 钉钉通知申请人，审核人，抄送DBA
         webhook_url = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
-        MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+        if webhook_url:
+            MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
 
     # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
@@ -198,8 +196,6 @@ def notify_for_execute(workflow):
             msg_to_email = [user.email for user in msg_to]
 
             # 发送
-            logger.info(f'发送DDL通知，消息audit_id={audit_id}')
-            logger.info(f'消息标题:{msg_title}\n通知对象：{[user.username for user in msg_to]}\n消息内容：{msg_content}')
             msg_sender.send_email(msg_title, msg_content, msg_to_email)
 
 
