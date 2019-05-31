@@ -138,19 +138,23 @@ def sign_up(request):
     elif password != password2:
         result['status'] = 1
         result['msg'] = '两次输入密码不一致'
+    elif not display:
+        result['status'] = 1
+        result['msg'] = '请填写中文名'
     else:
         # 验证密码
         try:
             validate_password(password)
+            new_user = Users.objects.create_user(
+                username=username,
+                password=password,
+                display=display,
+                email=email,
+                is_active=1)
+            init_user(new_user)
         except ValidationError as msg:
             result['status'] = 1
             result['msg'] = str(msg)
-        new_user = Users.objects.create_user(username=username,
-                                             password=password,
-                                             display=display,
-                                             email=email,
-                                             is_active=1)
-        init_user(new_user)
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
