@@ -57,6 +57,9 @@ def submit_sql(request):
     # 获取系统配置
     archer_config = SysConfig()
 
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True})
+
     context = {'active_user': active_user, 'group_list': group_list,
                'enable_backup_switch': archer_config.get('enable_backup_switch')}
     return render(request, 'sqlsubmit.html', context)
@@ -193,7 +196,8 @@ def dashboard(request):
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     # 获取实例支持查询的标签id
-    tag_id = InstanceTag.objects.get(tag_code='can_read').id
+    tag_id = InstanceTag.objects.get_or_create(
+        tag_code='can_read', defaults={'tag_name': '支持查询', 'active': True})[0].id
     # 获取用户关联实例列表
     instances = [slave for slave in user_instances(request.user, type='all', db_type='all', tags=[tag_id])]
 
