@@ -85,6 +85,7 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.Users"
@@ -130,7 +131,7 @@ DATABASES = {
         },
         'TEST': {
             'NAME': 'test_archery',
-            'CHARSET': 'utf8',
+            'CHARSET': 'utf8mb4',
         },
     }
 }
