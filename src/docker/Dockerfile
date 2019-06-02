@@ -1,5 +1,9 @@
 FROM docker.io/centos:7
 
+ENV VERSION v1.6.1
+
+WORKDIR /opt/archery
+
 #python3.6
 RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
@@ -16,10 +20,15 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && virtualenv venv4archery --python=python3 \
     && rm -rf Python-3.6.5 \
     && rm -rf Python-3.6.5.tar.xz \
-#修改中文支持
+#locale
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && yum -y install kde-l10n-Chinese \
     && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
+#dockerize
+ENV DOCKERIZE_VERSION v0.6.1
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 #sqladvisor
 RUN yum -y install epel-release \
     && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel libffi-devel glib2 glib2-devel \
@@ -60,7 +69,7 @@ RUN yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclie
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
-    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout v1.6.1 \
+    && git clone https://github.com/hhyo/archery.git && cd archery && git checkout $VERSION \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
