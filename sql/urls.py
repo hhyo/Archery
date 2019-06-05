@@ -80,7 +80,7 @@ urlpatterns = [
     path('instance/users/', instance.users),
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
-    path('instance/describetable/', instance.describe),
+    path('instance/describe<str:resource>/', instance.describe),
 
     path('param/list/', instance.param_list),
     path('param/history/', instance.param_history),

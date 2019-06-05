@@ -321,7 +321,7 @@ def instance_resource(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-def describe(request):
+def describe(request,resource):
     """获取表结构"""
     instance_name = request.POST.get('instance_name')
     try:
@@ -337,9 +337,9 @@ def describe(request):
     try:
         query_engine = get_engine(instance=instance)
         if schema_name:
-            query_result = query_engine.describe_table(db_name, tb_name, schema_name)
+            query_result = eval('query_engine.describe_'+ resource + '(db_name, tb_name, schema_name)')
         else:
-            query_result = query_engine.describe_table(db_name, tb_name)
+            query_result = eval('query_engine.describe_'+ resource + '(db_name, tb_name)')
         result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1

@@ -502,7 +502,7 @@
         );
 
         // 展示数据
-        function display_data(data) {
+        function display_data(data, index) {
             var result = data.data;
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
@@ -516,6 +516,7 @@
                     } else {
                         var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
+                    tb_name+=index||""
                     if (tb_name !== active_li_title) {
                         tab_add(tb_name);
                     }
@@ -832,6 +833,7 @@
 
         //获取表结构
         $("#table_name").change(function () {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
             $.ajax({
                 type: "post",
                 url: "/instance/describetable/",
@@ -846,7 +848,27 @@
                     data.is_describe = true;
                     display_data(data);
                 },
+                complete : function () {
+                    if (optgroup === "Oracle") {
+                        $.ajax({
+                            type: "post",
+                            url: "/instance/describeindex/",
+                            dataType: "json",
+                            data: {
+                                instance_name: $("#instance_name").val(),
+                                db_name: $("#db_name").val(),
+                                tb_name: $("#table_name").val()
+                            },
+                            success: function (data) {
+                                data.is_describe = true;
+                                display_data(data," 索引");
+                            }
+                        });
+                    };
+
+                }
             });
+
             //自动补全提示
             setColumnsCompleteData()
         });
