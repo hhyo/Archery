@@ -26,8 +26,8 @@
             </div>
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
+                        title="请选择实例:"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
                     {% for ins in instances %}
                         <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                     {% endfor %}
