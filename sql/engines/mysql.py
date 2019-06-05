@@ -165,8 +165,6 @@ class MysqlEngine(EngineBase):
                                       stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
-                check_result.rows += [result]
-                check_result.error_count += 1
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
                 check_result.is_critical = True
@@ -182,7 +180,7 @@ class MysqlEngine(EngineBase):
                                       sql=statement,
                                       affected_rows=0,
                                       execute_time=0, )
-            # 判断工单类型
+
             # 没有找出DDL语句的才继续执行此判断
             if check_result.syntax_type == 2:
                 if get_syntax_type(statement) == 'DDL':
