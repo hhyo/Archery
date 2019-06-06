@@ -36,6 +36,12 @@
                 发起时间
             </th>
             <th>
+                可执行起始时间
+            </th>
+            <th>
+                可执行最后时间
+            </th>
+            <th>
                 结束时间
             </th>
             <th>
@@ -71,6 +77,12 @@
             </td>
             <td>
                 {{ workflow_detail.create_time }}
+            </td>
+            <td>
+                {{ workflow_detail.starttime }}
+            </td>
+            <td>
+                {{ workflow_detail.endtime }}
             </td>
             <td>
                 {{ workflow_detail.finish_time }}
@@ -153,6 +165,15 @@
         <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                   placeholder="请填写审核备注/终止原因" rows=3></textarea>
         <br>
+    {% endif %}
+    <!--审核人修改可执行时间按钮-->
+    {% if is_can_review %}
+        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="hidden" id="audit_remark" name="audit_remark" value="">
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime" value="可执行时间变更"/>
+        </form>
     {% endif %}
     <!--审核通过按钮-->
     {% if is_can_review %}
@@ -281,6 +302,41 @@
         </div>
     </div>
 
+    <!-- 修改可执行时间弹出框 -->
+    <form id="from-alterexecutabletime" action="/altertime/" method="post" style="display:inline-block;">
+        <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header ">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <h4 class="modal-title text-danger">修改可执行时间</h4>
+                    </div>
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                        <div class='form-group input-group date' id='datetimepicker_run_date_start'>
+                            <input id="run_date_start" name="run_date_start" type='text' autocomplete="off" class="form-control"
+                                   placeholder="请选择可执行起始时间" value="{{ workflow_detail.starttime }}"/>
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                        </div>
+                        <div class='input-group date' id='datetimepicker_run_date_end'>
+                            <input id="run_date_end" name="run_date_end" type='text' autocomplete="off" class="form-control"
+                                   placeholder="请选择最后可执行时间" value="{{ workflow_detail.endtime }}"/>
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                        <input type="button" id="btnalterExecutabletime" class="btn btn-danger" value="确认提交"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
 
 {% endblock content %}
 
@@ -305,8 +361,35 @@
             inline: true,
             sideBySide: true,
             minuteStep: 5,
+        });
+        $("#datetimepicker_run_date_start").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 1,//天视图
+            minView: 0,//分钟
+            startDate: date,
+            inline: true,
+            sideBySide: true,
+            minuteStep: 5,
+        });
+        $("#datetimepicker_run_date_end").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 1,//天视图
+            minView: 0,//分钟
+            startDate: date,
+            inline: true,
+            sideBySide: true,
+            minuteStep: 5,
         })
     </script>
+
     <!--按钮控制 -->
     <script>
         var editWorkflowNname = "{{ workflow_detail.workflow_name }}";
@@ -396,6 +479,14 @@
             } else {
                 alert('请填写定时执行时间')
             }
+        });
+
+        // 修改可执行时间
+        $("#btnalterExecutabletime").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formAlterexecutabletime = $("#from-alterexecutabletime");
+            loading(this);
+            formAlterexecutabletime.submit();
         });
 
         // 按钮禁用

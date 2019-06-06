@@ -1,3 +1,4 @@
+import datetime
 import re
 import sqlparse
 
@@ -58,6 +59,11 @@ def can_execute(user, workflow_id):
     """
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
+    ctime = datetime.datetime.now()
+    stime = workflow_detail.starttime
+    etime = workflow_detail.endtime
+    if (stime and stime>ctime) or (etime and etime<ctime):
+        return result
     # 只有审核通过和定时执行的数据才可以立即执行
     if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
         # 当前登录用户有资源组粒度执行权限，并且为组内用户
@@ -67,6 +73,22 @@ def can_execute(user, workflow_id):
         # 当前登录用户为提交人，并且有执行权限
         if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
             result = True
+    return result
+
+def on_Correct_time_period(workflow_id):
+    """
+    判断是否在可执行时间段内
+    :param user:
+    :param workflow_id:
+    :return:
+    """
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = True
+    ctime = datetime.datetime.now()
+    stime = workflow_detail.starttime
+    etime = workflow_detail.endtime
+    if (stime and stime>ctime) or (etime and etime<ctime):
+        result = False
     return result
 
 
