@@ -9,7 +9,7 @@ class Users(AbstractUser):
     """
     用户信息扩展
     """
-    display = models.CharField('显示的中文名', max_length=50, default='', blank=True)
+    display = models.CharField('显示的中文名', max_length=50, default='')
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
 
@@ -24,6 +24,7 @@ class Users(AbstractUser):
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
 
+
 DB_TYPE_CHOICES = (
     ('mysql', 'MySQL'),
     ('mssql', 'MsSQL'),
@@ -32,6 +33,7 @@ DB_TYPE_CHOICES = (
     ('oracle', 'Oracle'),
     ('inception', 'Inception'),
     ('goinception', 'goInception'))
+
 
 class Instance(models.Model):
     """
@@ -89,8 +91,9 @@ class ResourceGroup(models.Model):
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
-    users = models.ManyToManyField(Users,through='ResourceGroup2User',through_fields=('group_id','object_id'))
-    instances = models.ManyToManyField(Instance,through='ResourceGroup2Instance',through_fields=('group_id','object_id'))
+    users = models.ManyToManyField(Users, through='ResourceGroup2User', through_fields=('resource_group', 'user'))
+    instances = models.ManyToManyField(Instance, through='ResourceGroup2Instance',
+                                       through_fields=('resource_group', 'instance'))
 
     def __str__(self):
         return self.group_name
@@ -101,27 +104,34 @@ class ResourceGroup(models.Model):
         verbose_name = u'资源组管理'
         verbose_name_plural = u'资源组管理'
 
+
 class ResourceGroup2User(models.Model):
-    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')),default=0)
-    group_id = models.ForeignKey(ResourceGroup,on_delete=models.CASCADE)
-    object_id = models.ForeignKey(Users,on_delete=models.CASCADE)
+    """资源组和用户关联表"""
+    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
+        db_table = 'resource_group_user'
+        unique_together = ('resource_group', 'user')
         verbose_name = u'资源组关联用户'
-        verbose_name_plural = u'资源组关联用户管理'
+        verbose_name_plural = u'资源组关联用户'
+
 
 class ResourceGroup2Instance(models.Model):
-    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')),default=1)
-    group_id = models.ForeignKey(ResourceGroup,on_delete=models.CASCADE)
-    object_id = models.ForeignKey(Instance,on_delete=models.CASCADE)
+    """资源组和实例关联表"""
+    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
+        db_table = 'resource_group_instance'
+        unique_together = ('resource_group', 'instance')
         verbose_name = u'资源组关联实例'
-        verbose_name_plural = u'资源组关联实例管理'
+        verbose_name_plural = u'资源组关联实例'
+
 
 class InstanceTag(models.Model):
     """实例标签配置"""
@@ -129,7 +139,8 @@ class InstanceTag(models.Model):
     tag_name = models.CharField('标签名称', max_length=20, unique=True)
     active = models.BooleanField('激活状态', default=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    instances = models.ManyToManyField(Instance,through='InstanceTagRelations',through_fields=('instance_tag','instance'))
+    instances = models.ManyToManyField(Instance, through='InstanceTagRelations',
+                                       through_fields=('instance_tag', 'instance'))
 
     def __str__(self):
         return self.tag_name
@@ -150,6 +161,8 @@ class InstanceTagRelations(models.Model):
 
     class Meta:
         managed = True
+        db_table = 'sql_instance_tag_relations'
+        unique_together = ('instance', 'instance_tag')
         verbose_name = u'实例标签关系'
         verbose_name_plural = u'实例标签关系'
 
@@ -575,7 +588,7 @@ class Permission(models.Model):
             ('menu_sqlworkflow', '菜单 SQL上线'),
             ('menu_sqlanalyze', '菜单 SQL分析'),
             ('menu_query', '菜单 SQL查询'),
-            ('menu_sqlquery', '菜单 MySQL查询'),
+            ('menu_sqlquery', '菜单 在线查询'),
             ('menu_queryapplylist', '菜单 查询权限申请'),
             ('menu_sqloptimize', '菜单 SQL优化'),
             ('menu_sqladvisor', '菜单 优化工具'),

@@ -225,7 +225,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=('status',))
         sql_execute_for_resource_group = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.user.user_permissions.add(sql_execute_for_resource_group)
-        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 

@@ -399,7 +399,7 @@ class TestQueryPrivilegesCheck(TestCase):
         测试用户权限校验，非mysql实例、普通用户 无库权限
         :return:
         """
-        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
+        mssql_instance = Instance(instance_name='mssql', type='slave', db_type='oracle',
                                   host='some_host', port=3306, user='some_user', password='some_password')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
@@ -526,7 +526,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_review = Permission.objects.get(codename='query_review')
         self.user.user_permissions.add(query_review)
-        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -547,7 +547,7 @@ class TestQueryPrivilegesApply(TestCase):
 
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         # ResourceGroup.objects.get(group_id=self.group.group_id).users.add(self.user)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
@@ -599,7 +599,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
         self.user.user_permissions.add(query_mgtpriv)
-        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -627,7 +627,7 @@ class TestQueryPrivilegesApply(TestCase):
                                        priv_type=2)
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(object_id=self.user, group_id=self.group)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -1895,13 +1895,15 @@ class TestNotify(TestCase):
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
 
+    @patch('sql.notify.auth_group_users')
     @patch('sql.notify.Audit')
     @patch('sql.notify.MsgSender')
-    def test_notify_for_execute(self, _msg_sender, _audit):
+    def test_notify_for_execute(self, _msg_sender, _audit, _auth_group_users):
         """
         测试执行消息
         :return:
         """
+        _auth_group_users.return_value = [self.user]
         # 处理工单信息
         _audit.review_info.return_value = self.audit.audit_auth_groups, self.audit.current_audit
         # 开启消息通知

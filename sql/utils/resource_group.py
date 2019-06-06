@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
-from itertools import chain
 
-from sql.models import Users, Instance, ResourceGroup,ResourceGroup2User,ResourceGroup2Instance
+from sql.models import Users, Instance, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance
 
 
 def user_groups(user):
@@ -26,15 +25,15 @@ def user_instances(user, type='all', db_type='all', tags=None):
     :param tags: 标签id列表, [1,2]
     :return:
     """
-    # 先获取用户关联资源组列表
+    # 拥有所有实例权限的用户
     if user.has_perm('sql.query_all_instances'):
         instances = Instance.objects.all()
     else:
         # 获取资源组关联的实例列表
         all_instances = Instance.objects.none()
-        resourcegroups = ResourceGroup.objects.filter(users=user)
-        for resourcegroup in resourcegroups:
-            all_instances = all_instances | resourcegroup.instances.all()
+        resource_groups = ResourceGroup.objects.filter(users=user)
+        for resource_group in resource_groups:
+            all_instances = all_instances | resource_group.instances.all()
         instances = all_instances.distinct()
     # 过滤type
     if type != 'all':
@@ -61,8 +60,8 @@ def auth_group_users(auth_group_names, group_id):
     :param group_id: 资源组ID
     :return:
     """
-    # 查询制定权限组里的所有用户
+    # 查询指定权限组里的所有用户
     users = Users.objects.filter(groups__name__in=auth_group_names)
-    # 查询制定资源组中包含有指定权限的用户
-    users = ResourceGroup.objects.filter(group_id=group_id,users=users)
+    # 查询指定资源组中包含有指定权限的用户
+    users = ResourceGroup.objects.filter(group_id=group_id, users=users)
     return users
