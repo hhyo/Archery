@@ -4,7 +4,8 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroupRelations, QueryPrivilegesApply, QueryPrivileges, \
+    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
+    QueryPrivileges, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
@@ -20,10 +21,20 @@ class UsersAdmin(UserAdmin):
         ('认证信息', {'fields': ('username', 'password')}),
         ('个人信息', {'fields': ('display', 'email')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
-        ('其他信息', {'fields': ('last_login', 'date_joined')}),
+        ('其他信息', {'fields': ('date_joined',)}),
     )
     # 添加页显示内容
-    add_fieldsets = (None, {'fields': ('username', 'display', 'email', 'password1', 'password2'), }),
+    add_fieldsets = (
+        ('认证信息', {'fields': ('username', 'password1', 'password2')}),
+        ('个人信息', {'fields': ('display', 'email')}),
+        ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups',)}),
+    )
+
+    # 用户资源组关联配置
+    class ResourceGroup2UserInline(admin.TabularInline):
+        model = ResourceGroup2User
+
+    inlines = [ResourceGroup2UserInline]
 
 
 # 资源组管理
@@ -33,10 +44,16 @@ class ResourceGroupAdmin(admin.ModelAdmin):
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
-# 资源组关系管理
-@admin.register(ResourceGroupRelations)
-class ResourceGroupRelationsAdmin(admin.ModelAdmin):
-    list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
+# 资源组关联用户关系管理
+@admin.register(ResourceGroup2User)
+class ResourceGroup2UserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'resource_group', 'user', 'create_time')
+
+
+# 资源组关联实例关系管理
+@admin.register(ResourceGroup2Instance)
+class ResourceGroup2InstanceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'resource_group', 'instance', 'create_time')
 
 
 # 实例标签配置
@@ -73,7 +90,11 @@ class InstanceAdmin(admin.ModelAdmin):
     class InstanceTagRelationsInline(admin.TabularInline):
         model = InstanceTagRelations
 
-    inlines = [InstanceTagRelationsInline, AliRdsConfigInline]
+    # 实例资源组关联配置
+    class ResourceGroup2InstanceInline(admin.TabularInline):
+        model = ResourceGroup2Instance
+
+    inlines = [InstanceTagRelationsInline, ResourceGroup2InstanceInline, AliRdsConfigInline]
 
 
 # SQL工单内容
