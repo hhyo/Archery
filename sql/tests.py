@@ -1733,6 +1733,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1754,6 +1755,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1775,6 +1777,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1796,6 +1799,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1818,6 +1822,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1859,6 +1864,7 @@ class TestNotify(TestCase):
         self.query_apply_1.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1882,6 +1888,7 @@ class TestNotify(TestCase):
         self.query_apply_1.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_execute_disable(self, _msg_sender):
@@ -1916,6 +1923,7 @@ class TestNotify(TestCase):
         self.wf.save()
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_binlog2sql_disable(self, _msg_sender):
@@ -1931,7 +1939,7 @@ class TestNotify(TestCase):
 
     @patch('django_q.tasks.async_task')
     @patch('sql.notify.MsgSender')
-    def test_notify_for_binlog2sql(self, _auth_group_users, _async_task):
+    def test_notify_for_binlog2sql(self, _msg_sender, _async_task):
         """
         测试执行消息
         :return:
@@ -1942,3 +1950,4 @@ class TestNotify(TestCase):
         _async_task.return_value.success.return_value = True
         r = notify_for_binlog2sql(_async_task)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()

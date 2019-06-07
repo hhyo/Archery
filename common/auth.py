@@ -22,6 +22,7 @@ def init_user(user):
     :param user:
     :return:
     """
+    # 添加到默认权限组
     default_auth_group = SysConfig().get('default_auth_group', '')
     if default_auth_group:
         try:
