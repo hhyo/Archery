@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Users, Instance, ResourceGroup, ResourceGroupRelations
+from sql.models import Users, Instance, ResourceGroup
 
 
 def user_groups(user):
@@ -12,9 +12,7 @@ def user_groups(user):
     if user.is_superuser:
         group_list = [group for group in ResourceGroup.objects.filter(is_deleted=0)]
     else:
-        group_ids = [group['group_id'] for group in
-                     ResourceGroupRelations.objects.filter(object_id=user.id, object_type=0).values('group_id')]
-        group_list = [group for group in ResourceGroup.objects.filter(group_id__in=group_ids, is_deleted=0)]
+        group_list = [group for group in Users.objects.get(id=user.id).resourcegroup_set.filter(is_deleted=0)]
     return group_list
 
 
@@ -27,21 +25,20 @@ def user_instances(user, type='all', db_type='all', tags=None):
     :param tags: 标签id列表, [1,2]
     :return:
     """
-    # 先获取用户关联资源组列表
-    group_list = user_groups(user)
-    group_ids = [group.group_id for group in group_list]
+    # 拥有所有实例权限的用户
     if user.has_perm('sql.query_all_instances'):
-        instance_ids = [master['id'] for master in Instance.objects.all().values('id')]
+        instances = Instance.objects.all()
     else:
-        # 获取资源组关联的实例列表
-        instance_ids = [group['object_id'] for group in
-                        ResourceGroupRelations.objects.filter(group_id__in=group_ids, object_type=1).values(
-                            'object_id')]
+        # 先获取用户关联的资源组
+        resource_groups = ResourceGroup.objects.filter(users=user)
+        # 再获取资源组关联的实例
+        instances = Instance.objects.none()
+        for resource_group in resource_groups:
+            instances = instances | resource_group.instances.all()
+        instances = instances.distinct()
     # 过滤type
-    if type == 'all':
-        instances = Instance.objects.filter(pk__in=instance_ids)
-    else:
-        instances = Instance.objects.filter(pk__in=instance_ids, type=type)
+    if type != 'all':
+        instances = instances.get(type=type)
 
     # 过滤db_type
     if db_type != 'all':
@@ -64,7 +61,8 @@ def auth_group_users(auth_group_names, group_id):
     :param group_id: 资源组ID
     :return:
     """
-    group_user_ids = [group['object_id'] for group in
-                      ResourceGroupRelations.objects.filter(group_id=group_id, object_type=0).values('object_id')]
-    users = Users.objects.filter(groups__name__in=auth_group_names, id__in=group_user_ids)
+    # 获取资源组关联的用户
+    users = ResourceGroup.objects.get(group_id=group_id).users.all()
+    # 过滤在该权限组中的用户
+    users = users.filter(groups__name__in=auth_group_names)
     return users

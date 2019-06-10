@@ -110,7 +110,6 @@
                             $("#db_name").append(name);
                         }
                         $("#db_name").prepend("<option value=\"all\">全部</option>");
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择源数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -145,7 +144,6 @@
                             $("#target_db_name").append(name);
                         }
                         $("#target_db_name").prepend("<option value=\"all\">全部</option>");
-                        $("#target_db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择目标数据库:</option>");
                         $('#target_db_name').selectpicker('render');
                         $('#target_db_name').selectpicker('refresh');
                     } else {

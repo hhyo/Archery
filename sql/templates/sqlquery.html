@@ -18,9 +18,9 @@
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-live-search="true"
+                                        title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
                                     // TODO 实例中的筛选可以在python代码中， 使用filter实现， 这种实现可能有效率问题。
-                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
                                     <optgroup id="optgroup-mysql" label="MySQL">
                                         {% for instance in instances %}
                                             {% if instance.db_type == 'mysql' %}
@@ -61,23 +61,26 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-placeholder="请选择数据库:" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                        data-live-search="true"
+                                        title="请选择数据库:"
+                                        data-placeholder="请选择数据库:" required>
                                 </select>
                             </div>
                             <div id="div-schema_name" class="form-group" style="display: none">
                                 <select id="schema_name" name="schema_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-placeholder="请选择模式:" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择模式:</option>
+                                        data-live-search="true"
+                                        title="请选择模式:"
+                                        data-placeholder="请选择模式:" required>
                                 </select>
                             </div>
                             <div id="div-table_name" class="form-group">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true"
-                                        data-name="查看表结构" data-placeholder="查看表结构:" required>
-                                    <option value="is-empty" disabled="" selected="selected">查看表结构:</option>
+                                        data-name="查看表结构"
+                                        title="查看表结构:"
+                                        data-placeholder="查看表结构:" required>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -660,7 +663,6 @@
         // 实例变更获取数据库
         $("#instance_name").change(function () {
             $("#db_name").empty();
-            $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
 
@@ -731,11 +733,9 @@
         //数据库变更获取表/模式名称
         $("#db_name").change(function () {
             $("#table_name").empty();
-            $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看表结构:</option>");
             $('#table_name').selectpicker('render');
             $('#table_name').selectpicker('refresh');
             $("#schema_name").empty();
-            $("#schema_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择模式:</option>");
             $('#schema_name').selectpicker('render');
             $('#schema_name').selectpicker('refresh');
             // PgSQL需要选择模式再获取表
@@ -793,7 +793,6 @@
         //模式变更获取表
         $("#schema_name").change(function () {
             $("#table_name").empty();
-            $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看表结构:</option>");
             $('#table_name').selectpicker('render');
             $('#table_name').selectpicker('refresh');
             //获取table

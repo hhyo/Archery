@@ -174,11 +174,16 @@ class OracleEngine(EngineBase):
             if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             cursor.execute(sql)
-            if int(limit_num) > 0:
-                rows = cursor.fetchmany(int(limit_num))
-            else:
-                rows = cursor.fetchall()
             fields = cursor.description
+            if any(x[1] == cx_Oracle.CLOB for x in fields):
+                rows = [tuple([(c.read() if type(c) == cx_Oracle.LOB else c) for c in r]) for r in cursor]
+                if int(limit_num) > 0:
+                    rows =  rows[0:int(limit_num)]
+            else:
+                if int(limit_num) > 0:
+                    rows = cursor.fetchmany(int(limit_num))
+                else:
+                    rows = cursor.fetchall()
 
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = [tuple(x) for x in rows]

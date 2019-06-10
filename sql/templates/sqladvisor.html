@@ -35,14 +35,17 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-placeholder="请选择数据库:" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
+                                        data-live-search="true"
+                                        title="请选择数据库:"
+                                        data-placeholder="请选择数据库:" required>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="tools" name="tools"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-placeholder="请选择优化方式:" required>
+                                        data-live-search="true"
+                                        title="请选择优化方式:"
+                                        data-placeholder="请选择优化方式:" required>
                                     <option value="is-empty" disabled="">请选择优化方式:</option>
                                     <option value="1" selected="selected">SQLAdvisor</option>
                                     <option value="3">SOAR</option>
@@ -347,7 +350,6 @@
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
 

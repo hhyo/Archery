@@ -19,16 +19,15 @@
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <select id=instance_name class="form-control selectpicker" name="instance_name_list"
+                        title="请选择实例:"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
                     {% for instance_name in instances %}
                         <option value="{{ instance_name }}">{{ instance_name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div id="command-div" class="form-group">
-                <select id="command" class="form-control selectpicker" name="command_type">
-                    <option value="is-empty" disabled="">command类型</option>
+                <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
                     <option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
                     <option value="Not Sleep">Not Sleep</option>
