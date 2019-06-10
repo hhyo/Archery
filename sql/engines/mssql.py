@@ -160,7 +160,6 @@ class MssqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
         # 切分语句，追加到检测结果中，默认全部检测通过
-        # split_sql = [f"""use [{db_name}]"""] + sqlparse.split(sql)
         sql = sql.split("GO")
         sql = filter(None,sql)
         split_sql = [f"""use [{db_name}]"""]
