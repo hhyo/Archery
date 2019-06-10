@@ -165,15 +165,17 @@ class MssqlEngine(EngineBase):
         split_sql = [f"""use [{db_name}]"""]
         for i in sql:
             split_sql = split_sql + [i]
+        rowid = 1
         for statement in split_sql:
             check_result.rows.append(ReviewResult(
-                id=1,
+                id=rowid,
                 errlevel=0,
                 stagestatus='Audit completed',
                 errormessage='None',
                 sql=statement,
                 affected_rows=0,
                 execute_time=0, ))
+            rowid += 1
         return check_result
 
     def execute_workflow(self, workflow):
