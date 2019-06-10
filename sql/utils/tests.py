@@ -18,8 +18,10 @@ from django_q.models import Schedule
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroupRelations, WorkflowLog, \
-    WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
+from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroup2User, \
+    ResourceGroup2Instance, WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
+    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
+from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel
 from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
@@ -225,7 +227,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=('status',))
         sql_execute_for_resource_group = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.user.user_permissions.add(sql_execute_for_resource_group)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 
@@ -1094,7 +1096,7 @@ class TestDataMasking(TestCase):
             'command': 'select',
             'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
                             {'type': 'FIELD_ITEM', 'field': '*'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},],
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone,*,phone from users;"""
@@ -1170,3 +1172,72 @@ class TestDataMasking(TestCase):
         r = brute_mask(query_result)
         mask_result_rows = [('188****8888',), ('188****8889',), ('188****8810',)]
         self.assertEqual(r.rows, mask_result_rows)
+
+
+class TestResourceGroup(TestCase):
+    def setUp(self):
+        self.sys_config = SysConfig()
+        self.user = User.objects.create(username='test_user', display='中文显示', is_active=True)
+        self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
+        self.ins1 = Instance.objects.create(instance_name='some_ins1', type='slave', db_type='mysql',
+                                            host='some_host',
+                                            port=3306, user='ins_user', password='some_pass')
+        self.ins2 = Instance.objects.create(instance_name='some_ins2', type='slave', db_type='mysql',
+                                            host='some_host',
+                                            port=3306, user='ins_user', password='some_pass')
+        self.rgp1 = ResourceGroup.objects.create(group_name='group1')
+        self.rgp2 = ResourceGroup.objects.create(group_name='group2')
+        self.agp = Group.objects.create(name='auth_group')
+
+    def tearDown(self):
+        self.sys_config.purge()
+        User.objects.all().delete()
+        Instance.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+        Group.objects.all().delete()
+
+    def test_user_groups_super(self):
+        """获取用户关联资源组列表，超级管理员"""
+        groups = user_groups(self.su)
+        self.assertEqual(groups.__len__(), 2)
+        self.assertIn(self.rgp1, groups)
+        self.assertIn(self.rgp2, groups)
+
+    def test_user_groups(self):
+        """获取用户关联资源组列表，普通用户"""
+        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
+        groups = user_groups(self.user)
+        self.assertEqual(groups.__len__(), 1)
+        self.assertIn(self.rgp1, groups)
+
+    def test_user_instances_super(self):
+        """获取用户实例列表，超级管理员"""
+        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        ins = user_instances(self.su)
+        self.assertEqual(ins.__len__(), 2)
+        self.assertIn(self.ins1, ins)
+        self.assertIn(self.ins2, ins)
+
+    def test_user_instances_associated_group(self):
+        """获取用户实例列表，普通用户关联资源组"""
+        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
+        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        ins = user_instances(self.user)
+        self.assertEqual(ins.__len__(), 1)
+        self.assertIn(self.ins1, ins)
+
+    def test_user_instances_unassociated_group(self):
+        """获取用户实例列表，普通用户未关联资源组"""
+        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        ins = user_instances(self.user)
+        self.assertEqual(ins.__len__(), 0)
+
+    def test_auth_group_users(self):
+        """获取资源组内关联指定权限组的用户"""
+        # 用户关联权限组
+        self.user.groups.add(self.agp)
+        # 用户关联资源组
+        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
+        # 获取资源组内关联指定权限组的用户
+        users = auth_group_users(auth_group_names=[self.agp.name], group_id=self.rgp1.group_id)
+        self.assertIn(self.user, users)

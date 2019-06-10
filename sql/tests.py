@@ -16,7 +16,7 @@ from sql.engines.models import ResultSet
 from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql
 from sql.utils.execute_sql import execute_callback
 from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
-    ResourceGroup, ResourceGroupRelations, ParamTemplate, WorkflowAudit
+    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit
 
 User = get_user_model()
 
@@ -526,7 +526,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_review = Permission.objects.get(codename='query_review')
         self.user.user_permissions.add(query_review)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -547,7 +547,8 @@ class TestQueryPrivilegesApply(TestCase):
 
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        # ResourceGroup.objects.get(group_id=self.group.group_id).users.add(self.user)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -598,7 +599,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
         self.user.user_permissions.add(query_mgtpriv)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -626,7 +627,7 @@ class TestQueryPrivilegesApply(TestCase):
                                        priv_type=2)
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroupRelations.objects.create(object_type=0, object_id=self.user.id, group_id=self.group.group_id)
+        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -1732,6 +1733,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1753,6 +1755,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1774,6 +1777,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1795,6 +1799,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1817,6 +1822,7 @@ class TestNotify(TestCase):
         self.audit.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1858,6 +1864,7 @@ class TestNotify(TestCase):
         self.query_apply_1.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
@@ -1881,6 +1888,7 @@ class TestNotify(TestCase):
         self.query_apply_1.save()
         r = notify_for_audit(audit_id=self.audit.audit_id)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_execute_disable(self, _msg_sender):
@@ -1894,13 +1902,15 @@ class TestNotify(TestCase):
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
 
+    @patch('sql.notify.auth_group_users')
     @patch('sql.notify.Audit')
     @patch('sql.notify.MsgSender')
-    def test_notify_for_execute(self, _msg_sender, _audit):
+    def test_notify_for_execute(self, _msg_sender, _audit, _auth_group_users):
         """
         测试执行消息
         :return:
         """
+        _auth_group_users.return_value = [self.user]
         # 处理工单信息
         _audit.review_info.return_value = self.audit.audit_auth_groups, self.audit.current_audit
         # 开启消息通知
@@ -1913,6 +1923,7 @@ class TestNotify(TestCase):
         self.wf.save()
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_binlog2sql_disable(self, _msg_sender):
@@ -1928,7 +1939,7 @@ class TestNotify(TestCase):
 
     @patch('django_q.tasks.async_task')
     @patch('sql.notify.MsgSender')
-    def test_notify_for_binlog2sql(self, _auth_group_users, _async_task):
+    def test_notify_for_binlog2sql(self, _msg_sender, _async_task):
         """
         测试执行消息
         :return:
@@ -1939,3 +1950,4 @@ class TestNotify(TestCase):
         _async_task.return_value.success.return_value = True
         r = notify_for_binlog2sql(_async_task)
         self.assertIsNone(r)
+        _msg_sender.assert_called_once()
