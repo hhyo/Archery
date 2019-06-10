@@ -91,6 +91,19 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <!--可执行时间-->
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker_run_date_start'>
+                                    <input id="run_date_start" name="run_date_start" type='text' autocomplete="off" class="form-control"
+                                           placeholder="请选择可执行起始时间"/>
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                                </div>
+                                <div class='input-group date' id='datetimepicker_run_date_end'>
+                                    <input id="run_date_end" name="run_date_end" type='text' autocomplete="off" class="form-control"
+                                           placeholder="请选择最后可执行时间"/>
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                                </div>
+                            </div>
                             <!--审批流程-->
                             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
                                    data-placeholder="请配置审批流程！" required>
@@ -157,6 +170,43 @@
     <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
 
+    <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+
+    <!--初始化时间控件 -->
+    <script>
+        var date = new Date();
+        $("#datetimepicker_run_date_start").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 1,//天视图
+            minView: 0,//分钟
+            startDate: date,
+            inline: true,
+            sideBySide: true,
+            minuteStep: 5,
+            {#initialDate: new Date(),#}
+        });
+        $("#datetimepicker_run_date_end").datetimepicker({
+            format: "yyyy-mm-dd hh:ii",
+            autoclose: true,
+            todayBtn: true,
+            pickerPosition: "bottom-left",
+            language: 'zh-CN',//中文，需要引用zh-CN.js包
+            startView: 1,//天视图
+            minView: 0,//分钟
+            startDate: date,
+            inline: true,
+            sideBySide: true,
+            minuteStep: 5,
+            {#initialDate: new Date(),#}
+        })
+    </script>
     <!--upload -->
     <script>
         //初始化上传控件

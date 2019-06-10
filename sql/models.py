@@ -193,6 +193,8 @@ class SqlWorkflow(models.Model):
     engineer_display = models.CharField('发起人中文名', max_length=50, default='')
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
+    starttime = models.DateTimeField('可执行起始时间', null=True, blank=True)
+    endtime = models.DateTimeField('可执行结束时间', null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     finish_time = models.DateTimeField('结束时间', null=True, blank=True)
     is_manual = models.IntegerField('是否原生执行', choices=((0, '否'), (1, '是')), default=0)

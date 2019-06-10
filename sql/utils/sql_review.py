@@ -1,3 +1,4 @@
+import datetime
 import re
 import sqlparse
 
@@ -67,6 +68,22 @@ def can_execute(user, workflow_id):
         # 当前登录用户为提交人，并且有执行权限
         if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
             result = True
+    return result
+
+def on_correct_time_period(workflow_id):
+    """
+    判断是否在可执行时间段内
+    :param user:
+    :param workflow_id:
+    :return:
+    """
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = True
+    ctime = datetime.datetime.now()
+    stime = workflow_detail.starttime
+    etime = workflow_detail.endtime
+    if (stime and stime>ctime) or (etime and etime<ctime):
+        result = False
     return result
 
 

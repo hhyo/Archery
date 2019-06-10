@@ -22,7 +22,7 @@ from sql.notify import notify_for_audit
 from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -126,6 +126,8 @@ def submit(request):
     is_backup = True if request.POST.get('is_backup') == 'True' else False
     notify_users = request.POST.getlist('notify_users')
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    starttime = request.POST['run_date_start']
+    endtime = request.POST['run_date_end']
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, db_name, is_backup]:
@@ -178,7 +180,9 @@ def submit(request):
                 db_name=db_name,
                 is_manual=0,
                 syntax_type=check_result.syntax_type,
-                create_time=timezone.now()
+                create_time=timezone.now(),
+                starttime=None if not starttime else starttime,
+                endtime=None if not endtime else endtime
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
@@ -204,6 +208,36 @@ def submit(request):
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
+@permission_required('sql.sql_review', raise_exception=True)
+def alter_time(request):
+    """
+    审核人修改可执行时间
+    :param request:
+    :return:
+    """
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    starttime = request.POST['run_date_start']
+    endtime = request.POST['run_date_end']
+    if workflow_id == 0:
+        context = {'errMsg': 'workflow_id参数为空.'}
+        return render(request, 'error.html', context)
+
+    user = request.user
+    if Audit.can_review(user, workflow_id, 2) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    try:
+        # 存进数据库里
+        alterworkflow = SqlWorkflow.objects.get(id=workflow_id)
+        alterworkflow.starttime = None if not starttime or starttime == "None" else starttime
+        alterworkflow.endtime = None if not endtime or endtime == "None" else endtime
+        alterworkflow.save()
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
+
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 @permission_required('sql.sql_review', raise_exception=True)
 def passed(request):
@@ -263,6 +297,10 @@ def execute(request):
 
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    if on_correct_time_period(workflow_id) is False:
+        context = {'errMsg': '请在正确的时间执行上线!'}
         return render(request, 'error.html', context)
     # 根据执行模式进行对应修改
     mode = request.POST.get('mode')
