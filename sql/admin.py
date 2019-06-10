@@ -135,7 +135,7 @@ class QueryPrivilegesAdmin(admin.ModelAdmin):
 @admin.register(QueryPrivilegesApply)
 class QueryPrivilegesApplyAdmin(admin.ModelAdmin):
     list_display = ('apply_id', 'user_display', 'group_name', 'instance', 'valid_date', 'limit_num', 'create_time')
-    search_fields = ['user_display', 'instance__instance_name', 'db_list', 'tb_list']
+    search_fields = ['user_display', 'instance__instance_name', 'db_list', 'table_list']
     list_filter = ('user_display', 'group_name', 'instance')
 
 
