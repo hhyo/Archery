@@ -29,7 +29,7 @@ class MssqlEngine(EngineBase):
         sql = "SELECT name FROM master.sys.databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
-                   if row[0] not in ('master','msdb','tempdb','model')]
+                   if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
         result.rows = db_list
         return result
 
