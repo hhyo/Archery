@@ -38,7 +38,7 @@ def user_instances(user, type='all', db_type='all', tags=None):
         instances = instances.distinct()
     # 过滤type
     if type != 'all':
-        instances = instances.get(type=type)
+        instances = instances.filter(type=type)
 
     # 过滤db_type
     if db_type != 'all':

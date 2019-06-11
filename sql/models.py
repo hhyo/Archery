@@ -521,7 +521,7 @@ class AliyunAccessKey(models.Model):
     """
     ak = models.CharField(max_length=50)
     secret = models.CharField(max_length=100)
-    is_enable = models.BooleanField(choices=((False, '禁用'), (True, '启用')))
+    is_enable = models.BooleanField('是否启用', default=True)
     remark = models.CharField(max_length=50, default='', blank=True)
 
     @property
@@ -563,7 +563,7 @@ class AliyunRdsConfig(models.Model):
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
-    is_enable = models.BooleanField('是否启用', choices=((False, '禁用'), (True, '启用')))
+    is_enable = models.BooleanField('是否启用', default=True)
 
     def __int__(self):
         return self.rds_dbinstanceid
@@ -589,7 +589,7 @@ class Permission(models.Model):
             ('menu_sqlanalyze', '菜单 SQL分析'),
             ('menu_query', '菜单 SQL查询'),
             ('menu_sqlquery', '菜单 在线查询'),
-            ('menu_queryapplylist', '菜单 查询权限申请'),
+            ('menu_queryapplylist', '菜单 权限管理'),
             ('menu_sqloptimize', '菜单 SQL优化'),
             ('menu_sqladvisor', '菜单 优化工具'),
             ('menu_slowquery', '菜单 慢查日志'),
