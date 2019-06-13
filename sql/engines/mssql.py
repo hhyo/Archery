@@ -160,8 +160,8 @@ class MssqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
         # 切分语句，追加到检测结果中，默认全部检测通过
-        t = re.compile('^GO$', re.I | re.M)
-        sql = re.split(t, sql, 0)
+        split_reg  = re.compile('^GO$', re.I | re.M)
+        sql = re.split(split_reg, sql, 0)
         sql = filter(None,sql)
         split_sql = [f"""use [dbname]"""]
         for i in sql:
@@ -190,8 +190,8 @@ class MssqlEngine(EngineBase):
         execute_result = ReviewSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         cursor = conn.cursor()
-        t = re.compile('^GO$', re.I | re.M)
-        sql = re.split(t, sql, 0)
+        split_reg = re.compile('^GO$', re.I | re.M)
+        sql = re.split(split_reg, sql, 0)
         sql = filter(None,sql)
         split_sql = [f"""use [dbname]"""]
         for i in sql:
