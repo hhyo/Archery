@@ -170,6 +170,15 @@ class TestMssql(TestCase):
         check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
         self.assertEqual(check_result, "select top 10 user from user_table")
 
+    def test_execute_check(self):
+        new_engine = MssqlEngine(instance=self.ins1)
+        test_sql = 'use database\ngo\nsome sql1\nGO\nsome sql2\n\r\nGo\nsome sql3\n\r\ngO\n'
+        check_result = new_engine.execute_check(db_name=None, sql=test_sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[1].__dict__['sql'], "use database\n")
+        self.assertEqual(check_result.rows[2].__dict__['sql'], "\nsome sql1\n")
+        self.assertEqual(check_result.rows[4].__dict__['sql'], "\nsome sql3\n\r\n")
+
     @patch('sql.engines.mssql.MssqlEngine.execute')
     def test_execute_workflow(self, mock_execute):
         mock_execute.return_value.error = None
