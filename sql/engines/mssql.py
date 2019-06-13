@@ -166,6 +166,7 @@ class MssqlEngine(EngineBase):
         split_sql = [f"""use [dbname]"""]
         for i in sql:
             split_sql = split_sql + [i]
+        rowid = 1
         for statement in split_sql:
             check_result.rows.append(ReviewResult(
                 id=rowid,
