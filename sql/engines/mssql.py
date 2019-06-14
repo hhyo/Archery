@@ -163,7 +163,7 @@ class MssqlEngine(EngineBase):
         split_reg  = re.compile('^GO$', re.I | re.M)
         sql = re.split(split_reg, sql, 0)
         sql = filter(None,sql)
-        split_sql = [f"""use [{dbname}]"""]
+        split_sql = [f"""use [{db_name}]"""]
         for i in sql:
             split_sql = split_sql + [i]
         rowid = 1
@@ -193,7 +193,7 @@ class MssqlEngine(EngineBase):
         split_reg = re.compile('^GO$', re.I | re.M)
         sql = re.split(split_reg, sql, 0)
         sql = filter(None,sql)
-        split_sql = [f"""use [{dbname}]"""]
+        split_sql = [f"""use [{db_name}]"""]
         for i in sql:
             split_sql = split_sql + [i]
         rowid = 1
