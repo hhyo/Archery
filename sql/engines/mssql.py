@@ -82,16 +82,8 @@ class MssqlEngine(EngineBase):
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
         sql_whitelist = ['select', 'sp_helptext']
-        check_msg = ''
-        whitelist_pattern = ''
         # 根据白名单list拼接pattern语句
-        for keyword in range(len(sql_whitelist)):
-            if keyword == len(sql_whitelist)-1:
-                whitelist_pattern = whitelist_pattern + '^' + sql_whitelist[keyword]
-                check_msg = check_msg + sql_whitelist[keyword]
-            else:
-                whitelist_pattern = whitelist_pattern + '^' + sql_whitelist[keyword] + '|'
-                check_msg = check_msg + sql_whitelist[keyword] + ','
+        whitelist_pattern = "^" + "|^".join(sql_whitelist)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sql.format(sql, strip_comments=True)
@@ -104,7 +96,7 @@ class MssqlEngine(EngineBase):
             return result
         if re.match(whitelist_pattern, sql_lower) is None:
             result['bad_query'] = True
-            result['msg'] = '仅支持{}语法!'.format(check_msg)
+            result['msg'] = '仅支持{}语法!'.format(','.join(sql_whitelist))
             return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
