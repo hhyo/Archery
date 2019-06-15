@@ -36,3 +36,8 @@ set foreign_key_checks = 1;
 
 -- 删除旧表
 drop table resource_group_relations;
+
+-- SQL上线工单增加可执行时间选择
+ALTER TABLE sql_workflow
+  ADD run_date_start datetime(6) DEFAULT NULL COMMENT '可执行起始时间',
+  ADD run_date_end datetime(6) DEFAULT NULL COMMENT '可执行结束时间';

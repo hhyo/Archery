@@ -70,13 +70,22 @@
                                     <select id="is_backup" name="is_backup"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-name="是否选择备份"
+                                            title="请选择是否需要备份"
                                             data-placeholder="请选择是否要备份" required>
-                                        <option value="is-empty" disabled="">请选择是否需要备份:</option>
                                         <option value=True selected="selected">备份SQL</option>
                                         <option value=False>不备份SQL</option>
                                     </select>
                                 </div>
                             {% endif %}
+                            <!--可执行范围时间-->
+                            <div class='form-group'>
+                                <input type="hidden" id="run_date_start" name="run_date_start">
+                                <input type="hidden" id="run_date_end" name="run_date_end">
+                                <input type="text" id="run_date_range" readonly
+                                       value="请选择可执行时间范围"
+                                       style="background-color: #fff;color: #999 "
+                                       class="form-control "/>
+                            </div>
                             <!--增加通知人-->
                             <div class="form-group">
                                 <select id="notify_users" name="notify_users"
@@ -90,19 +99,6 @@
                                         <option value="{{ user_info.username }}">{{ user_info.display }}</option>
                                     {% endfor %}
                                 </select>
-                            </div>
-                            <!--可执行时间-->
-                            <div class="form-group">
-                                <div class='input-group date' id='datetimepicker_run_date_start'>
-                                    <input id="run_date_start" name="run_date_start" type='text' autocomplete="off" class="form-control"
-                                           placeholder="请选择可执行起始时间"/>
-                                    <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
-                                </div>
-                                <div class='input-group date' id='datetimepicker_run_date_end'>
-                                    <input id="run_date_end" name="run_date_end" type='text' autocomplete="off" class="form-control"
-                                           placeholder="请选择最后可执行时间"/>
-                                    <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
-                                </div>
                             </div>
                             <!--审批流程-->
                             <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
@@ -161,6 +157,7 @@
 {% block js %}
     {% load staticfiles %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
     <script src="{% static 'ace/ext-language_tools.js' %}"></script>
     <script src="{% static 'ace/mode-mysql.js' %}"></script>
@@ -169,43 +166,37 @@
     <script src="{% static 'ace/ace-init.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
-
-    <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
-    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
-    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
     <!--初始化时间控件 -->
     <script>
-        var date = new Date();
-        $("#datetimepicker_run_date_start").datetimepicker({
-            format: "yyyy-mm-dd hh:ii",
-            autoclose: true,
-            todayBtn: true,
-            pickerPosition: "bottom-left",
-            language: 'zh-CN',//中文，需要引用zh-CN.js包
-            startView: 1,//天视图
-            minView: 0,//分钟
-            startDate: date,
-            inline: true,
-            sideBySide: true,
-            minuteStep: 5,
-            {#initialDate: new Date(),#}
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "up",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
         });
-        $("#datetimepicker_run_date_end").datetimepicker({
-            format: "yyyy-mm-dd hh:ii",
-            autoclose: true,
-            todayBtn: true,
-            pickerPosition: "bottom-left",
-            language: 'zh-CN',//中文，需要引用zh-CN.js包
-            startView: 1,//天视图
-            minView: 0,//分钟
-            startDate: date,
-            inline: true,
-            sideBySide: true,
-            minuteStep: 5,
-            {#initialDate: new Date(),#}
-        })
     </script>
     <!--upload -->
     <script>

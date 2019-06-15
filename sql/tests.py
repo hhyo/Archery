@@ -12,10 +12,10 @@ import sql.query_privileges
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.binlog import binlog2sql_file
-from sql.engines.models import ResultSet
+from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql
 from sql.utils.execute_sql import execute_callback
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, QueryLog, \
+from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
     ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit
 
 User = get_user_model()
@@ -830,17 +830,174 @@ class TestWorkflowView(TransactionTestCase):
         SysConfig().purge()
 
     def testWorkflowStatus(self):
+        """测试获取工单状态"""
         c = Client(header={})
         c.force_login(self.u1)
         r = c.post('/getWorkflowStatus/', {'workflow_id': self.wf1.id})
         r_json = r.json()
         self.assertEqual(r_json['status'], 'workflow_finish')
 
+    def test_check_param_is_None(self):
+        """测试工单检测，参数内容为空"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {"instance_name": self.master1.instance_name}
+        r = c.post('/simplecheck/', data=data)
+        self.assertDictEqual(json.loads(r.content),
+                             {'status': 1, 'msg': '页面提交参数可能为空', 'data': {}})
+
+    @patch('sql.sql_workflow.get_engine')
+    def test_check_inception_Exception(self, _get_engine):
+        """测试工单检测，inception报错"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {
+            "sql_content": "update sql_users set email = ''where id > 0;",
+            "instance_name": self.master1.instance_name,
+            "db_name": "archery",
+        }
+        _get_engine.return_value = RuntimeError
+        r = c.post('/simplecheck/', data=data)
+        self.assertDictEqual(json.loads(r.content),
+                             {'status': 1,
+                              'msg': "type object 'RuntimeError' has no attribute 'execute_check'",
+                              'data': {}})
+
+    @patch('sql.sql_workflow.get_engine')
+    def test_check(self, _get_engine):
+        """测试工单检测，正常返回"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {
+            "sql_content": "update sql_users set email = ''where id > 0;",  #
+            "instance_name": self.master1.instance_name,
+            "db_name": "archery",
+        }
+        column_list = [
+            'id', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'sql', 'affected_rows', 'sequence',
+            'backup_dbname', 'execute_time', 'sqlsha1', 'backup_time', 'actual_affected_rows']
+
+        rows = [ReviewResult(id=1,
+                             stage='CHECKED',
+                             errlevel=0,
+                             stagestatus='Audit Completed',
+                             errormessage='',
+                             sql='use `archer`',
+                             affected_rows=0,
+                             actual_affected_rows=0,
+                             sequence='0_0_00000000',
+                             backup_dbname='',
+                             execute_time='0',
+                             sqlsha1='')]
+        _get_engine.return_value.execute_check.return_value = ReviewSet(
+            warning_count=0,
+            error_count=0,
+            column_list=column_list,
+            rows=rows)
+        r = c.post('/simplecheck/', data=data)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()),
+                             ["rows", "CheckWarningCount", "CheckErrorCount"])
+        self.assertListEqual(list(json.loads(r.content)['data']['rows'][0].keys()), column_list)
+
+    def test_submit_param_is_None(self):
+        """测试SQL提交，参数内容为空"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {"sql_content": "update sql_users set email='' where id>0;",
+                "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
+                "group_name": self.resource_group1.group_name,
+                "instance_name": self.master1.instance_name,
+                "run_date_start": "",
+                "run_date_end": "",
+                "workflow_auditors": "11"}
+        r = c.post('/autoreview/', data=data)
+        self.assertContains(r, '页面提交参数可能为空')
+
+    @patch('sql.sql_workflow.async_task')
+    @patch('sql.sql_workflow.Audit')
+    @patch('sql.sql_workflow.get_engine')
+    @patch('sql.sql_workflow.user_instances')
+    def test_submit_audit_wrong(self, _user_instances, _get_engine, _audit, _async_task):
+        """测试SQL提交，获取审核信息报错"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {"sql_content": "update sql_users set email='' where id>0;",
+                "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
+                "group_name": self.resource_group1.group_name,
+                "instance_name": self.master1.instance_name,
+                "db_name": "archery",
+                "run_date_start": "",
+                "run_date_end": "",
+                "workflow_auditors": "11"}
+        _user_instances.return_value.get.return_value = self.master1
+        _get_engine.return_value.execute_check.return_value = ReviewSet(
+            syntax_type=1,
+            warning_count=1,
+            error_count=1)
+        _audit.settings = ValueError('error')
+        _audit.add.return_value = None
+        _async_task.return_value = None
+        r = c.post('/autoreview/', data=data)
+        self.assertContains(r, 'ValueError')
+
+    @patch('sql.sql_workflow.async_task')
+    @patch('sql.sql_workflow.Audit')
+    @patch('sql.sql_workflow.get_engine')
+    @patch('sql.sql_workflow.user_instances')
+    def test_submit(self, _user_instances, _get_engine, _audit, _async_task):
+        """测试SQL提交，正常提交"""
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {"sql_content": "update sql_users set email='' where id>0;",
+                "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
+                "group_name": self.resource_group1.group_name,
+                "instance_name": self.master1.instance_name,
+                "db_name": "archery",
+                "run_date_start": "",
+                "run_date_end": "",
+                "workflow_auditors": "11"}
+        _user_instances.return_value.get.return_value = self.master1
+        _get_engine.return_value.execute_check.return_value = ReviewSet(
+            syntax_type=1,
+            warning_count=1,
+            error_count=1)
+        _audit.settings.return_value = 'some_group,another_group'
+        _audit.add.return_value = None
+        _async_task.return_value = None
+        r = c.post('/autoreview/', data=data)
+        workflow_id = SqlWorkflow.objects.latest(field_name='id').id
+        self.assertRedirects(r, f'/detail/{workflow_id}/', fetch_redirect_response=False)
+
+    @patch('sql.utils.workflow_audit.Audit.can_review')
+    def test_alter_run_date_no_perm(self, _can_review):
+        """测试修改可执行时间，无权限"""
+        sql_review = Permission.objects.get(codename='sql_review')
+        self.u1.user_permissions.add(sql_review)
+        _can_review.return_value = False
+        c = Client()
+        c.force_login(self.u1)
+        data = {"workflow_id": self.wf1.id}
+        r = c.post('/alter_run_date/', data=data)
+        self.assertContains(r, '你无权操作当前工单')
+
+    @patch('sql.utils.workflow_audit.Audit.can_review')
+    def test_alter_run_date(self, _can_review):
+        """测试修改可执行时间，有权限"""
+        sql_review = Permission.objects.get(codename='sql_review')
+        self.u1.user_permissions.add(sql_review)
+        _can_review.return_value = True
+        c = Client()
+        c.force_login(self.u1)
+        data = {"workflow_id": self.wf1.id}
+        r = c.post('/alter_run_date/', data=data)
+        self.assertRedirects(r, f'/detail/{self.wf1.id}/', fetch_redirect_response=False)
+
     @patch('sql.utils.workflow_audit.Audit.logs')
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     @patch('sql.utils.workflow_audit.Audit.review_info')
     @patch('sql.utils.workflow_audit.Audit.can_review')
     def testWorkflowDetailView(self, _can_review, _review_info, _detail_by_id, _logs):
+        """测试工单详情"""
         _review_info.return_value = ('some_auth_group', 'current_auth_group')
         _can_review.return_value = False
         _detail_by_id.return_value.audit_id = 123
@@ -872,6 +1029,7 @@ class TestWorkflowView(TransactionTestCase):
         self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
+        """测试工单列表"""
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'navStatus': 'all'})
@@ -897,6 +1055,7 @@ class TestWorkflowView(TransactionTestCase):
     @patch('sql.utils.workflow_audit.Audit.audit')
     @patch('sql.utils.workflow_audit.Audit.can_review')
     def testWorkflowPassedView(self, _can_review, _audit, _detail_by_id):
+        """测试审核工单"""
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/passed/')
@@ -920,6 +1079,7 @@ class TestWorkflowView(TransactionTestCase):
     @patch('sql.sql_workflow.Audit.detail_by_workflow_id')
     @patch('sql.sql_workflow.can_execute')
     def test_workflow_execute(self, mock_can_excute, mock_detail_by_id, mock_add_log):
+        """测试工单执行"""
         c = Client()
         c.force_login(self.executor1)
         r = c.post('/execute/')
@@ -941,6 +1101,7 @@ class TestWorkflowView(TransactionTestCase):
     # 参见 : https://docs.python.org/3/library/unittest.mock.html#where-to-patch
     @patch('sql.sql_workflow.can_cancel')
     def testWorkflowCancelView(self, _can_cancel, _audit, _detail_by_id, _add_log):
+        """测试工单驳回、取消"""
         c = Client()
         c.force_login(self.u2)
         r = c.post('/cancel/')
@@ -1024,6 +1185,7 @@ class TestWorkflowView(TransactionTestCase):
 
     @patch('sql.sql_workflow.get_engine')
     def test_osc_control(self, _get_engine):
+        """测试MySQL工单osc控制"""
         c = Client()
         c.force_login(self.superuser1)
         request_data = {
@@ -1038,6 +1200,7 @@ class TestWorkflowView(TransactionTestCase):
 
     @patch('sql.sql_workflow.get_engine')
     def test_osc_control_exception(self, _get_engine):
+        """测试MySQL工单OSC控制异常"""
         c = Client()
         c.force_login(self.superuser1)
         request_data = {
