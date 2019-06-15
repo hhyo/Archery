@@ -46,6 +46,7 @@ class Instance(models.Model):
     port = models.IntegerField('端口', default=0)
     user = models.CharField('用户名', max_length=100, default='', blank=True)
     password = models.CharField('密码', max_length=300, default='', blank=True)
+    charset = models.CharField('字符集', max_length=20, default='', blank=True)
     service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)

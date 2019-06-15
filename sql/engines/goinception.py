@@ -17,7 +17,7 @@ class GoInceptionEngine(EngineBase):
         if self.conn:
             return self.conn
         if hasattr(self, 'instance'):
-            self.conn = pymysql.connect(host=self.host, port=self.port, charset='utf8mb4')
+            self.conn = pymysql.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4')
             return self.conn
         archer_config = SysConfig()
         go_inception_host = archer_config.get('go_inception_host')
