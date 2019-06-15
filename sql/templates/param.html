@@ -128,7 +128,14 @@
                     },
                     columns: [{
                         title: '参数名',
-                        field: 'variable_name'
+                        field: 'variable_name',
+                        formatter: function (value, row, index) {
+                            if (row.id) {
+                                return "<a target=\"_blank\" href=\"/admin/sql/paramtemplate/" + row.id + "/change/\">" + value + "</a>"
+                            } else {
+                                return value
+                            }
+                        }
                     }, {
                         title: '运行参数值',
                         field: 'runtime_value',

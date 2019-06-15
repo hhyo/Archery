@@ -176,15 +176,16 @@ class WorkflowLogAdmin(admin.ModelAdmin):
 # 实例参数配置表
 @admin.register(ParamTemplate)
 class ParamTemplateAdmin(admin.ModelAdmin):
-    list_display = ('db_type', 'variable_name', 'default_value', 'editable', 'valid_values')
+    list_display = ('variable_name', 'db_type', 'default_value', 'editable', 'valid_values')
     search_fields = ('variable_name',)
     list_filter = ('db_type', 'editable')
+    list_display_links = ('variable_name',)
 
 
 # 实例参数修改历史
 @admin.register(ParamHistory)
 class ParamHistoryAdmin(admin.ModelAdmin):
-    list_display = ('instance', 'variable_name', 'old_var', 'new_var', 'user_display', 'create_time')
+    list_display = ('variable_name', 'instance', 'old_var', 'new_var', 'user_display', 'create_time')
     search_fields = ('variable_name',)
     list_filter = ('instance', 'user_display')
 
