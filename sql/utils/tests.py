@@ -22,7 +22,7 @@ from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup,
     ResourceGroup2Instance, WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
     QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
-from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel
+from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel, on_correct_time_period
 from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
@@ -380,6 +380,62 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=('status', 'engineer'))
         _can_execute.return_value = False
         r = can_cancel(user=self.user, workflow_id=self.wfc1.workflow_id)
+        self.assertFalse(r)
+
+    def test_on_correct_time_period(self):
+        """
+        测试验证时间在可执行时间内
+        :return:
+        """
+        # 修改工单为workflow_review_pass，当前登录用户为提交人
+        self.wf1.run_date_start = '2019-06-15 11:10:00'
+        self.wf1.run_date_end = '2019-06-15 11:30:00'
+        self.wf1.save(update_fields=('run_date_start', 'run_date_end'))
+        run_date = datetime.datetime.strptime('2019-06-15 11:15:00', "%Y-%m-%d %H:%M:%S")
+        r = on_correct_time_period(self.wf1.id, run_date=run_date)
+        self.assertTrue(r)
+
+    def test_not_in_correct_time_period(self):
+        """
+        测试验证时间不在可执行时间内
+        :return:
+        """
+        # 修改工单为workflow_review_pass，当前登录用户为提交人
+        self.wf1.run_date_start = '2019-06-15 11:10:00'
+        self.wf1.run_date_end = '2019-06-15 11:30:00'
+        self.wf1.save(update_fields=('run_date_start', 'run_date_end'))
+        run_date = datetime.datetime.strptime('2019-06-15 11:45:00', "%Y-%m-%d %H:%M:%S")
+        r = on_correct_time_period(self.wf1.id, run_date=run_date)
+        self.assertFalse(r)
+
+    @patch('sql.utils.sql_review.datetime')
+    def test_now_on_correct_time_period(self, _datetime):
+        """
+        测试当前时间在可执行时间内
+        :return:
+        """
+        # 修改工单为workflow_review_pass，当前登录用户为提交人
+        self.wf1.run_date_start = '2019-06-15 11:10:00'
+        self.wf1.run_date_end = '2019-06-15 11:30:00'
+        self.wf1.save(update_fields=('run_date_start', 'run_date_end'))
+        _datetime.datetime.now.return_value = datetime.datetime.strptime(
+            '2019-06-15 11:15:00', "%Y-%m-%d %H:%M:%S")
+        r = on_correct_time_period(self.wf1.id)
+        self.assertTrue(r)
+
+    @patch('sql.utils.sql_review.datetime')
+    def test_now_not_in_correct_time_period(self, _datetime):
+        """
+        测试当前时间不在可执行时间内
+        :return:
+        """
+        # 修改工单为workflow_review_pass，当前登录用户为提交人
+        self.wf1.run_date_start = '2019-06-15 11:10:00'
+        self.wf1.run_date_end = '2019-06-15 11:30:00'
+        self.wf1.save(update_fields=('run_date_start', 'run_date_end'))
+        _datetime.datetime.now.return_value = datetime.datetime.strptime(
+            '2019-06-15 11:55:00', "%Y-%m-%d %H:%M:%S")
+        r = on_correct_time_period(self.wf1.id)
         self.assertFalse(r)
 
 
