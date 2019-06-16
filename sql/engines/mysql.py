@@ -23,10 +23,10 @@ class MysqlEngine(EngineBase):
             return self.conn
         if db_name:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        db=db_name, charset='utf8mb4')
+                                        db=db_name, charset=self.instance.charset or 'utf8mb4')
         else:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        charset='utf8mb4')
+                                        charset=self.instance.charset or 'utf8mb4')
         return self.conn
 
     @property

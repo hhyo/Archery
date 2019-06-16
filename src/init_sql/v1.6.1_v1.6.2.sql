@@ -41,3 +41,7 @@ drop table resource_group_relations;
 ALTER TABLE sql_workflow
   ADD run_date_start datetime(6) DEFAULT NULL COMMENT '可执行起始时间',
   ADD run_date_end datetime(6) DEFAULT NULL COMMENT '可执行结束时间';
+
+-- 实例配置增加默认字符集信息
+ALTER TABLE sql_instance
+  ADD `charset` varchar(20) DEFAULT NULL COMMENT '字符集' after `password`;

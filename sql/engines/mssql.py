@@ -17,8 +17,8 @@ logger = logging.getLogger('default')
 class MssqlEngine(EngineBase):
     def get_connection(self, db_name=None):
         connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
-        client charset = UTF-8;connect timeout=10;CHARSET=UTF8;""".format(self.host,
-                                                                          self.port, self.user, self.password)
+client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self.port, self.user, self.password,
+                                                                 self.instance.charset or 'UTF8')
         if self.conn:
             return self.conn
         self.conn = pyodbc.connect(connstr)
@@ -160,9 +160,9 @@ class MssqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
         # 切分语句，追加到检测结果中，默认全部检测通过
-        split_reg  = re.compile('^GO$', re.I | re.M)
+        split_reg = re.compile('^GO$', re.I | re.M)
         sql = re.split(split_reg, sql, 0)
-        sql = filter(None,sql)
+        sql = filter(None, sql)
         split_sql = [f"""use [{db_name}]"""]
         for i in sql:
             split_sql = split_sql + [i]
@@ -192,7 +192,7 @@ class MssqlEngine(EngineBase):
         cursor = conn.cursor()
         split_reg = re.compile('^GO$', re.I | re.M)
         sql = re.split(split_reg, sql, 0)
-        sql = filter(None,sql)
+        sql = filter(None, sql)
         split_sql = [f"""use [{db_name}]"""]
         for i in sql:
             split_sql = split_sql + [i]
