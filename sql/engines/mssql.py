@@ -81,6 +81,9 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
                            "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
         star_patter = r"(^|,| )\*( |\(|$)"
+        sql_whitelist = ['select', 'sp_helptext']
+        # 根据白名单list拼接pattern语句
+        whitelist_pattern = "^" + "|^".join(sql_whitelist)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sql.format(sql, strip_comments=True)
@@ -91,9 +94,9 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             result['has_star'] = True
             result['msg'] = '没有有效的SQL语句'
             return result
-        if re.match(r"^select", sql_lower) is None:
+        if re.match(whitelist_pattern, sql_lower) is None:
             result['bad_query'] = True
-            result['msg'] = '仅支持^select语法!'
+            result['msg'] = '仅支持{}语法!'.format(','.join(sql_whitelist))
             return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'

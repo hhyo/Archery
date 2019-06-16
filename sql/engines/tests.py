@@ -162,6 +162,10 @@ class TestMssql(TestCase):
         banned_sql = 'select phone from user_table where phone=concat(phone,1)'
         check_result = new_engine.query_check(db_name='some_db', sql=banned_sql)
         self.assertTrue(check_result.get('bad_query'))
+        sp_sql = "sp_helptext '[SomeName].[SomeAction]'"
+        check_result = new_engine.query_check(db_name='some_db', sql=sp_sql)
+        self.assertFalse(check_result.get('bad_query'))
+        self.assertEqual(check_result.get('filtered_sql'), sp_sql)
 
     def test_filter_sql(self):
         new_engine = MssqlEngine(instance=self.ins1)
