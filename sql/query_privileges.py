@@ -7,6 +7,7 @@
 """
 import logging
 import datetime
+import re
 import traceback
 
 import simplejson as json
@@ -33,6 +34,7 @@ logger = logging.getLogger('default')
 __author__ = 'hhyo'
 
 
+# TODO 权限校验内的语法解析和判断独立到每个engine内
 def query_priv_check(user, instance, db_name, sql_content, limit_num):
     """
     查询权限校验
@@ -50,7 +52,10 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
         result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
-
+    # explain和show create跳过权限校验
+    if re.match(r"^explain|^show\s+create", sql_content, re.I):
+        return result
+    # 其他尝试使用inception解析
     try:
         # 尝试使用Inception校验表权限
         table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
@@ -67,6 +72,10 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
             limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
         result['data']['limit_num'] = limit_num
+    except SyntaxError as msg:
+        result['status'] = 1
+        result['msg'] = f"SQL语法错误，{msg}"
+        return result
     except Exception as msg:
         # 表权限校验失败再次校验库权限
         # 先获取查询语句涉及的库

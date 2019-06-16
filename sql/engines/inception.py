@@ -162,8 +162,8 @@ class InceptionEngine(EngineBase):
         # 兼容语法错误时errlevel=0的场景
         if print_info['errlevel'] == 0 and print_info['errmsg'] == 'None':
             return json.loads(_repair_json_str(print_info['query_tree']))
-        elif print_info['errlevel'] == 0 and print_info['errmsg']:
-            raise RuntimeError(f"Inception Error: {print_info['query_tree']}")
+        elif print_info['errlevel'] == 0 and print_info['errmsg'] == 'Global environment':
+            raise SyntaxError(f"Inception Error: {print_info['query_tree']}")
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 

@@ -284,6 +284,14 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 0, 'msg': 'ok', 'data': {'priv_check': True, 'limit_num': 100}})
 
+    def test_query_priv_check_explain_or_show_create(self):
+        """测试用户权限校验，explain和show create不做校验"""
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="show create table archery.sql_users;",
+                                                  limit_num=100)
+        self.assertTrue(r)
+
     @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
@@ -327,15 +335,12 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
-    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
-    @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=False)
-    def test_query_priv_check_table_ref_Exception_and_no_db_priv(self, __db_priv, __tb_priv, __table_ref):
+    @patch('sql.query_privileges._table_ref', return_value=SyntaxError())
+    def test_query_priv_check_table_ref_SyntaxError(self, __table_ref):
         """
         测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
         :return:
         """
-        self.sys_config.set('query_check', 'true')
         self.sys_config.get_all_config()
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=self.slave, db_name=self.db_name,
@@ -345,14 +350,15 @@ class TestQueryPrivilegesCheck(TestCase):
                                  'msg': "你无archery数据库的查询权限！请先到查询权限管理进行申请",
                                  'data': {'priv_check': True, 'limit_num': 0}})
 
-    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
+    @patch('sql.query_privileges._table_ref')
     @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=1000)
-    def test_query_priv_check_table_ref_Exception_and_open_query_check(self, __db_priv, __tb_priv, __table_ref):
+    @patch('sql.query_privileges._db_priv', return_value=False)
+    def test_query_priv_check_table_ref_Exception_and_no_db_priv(self, __db_priv, __tb_priv, __table_ref):
         """
-        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check开启，有库权限
+        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
         :return:
         """
+        __table_ref.side_effect = SyntaxError('语法错误')
         self.sys_config.set('query_check', 'true')
         self.sys_config.get_all_config()
         r = sql.query_privileges.query_priv_check(user=self.user,
@@ -360,10 +366,29 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
-                                 'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：'RuntimeError' object is not iterable",
+                                 'msg': "SQL语法错误，语法错误",
+                                 'data': {'priv_check': True, 'limit_num': 0}})
+
+    @patch('sql.query_privileges._table_ref')
+    @patch('sql.query_privileges._tb_priv', return_value=False)
+    @patch('sql.query_privileges._db_priv', return_value=1000)
+    def test_query_priv_check_table_ref_Exception_and_open_query_check(self, __db_priv, __tb_priv, __table_ref):
+        """
+        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check开启，有库权限
+        :return:
+        """
+        __table_ref.side_effect = RuntimeError('RuntimeError')
+        self.sys_config.set('query_check', 'true')
+        self.sys_config.get_all_config()
+        r = sql.query_privileges.query_priv_check(user=self.user,
+                                                  instance=self.slave, db_name=self.db_name,
+                                                  sql_content="select * from archery.sql_users;",
+                                                  limit_num=100)
+        self.assertDictEqual(r, {'status': 1,
+                                 'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：RuntimeError",
                                  'data': {'priv_check': True, 'limit_num': 100}})
 
-    @patch('sql.query_privileges._table_ref', return_value=RuntimeError())
+    @patch('sql.query_privileges._table_ref')
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_table_ref_Exception_and_close_query_check(self, __db_priv, __tb_priv, __table_ref):
@@ -371,6 +396,7 @@ class TestQueryPrivilegesCheck(TestCase):
         测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check关闭，有库权限
         :return:
         """
+        __table_ref.side_effect = RuntimeError()
         self.sys_config.set('query_check', 'false')
         self.sys_config.get_all_config()
         r = sql.query_privileges.query_priv_check(user=self.user,
@@ -856,11 +882,11 @@ class TestWorkflowView(TransactionTestCase):
             "instance_name": self.master1.instance_name,
             "db_name": "archery",
         }
-        _get_engine.return_value = RuntimeError
+        _get_engine.side_effect = RuntimeError('RuntimeError')
         r = c.post('/simplecheck/', data=data)
         self.assertDictEqual(json.loads(r.content),
                              {'status': 1,
-                              'msg': "type object 'RuntimeError' has no attribute 'execute_check'",
+                              'msg': "RuntimeError",
                               'data': {}})
 
     @patch('sql.sql_workflow.get_engine')
@@ -1208,10 +1234,10 @@ class TestWorkflowView(TransactionTestCase):
             'sqlsha1': 'sqlsha1',
             'command': 'get',
         }
-        _get_engine.return_value.osc_control.return_value = RuntimeError
+        _get_engine.return_value.osc_control.side_effect = RuntimeError('RuntimeError')
         r = c.post('/inception/osc_control/', data=request_data, follow=False)
         self.assertDictEqual(json.loads(r.content),
-                             {"total": 0, "rows": [], "msg": "type object 'RuntimeError' has no attribute 'to_dict'"})
+                             {"total": 0, "rows": [], "msg": "RuntimeError"})
 
 
 class TestOptimize(TestCase):
