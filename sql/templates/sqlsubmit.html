@@ -251,7 +251,7 @@
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
-            $("#div-backup").show()
+            $("#div-backup").show();
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
@@ -265,12 +265,10 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                        $('#db_name').selectpicker();
-                        var myObject = {};
-                        myObject.db_name = sessionStorage.getItem('editDbname');
-                        if (myObject.db_name) {
-                            $("#db_name").selectpicker('val', myObject.db_name);
-                        }
+                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                         if ($("#db_name").val()){
+                             $("#db_name").selectpicker().trigger("change");
+                         }
                     }
                 },
                 success: function (data) {
@@ -568,21 +566,9 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充实例信息
-                        $('#instance_name').selectpicker();
-                        var myObject = {};
-                        myObject.instance_name = sessionStorage.getItem('editClustername');
-                        if (myObject.instance_name) {
-                            $("#instance_name").selectpicker('val', myObject.instance_name);
-                            if ($("#instance_name").val()) {
-                                $("#instance_name").trigger("change")
-                            } else {
-                                $("#instance_name").empty();
-                                $('#instance_name').selectpicker('render');
-                                $('#instance_name').selectpicker('refresh');
-                                $("#db_name").empty();
-                                $('#db_name').selectpicker('render');
-                                $('#db_name').selectpicker('refresh');
-                            }
+                        $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
+                        if ($("#instance_name").val()) {
+                            $("#instance_name").selectpicker().trigger("change");
                         }
                     }
                 },

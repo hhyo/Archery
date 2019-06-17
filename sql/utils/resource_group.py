@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Users, Instance, ResourceGroup
+from sql.models import Users, Instance, ResourceGroup, ResourceGroup2Instance
 
 
 def user_groups(user):
@@ -16,13 +16,13 @@ def user_groups(user):
     return group_list
 
 
-def user_instances(user, type='all', db_type='all', tags=None):
+def user_instances(user, type='all', db_type='all', tag_codes=None):
     """
     获取用户实例列表（通过资源组间接关联）
     :param user:
     :param type: 实例类型 all：全部，master主库，salve从库
     :param db_type: 数据库类型, mysql，mssql
-    :param tags: 标签id列表, [1,2]
+    :param tag_codes: 标签code列表, ['can_write', 'can_read']
     :return:
     """
     # 拥有所有实例权限的用户
@@ -31,11 +31,10 @@ def user_instances(user, type='all', db_type='all', tags=None):
     else:
         # 先获取用户关联的资源组
         resource_groups = ResourceGroup.objects.filter(users=user)
-        # 再获取资源组关联的实例
-        instances = Instance.objects.none()
-        for resource_group in resource_groups:
-            instances = instances | resource_group.instances.all()
-        instances = instances.distinct()
+        # 再获取资源组和实例的关联关系
+        resource_group2instance = ResourceGroup2Instance.objects.filter(resource_group__in=resource_groups)
+        # 再获取实例
+        instances = Instance.objects.filter(resourcegroup2instance__in=resource_group2instance)
     # 过滤type
     if type != 'all':
         instances = instances.filter(type=type)
@@ -47,9 +46,9 @@ def user_instances(user, type='all', db_type='all', tags=None):
         instances = instances.filter(db_type__in=db_type)
 
     # 过滤tag
-    if tags:
-        for tag in tags:
-            instances = instances.filter(instancetagrelations__instance_tag=tag, instancetagrelations__active=True)
+    if tag_codes:
+        for tag_code in tag_codes:
+            instances = instances.filter(instancetag__tag_code=tag_code, instancetagrelations__active=True)
 
     return instances
 

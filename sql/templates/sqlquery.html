@@ -20,42 +20,11 @@
                                         data-live-search="true"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
-                                    // TODO 实例中的筛选可以在python代码中， 使用filter实现， 这种实现可能有效率问题。
-                                    <optgroup id="optgroup-mysql" label="MySQL">
-                                        {% for instance in instances %}
-                                            {% if instance.db_type == 'mysql' %}
-                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup id="optgroup-mssql" label="MsSQL">
-                                        {% for instance in instances %}
-                                            {% if instance.db_type == 'mssql' %}
-                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup id="optgroup-redis" label="Redis">
-                                        {% for instance in instances %}
-                                            {% if instance.db_type == 'redis' %}
-                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup id="optgroup-pgsql" label="PgSQL">
-                                        {% for instance in instances %}
-                                            {% if instance.db_type == 'pgsql' %}
-                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
-                                    <optgroup id="optgroup-oracle" label="Oracle">
-                                        {% for instance in instances %}
-                                            {% if instance.db_type == 'oracle' %}
-                                                <option value="{{ instance.instance_name }}">{{ instance.instance_name }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </optgroup>
+                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -628,10 +597,6 @@
             else if (sql === 'show create table') {
                 sqlContent = "show create table " + $("#table_name").val() + ";"
             }
-            //处理SQL，去除注释、空行等
-            //sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
-            //sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
-            //sqlContent = sqlContent.trim();
             //提交请求
             $.ajax({
                 type: "post",
@@ -666,18 +631,24 @@
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
 
-            // 仅MySQL支持限制到表级权限
+            // 控制按钮和选择器显示
             var optgroup = $('#instance_name :selected').parent().attr('label');
             if (optgroup === "Redis") {
                 $("#div-table_name").hide();
-                $("#btn-format").attr('disabled',true);
-                $("#btn-explain").attr('disabled',true);
+                $("#btn-format").attr('disabled', true);
+                $("#btn-explain").attr('disabled', true);
                 redis_help_tab_add()
+            } else if (optgroup === "MySQL") {
+                $("#div-table_name").show();
+                $("#redis_help_tab").remove();
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', false);
+                $("#nav-tabs a:last").tab('show');
             } else {
                 $("#div-table_name").show();
                 $("#redis_help_tab").remove();
-                $("#btn-format").attr('disabled',false);
-                $("#btn-explain").attr('disabled',false);
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
                 $("#nav-tabs a:last").tab('show');
             }
             // PgSQL需要选择模式再获取表
@@ -875,13 +846,60 @@
             //默认获取查询历史
             get_querylog();
 
-            //填充实例名
-            $('#instance_name').selectpicker();
-            var myObject = {};
-            myObject.sql_query_instance_name = sessionStorage.getItem('sql_query_instance_name');
-            if (myObject.sql_query_instance_name) {
-                $("#instance_name").selectpicker('val', myObject.sql_query_instance_name).trigger("change");
-            }
+            //获取用户实例列表
+            $(function(){
+                $.ajax({
+                type: "get",
+                url: "/group/user_all_instances/",
+                dataType: "json",
+                data: {
+                    type: 'all',
+                    db_type: 'all',
+                    tag_codes: ['can_read']
+                },
+                complete: function () {
+                    //填充实例名
+                    $("#instance_name").selectpicker('val', sessionStorage.getItem('sql_query_instance_name'));
+                    if ( $("#instance_name").val()){
+                        $("#instance_name").selectpicker().trigger("change");
+                    }
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data['data'];
+                        $("#optgroup-mysql").empty();
+                        $("#optgroup-mssql").empty();
+                        $("#optgroup-redis").empty();
+                        $("#optgroup-pgsql").empty();
+                        for (let i = 0; i < result.length; i++) {
+                            let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            if (result[i]['db_type'] === 'mysql') {
+                                $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mssql') {
+                                $("#optgroup-mssql").append(instance);
+                            } else if (result[i]['db_type'] === 'redis') {
+                                $("#optgroup-redis").append(instance);
+                            } else if (result[i]['db_type'] === 'pgsql') {
+                                $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
+                            }
+                        }
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
+                        $("#db_name").empty();
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+            });
+
 
             $("#sql_content_editor").bind("input propertychange", function () {
                 var editor = ace.edit("sql_content_editor");

@@ -141,7 +141,7 @@ def submit(request):
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        user_instances(request.user, type='all', db_type='all').get(instance_name=instance_name)
+        user_instances(request.user, type='all', db_type='all', tag_codes=['can_write']).get(instance_name=instance_name)
     except instance.DoesNotExist:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)

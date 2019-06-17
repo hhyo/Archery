@@ -21,9 +21,6 @@
                 <select id=instance_name class="form-control selectpicker" name="instance_name_list"
                         title="请选择实例:"
                         data-live-search="true">
-                    {% for instance_name in instances %}
-                        <option value="{{ instance_name }}">{{ instance_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -476,18 +473,48 @@
             }
         }
 
-        //如果已选择instance_name，进入页面自动填充，并且重置激活id
+
         $(document).ready(function () {
-                sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
-                if (sessionStorage.getItem('diagnostic_instance_name')) {
-                    $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name'));
-                    get_process_list();
-                    $("#command-div").show();
-                    $("#process-toolbar").show();
-                }
+                //获取用户实例列表
+                $(function () {
+                    $.ajax({
+                        type: "get",
+                        url: "/group/user_all_instances/",
+                        dataType: "json",
+                        data: {
+                            type: 'all',
+                            db_type: 'mysql'
+                        },
+                        complete: function () {
+                            //如果已选择instance_name，进入页面自动填充，并且重置激活id
+                            sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
+                            if (sessionStorage.getItem('diagnostic_instance_name')) {
+                                $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name')).trigger("change");
+                                $("#command-div").show();
+                                $("#process-toolbar").show();
+                            }
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                let result = data['data'];
+                                $("#instance_name").empty();
+                                for (let i = 0; i < result.length; i++) {
+                                    let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                    $("#instance_name").append(instance);
+                                }
+                                $('#instance_name').selectpicker('render');
+                                $('#instance_name').selectpicker('refresh');
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                });
             }
         );
-
         //tab切换,保留当前激活的标签id
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {

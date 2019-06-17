@@ -27,9 +27,6 @@
                                         data-live-search="true"
                                         data-placeholder="请选择实例:" required>
                                     <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                                    {% for instance_name in instances %}
-                                        <option value="{{ instance_name }}">{{ instance_name }}</option>
-                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -336,11 +333,6 @@
                     resource_type: "database"
                 },
                 complete: function () {
-                    //适配从慢查询过来的优化请求
-                    var pathname = window.location.pathname;
-                    if (pathname === "/slowquery_advisor/") {
-                        sqladvisor();
-                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -356,13 +348,8 @@
                         //适配从慢查询过来的优化请求
                         var pathname = window.location.pathname;
                         if (pathname === "/slowquery_advisor/") {
-                            //填充库名
-                            $('#db_name').selectpicker();
-                            var myObject = {};
-                            myObject.db_name = sessionStorage.getItem('advisor_db_name');
-                            if (myObject.db_name) {
-                                $("#db_name").selectpicker('val', myObject.db_name);
-                            }
+                            $("#db_name").selectpicker('val', sessionStorage.getItem('advisor_db_name'));
+                            sqladvisor();
                         }
 
                     } else {
@@ -874,24 +861,53 @@
             });
         }
 
-        //适配从慢查询过来的优化请求
         $(document).ready(function () {
-            var pathname = window.location.pathname;
-            if (pathname == "/slowquery_advisor/") {
-                var sql_content = sessionStorage.getItem('advisor_sql_content');
-                var instance_name = sessionStorage.getItem('advisor_instance_name');
-                var db_name = sessionStorage.getItem('advisor_db_name');
-
-
-                if (sql_content && db_name && instance_name) {
-                    document.getElementById("instance_name").disabled = true;
-                    editor.setValue(sql_content);
-                    editor.clearSelection();
-                    document.getElementById('instance_name').value = instance_name;
-                    document.getElementById('db_name').value = db_name;
-                    get_db_list();
-                }
-            }
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        type: 'all',
+                        db_type: 'mysql'
+                    },
+                    complete: function () {
+                        //适配从慢查询过来的优化请求
+                        var pathname = window.location.pathname;
+                        if (pathname == "/slowquery_advisor/") {
+                            var sql_content = sessionStorage.getItem('advisor_sql_content');
+                            var instance_name = sessionStorage.getItem('advisor_instance_name');
+                            if (sql_content && instance_name) {
+                                $("#instance_name").disabled = true;
+                                editor.setValue(sql_content);
+                                editor.clearSelection();
+                                $("#instance_name").selectpicker('val', instance_name);
+                                if ($("#instance_name").val()) {
+                                    $("#instance_name").selectpicker().trigger("change");
+                                }
+                            }
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
         });
     </script>
 {% endblock %}

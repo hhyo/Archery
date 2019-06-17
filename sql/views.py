@@ -179,22 +179,15 @@ def rollback(request):
 @permission_required('sql.menu_sqlanalyze', raise_exception=True)
 def sqlanalyze(request):
     """SQL分析页面"""
-    # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-    return render(request, 'sqlanalyze.html', {'instances': instances})
+    return render(request, 'sqlanalyze.html')
 
 
 @permission_required('sql.menu_query', raise_exception=True)
 def sqlquery(request):
     """SQL在线查询页面"""
-    # 获取实例支持查询的标签id
-    tag_id = InstanceTag.objects.get_or_create(
-        tag_code='can_read', defaults={'tag_name': '支持查询', 'active': True})[0].id
-    # 获取用户关联实例列表
-    instances = [slave for slave in user_instances(request.user, type='all', db_type='all', tags=[tag_id])]
-
-    context = {'instances': instances}
-    return render(request, 'sqlquery.html', context)
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(tag_code='can_read', defaults={'tag_name': '支持查询', 'active': True})
+    return render(request, 'sqlquery.html')
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -244,21 +237,13 @@ def queryuserprivileges(request):
 @permission_required('sql.menu_sqladvisor', raise_exception=True)
 def sqladvisor(request):
     """SQL优化工具页面"""
-    # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-
-    context = {'instances': instances}
-    return render(request, 'sqladvisor.html', context)
+    return render(request, 'sqladvisor.html')
 
 
 @permission_required('sql.menu_slowquery', raise_exception=True)
 def slowquery(request):
     """SQL慢日志页面"""
-    # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-
-    context = {'tab': 'slowquery', 'instances': instances}
-    return render(request, 'slowquery.html', context)
+    return render(request, 'slowquery.html')
 
 
 @permission_required('sql.menu_instance', raise_exception=True)
@@ -278,36 +263,25 @@ def instanceuser(request, instance_id):
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
 def dbdiagnostic(request):
     """会话管理页面"""
-    # 获取用户关联实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-
-    context = {'tab': 'process', 'instances': instances}
-    return render(request, 'dbdiagnostic.html', context)
+    return render(request, 'dbdiagnostic.html')
 
 
 @permission_required('sql.menu_param', raise_exception=True)
 def instance_param(request):
     """实例参数管理页面"""
-    # 获取用户关联实例列表
-    instances = user_instances(request.user, type='all', db_type=['mysql', 'inception', 'goinception'])
-    context = {'tab': 'param_tab', 'instances': instances}
-    return render(request, 'param.html', context)
+    return render(request, 'param.html')
 
 
 @permission_required('sql.menu_binlog2sql', raise_exception=True)
 def binlog2sql(request):
     """binlog2sql页面"""
-    # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-    return render(request, 'binlog2sql.html', {'instances': instances})
+    return render(request, 'binlog2sql.html')
 
 
 @permission_required('sql.menu_schemasync', raise_exception=True)
 def schemasync(request):
     """数据库差异对比页面"""
-    # 获取实例列表
-    instances = [instance.instance_name for instance in user_instances(request.user, type='all', db_type='mysql')]
-    return render(request, 'schemasync.html', {'instances': instances})
+    return render(request, 'schemasync.html')
 
 
 @superuser_required

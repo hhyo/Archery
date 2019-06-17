@@ -10,6 +10,7 @@ from django.http import HttpResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
 from sql.models import ResourceGroup, ResourceGroup2Instance, ResourceGroup2User, Users, Instance, InstanceTag
+from sql.utils.resource_group import user_instances
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
@@ -139,6 +140,18 @@ def instances(request):
                                      instancetagrelations__active=True
                                      ).values('id', 'type', 'db_type', 'instance_name')
 
+    rows = [row for row in instances]
+    result = {'status': 0, 'msg': 'ok', "data": rows}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+def user_all_instances(request):
+    """获取用户所有实例列表（通过资源组间接关联）"""
+    user = request.user
+    type = request.GET.get('type')
+    db_type = request.GET.get('db_type')
+    tag_codes = request.GET.getlist('tag_codes[]')
+    instances = user_instances(user, type, db_type, tag_codes).values('id', 'type', 'db_type', 'instance_name')
     rows = [row for row in instances]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')

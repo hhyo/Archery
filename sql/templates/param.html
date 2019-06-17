@@ -26,11 +26,9 @@
             </div>
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
+                        title="请选择实例"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for ins in instances %}
-                        <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
         </div>
@@ -257,11 +255,43 @@
 
         //如果已选择实例，进入页面自动填充，并且重置激活id
         $(document).ready(function () {
-                sessionStorage.setItem('active_li_id', 'param_tab');
-                if (sessionStorage.getItem('instance_id')) {
-                    $("#instance").val(sessionStorage.getItem('instance_id'));
-                }
-                get_param_list();
+                //获取用户实例列表
+                $(function () {
+                    $.ajax({
+                        type: "get",
+                        url: "/group/user_all_instances/",
+                        dataType: "json",
+                        data: {
+                            type: 'all',
+                            db_type: 'mysql'
+                        },
+                        complete: function () {
+                            //如果已选择实例，进入页面自动填充，并且重置激活id
+                            sessionStorage.setItem('param_active_li_id', 'param_tab');
+                            if (sessionStorage.getItem('instance_id')) {
+                                $("#instance").val(sessionStorage.getItem('instance_id')).trigger("change");
+                            }
+                            get_param_list();
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                let result = data['data'];
+                                $("#instance").empty();
+                                for (let i = 0; i < result.length; i++) {
+                                    let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                                    $("#instance").append(instance);
+                                }
+                                $('#instance').selectpicker('render');
+                                $('#instance').selectpicker('refresh');
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                });
             }
         );
 
@@ -269,7 +299,7 @@
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 var active_li_id = $(e.target).parents().attr('id');
-                sessionStorage.setItem('active_li_id', active_li_id);
+                sessionStorage.setItem('param_active_li_id', active_li_id);
                 //当前激活的标签id
                 if (active_li_id === 'param_tab') {
                     get_param_list();
@@ -292,7 +322,7 @@
         //刷新页面
         function flush() {
             sessionStorage.setItem('instance_id', $("#instance").val());
-            var active_li_id = sessionStorage.getItem('active_li_id');
+            var active_li_id = sessionStorage.getItem('param_active_li_id');
             if (active_li_id === 'param_tab') {
                 get_param_list();
             } else if (active_li_id === 'history_tab') {

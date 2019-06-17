@@ -73,9 +73,10 @@ urlpatterns = [
     path('group/addrelation/', resource_group.addrelation),
     path('group/relations/', resource_group.associated_objects),
     path('group/instances/', resource_group.instances),
+    path('group/instances/', resource_group.instances),
     path('group/unassociated/', resource_group.unassociated_objects),
     path('group/auditors/', resource_group.auditors),
-    path('group/changeauditors/', resource_group.changeauditors),
+    path('group/user_all_instances/', resource_group.user_all_instances),
 
     path('instance/list/', instance.lists),
     path('instance/users/', instance.users),
