@@ -266,6 +266,12 @@ def dbdiagnostic(request):
     return render(request, 'dbdiagnostic.html')
 
 
+@permission_required('sql.menu_data_dictionary', raise_exception=True)
+def data_dictionary(request):
+    ins_name_list = [n.instance_name for n in user_instances(request.user, type='slave', db_type='mysql')]
+    return render(request, 'data_dictionary.html', locals())
+
+
 @permission_required('sql.menu_param', raise_exception=True)
 def instance_param(request):
     """实例参数管理页面"""
