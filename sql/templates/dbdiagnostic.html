@@ -482,8 +482,7 @@
                         url: "/group/user_all_instances/",
                         dataType: "json",
                         data: {
-                            type: 'all',
-                            db_type: 'mysql'
+                            db_type: ['mysql']
                         },
                         complete: function () {
                             //如果已选择instance_name，进入页面自动填充，并且重置激活id

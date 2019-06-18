@@ -869,8 +869,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        type: 'all',
-                        db_type: 'mysql'
+                        db_type: ['mysql']
                     },
                     complete: function () {
                         //适配从慢查询过来的优化请求

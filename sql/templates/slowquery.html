@@ -176,8 +176,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        type: 'all',
-                        db_type: 'mysql'
+                        db_type: ['mysql']
                     },
                     complete: function () {
                         //保留如果已选择instance_name，进入页面自动加载

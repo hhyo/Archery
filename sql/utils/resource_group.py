@@ -16,12 +16,12 @@ def user_groups(user):
     return group_list
 
 
-def user_instances(user, type='all', db_type='all', tag_codes=None):
+def user_instances(user, type=None, db_type=None, tag_codes=None):
     """
     获取用户实例列表（通过资源组间接关联）
     :param user:
     :param type: 实例类型 all：全部，master主库，salve从库
-    :param db_type: 数据库类型, mysql，mssql
+    :param db_type: 数据库类型, ['mysql','mssql']
     :param tag_codes: 标签code列表, ['can_write', 'can_read']
     :return:
     """
@@ -36,21 +36,21 @@ def user_instances(user, type='all', db_type='all', tag_codes=None):
         # 再获取实例
         instances = Instance.objects.filter(resourcegroup2instance__in=resource_group2instance)
     # 过滤type
-    if type != 'all':
+    if type:
         instances = instances.filter(type=type)
 
     # 过滤db_type
-    if db_type != 'all':
-        if isinstance(db_type, str):
-            db_type = [db_type]
+    if db_type:
         instances = instances.filter(db_type__in=db_type)
 
     # 过滤tag
     if tag_codes:
         for tag_code in tag_codes:
-            instances = instances.filter(instancetag__tag_code=tag_code, instancetagrelations__active=True)
+            instances = instances.filter(instancetag__tag_code=tag_code,
+                                         instancetag__active=True,
+                                         instancetagrelations__active=True)
 
-    return instances
+    return instances.distinct()
 
 
 def auth_group_users(auth_group_names, group_id):

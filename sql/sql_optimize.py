@@ -38,7 +38,7 @@ def optimize_sqladvisor(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     try:
-        user_instances(request.user, type='all', db_type='mysql').get(instance_name=instance_name)
+        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Exception:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例！'
@@ -95,7 +95,7 @@ def optimize_soar(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user, type='all', db_type='mysql').get(instance_name=instance_name)
+        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Exception:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例'

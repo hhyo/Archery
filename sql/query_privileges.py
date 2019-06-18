@@ -193,7 +193,7 @@ def query_priv_apply(request):
             result['msg'] = '请填写完整'
             return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user, type='all', db_type='all', tag_codes=['can_read']).get(instance_name=instance_name)
+        user_instances(request.user, tag_codes=['can_read']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例！'

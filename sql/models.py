@@ -92,9 +92,8 @@ class ResourceGroup(models.Model):
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
-    users = models.ManyToManyField(Users, through='ResourceGroup2User', through_fields=('resource_group', 'user'))
-    instances = models.ManyToManyField(Instance, through='ResourceGroup2Instance',
-                                       through_fields=('resource_group', 'instance'))
+    users = models.ManyToManyField(Users, through='ResourceGroup2User')
+    instances = models.ManyToManyField(Instance, through='ResourceGroup2Instance')
 
     def __str__(self):
         return self.group_name

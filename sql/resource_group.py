@@ -127,16 +127,12 @@ def instances(request):
     tag_code = request.POST.get('tag_code')
 
     # 先获取资源组关联所有实例列表
-    instance_ids = [ins['instance_id'] for ins in
-                    ResourceGroup2Instance.objects.filter(
-                        resource_group_id=group_id).values('instance_id')]
-
-    instances = Instance.objects.filter(pk__in=instance_ids)
+    instances = ResourceGroup.objects.get(group_id=group_id).instances
 
     # 过滤tag
     if tag_code:
-        tag_id = InstanceTag.objects.get(tag_code=tag_code).id
-        instances = instances.filter(instancetagrelations__instance_tag=tag_id,
+        instances = instances.filter(instancetag__tag_code=tag_code,
+                                     instancetag__active=True,
                                      instancetagrelations__active=True
                                      ).values('id', 'type', 'db_type', 'instance_name')
 
@@ -149,7 +145,7 @@ def user_all_instances(request):
     """获取用户所有实例列表（通过资源组间接关联）"""
     user = request.user
     type = request.GET.get('type')
-    db_type = request.GET.get('db_type')
+    db_type = request.GET.getlist('db_type[]')
     tag_codes = request.GET.getlist('tag_codes[]')
     instances = user_instances(user, type, db_type, tag_codes).values('id', 'type', 'db_type', 'instance_name')
     rows = [row for row in instances]
