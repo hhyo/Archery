@@ -25,16 +25,19 @@ def lists(request):
     limit = offset + limit
     search = request.POST.get('search', '')
 
-    instances = Instance.objects.all()
+    # 组合筛选项
+    filter_dict = dict()
     # 过滤搜索
     if search:
-        instances = instances.filter(instance_name__icontains=search)
+        filter_dict['instance_name__icontains'] = search
     # 过滤实例类型
     if type:
-        instances = instances.filter(type=type)
+        filter_dict['type'] = type
     # 过滤数据库类型
     if db_type:
-        instances = instances.filter(db_type=db_type)
+        filter_dict['db_type'] = db_type
+
+    instances = Instance.objects.filter(**filter_dict)
     # 过滤标签，返回同时包含全部标签的实例，TODO 循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
