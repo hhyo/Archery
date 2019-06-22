@@ -182,6 +182,11 @@
                                         <a href="/instanceparam/">参数配置</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_data_dictionary %}
+                                    <li>
+                                        <a href="/data_dictionary/">数据字典</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
                                         <a href="/binlog2sql/">Binlog2SQL</a>
