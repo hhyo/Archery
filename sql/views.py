@@ -135,6 +135,12 @@ def detail(request, workflow_id):
                 for r in loaded_rows:
                     review_result.rows += [ReviewResult(inception_result=r)]
                 rows = review_result.json()
+        except IndexError:
+            review_result.rows += [ReviewResult(
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
         except json.decoder.JSONDecodeError:
             review_result.rows += [ReviewResult(
                 # 迫于无法单元测试这里加上英文报错信息
