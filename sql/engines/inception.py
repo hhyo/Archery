@@ -82,10 +82,12 @@ class InceptionEngine(EngineBase):
                 check_result.error_count += 1
             # 没有找出DDL语句的才继续执行此判断
             if check_result.syntax_type == 2:
-                if get_syntax_type(r[5]) == 'DDL':
+                if get_syntax_type(r[5], parser=False, db_type='mysql') == 'DDL':
                     check_result.syntax_type = 1
         check_result.column_list = inception_result.column_list
         check_result.checked = True
+        check_result.error = inception_result.error
+        check_result.warning = inception_result.warning
         return check_result
 
     def execute(self, workflow=None):
