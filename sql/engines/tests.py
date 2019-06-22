@@ -356,25 +356,43 @@ class TestMysql(TestCase):
         masking_result = new_engine.query_masking(db_name='archery', sql='explain select 1', resultset=query_result)
         self.assertEqual(masking_result, query_result)
 
-    def test_execute_check_select_sql(self):
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_execute_check_select_sql(self, _inception_engine):
         sql = 'select * from user'
+        inc_row = ReviewResult(id=1,
+                               errlevel=0,
+                               stagestatus='Audit completed',
+                               errormessage='None',
+                               sql=sql,
+                               affected_rows=0,
+                               execute_time=0, )
         row = ReviewResult(id=1, errlevel=2,
                            stagestatus='驳回不支持语句',
                            errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                            sql=sql)
+        _inception_engine.return_value.execute_check.return_value = ReviewSet(full_sql=sql, rows=[inc_row])
         new_engine = MysqlEngine(instance=self.ins1)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    def test_execute_check_critical_sql(self):
+    @patch('sql.engines.mysql.InceptionEngine')
+    def test_execute_check_critical_sql(self, _inception_engine):
         self.sys_config.set('critical_ddl_regex', '^|update')
         self.sys_config.get_all_config()
         sql = 'update user set id=1'
+        inc_row = ReviewResult(id=1,
+                               errlevel=0,
+                               stagestatus='Audit completed',
+                               errormessage='None',
+                               sql=sql,
+                               affected_rows=0,
+                               execute_time=0, )
         row = ReviewResult(id=1, errlevel=2,
                            stagestatus='驳回高危SQL',
                            errormessage='禁止提交匹配' + '^|update' + '条件的语句！',
                            sql=sql)
+        _inception_engine.return_value.execute_check.return_value = ReviewSet(full_sql=sql, rows=[inc_row])
         new_engine = MysqlEngine(instance=self.ins1)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)

@@ -44,6 +44,36 @@ class TestSQLUtils(TestCase):
         self.assertEqual(get_syntax_type(dml_sql), 'DML')
         self.assertEqual(get_syntax_type(ddl_sql), 'DDL')
 
+    def test_get_syntax_type_by_re(self):
+        """
+        测试语法判断，不使用sqlparse解析,直接正则匹配判断
+        :return:
+        """
+        dml_sql = "select * from users;"
+        ddl_sql = "alter table users add id int not null default 0 comment 'id' "
+        other_sql = 'show engine innodb status'
+        self.assertEqual(get_syntax_type(dml_sql, parser=False, db_type='mysql'), 'DML')
+        self.assertEqual(get_syntax_type(ddl_sql, parser=False, db_type='mysql'), 'DDL')
+        self.assertIsNone(get_syntax_type(other_sql, parser=False, db_type='mysql'))
+
+    def test_remove_comments(self):
+        """
+        测试去除SQL注释
+        :return:
+        """
+        sql1 = """   # This comment continues to the end of line
+        SELECT 1+1;     # This comment continues to the end of line"""
+        sql2 = """-- This comment continues to the end of line
+        SELECT 1+1;     -- This comment continues to the end of line"""
+        sql3 = """/* this is an in-line comment */
+        SELECT 1 /* this is an in-line comment */ + 1;/* this is an in-line comment */"""
+        self.assertEqual(remove_comments(sql1, db_type='mysql'),
+                         'SELECT 1+1;     # This comment continues to the end of line')
+        self.assertEqual(remove_comments(sql2, db_type='mysql'),
+                         'SELECT 1+1;     -- This comment continues to the end of line')
+        self.assertEqual(remove_comments(sql3, db_type='mysql'),
+                         'SELECT 1  + 1;')
+
     def test_extract_tables_by_sql_parse(self):
         """
         测试表解析
