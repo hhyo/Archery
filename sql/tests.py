@@ -2172,3 +2172,149 @@ class TestNotify(TestCase):
         r = notify_for_binlog2sql(_async_task)
         self.assertIsNone(r)
         _msg_sender.assert_called_once()
+
+
+class TestDataDictionary(TestCase):
+    """
+    测试数据字典
+    """
+
+    def setUp(self):
+        self.sys_config = SysConfig()
+        self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
+        self.client = Client()
+        self.client.force_login(self.su)
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.ins = Instance.objects.create(instance_name='test_instance', type='slave', db_type='mysql',
+                                           host=settings.DATABASES['default']['HOST'],
+                                           port=settings.DATABASES['default']['PORT'],
+                                           user=settings.DATABASES['default']['USER'],
+                                           password=settings.DATABASES['default']['PASSWORD'])
+        self.db_name = settings.DATABASES['default']['TEST']['NAME']
+
+    def tearDown(self):
+        self.sys_config.purge()
+        Instance.objects.all().delete()
+        User.objects.all().delete()
+
+    def test_data_dictionary_view(self):
+        """
+        测试访问数据字典页面
+        :return:
+        """
+        r = self.client.get(path='/data_dictionary/')
+        self.assertEqual(r.status_code, 200)
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_table_list(self, _get_engine):
+        """
+        测试获取表清单
+        :return:
+        """
+        _get_engine.return_value.query.return_value = ResultSet(rows=(('test1', '测试表1'), ('test2', '测试表2')))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/table_list/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content),
+                             {'data': {'t': [['test1', '测试表1'], ['test2', '测试表2']]}, 'status': 0})
+
+    def test_table_list_not_param(self):
+        """
+        测试获取表清单，参数不完整
+        :return:
+        """
+        data = {
+            'instance_name': 'not exist ins',
+        }
+        r = self.client.get(path='/data_dictionary/table_list/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': '非法调用！', 'status': 1})
+
+    def test_table_list_instance_does_not_exist(self):
+        """
+        测试获取表清单，实例不存在
+        :return:
+        """
+        data = {
+            'instance_name': 'not exist ins',
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/table_list/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': 'Instance.DoesNotExist', 'status': 1})
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_table_list_exception(self, _get_engine):
+        """
+        测试获取表清单，异常
+        :return:
+        """
+        _get_engine.side_effect = RuntimeError('test error')
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/table_list/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': 'test error', 'status': 1})
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_table_info(self, _get_engine):
+        """
+        测试获取表信息
+        :return:
+        """
+        _get_engine.return_value.query.return_value = ResultSet(rows=(('test1', '测试表1'), ('test2', '测试表2')))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name,
+            'tb_name': 'sql_instance'
+        }
+        r = self.client.get(path='/data_dictionary/table_info/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertListEqual(list(json.loads(r.content)['data'].keys()), ['meta_data', 'desc', 'index', 'create_sql'])
+
+    def test_table_info_not_param(self):
+        """
+        测试获取表清单，参数不完整
+        :return:
+        """
+        data = {
+            'instance_name': 'not exist ins',
+        }
+        r = self.client.get(path='/data_dictionary/table_info/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': '非法调用！', 'status': 1})
+
+    def test_table_info_instance_does_not_exist(self):
+        """
+        测试获取表清单，实例不存在
+        :return:
+        """
+        data = {
+            'instance_name': 'not exist ins',
+            'db_name': self.db_name,
+            'tb_name': 'sql_instance'
+        }
+        r = self.client.get(path='/data_dictionary/table_info/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': 'Instance.DoesNotExist', 'status': 1})
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_table_info_exception(self, _get_engine):
+        """
+        测试获取表清单，异常
+        :return:
+        """
+        _get_engine.side_effect = RuntimeError('test error')
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name,
+            'tb_name': 'sql_instance'
+        }
+        r = self.client.get(path='/data_dictionary/table_info/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content), {'msg': 'test error', 'status': 1})

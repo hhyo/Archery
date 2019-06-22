@@ -4,24 +4,17 @@
     <!-- 自定义操作按钮-->
     <div class="form-group ">
         <div id="toolbar" class="form-inline">
-            <div class="form-group bootstrap-select ">
-                <select id="instance_name" class="dropdown-menu-right selectpicker " data-live-search="true">
-                    <option value="" selected="selected">实例</option>
-                    {% for ins in ins_name_list %}
-                        <option value="{{ ins }}">{{ ins }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group bootstrap-select ">
-                <select id="db_name" class="dropdown-menu-right selectpicker " data-live-search="true">
-                    <option value="" selected="selected">数据库</option>
+            <div class="form-group">
+                <select id="instance_name" class="form-control selectpicker "
+                        title="请选择实例"
+                        data-live-search="true">
                 </select>
             </div>
             <div class="form-group">
-                <button type="button" class="btn btn-default" onclick="get_table_list()">
-                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-                    获取所有表
-                </button>
+                <select id="db_name" class="form-control selectpicker "
+                        title="请选择数据库"
+                        data-live-search="true">
+                </select>
             </div>
         </div>
     </div>
@@ -135,7 +128,42 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
         $(document).ready(function () {
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                        if ($('#instance_name').val()) {
+                            $('#instance_name').selectpicker().trigger("change");
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance_name);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
         });
+
+        //实例变动获取库
         $("#instance_name").change(function () {
             $('#db_name').empty();
             $.ajax({
@@ -161,11 +189,15 @@
                     alert(errorThrown);
                 },
                 complete: function () {
-                    $('#db_name').prepend('<option value="" selected="selected">数据库</option>');
                     $('#db_name').selectpicker('render');
                     $('#db_name').selectpicker('refresh');
                 }
             });
+        });
+
+        //库变动获取表
+        $("#db_name").change(function () {
+            get_table_list()
         });
 
         function get_table_list() {
@@ -188,21 +220,21 @@
                             $('#indexTable').empty();
                             var result = data.data;
                             for (var k in result) {
-                                var jumpBoxStr = '<a href="#cap-'+k+'" style="margin-left:0.4em;"><strong>'+k+'</strong></a>';
+                                var jumpBoxStr = '<a href="#cap-' + k + '" style="margin-left:0.4em;"><strong>' + k + '</strong></a>';
                                 $('#jumpbox').append(jumpBoxStr);
-                                $('#indexTable').append('<tr class="cap" id="cap-'+k+'">' +
-                                                            '<td></td>' +
-                                                            '<td><strong>'+k+'</strong></td>' +
-                                                            '<td></td>' +
-                                                        '</tr>');
+                                $('#indexTable').append('<tr class="cap" id="cap-' + k + '">' +
+                                    '<td></td>' +
+                                    '<td><strong>' + k + '</strong></td>' +
+                                    '<td></td>' +
+                                    '</tr>');
                                 for (var i = 0; i < result[k].length; i++) {
                                     var indexTableStr = '<tr>' +
-                                                            '<td></td>' +
-                                                            '<td><a href="javascript:;" onclick="showTableInfo(\''+instance_name+'\',\''+db_name+'\',\''+result[k][i][0]+'\')" >' +
-                                                                    '<code class="xref">'+result[k][i][0]+'</code>' +
-                                                                '</a></td>' +
-                                                            '<td>'+result[k][i][1]+'</td>' +
-                                                        '</tr>';
+                                        '<td></td>' +
+                                        '<td><a href="javascript:;" onclick="showTableInfo(\'' + instance_name + '\',\'' + db_name + '\',\'' + result[k][i][0] + '\')" >' +
+                                        '<code class="xref">' + result[k][i][0] + '</code>' +
+                                        '</a></td>' +
+                                        '<td>' + result[k][i][1] + '</td>' +
+                                        '</tr>';
                                     // console.log(indexTableStr);
                                     $('#indexTable').append(indexTableStr);
                                 }
@@ -238,7 +270,7 @@
 
                         var meta_data_columns = result['meta_data']['column_list'];
                         var meta_data_values = result['meta_data']['rows'];
-                        for (var i=0;i<meta_data_columns.length;i++) {
+                        for (var i = 0; i < meta_data_columns.length; i++) {
                             // console.log(meta_data_columns[i], meta_data_values[i]);
                             $('#meta_data #' + meta_data_columns[i]).text(meta_data_values[i])
                         }

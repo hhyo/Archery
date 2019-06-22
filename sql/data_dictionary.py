@@ -1,9 +1,7 @@
 # -*- coding: UTF-8 -*-
-import datetime
 import simplejson as json
 
 from sql.engines import get_engine
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 
@@ -13,12 +11,13 @@ from .models import Instance
 
 @permission_required('sql.menu_data_dictionary', raise_exception=True)
 def table_list(request):
+    """数据字典获取表列表"""
     instance_name = request.GET.get('instance_name', '')
     db_name = request.GET.get('db_name', '')
     if instance_name and db_name:
         data = {}
         try:
-            instance = Instance.objects.get(instance_name=instance_name)
+            instance = Instance.objects.get(instance_name=instance_name, db_type='mysql')
             query_engine = get_engine(instance=instance)
             sql = f"""SELECT
                 TABLE_NAME,
@@ -46,13 +45,14 @@ def table_list(request):
 
 @permission_required('sql.menu_data_dictionary', raise_exception=True)
 def table_info(request):
+    """数据字典获取表信息"""
     instance_name = request.GET.get('instance_name', '')
     db_name = request.GET.get('db_name', '')
     tb_name = request.GET.get('tb_name', '')
     if instance_name and db_name and tb_name:
         data = {}
         try:
-            instance = Instance.objects.get(instance_name=instance_name)
+            instance = Instance.objects.get(instance_name=instance_name, db_type='mysql')
             query_engine = get_engine(instance=instance)
 
             sql = f"""SELECT

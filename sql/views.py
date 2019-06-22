@@ -296,7 +296,7 @@ def dbdiagnostic(request):
 
 @permission_required('sql.menu_data_dictionary', raise_exception=True)
 def data_dictionary(request):
-    ins_name_list = [n.instance_name for n in user_instances(request.user, type='slave', db_type='mysql')]
+    """数据字典页面"""
     return render(request, 'data_dictionary.html', locals())
 
 
