@@ -39,39 +39,59 @@ def sql_workflow_list(request):
     :param request:
     :return:
     """
-    nav_status = request.POST.get('navStatus', 'all')
+    nav_status = request.POST.get('navStatus')
+    instance_id = request.POST.get('instance_id')
+    resource_group_id = request.POST.get('group_id')
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
     search = request.POST.get('search')
     user = request.user
 
-    workflow = SqlWorkflow.objects.all()
-    # 过滤搜索项，模糊检索项包括提交人名称、工单名
-    if search:
-        workflow = SqlWorkflow.objects.filter(
-            Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
-    # 过滤工单状态
-    if nav_status != 'all':
-        workflow = workflow.filter(status=nav_status)
+    # 组合筛选项
+    filter_dict = dict()
+    # 工单状态
+    if nav_status:
+        filter_dict['status'] = nav_status
+    # 实例
+    if instance_id:
+        filter_dict['instance_id'] = instance_id
+    # 资源组
+    if resource_group_id:
+        filter_dict['group_id'] = resource_group_id
+    # 时间
+    if start_date and end_date:
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
+        filter_dict['create_time__range'] = (start_date, end_date)
     # 管理员，可查看所有工单
     if user.is_superuser:
-        workflow = workflow
+        pass
     # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
     elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
         # 先获取用户所在资源组列表
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
-        workflow = workflow.filter(group_id__in=group_ids)
+        filter_dict['group_id__in'] = group_ids
     # 其他人只能查看自己提交的工单
     else:
-        workflow = workflow.filter(engineer=user.username)
+        filter_dict['engineer'] = user.username
+
+    # 过滤组合筛选项
+    workflow = SqlWorkflow.objects.filter(**filter_dict)
+
+    # 过滤搜索项，模糊检索项包括提交人名称、工单名
+    if search:
+        workflow = SqlWorkflow.objects.filter(Q(engineer_display__icontains=search) |
+                                              Q(workflow_name__icontains=search))
 
     count = workflow.count()
-    workflow_list = workflow.order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display",
-                                                                           "status", "is_backup", "create_time",
-                                                                           "instance__instance_name", "db_name",
-                                                                           "group_name", "syntax_type")
+    workflow_list = workflow.order_by('-create_time')[offset:limit].values(
+        "id", "workflow_name", "engineer_display",
+        "status", "is_backup", "create_time",
+        "instance__instance_name", "db_name",
+        "group_name", "syntax_type")
 
     # QuerySet 序列化
     rows = [row for row in workflow_list]

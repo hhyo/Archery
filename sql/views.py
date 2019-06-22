@@ -18,11 +18,11 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
-from sql.utils.resource_group import user_groups, user_instances
+from sql.utils.resource_group import user_groups
 
 import logging
 
@@ -49,7 +49,29 @@ def dashboard(request):
 
 def sqlworkflow(request):
     """SQL上线工单列表页面"""
-    return render(request, 'sqlworkflow.html', {'status_list': SQL_WORKFLOW_CHOICES})
+    user = request.user
+    # 过滤筛选项的数据
+    filter_dict = dict()
+    # 管理员，可查看所有工单
+    if user.is_superuser:
+        pass
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        filter_dict['group_id__in'] = group_ids
+    # 其他人只能查看自己提交的工单
+    else:
+        filter_dict['engineer'] = user.username
+    instance_id = SqlWorkflow.objects.filter(**filter_dict).values('instance_id').distinct()
+    instance = Instance.objects.filter(pk__in=instance_id)
+    resource_group_id = SqlWorkflow.objects.filter(**filter_dict).values('group_id').distinct()
+    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+
+    return render(request, 'sqlworkflow.html',
+                  {'status_list': SQL_WORKFLOW_CHOICES,
+                   'instance': instance, 'resource_group': resource_group})
 
 
 @permission_required('sql.sql_submit', raise_exception=True)
