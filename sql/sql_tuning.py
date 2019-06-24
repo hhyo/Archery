@@ -2,7 +2,6 @@
 
 import time
 
-from MySQLdb.connections import numeric_part
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance

@@ -23,7 +23,7 @@ def slowquery_review(request):
     instance_name = request.POST.get('instance_name')
     # 服务端权限校验
     try:
-        user_instances(request.user, type='all', db_type='mysql').get(instance_name=instance_name)
+        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Exception:
         result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -91,7 +91,7 @@ def slowquery_review_history(request):
     instance_name = request.POST.get('instance_name')
     # 服务端权限校验
     try:
-        user_instances(request.user, type='all', db_type='mysql').get(instance_name=instance_name)
+        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Exception:
         result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')

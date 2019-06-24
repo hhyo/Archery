@@ -47,7 +47,7 @@ class Audit(object):
             raise Exception(result['msg'])
 
         # 校验是否配置审批流程
-        if audit_auth_groups is None:
+        if audit_auth_groups == '':
             result['msg'] = '审批流程不能为空，请先配置审批流程'
             raise Exception(result['msg'])
         else:
@@ -121,6 +121,8 @@ class Audit(object):
                           operator=audit_detail.create_user,
                           operator_display=audit_detail.create_user_display
                           )
+        # 增加审核id
+        result['data']['audit_id'] = audit_detail.audit_id
         # 返回添加结果
         return result
 
@@ -222,8 +224,9 @@ class Audit(object):
             # 更新主表审核状态
             audit_result = WorkflowAudit()
             audit_result.audit_id = audit_id
+            audit_result.next_audit = '-1'
             audit_result.current_status = WorkflowDict.workflow_status['audit_abort']
-            audit_result.save(update_fields=['current_status'])
+            audit_result.save(update_fields=['current_status', 'next_audit'])
 
             # 插入审核明细数据
             audit_detail_result = WorkflowAuditDetail()

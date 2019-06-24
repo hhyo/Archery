@@ -16,22 +16,18 @@
         <div class="form-inline pull-right">
             <div class="form-group">
                 <select id=instance_name class="form-control selectpicker" name="instances"
+                        title="请选择实例:"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for instance_name in instances %}
-                        <option value="{{ instance_name }}">{{ instance_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <select id=db_name class="form-control selectpicker" name="db_name_list" data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择数据库</option>
+                <select id=db_name class="form-control selectpicker" name="db_name_list"
+                        title="请选择数据库:"
+                        data-live-search="true">
                 </select>
             </div>
-            <div class="form-group daterange" style="display: inline-block">
-                <div class="input-prepend input-group">
-                    <input id="reservation" type="text" readonly class="form-control"/>
-                </div>
+            <div class="form-group">
+                <input id="reservation" type="text" readonly class="form-control"/>
             </div>
         </div>
     </ul>
@@ -61,41 +57,35 @@
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
-        $(function () {
-            $(".daterange input").each(function () {
-                var $this = $(this);
-
-                $this.daterangepicker({
-                    startDate: moment().startOf('day'),
-                    endDate: moment(),
-                    locale: {
-                        "format": "YYYY-MM-DD",// 显示格式
-                        "separator": " / ",// 两个日期之间的分割线
-                        // 中文化
-                        "applyLabel": "确定",
-                        "cancelLabel": "取消",
-                        "fromLabel": "开始",
-                        "toLabel": "结束",
-                        "customRangeLabel": "自定义",
-                        "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                        "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-                        "firstDay": 1
-                    },
-                    ranges: {
-                        "今日": [moment().startOf('day'), moment()],
-                        "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                        "最近7日": [moment().subtract('days', 6), moment()],
-                        "最近30日": [moment().subtract('days', 29), moment()],
-                        "本月": [moment().startOf("month"), moment().endOf("month")],
-                        "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-                    }
-                }, function (start, end, label) {
-                    // 设置最小宽度，否则显示不全
-                }).css("min-width", "210px").next("i").click(function () {
-                    // 对日期的i标签增加click事件，使其在鼠标点击时可以拉出日期选择
-                    $(this).parent().find('input').click();
-                });
-            });
+        $('#reservation').daterangepicker({
+            startDate: moment().startOf('day'),
+            endDate: moment(),
+            locale: {
+                "format": "YYYY-MM-DD",// 显示格式
+                "separator": " / ",// 两个日期之间的分割线
+                // 中文化
+                "applyLabel": "确定",
+                "cancelLabel": "取消",
+                "fromLabel": "开始",
+                "toLabel": "结束",
+                "customRangeLabel": "自定义",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+            ranges: {
+                "今日": [moment().startOf('day'), moment()],
+                "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                "最近7日": [moment().subtract('days', 6), moment()],
+                "最近30日": [moment().subtract('days', 29), moment()],
+                "本月": [moment().startOf("month"), moment().endOf("month")],
+                "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+            }
+        }, function (start, end, label) {
+            // 设置最小宽度，否则显示不全
+        }).css("min-width", "210px").next("i").click(function () {
+            // 对日期的i标签增加click事件，使其在鼠标点击时可以拉出日期选择
+            $(this).parent().find('input').click();
         });
 
         //时间变动保存
@@ -135,20 +125,12 @@
                     resource_type: "database"
                 },
                 complete: function () {
-                    if (sessionStorage.getItem('slow_query_db_name')) {
-                        $("#db_name").selectpicker();
-                        var myObject = {};
-                        myObject.db_name = sessionStorage.getItem('slow_query_db_name');
-                        $("#db_name").selectpicker('val', myObject.db_name).trigger("change");
-                        ;
-                    } else {
-                        var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-                        if (slowsql_active_li_id === 'slowsql_tab') {
-                            slowquery_review()
-                        } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                            slowquery_review_history()
+                    var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+                    if (slowsql_active_li_id === 'slowsql_tab') {
+                        slowquery_review()
+                    } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                        slowquery_review_history()
 
-                        }
                     }
                 },
                 success: function (data) {
@@ -187,19 +169,53 @@
 
         //保留如果已选择instance_name，进入页面自动加载
         $(document).ready(function () {
-            sessionStorage.removeItem('SQLId');
-            sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
-            if (sessionStorage.getItem('slow_query_instance_name')) {
-                var instance_name = sessionStorage.getItem('slow_query_instance_name');
-                var start_date = sessionStorage.getItem('start_date');
-                var end_date = sessionStorage.getItem('end_date');
-                $("#instance_name").val(instance_name);
-                if (start_date && end_date) {
-                    $('#reservation').data('daterangepicker').setStartDate(start_date);
-                    $('#reservation').data('daterangepicker').setEndDate(end_date);
-                }
-                get_db_list();
-            }
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                        //保留如果已选择instance_name，进入页面自动加载
+                        sessionStorage.removeItem('SQLId');
+                        sessionStorage.setItem('slowsql_active_li_id', 'slowsql_tab');
+                        if (sessionStorage.getItem('slow_query_instance_name')) {
+                            var instance_name = sessionStorage.getItem('slow_query_instance_name');
+                            var start_date = sessionStorage.getItem('start_date');
+                            var end_date = sessionStorage.getItem('end_date');
+                            if (start_date && end_date) {
+                                $('#reservation').data('daterangepicker').setStartDate(start_date);
+                                $('#reservation').data('daterangepicker').setEndDate(end_date);
+                            }
+                            $("#instance_name").val(instance_name).trigger("change");
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            $("#target_instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance);
+                                $("#target_instance_name").append(instance);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                            $('#target_instance_name').selectpicker('render');
+                            $('#target_instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
         });
 
         //tab切换,保留当前激活的标签id

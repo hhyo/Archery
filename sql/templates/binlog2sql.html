@@ -12,12 +12,9 @@
                         <h5 class="control-label text-bold">选择实例：</h5>
                         <div class="form-group">
                             <select id="instance_name" name="instance_name"
-                                    class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                    data-placeholder="请选择实例:" required>
-                                <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                                {% for instance_name in instances %}
-                                    <option value="{{ instance_name }}">{{ instance_name }}</option>
-                                {% endfor %}
+                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                    title="请选择实例:"
+                                    data-live-search="true" required>
                             </select>
                         </div>
                     </div>
@@ -60,8 +57,9 @@
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
-                            <select id="start_file" class="selectpicker form-control" required>
-                                <option value="is-empty" disabled="">起始解析文件:</option>
+                            <select id="start_file" class="selectpicker form-control"
+                                    title="起始解析文件:"
+                                    required>
                             </select>
                         </div>
                         <div class="form-group">
@@ -69,8 +67,9 @@
                                    onkeyup="if(event.keyCode !=37 && event.keyCode != 39)value=value.replace(/\D/g,'')">
                         </div>
                         <div class="form-group">
-                            <select id="end_file" class="selectpicker form-control" required>
-                                <option value="is-empty" disabled="">终止解析文件(可选):</option>
+                            <select id="end_file" class="selectpicker form-control"
+                                    title="终止解析文件(可选):"
+                                    required>
                             </select>
                         </div>
                         <div class="form-group">
@@ -96,19 +95,22 @@
                         </div>
                         <div class="form-group">
                             <select id="only_schemas" class="selectpicker form-control "
-                                    data-live-search="true" required>
-                                <option value="is-empty" disabled="" selected="selected">数据库过滤(可选):</option>
+                                    data-live-search="true"
+                                    title="数据库过滤(可选):"
+                                    required>
                             </select>
                         </div>
                         <div class="form-group">
                             <select id="only_tables" class="selectpicker form-control "
-                                    data-live-search="true" multiple="multiple" required>
-                                <option value="is-empty" disabled="" selected>表过滤(可选):</option>
+                                    data-live-search="true"
+                                    title="表过滤(可选):"
+                                    multiple="multiple" required>
                             </select>
                         </div>
                         <select id="sql_type" class="selectpicker form-control "
-                                data-live-search="true" multiple="multiple" required>
-                            <option value="is-empty" disabled="">类型过滤(可选):</option>
+                                data-live-search="true"
+                                title="类型过滤(可选):"
+                                multiple="multiple" required>
                             <option value="INSERT">INSERT</option>
                             <option value="UPDATE">UPDATE</option>
                             <option value="DELETE">DELETE</option>
@@ -151,6 +153,37 @@
     <script>
         $(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii:ss', language: 'zh-CN', autoclose: true});
 
+        //获取用户实例列表
+        $(function () {
+            $.ajax({
+                type: "get",
+                url: "/group/user_all_instances/",
+                dataType: "json",
+                data: {
+                    db_type: ['mysql']
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data['data'];
+                        $("#instance_name").empty();
+                        for (let i = 0; i < result.length; i++) {
+                            let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            $("#instance_name").append(instance);
+                        }
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
         //实例变更获取数据库\BINLOG
         $("#instance_name").change(function () {
             //获取db_name
@@ -172,7 +205,6 @@
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#only_schemas").append(name);
                         }
-                        $("#only_schemas").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">数据库过滤(可选):</option>");
                         $('#only_schemas').selectpicker('render');
                         $('#only_schemas').selectpicker('refresh');
                     } else {
@@ -200,10 +232,8 @@
                             $("#start_file").append(name);
                             $("#end_file").append(name);
                         }
-                        $("#start_file").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">起始解析文件:</option>");
                         $('#start_file').selectpicker('render');
                         $('#start_file').selectpicker('refresh');
-                        $("#end_file").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">终止解析文件(可选):</option>");
                         $('#end_file').selectpicker('render');
                         $('#end_file').selectpicker('refresh');
                     } else {

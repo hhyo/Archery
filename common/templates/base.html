@@ -108,7 +108,7 @@
                                 {% endif %}
                                 {% if perms.sql.menu_queryapplylist %}
                                     <li>
-                                        <a href="/queryapplylist/">权限申请</a>
+                                        <a href="/queryapplylist/">权限管理</a>
                                     </li>
                                 {% endif %}
 
@@ -139,25 +139,25 @@
                             <a href="#"><i class="fa fa-stethoscope fa-fw"></i> 数据库审核<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/themis/">规则设置</a>
+                                    <a target="_blank" href="/themis/">规则设置</a>
                                 </li>
                                 <li>
                                     <a href="#">规则增加<span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
                                         <li>
-                                            <a href="/themis/sqlreview/rule/simple/addition">简单规则</a>
+                                            <a target="_blank" href="/themis/sqlreview/rule/simple/addition">简单规则</a>
                                         </li>
                                         <li>
-                                            <a href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
+                                            <a target="_blank" href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
                                 </li>
                                 <li>
-                                    <a href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
+                                    <a target="_blank" href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
                                 </li>
                                 <li>
-                                    <a href="/themis/new/version/sql/review/task/index">任务查询</a>
+                                    <a target="_blank" href="/themis/new/version/sql/review/task/index">任务查询</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -180,6 +180,11 @@
                                 {% if perms.sql.menu_param %}
                                     <li>
                                         <a href="/instanceparam/">参数配置</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_data_dictionary %}
+                                    <li>
+                                        <a href="/data_dictionary/">数据字典</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
@@ -210,13 +215,13 @@
                                     <a href="#">其他配置管理 <span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
                                         <li>
-                                            <a href="/admin/sql/users/">用户管理</a>
+                                            <a target="_blank" href="/admin/sql/users/">用户管理</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/auth/group/">权限组管理</a>
+                                            <a target="_blank" href="/admin/auth/group/">权限组管理</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/">全部后台数据</a>
+                                            <a target="_blank" href="/admin/">全部后台数据</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->

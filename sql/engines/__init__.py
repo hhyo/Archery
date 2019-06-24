@@ -88,3 +88,9 @@ def get_engine(instance=None):
     elif instance.db_type == 'oracle':
         from .oracle import OracleEngine
         return OracleEngine(instance=instance)
+    elif instance.db_type == 'inception':
+        from .inception import InceptionEngine
+        return InceptionEngine(instance=instance)
+    elif instance.db_type == 'goinception':
+        from .goinception import GoInceptionEngine
+        return GoInceptionEngine(instance=instance)

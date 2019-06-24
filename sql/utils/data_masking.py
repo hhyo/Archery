@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-import traceback
 
 from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
@@ -245,6 +244,7 @@ def brute_mask(sql_result):
     for reg in masking_rules:
         compiled_r = re.compile(reg.rule_regex, re.I)
         replace_pattern = r""
+        rows = list(sql_result.rows)
         for i in range(1, compiled_r.groups + 1):
             if i == int(reg.hide_group):
                 replace_pattern += r"****"
@@ -255,5 +255,6 @@ def brute_mask(sql_result):
             for j in range(len(sql_result.rows[i])):
                 # 进行正则替换
                 temp_value_list += [compiled_r.sub(replace_pattern, str(sql_result.rows[i][j]))]
-            sql_result.rows[i] = tuple(temp_value_list)
+            rows[i] = tuple(temp_value_list)
+        sql_result.rows = rows
     return sql_result

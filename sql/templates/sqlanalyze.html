@@ -16,9 +16,6 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 title="请选择实例:"
                                 data-placeholder="请选择实例:" required>
-                            {% for instance in instances %}
-                                <option value="{{ instance }}">{{ instance }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -77,7 +74,7 @@
     <!-- 解析文件 -->
     <script>
         //初始化上传控件
-        function init_upload() {
+        $(function init_upload() {
             $("#sql-upload").fileinput({
                 language: 'zh',
                 allowedFileExtensions: ['sql', 'xml'],//接收的文件后缀
@@ -96,7 +93,8 @@
             }).on('fileclear', function (event) {
                 generate();
             });
-        }
+        });
+
 
         //读取文件并展示在输入域
         function loadsql() {
@@ -228,7 +226,6 @@
                             var name = "<option>" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -390,9 +387,37 @@
     </script>
     <script>
         $(document).ready(function () {
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
             sessionStorage.setItem('analyze_text', '');
-            // 初始化上传控件
-            init_upload();
             generate();
         })
     </script>

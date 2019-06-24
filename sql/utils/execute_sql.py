@@ -14,6 +14,8 @@ def execute(workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     # 给定时执行的工单增加执行日志
     if workflow_detail.status == 'workflow_timingtask':
+        # 将工单状态修改为执行中
+        SqlWorkflow(id=workflow_id, status='workflow_executing').save(update_fields=['status'])
         audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
         Audit.add_log(audit_id=audit_id,
@@ -40,10 +42,10 @@ def execute_callback(task):
         # 不成功会返回错误堆栈信息，构造一个错误信息追加到执行结果后面
         workflow.status = 'workflow_exception'
         if workflow.sqlworkflowcontent.execute_result:
-            execute_result = ReviewSet(rows=json.loads(workflow.sqlworkflowcontent.execute_result))
+            execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
         else:
-            execute_result = ReviewSet(rows=None)
-        execute_result.rows.append(ReviewResult(
+            execute_result = []
+        execute_result.append(ReviewResult(
             id=0,
             stage='Execute failed',
             errlevel=2,
@@ -56,13 +58,17 @@ def execute_callback(task):
             backup_dbname=None,
             execute_time=0,
             sqlsha1='').__dict__)
+        execute_result = json.dumps(execute_result)
     elif task.result.warning or task.result.error:
         execute_result = task.result
         workflow.status = 'workflow_exception'
+        execute_result = execute_result.json()
     else:
         execute_result = task.result
         workflow.status = 'workflow_finish'
-    workflow.sqlworkflowcontent.execute_result = execute_result.json()
+        execute_result = execute_result.json()
+    # 保存执行结果
+    workflow.sqlworkflowcontent.execute_result = execute_result
     workflow.sqlworkflowcontent.save()
     workflow.save()
 

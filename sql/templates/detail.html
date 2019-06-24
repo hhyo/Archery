@@ -14,7 +14,7 @@
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
     <table data-toggle="table" class="table table-striped table-hover"
-           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+           style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
@@ -34,6 +34,9 @@
             </th>
             <th>
                 发起时间
+            </th>
+            <th>
+                可执行时间范围
             </th>
             <th>
                 结束时间
@@ -73,6 +76,13 @@
                 {{ workflow_detail.create_time }}
             </td>
             <td>
+                {% if workflow_detail.run_date_start and workflow_detail.run_date_end %}
+                    {{ workflow_detail.run_date_start }} / {{ workflow_detail.run_date_end }}
+                {% else %}
+                    无限制
+                {% endif %}
+            </td>
+            <td>
                 {{ workflow_detail.finish_time }}
             </td>
             <td>
@@ -101,35 +111,68 @@
         </tbody>
     </table>
     <br>
-    <table id="tb-detail" data-toggle="table" class="table table-condensed"
-           style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
-    <!--最后操作信息-->
-    {% if last_operation_info %}
-        <table data-toggle="table" class="table table-striped table-hover"
-               style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
-            <thead>
-            <tr>
-                <th>
-                    操作信息
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>
-                    {{ last_operation_info }}
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <br>
-    {% endif %}
+
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="detail_tab" class="active">
+            <a href="#detail" role="tab" data-toggle="tab">工单详情</a>
+        </li>
+        <li id="logs_tab">
+            <a href="#logs" role="tab" data-toggle="tab">工单日志</a>
+        </li>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <!-- 工单详情-->
+        <div id="detail" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="tb-detail" data-toggle="table" class="table table-condensed"
+                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
+            <!--最后操作信息-->
+            {% if last_operation_info %}
+                <table data-toggle="table" class="table table-striped table-hover"
+                       style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+                    <thead>
+                    <tr>
+                        <th>
+                            操作信息
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            {{ last_operation_info }}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <br>
+            {% endif %}
+        </div>
+
+        <!-- 工单日志-->
+        <div id="logs" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="tb-logs" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+    </div>
 
     <!--审核备注输入框-->
     {% if is_can_review or is_can_cancel %}
         <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
                   placeholder="请填写审核备注/终止原因" rows=3></textarea>
         <br>
+    {% endif %}
+    <!--审核人修改可执行时间按钮-->
+    {% if is_can_review %}
+        <form id="from-passed" action="/passed/" method="post" style="display:inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+            <input type="hidden" id="audit_remark" name="audit_remark" value="">
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#Executabletime"
+                   value="可执行时间变更"/>
+        </form>
     {% endif %}
     <!--审核通过按钮-->
     {% if is_can_review %}
@@ -230,15 +273,78 @@
         </div>
     </form>
 
+    <!-- 执行进度弹出框-->
+    <!-- 自定义操作按钮-->
+    <div id="osc-toolbar" class="btn-group left" style="display:none;">
+        <button id="pause_osc" class="btn btn-warning" type="button">暂停</button>
+        <button id="resume_osc" class="btn btn-success" type="button">恢复</button>
+        <button id="kill_osc" class="btn btn-danger" type="button">终止</button>
+    </div>
+    <div class="modal fade" id="osc_percent">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">执行进度</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="osc_percent_list" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 修改可执行时间弹出框 -->
+    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+        <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header ">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">×</span></button>
+                        <h4 class="modal-title text-danger">修改可执行时间</h4>
+                    </div>
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <!--可执行范围时间-->
+                        <div class='form-group input-group'>
+                            <input type="hidden" id="run_date_start" name="run_date_start">
+                            <input type="hidden" id="run_date_end" name="run_date_end">
+                            <input type="text" id="run_date_range" readonly
+                                   value="请选择可执行时间范围"
+                                   style="background-color: #fff;color: #999 "
+                                   class="form-control "/>
+                            <span class="input-group-addon"><span class="fa fa-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+
+                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                        <input type="button" id="btnalterExecutabletime" class="btn btn-danger" value="确认提交"/>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
 
 {% endblock content %}
 
 {% block js %}
     {% load staticfiles %}
     <link href="{% static 'datetimepicker/css/bootstrap-datetimepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
     <!--初始化时间控件 -->
     <script>
         var date = new Date();
@@ -254,8 +360,35 @@
             inline: true,
             sideBySide: true,
             minuteStep: 5,
-        })
+        });
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "down",
+            minDate:  moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('YYYY-MM-DD HH:mm') + ' / ' + picker.endDate.format('YYYY-MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
+        });
     </script>
+
     <!--按钮控制 -->
     <script>
         var editWorkflowNname = "{{ workflow_detail.workflow_name }}";
@@ -347,6 +480,14 @@
             }
         });
 
+        // 修改可执行时间
+        $("#btnalterExecutabletime").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formAlterexecutabletime = $("#from-alterexecutabletime");
+            loading(this);
+            formAlterexecutabletime.submit();
+        });
+
         // 按钮禁用
         function loading(obj) {
             $(obj).button('loading').delay(2500).queue(function () {
@@ -357,106 +498,338 @@
     </script>
     <!--表格初始化 -->
     <script>
-        $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
-            escape: false,
-            striped: true,                      //是否显示行间隔色
-            cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-            pagination: true,                   //是否显示分页（*）
-            sortable: true,                     //是否启用排序
-            sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
-            pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-            pageSize: 500,                       //每页的记录行数（*）
-            pageList: [500, 1000, 5000],        //可供选择的每页的行数（*）
-            search: false,                       //是否显示表格搜索
-            strictSearch: false,                //是否全匹配搜索
-            showColumns: false,                  //是否显示所有的列（选择显示的列）
-            showRefresh: false,                  //是否显示刷新按钮
-            minimumCountColumns: 2,             //最少允许的列数
-            clickToSelect: false,                //是否启用点击选中行
-            uniqueId: "id",                     //每一行的唯一标识，一般为主键列
-            showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
-            cardView: false,                    //是否显示详细视图
-            detailView: true,                  //是否显示父子表
-            //格式化详情
-            detailFormatter: function (index, row) {
-                var html = [];
-                $.each(row, function (key, value) {
-                    if (key === 'sql') {
-                        var sql = value;
-                        //替换所有的换行符
-                        sql = sql.replace(/\r\n/g, "<br>");
-                        sql = sql.replace(/\n/g, "<br>");
-                        //替换所有的空格
-                        sql = sql.replace(/\s/g, "&nbsp;");
-                        html.push('<span>' + sql + '</span>');
-                    }
-                });
-                return html.join('');
-            },
-            locale: 'zh-CN',                    //本地化
-            data:{{ rows|safe }},
-            columns: [{
-                title: 'ID',
-                field: 'id',
-                sortable: true
-            }, {
-                title: 'SQL内容',
-                field: 'sql',
-                formatter: function (value, row, index) {
-                    if (value.length > 80) {
-                        return value.substr(0, 80) + '...';
-                    } else {
-                        return value
-                    }
+        //获取工单详情
+        function get_detail() {
+            $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
+                escape: false,
+                striped: true,                      //是否显示行间隔色
+                cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 500,                       //每页的记录行数（*）
+                pageList: [500, 1000, 5000],        //可供选择的每页的行数（*）
+                search: true,                       //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: false,                  //是否显示刷新按钮
+                minimumCountColumns: 1,             //最少允许的列数
+                clickToSelect: false,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                  //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'sql') {
+                            var sql = value;
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
                 },
-                sortable: false
-            }, {
-                title: '审核/执行状态',
-                field: 'errlevel',
-                formatter: function (value, row, index) {
-                    if (value === 0) {
-                        return 'pass'
-                    } else if (value === 1) {
-                        return 'warning'
-                    } else if (value === 2) {
-                        return 'error'
+                locale: 'zh-CN',                    //本地化
+                data:{{ rows|safe }},
+                columns: [{
+                    title: 'ID',
+                    field: 'id',
+                    sortable: true
+                }, {
+                    title: 'SQL内容',
+                    field: 'sql',
+                    formatter: function (value, row, index) {
+                        if (value.length > 80) {
+                            return value.substr(0, 80) + '...';
+                        } else {
+                            return value
+                        }
+                    },
+                    sortable: false
+                }, {
+                    title: '审核/执行状态',
+                    field: 'errlevel',
+                    formatter: function (value, row, index) {
+                        if (value === 0) {
+                            return 'pass'
+                        } else if (value === 1) {
+                            return 'warning'
+                        } else if (value === 2) {
+                            return 'error'
+                        }
+                    },
+                    sortable: true
+                }, {
+                    title: '审核/执行信息',
+                    field: 'errormessage',
+                    formatter: function (value, row, index) {
+                        return value.replace(/\n/g, '<br>');
+                    },
+                    sortable: true
+                }, {
+                    title: '扫描/影响行数',
+                    field: 'affected_rows',
+                    sortable: true
+                }, {
+                    title: '执行耗时',
+                    field: 'execute_time',
+                    sortable: true
+                }, {
+                    title: '当前阶段',
+                    field: 'stagestatus',
+                    sortable: true
+                }, {
+                    title: '操作',
+                    field: 'sqlsha1',
+                    formatter: function (value, row, index) {
+                        let btn_percent = "<button class=\"btn btn-info btn-xs\" sqlsha1=\"" + row.sqlsha1 + "\" onclick=\"get_osc_percent(this)" + "\">查看进度</button>\n";
+                        let status = $("#workflow_detail_status").text();
+                        if (row.sqlsha1 && status === 'workflow_executing') {
+                            return btn_percent;
+                        }
+                    },
+
+                }],
+                rowStyle: function (row, index) {
+                    var style = "";
+                    if (row.errlevel === 1) {
+                        style = 'warning';
+                    } else if (row.errlevel === 2) {
+                        style = 'danger';
                     }
+                    return {classes: style}
                 },
-                sortable: true
-            }, {
-                title: '审核/执行信息',
-                field: 'errormessage',
-                formatter: function (value, row, index) {
-                    return value.replace(/\n/g, '<br>');
+                onLoadSuccess: function () {
                 },
-                sortable: true
-            }, {
-                title: '扫描/影响行数',
-                field: 'affected_rows',
-                sortable: true
-            }, {
-                title: '执行耗时',
-                field: 'execute_time',
-                sortable: true
-            }, {
-                title: '当前阶段',
-                field: 'stagestatus',
-                sortable: true
-            }],
-            rowStyle: function (row, index) {
-                var style = "";
-                if (row.errlevel === 1) {
-                    style = 'warning';
-                } else if (row.errlevel === 2) {
-                    style = 'danger';
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
                 }
-                return {classes: style}
-            },
-            onLoadSuccess: function () {
-            },
-            onLoadError: function () {
-                alert("数据加载失败！请检查接口返回信息和错误日志！");
+            });
+        }
+
+        // 获取操作日志
+        function get_logs() {
+            $.ajax({
+                type: "post",
+                url: "/workflow/log/",
+                dataType: "json",
+                data: {
+                    workflow_id: "{{ workflow_detail.id }}",
+                    workflow_type: 2,
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    //初始化table
+                    $('#tb-logs').bootstrapTable('destroy').bootstrapTable({
+                        escape: true,
+                        striped: true,                      //是否显示行间隔色
+                        cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                        pagination: true,                   //是否显示分页（*）
+                        sortable: false,                     //是否启用排序
+                        sortOrder: "asc",                   //排序方式
+                        sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                        pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                        pageSize: 14,                     //每页的记录行数（*）
+                        pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                        search: true,                      //是否显示表格搜索
+                        strictSearch: false,                //是否全匹配搜索
+                        showColumns: false,                  //是否显示所有的列（选择显示的列）
+                        showRefresh: false,                  //是否显示刷新按钮
+                        minimumCountColumns: 2,             //最少允许的列数
+                        clickToSelect: false,                //是否启用点击选中行
+                        uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                        showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                        cardView: false,                    //是否显示详细视图
+                        detailView: false,                  //是否显示父子表
+                        locale: 'zh-CN',                    //本地化
+                        data: data.rows,
+                        columns: [{
+                            title: '操作',
+                            field: 'operation_type_desc'
+                        }, {
+                            title: '操作人',
+                            field: 'operator_display'
+                        }, {
+                            title: '操作时间',
+                            field: 'operation_time'
+                        }, {
+                            title: '操作信息',
+                            field: 'operation_info'
+                        }],
+                        onLoadSuccess: function () {
+                        },
+                        onLoadError: function () {
+                            alert("数据加载失败！请检查接口返回信息和错误日志！");
+                        }
+                    });
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+        }
+
+        //获取osc执行进度信息
+        function get_osc_percent(obj) {
+            $('#osc_percent_list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/inception/osc_control/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: false,                   //是否显示分页（*）
+                sortable: false,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                search: false,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: false,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                checkboxHeader: false,             //隐藏全选框
+                singleSelect: true,                  //单选框
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                  //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'INFOMATION') {
+                            //替换所有的换行符
+                            value = value.replace(/\r\n/g, "<br>");
+                            value = value.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            value = value.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + value + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#osc-toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            sqlsha1: $(obj).attr("sqlsha1"),
+                            workflow_id: "{{ workflow_detail.id }}",
+                            command: "get"
+                        }
+                    },
+                columns: [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true,
+                    formatter: function stateFormatter(value, row, index) {
+                        return {
+                            checked: true//设置选中
+                        };
+                    },
+                }, {
+                    title: 'DBNAME',
+                    field: 'DBNAME'
+                }, {
+                    title: 'TABLENAME',
+                    field: 'TABLENAME'
+                }, {
+                    title: 'PERCENT',
+                    field: 'PERCENT'
+                }, {
+                    title: 'SQLSHA1',
+                    field: 'SQLSHA1',
+                    visible: false // 默认不显示
+                }, {
+                    title: 'REMAINTIME',
+                    field: 'REMAINTIME'
+                }, {
+                    title: 'INFOMATION',
+                    field: 'INFOMATION',
+                    formatter: function (value, row, index) {
+                        if (value.length > 300) {
+                            value = value.substr(0, 300) + '...';
+                        }
+                        return value.replace(/\n/g, '<br>');
+                    },
+                }],
+                onLoadSuccess: function () {
+                    $("#osc-toolbar").show();
+                    $('#osc_percent').modal('show');
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                }
+            });
+
+        }
+    </script>
+    <!--OSC控制-->
+    <script>
+        $(":input[id$='_osc']").bind('click', function () {
+            let AllSelections = $("#osc_percent_list").bootstrapTable('getSelections');
+            if (AllSelections.length === 1) {
+                //获取选择的sqlsha1
+                let sqlsha1 = AllSelections[0]['SQLSHA1'];
+                let command = '';
+                let isContinue = true;
+
+                // 判断command值
+                switch (this.id) {
+                    case 'pause_osc':
+                        command = 'pause';
+                        break;
+                    case 'resume_osc':
+                        command = 'resume';
+                        break;
+                    case 'kill_osc':
+                        command = 'kill';
+                        isContinue = confirm("请确认是否立即终止？终止后需要手动清理触发器以及相关中间表！");
+                        break;
+                    default:
+                        alert('命令错误！')
+                }
+                if (isContinue) {
+                    //发送请求
+                    $.ajax({
+                        type: "post",
+                        url: "/inception/osc_control/",
+                        dataType: "json",
+                        data: {
+                            sqlsha1: sqlsha1,
+                            workflow_id: "{{ workflow_detail.id }}",
+                            command: command
+                        },
+                        complete: function () {
+                        },
+                        success: function (data) {
+                            if (data.msg) {
+                                alert(data.msg);
+                            } else {
+                                alert('操作成功！请稍后刷新获取最新状态');
+                            }
+                        }
+                    })
+                }
+
+            } else {
+                alert("请先选择要终止进程")
             }
+
         });
     </script>
     <!--状态控制 -->
@@ -466,6 +839,8 @@
         var key;
         var retryCnt = 1;
         $(document).ready(function () {
+            sessionStorage.setItem('sql_workflow_active_li_id', 'detail_tab');
+            get_detail();
             if (status === "workflow_executing") {
                 getWorkflowStatus(workflow_id);
             }
@@ -477,7 +852,7 @@
                 clearTimeout(key);
                 key = setTimeout(function () {
                     getWorkflowStatus(workflow_id);
-                }, 1000);
+                }, 2500);
                 retryCnt++;
             } else {
                 retryCnt = 1;
@@ -513,4 +888,21 @@
 
 
     </script>
+    <!--TAB控制 -->
+    <script>
+        //tab切换,保留当前激活的标签id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                var active_li_id = $(e.target).parents().attr('id');
+                sessionStorage.setItem('sql_workflow_active_li_id', active_li_id);
+                //当前激活的标签id
+                if (active_li_id === 'detail_tab') {
+                    get_detail();
+                } else if (active_li_id === 'logs_tab') {
+                    get_logs();
+                }
+            });
+        });
+    </script>
+
 {% endblock %}

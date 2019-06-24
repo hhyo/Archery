@@ -5,7 +5,9 @@ import traceback
 import re
 import sqlparse
 
+from common.config import SysConfig
 from common.utils.timer import FuncTimer
+from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -148,7 +150,7 @@ class OracleEngine(EngineBase):
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'
             result['bad_query'] = True
-        if result.get('bad_query'):
+        if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result
 
@@ -172,11 +174,16 @@ class OracleEngine(EngineBase):
             if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             cursor.execute(sql)
-            if int(limit_num) > 0:
-                rows = cursor.fetchmany(int(limit_num))
-            else:
-                rows = cursor.fetchall()
             fields = cursor.description
+            if any(x[1] == cx_Oracle.CLOB for x in fields):
+                rows = [tuple([(c.read() if type(c) == cx_Oracle.LOB else c) for c in r]) for r in cursor]
+                if int(limit_num) > 0:
+                    rows =  rows[0:int(limit_num)]
+            else:
+                if int(limit_num) > 0:
+                    rows = cursor.fetchmany(int(limit_num))
+                else:
+                    rows = cursor.fetchall()
 
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = [tuple(x) for x in rows]
@@ -202,44 +209,64 @@ class OracleEngine(EngineBase):
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
+        config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
-        # 切分语句，追加到检测结果中，默认全部检测通过
+        # 禁用/高危语句检查
+        line = 1
+        critical_ddl_regex = config.get('critical_ddl_regex', '')
+        p = re.compile(critical_ddl_regex)
+        check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
         for statement in sqlparse.split(sql):
-            check_result.rows.append(ReviewResult(
-                id=1,
-                errlevel=0,
-                stagestatus='Audit completed',
-                errormessage='None',
-                sql=statement,
-                affected_rows=0,
-                execute_time=0, ))
+            statement = sqlparse.format(statement, strip_comments=True)
+            # 禁用语句
+            if re.match(r"^select", statement.lower()):
+                check_result.is_critical = True
+                result = ReviewResult(id=line, errlevel=2,
+                                      stagestatus='驳回不支持语句',
+                                      errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
+                                      sql=statement)
+            # 高危语句
+            elif critical_ddl_regex and p.match(statement.strip().lower()):
+                check_result.is_critical = True
+                result = ReviewResult(id=line, errlevel=2,
+                                      stagestatus='驳回高危SQL',
+                                      errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
+                                      sql=statement)
+
+            # 正常语句
+            else:
+                result = ReviewResult(id=line, errlevel=0,
+                                      stagestatus='Audit completed',
+                                      errormessage='None',
+                                      sql=statement,
+                                      affected_rows=0,
+                                      execute_time=0, )
+            # 判断工单类型
+            if get_syntax_type(statement) == 'DDL':
+                check_result.syntax_type = 1
+            check_result.rows += [result]
+
+            # 遇到禁用和高危语句直接返回，提高效率
+            if check_result.is_critical:
+                check_result.error_count += 1
+                return check_result
+            line += 1
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
+        # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
+        sql = sqlparse.format(sql, strip_comments=True)
+        split_sql = [f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name};"] + sqlparse.split(sql)
         line = 1
         statement = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            # 切换CURRENT_SCHEMA并且记录到执行结果中
-            if workflow.db_name:
-                with FuncTimer() as t:
-                    cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}")
-                execute_result.rows.append(ReviewResult(
-                    id=line,
-                    errlevel=0,
-                    stagestatus='Execute Successfully',
-                    errormessage='None',
-                    sql=f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name}",
-                    affected_rows=cursor.rowcount,
-                    execute_time=t.cost, ))
-                line += 1
-            # 删除注释语句，切分语句逐条执行，追加到执行结果中
-            sql = sqlparse.format(sql, strip_comments=True)
-            for statement in sqlparse.split(sql):
+            # 逐条执行切分语句，追加到执行结果中
+            for statement in split_sql:
                 statement = statement.rstrip(';')
                 with FuncTimer() as t:
                     cursor.execute(statement)
@@ -254,11 +281,10 @@ class OracleEngine(EngineBase):
                     execute_time=t.cost,
                 ))
                 line += 1
-
         except Exception as e:
             logger.error(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            # 追加报错信息到执行结果中
+            # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(
                 id=line,
                 errlevel=2,
@@ -268,6 +294,19 @@ class OracleEngine(EngineBase):
                 affected_rows=0,
                 execute_time=0,
             ))
+            line += 1
+            # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
+            for statement in split_sql[line - 1:]:
+                execute_result.rows.append(ReviewResult(
+                    id=line,
+                    errlevel=0,
+                    stagestatus='Audit completed',
+                    errormessage=f'前序语句失败, 未执行',
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                ))
+                line += 1
         finally:
             if close_conn:
                 self.close()

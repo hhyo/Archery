@@ -1,7 +1,8 @@
+import datetime
 import re
 import sqlparse
 
-from sql.models import SqlWorkflow, Instance
+from sql.models import SqlWorkflow
 from common.config import SysConfig
 from sql.utils.resource_group import user_groups
 from sql.engines import get_engine
@@ -67,6 +68,23 @@ def can_execute(user, workflow_id):
         # 当前登录用户为提交人，并且有执行权限
         if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
             result = True
+    return result
+
+
+def on_correct_time_period(workflow_id, run_date=None):
+    """
+    判断是否在可执行时间段内，包括人工执行和定时执行
+    :param workflow_id:
+    :param run_date:
+    :return:
+    """
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = True
+    ctime = run_date or datetime.datetime.now()
+    stime = workflow_detail.run_date_start
+    etime = workflow_detail.run_date_end
+    if (stime and stime > ctime) or (etime and etime < ctime):
+        result = False
     return result
 
 

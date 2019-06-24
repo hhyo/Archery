@@ -4,7 +4,7 @@
 python3 manage.py collectstatic -v0 --noinput
 
 # 启动Django Q cluster
-nohup python3 manage.py qcluster &
+supervisord -c qcluster_supervisord.conf
 
 settings=${1:-"archery.settings"}
 ip=${2:-"127.0.0.1"}

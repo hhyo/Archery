@@ -5,6 +5,7 @@
 @file: sql_utils.py 
 @time: 2019/03/13
 """
+import re
 import xml
 import mybatis_mapper2sql
 import sqlparse
@@ -15,22 +16,71 @@ from sql.utils.extract_tables import extract_tables as extract_tables_by_sql_par
 __author__ = 'hhyo'
 
 
-def get_syntax_type(sql):
+def get_syntax_type(sql, parser=True, db_type='mysql'):
     """
-    返回SQL语句类型
+    返回SQL语句类型，仅判断DDL和DML
     :param sql:
+    :param parser: 是否使用sqlparse解析
+    :param db_type: 不使用sqlparse解析时需要提供该参数
     :return:
     """
-    parser = sqlparse.parse(sql)
-    syntax_type = None
+    sql = remove_comments(sql=sql, db_type=db_type)
     if parser:
-        statement = sqlparse.parse(sql)[0]
-        syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
-        if syntax_type == 'Token.Keyword.DDL':
+        try:
+            statement = sqlparse.parse(sql)[0]
+            syntax_type = statement.token_first(skip_cm=True).ttype.__str__()
+            if syntax_type == 'Token.Keyword.DDL':
+                syntax_type = 'DDL'
+            elif syntax_type == 'Token.Keyword.DML':
+                syntax_type = 'DML'
+        except Exception:
+            syntax_type = None
+    else:
+        if db_type == 'mysql':
+            ddl_re = r"^alter|^create|^drop|^rename|^truncate"
+            dml_re = r"^call|^delete|^do|^handler|^insert|^load\s+data|^load\s+xml|^replace|^select|^update"
+        else:
+            # TODO 其他数据库的解析正则
+            return None
+        if re.match(ddl_re, sql, re.I):
             syntax_type = 'DDL'
-        elif syntax_type == 'Token.Keyword.DML':
+        elif re.match(dml_re, sql, re.I):
             syntax_type = 'DML'
+        else:
+            syntax_type = None
     return syntax_type
+
+
+def remove_comments(sql, db_type='mysql'):
+    """
+    去除SQL语句中的注释信息
+    来源:https://stackoverflow.com/questions/35647841/parse-sql-file-with-comments-into-sqlite-with-python
+    :param sql:
+    :param db_type:
+    :return:
+    """
+    sql_comments_re = {
+        'oracle':
+            [r'(?:--)[^\n]*\n', r'(?:\W|^)(?:remark|rem)\s+[^\n]*\n'],
+        'mysql':
+            [r'(?:#|--\s)[^\n]*\n']
+    }
+    specific_comment_re = sql_comments_re[db_type]
+    additional_patterns = "|"
+    if isinstance(specific_comment_re, str):
+        additional_patterns += specific_comment_re
+    elif isinstance(specific_comment_re, list):
+        additional_patterns += "|".join(specific_comment_re)
+    pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/{})".format(additional_patterns)
+    regex = re.compile(pattern, re.MULTILINE | re.DOTALL)
+
+    def _replacer(match):
+        if match.group(2):
+            return ""
+        else:
+            return match.group(1)
+
+    return regex.sub(_replacer, sql).strip()
 
 
 def extract_tables(sql, _type=None):

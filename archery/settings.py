@@ -85,6 +85,7 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.Users"
@@ -130,7 +131,7 @@ DATABASES = {
         },
         'TEST': {
             'NAME': 'test_archery',
-            'CHARSET': 'utf8',
+            'CHARSET': 'utf8mb4',
         },
     }
 }
@@ -175,6 +176,9 @@ CACHES = {
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch
+
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
         'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序

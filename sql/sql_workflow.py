@@ -22,7 +22,7 @@ from sql.notify import notify_for_audit
 from sql.models import ResourceGroup, Users
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.sql_review import can_timingtask, can_cancel, can_execute
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -39,39 +39,59 @@ def sql_workflow_list(request):
     :param request:
     :return:
     """
-    nav_status = request.POST.get('navStatus', 'all')
+    nav_status = request.POST.get('navStatus')
+    instance_id = request.POST.get('instance_id')
+    resource_group_id = request.POST.get('group_id')
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
     search = request.POST.get('search')
     user = request.user
 
-    workflow = SqlWorkflow.objects.all()
-    # 过滤搜索项，模糊检索项包括提交人名称、工单名
-    if search:
-        workflow = SqlWorkflow.objects.filter(
-            Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
-    # 过滤工单状态
-    if nav_status != 'all':
-        workflow = workflow.filter(status=nav_status)
+    # 组合筛选项
+    filter_dict = dict()
+    # 工单状态
+    if nav_status:
+        filter_dict['status'] = nav_status
+    # 实例
+    if instance_id:
+        filter_dict['instance_id'] = instance_id
+    # 资源组
+    if resource_group_id:
+        filter_dict['group_id'] = resource_group_id
+    # 时间
+    if start_date and end_date:
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
+        filter_dict['create_time__range'] = (start_date, end_date)
     # 管理员，可查看所有工单
     if user.is_superuser:
-        workflow = workflow
+        pass
     # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
     elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
         # 先获取用户所在资源组列表
         group_list = user_groups(user)
         group_ids = [group.group_id for group in group_list]
-        workflow = workflow.filter(group_id__in=group_ids)
+        filter_dict['group_id__in'] = group_ids
     # 其他人只能查看自己提交的工单
     else:
-        workflow = workflow.filter(engineer=user.username)
+        filter_dict['engineer'] = user.username
+
+    # 过滤组合筛选项
+    workflow = SqlWorkflow.objects.filter(**filter_dict)
+
+    # 过滤搜索项，模糊检索项包括提交人名称、工单名
+    if search:
+        workflow = SqlWorkflow.objects.filter(Q(engineer_display__icontains=search) |
+                                              Q(workflow_name__icontains=search))
 
     count = workflow.count()
-    workflow_list = workflow.order_by('-create_time')[offset:limit].values("id", "workflow_name", "engineer_display",
-                                                                           "status", "is_backup", "create_time",
-                                                                           "instance__instance_name", "db_name",
-                                                                           "group_name", "syntax_type")
+    workflow_list = workflow.order_by('-create_time')[offset:limit].values(
+        "id", "workflow_name", "engineer_display",
+        "status", "is_backup", "create_time",
+        "instance__instance_name", "db_name",
+        "group_name", "syntax_type")
 
     # QuerySet 序列化
     rows = [row for row in workflow_list]
@@ -115,33 +135,33 @@ def check(request):
 @permission_required('sql.sql_submit', raise_exception=True)
 def submit(request):
     """正式提交SQL, 此处生成工单"""
-    sql_content = request.POST['sql_content'].strip()
-    workflow_title = request.POST['workflow_name']
+    sql_content = request.POST.get('sql_content').strip()
+    workflow_title = request.POST.get('workflow_name')
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
-    # 工单表中可以考虑不存储资源组相关信息
-    # 工单和实例关联， 实例和资源组关联， 资源组和用户关联。（reply 一个实例可以被多个资源组关联，无法去除）
-    group_name = request.POST['group_name']
+    group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
-    instance_name = request.POST['instance_name']
+    instance_name = request.POST.get('instance_name')
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
     is_backup = True if request.POST.get('is_backup') == 'True' else False
     notify_users = request.POST.getlist('notify_users')
     list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    run_date_start = request.POST.get('run_date_start')
+    run_date_end = request.POST.get('run_date_end')
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, db_name, is_backup]:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
-    # 未开启备份选择项，强制设置备份
+    # 未开启备份选项，强制设置备份
     sys_config = SysConfig()
     if not sys_config.get('enable_backup_switch'):
         is_backup = True
 
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
-        user_instances(request.user, type='all', db_type='all').get(instance_name=instance_name)
+        user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
     except instance.DoesNotExist:
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
@@ -155,7 +175,6 @@ def submit(request):
         return render(request, 'error.html', context)
 
     # 按照系统配置确定是自动驳回还是放行
-
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':
@@ -181,7 +200,9 @@ def submit(request):
                 db_name=db_name,
                 is_manual=0,
                 syntax_type=check_result.syntax_type,
-                create_time=timezone.now()
+                create_time=timezone.now(),
+                run_date_start=run_date_start or None,
+                run_date_end=run_date_end or None
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
@@ -204,6 +225,38 @@ def submit(request):
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
+
+    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
+
+
+@permission_required('sql.sql_review', raise_exception=True)
+def alter_run_date(request):
+    """
+    审核人修改可执行时间
+    :param request:
+    :return:
+    """
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    run_date_start = request.POST.get('run_date_start')
+    run_date_end = request.POST.get('run_date_end')
+    if workflow_id == 0:
+        context = {'errMsg': 'workflow_id参数为空.'}
+        return render(request, 'error.html', context)
+
+    user = request.user
+    if Audit.can_review(user, workflow_id, 2) is False:
+        context = {'errMsg': '你无权操作当前工单！'}
+        return render(request, 'error.html', context)
+
+    try:
+        # 存进数据库里
+        SqlWorkflow(id=workflow_id,
+                    run_date_start=run_date_start or None,
+                    run_date_end=run_date_end or None
+                    ).save(update_fields=['run_date_start', 'run_date_end'])
+    except Exception as msg:
+        context = {'errMsg': msg}
+        return render(request, 'error.html', context)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -267,6 +320,10 @@ def execute(request):
     if can_execute(request.user, workflow_id) is False:
         context = {'errMsg': '你无权操作当前工单！'}
         return render(request, 'error.html', context)
+
+    if on_correct_time_period(workflow_id) is False:
+        context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
+        return render(request, 'error.html', context)
     # 根据执行模式进行对应修改
     mode = request.POST.get('mode')
     if mode == "auto":
@@ -327,6 +384,10 @@ def timing_task(request):
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
     task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
+
+    if on_correct_time_period(workflow_id, run_date) is False:
+        context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
+        return render(request, 'error.html', context)
 
     # 使用事务保持数据一致性
     try:
@@ -447,3 +508,22 @@ def get_workflow_status(request):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     result = {"status": workflow_detail.status, "msg": "", "data": ""}
     return JsonResponse(result)
+
+
+def osc_control(request):
+    """用于mysql控制osc执行"""
+    workflow_id = request.POST.get('workflow_id')
+    sqlsha1 = request.POST.get('sqlsha1')
+    command = request.POST.get('command')
+    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    execute_engine = get_engine(workflow.instance)
+    try:
+        execute_result = execute_engine.osc_control(command=command, sqlsha1=sqlsha1)
+        rows = execute_result.to_dict()
+        error = execute_result.error
+    except Exception as e:
+        rows = []
+        error = str(e)
+    result = {"total": len(rows), "rows": rows, "msg": error}
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')

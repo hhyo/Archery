@@ -113,10 +113,19 @@
                         }
                     },
                 columns: [{
-                    title: '关联ID',
-                    field: 'id',
+                    title: '关联对象描述',
+                    field: 'object_name',
                     formatter: function (value, row, index) {
-                        return "<a href=\"/admin/sql/resourcegrouprelations/" + row.id + "/change/\">" + value + "</a>"
+                        switch (row.object_type) {
+                            case 0:
+                                return "<a href=\"/admin/sql/users/" + row.object_id + "/change/\">" + row.object_name + "</a>";
+                                break;
+                            case 1:
+                                return "<a href=\"/admin/sql/instance/" + row.object_id + "/change/\">" + row.object_name + "</a>";
+                                break;
+                            default:
+                                return "未知"
+                        }
                     }
                 }, {
                     title: '关联对象类型',
@@ -134,33 +143,31 @@
                         }
                     }
                 }, {
-                    title: '关联对象描述',
-                    field: 'object_name',
-                    formatter: function (value, row, index) {
-                        switch (row.object_type) {
-                            case 0:
-                                return "<a href=\"/admin/sql/users/" + row.object_id + "/change/\">" + value + "</a>";
-                                break;
-                            case 1:
-                                return "<a href=\"/admin/sql/instance/" + row.object_id + "/change/\">" + value + "</a>";
-                                break;
-                            default:
-                                return "未知"
-                        }
-                    }
-                }, {
-                    title: '组名称',
+                    title: '资源组',
                     field: 'group_name'
                 }, {
                     title: '关联时间',
                     field: 'create_time'
-                }, {
-                    title: '操作',
-                    field: '',
-                    formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-danger btn-xs\" onclick=\"window.location.href='/admin/sql/resourcegrouprelations/" + row.id + "/delete/'\" >删除</button>\n"
+                }
+                    , {
+                        title: '操作',
+                        field: '',
+                        formatter: function (value, row, index) {
+                            switch (row.object_type) {
+                                case 0:
+                                    return "<button class=\"btn btn-danger btn-xs\" " +
+                                        "onclick=\"window.location.href='/admin/sql/resourcegroup2user/" + row.id + "/delete/'\" >删除</button>\n"
+                                    break;
+                                case 1:
+                                    return "<button class=\"btn btn-danger btn-xs\" " +
+                                        "onclick=\"window.location.href='/admin/sql/resourcegroup2instance/" + row.id + "/delete/'\" >删除</button>\n"
+                                    break;
+                                default:
+                                    return "未知"
+                            }
+                        }
                     }
-                }],
+                ],
                 onLoadSuccess: function () {
                 },
                 onLoadError: function () {
