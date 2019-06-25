@@ -2016,29 +2016,7 @@ class TestNotify(TestCase):
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
-    def test_notify_for_sqlreview_audit_reject(self, _auth_group_users, _msg_sender):
-        """
-        测试SQL上线申请审核驳回通知
-        :return:
-        """
-        # 通知人修改
-        _auth_group_users.return_value = [self.user]
-        # 开启消息通知
-        self.sys_config.set('mail', 'true')
-        self.sys_config.set('ding', 'true')
-        # 修改工单状态审核驳回
-        self.audit.workflow_type = WorkflowDict.workflow_type['sqlreview']
-        self.audit.workflow_id = self.wf.id
-        self.audit.current_status = WorkflowDict.workflow_status['audit_reject']
-        self.audit.create_user = self.user.username
-        self.audit.save()
-        r = notify_for_audit(audit_id=self.audit.audit_id)
-        self.assertIsNone(r)
-        _msg_sender.assert_called_once()
-
-    @patch('sql.notify.MsgSender')
-    @patch('sql.notify.auth_group_users')
-    def test_notify_for_sqlreview_audit_reject(self, _auth_group_users, _msg_sender):
+    def test_notify_for_sqlreview_audit_abort(self, _auth_group_users, _msg_sender):
         """
         测试SQL上线申请审核取消通知
         :return:
@@ -2061,7 +2039,7 @@ class TestNotify(TestCase):
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
-    def test_notify_for_sqlreview_audit_reject(self, _auth_group_users, _msg_sender):
+    def test_notify_for_sqlreview_wrong_workflow_type(self, _auth_group_users, _msg_sender):
         """
         测试不存在的工单类型
         :return:
@@ -2079,7 +2057,7 @@ class TestNotify(TestCase):
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
-    def test_notify_for_query_audit_wait(self, _auth_group_users, _msg_sender):
+    def test_notify_for_query_audit_wait_apply_db_perm(self, _auth_group_users, _msg_sender):
         """
         测试查询申请库权限
         :return:
@@ -2103,7 +2081,7 @@ class TestNotify(TestCase):
 
     @patch('sql.notify.MsgSender')
     @patch('sql.notify.auth_group_users')
-    def test_notify_for_query_audit_wait(self, _auth_group_users, _msg_sender):
+    def test_notify_for_query_audit_wait_apply_tb_perm(self, _auth_group_users, _msg_sender):
         """
         测试查询申请表权限
         :return:
