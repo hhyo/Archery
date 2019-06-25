@@ -8,8 +8,9 @@ from django.test import Client, TestCase
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
 from sql.engines import EngineBase
-from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog
+from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, ResourceGroup
 from common.utils.chart_dao import ChartDao
+from common.auth import init_user
 
 User = get_user_model()
 
@@ -478,9 +479,19 @@ class AuthTest(TestCase):
         self.password = 'some_pass'
         self.u1 = User(username=self.username, password=self.password, display='用户1')
         self.u1.save()
+        self.resource_group1 = ResourceGroup.objects.create(group_name='some_group')
+        sys_config = SysConfig()
+        sys_config.set('default_resource_group', self.resource_group1.group_name)
 
     def tearDown(self):
         self.u1.delete()
+        self.resource_group1.delete()
+        SysConfig().purge()
 
-    def testChallenge(self):
-        pass
+    def test_init_user(self):
+        """用户初始化测试测试"""
+        init_user(self.u1)
+        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
+        init_user(self.u1)
+        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))

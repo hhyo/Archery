@@ -36,6 +36,8 @@ class TestSignUp(TestCase):
 
     def tearDown(self):
         SysConfig().purge()
+        Group.objects.all().delete()
+        User.objects.all().delete()
 
     def test_sing_up_not_username(self):
         """
@@ -96,7 +98,8 @@ class TestSignUp(TestCase):
         with self.assertRaises(User.DoesNotExist):
             User.objects.get(username='test')
 
-    def test_sing_up_valid(self):
+    @patch('common.auth.init_user')
+    def test_sing_up_valid(self, mock_init):
         """
         正常注册
         """
@@ -105,26 +108,37 @@ class TestSignUp(TestCase):
                                'password2': '123456test', 'display': 'test', 'email': '123@123.com'})
         user = User.objects.get(username='test')
         self.assertTrue(user)
+        # 注册后登录
+        r = self.client.post('/authenticate/', data={'username': 'test', 'password': '123456test'}, follow=False)
+        r_json = r.json()
+        self.assertEqual(0, r_json['status'])
+        # 只允许初始化用户一次
+        mock_init.assert_called_once()
 
 
 class TestUser(TestCase):
     def setUp(self):
         self.u1 = User(username='test_user', display='中文显示', is_active=True)
+        self.u1.set_password('test_password')
         self.u1.save()
 
     def tearDown(self):
         self.u1.delete()
 
-    def testLogin(self):
+    @patch('common.auth.init_user')
+    def testLogin(self, mock_init):
         """login 页面测试"""
-        c = Client()
-        r = c.get('/login/')
+        r = self.client.get('/login/')
         self.assertEqual(r.status_code, 200)
         self.assertTemplateUsed(r, 'login.html')
-        c.force_login(self.u1)
+        r = self.client.post('/authenticate/', data={'username': 'test_user', 'password': 'test_password'})
+        r_json = r.json()
+        self.assertEqual(0, r_json['status'])
         # 登录后直接跳首页
-        r = c.get('/login/', follow=True)
+        r = self.client.get('/login/', follow=True)
         self.assertRedirects(r, '/sqlworkflow/')
+        # init 只调用一次
+        mock_init.assert_called_once()
 
 
 class TestQueryPrivilegesCheck(TestCase):

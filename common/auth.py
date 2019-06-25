@@ -34,10 +34,9 @@ def init_user(user):
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
         try:
-            new_relation = ResourceGroup2User(
+            ResourceGroup2User.objects.get_or_create(
                 user_id=user.id,
                 resource_group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id)
-            new_relation.save()
         except ResourceGroup.DoesNotExist:
             logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
 
@@ -143,13 +142,12 @@ def sign_up(request):
         # 验证密码
         try:
             validate_password(password)
-            new_user = Users.objects.create_user(
+            Users.objects.create_user(
                 username=username,
                 password=password,
                 display=display,
                 email=email,
                 is_active=1)
-            init_user(new_user)
         except ValidationError as msg:
             result['status'] = 1
             result['msg'] = str(msg)
