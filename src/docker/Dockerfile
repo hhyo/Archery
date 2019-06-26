@@ -1,6 +1,6 @@
 FROM docker.io/centos:7
 
-ENV VERSION v1.6.3
+ENV VERSION v1.6.4
 
 WORKDIR /opt/archery
 
