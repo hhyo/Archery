@@ -4,8 +4,8 @@
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
-            <select id="navStatus" class="form-control selectpicker"
-                    title="状态">
+            <select id="navStatus" class="form-control selectpicker">
+                <option value="" selected="selected">状态</option>
                 {% for status, status_display in status_list %}
                     <option value="{{ status }}">{{ status_display }}</option>
                 {% endfor %}
@@ -13,8 +13,8 @@
         </div>
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
-                    title="实例"
                     data-live-search="true">
+                <option value="" selected="selected">实例</option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -22,8 +22,8 @@
         </div>
         <div class="form-group">
             <select id="group_id" class="form-control selectpicker"
-                    title="组"
                     data-live-search="true">
+                <option value="" selected="selected">组</option>
                 {% for rgp in resource_group %}
                     <option value="{{ rgp.group_id }}">{{ rgp.group_name }}</option>
                 {% endfor %}
