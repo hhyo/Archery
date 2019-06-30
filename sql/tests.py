@@ -674,7 +674,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
-class TestQuery(TransactionTestCase):
+class TestQuery(TestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
@@ -788,7 +788,7 @@ class TestQuery(TransactionTestCase):
         _get_engine.return_value.kill_connection.return_value = ResultSet()
 
 
-class TestWorkflowView(TransactionTestCase):
+class TestWorkflowView(TestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -1112,7 +1112,7 @@ class TestWorkflowView(TransactionTestCase):
         self.assertEqual(r_json['rows'][1]['workflow_name'], self.wf1.workflow_name)
 
         # 资源组
-        r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'instance_id': self.wf1.group_id})
+        r = c.post('/sqlworkflow_list/', {'limit': 10, 'offset': 0, 'resource_group_id': self.wf1.group_id})
         r_json = r.json()
         self.assertEqual(r_json['total'], 2)
         # 列表按创建时间倒序排列, 第二个是wf1
@@ -1734,7 +1734,7 @@ class TestBinLog(TestCase):
         self.assertEqual(json.loads(r.content), {'status': 2, 'msg': '清理失败,Error:清理失败', 'data': ''})
 
 
-class TestParam(TransactionTestCase):
+class TestParam(TestCase):
     """
     测试实例参数修改
     """
