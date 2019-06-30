@@ -487,6 +487,12 @@ class TestMysql(TestCase):
         new_engine.kill_connection(100)
         _query.assert_called_once_with(sql="kill 100")
 
+    @patch.object(MysqlEngine, 'query')
+    def test_seconds_behind_master(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.seconds_behind_master()
+        _query.assert_called_once_with(sql="show slave status")
+
 
 class TestRedis(TestCase):
     @classmethod

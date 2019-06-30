@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import logging
-
+import traceback
 from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
@@ -20,6 +20,7 @@ def data_masking(instance, db_name, sql, sql_result):
         table_hit_columns, hit_columns = analyze_query_tree(query_tree, instance)
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
     except Exception as msg:
+        logger.error(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
         sql_result.status = 1
     else:

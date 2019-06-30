@@ -112,7 +112,7 @@ def query(request):
                     # 开启query_check，直接返回异常，禁止执行
                     if config.get('query_check'):
                         result['status'] = 1
-                        result['msg'] = masking_result.error
+                        result['msg'] = f'数据脱敏异常：{masking_result.error}'
                     # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                     else:
                         query_result.error = None
@@ -139,6 +139,8 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
+            if hasattr(query_engine, 'seconds_behind_master'):
+                result['data']['seconds_behind_master'] = query_engine.seconds_behind_master
             if int(limit_num) == 0:
                 limit_num = int(query_result.affected_rows)
             else:

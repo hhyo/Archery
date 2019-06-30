@@ -40,6 +40,11 @@ class MysqlEngine(EngineBase):
         return 'MySQL engine'
 
     @property
+    def seconds_behind_master(self):
+        slave_status = self.query(sql='show slave status')
+        return slave_status.rows[0][32] if slave_status.rows else None
+
+    @property
     def server_version(self):
         version = self.query(sql="select @@version").rows[0][0]
         return tuple([numeric_part(n) for n in version.split('.')[:3]])

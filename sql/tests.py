@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.test import Client, TestCase, TransactionTestCase
+from django.test import Client, TestCase
 
 import sql.query_privileges
 from common.config import SysConfig
@@ -718,6 +718,7 @@ class TestQuery(TestCase):
             'msg': '', 'bad_query': False, 'filtered_sql': some_sql, 'has_star': False}
         _get_engine.return_value.filter_sql.return_value = some_sql
         _get_engine.return_value.query.return_value = q_result
+        _get_engine.return_value.seconds_behind_master = 100
         _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
@@ -725,8 +726,10 @@ class TestQuery(TestCase):
                                     'limit_num': some_limit})
         _get_engine.return_value.query.assert_called_once_with(some_db, some_sql, some_limit)
         r_json = r.json()
+        print(r_json)
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
+        self.assertEqual(r_json['data']['seconds_behind_master'], 100)
 
     @patch('sql.query.get_engine')
     @patch('sql.query.query_priv_check')
