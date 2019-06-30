@@ -16,6 +16,13 @@ def add_sql_schedule(name, run_date, workflow_id):
     logger.debug(f"添加SQL定时执行任务：{name} 执行时间：{run_date}")
 
 
+def add_kill_conn_schedule(name, run_date, instance_id, thread_id):
+    """添加/修改终止数据库连接的定时任务"""
+    del_schedule(name)
+    schedule('sql.query.kill_query_conn', instance_id, thread_id,
+             name=name, schedule_type='O', next_run=run_date, repeats=1, timeout=-1)
+
+
 def del_schedule(name):
     """删除task"""
     try:
@@ -23,7 +30,7 @@ def del_schedule(name):
         Schedule.delete(sql_schedule)
         logger.debug(f'删除task：{name}')
     except Schedule.DoesNotExist:
-        logger.debug(f'删除task：{name}失败，任务不存在')
+        pass
 
 
 def task_info(name):

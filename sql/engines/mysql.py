@@ -20,6 +20,7 @@ logger = logging.getLogger('default')
 class MysqlEngine(EngineBase):
     def get_connection(self, db_name=None):
         if self.conn:
+            self.thread_id = self.conn.thread_id()
             return self.conn
         if db_name:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
@@ -27,6 +28,7 @@ class MysqlEngine(EngineBase):
         else:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         charset=self.instance.charset or 'utf8mb4')
+        self.thread_id = self.conn.thread_id()
         return self.conn
 
     @property
@@ -41,6 +43,10 @@ class MysqlEngine(EngineBase):
     def server_version(self):
         version = self.query(sql="select @@version").rows[0][0]
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
+
+    def kill_connection(self, thread_id):
+        """终止数据库连接"""
+        self.query(sql=f'kill {thread_id}')
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""

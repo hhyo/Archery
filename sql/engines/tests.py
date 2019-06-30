@@ -481,6 +481,12 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
 
+    @patch.object(MysqlEngine, 'query')
+    def test_kill_connection(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        new_engine.kill_connection(100)
+        _query.assert_called_once_with(sql="kill 100")
+
 
 class TestRedis(TestCase):
     @classmethod
