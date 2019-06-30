@@ -7,6 +7,7 @@ class EngineBase:
 
     def __init__(self, instance=None):
         self.conn = None
+        self.thread_id = None
         if instance:
             self.instance = instance
             self.instance_name = instance.instance_name
@@ -27,6 +28,14 @@ class EngineBase:
     def info(self):
         """返回引擎简介"""
         return 'Base engine'
+
+    @property
+    def server_version(self):
+        """返回引擎服务器版本，返回对象为tuple (x,y,z)"""
+        return tuple()
+
+    def kill_connection(self, thread_id):
+        """终止数据库连接"""
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet，rows=list"""
@@ -69,6 +78,14 @@ class EngineBase:
 
     def get_rollback(self, workflow):
         """获取工单回滚语句"""
+
+    def get_variables(self, variables=None):
+        """获取实例参数，返回一个 ResultSet"""
+        return ResultSet()
+
+    def set_variable(self, variable_name, variable_value):
+        """修改实例参数值，返回一个 ResultSet"""
+        return ResultSet()
 
 
 def get_engine(instance=None):
