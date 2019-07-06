@@ -2,7 +2,7 @@
 import logging
 import re
 import traceback
-import pymysql
+import MySQLdb
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
@@ -17,12 +17,12 @@ class GoInceptionEngine(EngineBase):
         if self.conn:
             return self.conn
         if hasattr(self, 'instance'):
-            self.conn = pymysql.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4')
+            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4')
             return self.conn
         archer_config = SysConfig()
         go_inception_host = archer_config.get('go_inception_host')
         go_inception_port = int(archer_config.get('go_inception_port', 4000))
-        self.conn = pymysql.connect(host=go_inception_host, port=go_inception_port, charset='utf8mb4')
+        self.conn = MySQLdb.connect(host=go_inception_host, port=go_inception_port, charset='utf8mb4')
         return self.conn
 
     def execute_check(self, instance=None, db_name=None, sql=''):

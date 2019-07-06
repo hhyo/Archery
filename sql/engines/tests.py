@@ -982,7 +982,7 @@ class TestGoInception(TestCase):
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
-    @patch('pymysql.connect')
+    @patch('MySQLdb.connect')
     def test_get_connection(self, _connect):
         new_engine = GoInceptionEngine()
         new_engine.get_connection()
@@ -1019,18 +1019,18 @@ class TestGoInception(TestCase):
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
 
-    @patch('pymysql.connect.cursor.execute')
-    @patch('pymysql.connect.cursor')
-    @patch('pymysql.connect')
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
     def test_query(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
         new_engine = GoInceptionEngine()
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
 
-    @patch('pymysql.connect.cursor.execute')
-    @patch('pymysql.connect.cursor')
-    @patch('pymysql.connect')
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
     def test_query_not_limit(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
         new_engine = GoInceptionEngine(instance=self.ins)

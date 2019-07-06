@@ -1,6 +1,6 @@
 FROM docker.io/centos:7
 
-ENV VERSION v1.6.4
+ENV VERSION v1.6.5
 
 WORKDIR /opt/archery
 
@@ -14,7 +14,7 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && make && make install \
     && ln -fs /usr/local/python3/bin/python3 /usr/bin/python3 \
     && ln -fs /usr/local/python3/bin/pip3 /usr/bin/pip3 \
-    && pip3 install virtualenv -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && pip3 install virtualenv \
     && cd /opt \
     && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
     && virtualenv venv4archery --python=python3 \
@@ -71,7 +71,7 @@ RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
     && git clone https://github.com/hhyo/archery.git && cd archery && git checkout $VERSION \
     && source /opt/venv4archery/bin/activate \
-    && pip3 install -r /opt/archery/requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/ \
+    && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
     && mv /opt/soar /opt/archery/src/plugins/ \
