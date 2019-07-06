@@ -52,8 +52,6 @@
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
-    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
@@ -286,7 +284,7 @@
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,
+                    showExport: false,
                     exportDataType: "all",
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
@@ -402,7 +400,7 @@
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: true,
+                    showExport: false,
                     exportDataType: "all",
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
