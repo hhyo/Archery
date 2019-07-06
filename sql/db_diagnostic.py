@@ -117,11 +117,11 @@ def tablesapce(request):
     else:
         sql = '''
         SELECT
-          table_schema,
-          table_name,
-          engine,
+          table_schema AS table_schema,
+          table_name AS table_name,
+          engine AS engine,
           TRUNCATE((data_length+index_length+data_free)/1024/1024,2) AS total_size,
-          table_rows,
+          table_rows AS table_rows,
           TRUNCATE(data_length/1024/1024,2) AS data_size,
           TRUNCATE(index_length/1024/1024,2) AS index_size,
           TRUNCATE(data_free/1024/1024,2) AS data_free,
