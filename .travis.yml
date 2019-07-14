@@ -7,11 +7,9 @@ services:
   - mysql
   - redis-server
 install:
-  - pip install -r requirements.txt
-  - pip install mycli==1.19.0
-  - pip install coverage
-  - pip install codecov
+  - pip install codecov coverage flake8 mycli==1.19.0 -r requirements.txt
 before_script:
+  - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
   - mysql -e "CREATE DATABASE archery CHARSET UTF8;"
   - python manage.py makemigrations
   - python manage.py makemigrations sql
