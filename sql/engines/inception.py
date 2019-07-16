@@ -19,12 +19,14 @@ class InceptionEngine(EngineBase):
         if self.conn:
             return self.conn
         if hasattr(self, 'instance'):
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4')
+            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4',
+                                        connect_timeout=10)
             return self.conn
         archer_config = SysConfig()
         inception_host = archer_config.get('inception_host')
         inception_port = int(archer_config.get('inception_port', 6669))
-        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4')
+        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4',
+                                    connect_timeout=10)
         return self.conn
 
     @staticmethod

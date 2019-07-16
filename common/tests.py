@@ -321,7 +321,7 @@ class CheckTest(TestCase):
         r_json = r.json()
         self.assertEqual(r_json['status'], 0)
 
-    @patch('pymysql.connect')
+    @patch('MySQLdb.connect')
     def test_inception_check(self, _conn):
         c = Client()
         c.force_login(self.superuser1)
@@ -337,7 +337,7 @@ class CheckTest(TestCase):
         r_json = r.json()
         self.assertEqual(r_json['status'], 0)
 
-    @patch('pymysql.connect')
+    @patch('MySQLdb.connect')
     def test_go_inception_check(self, _conn):
         c = Client()
         c.force_login(self.superuser1)
