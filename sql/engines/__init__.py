@@ -105,6 +105,9 @@ def get_engine(instance=None):
     elif instance.db_type == 'oracle':
         from .oracle import OracleEngine
         return OracleEngine(instance=instance)
+    elif instance.db_type == 'mongo':
+        from .mongo import MongoEngine
+        return MongoEngine(instance=instance)
     elif instance.db_type == 'inception':
         from .inception import InceptionEngine
         return InceptionEngine(instance=instance)
