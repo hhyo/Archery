@@ -130,10 +130,13 @@ def tablesapce(request):
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
         LIMIT 14;'''.format(instance_name)
-        execute_engine = get_engine(instance=instance)
-        table_space = execute_engine.query('information_schema', sql).to_dict()
-
-        result = {'status': 0, 'msg': 'ok', 'rows': table_space}
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.query('information_schema', sql)
+        if not query_result.error:
+            table_space = query_result.to_dict()
+            result = {'status': 0, 'msg': 'ok', 'rows': table_space}
+        else:
+            result = {'status': 1, 'msg': query_result.error}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -179,9 +182,13 @@ def trxandlocks(request):
           AND lw.requesting_trx_id = rtrx.trx_id
           AND lw.blocking_trx_id = trx.trx_id;'''
 
-    execute_engine = get_engine(instance=instance)
-    trxandlocks = execute_engine.query('information_schema', sql).to_dict()
-    result = {'status': 0, 'msg': 'ok', 'rows': trxandlocks}
+    query_engine = get_engine(instance=instance)
+    query_result = query_engine.query('information_schema', sql)
+    if not query_result.error:
+        trxandlocks = query_result.to_dict()
+        result = {'status': 0, 'msg': 'ok', 'rows': trxandlocks}
+    else:
+        result = {'status': 1, 'msg': query_result.error}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
