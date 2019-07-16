@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    分析选项
+                </div>
+                <div class="panel-body form-inline">
+                    <div class="form-group">
+                        <input id="sql-upload" name="sql-upload" accept=".sql,.xml" type="file" class="file-loading">
+                    </div>
+                    <div class="form-group">
+                        <select id="instance_name" name="instance_name"
+                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                                title="请选择实例:"
+                                data-placeholder="请选择实例:" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
+                                title="请选择数据库:"
+                                data-live-search="true" data-placeholder="请选择数据库:" required>
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input id="btn-analyze" type="button" class="btn btn-warning" value="开始分析"
+                               onclick="analyze()"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL列表
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table id="analyze-sql" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 分析报告-->
+    <div class="modal fade" id="reports">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">分析报告</h4>
+                </div>
+                <div id="reports-body" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dist/js/marked.min.js' %}"></script>
+    <!-- 解析文件 -->
+    <script>
+        //初始化上传控件
+        $(function init_upload() {
+            $("#sql-upload").fileinput({
+                language: 'zh',
+                allowedFileExtensions: ['sql', 'xml'],//接收的文件后缀
+                showCaption: true,//是否显示标题
+                initialCaption: 'SQL/MyBatis3 Mapper XML file',
+                captionClass: "",
+                showUpload: false,     //不显示上传按钮
+                showPreview: false,    // 不显示预览,
+            }).on('fileloaded', function (event, data, previewId, index) {
+                if (data.size <= 10240 * 512) {
+                    loadsql();
+                } else {
+                    $('#sql-upload').fileinput('reset');
+                    alert('文件大小超过5M，请重新选择');
+                }
+            }).on('fileclear', function (event) {
+                generate();
+            });
+        });
+
+
+        //读取文件并展示在输入域
+        function loadsql() {
+            $('#sql-upload').fileinput('disable');
+            //获取文件
+            var file = $("#sql-upload")[0].files[0];
+
+            //创建读取文件的对象
+            var reader = new FileReader();
+
+            //为文件读取成功设置事件
+            reader.onload = function (e) {
+                var text = e.target.result;
+                generate(text);
+            };
+
+            //正式读取文件
+            reader.readAsText(file);
+        }
+
+        //获取解析后的SQL列表
+        function generate(text) {
+            //初始化table
+            $('#analyze-sql').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/sql_analyze/generate/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: false,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {},
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: false,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: false,                //是否启用点击选中行
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: true,                  //是否显示父子表
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'sql') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            text: text,
+                            offset: params.offset,
+                        }
+                    },
+                columns: [{
+                    title: 'SQLID',
+                    field: 'sql_id'
+                }, {
+                    title: 'SQL内容',
+                    field: 'sql',
+                    formatter: function (value, row, index) {
+                        if (value.length > 100) {
+                            var sql = value.substr(0, 100) + '...';
+                            return sql;
+                        } else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '完整SQL内容',
+                    field: 'sql',
+                    visible: false // 默认不显示
+                }],
+                onLoadSuccess: function () {
+                    $('#sql-upload').fileinput('enable');
+                    sessionStorage.setItem('analyze_text', text);
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                responseHandler: function (res) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return res;
+                }
+            });
+
+        }
+    </script>
+    <!-- 获取数据库名称 -->
+    <script>
+        $("#instance_name").change(function () {
+            //将数据通过ajax提交给获取db_name
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name option:selected").text(),
+                    resource_type: "database"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#db_name").empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option>" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+    </script>
+    <!-- 执行分析获取结果 -->
+    <script>
+        function analyze() {
+            var analyze_text = sessionStorage.getItem('analyze_text');
+            if (analyze_text !== "undefined") {
+                $('#btn-analyze').addClass('disabled');
+                $('#btn-analyze').prop('disabled', true);
+                //初始化table
+                $('#analyze-sql').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/sql_analyze/analyze/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: false,                     //是否启用排序
+                    sortOrder: "asc",                   //排序方式
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 14,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    showExport: true,                   //是否显示导出按钮
+                    exportOptions: {},
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: false,                  //是否显示刷新按钮
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: false,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'report') {
+                                var report = value;
+                                var rendererMD = new marked.Renderer();
+                                marked.setOptions({
+                                    renderer: rendererMD,
+                                    gfm: true,
+                                    tables: true,
+                                    breaks: true,
+                                    pedantic: false,
+                                    sanitize: false,
+                                    smartLists: false,
+                                    smartypants: false
+                                });
+                                //增加的代码，用于个性化输出table
+                                rendererMD.table = function (header, body) {
+                                    return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
+                                };
+                                html.push(marked(report))
+                            }
+                        });
+                        return html.join('');
+                    },
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams:
+                        function (params) {
+                            return {
+                                text: sessionStorage.getItem('analyze_text'),
+                                instance_name: $("#instance_name").val(),
+                                db_name: $("#db_name").val(),
+                                offset: params.offset,
+                            }
+                        },
+                    columns: [{
+                        title: 'SQLID',
+                        field: 'sql_id'
+                    }, {
+                        title: 'SQL内容',
+                        field: 'sql',
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                var sql = value.substr(0, 100) + '...';
+                                return sql;
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '完整SQL内容',
+                        field: 'sql',
+                        visible: false // 默认不显示
+                    }, {
+                        title: '分析报告',
+                        field: 'operation',
+                        formatter: function (value, row, index) {
+                            return "<button class=\"btn btn-info btn-xs\" report=\"" + row.report + "\"\n" + "onclick=\"getReport(this)\" >查看\n" + "</button>"
+                        }
+                    }],
+                    onLoadSuccess: function () {
+                        $('#btn-analyze').removeClass('disabled');
+                        $('#btn-analyze').prop('disabled', false);
+                    },
+                    onLoadError: function () {
+                        $('#btn-analyze').removeClass('disabled');
+                        $('#btn-analyze').prop('disabled', false);
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+                // 提示信息
+                if ($('#instance_name').val() && $('#db_name').val()) {
+                    alert('已提交SOAR分析，请耐心等待分析结果!');
+                } else {
+                    alert('已提交SOAR分析，未选择实例和数据库将不会输出执行计划和索引建议，请耐心等待分析结果!');
+                }
+            } else {
+                alert('请先解析SQL/MyBatis3 Mapper XML文件');
+            }
+
+        }
+    </script>
+    <!-- 查看分析报告 -->
+    <script>
+        function getReport(obj) {
+            var report = $(obj).attr("report");
+            var rendererMD = new marked.Renderer();
+            marked.setOptions({
+                renderer: rendererMD,
+                gfm: true,
+                tables: true,
+                breaks: true,
+                pedantic: false,
+                sanitize: false,
+                smartLists: false,
+                smartypants: false
+            });
+            //增加的代码，用于个性化输出table
+            rendererMD.table = function (header, body) {
+                return '<div class="table-responsive"><table class="table table-condensed">' + header + body + '</table></div>'
+            };
+            $("#reports-body").html(marked(report));
+            $('#reports').modal('show');
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+            sessionStorage.setItem('analyze_text', '');
+            generate();
+        })
+    </script>
+{% endblock %}
+

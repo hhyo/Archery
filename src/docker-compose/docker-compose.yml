@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:5
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql/my.cnf:/etc/mysql/my.cnf"
+      - "./mysql/datadir:/var/lib/mysql"
+    environment:
+      MYSQL_DATABASE: archery
+      MYSQL_ROOT_PASSWORD: 123456
+
+  mongo:
+    image: mongo:3.6
+    container_name: mongo
+    restart: always
+    volumes:
+      - "./mongo/datadir:/data/db"
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+
+  inception:
+    image: hhyo/inception
+    container_name: inception
+    restart: always
+    ports:
+      - "6669:6669"
+    volumes:
+      - "./inception/inc.cnf:/etc/inc.cnf"
+
+  goinception:
+    image: hanchuanchuan/goinception
+    container_name: goinception
+    restart: always
+    ports:
+      - "4000:4000"
+    volumes:
+      - "./inception/config.toml:/etc/config.toml"
+
+  archery:
+    image: hhyo/archery
+    container_name: archery
+    restart: always
+    ports:
+      - "9123:9123"
+    volumes:
+      - "./archery/settings.py:/opt/archery/archery/settings.py"
+      - "./archery/soar.yaml:/etc/soar.yaml"
+      - "./archery/downloads:/opt/archery/downloads"
+    entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
+    environment:
+      NGINX_PORT: 9123

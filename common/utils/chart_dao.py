@@ -32,17 +32,17 @@ class ChartDao(object):
         return dates
 
     # 语法类型
-    def sql_syntax(self):
+    def syntax_type(self):
         sql = '''
         select
-          case when sql_syntax = 1
+          case when syntax_type = 1
             then 'DDL'
-          when sql_syntax = 2
+          when syntax_type = 2
             then 'DML'
-          end as sql_syntax,
+          end as syntax_type,
           count(*)
         from sql_workflow
-        group by sql_syntax;'''
+        group by syntax_type;'''
         return self.__query(sql)
 
     # 工单数量统计

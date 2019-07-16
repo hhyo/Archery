@@ -4,15 +4,15 @@
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <div class="form-group">
-            <select id=user_name class="form-control selectpicker show-tick bs-select-hidden " name="user_name_list"
+            <select id=user_display class="form-control selectpicker show-tick bs-select-hidden " name="user_display_list"
                     data-live-search="true">
                 <option value="all" selected="selected">全部</option>
                 {% if user.is_superuser %}
                     {% for user in user_list %}
-                        <option value="{{ user.user_name }}">{{ user.user_name }}</option>
+                        <option value="{{ user.user_display }}">{{ user.user_display }}</option>
                     {% endfor %}
                 {% else %}
-                    <option value="{{ user.username }}">{{ user.username }}</option>
+                    <option value="{{ user.user_display }}">{{ user.user_display }}</option>
                 {% endif %}
             </select>
         </div>
@@ -118,21 +118,18 @@
                 queryParams:
                     function (params) {
                         return {
-                            user_name: $("#user_name").val(),
+                            user_display: $("#user_display").val(),
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search
                         }
                     },
                 columns: [{
-                    title: '权限id',
-                    field: 'id'
-                }, {
                     title: '用户',
                     field: 'user_display'
                 }, {
                     title: '实例',
-                    field: 'instance_name'
+                    field: 'instance__instance_name'
                 }, {
                     title: '数据库',
                     field: 'db_name'
@@ -158,14 +155,14 @@
                     field: 'valid_date'
                 }, {
                     title: '操作',
-                    field: 'id',
+                    field: 'privilege_id',
                     formatter: function (value, row, index) {
                         {% if perms.sql.query_mgtpriv %}
-                            return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.id + "\"\n" +
+                            return "<button class=\"btn btn-warning btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#modify_privileges\">变更\n" + "</button>\n" +
-                                "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.id + "\"\n" +
+                                "<button class=\"btn btn-danger btn-xs\" privilege_id=\"" + row.privilege_id + "\"\n" +
                                 "limit_num=\"" + row.limit_num + "\"\n" +
                                 "valid_date=\"" + row.valid_date + "\"\n" + "onclick=\"setInfo(this)\" " +
                                 "data-toggle=\"modal\" data-target=\"#deleted_privileges\">删除权限\n" + "</button>"
@@ -190,7 +187,7 @@
         }
 
         //用户筛选
-        $("#user_name").change(function () {
+        $("#user_display").change(function () {
             queryuserprivileges()
         });
 

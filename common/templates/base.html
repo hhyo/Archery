@@ -10,12 +10,14 @@
     <title>SQL审核平台</title>
 
     <!-- 引入 Bootstrap -->
-    <link href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'metisMenu/css/metisMenu.min.css' %}" rel="stylesheet">
     <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
     <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
-    <link href="{% static 'dist/css/bootstrap-select.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    <!-- django i18n -->
+    <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
     {% for jsfile_name in script_list %}
         <script src="{{ host }}/{{ jsfile_name }}.js"></script>
     {% endfor %}
@@ -77,9 +79,22 @@
                             <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                         </li>
                     {% endif %}
-                    {% if perms.sql.menu_sqlworkflow %}
+                    {% if perms.sql.menu_sqlcheck %}
                         <li>
-                            <a href="/sqlworkflow/"><i class="fa fa-cloud-upload fa-fw"></i> SQL上线</a>
+                            <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_sqlworkflow %}
+                                    <li>
+                                        <a href="/sqlworkflow/">SQL上线</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_sqlanalyze %}
+                                    <li>
+                                        <a href="/sqlanalyze/">SQL分析</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_query %}
@@ -88,12 +103,12 @@
                             <ul class="nav nav-second-level">
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
-                                        <a href="/sqlquery/">MySQL查询</a>
+                                        <a href="/sqlquery/">在线查询</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_queryapplylist %}
                                     <li>
-                                        <a href="/queryapplylist/">查询权限申请</a>
+                                        <a href="/queryapplylist/">权限管理</a>
                                     </li>
                                 {% endif %}
 
@@ -124,25 +139,25 @@
                             <a href="#"><i class="fa fa-stethoscope fa-fw"></i> 数据库审核<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="/themis/">规则设置</a>
+                                    <a target="_blank" href="/themis/">规则设置</a>
                                 </li>
                                 <li>
                                     <a href="#">规则增加<span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
                                         <li>
-                                            <a href="/themis/sqlreview/rule/simple/addition">简单规则</a>
+                                            <a target="_blank" href="/themis/sqlreview/rule/simple/addition">简单规则</a>
                                         </li>
                                         <li>
-                                            <a href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
+                                            <a target="_blank" href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
                                 </li>
                                 <li>
-                                    <a href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
+                                    <a target="_blank" href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
                                 </li>
                                 <li>
-                                    <a href="/themis/new/version/sql/review/task/index">任务查询</a>
+                                    <a target="_blank" href="/themis/new/version/sql/review/task/index">任务查询</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -152,7 +167,7 @@
                         <li>
                             <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
-                                {% if perms.sql.menu_instance %}
+                                {% if perms.sql.menu_instance_list %}
                                     <li>
                                         <a href="/instance/">实例列表</a>
                                     </li>
@@ -160,6 +175,16 @@
                                 {% if perms.sql.menu_dbdiagnostic %}
                                     <li>
                                         <a href="/dbdiagnostic/">会话管理</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_param %}
+                                    <li>
+                                        <a href="/instanceparam/">参数配置</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_data_dictionary %}
+                                    <li>
+                                        <a href="/data_dictionary/">数据字典</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
@@ -190,13 +215,13 @@
                                     <a href="#">其他配置管理 <span class="fa arrow"></span></a>
                                     <ul class="nav nav-third-level collapse">
                                         <li>
-                                            <a href="/admin/sql/users/">用户管理</a>
+                                            <a target="_blank" href="/admin/sql/users/">用户管理</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/auth/group/">权限组管理</a>
+                                            <a target="_blank" href="/admin/auth/group/">权限组管理</a>
                                         </li>
                                         <li>
-                                            <a href="/admin/">全部后台数据</a>
+                                            <a target="_blank" href="/admin/">全部后台数据</a>
                                         </li>
                                     </ul>
                                     <!-- /.nav-third-level -->
@@ -239,12 +264,14 @@
 </div>
 
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
-<script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 <script src="{% static 'metisMenu/js/metisMenu.min.js' %}"></script>
 <script src="{% static 'sb-admin-2/js/sb-admin-2.js' %}"></script>
-<script src="{% static 'dist/js/bootstrap-select.js' %}"></script>
+<script src="{% static 'bootstrap-select/js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+<script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 
 </body>

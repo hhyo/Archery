@@ -5,7 +5,7 @@
     <div id="toolbar" class="form-inline">
         <div class="form-group ">
             <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/resourcegroup/add/'">
+                    onclick="window.open('/admin/sql/resourcegroup/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 添加组
             </button>
@@ -22,7 +22,6 @@
     {% load staticfiles %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
         //获取列表
         function grouplist() {
@@ -75,13 +74,13 @@
                     title: '组名称',
                     field: 'group_name',
                     formatter: function (value, row, index) {
-                        return "<a href=\"/admin/sql/resourcegroup/" + row.group_id + "/change/\">" + value + "</a>"
+                        return "<a target=\"_blank\" href=\"/admin/sql/resourcegroup/" + row.group_id + "/change/\">" + value + "</a>"
                     }
                 }, {
                     title: '关联对象',
                     field: '',
                     formatter: function (value, row, index) {
-                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.location.href='/grouprelations/" + row.group_id + "/'\">管理</button>\n"
+                        return "<button class=\"btn btn-warning btn-xs\" onclick=\"window.open('/grouprelations/" + row.group_id + "/')\">管理</button>\n"
                     }
                 }],
                 onLoadSuccess: function () {

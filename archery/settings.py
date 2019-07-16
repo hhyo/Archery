@@ -85,9 +85,10 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
-AUTH_USER_MODEL = "sql.users"
+AUTH_USER_MODEL = "sql.Users"
 
 # 密码校验
 AUTH_PASSWORD_VALIDATORS = [
@@ -108,7 +109,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-###############以下部分需要用户根据自己环境自行修改###################
+############### 以下部分需要用户根据自己环境自行修改 ###################
+
+# SESSION 设置
+SESSION_COOKIE_AGE = 60 * 300  # 300分钟
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 
 # 该项目本身的mysql数据库地址
 DATABASES = {
@@ -125,7 +131,7 @@ DATABASES = {
         },
         'TEST': {
             'NAME': 'test_archery',
-            'CHARSET': 'utf8',
+            'CHARSET': 'utf8mb4',
         },
     }
 }
@@ -152,7 +158,8 @@ Q_CLUSTER = {
     'save_limit': 0,
     'queue_limit': 50,
     'label': 'Django Q',
-    'django_redis': 'default'
+    'django_redis': 'default',
+    'sync': False  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
@@ -211,27 +218,29 @@ LOGGING = {
         }
     },
     'loggers': {
-        'default': {  # default日志，存放于log中
-            'handlers': ['default'],
-            'level': 'DEBUG',
+        'default': {  # default日志
+            'handlers': ['console', 'default'],
+            'level': 'DEBUG'
         },
         'django-q': {  # django_q模块相关日志
             'handlers': ['console', 'default'],
             'level': 'DEBUG',
+            'propagate': False
         },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
-            'handlers': ['default'],
+            'handlers': ['console', 'default'],
             'level': 'DEBUG',
+            'propagate': False
         },
-        # 'django.db': {  # 打印SQL语句到console，方便开发
-        #     'handlers': ['console'],
+        # 'django.db': {  # 打印SQL语句，方便开发
+        #     'handlers': ['console', 'default'],
         #     'level': 'DEBUG',
-        #     'propagate': True,
+        #     'propagate': False
         # },
-        'django.request': {  # 打印请求错误堆栈信息到console，方便开发
-            'handlers': ['console'],
+        'django.request': {  # 打印请求错误堆栈信息，方便开发
+            'handlers': ['console', 'default'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False
         },
     }
 }

@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="param_tab" class="active">
+            <a href="#param_table" role="tab" data-toggle="tab">可修改参数</a>
+        </li>
+        <li id="history_tab">
+            <a href="#history_table" role="tab" data-toggle="tab">修改历史</a>
+        </li>
+        <div class="form-inline pull-right">
+            <div class="form-group ">
+                <button id="btn_add_param" type="button" class="btn btn-default"
+                        onclick="window.open('/admin/sql/paramtemplate/add/')">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    添加参数
+                </button>
+            </div>
+            <div id="editable-div" style="display: none" class="form-group">
+                <select id=editable class="form-control selectpicker" data-live-search="true">
+                    <option value="is-empty" disabled="">允许修改</option>
+                    <option value="true" selected="selected">是</option>
+                    <option value=''>否</option>
+                </select>
+            </div>
+            <div class="form-group ">
+                <select id=instance class="form-control selectpicker" name="instance_list"
+                        title="请选择实例"
+                        data-live-search="true">
+                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
+                </select>
+            </div>
+        </div>
+    </ul>
+    <div id="tab-content" class="tab-content">
+        <div id="param_table" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="param-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:fixed;word-break:break-word;overflow:hidden;"></table>
+        </div>
+        <div id="history_table" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="history-list" data-toggle="table" class="table table-hover"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'bootstrap-editable/css/bootstrap-editable.css' %}" rel="stylesheet">
+    <script src="{% static 'bootstrap-table/extensions/editable/bootstrap-table-editable.js' %}"></script>
+    <script src="{% static 'bootstrap-editable/js/bootstrap-editable.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
+    <script>
+        function get_param_list() {
+            $("#editable-div").show();
+            if ($("#instance").val()) {
+                //初始化table
+                $('#param-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/param/list/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //是否启用排序
+                    sortOrder: "desc",                   //排序方式
+                    sortName: 'time',                   //排序字段
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100, 500],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                   //是否显示父子表
+                    detailFormatter: function (index, row) {
+                        return row.description
+                    },
+                    locale: 'zh-CN',                     //本地化
+                    toolbar: "#process-toolbar",         //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams: function (params) {
+                        return {
+                            search: params.search,
+                            editable: $("#editable").val(),
+                            instance_id: $("#instance").val()
+                        }
+                    },
+                    onEditableSave: function (field, row, oldValue, $el) {
+                        if (row.editable) {
+                            $.ajax({
+                                type: "post",
+                                url: "/param/edit/",
+                                data: {
+                                    instance_id: $("#instance").val(),
+                                    variable_name: row.variable_name,
+                                    runtime_value: row.runtime_value
+                                },
+                                success: function (data) {
+                                    alert(data.msg);
+                                    get_param_list()
+                                },
+                                error: function (data) {
+                                    alert(data.msg);
+                                    get_param_list()
+
+                                }
+                            });
+                        } else {
+                            alert('请先在参数模板中配置该参数！');
+                            get_param_list()
+                        }
+                    },
+                    columns: [{
+                        title: '参数名',
+                        field: 'variable_name',
+                        formatter: function (value, row, index) {
+                            if (row.id) {
+                                return "<a target=\"_blank\" href=\"/admin/sql/paramtemplate/" + row.id + "/change/\">" + value + "</a>"
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '运行参数值',
+                        field: 'runtime_value',
+                        editable: {
+                            type: 'text',
+                            title: '修改参数值',
+                            placement: 'bottom',
+                            emptytext: '-',
+                            validate: function (v) {
+                                if (!v) return '参数值不能为空';
+                            }
+                        }
+                    }, {
+                        title: '默认参数值',
+                        field: 'default_value'
+                    }, {
+                        title: '可修改参数值',
+                        field: 'valid_values'
+                    }, {
+                        title: '参数描述',
+                        field: 'description',
+                        visible: false // 默认不显示
+                    }],
+                    onLoadSuccess: function () {
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        return {
+                            search: e.search
+                        }
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+
+        function get_param_edit_history() {
+            $("#editable-div").hide();
+            if ($("#instance").val()) {
+                $('#history-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/param/history/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 30,                      //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    cardView: false,                    //是否显示详细视图
+                    detailView: false,                  //是否显示父子表
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",                //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams: function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search,
+                            instance_id: $("#instance").val()
+                        }
+                    },
+                    columns: [{
+                        title: '实例名称',
+                        field: 'instance__instance_name'
+                    }, {
+                        title: '参数名',
+                        field: 'variable_name'
+                    }, {
+                        title: '变更前的参数值',
+                        field: 'old_var'
+                    }, {
+                        title: '变更后的参数值',
+                        field: 'new_var'
+                    }, {
+                        title: '修改人',
+                        field: 'user_display'
+                    }, {
+                        title: '修改时间',
+                        field: 'create_time'
+                    }],
+                    onLoadSuccess: function () {
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        return {
+                            search: e.search
+                        }
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+
+        //如果已选择实例，进入页面自动填充，并且重置激活id
+        $(document).ready(function () {
+                //获取用户实例列表
+                $(function () {
+                    $.ajax({
+                        type: "get",
+                        url: "/group/user_all_instances/",
+                        dataType: "json",
+                        data: {
+                            db_type: ['mysql', 'inception', 'goinception']
+                        },
+                        complete: function () {
+                            //如果已选择实例，进入页面自动填充，并且重置激活id
+                            sessionStorage.setItem('param_active_li_id', 'param_tab');
+                            if (sessionStorage.getItem('instance_id')) {
+                                $("#instance").val(sessionStorage.getItem('instance_id')).trigger("change");
+                            }
+                            get_param_list();
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                let result = data['data'];
+                                $("#instance").empty();
+                                for (let i = 0; i < result.length; i++) {
+                                    let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                                    $("#instance").append(instance);
+                                }
+                                $('#instance').selectpicker('render');
+                                $('#instance').selectpicker('refresh');
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                });
+            }
+        );
+
+        //tab切换,保留当前激活的标签id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                var active_li_id = $(e.target).parents().attr('id');
+                sessionStorage.setItem('param_active_li_id', active_li_id);
+                //当前激活的标签id
+                if (active_li_id === 'param_tab') {
+                    get_param_list();
+                } else if (active_li_id === 'history_tab') {
+                    get_param_edit_history();
+                }
+            });
+        });
+
+        //实例变动
+        $("#instance").change(function () {
+            flush()
+        });
+
+        //筛选项变动
+        $("#editable").change(function () {
+            flush()
+        });
+
+        //刷新页面
+        function flush() {
+            sessionStorage.setItem('instance_id', $("#instance").val());
+            var active_li_id = sessionStorage.getItem('param_active_li_id');
+            if (active_li_id === 'param_tab') {
+                get_param_list();
+            } else if (active_li_id === 'history_tab') {
+                get_param_edit_history();
+            }
+        }
+
+    </script>
+{% endblock %}
+

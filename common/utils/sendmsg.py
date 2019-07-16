@@ -90,7 +90,7 @@ class MsgSender(object):
 
             # 消息内容:
             main_msg['Subject'] = Header(subject, "utf-8").encode()
-            main_msg['From'] = formataddr(["archery 通知", self.MAIL_REVIEW_FROM_ADDR])
+            main_msg['From'] = formataddr(["Archery 通知", self.MAIL_REVIEW_FROM_ADDR])
             main_msg['To'] = ','.join(to)
             main_msg['Cc'] = ', '.join(str(cc) for cc in list_cc)
             main_msg['Date'] = email.utils.formatdate()
@@ -105,7 +105,7 @@ class MsgSender(object):
                 server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
             server.sendmail(self.MAIL_REVIEW_FROM_ADDR, to + list_cc, main_msg.as_string())
             server.quit()
-            logger.debug('邮件推送成功')
+            logger.debug(f'邮件推送成功\n消息标题:{subject}\n通知对象：{to + list_cc}\n消息内容：{body}')
             return 'success'
         except Exception:
             errmsg = '邮件推送失败\n{}'.format(traceback.format_exc())
@@ -129,10 +129,10 @@ class MsgSender(object):
         r = requests.post(url=url, json=data)
         r_json = r.json()
         if r_json['errcode'] == 0:
-            logger.debug('钉钉推送成功')
+            logger.debug(f'钉钉推送成功\n通知对象：{url}\n消息内容：{content}')
         else:
             logger.error("""钉钉推送失败
-错误码:{}
-返回错误信息:{}
-请求url:{}
-请求data:{}""".format(r_json['errcode'], r_json['errmsg'], url, data))
+                            错误码:{}
+                            返回错误信息:{}
+                            请求url:{}
+                            请求data:{}""".format(r_json['errcode'], r_json['errmsg'], url, data))

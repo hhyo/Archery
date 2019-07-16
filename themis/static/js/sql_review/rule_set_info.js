@@ -27,10 +27,11 @@ $(document).ready(function () {
         //获取数据库
         $.ajax({
             type: "post",
-            url: "/instance/getdbNameList/",
+            url: "/instance/instance_resource/",
             dataType: "json",
             data: {
-                instance_name: $("#pubIp").val()
+                instance_name: $("#pubIp").val(),
+                resource_type: "database"
             },
             complete: function () {
             },

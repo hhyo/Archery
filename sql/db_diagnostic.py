@@ -25,7 +25,7 @@ def process(request):
 
     base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance, is_enable=True)) > 0:
         result = aliyun_process_status(request)
     else:
         if command_type == 'All':
@@ -37,7 +37,7 @@ def process(request):
         query_engine = get_engine(instance=instance)
         processlist = query_engine.query('information_schema', sql).to_dict()
 
-        result = {'status': 0, 'msg': 'ok', 'data': processlist}
+        result = {'status': 0, 'msg': 'ok', 'rows': processlist}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -58,7 +58,7 @@ def create_kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance, is_enable=True)) > 0:
         result = aliyun_create_kill_session(request)
     else:
         thread_ids = thread_ids.replace('[', '').replace(']', '')
@@ -88,7 +88,7 @@ def kill_session(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance, is_enable=True)) > 0:
         result = aliyun_kill_session(request)
     else:
         kill_sql = request_params
@@ -112,16 +112,16 @@ def tablesapce(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
-    if len(AliyunRdsConfig.objects.filter(instance_name=instance_name, is_enable=1)) > 0:
+    if len(AliyunRdsConfig.objects.filter(instance=instance, is_enable=True)) > 0:
         result = aliyun_sapce_status(request)
     else:
         sql = '''
         SELECT
-          table_schema,
-          table_name,
-          engine,
+          table_schema AS table_schema,
+          table_name AS table_name,
+          engine AS engine,
           TRUNCATE((data_length+index_length+data_free)/1024/1024,2) AS total_size,
-          table_rows,
+          table_rows AS table_rows,
           TRUNCATE(data_length/1024/1024,2) AS data_size,
           TRUNCATE(index_length/1024/1024,2) AS index_size,
           TRUNCATE(data_free/1024/1024,2) AS data_free,
@@ -133,7 +133,7 @@ def tablesapce(request):
         execute_engine = get_engine(instance=instance)
         table_space = execute_engine.query('information_schema', sql).to_dict()
 
-        result = {'status': 0, 'msg': 'ok', 'data': table_space}
+        result = {'status': 0, 'msg': 'ok', 'rows': table_space}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -180,8 +180,8 @@ def trxandlocks(request):
           AND lw.blocking_trx_id = trx.trx_id;'''
 
     execute_engine = get_engine(instance=instance)
-    trxandlocks = execute_engine.query('information_schema', sql).to_sep_dict()
-    result = {'status': 0, 'msg': 'ok', 'data': trxandlocks}
+    trxandlocks = execute_engine.query('information_schema', sql).to_dict()
+    result = {'status': 0, 'msg': 'ok', 'rows': trxandlocks}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),

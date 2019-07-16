@@ -18,11 +18,10 @@ from themis.themis import Themis
 from themis.rule_analysis.db.mongo_operat import MongoOperat
 from sql.models import Instance
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 import logging
 
 logger = logging.getLogger('default')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class BaseHandler(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -126,7 +125,7 @@ class SqlReRuleSetInfoIndex(BaseHandler):
         任务发布界面之ip地址显示
         """
         # 获取实例列表
-        instances = Instance.objects.filter(type='master')
+        instances = Instance.objects.filter(type='master', db_type='mysql')
         return render(request, "rule_set_info.html", {'instances': instances})
 
 
@@ -161,9 +160,8 @@ class SqlReviewRuleInfo(BaseHandler):
                 parms[0],
                 parms[1],
                 parms[2],
-                parms[3],
-                parms[4],
-                value.get("exclude_obj_type", "无")
+                value["rule_cmd"],
+                value.get("exclude_obj_type", "无"),
             ])
         return {"errcode": 80013, "message": u"查询成功", "data": data}
 
@@ -171,6 +169,9 @@ class SqlReviewRuleInfo(BaseHandler):
     def post(self, request):
         rule_name = request.POST.get("id")
         db_type = request.POST.get("dbtype")
+        flag = request.POST.get("flag")
+        oldvalue = request.POST.get("value", None)
+        value = request.POST.get("value", None)
         if db_type == "Oracle":
             dbtype = "O"
         elif db_type == "Mysql":
@@ -179,22 +180,18 @@ class SqlReviewRuleInfo(BaseHandler):
             raise APIError(u"db类型不正确", 30055)
         if not rule_name:
             raise APIError(u"规则名称不正确", 30057)
-        flag = request.POST.get("flag")
+
         rule_name = rule_name.split("$")[0]
         record = self.mongo_client.get_collection("rule"). \
             find_one({"rule_name": rule_name, "db_type": dbtype})
         if not record:
             raise APIError(u"没有相关规则", 30055)
         if flag == "maxscore":
-            value = request.POST.get("value", None)
-            oldvalue = request.POST.get("value", None)
             self.mongo_client.get_collection("rule").update_one(
                 {"rule_name": rule_name, "db_type": dbtype},
                 {"$set": {"max_score": str(value)}}
             )
         elif flag == "status":
-            value = request.POST.get("value", None)
-            oldvalue = request.POST.get("oldvalue", None)
             if value not in ["ON", "OFF"] or oldvalue not in ["ON", "OFF"]:
                 raise APIError(u"状态不正确", 30054)
             self.mongo_client.get_collection("rule").update_one(
@@ -203,10 +200,9 @@ class SqlReviewRuleInfo(BaseHandler):
             )
         elif flag == "weight":
             try:
-                value = float(request.POST.get("value", None))
+                value = float(value)
             except Exception:
                 raise APIError(u"设置错误", 30059)
-            oldvalue = request.POST.get("oldvalue", None)
             self.mongo_client.get_collection("rule").update_one(
                 {"rule_name": rule_name, "db_type": dbtype},
                 {"$set": {"weight": value}}
@@ -217,13 +213,17 @@ class SqlReviewRuleInfo(BaseHandler):
             if len(record['input_parms']) < int(flag[-1]):
                 raise APIError(u"设置错误", 30055)
             try:
-                value = float(request.POST.get("value", None))
+                value = float(value)
             except Exception:
                 raise APIError(u"设置错误", 30059)
-            oldvalue = request.POST.get("oldvalue", None)
             self.mongo_client.get_collection("rule").update_one(
                 {"rule_name": rule_name, "db_type": dbtype},
                 {"$set": {edit_parm: value}}
+            )
+        elif flag == "rule_cmd":
+            self.mongo_client.get_collection("rule").update_one(
+                {"rule_name": rule_name, "db_type": dbtype},
+                {"$set": {'rule_cmd': value}}
             )
         context = {
             "message": u"规则设置成功",
@@ -692,6 +692,15 @@ class SqlReviewTaskPublish(BaseHandler):
             'stop_date': request.POST.get('stop_date'),
             'create_user': request.user.display
         }
+
+        # 非对象类型必须选择起止日期
+        if kwargs['rule_type'] != 'obj':
+            if not (kwargs['start_date'] and kwargs['stop_date']):
+                context = {
+                    "errcode": 80058,
+                    "message": u"请分析选择起止日期"
+                }
+                return context
 
         async_task(self.run, kwargs=kwargs)
 

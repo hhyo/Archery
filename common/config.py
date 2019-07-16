@@ -15,6 +15,7 @@ logger = logging.getLogger('default')
 
 class SysConfig(object):
     def __init__(self, *args, **kwargs):
+        self.sys_config = {}
         self.get_all_config()
 
     def get_all_config(self):
@@ -76,23 +77,28 @@ class SysConfig(object):
 
         # 清空并替换
         try:
+            self.purge()
             with transaction.atomic():
-                Config.objects.all().delete()
                 Config.objects.bulk_create(
                     [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
         except Exception as e:
             logger.error(traceback.format_exc())
             result['status'] = 1
             result['msg'] = str(e)
-        else:
-            # 删除并更新缓存
-            try:
-                cache.delete('sys_config')
-            except Exception:
-                logger.error(traceback.format_exc())
-            finally:
-                self.get_all_config()
+        finally:
+            self.get_all_config()
         return result
+
+    def purge(self):
+        """清除所有配置, 供测试以及replace方法使用"""
+        try:
+            self.sys_config = {}
+            cache.delete('sys_config')
+        except Exception:
+            # 缓存清理失败可接受
+            logger.error(traceback.format_exc())
+        with transaction.atomic():
+            Config.objects.all().delete()
 
 
 # 修改系统配置

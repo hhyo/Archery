@@ -1,0 +1,51 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+# 更改翻译文件后务必使用 python manage.py compilemessages 编译翻译文件
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-02-14 19:34+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\sql\models.py:111
+msgid "workflow_finish"
+msgstr "已正常结束"
+
+#: .\sql\models.py:112
+msgid "workflow_abort"
+msgstr "人工终止流程"
+
+#: .\sql\models.py:113
+msgid "workflow_manreviewing"
+msgstr "等待审核人审核"
+
+#: .\sql\models.py:114
+msgid "workflow_review_pass"
+msgstr "审核通过"
+
+#: .\sql\models.py:115
+msgid "workflow_timingtask"
+msgstr "定时执行"
+
+#: .\sql\models.py:116
+msgid "workflow_executing"
+msgstr "执行中"
+
+#: .\sql\models.py:117
+msgid "workflow_autoreviewwrong"
+msgstr "自动审核不通过"
+
+#: .\sql\models.py:118
+msgid "workflow_exception"
+msgstr "执行有异常"

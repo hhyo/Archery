@@ -40,7 +40,7 @@ def pyecharts(request):
 
     # SQL语句类型统计
     pie2 = Pie("SQL上线工单统计(类型)", width="100%")
-    data = chart_dao.sql_syntax()
+    data = chart_dao.syntax_type()
     attr = [row[0] for row in data['rows']]
     value = [row[1] for row in data['rows']]
     pie2.add("", attr, value, is_label_show=True)

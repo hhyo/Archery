@@ -2,59 +2,10 @@
 
 import time
 
-import simplejson as json
-from MySQLdb.connections import numeric_part
-from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse
-
-from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.const import SQLTuning
 from sql.engines import get_engine
 from sql.models import Instance
-import sqlparse
-from sqlparse.sql import IdentifierList, Identifier
-from sqlparse.tokens import Keyword, DML
-
-
-@permission_required('sql.optimize_sqltuning', raise_exception=True)
-def tuning(request):
-    instance_name = request.POST.get('instance_name')
-    db_name = request.POST.get('db_name')
-    sqltext = request.POST.get('sql_content')
-    option = request.POST.getlist('option[]')
-
-    try:
-        Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
-    result = {'status': 0, 'msg': 'ok', 'data': {}}
-    if 'sys_parm' in option:
-        basic_information = sql_tunning.basic_information()
-        sys_parameter = sql_tunning.sys_parameter()
-        optimizer_switch = sql_tunning.optimizer_switch()
-        result['data']['basic_information'] = basic_information
-        result['data']['sys_parameter'] = sys_parameter
-        result['data']['optimizer_switch'] = optimizer_switch
-    if 'sql_plan' in option:
-        plan, optimizer_rewrite_sql = sql_tunning.sqlplan()
-        result['data']['optimizer_rewrite_sql'] = optimizer_rewrite_sql
-        result['data']['plan'] = plan
-    if 'obj_stat' in option:
-        object_statistics_tableistructure, object_statistics_tableinfo, object_statistics_indexinfo = sql_tunning.object_statistics()
-        result['data']['object_statistics_tableistructure'] = object_statistics_tableistructure
-        result['data']['object_statistics_tableinfo'] = object_statistics_tableinfo
-        result['data']['object_statistics_indexinfo'] = object_statistics_indexinfo
-    if 'sql_profile' in option:
-        session_status = sql_tunning.exec_sql()
-        result['data']['session_status'] = session_status
-    # 关闭连接
-    sql_tunning.engine.close()
-    result['data']['sqltext'] = sqltext
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')
+from sql.utils.sql_utils import extract_tables
 
 
 class SqlTuning(object):
@@ -105,55 +56,17 @@ class SqlTuning(object):
     order by 1, 3;    
     '''
 
-    @staticmethod
-    def __is_subselect(parsed):
-        if not parsed.is_group:
-            return False
-        for item in parsed.tokens:
-            if item.ttype is DML and item.value.upper() == 'SELECT':
-                return True
-        return False
-
-    def __extract_from_part(self, parsed):
-        from_seen = False
-        for item in parsed.tokens:
-            # print item.ttype,item.value
-            if from_seen:
-                if self.__is_subselect(item):
-                    for x in self.__extract_from_part(item):
-                        yield x
-                elif item.ttype is Keyword:
-                    raise StopIteration
-                else:
-                    yield item
-            elif item.ttype is Keyword and item.value.upper() == 'FROM':
-                from_seen = True
-
-    @staticmethod
-    def __extract_table_identifiers(token_stream):
-        for item in token_stream:
-            if isinstance(item, IdentifierList):
-                for identifier in item.get_identifiers():
-                    yield identifier.get_real_name()
-            elif isinstance(item, Identifier):
-                yield item.get_real_name()
-            # It's a bug to check for Keyword here, but in the example
-            # above some tables names are identified as keywords...
-            elif item.ttype is Keyword:
-                yield item.value
-
-    def __extract_tables(self, p_sqltext):
-        stream = self.__extract_from_part(sqlparse.parse(p_sqltext)[0])
-        return list(self.__extract_table_identifiers(stream))
+    def __extract_tables(self):
+        """获取sql语句中的表名"""
+        return [i['name'].strip('`') for i in extract_tables(self.sqltext)]
 
     def basic_information(self):
         return self.engine.query(sql="select @@version", close_conn=False).to_sep_dict()
 
     def sys_parameter(self):
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = self.sql_variable.replace('performance_schema', 'information_schema')
         else:
             sql = self.sql_variable
@@ -161,9 +74,8 @@ class SqlTuning(object):
 
     def optimizer_switch(self):
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = self.sql_optimizer_switch.replace('performance_schema', 'information_schema')
         else:
             sql = self.sql_optimizer_switch
@@ -176,21 +88,20 @@ class SqlTuning(object):
 
     # 获取关联表信息存在缺陷，只能获取到一张表
     def object_statistics(self):
-        tableistructure = {'column_list': [], 'rows': []}
-        tableinfo = {'column_list': [], 'rows': []}
-        indexinfo = {'column_list': [], 'rows': []}
-        for index, table_name in enumerate(self.__extract_tables(self.sqltext)):
-            tableistructure = self.engine.query(db_name=self.db_name, sql="show create table {};".format(
-                table_name.replace('`', '').lower()), close_conn=False).to_sep_dict()
-
-            tableinfo = self.engine.query(
-                sql=self.sql_table_info % (self.db_name, table_name.replace('`', '').lower()),
-                close_conn=False).to_sep_dict()
-
-            indexinfo = self.engine.query(
-                sql=self.sql_table_index % (self.db_name, table_name.replace('`', '').lower()),
-                close_conn=False).to_sep_dict()
-        return tableistructure, tableinfo, indexinfo
+        object_statistics = []
+        for index, table_name in enumerate(self.__extract_tables()):
+            object_statistics.append({
+                "structure": self.engine.query(
+                    db_name=self.db_name, sql=f"show create table {table_name};",
+                    close_conn=False).to_sep_dict(),
+                "table_info": self.engine.query(
+                    sql=self.sql_table_info % (self.db_name, table_name),
+                    close_conn=False).to_sep_dict(),
+                "index_info": self.engine.query(
+                    sql=self.sql_table_index % (self.db_name, table_name),
+                    close_conn=False).to_sep_dict()
+            })
+        return object_statistics
 
     def exec_sql(self):
         result = {"EXECUTE_TIME": 0,
@@ -200,12 +111,16 @@ class SqlTuning(object):
                   "PROFILING_DETAIL": {'column_list': [], 'rows': []},
                   "PROFILING_SUMMARY": {'column_list': [], 'rows': []}
                   }
-        sql_profiling = "select concat(upper(left(variable_name,1)),substring(lower(variable_name),2,(length(variable_name)-1))) var_name,variable_value var_value from performance_schema.session_status order by 1"
+        sql_profiling = """select concat(upper(left(variable_name,1)),
+                            substring(lower(variable_name),
+                            2,
+                            (length(variable_name)-1))) var_name,
+                            variable_value var_value 
+                        from performance_schema.session_status order by 1"""
 
         # 获取mysql版本信息
-        version = self.basic_information()['rows'][0][0]
-        server_version = tuple([numeric_part(n) for n in version.split('.')[:2]])
-        if server_version < (5, 7):
+        server_version = self.engine.server_version
+        if server_version < (5, 7, 0):
             sql = sql_profiling.replace('performance_schema', 'information_schema')
         else:
             sql = sql_profiling

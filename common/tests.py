@@ -7,9 +7,11 @@ from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
-from sql.models import Instance, SqlWorkflow, QueryLog
+from sql.engines import EngineBase
+from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, ResourceGroup
 from common.utils.chart_dao import ChartDao
-from common.auth import ArcherAuth
+from common.auth import init_user
+
 User = get_user_model()
 
 
@@ -17,38 +19,49 @@ class ConfigOpsTests(TestCase):
     def setUp(self):
         pass
 
+    def test_purge(self):
+        archer_config = SysConfig()
+        archer_config.set('some_key','some_value')
+        archer_config.purge()
+        self.assertEqual({}, archer_config.sys_config)
+        archer_config2 = SysConfig()
+        self.assertEqual({}, archer_config2.sys_config)
+
     def test_replace_configs(self):
         archer_config = SysConfig()
         new_config = json.dumps(
-            [{'key': 'numconfig','value': 1},
-            {'key':'strconfig','value':'strconfig'},
-            {'key':'boolconfig','value':'false'}])
+            [{'key': 'numconfig', 'value': 1},
+             {'key': 'strconfig', 'value': 'strconfig'},
+             {'key': 'boolconfig', 'value': 'false'}])
         archer_config.replace(new_config)
         archer_config.get_all_config()
         expected_config = {
             'numconfig': '1',
             'strconfig': 'strconfig',
             'boolconfig': False
-            }
-        self.assertEqual(archer_config.sys_config,expected_config)
+        }
+        self.assertEqual(archer_config.sys_config, expected_config)
 
     def test_get_bool_transform(self):
-        bool_config = json.dumps([{'key':'boolconfig2','value':'false'}])
+        bool_config = json.dumps([{'key': 'boolconfig2', 'value': 'false'}])
         archer_config = SysConfig()
         archer_config.replace(bool_config)
         self.assertEqual(archer_config.sys_config['boolconfig2'], False)
+
     def test_set_bool_transform(self):
         archer_config = SysConfig()
         archer_config.set('boolconfig3', False)
         self.assertEqual(archer_config.sys_config['boolconfig3'], False)
+
     def test_get_other_data(self):
-        new_config = json.dumps([{'key':'other_config','value':'testvalue'}])
+        new_config = json.dumps([{'key': 'other_config', 'value': 'testvalue'}])
         archer_config = SysConfig()
         archer_config.replace(new_config)
         self.assertEqual(archer_config.sys_config['other_config'], 'testvalue')
+
     def test_set_other_data(self):
         archer_config = SysConfig()
-        archer_config.set('other_config','testvalue3')
+        archer_config.set('other_config', 'testvalue3')
         self.assertEqual(archer_config.sys_config['other_config'], 'testvalue3')
 
 
@@ -100,7 +113,7 @@ class SendMessageTest(TestCase):
     @patch.object(smtplib.SMTP, 'login')
     @patch.object(smtplib.SMTP, 'sendmail')
     @patch.object(smtplib.SMTP, 'quit')
-    def testSendMail(self,_quit, sendmail, login, _):
+    def testSendMail(self, _quit, sendmail, login, _):
         """有密码测试"""
         some_sub = 'test_subject'
         some_body = 'mail_body'
@@ -192,6 +205,7 @@ class GlobalInfoTest(TestCase):
 
     def tearDown(self):
         self.u1.delete()
+
 
 class CheckTest(TestCase):
     """检查功能测试"""
@@ -293,50 +307,68 @@ class CheckTest(TestCase):
         mailsender.assert_called_once_with(server=smtp_server, port=int(smtp_port), user=smtp_user,
                                            password=smtp_pass, ssl=False)
         send_email.called_once_with('Archery 邮件发送测试', 'Archery 邮件发送测试...',
-                                                           [self.superuser1.email])
+                                    [self.superuser1.email])
         self.assertEqual(r_json['status'], 0)
         self.assertEqual(r_json['msg'], 'ok')
 
     @patch('MySQLdb.connect')
-    def testInstanceCheck(self, connect):
-        cur = MagicMock()
-        cur.return_value.execute = MagicMock()
-        cur.return_value.close = MagicMock()
-        connect.return_value.cursor = cur
-        connect.return_value.close = MagicMock()
-
+    @patch('common.check.get_engine', return_value=EngineBase)
+    def testInstanceCheck(self, _get_engine, _conn):
+        _get_engine.return_value.get_connection = _conn
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
         r_json = r.json()
         self.assertEqual(r_json['status'], 0)
-        connect.assert_called_once_with(host=self.slave1.host, port=self.slave1.port,
-                                        user=self.slave1.user, passwd=self.slave1.raw_password, charset=ANY)
-        cur.assert_called_once()
-        cur.return_value.execute.assert_called_once()
-        cur.return_value.close.assert_called_once()
-        connect.return_value.close.assert_called_once()
 
-        # exception
-        cur.return_value.execute.side_effect = NameError('some error')
-        r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
+    @patch('pymysql.connect')
+    def test_inception_check(self, _conn):
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {
+            "inception_host": "inception",
+            "inception_port": "6669",
+            "inception_remote_backup_host": "mysql",
+            "inception_remote_backup_port": 3306,
+            "inception_remote_backup_user": "mysql",
+            "inception_remote_backup_password": "123456"
+        }
+        r = c.post('/check/inception/', data=data)
         r_json = r.json()
-        self.assertEqual(r_json['status'], 1)
-        self.assertIn('无法连接实例', r_json['msg'])
-        self.assertIn('some error', r_json['msg'])
+        self.assertEqual(r_json['status'], 0)
+
+    @patch('pymysql.connect')
+    def test_go_inception_check(self, _conn):
+        c = Client()
+        c.force_login(self.superuser1)
+        data = {
+            "go_inception_host": "inception",
+            "go_inception_port": "6669",
+            "inception_remote_backup_host": "mysql",
+            "inception_remote_backup_port": 3306,
+            "inception_remote_backup_user": "mysql",
+            "inception_remote_backup_password": "123456"
+        }
+        r = c.post('/check/go_inception/', data=data)
+        r_json = r.json()
+        self.assertEqual(r_json['status'], 0)
 
 
 class ChartTest(TestCase):
     """报表测试"""
+
     @classmethod
     def setUpClass(cls):
-        cls.u1 = User(username='some_user',display='用户1')
+        cls.u1 = User(username='some_user', display='用户1')
         cls.u1.save()
         cls.u2 = User(username='some_other_user', display='用户2')
         cls.u2.save()
         cls.superuser1 = User(username='super1', is_superuser=True)
         cls.superuser1.save()
         cls.now = datetime.datetime.now()
+        cls.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
+                              host='testhost', port=3306, user='mysql_user', password='mysql_password')
+        cls.slave1.save()
         # 批量创建数据 ddl ,u1 ,g1, yesterday 组, 2 个数据
         ddl_workflow = [SqlWorkflow(
             workflow_name='ddl %s' % i,
@@ -346,12 +378,11 @@ class ChartTest(TestCase):
             engineer_display=cls.u1.display,
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=1),
-            status = '已正常结束',
-            is_backup = '是',
-            instance_name='some_instance',
+            status='workflow_finish',
+            is_backup=True,
+            instance=cls.slave1,
             db_name='some_db',
-            sql_content='some_sql',
-            sql_syntax=1
+            syntax_type=1
         ) for i in range(2)]
         # 批量创建数据 dml ,u1 ,g2, the day before yesterday 组, 3 个数据
         dml_workflow = [SqlWorkflow(
@@ -362,18 +393,38 @@ class ChartTest(TestCase):
             engineer_display=cls.u2.display,
             audit_auth_groups='some_group',
             create_time=cls.now - datetime.timedelta(days=2),
-            status='已正常结束',
-            is_backup='是',
-            instance_name='some_instance',
+            status='workflow_finish',
+            is_backup=True,
+            instance=cls.slave1,
             db_name='some_db',
-            sql_content='some_sql',
-            sql_syntax=2
+            syntax_type=2
         ) for i in range(3)]
         SqlWorkflow.objects.bulk_create(ddl_workflow + dml_workflow)
-#query_logs = [QueryLog(
-#    instance_name = 'some_instance',
-#
-#) for i in range(20)]
+        # 保存内容数据
+        ddl_workflow_content = [SqlWorkflowContent(
+            workflow=SqlWorkflow.objects.get(workflow_name='ddl %s' % i),
+            sql_content='some_sql',
+        ) for i in range(2)]
+        dml_workflow_content = [SqlWorkflowContent(
+            workflow=SqlWorkflow.objects.get(workflow_name='Test %s' % i),
+            sql_content='some_sql',
+        ) for i in range(3)]
+        SqlWorkflowContent.objects.bulk_create(ddl_workflow_content + dml_workflow_content)
+
+    # query_logs = [QueryLog(
+    #    instance_name = 'some_instance',
+    #
+    # ) for i in range(20)]
+
+    @classmethod
+    def tearDownClass(cls):
+        SqlWorkflowContent.objects.all().delete()
+        SqlWorkflow.objects.all().delete()
+        QueryLog.objects.all().delete()
+        cls.u1.delete()
+        cls.u2.delete()
+        cls.superuser1.delete()
+        cls.slave1.delete()
 
     def testGetDateList(self):
         dao = ChartDao()
@@ -387,15 +438,15 @@ class ChartTest(TestCase):
     def testSyntaxList(self):
         """工单以语法类型分组"""
         dao = ChartDao()
-        expected_rows = (('DDL',2), ('DML',3))
-        result = dao.sql_syntax()
+        expected_rows = (('DDL', 2), ('DML', 3))
+        result = dao.syntax_type()
         self.assertEqual(result['rows'], expected_rows)
 
     def testWorkflowByDate(self):
         """TODO 按日分组工单数量统计测试"""
         dao = ChartDao()
         result = dao.workflow_by_date(30)
-        self.assertEqual(len(result['rows'][0]),2)
+        self.assertEqual(len(result['rows'][0]), 2)
 
     def testWorkflowByGroup(self):
         """按组统计测试"""
@@ -408,7 +459,7 @@ class ChartTest(TestCase):
         """按用户统计测试"""
         dao = ChartDao()
         result = dao.workflow_by_user(30)
-        expected_rows = ((self.u2.display, 3),(self.u1.display, 2))
+        expected_rows = ((self.u2.display, 3), (self.u1.display, 2))
         self.assertEqual(result['rows'], expected_rows)
 
     def testDashboard(self):
@@ -420,14 +471,6 @@ class ChartTest(TestCase):
         r = c.get('/dashboard/')
         self.assertEqual(r.status_code, 200)
 
-    @classmethod
-    def tearDownClass(cls):
-        SqlWorkflow.objects.all().delete()
-        QueryLog.objects.all().delete()
-        cls.u1.delete()
-        cls.u2.delete()
-        cls.superuser1.delete()
-
 
 class AuthTest(TestCase):
 
@@ -436,9 +479,19 @@ class AuthTest(TestCase):
         self.password = 'some_pass'
         self.u1 = User(username=self.username, password=self.password, display='用户1')
         self.u1.save()
+        self.resource_group1 = ResourceGroup.objects.create(group_name='some_group')
+        sys_config = SysConfig()
+        sys_config.set('default_resource_group', self.resource_group1.group_name)
 
     def tearDown(self):
         self.u1.delete()
+        self.resource_group1.delete()
+        SysConfig().purge()
 
-    def testChallenge(self):
-        pass
+    def test_init_user(self):
+        """用户初始化测试测试"""
+        init_user(self.u1)
+        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
+        init_user(self.u1)
+        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))

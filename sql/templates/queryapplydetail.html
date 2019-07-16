@@ -29,6 +29,9 @@
                 权限级别
             </th>
             <th>
+                数据库
+            </th>
+            <th>
                 结果集
             </th>
             <th>
@@ -57,14 +60,13 @@
                 {{ current_audit_auth_group }}
             </td>
             <td>
-                {{ workflow_detail.instance_name }}
+                {{ workflow_detail.instance.instance_name }}
             </td>
             <td>
-                {% if workflow_detail.priv_type == 1 %}
-                    DATABASE
-                {% elif workflow_detail.priv_type == 2 %}
-                    TABLE
-                {% endif %}
+                {{ workflow_detail.get_priv_type_display }}
+            </td>
+            <td>
+                {{ workflow_detail.db_list| slice:"124" }}
             </td>
             <td>
                 {{ workflow_detail.limit_num }}
@@ -109,7 +111,26 @@
             {% endif %}
         </div>
     </div>
-    <br>
+    <!--最后操作信息-->
+    {% if last_operation_info %}
+        <table data-toggle="table" class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>
+                    操作信息
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    {{ last_operation_info }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <br>
+    {% endif %}
     {% if workflow_detail.status == 0 %}
         {% if is_can_review %}
             <textarea id="remark" name="remark" class="form-control" data-name="审核备注"
@@ -154,8 +175,7 @@
                     $(this).dequeue();
                 });
                 formCancel.submit();
-            }
-            else {
+            } else {
                 alert('请填写审核备注')
             }
         })

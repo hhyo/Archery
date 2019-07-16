@@ -28,14 +28,14 @@ def slowquery_review(request):
     end_time = '%sZ' % end_time
 
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = Aliyun().DescribeSlowLogs(instance_info.rds_dbinstanceid, start_time, end_time, **values)
 
     # 解决table数据丢失精度、格式化时间
     sql_slow_log = json.loads(slowsql)['Items']['SQLSlowLog']
     for SlowLog in sql_slow_log:
-        SlowLog['SQLId'] = str(SlowLog['SQLId'])
+        SlowLog['SQLId'] = str(SlowLog['SQLHASH'])
         SlowLog['CreateTime'] = Aliyun.aliyun_time_format(SlowLog['CreateTime'])
 
     result = {"total": json.loads(slowsql)['TotalRecordCount'], "rows": sql_slow_log,
@@ -59,7 +59,7 @@ def slowquery_review_history(request):
     values = {"PageSize": int(limit), "PageNumber": int(page_number)}
     # SQLId、DBName非必传
     if sql_id:
-        values['SQLId'] = sql_id
+        values['SQLHASH'] = sql_id
     if db_name:
         values['DBName'] = db_name
 
@@ -69,7 +69,7 @@ def slowquery_review_history(request):
     end_time = '%sT15:59Z' % end_time
 
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取SQL慢日志统计
     slowsql = Aliyun().DescribeSlowLogRecords(instance_info.rds_dbinstanceid, start_time, end_time, **values)
 
@@ -96,7 +96,7 @@ def process_status(request):
         command_type = 'Query'
 
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
     process_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'ShowProcessList',
                                                      {"Language": "zh", "Command": command_type})
@@ -105,7 +105,7 @@ def process_status(request):
     process_list = json.loads(process_info)['AttrData']
     process_list = json.loads(process_list)['ProcessList']
 
-    result = {'status': 0, 'msg': 'ok', 'data': process_list}
+    result = {'status': 0, 'msg': 'ok', 'rows': process_list}
 
     # 返回查询结果
     return result
@@ -118,7 +118,7 @@ def create_kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
     request_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'CreateKillSessionRequest',
                                                      {"Language": "zh", "ThreadIDs": json.loads(thread_ids)})
@@ -139,7 +139,7 @@ def kill_session(request):
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取终止进程
     request_params = json.loads(request_params)
     service_request_param = dict({"Language": "zh"}, **request_params)
@@ -160,7 +160,7 @@ def sapce_status(request):
     instance_name = request.POST.get('instance_name')
 
     # 通过实例名称获取关联的rds实例id
-    instance_info = AliyunRdsConfig.objects.get(instance_name=instance_name)
+    instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
     space_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'GetSpaceStatForTables',
                                                    {"Language": "zh", "OrderType": "Data"})
@@ -172,7 +172,7 @@ def sapce_status(request):
     else:
         space_list = []
 
-    result = {'status': 0, 'msg': 'ok', 'data': space_list}
+    result = {'status': 0, 'msg': 'ok', 'rows': space_list}
 
     # 返回查询结果
     return result

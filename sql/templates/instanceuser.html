@@ -12,7 +12,6 @@
     {% load staticfiles %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
         //获取列表
         function userlist() {
@@ -59,7 +58,7 @@
                     },
                 columns: [
                     {
-                        title: 'user',
+                        title: 'User@Host',
                         field: 'user'
                     }, {
                         title: 'privileges',

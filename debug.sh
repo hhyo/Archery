@@ -1,5 +1,6 @@
 #!/bin/bash
 
-python3 manage.py runserver 0.0.0.0:9123  --insecure
+nohup python3 manage.py runserver 0.0.0.0:9123  --insecure &
 
-python3 manage.py qcluster
+# 启动Django Q cluster
+nohup python3 manage.py qcluster &

@@ -13,9 +13,6 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 title="请选择源实例:"
                                 data-placeholder="请选择实例:" required>
-                            {% for instance in instances %}
-                                <option value="{{ instance }}">{{ instance }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -30,9 +27,6 @@
                                 class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
                                 title="请选择目标实例:"
                                 data-placeholder="请选择目标实例:" required>
-                            {% for instance in instances %}
-                                <option value="{{ instance }}">{{ instance }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -74,8 +68,7 @@
                 </div>
                 <div class="panel-body">
                     <h5 class="control-label text-bold" style="color: red">
-                        <b>页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录，<a
-                                href="https://github.com/hhyo/SchemaSync">项目地址</a></b></h5>
+                        <b>页面仅展示单库对比结果，生成的SQL文件会保存到项目downloads目录</b></h5>
                     <br>
                     <div id="schemadiff-result" style="display:none;" class="row clearfix">
                         <div id="schemadiff-result-col" class="col-md-12"></div>
@@ -89,15 +82,51 @@
     {% load staticfiles %}
     <!-- 选择同步数据 -->
     <script>
+        //获取用户实例列表
+        $(function () {
+            $.ajax({
+                type: "get",
+                url: "/group/user_all_instances/",
+                dataType: "json",
+                data: {
+                    db_type: ['mysql']
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data['data'];
+                        $("#instance_name").empty();
+                        $("#target_instance_name").empty();
+                        for (let i = 0; i < result.length; i++) {
+                            let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                            $("#instance_name").append(instance);
+                            $("#target_instance_name").append(instance);
+                        }
+                        $('#instance_name').selectpicker('render');
+                        $('#instance_name').selectpicker('refresh');
+                        $('#target_instance_name').selectpicker('render');
+                        $('#target_instance_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
         //获取源数据库名称
         $("#instance_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name option:selected").text()
+                    instance_name: $("#instance_name option:selected").text(),
+                    resource_type: "database"
                 },
                 complete: function () {
                 },
@@ -110,7 +139,6 @@
                             $("#db_name").append(name);
                         }
                         $("#db_name").prepend("<option value=\"all\">全部</option>");
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择源数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -128,10 +156,11 @@
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#target_instance_name option:selected").text()
+                    instance_name: $("#target_instance_name option:selected").text(),
+                    resource_type: "database"
                 },
                 complete: function () {
                 },
@@ -144,7 +173,6 @@
                             $("#target_db_name").append(name);
                         }
                         $("#target_db_name").prepend("<option value=\"all\">全部</option>");
-                        $("#target_db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择目标数据库:</option>");
                         $('#target_db_name').selectpicker('render');
                         $('#target_db_name').selectpicker('refresh');
                     } else {
@@ -220,15 +248,14 @@
                             //填充内容后展现出来
                             $("#schemadiff-result").show();
                         } else {
-                            alert("status: " + data.status + "\nmsg: " + data.data);
+                            alert(data.msg);
                         }
                     },
                     error: function (XMLHttpRequest, textStatus, errorThrown) {
                         alert(errorThrown);
                     }
                 });
-            }
-            else {
+            } else {
                 alert('请选择完整！')
             }
         }

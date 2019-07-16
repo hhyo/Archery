@@ -2,17 +2,35 @@
 
 {% block content %}
     <!-- 自定义操作按钮-->
-    <div id="toolbar" class="form-inline">
-        <div class="form-group bootstrap-select ">
-            <select id="type" class="dropdown-menu-right selectpicker ">
-                <option value="" selected="selected">全部</option>
+    <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group">
+            <select id="type" class="form-control selectpicker">
+                <option value="" selected="selected">实例类型</option>
                 <option value="master">MASTER</option>
                 <option value="slave">SLAVE</option>
             </select>
         </div>
+        <div class="form-group">
+            <select id="db_type" class="form-control selectpicker">
+                <option value="" selected="selected">数据库类型</option>
+                <option value="mysql">MySQL</option>
+                <option value="mssql">MsSQL</option>
+                <option value="redis">Redis</option>
+                <option value="pgsql">PgSQL</option>
+                <option value="oracle">Oracle</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <select id="tags" class="form-control selectpicker" data-live-search="true"
+                    multiple data-selected-text-format="count > 2" data-none-selected-text="标签筛选">
+                {% for tag in tags %}
+                    <option value="{{ tag.id }}">{{ tag.tag_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <div class="form-group ">
             <button id="btn_add_master" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/instance/add/'">
+                    onclick="window.open('/admin/sql/instance/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 添加实例
             </button>
@@ -24,12 +42,38 @@
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
+    <!-- 删除Binlog日志的模态框-->
+    <div class="modal fade" id="deleteBinlog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">清理Binlog日志</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="delete_instance_name" name="instance_name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <select id="binlog" name="binlog" data-live-search="true"
+                                class="form-control selectpicker show-tick bs-select-hidden ">
+                        </select>
+                    </div>
+                    <p class="text-danger">提示：该binlog前的所有binlog都会被删除！</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="cleanLogBtn">清理</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 {% block js %}
     {% load staticfiles %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
     <script>
         //获取列表
         function instancelist() {
@@ -73,7 +117,9 @@
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search,
-                            type: $("#type").val()
+                            type: $("#type").val(),
+                            db_type: $("#db_type").val(),
+                            tags: $("#tags").val(),
                         }
                     },
                 columns: [
@@ -84,7 +130,7 @@
                         title: '实例名称',
                         field: 'instance_name',
                         formatter: function (value, row, index) {
-                            return "<a href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
+                            return "<a target=\"_blank\" href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
                     }, {
                         title: '实例类型',
@@ -105,8 +151,14 @@
                         title: '操作',
                         field: '',
                         formatter: function (value, row, index) {
-                            return "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户管理</button>\n" +
-                                "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n"
+                            var btn_del_binLog = '';
+                            var btn_user_manger = '';
+                            if (row.db_type === 'mysql') {
+                                btn_user_manger = "<button class=\"btn btn-info btn-xs\" onclick=\"window.open('/instanceuser/" + row.id + "\')\">用户</button>\n";
+                                btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
+                            }
+                            var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n";
+                            return btn_user_manger + btn_del_binLog + btn_test
                         }
                     }],
                 onLoadSuccess: function () {
@@ -146,8 +198,68 @@
             });
         }
 
+        //删除binlog
+        function del_binLog(obj) {
+            $("#delete_instance_name").val($(obj).attr("instance_name"));
+            $("#binlog option").remove();
+            $.ajax({
+                type: "post",
+                url: "/binlog/list/",
+                dataType: "json",
+                data: {
+                    'instance_name': $(obj).attr("instance_name")
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        for (var i = 0; i < result.length; i++) {
+                            var _html = "<option value='" + result[i]['Log_name'] + "'>" + result[i]['Log_name'] + " Size:" + result[i]['File_size'] + "</option>";
+                            $("#binlog").append(_html);
+                        }
+                        $("#binlog").prepend('<option value="is-empty" disabled="" selected="selected">请选择Binlog:</option>');
+                        $('#binlog').selectpicker('render');
+                        $('#binlog').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                }
+            });
+            $("#deleteBinlog").modal('show');
+            $("#cleanLogBtn").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/binlog/del_log/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $(obj).attr("instance_id"),
+                        binlog: $("#binlog").val()
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        alert(data.msg);
+                        window.location.reload(true);
+
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                })
+            });
+        }
+
         //筛选变动自动刷新
         $("#type").change(function () {
+            instancelist();
+        });
+
+        $("#db_type").change(function () {
+            instancelist();
+        });
+
+        $("#tags").change(function () {
             instancelist();
         });
 

@@ -1,33 +1,33 @@
 # -*- coding: UTF-8 -*-
 import logging
 import traceback
+from itertools import chain
 
 import simplejson as json
 from django.contrib.auth.models import Group
-from django.db.models import F
+from django.db.models import F, Value, IntegerField
 from django.http import HttpResponse
-
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
-from sql.models import ResourceGroup, ResourceGroupRelations, Users, Instance
+from sql.models import ResourceGroup, ResourceGroup2Instance, ResourceGroup2User, Users, Instance, InstanceTag
+from sql.utils.resource_group import user_instances
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
 
 
-# 获取资源组列表
 @superuser_required
 def group(request):
+    """获取资源组列表"""
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
     search = request.POST.get('search', '')
 
-    # 全部工单里面包含搜索条件
-    group_list = ResourceGroup.objects.filter(group_name__contains=search)[offset:limit].values("group_id",
-                                                                                                "group_name",
-                                                                                                "ding_webhook")
-    group_count = ResourceGroup.objects.filter(group_name__contains=search).count()
+    # 过滤搜索条件
+    group_obj = ResourceGroup.objects.filter(group_name__icontains=search)
+    group_count = group_obj.count()
+    group_list = group_obj[offset:limit].values("group_id", "group_name", "ding_webhook")
 
     # QuerySet 序列化
     rows = [row for row in group_list]
@@ -38,9 +38,9 @@ def group(request):
                         content_type='application/json')
 
 
-# 获取资源组已关联对象信息
 def associated_objects(request):
     """
+    获取资源组已关联对象信息
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
@@ -48,87 +48,131 @@ def associated_objects(request):
     limit = int(request.POST.get('limit'))
     offset = int(request.POST.get('offset'))
     limit = offset + limit
-    search = request.POST.get('search', '')
-
-    if object_type:
-        rows = ResourceGroupRelations.objects.filter(group_id=group_id, object_type=object_type,
-                                                     object_name__contains=search)[
-               offset:limit].values('id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type',
-                                    'create_time')
-        count = ResourceGroupRelations.objects.filter(group_id=group_id, object_type=object_type,
-                                                      object_name__contains=search).count()
+    search = request.POST.get('search')
+    rows_users = ResourceGroup2User.objects.filter(resource_group__group_id=group_id)
+    rows_instances = ResourceGroup2Instance.objects.filter(resource_group__group_id=group_id)
+    # 过滤搜索
+    if search:
+        rows_users = rows_users.filter(user__display__contains=search)
+        rows_instances = rows_instances.filter(instance__instance_name=search)
+    rows_users = rows_users.annotate(
+        object_id=F('user_id'),
+        object_type=Value(0, output_field=IntegerField()),
+        object_name=F('user__display'),
+        group_id=F('resource_group__group_id'),
+        group_name=F('resource_group__group_name')
+    ).values(
+        'id',
+        'object_type', 'object_id', 'object_name',
+        'group_id', 'group_name', 'create_time')
+    rows_instances = rows_instances.annotate(
+        object_id=F('instance_id'),
+        object_type=Value(1, output_field=IntegerField()),
+        object_name=F('instance__instance_name'),
+        group_id=F('resource_group__group_id'),
+        group_name=F('resource_group__group_name')
+    ).values(
+        'id',
+        'object_type', 'object_id', 'object_name',
+        'group_id', 'group_name', 'create_time')
+    # 过滤对象类型
+    if object_type == '0':
+        rows_obj = rows_users
+        count = rows_obj.count()
+        rows = [row for row in rows_obj][offset:limit]
+    elif object_type == '1':
+        rows_obj = rows_instances
+        count = rows_obj.count()
+        rows = [row for row in rows_obj][offset:limit]
     else:
-        rows = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search)[
-               offset:limit].values(
-            'id', 'object_id', 'object_name', 'group_id', 'group_name', 'object_type', 'create_time')
-        count = ResourceGroupRelations.objects.filter(group_id=group_id, object_name__contains=search).count()
-    rows = [row for row in rows]
+        rows = list(chain(rows_users, rows_instances))
+        count = len(rows)
+        rows = rows[offset:limit]
     result = {'status': 0, 'msg': 'ok', "total": count, "rows": rows}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder), content_type='application/json')
 
 
-# 获取资源组未关联对象信息
 def unassociated_objects(request):
     """
+    获取资源组未关联对象信息
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
     object_type = int(request.POST.get('object_type'))
-
-    associated_object_ids = [object_id['object_id'] for object_id in
-                             ResourceGroupRelations.objects.filter(group_id=group_id,
-                                                                   object_type=object_type).values('object_id')]
-
     if object_type == 0:
-        rows = Users.objects.exclude(pk__in=associated_object_ids).annotate(object_id=F('pk'),
-                                                                            object_name=F('display')
-                                                                            ).values('object_id', 'object_name')
+        associated_user_ids = [user['user_id'] for user in
+                               ResourceGroup2User.objects.filter(
+                                   resource_group_id=group_id).values('user_id')]
+        rows = Users.objects.exclude(pk__in=associated_user_ids).annotate(
+            object_id=F('pk'), object_name=F('display')).values('object_id', 'object_name')
     elif object_type == 1:
-        rows = Instance.objects.exclude(pk__in=associated_object_ids).annotate(object_id=F('pk'),
-                                                                               object_name=F('instance_name')
-                                                                               ).values('object_id', 'object_name')
+        associated_instance_ids = [ins['instance_id'] for ins in
+                                   ResourceGroup2Instance.objects.filter(
+                                       resource_group_id=group_id).values('instance_id')]
+        rows = Instance.objects.exclude(pk__in=associated_instance_ids).annotate(
+            object_id=F('pk'), object_name=F('instance_name')
+        ).values('object_id', 'object_name')
     else:
-        rows = []
+        raise ValueError('关联对象类型不正确')
 
     rows = [row for row in rows]
-
     result = {'status': 0, 'msg': 'ok', "rows": rows, "total": len(rows)}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取资源组关联实例列表
 def instances(request):
+    """获取资源组关联实例列表"""
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
-    type = request.POST.get('type')
-    # 先获取资源组关联所有实例列表
-    instance_ids = [group['object_id'] for group in
-                    ResourceGroupRelations.objects.filter(group_id=group_id, object_type=1).values('object_id')]
+    tag_code = request.POST.get('tag_code')
 
-    # 获取实例信息
-    instances_ob = Instance.objects.filter(pk__in=instance_ids, type=type).values('id', 'instance_name')
-    rows = [row for row in instances_ob]
+    # 先获取资源组关联所有实例列表
+    instances = ResourceGroup.objects.get(group_id=group_id).instances
+
+    # 过滤tag
+    if tag_code:
+        instances = instances.filter(instancetag__tag_code=tag_code,
+                                     instancetag__active=True,
+                                     instancetagrelations__active=True
+                                     ).values('id', 'type', 'db_type', 'instance_name')
+
+    rows = [row for row in instances]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 添加资源组关联对象
+def user_all_instances(request):
+    """获取用户所有实例列表（通过资源组间接关联）"""
+    user = request.user
+    type = request.GET.get('type')
+    db_type = request.GET.getlist('db_type[]')
+    tag_codes = request.GET.getlist('tag_codes[]')
+    instances = user_instances(user, type, db_type, tag_codes).values('id', 'type', 'db_type', 'instance_name')
+    rows = [row for row in instances]
+    result = {'status': 0, 'msg': 'ok', "data": rows}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
 @superuser_required
 def addrelation(request):
     """
+    添加资源组关联对象
     type：(0, '用户'), (1, '实例')
     """
     group_id = int(request.POST.get('group_id'))
     object_type = request.POST.get('object_type')
     object_list = json.loads(request.POST.get('object_info'))
-    group_name = ResourceGroup.objects.get(group_id=group_id).group_name
     try:
-        ResourceGroupRelations.objects.bulk_create(
-            [ResourceGroupRelations(object_id=int(object.split(',')[0]),
-                                    object_type=object_type,
-                                    object_name=object.split(',')[1],
-                                    group_id=group_id,
-                                    group_name=group_name) for object in object_list])
+        if object_type == '0':  # 用户
+            ResourceGroup2User.objects.bulk_create(
+                [ResourceGroup2User(
+                    user_id=int(obj.split(',')[0]), resource_group_id=group_id
+                ) for obj in object_list])
+        elif object_type == '1':  # 实例
+            ResourceGroup2Instance.objects.bulk_create(
+                [ResourceGroup2Instance(
+                    instance_id=int(obj.split(',')[0]), resource_group_id=group_id
+                ) for obj in object_list])
         result = {'status': 0, 'msg': 'ok'}
     except Exception as e:
         logger.error(traceback.format_exc())
@@ -136,8 +180,8 @@ def addrelation(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 获取资源组的审批流程
 def auditors(request):
+    """获取资源组的审批流程"""
     group_name = request.POST.get('group_name')
     workflow_type = request.POST['workflow_type']
     result = {'status': 0, 'msg': 'ok', 'data': {'auditors': '', 'auditors_display': ''}}
@@ -167,9 +211,9 @@ def auditors(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-# 资源组审批流程配置
 @superuser_required
 def changeauditors(request):
+    """设置资源组的审批流程"""
     auth_groups = request.POST.get('audit_auth_groups')
     group_name = request.POST.get('group_name')
     workflow_type = request.POST.get('workflow_type')

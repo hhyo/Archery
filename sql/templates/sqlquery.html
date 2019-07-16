@@ -2,77 +2,195 @@
 
 {% block content %}
     <div class="row clearfix">
-        <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
-            {% csrf_token %}
-            <div class="col-md-9 column">
-                <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL查询
+                </div>
+                <div class="panel-body">
+                    <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
+                        {% csrf_token %}
+                        <div class="col-md-9 column">
+                            <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
+                        </div>
+                        <div class="col-md-3 column">
+                            <div class="form-group">
+                                <select id="instance_name" name="instance_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-live-search="true"
+                                        title="请选择实例:"
+                                        data-placeholder="请选择实例:" required>
+                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="db_name" name="db_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true"
+                                        title="请选择数据库:"
+                                        data-placeholder="请选择数据库:" required>
+                                </select>
+                            </div>
+                            <div id="div-schema_name" class="form-group" style="display: none">
+                                <select id="schema_name" name="schema_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true"
+                                        title="请选择模式:"
+                                        data-placeholder="请选择模式:" required>
+                                </select>
+                            </div>
+                            <div id="div-table_name" class="form-group">
+                                <select id="table_name" name="table_name"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-live-search="true"
+                                        data-name="查看表结构"
+                                        title="查看表结构:"
+                                        data-placeholder="查看表结构:" required>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="limit_num" name="limit_num"
+                                        class="form-control selectpicker show-tick bs-select-hidden"
+                                        data-placeholder="返回行数:" required>
+                                    <option value="is-empty" disabled="">返回行数:</option>
+                                    <option value=100 selected="selected">100</option>
+                                    <option value=500>500</option>
+                                    <option value=1000>1000</option>
+                                    <option value=0>max(最大限制行数)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
+                                <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
+                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                            </div>
+                        </div>
+                        <div class="text-info">
+                            <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
+                            <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="col-md-3 column">
-                <div class="form-group">
-                    <select id="instance_name" name="instance_name"
-                            class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                            data-placeholder="请选择实例:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                        {% for instance_name in instances %}
-                            {% if instance_name != 'mycat' %}
-                                <option value="{{ instance_name }}">{{ instance_name }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    查询结果 <span style="color: red">
+                        <small id="seconds_behind_master"></small>
+                    </span>
                 </div>
-                <div class="form-group">
-                    <select id="db_name" name="db_name" class="form-control selectpicker show-tick bs-select-hidden"
-                            data-live-search="true" data-placeholder="请选择数据库:" required>
-                        <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="table_name" name="table_name"
-                            class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
-                            data-name="查看表结构" data-placeholder="查看表结构:" required>
-                        <option value="is-empty" disabled="" selected="selected">查看表结构:</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="limit_num" name="limit_num"
-                            class="form-control selectpicker show-tick bs-select-hidden"
-                            data-placeholder="返回行数:" required>
-                        <option value="is-empty" disabled="">返回行数:</option>
-                        <option value=100 selected="selected">100</option>
-                        <option value=500>500</option>
-                        <option value=1000>1000</option>
-                        <option value=0>max(最大限制行数)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
-                    <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                    <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                <div class="panel-body">
+                    <!-- Nav tabs -->
+                    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+                        <li class="active" id="sqllog_tab">
+                            <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
+                        </li>
+                        <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
+                            <span class="glyphicon glyphicon-minus"></span>
+                        </button>
+                        <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
+                            <span class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div id="tab-content" class="form-group tab-content">
+                        <div id="redis_help" role="tabpanel"
+                             class="form-group tab-pane fade in table-responsive">
+                            <div class="col-sm-12">
+                                <div class="radio i-checks">
+                                    <label> <input type="radio" value="key" name="operate" checked
+                                                   onclick="show(this)"> <i> Key操作 </i></label>
+                                    <label> <input type="radio" value="string" name="operate"
+                                                   onclick="show(this)"> <i> String </i></label>
+                                    <label> <input type="radio" value="hash" name="operate"
+                                                   onclick="show(this)"> <i> Hash </i></label>
+                                    <label> <input type="radio" value="set" name="operate"
+                                                   onclick="show(this)"> <i> Set </i></label>
+                                </div>
+
+                                <div id="keyHelp" class="alert alert-info" style="display: block">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、exists key　检查key是否存在，若key存在返回1，否则返回0</i></br>
+                                    <i> 2、keys pattern 查找所有符合给定模式的key，通常用于查找key</i></br>
+                                    <i> 3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除</i></br>
+                                    <i> 4、ttl key 以秒为单位返回key的剩余生存时间（time to
+                                        live），当key不存在时返回-2，当key存在未设置生存时间时返回-1</i></br>
+                                    <i> 5、pttl key 这个命令和ttl类似，它以毫秒为单位返回key的剩余生存时间</i></br>
+                                    <i> 6、move key db 将key移动到指定数据库中</i></br>
+                                    <i> 7、type key
+                                        返回key存储的值的类型，返回none（不存在）、string（字符串）、list（列表）、set（集合）、zset（有序集合）、hash（哈希表）</i>
+                                </div>
+
+                                <div id="stringHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误</i></br>
+                                    <i> 2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil</i></br>
+                                    <i> 3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误</i></br>
+                                    <i> 4、append key value 将指定的值追加到key末尾，若key不存在，则创建并赋值，返回追加后的字符串长度</i></br>
+                                    <i> 5、set key value [ex seconds] [px milliseconds] [nx|xx]
+                                        为key设置值,ex和px均为设置过期时间只不过单位不同，nx表示只有key不存在时才进行操作，xx表示只有key存在时才进行操作</i></br>
+                                    <i> 6、setex key seconds value 设置带生存时间的key的值，以秒为单位</i></br>
+                                    <i> 7、setnx key value 为key设置值，若key已存在则不进行任何操作</i></br>
+                                    <i> 8、mset key value [key value...]
+                                        为一组或多组key设置值，该操作为原子操作，要么一组都设置成功，要么一组都设置失败</i></br>
+                                    <i> 9、msetnx key value [key value...] 与mset不同的是msetnx中的key必须是不存在的，若有一个已存在则会整体失败</i>
+                                </div>
+
+                                <div id="hashHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、hgetall key 获取hash表中所有field的值</i></br>
+                                    <i> 2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0</i></br>
+                                    <i> 3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil</i></br>
+                                    <i> 4、hmget key field[field...]
+                                        获取hash表中多个指定field的值，若key不存在返回空，若field不存在返回nil</i></br>
+                                    <i> 5、hkeys key 返回hash表中的所有field，若key不存在返回空</i></br>
+                                    <i> 6、hvals key 返回hash表中的所有val，若key不存在返回空</i></br>
+                                    <i> 7、hdel key field[field...] 删除hash表中指定field，若key或field不存在则会忽略</i></br>
+                                    <i> 8、hset key field value
+                                        将field-value设置到hash表中，若key不存在会新建hash表再赋值，若field已存在则会覆盖现有值</i></br>
+                                    <i> 9、hsetnx key field value 和hset类似，但是hsetnx要求field不存在才能进行此操作，否则会返回0</i>
+                                </div>
+
+                                <div id="setHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                                    <i> 2、scard key 返回集合key中元素的个数</i></br>
+                                    <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
+                                    <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
+                                    <i> 5、spop key 移除并返回集合中的一个随机元素，当key不存在时返回NULL</i></br>
+                                    <i> 6、sismember key member 判断member在key中是否已存在返回0或1</i></br>
+                                    <i> 7、sadd key member[member...] 将一个或多个member元素加入到集合key中，若member已存在那么会忽略此元素</i></br>
+                                    <i> 8、smove source destination member
+                                        将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作</i></br>
+                                    <i> 9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略</i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="sql_log_result" role="tabpanel"
+                             class="form-group tab-pane fade in active table-responsive">
+                            <table id="sql-log" data-toggle="table" class="form-group table table-condensed"
+                                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="text-info">
-                <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
-            </div>
-        </form>
-    </div>
-    <br>
-    <!-- Nav tabs -->
-    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
-        <li class="active" id="sqllog_tab">
-            <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
-        </li>
-        <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
-            <span class="glyphicon glyphicon-minus"></span>
-        </button>
-        <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
-            <span class="glyphicon glyphicon-plus"></span>
-        </button>
-    </ul>
-    <!-- Tab panes -->
-    <div id="tab-content" class="tab-content">
-        <div id="sql_log_result" role="tabpanel" class="tab-pane fade in active table-responsive">
-            <table id="sql-log" data-toggle="table" class="table table-condensed"></table>
         </div>
     </div>
 {% endblock content %}
@@ -81,13 +199,17 @@
     {% load staticfiles %}
     <script src="{% static 'ace/ace.js' %}"></script>
     <script src="{% static 'ace/ext-language_tools.js' %}"></script>
-    <script src="{% static 'ace/mode-sql.js' %}"></script>
+    <script src="{% static 'ace/mode-mysql.js' %}"></script>
     <script src="{% static 'ace/theme-github.js' %}"></script>
-    <script src="{% static 'ace/snippets/sql.js' %}"></script>
-    <script src="{% static 'ace/ace_init.js' %}"></script>
+    <script src="{% static 'ace/snippets/mysql.js' %}"></script>
+    <script src="{% static 'ace/ace-init.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <script src="{% static 'dist/js/sql-formatter.min.js' %}"></script>
+    <link rel="stylesheet" href="/static/toastr/toastr.min.css" type="text/css">
+    <script type="text/javascript" src="/static/toastr/toastr.min.js"></script>
+
     <!-- 查询历史  -->
     <script>
         //获取查询列表
@@ -109,9 +231,10 @@
                 pageSize: 14,                       //每页的记录行数（*）
                 pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
+                exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                 exportOptions: {
                     ignoreColumn: [0],  //忽略某些列的索引数组
-                    fileName: 'sqllog'  //文件名称设置
+                    fileName: 'query_log'  //文件名称设置
                 },
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -140,12 +263,12 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            var sql = window.sqlFormatter.format(value);
+                            var sql = value;
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
                             //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
+                            sql = sql.replace(/\s/g, " ");
                             html.push('<span>' + sql + '</span>');
                         }
                     });
@@ -170,11 +293,14 @@
                         if (value.length > 50) {
                             var sql = value.substr(0, 50) + '...';
                             return sql;
-                        }
-                        else {
+                        } else {
                             return value
                         }
                     }
+                }, {
+                    title: '完整sql语句',
+                    field: 'sqllog',
+                    visible: false // 默认不显示
                 }, {
                     title: '返回行数',
                     field: 'effect_row'
@@ -200,8 +326,26 @@
     </script>
     <!-- 执行结果  -->
     <script>
+        // 添加redis帮助页
+        function redis_help_tab_add() {
+
+            //增加执行结果tab页
+            var li = document.createElement("li"); //创建li
+            li.setAttribute("id", "redis_help_tab");
+            li.setAttribute("role", "presentation");
+
+            var href_a = document.createElement("a"); //创建li中的链接a
+            href_a.setAttribute("href", "#redis_help");
+            href_a.setAttribute("role", "tab");
+            href_a.setAttribute("data-toggle", "tab");
+            href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
+            li.appendChild(href_a);//将a添加到li
+            $("#nav-tabs").prepend(li);//li添加到ul
+            $("#nav-tabs a:first").tab('show')
+        }
+
         //添加执行结果页面
-        function tab_add() {
+        function tab_add(tab_title) {
             var tab_number = sessionStorage.getItem('tab_num');
 
             //增加执行结果tab页
@@ -213,7 +357,12 @@
             href_a.setAttribute("href", "#sqlquery_result" + (Number(tab_number) + 1));
             href_a.setAttribute("role", "tab");
             href_a.setAttribute("data-toggle", "tab");
-            href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+            if (tab_title) {
+                href_a.innerHTML = tab_title; //链接显示文本（相当于标签标题）
+            } else {
+                href_a.innerHTML = "执行结果" + (Number(tab_number) + 1); //链接显示文本（相当于标签标题）
+
+            }
             li.appendChild(href_a);//将a添加到li
             $("#nav-tabs").append(li);//li添加到ul
 
@@ -268,26 +417,21 @@
         //表单验证
         function sqlquery_validate() {
             var result = true;
-            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
-            if (select_sqlContent) {
-                var sqlContent = select_sqlContent
-            }
-            else {
-                var sqlContent = editor.getValue();
-
-            }
-
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
-
-            if (sqlContent === null || sqlContent.trim() === "") {
-                alert("SQL内容不能为空！");
-                return result = false;
-            } else if (instance_name === null || instance_name === $("#instance_name").attr("data-placeholder")) {
+            var sqlContent = editor.getValue();
+            var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+            if (select_sqlContent) {
+                sqlContent = select_sqlContent
+            }
+            if (!instance_name) {
                 alert("请选择实例！");
                 return result = false;
-            } else if (db_name === null || db_name === $("#db_name").attr("data-placeholder")) {
+            } else if (!db_name) {
                 alert("请选择数据库！");
+                return result = false;
+            } else if (!sqlContent) {
+                alert("SQL内容不能为空！");
                 return result = false;
             }
             return result;
@@ -318,8 +462,7 @@
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
                     var sqlContent = select_sqlContent
-                }
-                else {
+                } else {
                     var sqlContent = editor.getValue();
 
                 }
@@ -329,44 +472,38 @@
             }
         );
 
+        // 展示数据
         function display_data(data) {
-            if (data.status === 0 || data.status === 2) {
-                //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
-                var active_li_id = sessionStorage.getItem('active_li_id');
+            var result = data.data;
+            //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
+            var active_li_id = sessionStorage.getItem('active_li_id');
+            var active_li_title = sessionStorage.getItem('active_li_title');
 
-                if (active_li_id.match(/^execute_result_tab*/)) {
-                    //查看表结构默认打开新窗口
+            if (data.status === 0) {
+                // 查看表结构默认新增tab，相同表结构获取不新增
+                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe) {
-                        tab_add();
-                        n = sessionStorage.getItem('tab_num');
+                        var tb_name = $("#table_name").val();
+                    } else {
+                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
-                    else {
-                        var n = active_li_id.split("execute_result_tab")[1];
+                    if (tb_name !== active_li_title) {
+                        tab_add(tb_name);
                     }
+                    n = sessionStorage.getItem('tab_num');
                 }
-                else {
+                // 执行结果页默认不新增
+                else if (active_li_title.match(/^执行结果\d$/)) {
+                    var n = active_li_id.split("execute_result_tab")[1];
+                } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
                 }
 
-                var result = data.data;
-                //查询报错失败或者inception检测报错
-                if (result['error']) {
-                    alertStyle = "alert-danger";
-                    $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                        escape: false,
-                        columns: [{
-                            field: 'error',
-                            title: 'Error'
-                        }],
-                        data: [{
-                            error: result['error']
-                        }]
-                    })
-                }
-                else if (result['column_list']) {
+                //显示查询结果
+                if (result['column_list']) {
                     //异步获取要动态生成的列
-                    var columns = []
+                    var columns = [];
                     $.each(result['column_list'], function (i, column) {
                         columns.push({
                             "field": i,
@@ -387,7 +524,7 @@
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
                                         //替换所有的空格
-                                        sql = sql.replace(/\s/g, "&nbsp;");
+                                        sql = sql.replace(/\s/g, " ");
                                         return sql;
 
                                     }
@@ -396,8 +533,7 @@
                                 locale: 'zh-CN'
                             }
                         );
-                    }
-                    else {
+                    } else {
                         //初始化查询结果
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
@@ -405,7 +541,7 @@
                             columns: columns,
                             showExport: true,
                             exportDataType: "all",
-                            //exportTypes: ['json', 'sql', 'csv', 'txt', 'xml'],
+                            exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
                                 fileName: 'export_result'  //文件名称设置
@@ -423,9 +559,30 @@
                     //执行时间和脱敏时间赋值
                     $("#" + ('time') + n).text(result['query_time'] + ' sec');
                     $("#" + ('masking_time') + n).text(result['mask_time'] + ' sec');
+                    //主从延迟赋值，仅在出现延迟时展示，null和0都不展示
+                    if (result['seconds_behind_master']) {
+                        $("#seconds_behind_master").text('Seconds_Behind_Master:  ' + result['seconds_behind_master']);
+                    }
                 }
+
             } else {
-                alert(data.msg);
+                //查询报错失败信息
+                if (active_li_title.match(/^执行结果\d$/)) {
+                    n = active_li_id.split("execute_result_tab")[1];
+                } else {
+                    tab_add();
+                    n = sessionStorage.getItem('tab_num');
+                }
+                $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                    escape: false,
+                    columns: [{
+                        field: 'error',
+                        title: 'Error'
+                    }],
+                    data: [{
+                        error: data.msg
+                    }]
+                })
             }
         }
 
@@ -434,8 +591,7 @@
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
-            }
-            else {
+            } else {
                 var sqlContent = editor.getValue();
 
             }
@@ -445,13 +601,8 @@
             }
             //查看表结构
             else if (sql === 'show create table') {
-                var table_name = $("#table_name").val();
-                sqlContent = "show create table " + table_name + ";"
+                sqlContent = "show create table " + $("#table_name").val() + ";"
             }
-            //处理SQL，去除注释、空行等
-            sqlContent = sqlContent.replace(/^--\s+.*|^#\s+.*/g, '');
-            sqlContent = sqlContent.replace(/[\r\n\f]{2,}/g, '\n');
-            sqlContent = sqlContent.trim();
             //提交请求
             $.ajax({
                 type: "post",
@@ -460,6 +611,7 @@
                 data: {
                     instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
                     tb_name: $("#table_name").val(),
                     sql_content: sqlContent,
                     limit_num: $("#limit_num").val()
@@ -481,14 +633,46 @@
     <script>
         // 实例变更获取数据库
         $("#instance_name").change(function () {
+            $("#db_name").empty();
+            $('#db_name').selectpicker('render');
+            $('#db_name').selectpicker('refresh');
+
+            // 控制按钮和选择器显示
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            if (optgroup === "Redis") {
+                $("#div-table_name").hide();
+                $("#btn-format").attr('disabled', true);
+                $("#btn-explain").attr('disabled', true);
+                redis_help_tab_add()
+            } else if (optgroup === "MySQL") {
+                $("#div-table_name").show();
+                $("#redis_help_tab").remove();
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', false);
+                $("#nav-tabs a:last").tab('show');
+            } else {
+                $("#div-table_name").show();
+                $("#redis_help_tab").remove();
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+                $("#nav-tabs a:last").tab('show');
+            }
+            // PgSQL需要选择模式再获取表
+            if (optgroup === "PgSQL") {
+                $("#div-schema_name").show()
+            } else {
+                $("#div-schema_name").hide()
+            }
+
             sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name").val()
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
                 },
                 complete: function () {
                 },
@@ -496,7 +680,6 @@
                     if (data.status === 0) {
                         var result = data.data;
                         var dbs = [];
-                        $("#db_name").empty();
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
@@ -508,7 +691,6 @@
                                 score: '100'
                             })
                         }
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
@@ -525,28 +707,92 @@
         });
 
 
-        //数据库变更获取表名称
+        //数据库变更获取表/模式名称
         $("#db_name").change(function () {
-            //将数据通过ajax提交给获取db_name
+            $("#table_name").empty();
+            $('#table_name').selectpicker('render');
+            $('#table_name').selectpicker('refresh');
+            $("#schema_name").empty();
+            $('#schema_name').selectpicker('render');
+            $('#schema_name').selectpicker('refresh');
+            // PgSQL需要选择模式再获取表
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            var resource_type = "table";
+            if (optgroup === "PgSQL") {
+                //获取schema
+                resource_type = "schema"
+            }
             $.ajax({
                 type: "post",
-                url: "/instance/getTableNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val()
+                    db_name: $("#db_name").val(),
+                    resource_type: resource_type
                 },
                 complete: function () {
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        $("#table_name").empty();
+                        if (resource_type === "table") {
+                            for (var i = 0; i < result.length; i++) {
+                                var name = "<option>" + result[i] + "</option>";
+                                $("#table_name").append(name);
+                            }
+                            $('#table_name').selectpicker('render');
+                            $('#table_name').selectpicker('refresh');
+                            //自动补全提示
+                            $("#schema_name").val('');
+                            setTablesCompleteData(result)
+                        } else {
+                            for (var i = 0; i < result.length; i++) {
+                                var name = "<option>" + result[i] + "</option>";
+                                $("#schema_name").append(name);
+                            }
+                            $('#schema_name').selectpicker('render');
+                            $('#schema_name').selectpicker('refresh');
+                            //自动补全提示
+                            setSchemasCompleteData(result)
+                        }
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        //模式变更获取表
+        $("#schema_name").change(function () {
+            $("#table_name").empty();
+            $('#table_name').selectpicker('render');
+            $('#table_name').selectpicker('refresh');
+            //获取table
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
+                    resource_type: "table"
+                },
+                complete: function () {
+                    $("#schema_name").attr('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option>" + result[i] + "</option>";
                             $("#table_name").append(name);
                         }
-                        $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看表结构:</option>");
                         $('#table_name').selectpicker('render');
                         $('#table_name').selectpicker('refresh');
                         //自动补全提示
@@ -570,6 +816,7 @@
                 data: {
                     instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val(),
+                    schema_name: $("#schema_name").val(),
                     tb_name: $("#table_name").val()
                 },
                 success: function (data) {
@@ -587,6 +834,8 @@
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 //当前激活的标签id
                 sessionStorage.setItem('active_li_id', $(e.target).parents().attr('id'));
+                //当前激活的标签标题
+                sessionStorage.setItem('active_li_title', e.target.innerText);
                 if ($(e.target).parents().attr('id') === 'sqllog_tab') {
                     get_querylog();
                 }
@@ -599,16 +848,94 @@
             sessionStorage.setItem('tab_num', 0);
             //设置当前激活的标签id
             sessionStorage.setItem('active_li_id', 'sqllog_tab');
+            sessionStorage.setItem('active_li_title', '查询历史');
             //默认获取查询历史
             get_querylog();
 
-            //填充实例名
-            $('#instance_name').selectpicker();
-            var myObject = {};
-            myObject.sql_query_instance_name = sessionStorage.getItem('sql_query_instance_name');
-            if (myObject.sql_query_instance_name) {
-                $("#instance_name").selectpicker('val', myObject.sql_query_instance_name).trigger("change");
-            }
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        tag_codes: ['can_read']
+                    },
+                    complete: function () {
+                        //填充实例名
+                        $("#instance_name").selectpicker('val', sessionStorage.getItem('sql_query_instance_name'));
+                        if ($("#instance_name").val()) {
+                            $("#instance_name").selectpicker().trigger("change");
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            var result = data['data'];
+                            $("#optgroup-mysql").empty();
+                            $("#optgroup-mssql").empty();
+                            $("#optgroup-redis").empty();
+                            $("#optgroup-pgsql").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                if (result[i]['db_type'] === 'mysql') {
+                                    $("#optgroup-mysql").append(instance);
+                                } else if (result[i]['db_type'] === 'mssql') {
+                                    $("#optgroup-mssql").append(instance);
+                                } else if (result[i]['db_type'] === 'redis') {
+                                    $("#optgroup-redis").append(instance);
+                                } else if (result[i]['db_type'] === 'pgsql') {
+                                    $("#optgroup-pgsql").append(instance);
+                                } else if (result[i]['db_type'] === 'oracle') {
+                                    $("#optgroup-oracle").append(instance);
+                                }
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                            $("#db_name").empty();
+                            $('#db_name').selectpicker('render');
+                            $('#db_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+
+
+            $("#sql_content_editor").bind("input propertychange", function () {
+                var editor = ace.edit("sql_content_editor");
+                var cmd = editor.getValue();
+                if (cmd.trim().search(/^keys\s+/i) == 0) {
+                    toastr.warning('禁用keys 命令！使用scan 命令代替！')
+                }
+            });
         });
+
+        function show(o) {
+            if (o.value == "key") {
+                document.getElementById("keyHelp").style.display = "block";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "string") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "block";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "hash") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "block";
+                document.getElementById("setHelp").style.display = "none";
+            } else if (o.value == "set") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "block";
+            }
+        }
     </script>
 {% endblock %}

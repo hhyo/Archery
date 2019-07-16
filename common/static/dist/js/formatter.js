@@ -4,7 +4,7 @@ workflow_type = {
     'query_display': '查询权限申请',
     'sqlreview': 2,
     'sqlreview_display': 'SQL上线申请'
-};
+}
 
 // 0.待审核 1.审核通过/等待执行 2.审核不通过 3.审核取消 101执行中，102执行成功，103执行失败
 workflow_status = {
@@ -16,50 +16,39 @@ workflow_status = {
     'audit_reject_display': '审核不通过',
     'audit_abort': 3,
     'audit_abort_display': '审核取消'
-};
+}
 
-sqlworkflowStatus = {
-    'finish': '已正常结束',
-    'abort': '人工终止流程',
-    'autoreviewing': '自动审核中',
-    'manreviewing': '等待审核人审核',
-    'pass': '审核通过',
-    'timingtask': '定时执行',
-    'executing': '执行中',
-    'autoreviewwrong': '自动审核不通过',
-    'exception': '执行有异常'
-};
 
 function sqlworkflowStatus_formatter(value) {
-    if (value === sqlworkflowStatus.finish) {
-        return "<span class=\"label label-success\">" + sqlworkflowStatus.finish + "</span>"
+    if (value === "workflow_finish") {
+        return "<span class=\"label label-success\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.abort) {
-        return "<span class=\"label label-default\">" + sqlworkflowStatus.abort + "</span>"
+    else if (value === "workflow_abort") {
+        return "<span class=\"label label-default\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.autoreviewing) {
-        return "<span class=\"label label-warning\">" + sqlworkflowStatus.autoreviewing + "</span>"
+    else if (value === "workflow_manreviewing") {
+        return "<span class=\"label label-info\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.manreviewing) {
-        return "<span class=\"label label-info\">" + sqlworkflowStatus.manreviewing + "</span>"
+    else if (value === "workflow_review_pass") {
+        return "<span class=\"label label-warning\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.pass) {
-        return "<span class=\"label label-warning\">" + sqlworkflowStatus.pass + "</span>"
+    else if (value === "workflow_timingtask") {
+        return "<span class=\"label label-warning\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.timingtask) {
-        return "<span class=\"label label-warning\">" + sqlworkflowStatus.timingtask + "</span>"
+    else if (value === "workflow_executing") {
+        return "<span class=\"label label-primary\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.executing) {
-        return "<span class=\"label label-primary\">" + sqlworkflowStatus.executing + "</span>"
+    else if (value === "workflow_autoreviewwrong") {
+        return "<span class=\"label label-danger\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.autoreviewwrong) {
-        return "<span class=\"label label-danger\">" + sqlworkflowStatus.autoreviewwrong + "</span>"
+    else if (value === "workflow_exception") {
+        return "<span class=\"label label-danger\">" + gettext(value) + "</span>"
     }
-    else if (value === sqlworkflowStatus.exception) {
-        return "<span class=\"label label-danger\">" + sqlworkflowStatus.exception + "</span>"
+    else if (value === "workflow_finish_manual") {
+        return "<span class=\"label label-success\">" + gettext(value) + "</span>"
     }
     else {
-        return "<span class=\"label label-danger\">" + '未知状态' + "</span>"
+        return "<span class=\"label label-danger\">" + "未知状态" + "</span>"
     }
 }
 

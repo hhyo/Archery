@@ -7,7 +7,7 @@
             <span aria-hidden="true"></span>权限管理</a>
         <button id="btn_add" type="button" class="btn btn-default"
                 data-toggle="modal" data-target="#apply">
-            <span aria-hidden="true"></span>申请权限
+            <span aria-hidden="true"></span>权限申请
         </button>
     </div>
     <!-- 申请列表的表格-->
@@ -27,61 +27,62 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <input type="text" class="form-control" id="title" placeholder="简单说明权限用途">
+                        <input type="text" autocomplete="off" class="form-control" id="title" placeholder="简单说明权限用途">
                     </div>
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择组:</option>
+                                title="请选择组:"
+                                data-live-search="true" required>
                             {% for group in group_list %}
                                 <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="priv_type" name="db_name" data-live-search="true"
-                                class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">权限级别:</option>
-                            <option value="2">TABLE</option>
-                            <option value="1">DATABASE</option>
+                        <select id="instance_name" name="instance_name"
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                title="请选择实例:"
+                                data-live-search="true" required>
+                            // TODO 使用models中的choices 渲染
+                            <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                            <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                            <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                            <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
+                            <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="instance_name" name="instance_name"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                data-placeholder="请选择实例:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
-                            {% for instance_name in instances %}
-                                <option value="{{ instance_name }}">{{ instance_name }}</option>
-                            {% endfor %}
+                        <select id="priv_type" name="db_name" data-live-search="true"
+                                title="权限级别:"
+                                class="form-control selectpicker show-tick bs-select-hidden">
                         </select>
                     </div>
                     <div id="db_name_div" class="form-group">
                         <select id="db_name" name="db_name" data-live-search="true"
+                                title="请选择数据库:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
                     <div id="db_name_multiple_div" class="form-group" style="display: none">
                         <select id="db_name_multiple" name="db_name" data-live-search="true" multiple="multiple"
+                                title="请选择数据库:" required
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
 
                     <div id="table_div" class="form-group">
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
-                                multiple='multiple' data-max-options="999" data-name="请选择表" data-placeholder="请选择表:"
-                                required>
-                            <option value="is-empty" disabled="" selected="selected">请选择表:</option>
+                                multiple='multiple' data-max-options="999"
+                                title="请选择表:" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="valid_date" name="valid_date"
+                                title="请选择授权时间:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择授权时间:</option>
                             <option value="day">一天</option>
                             <option value="week">一周</option>
                             <option value="month">一月</option>
@@ -90,8 +91,8 @@
                     </div>
                     <div class="form-group">
                         <select id="limit_num" name="limit_num"
+                                title="请选择查询限制行数:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择查询限制行数:</option>
                             <option value=100>100</option>
                             <option value=500>500</option>
                             <option value=1000>1000</option>
@@ -144,19 +145,32 @@
                 dataType: "json",
                 data: {
                     group_name: $("#group_name").val(),
-                    type: 'slave'
+                    tag_code: 'can_read'
                 },
                 complete: function () {
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data['data'];
-                        $("#instance_name").empty();
+                        $("#optgroup-mysql").empty();
+                        $("#optgroup-mssql").empty();
+                        $("#optgroup-redis").empty();
+                        $("#optgroup-pgsql").empty();
+                        $("#optgroup-oracle").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                            $("#instance_name").append(instance);
+                            if (result[i]['db_type'] === 'mysql') {
+                                $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mssql') {
+                                $("#optgroup-mssql").append(instance);
+                            } else if (result[i]['db_type'] === 'redis') {
+                                $("#optgroup-redis").append(instance);
+                            } else if (result[i]['db_type'] === 'pgsql') {
+                                $("#optgroup-pgsql").append(instance);
+                            } else if (result[i]['db_type'] === 'oracle') {
+                                $("#optgroup-oracle").append(instance);
+                            }
                         }
-                        $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
                         $('#instance_name').selectpicker('render');
                         $('#instance_name').selectpicker('refresh');
                     } else {
@@ -260,8 +274,7 @@
                             }
                         });
                         return html.join('');
-                    }
-                    else {
+                    } else {
                         $.each(row, function (key, value) {
                             if (key === 'db_list') {
                                 var sql = '数据库清单：<br>' + value;
@@ -277,11 +290,19 @@
                     title: '工单名称',
                     field: 'title',
                     formatter: function (value, row, index) {
-                        return "<a href='/queryapplydetail/" + row.apply_id + "/'>" + value + "</a>";
+                        var span = document.createElement('span');
+                        span.setAttribute('title', value);
+                        if (value.length > 10) {
+                            span.innerHTML = "<a href=\"/queryapplydetail/" + row.apply_id + "/\">" + value.substr(0, 10) + '...';
+                            +"</a>";
+                        } else {
+                            span.innerHTML = "<a href=\"/queryapplydetail/" + row.apply_id + "/\">" + value + "</a>";
+                        }
+                        return span.outerHTML;
                     }
                 }, {
                     title: '实例',
-                    field: 'instance_name'
+                    field: 'instance__instance_name'
                 }, {
                     title: '数据库',
                     field: 'db_list',
@@ -289,8 +310,7 @@
                         if (value.length > 30) {
                             var db_list = value.substr(0, 30) + '...';
                             return db_list;
-                        }
-                        else {
+                        } else {
                             return value
                         }
                     }
@@ -300,8 +320,7 @@
                     formatter: function (value, row, index) {
                         if (value === 1) {
                             return 'DATABASE';
-                        }
-                        else {
+                        } else {
                             return 'TABLE';
                         }
                     }
@@ -350,16 +369,30 @@
 
         }
 
-        //实例变更获取数据库列表
+        //实例变更获取数据库列表/权限类型
         $("#instance_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/instance/getdbNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
-                    instance_name: $("#instance_name").val()
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
                 },
                 complete: function () {
+                    // 仅MySQL支持限制到表级权限
+                    var optgroup = $('#instance_name :selected').parent().attr('label');
+                    $("#priv_type").empty();
+                    if (optgroup === "MySQL") {
+                        $('#priv_type').append("<option value=\"1\">DATABASE</option>");
+                        $('#priv_type').append("<option value=\"2\" selected=\"selected\">TABLE</option>");
+                    } else {
+                        $('#priv_type').append("<option value=\"1\" selected=\"selected\">DATABASE</option>");
+                    }
+                    $('#priv_type').prepend("<option value=\"is-empty\" disabled=\"\">权限级别:</option>");
+                    $('#priv_type').selectpicker('render');
+                    $('#priv_type').selectpicker('refresh');
+                    $('#priv_type').selectpicker().trigger("change")
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -371,7 +404,6 @@
                             $("#db_name").append(name);
                             $("#db_name_multiple").append(name);
                         }
-                        $('#db_name').append("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>\n");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         $('#db_name_multiple').selectpicker('render');
@@ -390,11 +422,12 @@
         $("#db_name").change(function () {
             $.ajax({
                 type: "post",
-                url: "/instance/getTableNameList/",
+                url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val()
+                    db_name: $("#db_name").val(),
+                    resource_type: "table"
                 },
                 complete: function () {
                 },
@@ -461,23 +494,19 @@
                 if (priv_type === '1') {
                     if (title && group_name && workflow_auditors && instance_name && db_name_multiple && valid_date && limit_num) {
                         return true
-                    }
-                    else {
+                    } else {
                         alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
-                }
-                else if (priv_type === '2') {
+                } else if (priv_type === '2') {
                     if (title && group_name && workflow_auditors && instance_name && db_name && table_name && valid_date && limit_num) {
                         return true
-                    }
-                    else {
+                    } else {
                         alert("信息填写不完整，或者未配置审批流程");
                         return false
                     }
                 }
-            }
-            else if (priv_type == null) {
+            } else if (priv_type == null) {
                 alert("请选择权限类别");
                 return false
             }
@@ -490,7 +519,7 @@
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
             var db_name_multiple = $("#db_name_multiple").val();
-            var table_name = $("#table_name").val();
+            var table_list = $("#table_name").val();
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
             var apply_remark = $("#apply_remark").val();
@@ -504,38 +533,15 @@
                 if (valid_date === 'day') {
                     valid_date = addDate(date, 1);
 
-                }
-                else if (valid_date === 'week') {
+                } else if (valid_date === 'week') {
                     valid_date = addDate(date, 7);
-                }
-                else if (valid_date === 'month') {
+                } else if (valid_date === 'month') {
                     valid_date = addDate(date, 30);
-                }
-                else if (valid_date === 'year') {
+                } else if (valid_date === 'year') {
                     valid_date = addDate(date, 365);
-                }
-                else {
+                } else {
                     valid_date = addDate(date, 1);
                 }
-
-                // db_list和table_list
-                if (priv_type === '1') {
-                    if (db_name_multiple.length > 1) {
-                        var db_list = db_name_multiple.join(",");
-                    }
-                    else {
-                        var db_list = db_name_multiple.toString()
-                    }
-                }
-                else if (priv_type === '2') {
-                    if (table_name.length > 1) {
-                        var table_list = table_name.join(",");
-                    }
-                    else {
-                        var table_list = table_name.toString()
-                    }
-                }
-
 
                 //禁用按钮
                 $('button[type=button]').addClass('disabled');
@@ -549,8 +555,8 @@
                         title: title,
                         instance_name: instance_name,
                         priv_type: priv_type,
-                        db_list: db_list,
                         db_name: db_name,
+                        db_list: db_name_multiple,
                         table_list: table_list,
                         valid_date: valid_date,
                         limit_num: limit_num,
@@ -566,8 +572,7 @@
                         if (data.status === 0) {
                             $('#apply').modal('hide');
                             location.href = '/queryapplylist/'
-                        }
-                        else {
+                        } else {
                             alert(data.msg)
                         }
                     },

@@ -1,0 +1,9 @@
+# Configuration for request-info - https://github.com/behaviorbot/request-info
+
+# *Required* Comment to reply with
+requestInfoReplyComment: >
+  你好!感谢你反馈的问题/bug，但是你的描述好像是空的，我们需要你完整的信息，这样才能帮你解决问题
+  如果不知道怎么写，在新建issue的时候有若干个模板可供选择，祝好！
+
+# *OPTIONAL* Label to be added to Issues and Pull Requests with insufficient information given
+requestInfoLabelToAdd: 请提供更多信息
