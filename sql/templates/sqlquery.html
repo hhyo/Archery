@@ -875,6 +875,7 @@
                             $("#optgroup-mssql").empty();
                             $("#optgroup-redis").empty();
                             $("#optgroup-pgsql").empty();
+                            $("#optgroup-mongo").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
@@ -887,7 +888,9 @@
                                     $("#optgroup-pgsql").append(instance);
                                 } else if (result[i]['db_type'] === 'oracle') {
                                     $("#optgroup-oracle").append(instance);
-                                }
+                                } else if (result[i]['db_type'] === 'mongo') {
+                                    $("#optgroup-mongo").append(instance);
+                                } 
                             }
                             $('#instance_name').selectpicker('render');
                             $('#instance_name').selectpicker('refresh');
