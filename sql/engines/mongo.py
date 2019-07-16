@@ -1,20 +1,14 @@
 # -*- coding: UTF-8 -*-
-""" 
 @author: jackie
-@license: Apache Licence 
-@file: mongo.py 
+@file: mongo.py
 @time: 2019/06/24
-"""
 import re
-import pprint
 import pymongo
 import logging
 import traceback
 import json
 
-from common.utils.timer import FuncTimer
 from . import EngineBase
-from .models import ResultSet, ReviewSet, ReviewResult
 from bson import json_util
 
 __author__ = 'jackie'
@@ -42,7 +36,7 @@ class MongoEngine(EngineBase):
         result.rows = conn.list_database_names()
         return result
 
-    def query_check(self, db_name=None, sql='', limit_num=0):
+    def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
         safe_cmd = ['find']
@@ -62,14 +56,14 @@ class MongoEngine(EngineBase):
         result.rows = db.list_collection_names()
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()
             db = conn[db_name]
             collect = db[sql.split('.')[0]]
             rows = []
-            match = re.compile(r'[(](.*)[)]', re.S) 
+            match = re.compile(r'[(](.*)[)]', re.S)
             sql = re.findall(match, sql)[0]
             if sql != '':
                 sql = json.loads(sql)
@@ -99,7 +93,7 @@ class MongoEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         return check_result
 
-    def execute_workflow(self, workflow):
+    def execute_workflow(self, workflow, close_conn=True):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
