@@ -21,11 +21,11 @@ class MongoEngine(EngineBase):
         return conn
 
     @property
-    def name(self):
+    def name(self): # pragma: no cover
         return 'Mongo'
 
     @property
-    def info(self):
+    def info(self): # pragma: no cover
         return 'Mongo engine'
 
     def get_all_databases(self):
@@ -80,10 +80,3 @@ class MongoEngine(EngineBase):
             logger.error(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         return result_set
-
-    def filter_sql(self, sql='', limit_num=0):
-        return sql.strip()
-
-    def query_masking(self, db_name=None, sql='', resultset=None):
-        """不做脱敏"""
-        return resultset

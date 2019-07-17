@@ -1400,26 +1400,40 @@ class TestOracle(TestCase):
 class MongoTest(TestCase):
     def setUp(self) -> None:
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mongo',
-                                           host='some_host', port=3306, user='ins_user', password='some_pass',
-                                           sid='some_id')
+                                           host='some_host', port=3306, user='ins_user')
+        self.engine = MongoEngine(instance=self.ins)
 
     def tearDown(self) -> None:
         self.ins.delete()
 
     @patch('sql.engines.mongo.pymongo')
     def test_get_connection(self, mock_pymongo):
-        test_engine = MongoEngine(instance=self.ins)
-        _ = test_engine.get_connection()
+        _ = self.engine.get_connection()
         mock_pymongo.MongoClient.assert_called_once()
 
     @patch('sql.engines.mongo.MongoEngine.get_connection')
     def test_query(self, mock_get_connection):
-        test_engine = MongoEngine(instance=self.ins)
+        # TODO 正常查询还没做
         test_sql = 'test.find({"id":{"$gt":1.0}})'
-        self.assertIsInstance(test_engine.query(test_sql), ResultSet)
+        self.assertIsInstance(self.engine.query(test_sql), ResultSet)
 
     def test_query_check(self):
         test_sql = 'test.find({"id":{"$gt":1.0}})'
-        test_engine = MongoEngine(instance=self.ins)
-        check_result = test_engine.query_check(sql=test_sql)
+        check_result = self.engine.query_check(sql=test_sql)
         self.assertEqual(False, check_result.get('bad_query'))
+
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_get_all_databases(self, mock_get_connection):
+        db_list = self.engine.get_all_databases()
+        self.assertIsInstance(db_list, ResultSet)
+        mock_get_connection.return_value.list_database_names.assert_called_once()
+
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_get_all_tables(self, mock_get_connection):
+        mock_db = Mock()
+        # 下面是查表示例返回结果
+        mock_db.list_collection_names.return_value = ['u', 'v', 'w']
+        mock_get_connection.return_value = {'some_db' : mock_db}
+        table_list = self.engine.get_all_tables('some_db')
+        mock_db.list_collection_names.assert_called_once()
+        self.assertEqual(table_list.rows, ['u', 'v', 'w'])

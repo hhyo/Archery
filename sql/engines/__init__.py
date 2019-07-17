@@ -58,6 +58,7 @@ class EngineBase:
 
     def filter_sql(self, sql='', limit_num=0):
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
+        return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """实际查询 返回一个ResultSet"""
@@ -88,7 +89,7 @@ class EngineBase:
         return ResultSet()
 
 
-def get_engine(instance=None):
+def get_engine(instance=None):  # pragma: no cover
     """获取数据库操作engine"""
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
