@@ -38,16 +38,17 @@ class MongoEngine(EngineBase):
         """提交查询前的检查"""
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
         safe_cmd = ['find']
-        sql=sql.split('.')[1]
+        sql = sql.split('.')[1]
         for cmd in safe_cmd:
             if re.match(fr'^{cmd}\(.*', sql.strip(), re.I):
                 result['bad_query'] = False
                 break
         if result['bad_query']:
-            result['msg'] = '禁止执行该命令！正确格式为：{collection_name}.find() or {collection_name}.find(expression)         For exameple: test.find({"id":{"$gt":1.0}})'
+            result['msg'] = """禁止执行该命令！正确格式为：{collection_name}.find() or {collection_name}.find(expression)""", \
+                            """如 : 'test.find({"id":{"$gt":1.0}})'"""
         return result
 
-    def get_all_tables(self,db_name):
+    def get_all_tables(self, db_name):
         result = ResultSet(full_sql='get tables')
         conn = self.get_connection()
         db = conn[db_name]

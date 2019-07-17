@@ -14,6 +14,7 @@ from sql.engines.mysql import MysqlEngine
 from sql.engines.redis import RedisEngine
 from sql.engines.pgsql import PgSQLEngine
 from sql.engines.oracle import OracleEngine
+from sql.engines.mongo import MongoEngine
 from sql.engines.inception import InceptionEngine, _repair_json_str
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
@@ -1394,3 +1395,31 @@ class TestOracle(TestCase):
             execute_result = new_engine.execute_workflow(workflow=wf)
             self.assertIsInstance(execute_result, ReviewSet)
             self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
+
+class MongoTest(TestCase):
+    def setUp(self) -> None:
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mongo',
+                                           host='some_host', port=3306, user='ins_user', password='some_pass',
+                                           sid='some_id')
+
+    def tearDown(self) -> None:
+        self.ins.delete()
+
+    @patch('sql.engines.mongo.pymongo')
+    def test_get_connection(self, mock_pymongo):
+        test_engine = MongoEngine(instance=self.ins)
+        _ = test_engine.get_connection()
+        mock_pymongo.MongoClient.assert_called_once()
+
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_query(self, mock_get_connection):
+        test_engine = MongoEngine(instance=self.ins)
+        test_sql = 'test.find({"id":{"$gt":1.0}})'
+        self.assertIsInstance(test_engine.query(test_sql), ResultSet)
+
+    def test_query_check(self):
+        test_sql = 'test.find({"id":{"$gt":1.0}})'
+        test_engine = MongoEngine(instance=self.ins)
+        check_result = test_engine.query_check(sql=test_sql)
+        self.assertEqual(False, check_result.get('bad_query'))
