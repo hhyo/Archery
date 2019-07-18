@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
 @author: hhyo、yyukai
-@license: Apache Licence 
-@file: redis.py 
+@license: Apache Licence
+@file: redis.py
 @time: 2019/03/26
 """
 

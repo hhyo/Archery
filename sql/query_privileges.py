@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: query_privileges.py 
+@author: hhyo
+@license: Apache Licence
+@file: query_privileges.py
 @time: 2019/03/24
 """
 import logging

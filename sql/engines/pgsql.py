@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
 @author: hhyo、yyukai
-@license: Apache Licence 
-@file: pgsql.py 
+@license: Apache Licence
+@file: pgsql.py
 @time: 2019/03/29
 """
 import re

@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: tests.py 
+@author: hhyo
+@license: Apache Licence
+@file: tests.py
 @time: 2019/03/04
 """
 import json

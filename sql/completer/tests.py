@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: tests.py 
+@author: hhyo
+@license: Apache Licence
+@file: tests.py
 @time: 2019/03/11
 """
 from django.conf import settings

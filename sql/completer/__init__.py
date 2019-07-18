@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
+@author: hhyo
+@license: Apache Licence
 @file: completion_engines.py
 @time: 2019/03/09
 """

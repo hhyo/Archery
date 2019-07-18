@@ -491,7 +491,7 @@ class TestMysql(TestCase):
     @patch.object(MysqlEngine, 'query')
     def test_seconds_behind_master(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
-        new_engine.seconds_behind_master()
+        new_engine.seconds_behind_master
         _query.assert_called_once_with(sql="show slave status")
 
 

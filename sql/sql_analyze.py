@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: sql_analyze.py 
+@author: hhyo
+@license: Apache Licence
+@file: sql_analyze.py
 @time: 2019/03/14
 """
 import simplejson as json
