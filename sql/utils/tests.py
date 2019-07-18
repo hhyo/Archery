@@ -473,7 +473,7 @@ class TestExecuteSql(TestCase):
     def setUp(self):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -640,7 +640,7 @@ class TestAudit(TestCase):
         tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -1059,7 +1059,7 @@ class TestDataMasking(TestCase):
         self.user = User.objects.create(username='user')
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.sys_config = SysConfig()
         self.wf1 = SqlWorkflow.objects.create(
             workflow_name='workflow_name',
@@ -1267,10 +1267,10 @@ class TestResourceGroup(TestCase):
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
         self.ins1 = Instance.objects.create(instance_name='some_ins1', type='slave', db_type='mysql',
                                             host='some_host',
-                                            port=3306, user='ins_user', password='some_pass')
+                                            port=3306, user='ins_user', password='some_str')
         self.ins2 = Instance.objects.create(instance_name='some_ins2', type='slave', db_type='mysql',
                                             host='some_host',
-                                            port=3306, user='ins_user', password='some_pass')
+                                            port=3306, user='ins_user', password='some_str')
         self.rgp1 = ResourceGroup.objects.create(group_name='group1')
         self.rgp2 = ResourceGroup.objects.create(group_name='group2')
         self.agp = Group.objects.create(name='auth_group')

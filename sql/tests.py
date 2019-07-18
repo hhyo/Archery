@@ -427,7 +427,7 @@ class TestQueryPrivilegesCheck(TestCase):
         :return:
         """
         mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
-                                  host='some_host', port=3306, user='some_user', password='some_password')
+                                  host='some_host', port=3306, user='some_user', password='some_str')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
@@ -441,7 +441,7 @@ class TestQueryPrivilegesCheck(TestCase):
         :return:
         """
         mssql_instance = Instance(instance_name='mssql', type='slave', db_type='oracle',
-                                  host='some_host', port=3306, user='some_user', password='some_password')
+                                  host='some_host', port=3306, user='some_user', password='some_str')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
@@ -679,7 +679,7 @@ class TestQuery(TestCase):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
         self.slave2 = Instance(instance_name='test_instance_non_mysql', type='slave', db_type='mssql',
-                               host='some_host2', port=3306, user='some_user', password='some_password')
+                               host='some_host2', port=3306, user='some_user', password='some_str')
         self.slave1.save()
         self.slave2.save()
         self.superuser1 = User.objects.create(username='super1', is_superuser=True)
@@ -1890,7 +1890,7 @@ class TestNotify(TestCase):
         tomorrow = datetime.today() + timedelta(days=1)
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
