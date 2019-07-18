@@ -2,7 +2,7 @@
 import simplejson as json
 
 from common.utils.const import WorkflowDict
-from sql.engines.models import ReviewSet, ReviewResult
+from sql.engines.models import ReviewResult
 from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute
 from sql.utils.workflow_audit import Audit

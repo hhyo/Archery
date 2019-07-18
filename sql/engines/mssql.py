@@ -7,9 +7,7 @@ import sqlparse
 from . import EngineBase
 import pyodbc
 from .models import ResultSet, ReviewSet, ReviewResult
-from common.config import SysConfig
 from sql.utils.data_masking import brute_mask
-from django.utils import timezone
 
 logger = logging.getLogger('default')
 

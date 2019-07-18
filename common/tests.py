@@ -1,6 +1,6 @@
 import json
 import smtplib
-from unittest.mock import patch, Mock, MagicMock, ANY
+from unittest.mock import patch, ANY
 import datetime
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -21,7 +21,7 @@ class ConfigOpsTests(TestCase):
 
     def test_purge(self):
         archer_config = SysConfig()
-        archer_config.set('some_key','some_value')
+        archer_config.set('some_key', 'some_value')
         archer_config.purge()
         self.assertEqual({}, archer_config.sys_config)
         archer_config2 = SysConfig()

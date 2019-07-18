@@ -1,11 +1,9 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import logging
-import re
 import traceback
 
 import simplejson as json
-import sqlparse
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction

@@ -9,7 +9,7 @@ from django.db.models import F, Value, IntegerField
 from django.http import HttpResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.permission import superuser_required
-from sql.models import ResourceGroup, ResourceGroup2Instance, ResourceGroup2User, Users, Instance, InstanceTag
+from sql.models import ResourceGroup, ResourceGroup2Instance, ResourceGroup2User, Users, Instance
 from sql.utils.resource_group import user_instances
 from sql.utils.workflow_audit import Audit
 

@@ -1015,7 +1015,7 @@ class TestAudit(TestCase):
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     def test_can_review_no_prem(self, _detail_by_workflow_id, _auth_group_users):
         """测试判断用户当前是否是可审核，权限组不存在"""
-        aug = Group.objects.create(name='auth_group')
+        Group.objects.create(name='auth_group')
         _detail_by_workflow_id.side_effect = RuntimeError()
         _auth_group_users.return_value.filter.exists = True
         self.audit.workflow_type = WorkflowDict.workflow_type['sqlreview']
