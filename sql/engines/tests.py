@@ -669,7 +669,7 @@ class TestPgSQL(TestCase):
     @patch('psycopg2.connect')
     def test_get_connection(self, _conn):
         new_engine = PgSQLEngine(instance=self.ins)
-        new_engine.get_connection()
+        new_engine.get_connection("some_dbname")
         _conn.assert_called_once()
 
     @patch('psycopg2.connect.cursor.execute')
@@ -678,7 +678,7 @@ class TestPgSQL(TestCase):
     def test_query(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchmany.return_value = [(1,)]
         new_engine = PgSQLEngine(instance=self.ins)
-        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
+        query_result = new_engine.query(db_name="some_dbname", sql='select 1', limit_num=100, schema_name="some_schema")
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
@@ -688,7 +688,7 @@ class TestPgSQL(TestCase):
     def test_query_not_limit(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
         new_engine = PgSQLEngine(instance=self.ins)
-        query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
+        query_result = new_engine.query(db_name="some_dbname", sql='select 1', limit_num=0, schema_name="some_schema")
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
