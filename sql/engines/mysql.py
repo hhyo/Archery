@@ -169,8 +169,8 @@ class MysqlEngine(EngineBase):
                 inception_engine = GoInceptionEngine()
                 inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
             except Exception as e:
-                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
-                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
+                logger.debug(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
+                raise RuntimeError(f"goInception检测语句报错，请注意检查系统配置中goInception配置，错误信息：\n{e}")
         else:
             try:
                 inception_engine = InceptionEngine()
