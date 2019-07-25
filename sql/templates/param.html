@@ -12,7 +12,7 @@
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <button id="btn_add_param" type="button" class="btn btn-default"
-                        onclick="window.location.href='/admin/sql/paramtemplate/add/'">
+                        onclick="window.open('/admin/sql/paramtemplate/add/')">
                     <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                     添加参数
                 </button>
@@ -26,11 +26,9 @@
             </div>
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
+                        title="请选择实例"
                         data-live-search="true">
                     <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for ins in instances %}
-                        <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
         </div>
@@ -75,7 +73,7 @@
                     sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    pageList: [20, 30, 50, 100, 500],       //可供选择的每页的行数（*）
                     search: true,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
@@ -128,7 +126,14 @@
                     },
                     columns: [{
                         title: '参数名',
-                        field: 'variable_name'
+                        field: 'variable_name',
+                        formatter: function (value, row, index) {
+                            if (row.id) {
+                                return "<a target=\"_blank\" href=\"/admin/sql/paramtemplate/" + row.id + "/change/\">" + value + "</a>"
+                            } else {
+                                return value
+                            }
+                        }
                     }, {
                         title: '运行参数值',
                         field: 'runtime_value',
@@ -136,6 +141,7 @@
                             type: 'text',
                             title: '修改参数值',
                             placement: 'bottom',
+                            emptytext: '-',
                             validate: function (v) {
                                 if (!v) return '参数值不能为空';
                             }
@@ -146,6 +152,10 @@
                     }, {
                         title: '可修改参数值',
                         field: 'valid_values'
+                    }, {
+                        title: '参数描述',
+                        field: 'description',
+                        visible: false // 默认不显示
                     }],
                     onLoadSuccess: function () {
                     },
@@ -245,11 +255,42 @@
 
         //如果已选择实例，进入页面自动填充，并且重置激活id
         $(document).ready(function () {
-                sessionStorage.setItem('active_li_id', 'param_tab');
-                if (sessionStorage.getItem('instance_id')) {
-                    $("#instance").val(sessionStorage.getItem('instance_id'));
-                }
-                get_param_list();
+                //获取用户实例列表
+                $(function () {
+                    $.ajax({
+                        type: "get",
+                        url: "/group/user_all_instances/",
+                        dataType: "json",
+                        data: {
+                            db_type: ['mysql', 'inception', 'goinception']
+                        },
+                        complete: function () {
+                            //如果已选择实例，进入页面自动填充，并且重置激活id
+                            sessionStorage.setItem('param_active_li_id', 'param_tab');
+                            if (sessionStorage.getItem('instance_id')) {
+                                $("#instance").val(sessionStorage.getItem('instance_id')).trigger("change");
+                            }
+                            get_param_list();
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                let result = data['data'];
+                                $("#instance").empty();
+                                for (let i = 0; i < result.length; i++) {
+                                    let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                                    $("#instance").append(instance);
+                                }
+                                $('#instance').selectpicker('render');
+                                $('#instance').selectpicker('refresh');
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                });
             }
         );
 
@@ -257,7 +298,7 @@
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
                 var active_li_id = $(e.target).parents().attr('id');
-                sessionStorage.setItem('active_li_id', active_li_id);
+                sessionStorage.setItem('param_active_li_id', active_li_id);
                 //当前激活的标签id
                 if (active_li_id === 'param_tab') {
                     get_param_list();
@@ -280,7 +321,7 @@
         //刷新页面
         function flush() {
             sessionStorage.setItem('instance_id', $("#instance").val());
-            var active_li_id = sessionStorage.getItem('active_li_id');
+            var active_li_id = sessionStorage.getItem('param_active_li_id');
             if (active_li_id === 'param_tab') {
                 get_param_list();
             } else if (active_li_id === 'history_tab') {

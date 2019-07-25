@@ -22,13 +22,14 @@ class DbOperat(object):
         self.port = int(instance_info.port)
         self.user = instance_info.user
         self.password = instance_info.raw_password
+        self.charset = instance_info.charset or charset
         if flag:
             self.conn = MySQLdb.connect(host=self.host,
                                         port=int(self.port),
                                         user=self.user,
                                         passwd=self.password,
                                         db=db_name,
-                                        charset=charset)
+                                        charset=self.charset)
             self.cursor = self.conn.cursor()
 
     def get_db_cursor(self):

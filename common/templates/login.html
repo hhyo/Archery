@@ -50,19 +50,25 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <input type="text" class="form-control" id="username" placeholder="用户名">
+                    <input type="text" autocomplete="off"
+                           class="form-control" id="username" placeholder="用户名">
                 </div>
                 <div class="form-group">
-                    <input type="text" class="form-control" id="display" placeholder="昵称">
+                    <input type="text" autocomplete="off"
+                           class="form-control" id="display" placeholder="中文名">
                 </div>
                 <div class="form-group">
-                    <input type="text" class="form-control" id="email" placeholder="邮箱">
+                    <input type="text" autocomplete="off"
+                           class="form-control" id="email" placeholder="邮箱">
                 </div>
                 <div class="form-group">
-                    <input type="password" class="form-control" id="password" placeholder="密码">
+                    <input type="password"
+                           class="form-control" id="password" placeholder="密码">
                 </div>
                 <div class="form-group">
-                    <input type="password" class="form-control" id="password2" placeholder="密码确认">
+                    <input type="password"
+                           class="form-control" autocomplete="new-password" id="password2"
+                           placeholder="密码确认">
                 </div>
 
                 <div class="form-group">
@@ -70,7 +76,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button id="btnSign" type="submit" class="btn btn-success">确认提交</button>
+                <button id="btnSign" type="submit" class="btn btn-success">注册</button>
             </div>
         </div>
     </div>
@@ -101,7 +107,7 @@
 
 <!--底部部分 -->
 <div class="row clearfix user-bottom-div">
-    <p><strong>SQL审核平台</strong>&nbsp;(v1.6.0)</p>
+    <p><strong>SQL审核平台</strong>&nbsp;(v1.6.6)</p>
 </div>
 <!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
@@ -142,11 +148,12 @@
     $(document).ready(function () {
         $(document).keydown(function (event) {
             //keycode==13为回车键
-            if (event.keyCode == 13) {
+            console.log($("#sign-up").css("display"))
+            if (event.keyCode === 13 && $("#sign-up").css("display") === 'none') {
                 $('#btnLogin').addClass('disabled');
                 $('#btnLogin').prop('disabled', true);
-                username = $('#inputUsername').val();
-                password = $('#inputPassword').val();
+                let username = $('#inputUsername').val();
+                let password = $('#inputPassword').val();
                 authenticateUser(username, password);
             }
         });

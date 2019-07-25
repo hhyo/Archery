@@ -61,6 +61,6 @@ services:
       - "./archery/settings.py:/opt/archery/archery/settings.py"
       - "./archery/soar.yaml:/etc/soar.yaml"
       - "./archery/downloads:/opt/archery/downloads"
-    command: ["bash","/opt/archery/src/docker/startup.sh"]
+    entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
     environment:
       NGINX_PORT: 9123

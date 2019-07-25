@@ -2,28 +2,26 @@
 
 cd /opt/archery
 
-#切换python运行环境
+echo 切换python运行环境
 source /opt/venv4archery/bin/activate
 
-#修改重定向端口
+echo 修改重定向端口
 if [[ -z $NGINX_PORT ]]; then
     sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
 else
     sed -i "s/nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
 fi
 
-#启动nginx
+echo 启动nginx
 /usr/sbin/nginx
 
-#收集所有的静态文件到STATIC_ROOT
+echo 收集所有的静态文件到STATIC_ROOT
 python3 manage.py collectstatic -v0 --noinput
 
-#编译翻译文件
-python3 manage.py compilemessages
+echo 启动Django Q cluster
+supervisord -c qcluster_supervisord.conf
 
-#启动Django Q cluster，建议使用supervisor等进程管理工具
-nohup python3 manage.py qcluster >> /opt/archery/downloads/log/qcluster.log 2>&1 &
-
+echo 启动服务
 settings=${1:-"archery.settings"}
 ip=${2:-"127.0.0.1"}
 port=${3:-8888}

@@ -18,6 +18,7 @@
                 <option value="redis">Redis</option>
                 <option value="pgsql">PgSQL</option>
                 <option value="oracle">Oracle</option>
+                <option value="mongo">Mongo</option>
             </select>
         </div>
         <div class="form-group">
@@ -30,7 +31,7 @@
         </div>
         <div class="form-group ">
             <button id="btn_add_master" type="button" class="btn btn-default"
-                    onclick="window.location.href='/admin/sql/instance/add/'">
+                    onclick="window.open('/admin/sql/instance/add/')">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 添加实例
             </button>
@@ -130,7 +131,7 @@
                         title: '实例名称',
                         field: 'instance_name',
                         formatter: function (value, row, index) {
-                            return "<a href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
+                            return "<a target=\"_blank\" href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
                     }, {
                         title: '实例类型',
@@ -154,7 +155,7 @@
                             var btn_del_binLog = '';
                             var btn_user_manger = '';
                             if (row.db_type === 'mysql') {
-                                btn_user_manger = "<button class=\"btn btn-info btn-xs\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户</button>\n";
+                                btn_user_manger = "<button class=\"btn btn-info btn-xs\" onclick=\"window.open('/instanceuser/" + row.id + "\')\">用户</button>\n";
                                 btn_del_binLog = "<button class=\"btn btn-danger btn-xs\" instance_id=\"" + row.id + "\" + instance_name=\"" + row.instance_name + "\"+ onclick=\"del_binLog(this)" + "\">Binlog清理</button>\n"
                             }
                             var btn_test = "<button class=\"btn btn-warning btn-xs\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试</button>\n";

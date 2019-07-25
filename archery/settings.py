@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -87,6 +87,7 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.Users"
@@ -132,7 +133,7 @@ DATABASES = {
         },
         'TEST': {
             'NAME': 'test_archery',
-            'CHARSET': 'utf8',
+            'CHARSET': 'utf8mb4',
         },
     }
 }
@@ -177,6 +178,9 @@ CACHES = {
 # LDAP
 ENABLE_LDAP = False
 if ENABLE_LDAP:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch
+
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
         'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
@@ -184,6 +188,12 @@ if ENABLE_LDAP:
 
     AUTH_LDAP_SERVER_URI = "ldap://xxx"
     AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=xxx,dc=xxx,dc=xxx"
+    # ldap认证的另一种方式,使用时注释AUTH_LDAP_USER_DN_TEMPLATE
+    """
+    AUTH_LDAP_BIND_DN = "cn=xxx,ou=xxx,dc=xxx,dc=xxx"
+    AUTH_LDAP_BIND_PASSWORD = "***********"
+    AUTH_LDAP_USER_SEARCH = LDAPSearch('ou=xxx,dc=xxx,dc=xxx',ldap.SCOPE_SUBTREE, '(cn=%(user)s)',)
+    """
     AUTH_LDAP_ALWAYS_UPDATE_USER = True  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = {  # key为archery.sql_users字段名，value为ldap中字段名，用户同步信息
         "username": "cn",

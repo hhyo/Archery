@@ -1,11 +1,12 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 import re
 from django.http import HttpResponseRedirect
 from django.utils.deprecation import MiddlewareMixin
 
 
 class CheckLoginMiddleware(MiddlewareMixin):
-    def process_request(self, request):
+    @staticmethod
+    def process_request(request):
         """
         该函数在每个函数之前检查是否登录，若未登录，则重定向到/login/
         """

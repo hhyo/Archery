@@ -11,15 +11,14 @@
                     <form id="form-submitsql" action="/autoreview/" method="post" class="form-horizontal" role="form">
                         {% csrf_token %}
                         <input type="hidden" id="workflow_id" name="workflow_id"/>
-                        <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
-                               data-placeholder="请配置审批流程" required>
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" style="min-height:450px"></pre>
                         </div>
                         <div style="display: none" class="col-md-8 column">
-                    <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
-                              placeholder="请在此提交SQL，请以分号结尾。" rows=20
-                              required></textarea>
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
+                                      data-placeholder="SQL内容不能为空！"
+                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                                      required></textarea>
                         </div>
                         <div class="col-md-3 column">
                             <div class="form-group">
@@ -28,14 +27,16 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="上线单名称" data-placeholder="请输入上线单名称" placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                                       data-name="上线单名称" data-placeholder="请输入上线单名称！"
+                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
                                        required>
                             </div>
                             <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-name="组" data-placeholder="请选择组" data-live-search="true" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择组:</option>
+                                        data-name="组" data-placeholder="请选择组！"
+                                        title="请选择组"
+                                        data-live-search="true" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                     {% endfor %}
@@ -43,20 +44,25 @@
                             </div>
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
-                                        class="selectpicker show-tick form-control bs-select-hidden" data-name="实例"
-                                        data-live-search="true" data-placeholder="请选择实例" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="实例" data-placeholder="请选择实例！"
+                                        title="请选择实例"
+                                        data-live-search="true" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
                                     <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true" data-placeholder="请选择数据库" required>
+                                        data-name="数据库" data-placeholder="请选择数据库！"
+                                        data-live-search="true"
+                                        title="请选择数据库"
+                                        required>
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                                 </select>
                             </div>
@@ -65,13 +71,22 @@
                                     <select id="is_backup" name="is_backup"
                                             class="selectpicker show-tick form-control bs-select-hidden"
                                             data-name="是否选择备份"
+                                            title="请选择是否需要备份"
                                             data-placeholder="请选择是否要备份" required>
-                                        <option value="is-empty" disabled="">请选择是否需要备份:</option>
                                         <option value=True selected="selected">备份SQL</option>
                                         <option value=False>不备份SQL</option>
                                     </select>
                                 </div>
                             {% endif %}
+                            <!--可执行范围时间-->
+                            <div class='form-group'>
+                                <input type="hidden" id="run_date_start" name="run_date_start">
+                                <input type="hidden" id="run_date_end" name="run_date_end">
+                                <input type="text" id="run_date_range" readonly
+                                       value="请选择可执行时间范围"
+                                       style="background-color: #fff;color: #999 "
+                                       class="form-control "/>
+                            </div>
                             <!--增加通知人-->
                             <div class="form-group">
                                 <select id="notify_users" name="notify_users"
@@ -87,6 +102,8 @@
                                 </select>
                             </div>
                             <!--审批流程-->
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                                   data-placeholder="请配置审批流程！" required>
                             <div id="div-workflow_auditors" class="form-group" style="display: none">
                                 <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
                             </div>
@@ -94,7 +111,6 @@
                             <div class="form-group">
                                 <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                                 <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
-                                {#<button type="reset" id="btn-reset" class="btn btn-warning">清空选项</button>#}
                                 <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                             </div>
                         </div>
@@ -142,6 +158,7 @@
 {% block js %}
     {% load staticfiles %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
     <script src="{% static 'ace/ext-language_tools.js' %}"></script>
     <script src="{% static 'ace/mode-mysql.js' %}"></script>
@@ -150,7 +167,38 @@
     <script src="{% static 'ace/ace-init.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
 
+    <!--初始化时间控件 -->
+    <script>
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "up",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
+        });
+    </script>
     <!--upload -->
     <script>
         //初始化上传控件
@@ -204,7 +252,7 @@
         // 实例变更获取数据库补全提示
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
-            $("#div-backup").show()
+            $("#div-backup").show();
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
@@ -218,12 +266,10 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                        $('#db_name').selectpicker();
-                        var myObject = {};
-                        myObject.db_name = sessionStorage.getItem('editDbname');
-                        if (myObject.db_name) {
-                            $("#db_name").selectpicker('val', myObject.db_name);
-                        }
+                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                         if ($("#db_name").val()){
+                             $("#db_name").selectpicker().trigger("change");
+                         }
                     }
                 },
                 success: function (data) {
@@ -234,7 +280,6 @@
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
                         }
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
@@ -298,7 +343,7 @@
             return result;
         }
 
-        //格式化sql
+        //美化
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
                 if (select_sqlContent) {
@@ -313,6 +358,7 @@
             }
         );
 
+        //SQL提交
         $("#btn-submitsql").click(function () {
             //获取form对象，判断输入，通过则提交
             var formSubmit = $("#form-submitsql");
@@ -334,6 +380,7 @@
             }
         });
 
+        //提交二次确认
         $("#submitsqlcomfirm").click(function () {
             //获取form对象，判断输入，通过则提交
             var formSubmit = $("#form-submitsql");
@@ -344,48 +391,22 @@
             $('input[type=button]').prop('disabled', true);
         });
 
-        $("#btn-reset").click(function () {
-            editor.setValue("");
-            //重置选择器
-            $(".selectpicker").selectpicker('val', '');
-            $(".selectpicker").selectpicker('render');
-            $(".selectpicker").selectpicker('refresh');
-        });
-
+        //审批流程控制
         $("#audit_auth_groups").change(function audit_auth_groups() {
             var audit_auth_groups = $(this).val();
             $("div#" + audit_auth_groups).hide();
         });
     </script>
-    <!--autoreview-->
+    <!--check-->
     <script>
-        function validate() {
-            var result = true;
-            var group_name = $("#group_name").val();
-            var sqlContent = editor.getValue();
-            var instance_name = $("#instance_name").val();
-            var db_name = $("#db_name").val();
-            if (sqlContent === null || sqlContent.trim() === "" || sqlContent == $("#sql_content").attr("placeholder")) {
-                alert("SQL内容不能为空！");
-                return result = false;
-            } else if (group_name === null || group_name == $("#group_name").attr("data-placeholder")) {
-                alert("请选择组！");
-                return result = false;
-            } else if (instance_name === null || instance_name == $("#instance_name").attr("data-placeholder")) {
-                alert("请选择实例！");
-                return result = false;
-            } else if (db_name === null || db_name == $("#db_name").attr("data-placeholder")) {
-                alert("请选择数据库");
-                return result = false;
-            }
-            return result;
-        }
-
         $("#btn-autoreview").click(function () {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
             //先做表单验证，成功了提交ajax给后端
-            if (validate()) {
+            let formSubmit = $("#form-submitsql");
+            var sqlContent = editor.getValue();
+            $("#sql_content").val(sqlContent);
+            if (validateForm(formSubmit)) {
                 autoreview();
             } else {
                 $("#btn-format").removeClass('disabled');
@@ -484,13 +505,13 @@
                                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                                 pageSize: 500,                     //每页的记录行数（*）
                                 pageList: [500, 1000, 5000],       //可供选择的每页的行数（*）
-                                search: false,                      //是否显示表格搜索
+                                search: true,                      //是否显示表格搜索
                                 strictSearch: false,                //是否全匹配搜索
                                 showColumns: true,                  //是否显示所有的列（选择显示的列）
                                 showRefresh: false,                  //是否显示刷新按钮
                                 showExport: true,
                                 exportDataType: "all",
-                                minimumCountColumns: 2,             //最少允许的列数
+                                minimumCountColumns: 1,             //最少允许的列数
                                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                                 cardView: false,                    //是否显示详细视图
@@ -546,23 +567,9 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充实例信息
-                        $('#instance_name').selectpicker();
-                        var myObject = {};
-                        myObject.instance_name = sessionStorage.getItem('editClustername');
-                        if (myObject.instance_name) {
-                            $("#instance_name").selectpicker('val', myObject.instance_name);
-                            if ($("#instance_name").val()) {
-                                $("#instance_name").trigger("change")
-                            } else {
-                                $("#instance_name").empty();
-                                $("#instance_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择实例:</option>");
-                                $('#instance_name').selectpicker('render');
-                                $('#instance_name').selectpicker('refresh');
-                                $("#db_name").empty();
-                                $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
-                                $('#db_name').selectpicker('render');
-                                $('#db_name').selectpicker('refresh');
-                            }
+                        $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
+                        if ($("#instance_name").val()) {
+                            $("#instance_name").selectpicker().trigger("change");
                         }
                     }
                 },
@@ -585,12 +592,13 @@
                                 $("#optgroup-pgsql").append(instance);
                             } else if (result[i]['db_type'] === 'oracle') {
                                 $("#optgroup-oracle").append(instance);
-                            }
+                            } else if (result[i]['db_type'] === 'mongo') {
+                                $("#optgroup-mongo").append(instance);
+                            } 
                         }
                         $('#instance_name').selectpicker('render');
                         $('#instance_name').selectpicker('refresh');
                         $("#db_name").empty();
-                        $("#db_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                     } else {
@@ -642,7 +650,6 @@
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
-                $("#workflow_id").val(sessionStorage.getItem('editWorkflowDetailId'));
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
@@ -655,11 +662,11 @@
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitsql/") {
-                $("#workflow_name").val(sessionStorage.removeItem('editWorkflowNname'));
-                sessionStorage.removeItem('editGroup');
-                sessionStorage.removeItem('editSqlContent');
-                sessionStorage.removeItem('editClustername');
-                sessionStorage.removeItem('editIsbackup');
+                //重置页面内容
+                editor.setValue("");
+                $(".selectpicker").selectpicker('val', '');
+                $(".selectpicker").selectpicker('render');
+                $(".selectpicker").selectpicker('refresh');
             }
             if ($("#group_name").val()) {
                 $("#group_name").trigger("change");

@@ -19,16 +19,12 @@
         <div class="form-inline pull-right">
             <div class="form-group ">
                 <select id=instance_name class="form-control selectpicker" name="instance_name_list"
+                        title="请选择实例:"
                         data-live-search="true">
-                    <option value="is-empty" disabled="" selected="selected">请选择实例</option>
-                    {% for instance_name in instances %}
-                        <option value="{{ instance_name }}">{{ instance_name }}</option>
-                    {% endfor %}
                 </select>
             </div>
             <div id="command-div" class="form-group">
-                <select id="command" class="form-control selectpicker" name="command_type">
-                    <option value="is-empty" disabled="">command类型</option>
+                <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
                     <option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
                     <option value="Not Sleep">Not Sleep</option>
@@ -182,7 +178,10 @@
                             }
                         }
                     }],
-                    onLoadSuccess: function () {
+                    onLoadSuccess: function (data) {
+                        if (data.status !== 0) {
+                            alert("数据加载失败！" + data.msg);
+                        }
                     },
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -275,7 +274,10 @@
                         field: 'pct_free',
                         sortable: true
                     }],
-                    onLoadSuccess: function () {
+                    onLoadSuccess: function (data) {
+                        if (data.status !== 0) {
+                            alert("数据加载失败！" + data.msg);
+                        }
                     },
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -384,7 +386,10 @@
                         title: '运行事务的sql',
                         field: '运行事务的sql',
                     }],
-                    onLoadSuccess: function () {
+                    onLoadSuccess: function (data) {
+                        if (data.status !== 0) {
+                            alert("数据加载失败！" + data.msg);
+                        }
                     },
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -392,10 +397,6 @@
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
-                    },
-                    responseHandler: function (res) {
-                        //在ajax获取到数据，渲染表格之前，修改数据源
-                        return res;
                     }
                 });
             }
@@ -477,18 +478,47 @@
             }
         }
 
-        //如果已选择instance_name，进入页面自动填充，并且重置激活id
+
         $(document).ready(function () {
-                sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
-                if (sessionStorage.getItem('diagnostic_instance_name')) {
-                    $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name'));
-                    get_process_list();
-                    $("#command-div").show();
-                    $("#process-toolbar").show();
-                }
+                //获取用户实例列表
+                $(function () {
+                    $.ajax({
+                        type: "get",
+                        url: "/group/user_all_instances/",
+                        dataType: "json",
+                        data: {
+                            db_type: ['mysql']
+                        },
+                        complete: function () {
+                            //如果已选择instance_name，进入页面自动填充，并且重置激活id
+                            sessionStorage.setItem('diagnostic_active_li_id', 'process_tab');
+                            if (sessionStorage.getItem('diagnostic_instance_name')) {
+                                $("#instance_name").val(sessionStorage.getItem('diagnostic_instance_name')).trigger("change");
+                                $("#command-div").show();
+                                $("#process-toolbar").show();
+                            }
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                let result = data['data'];
+                                $("#instance_name").empty();
+                                for (let i = 0; i < result.length; i++) {
+                                    let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                    $("#instance_name").append(instance);
+                                }
+                                $('#instance_name').selectpicker('render');
+                                $('#instance_name').selectpicker('refresh');
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert(errorThrown);
+                        }
+                    });
+                });
             }
         );
-
         //tab切换,保留当前激活的标签id
         $(function () {
             $("#nav-tabs").on('shown.bs.tab', "li", function (e) {

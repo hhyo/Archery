@@ -25,20 +25,25 @@ def lists(request):
     limit = offset + limit
     search = request.POST.get('search', '')
 
-    instances = Instance.objects.all()
+    # 组合筛选项
+    filter_dict = dict()
     # 过滤搜索
     if search:
-        instances = instances.filter(nstance_name__icontains=search)
+        filter_dict['instance_name__icontains'] = search
     # 过滤实例类型
     if type:
-        instances = instances.filter(type=type)
+        filter_dict['type'] = type
     # 过滤数据库类型
     if db_type:
-        instances = instances.filter(db_type=db_type)
-    # 过滤标签，返回同时包含全部标签的实例，循环会生成多表JOIN，如果数据量大会存在效率问题
+        filter_dict['db_type'] = db_type
+
+    instances = Instance.objects.filter(**filter_dict)
+    # 过滤标签，返回同时包含全部标签的实例，TODO 循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
-            instances = instances.filter(instancetagrelations__instance_tag=tag, instancetagrelations__active=True)
+            instances = instances.filter(instancetagrelations__instance_tag=tag,
+                                         instancetag__active=True,
+                                         instancetagrelations__active=True)
 
     count = instances.count()
     instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
@@ -95,8 +100,8 @@ def param_list(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 获取已配置参数列表
     cnf_params = dict()
-    for param in ParamTemplate.objects.filter(variable_name__contains=search).values(
-            'variable_name', 'default_value', 'valid_values', 'description', 'editable'):
+    for param in ParamTemplate.objects.filter(db_type=ins.db_type, variable_name__contains=search).values(
+            'id', 'variable_name', 'default_value', 'valid_values', 'description', 'editable'):
         param['variable_name'] = param['variable_name'].lower()
         cnf_params[param['variable_name']] = param
     # 获取实例参数列表

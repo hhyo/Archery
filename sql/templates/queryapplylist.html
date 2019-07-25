@@ -32,8 +32,8 @@
                     <div class="form-group">
                         <select id="group_name" name="group_name"
                                 class="selectpicker show-tick form-control bs-select-hidden"
-                                data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择组:</option>
+                                title="请选择组:"
+                                data-live-search="true" required>
                             {% for group in group_list %}
                                 <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                             {% endfor %}
@@ -41,49 +41,49 @@
                     </div>
                     <div class="form-group">
                         <select id="instance_name" name="instance_name"
-                                class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
-                                data-placeholder="请选择实例:" required>
-                            <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                class="selectpicker show-tick form-control bs-select-hidden"
+                                title="请选择实例:"
+                                data-live-search="true" required>
                             // TODO 使用models中的choices 渲染
                             <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                             <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                             <optgroup id="optgroup-redis" label="Redis"></optgroup>
                             <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                             <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                            <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
 
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="priv_type" name="db_name" data-live-search="true"
-                                class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">权限级别:</option>
+                                title="权限级别:"
+                                class="form-control selectpicker show-tick bs-select-hidden">
                         </select>
                     </div>
                     <div id="db_name_div" class="form-group">
                         <select id="db_name" name="db_name" data-live-search="true"
+                                title="请选择数据库:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
                     <div id="db_name_multiple_div" class="form-group" style="display: none">
                         <select id="db_name_multiple" name="db_name" data-live-search="true" multiple="multiple"
+                                title="请选择数据库:" required
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
                         </select>
                     </div>
 
                     <div id="table_div" class="form-group">
                         <select id="table_name" name="table_name"
                                 class="form-control selectpicker show-tick bs-select-hidden" data-live-search="true"
-                                multiple='multiple' data-max-options="999" data-name="请选择表" data-placeholder="请选择表:"
-                                required>
-                            <option value="is-empty" disabled="" selected="selected">请选择表:</option>
+                                multiple='multiple' data-max-options="999"
+                                title="请选择表:" required>
                         </select>
                     </div>
                     <div class="form-group">
                         <select id="valid_date" name="valid_date"
+                                title="请选择授权时间:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择授权时间:</option>
                             <option value="day">一天</option>
                             <option value="week">一周</option>
                             <option value="month">一月</option>
@@ -92,8 +92,8 @@
                     </div>
                     <div class="form-group">
                         <select id="limit_num" name="limit_num"
+                                title="请选择查询限制行数:"
                                 class="form-control selectpicker show-tick bs-select-hidden ">
-                            <option value="is-empty" disabled="" selected="selected">请选择查询限制行数:</option>
                             <option value=100>100</option>
                             <option value=500>500</option>
                             <option value=1000>1000</option>
@@ -158,6 +158,7 @@
                         $("#optgroup-redis").empty();
                         $("#optgroup-pgsql").empty();
                         $("#optgroup-oracle").empty();
+                        $("#optgroup-mongo").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
@@ -170,6 +171,8 @@
                                 $("#optgroup-pgsql").append(instance);
                             } else if (result[i]['db_type'] === 'oracle') {
                                 $("#optgroup-oracle").append(instance);
+                            } else if (result[i]['db_type'] === 'mongo') {
+                                $("#optgroup-mongo").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');
@@ -405,7 +408,6 @@
                             $("#db_name").append(name);
                             $("#db_name_multiple").append(name);
                         }
-                        $('#db_name').prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择数据库:</option>");
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         $('#db_name_multiple').selectpicker('render');

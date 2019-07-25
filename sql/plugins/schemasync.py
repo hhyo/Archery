@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: schemasync.py 
+@author: hhyo
+@license: Apache Licence
+@file: schemasync.py
 @time: 2019/03/05
 """
 __author__ = 'hhyo'

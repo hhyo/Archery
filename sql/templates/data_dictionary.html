@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div class="form-group ">
+        <div id="toolbar" class="form-inline">
+            <div class="form-group">
+                <select id="instance_name" class="form-control selectpicker "
+                        title="请选择实例"
+                        data-live-search="true">
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="db_name" class="form-control selectpicker "
+                        title="请选择数据库"
+                        data-live-search="true">
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="jumpbox" class="modindex-jumpbox">
+    </div>
+
+    <table id="indexTable" class="indextable modindextable">
+    </table>
+
+    <div class="modal fade" id="showModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title">表元数据展示</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">表信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>表名</th>
+                                        <td id="table_name"></td>
+                                        <th>引擎</th>
+                                        <td id="engine"></td>
+                                        <th>行格式</th>
+                                        <td id="row_format"></td>
+                                        <th>表行数</th>
+                                        <td id="table_rows"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>平均行长度</th>
+                                        <td id="avg_row_length"></td>
+                                        <th>最大行长度</th>
+                                        <td id="max_data_length"></td>
+                                        <th>数据长度（K）</th>
+                                        <td id="data_length"></td>
+                                        <th>索引长度（K）</th>
+                                        <td id="index_length"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>数据总大小（K）</th>
+                                        <td id="data_total"></td>
+                                        <th>碎片大小</th>
+                                        <td id="data_free"></td>
+                                        <th>当前自增值</th>
+                                        <td id="auto_increment"></td>
+                                        <th>表的校验码</th>
+                                        <td id="table_collation"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="create_time"></td>
+                                        <th>更新时间</th>
+                                        <td id="update_time"></td>
+                                        <th>检查时间</th>
+                                        <td id="check_time"></td>
+                                        <th>表说明</th>
+                                        <td id="table_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="index-list" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">建表语句</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="create-table-sql" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-->
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <link href="{% static 'css/basic.css' %}" rel="stylesheet">
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                        if ($('#instance_name').val()) {
+                            $('#instance_name').selectpicker().trigger("change");
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance_name);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        });
+
+        //实例变动获取库
+        $("#instance_name").change(function () {
+            $('#db_name').empty();
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                },
+                complete: function () {
+                    $('#db_name').selectpicker('render');
+                    $('#db_name').selectpicker('refresh');
+                }
+            });
+        });
+
+        //库变动获取表
+        $("#db_name").change(function () {
+            get_table_list()
+        });
+
+        function get_table_list() {
+            var instance_name = $("#instance_name").val();
+            var db_name = $('#db_name').val();
+            if (instance_name === "" || db_name === "") {
+                alert("请先选择实例和数据库！");
+            } else {
+                $.ajax({
+                    type: "get",
+                    url: "/data_dictionary/table_list/",
+                    dataType: "json",
+                    data: {
+                        instance_name: instance_name,
+                        db_name: db_name
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#jumpbox').empty();
+                            $('#indexTable').empty();
+                            var result = data.data;
+                            for (var k in result) {
+                                var jumpBoxStr = '<a href="#cap-' + k + '" style="margin-left:0.4em;"><strong>' + k + '</strong></a>';
+                                $('#jumpbox').append(jumpBoxStr);
+                                $('#indexTable').append('<tr class="cap" id="cap-' + k + '">' +
+                                    '<td></td>' +
+                                    '<td><strong>' + k + '</strong></td>' +
+                                    '<td></td>' +
+                                    '</tr>');
+                                for (var i = 0; i < result[k].length; i++) {
+                                    var indexTableStr = '<tr>' +
+                                        '<td></td>' +
+                                        '<td><a href="javascript:;" onclick="showTableInfo(\'' + instance_name + '\',\'' + db_name + '\',\'' + result[k][i][0] + '\')" >' +
+                                        '<code class="xref">' + result[k][i][0] + '</code>' +
+                                        '</a></td>' +
+                                        '<td>' + result[k][i][1] + '</td>' +
+                                        '</tr>';
+                                    // console.log(indexTableStr);
+                                    $('#indexTable').append(indexTableStr);
+                                }
+                            }
+                            $('#indexTable').prepend('<tr class="pcap"><td>&#160;</td></tr>')
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    },
+                    complete: function () {
+                    }
+                });
+            }
+        }
+
+        function showTableInfo(ins_name, db_name, tb_name) {
+            // console.log(ins_name, db_name, tb_name);
+            $.ajax({
+                type: "get",
+                url: "/data_dictionary/table_info/",
+                dataType: "json",
+                data: {
+                    instance_name: ins_name,
+                    db_name: db_name,
+                    tb_name: tb_name
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+
+                        var meta_data_columns = result['meta_data']['column_list'];
+                        var meta_data_values = result['meta_data']['rows'];
+                        for (var i = 0; i < meta_data_columns.length; i++) {
+                            // console.log(meta_data_columns[i], meta_data_values[i]);
+                            $('#meta_data #' + meta_data_columns[i]).text(meta_data_values[i])
+                        }
+
+                        var columns_field = [];
+                        $.each(result['desc']['column_list'], function (i, column) {
+                            columns_field.push({
+                                "field": i,
+                                "title": column,
+                                "sortable": true
+                            });
+                        });
+                        $("#field-list").bootstrapTable('destroy').bootstrapTable({
+                            escape: true,
+                            data: result['desc']['rows'],
+                            columns: columns_field,
+                            showExport: true,
+                            exportDataType: "all",
+                            exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                            exportOptions: {
+                                //ignoreColumn: [0],  //忽略某些列的索引数组
+                                fileName: 'field'  //文件名称设置
+                            },
+                            showColumns: true,
+                            showToggle: true,
+                            clickToSelect: true,
+                            striped: true,
+                            pagination: true,
+                            pageSize: 30,
+                            pageList: [30, 50, 100, 500, 1000],
+                            locale: 'zh-CN'
+                        });
+                        var columns_index = [];
+                        $.each(result['index']['column_list'], function (i, column) {
+                            columns_index.push({
+                                "field": i,
+                                "title": column,
+                                "sortable": true
+                            });
+                        });
+                        $("#index-list").bootstrapTable('destroy').bootstrapTable({
+                            escape: true,
+                            data: result['index']['rows'],
+                            columns: columns_index,
+                            showExport: false,
+                            showColumns: false,
+                            showToggle: false,
+                            clickToSelect: true,
+                            striped: true,
+                            pagination: true,
+                            pageSize: 30,
+                            pageList: [30, 50, 100, 500, 1000],
+                            locale: 'zh-CN'
+                        });
+                        $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
+                            data: result['create_sql'],
+                            columns: [{
+                                field: 1,
+                                formatter: function (value, row, index) {
+                                    var sql = window.sqlFormatter.format(value);
+                                    //替换所有的换行符
+                                    sql = sql.replace(/\r\n/g, "<br>");
+                                    sql = sql.replace(/\n/g, "<br>");
+                                    //替换所有的空格
+                                    sql = sql.replace(/\s/g, " ");
+                                    return sql;
+
+                                }
+                            }],
+                            locale: 'zh-CN'
+                        });
+                        $('#showModal').modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                },
+                complete: function () {
+                }
+            });
+        }
+    </script>
+{% endblock %}

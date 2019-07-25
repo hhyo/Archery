@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 from django.urls import path
 from django.views.i18n import JavaScriptCatalog
@@ -6,7 +6,8 @@ from django.views.i18n import JavaScriptCatalog
 import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog
+from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog, \
+    data_dictionary
 from sql.utils import tasks
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
     path('passed/', sql_workflow.passed),
     path('execute/', sql_workflow.execute),
     path('timingtask/', sql_workflow.timing_task),
+    path('alter_run_date/', sql_workflow.alter_run_date),
     path('cancel/', sql_workflow.cancel),
     path('rollback/', views.rollback),
     path('sqlanalyze/', views.sqlanalyze),
@@ -54,6 +56,7 @@ urlpatterns = [
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
+    path('inception/osc_control/', sql_workflow.osc_control),
 
     path('sql_analyze/generate/', sql_analyze.generate),
     path('sql_analyze/analyze/', sql_analyze.analyze),
@@ -74,12 +77,17 @@ urlpatterns = [
     path('group/unassociated/', resource_group.unassociated_objects),
     path('group/auditors/', resource_group.auditors),
     path('group/changeauditors/', resource_group.changeauditors),
+    path('group/user_all_instances/', resource_group.user_all_instances),
 
     path('instance/list/', instance.lists),
     path('instance/users/', instance.users),
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
     path('instance/describetable/', instance.describe),
+
+    path('data_dictionary/', views.data_dictionary),
+    path('data_dictionary/table_list/', data_dictionary.table_list),
+    path('data_dictionary/table_info/', data_dictionary.table_info),
 
     path('param/list/', instance.param_list),
     path('param/history/', instance.param_history),

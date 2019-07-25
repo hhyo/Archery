@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: binglog2sql.py 
+@author: hhyo
+@license: Apache Licence
+@file: binglog2sql.py
 @time: 2019/03/23
 """
 from common.config import SysConfig
@@ -39,7 +39,7 @@ class Binlog2Sql(Plugin):
                 elif name in parse_mode_options and value:
                     cmd_args += f' --{name}'
                 elif name in range_options and value:
-                    cmd_args += f' --{name}={value}'
+                    cmd_args += f" --{name}='{value}'"
                 elif name in filter_options and value:
                     if name == 'only-dml':
                         cmd_args += f' --{name}'
