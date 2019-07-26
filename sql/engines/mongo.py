@@ -16,16 +16,17 @@ logger = logging.getLogger('default')
 
 class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
-        db_name = db_name or 0
-        conn = pymongo.MongoClient('mongodb://%s:%s@%s' % (self.user, self.password, self.host))
+        conn = pymongo.MongoClient(self.host, self.port, connect=True, connectTimeoutMS=10000)
+        if self.user and self.password:
+            conn.admin.authenticate(self.user, self.password)
         return conn
 
     @property
-    def name(self): # pragma: no cover
+    def name(self):  # pragma: no cover
         return 'Mongo'
 
     @property
-    def info(self): # pragma: no cover
+    def info(self):  # pragma: no cover
         return 'Mongo engine'
 
     def get_all_databases(self):
