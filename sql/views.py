@@ -159,12 +159,16 @@ def detail(request, workflow_id):
                 rows = review_result.json()
         except IndexError:
             review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
                 errormessage="Json decode failed."
                              "执行结果Json解析失败, 请联系管理员"
             )]
             rows = review_result.json()
         except json.decoder.JSONDecodeError:
             review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
                 # 迫于无法单元测试这里加上英文报错信息
                 errormessage="Json decode failed."
                              "执行结果Json解析失败, 请联系管理员"

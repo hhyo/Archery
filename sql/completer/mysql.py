@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: mysql.py 
+@author: hhyo
+@license: Apache Licence
+@file: mysql.py
 @time: 2019/03/09
 """
 import threading

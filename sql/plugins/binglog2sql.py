@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: binglog2sql.py 
+@author: hhyo
+@license: Apache Licence
+@file: binglog2sql.py
 @time: 2019/03/23
 """
 from common.config import SysConfig

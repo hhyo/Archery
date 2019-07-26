@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
 @author: hhyo
-@license: Apache Licence 
-@file: soar.py 
+@license: Apache Licence
+@file: soar.py
 @time: 2019/03/04
 """
 __author__ = 'hhyo'

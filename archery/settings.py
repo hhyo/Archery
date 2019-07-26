@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)

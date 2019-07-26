@@ -1,6 +1,6 @@
 import json
 import smtplib
-from unittest.mock import patch, Mock, MagicMock, ANY
+from unittest.mock import patch, ANY
 import datetime
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -21,7 +21,7 @@ class ConfigOpsTests(TestCase):
 
     def test_purge(self):
         archer_config = SysConfig()
-        archer_config.set('some_key','some_value')
+        archer_config.set('some_key', 'some_value')
         archer_config.purge()
         self.assertEqual({}, archer_config.sys_config)
         archer_config2 = SysConfig()
@@ -72,7 +72,7 @@ class SendMessageTest(TestCase):
         archer_config = SysConfig()
         self.smtp_server = 'test_smtp_server'
         self.smtp_user = 'test_smtp_user'
-        self.smtp_password = 'some_password'
+        self.smtp_password = 'some_str'
         self.smtp_port = 1234
         self.smtp_ssl = True
         archer_config.set('mail_smtp_server', self.smtp_server)
@@ -215,7 +215,7 @@ class CheckTest(TestCase):
                                email='XXX@xxx.com')
         self.superuser1.save()
         self.slave1 = Instance(instance_name='some_name', host='some_host', type='slave', db_type='mysql',
-                               user='some_user', port=1234, password='some_password')
+                               user='some_user', port=1234, password='some_str')
         self.slave1.save()
 
     def tearDown(self):
@@ -230,7 +230,7 @@ class CheckTest(TestCase):
         smtp_server = 'some_server'
         smtp_port = '1234'
         smtp_user = 'some_user'
-        smtp_pass = 'some_pass'
+        smtp_pass = 'some_str'
         # 略过superuser校验
         # 未开启mail开关
         mail_switch = 'false'
@@ -476,7 +476,7 @@ class AuthTest(TestCase):
 
     def setUp(self):
         self.username = 'some_user'
-        self.password = 'some_pass'
+        self.password = 'some_str'
         self.u1 = User(username=self.username, password=self.password, display='用户1')
         self.u1.save()
         self.resource_group1 = ResourceGroup.objects.create(group_name='some_group')

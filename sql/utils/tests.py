@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: tests.py 
+@author: hhyo
+@license: Apache Licence
+@file: tests.py
 @time: 2019/03/14
 """
 import datetime
@@ -473,7 +473,7 @@ class TestExecuteSql(TestCase):
     def setUp(self):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -558,9 +558,7 @@ class TestExecuteSql(TestCase):
         self.task_result.args = [self.wf.id]
         self.task_result.success = False
         self.task_result.stopped = datetime.datetime.now()
-        self.task_result.result.json.return_value = json.dumps([{'id': 1, 'sql': 'some_content'}])
-        self.task_result.result.warning = ''
-        self.task_result.result.error = ''
+        self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
         execute_callback(self.task_result)
@@ -583,9 +581,7 @@ class TestExecuteSql(TestCase):
         self.task_result.args = [self.wf.id]
         self.task_result.success = False
         self.task_result.stopped = datetime.datetime.now()
-        self.task_result.result.json.return_value = json.dumps([{'id': 1, 'sql': 'some_content'}])
-        self.task_result.result.warning = ''
-        self.task_result.result.error = ''
+        self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
         # 删除execute_result
@@ -640,7 +636,7 @@ class TestAudit(TestCase):
         tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -1015,7 +1011,7 @@ class TestAudit(TestCase):
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
     def test_can_review_no_prem(self, _detail_by_workflow_id, _auth_group_users):
         """测试判断用户当前是否是可审核，权限组不存在"""
-        aug = Group.objects.create(name='auth_group')
+        Group.objects.create(name='auth_group')
         _detail_by_workflow_id.side_effect = RuntimeError()
         _auth_group_users.return_value.filter.exists = True
         self.audit.workflow_type = WorkflowDict.workflow_type['sqlreview']
@@ -1059,7 +1055,7 @@ class TestDataMasking(TestCase):
         self.user = User.objects.create(username='user')
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.sys_config = SysConfig()
         self.wf1 = SqlWorkflow.objects.create(
             workflow_name='workflow_name',
@@ -1267,10 +1263,10 @@ class TestResourceGroup(TestCase):
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
         self.ins1 = Instance.objects.create(instance_name='some_ins1', type='slave', db_type='mysql',
                                             host='some_host',
-                                            port=3306, user='ins_user', password='some_pass')
+                                            port=3306, user='ins_user', password='some_str')
         self.ins2 = Instance.objects.create(instance_name='some_ins2', type='slave', db_type='mysql',
                                             host='some_host',
-                                            port=3306, user='ins_user', password='some_pass')
+                                            port=3306, user='ins_user', password='some_str')
         self.rgp1 = ResourceGroup.objects.create(group_name='group1')
         self.rgp2 = ResourceGroup.objects.create(group_name='group2')
         self.agp = Group.objects.create(name='auth_group')

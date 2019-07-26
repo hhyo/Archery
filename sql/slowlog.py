@@ -77,7 +77,11 @@ def slowquery_review(request):
         slow_sql_list = slowsql_obj.order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
 
         # QuerySet 序列化
-        sql_slow_log = [SlowLog for SlowLog in slow_sql_list]
+        sql_slow_log = []
+        for SlowLog in slow_sql_list:
+            SlowLog['QueryTimeAvg'] = round(SlowLog['QueryTimeAvg'], 6)
+            SlowLog['MySQLTotalExecutionTimes'] = round(SlowLog['MySQLTotalExecutionTimes'], 6)
+            sql_slow_log.append(SlowLog)
         result = {"total": slow_sql_count, "rows": sql_slow_log}
 
     # 返回查询结果
@@ -176,7 +180,12 @@ def slowquery_review_history(request):
                                                                         )
 
         # QuerySet 序列化
-        sql_slow_record = [SlowRecord for SlowRecord in slow_sql_record_list]
+        sql_slow_record = []
+        for SlowRecord in slow_sql_record_list:
+            SlowRecord['QueryTimePct95'] = round(SlowRecord['QueryTimePct95'], 6)
+            SlowRecord['QueryTimes'] = round(SlowRecord['QueryTimes'], 6)
+            SlowRecord['LockTimes'] = round(SlowRecord['LockTimes'], 6)
+            sql_slow_record.append(SlowRecord)
         result = {"total": slow_sql_record_count, "rows": sql_slow_record}
 
         # 返回查询结果

@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 class Const(object):
     # 定时任务id的前缀
@@ -28,6 +28,7 @@ class WorkflowDict:
         'audit_abort': 3,
         'audit_abort_display': '审核取消',
     }
+
 
 class SQLTuning:
     SYS_PARM_FILTER = [

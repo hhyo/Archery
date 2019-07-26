@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: sql_utils.py 
+@author: hhyo
+@license: Apache Licence
+@file: sql_utils.py
 @time: 2019/03/13
 """
 import re

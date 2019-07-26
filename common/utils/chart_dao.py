@@ -1,13 +1,13 @@
 # -*- coding: UTF-8 -*-
 
-import MySQLdb
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.db import connection
 
 
 class ChartDao(object):
     # 直接在archery数据库查询数据，用于报表
-    def __query(self, sql):
+    @staticmethod
+    def __query(sql):
         cursor = connection.cursor()
         effect_row = cursor.execute(sql)
         rows = cursor.fetchall()
@@ -23,7 +23,8 @@ class ChartDao(object):
         return result
 
     # 获取连续时间
-    def get_date_list(self, begin_date, end_date):
+    @staticmethod
+    def get_date_list(begin_date, end_date):
         dates = []
         this_day = begin_date
         while this_day <= end_date:
@@ -81,7 +82,6 @@ class ChartDao(object):
         group by engineer_display
         order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
-
 
     # SQL查询统计(每日检索行数)
     def querylog_effect_row_by_date(self, cycle):
