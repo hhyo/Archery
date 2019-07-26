@@ -558,9 +558,7 @@ class TestExecuteSql(TestCase):
         self.task_result.args = [self.wf.id]
         self.task_result.success = False
         self.task_result.stopped = datetime.datetime.now()
-        self.task_result.result.json.return_value = json.dumps([{'id': 1, 'sql': 'some_content'}])
-        self.task_result.result.warning = ''
-        self.task_result.result.error = ''
+        self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
         execute_callback(self.task_result)
@@ -583,9 +581,7 @@ class TestExecuteSql(TestCase):
         self.task_result.args = [self.wf.id]
         self.task_result.success = False
         self.task_result.stopped = datetime.datetime.now()
-        self.task_result.result.json.return_value = json.dumps([{'id': 1, 'sql': 'some_content'}])
-        self.task_result.result.warning = ''
-        self.task_result.result.error = ''
+        self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
         # 删除execute_result

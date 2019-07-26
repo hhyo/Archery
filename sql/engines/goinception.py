@@ -71,6 +71,18 @@ class GoInceptionEngine(EngineBase):
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
+
+        # 执行报错，inception crash或者执行中连接异常的场景
+        if inception_result.error and not execute_result.rows:
+            execute_result.error = inception_result.error
+            execute_result.rows = [ReviewResult(
+                stage='Execute failed',
+                errlevel=2,
+                stagestatus='异常终止',
+                errormessage=f'goInception Error: {inception_result.error}',
+                sql=workflow.sqlworkflowcontent.sql_content)]
+            return execute_result
+
         # 把结果转换为ReviewSet
         for r in inception_result.rows:
             execute_result.rows += [ReviewResult(inception_result=r)]
