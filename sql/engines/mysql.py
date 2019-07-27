@@ -142,13 +142,20 @@ class MysqlEngine(EngineBase):
         return result
 
     def filter_sql(self, sql='', limit_num=0):
-        # 对查询sql增加limit限制，# TODO limit改写待优化
-        sql_lower = sql.lower().rstrip(';').strip()
-        if re.match(r"^select", sql_lower):
-            if re.search(r"limit\s+(\d+)$", sql_lower) is None:
-                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
-                    return f"{sql.rstrip(';')} limit {limit_num};"
-        return f"{sql.rstrip(';')};"
+        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
+        sql = sql.rstrip(';').strip()
+        if re.match(r"^select", sql, re.I):
+            # LIMIT N
+            limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)
+            # LIMIT N, N 或LIMIT N OFFSET N
+            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
+            if limit_n.search(sql):
+                sql = limit_n.sub(f'limit {limit_num};', sql)
+            elif limit_offset.search(sql):
+                sql = limit_offset.sub(f'limit {limit_num};', sql)
+            else:
+                sql = f'{sql} limit {limit_num};'
+        return sql
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
