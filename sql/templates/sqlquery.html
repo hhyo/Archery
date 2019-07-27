@@ -482,7 +482,7 @@
                 $("#db_name").selectpicker().trigger("change");
             }
             let sql = row_data['sqllog'];
-            let limit_num = 100;
+            let limit_num = $("#limit_num").val();
             editor.setValue(sql);
             editor.clearSelection();
             $("#limit_num").val(limit_num);
