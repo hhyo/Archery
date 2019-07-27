@@ -150,8 +150,12 @@ class MysqlEngine(EngineBase):
             # LIMIT N, N 或LIMIT N OFFSET N
             limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
             if limit_n.search(sql):
+                sql_limit = limit_n.search(sql).group(1)
+                limit_num = min(int(limit_num), int(sql_limit))
                 sql = limit_n.sub(f'limit {limit_num};', sql)
             elif limit_offset.search(sql):
+                sql_limit = limit_offset.search(sql).group(3)
+                limit_num = min(int(limit_num), int(sql_limit))
                 sql = limit_offset.sub(f'limit {limit_num};', sql)
             else:
                 sql = f'{sql} limit {limit_num};'
