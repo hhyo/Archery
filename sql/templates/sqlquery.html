@@ -473,6 +473,7 @@
             let row_data = $('#sql-log').bootstrapTable('getRowByUniqueId', query_log_id);
             $("#instance_name").selectpicker('val', row_data['instance_name']);
             if ($("#instance_name").val()) {
+                $("#instance_name").selectpicker().trigger("change");
                 get_instance(false)
             }
             $("#db_name").selectpicker('val', row_data['db_name']);
