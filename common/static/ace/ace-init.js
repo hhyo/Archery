@@ -171,7 +171,7 @@ $("#instance_name").change(function () {
         editor.session.setMode("ace/mode/" + "sqlserver");
     } else if (optgroup === "Redis") {
         editor.setTheme("ace/theme/" + "textmate");
-        editor.session.setMode();
+        editor.session.setMode("ace/mode/" + "text");
         editor.setOptions({
             enableSnippets: false,
         });
@@ -187,5 +187,8 @@ $("#instance_name").change(function () {
         editor.setOptions({
             enableSnippets: false,
         });
+    } else {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mysql");
     }
 });
