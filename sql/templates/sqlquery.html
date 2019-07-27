@@ -474,7 +474,6 @@
             $("#instance_name").selectpicker('val', row_data['instance_name']);
             if ($("#instance_name").val()) {
                 $("#instance_name").selectpicker().trigger("change");
-                get_instance(false)
             }
             $("#db_name").selectpicker('val', row_data['db_name']);
             let instance_name = $("#instance_name").val();
@@ -758,6 +757,8 @@
 
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
+            $('input[type=button]').addClass('disabled');
+            $('input[type=button]').prop('disabled', true);
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
@@ -882,7 +883,7 @@
         }
 
         $("#instance_name").change(function () {
-            get_instance(true)
+            get_instance(false)
         });
 
 
