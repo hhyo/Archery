@@ -95,6 +95,7 @@ urlpatterns = [
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
+    path('query/favorite/', query.favorite),
     path('query/explain/', sql.sql_optimize.explain),
     path('query/applylist/', sql.query_privileges.query_priv_apply_list),
     path('query/userprivileges/', sql.query_privileges.user_query_priv),

@@ -188,32 +188,59 @@ def querylog(request):
     # 获取用户信息
     user = request.user
 
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.GET.get('limit'))
+    offset = int(request.GET.get('offset'))
     limit = offset + limit
-    search = request.POST.get('search', '')
+    star = True if request.GET.get('star') == 'true' else False
+    query_log_id = request.GET.get('query_log_id')
+    search = request.GET.get('search', '')
 
-    sql_log = QueryLog.objects.all()
+    # 组合筛选项
+    filter_dict = dict()
+    # 是否收藏
+    if star:
+        filter_dict['favorite'] = star
+    # 语句别名
+    if query_log_id:
+        filter_dict['id'] = query_log_id
+    # 管理员查看全部数据,普通用户查看自己的数据
+    if not user.is_superuser:
+        filter_dict['username'] = user.username
+
+    # 过滤组合筛选项
+    sql_log = QueryLog.objects.filter(**filter_dict)
+
     # 过滤搜索信息
-    sql_log = sql_log.filter(Q(sqllog__icontains=search) | Q(user_display__icontains=search))
-    # 管理员查看全部数据
-    if user.is_superuser:
-        sql_log = sql_log
-    # 普通用户查看自己的数据
-    else:
-        sql_log = sql_log.filter(username=user.username)
+    sql_log = sql_log.filter(Q(sqllog__icontains=search) |
+                             Q(user_display__icontains=search) |
+                             Q(alias__icontains=search))
 
     sql_log_count = sql_log.count()
-    sql_log_list = sql_log.order_by('-id')[offset:limit]
+    sql_log_list = sql_log.order_by('-id')[offset:limit].values(
+        "id", "instance_name", "db_name", "sqllog",
+        "effect_row", "cost_time", "user_display", "favorite", "alias",
+        "create_time")
     # QuerySet 序列化
-    sql_log_list = serializers.serialize("json", sql_log_list)
-    sql_log_list = json.loads(sql_log_list)
-    sql_log = [log_info['fields'] for log_info in sql_log_list]
-
-    result = {"total": sql_log_count, "rows": sql_log}
+    rows = [row for row in sql_log_list]
+    result = {"total": sql_log_count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+@permission_required('sql.menu_sqlquery', raise_exception=True)
+def favorite(request):
+    """
+    收藏查询记录，并且设置别名
+    :param request:
+    :return:
+    """
+    query_log_id = request.POST.get('query_log_id')
+    star = True if request.POST.get('star') == 'true' else False
+    alias = request.POST.get('alias')
+    QueryLog(id=query_log_id, favorite=star, alias=alias).save(update_fields=['favorite', 'alias'])
+    # 返回查询结果
+    return HttpResponse(json.dumps({'status': 0, 'msg': 'ok'}), content_type='application/json')
 
 
 def kill_query_conn(instance_id, thread_id):

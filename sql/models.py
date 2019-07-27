@@ -400,7 +400,7 @@ class QueryLog(models.Model):
     # TODO 改为实例外键
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=64)
-    sqllog = models.TextField('执行的sql查询')
+    sqllog = models.TextField('执行的查询语句')
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
     # TODO 改为user 外键
@@ -409,6 +409,8 @@ class QueryLog(models.Model):
     priv_check = models.BooleanField('查询权限是否正常校验', choices=((False, '跳过'), (True, '正常'),), default=False)
     hit_rule = models.BooleanField('查询是否命中脱敏规则', choices=((False, '未命中/未知'), (True, '命中')), default=False)
     masking = models.BooleanField('查询结果是否正常脱敏', choices=((False, '否'), (True, '是'),), default=False)
+    favorite = models.BooleanField('是否收藏', choices=((False, '否'), (True, '是'),), default=False)
+    alias = models.CharField('语句标识', max_length=64, default='', blank=True)
     create_time = models.DateTimeField('操作时间', auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 

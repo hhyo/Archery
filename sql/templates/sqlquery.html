@@ -1,11 +1,62 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="query-log-toolbar" class="form-inline pull-left">
+        <div class="form-group">
+            <select id="filter-star" class="form-control selectpicker"
+                    title="全部">
+                <option value="" selected="selected">全部</option>
+                <option value="true">已收藏</option>
+                <option value="false">未收藏</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <select id="filter-alias" class="form-control selectpicker"
+                    data-live-search="true"
+                    title="全部">
+                <option value="" selected="selected">全部</option>
+                {% for sql in favorites %}
+                    <option value={{ sql.id }}>{{ sql.alias }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <!-- 收藏信息弹出框-->
+    <div class="modal fade" id="favorite">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content message_align">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">收藏语句</h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="query_log_id">
+                    <input id="alias" name="alias" type='text' autocomplete="off" class="form-control"
+                           placeholder="请输入语句别名"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button type="button" id="btn-star" class="btn btn-danger" onclick="star()">收藏</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row clearfix">
         <div class="col-md-12">
             <div class="panel panel-default">
-                <div class="panel-heading">
+                <div class="panel-heading form-inline">
                     SQL查询
+                    <select id="favorites" name="favorites"
+                            class="form-control selectpicker"
+                            data-live-search="true"
+                            title="常用查询"
+                            required>
+                        {% for sql in favorites %}
+                            <option value={{ sql.id }}>{{ sql.alias }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="panel-body">
                     <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
@@ -214,12 +265,11 @@
     <!-- 查询历史  -->
     <script>
         //获取查询列表
-        function get_querylog() {
-            //采取异步请求
+        function get_querylog(query_log_id) {
             //初始化table
             $('#sql-log').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
-                method: 'post',
+                method: 'get',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/query/querylog/",
                 striped: true,                      //是否显示行间隔色
@@ -248,12 +298,14 @@
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                   //是否显示父子表
                 locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",                //指明自定义的toolbar
+                toolbar: "#query-log-toolbar",      //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //获取查询列表请求服务数据时所传参数
                 queryParams:
                     function (params) {
                         return {
+                            star: $("#filter-star").val(),
+                            query_log_id: $("#filter-alias").val(),
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search
@@ -276,6 +328,19 @@
                     return html.join('');
                 },
                 columns: [{
+                    title: '操作',
+                    field: '',
+                    formatter: function (value, row, index) {
+                        if (row.favorite) {
+                            var btn_favorite = "<button type=\"button\" class=\"btn btn-xs\" data-toggle=\"tooltip\" title=\"取消收藏\" onclick=\"unstar(" + row.id + ")" + "\"><span class=\"fa fa-star\"></span></button>\n";
+                        } else {
+                            var btn_favorite = "<button type=\"button\" class=\"btn btn-xs\" data-toggle=\"modal\" data-target=\"#favorite\" onclick=\"star(" + row.id + ")" + "\"><span class=\"fa fa-star-o\"></span></button>\n";
+                        }
+                        let btn_re_query = "<button type=\"button\" class=\"btn btn-xs\"  data-toggle=\"tooltip\" title=\"一键查询\" onclick=\"re_query(" + row.id + ")" + "\"><span class=\"fa fa-search\"></span></button>";
+                        return btn_favorite + btn_re_query
+                    }
+
+                }, {
                     title: '用户',
                     field: 'user_display'
                 }, {
@@ -288,7 +353,7 @@
                     title: '查询时间',
                     field: 'create_time'
                 }, {
-                    title: 'sql语句',
+                    title: '语句',
                     field: 'sqllog',
                     formatter: function (value, row, index) {
                         if (value.length > 50) {
@@ -299,7 +364,7 @@
                         }
                     }
                 }, {
-                    title: '完整sql语句',
+                    title: '完整语句',
                     field: 'sqllog',
                     visible: false // 默认不显示
                 }, {
@@ -310,6 +375,9 @@
                     field: 'cost_time'
                 }],
                 onLoadSuccess: function () {
+                    if (query_log_id) {
+                        re_query(query_log_id)
+                    }
                 },
                 onLoadError: function () {
                     alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -323,6 +391,106 @@
                     return res;
                 }
             });
+        }
+
+        // 筛选
+        $("#filter-star").change(function () {
+            get_querylog();
+        });
+        $("#filter-alias").change(function () {
+            get_querylog()
+        });
+
+        // 快捷查询
+        $("#favorites").change(function () {
+            let query_log_id = $("#favorites").val();
+            $("#filter-alias").val(query_log_id);
+            $('#filter-alias').selectpicker('render');
+            $('#filter-alias').selectpicker('refresh');
+            get_querylog(query_log_id);
+        });
+
+        // 收藏
+        function star(query_log_id) {
+            if (query_log_id) {
+                $("#query_log_id").val(query_log_id);
+            } else if ($("#alias").val()) {
+                $.ajax({
+                    type: "post",
+                    url: "/query/favorite/",
+                    dataType: "json",
+                    data: {
+                        query_log_id: $("#query_log_id").val(),
+                        star: true,
+                        alias: $("#alias").val(),
+                    },
+                    complete: function () {
+                        $("#sql-log").bootstrapTable('refresh');
+                        $("#favorite").modal('hide');
+                        $("#alias").val('')
+                    },
+                    success: function (data) {
+                        if (data.status !== 0) {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            } else {
+                alert('请输入语句别名！')
+            }
+        }
+
+        // 取消收藏
+        function unstar(query_log_id) {
+            $.ajax({
+                type: "post",
+                url: "/query/favorite/",
+                dataType: "json",
+                data: {
+                    query_log_id: query_log_id,
+                    star: false,
+                    alias: '',
+                },
+                complete: function () {
+                    $("#sql-log").bootstrapTable('refresh');
+                },
+                success: function (data) {
+                    if (data.status !== 0) {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 一键重新查询
+        function re_query(query_log_id) {
+            let row_data = $('#sql-log').bootstrapTable('getRowByUniqueId', query_log_id);
+            $("#instance_name").selectpicker('val', row_data['instance_name']);
+            if ($("#instance_name").val()) {
+                get_instance(false)
+            }
+            $("#db_name").selectpicker('val', row_data['db_name']);
+            let instance_name = $("#instance_name").val();
+            let db_name = $("#db_name").val();
+            if (db_name) {
+                $("#db_name").selectpicker().trigger("change");
+            }
+            let sql = row_data['sqllog'];
+            let limit_num = 100;
+            editor.setValue(sql);
+            editor.clearSelection();
+            $("#limit_num").val(limit_num);
+            if (instance_name && db_name && sql) {
+                sqlquery()
+            } else {
+                alert("信息不完整，无法一键查询！")
+            }
         }
     </script>
     <!-- 执行结果  -->
@@ -633,7 +801,7 @@
     <!-- common -->
     <script>
         // 实例变更获取数据库
-        $("#instance_name").change(function () {
+        function get_instance(async) {
             $("#db_name").empty();
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
@@ -671,11 +839,16 @@
                 type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
+                async: async,
                 data: {
                     instance_name: $("#instance_name").val(),
                     resource_type: "database"
                 },
                 complete: function () {
+                    $("#db_name").selectpicker('val', db_name);
+                    if ($("#db_name").val()) {
+                        $("#db_name").selectpicker().trigger("change");
+                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -705,6 +878,10 @@
                     alert(errorThrown);
                 }
             });
+        }
+
+        $("#instance_name").change(function () {
+            get_instance(true)
         });
 
 
@@ -891,7 +1068,7 @@
                                     $("#optgroup-oracle").append(instance);
                                 } else if (result[i]['db_type'] === 'mongo') {
                                     $("#optgroup-mongo").append(instance);
-                                } 
+                                }
                             }
                             $('#instance_name').selectpicker('render');
                             $('#instance_name').selectpicker('refresh');
