@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import simplejson as json
 
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet

@@ -17,7 +17,7 @@ from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2s
 from sql.utils.execute_sql import execute_callback
 from sql.query import kill_query_conn
 from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
-    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit
+    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit, QueryLog
 
 User = get_user_model()
 
@@ -685,11 +685,18 @@ class TestQuery(TestCase):
         self.superuser1 = User.objects.create(username='super1', is_superuser=True)
         self.u1 = User.objects.create(username='test_user', display='中文显示', is_active=True)
         self.u2 = User.objects.create(username='test_user2', display='中文显示', is_active=True)
+        self.query_log = QueryLog.objects.create(instance_name=self.slave1.instance_name,
+                                                 db_name='some_db',
+                                                 sqllog='select 1;',
+                                                 effect_row=10,
+                                                 cost_time=1,
+                                                 username=self.superuser1.username)
         sql_query_perm = Permission.objects.get(codename='query_submit')
         self.u2.user_permissions.add(sql_query_perm)
 
     def tearDown(self):
         QueryPrivileges.objects.all().delete()
+        QueryLog.objects.all().delete()
         self.u1.delete()
         self.u2.delete()
         self.superuser1.delete()
@@ -789,6 +796,41 @@ class TestQuery(TestCase):
     def test_kill_query_conn(self, _get_engine):
         kill_query_conn(self.slave1.id, 10)
         _get_engine.return_value.kill_connection.return_value = ResultSet()
+
+    def test_query_log(self):
+        """测试获取查询历史"""
+        c = Client()
+        c.force_login(self.superuser1)
+        QueryLog(id=self.query_log.id, favorite=True, alias='test_a').save(update_fields=['favorite', 'alias'])
+        data = {"star": "true",
+                "query_log_id": self.query_log.id,
+                "limit": 14,
+                "offset": 0, }
+        r = c.get('/query/querylog/', data=data)
+        self.assertEqual(r.json()['total'],1)
+
+    def test_star(self):
+        """测试查询语句收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post('/query/favorite/', data={'query_log_id': self.query_log.id,
+                                             'star': 'true',
+                                             'alias': 'test_alias'})
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertTrue(query_log.favorite)
+        self.assertEqual(query_log.alias, 'test_alias')
+
+    def test_un_star(self):
+        """测试查询语句取消收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post('/query/favorite/', data={'query_log_id': self.query_log.id,
+                                             'star': 'false',
+                                             'alias': ''})
+        r_json = r.json()
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertFalse(query_log.favorite)
+        self.assertEqual(query_log.alias, '')
 
 
 class TestWorkflowView(TestCase):

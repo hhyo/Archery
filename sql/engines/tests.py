@@ -341,7 +341,31 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable limit 10'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 1;')
+
+    def test_filter_sql_with_limit_min(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
         self.assertEqual(check_result, 'select user from usertable limit 10;')
+
+    def test_filter_sql_with_limit_offset(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10 offset 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 1;')
+
+    def test_filter_sql_with_limit_nn(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10, 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 1;')
+
+    def test_filter_sql_upper(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'SELECT USER FROM usertable LIMIT 10, 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 1;')
 
     @patch('sql.engines.mysql.data_masking', return_value=ResultSet())
     def test_query_masking(self, _data_masking):
@@ -1433,7 +1457,7 @@ class MongoTest(TestCase):
         mock_db = Mock()
         # 下面是查表示例返回结果
         mock_db.list_collection_names.return_value = ['u', 'v', 'w']
-        mock_get_connection.return_value = {'some_db' : mock_db}
+        mock_get_connection.return_value = {'some_db': mock_db}
         table_list = self.engine.get_all_tables('some_db')
         mock_db.list_collection_names.assert_called_once()
         self.assertEqual(table_list.rows, ['u', 'v', 'w'])
