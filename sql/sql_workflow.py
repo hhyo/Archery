@@ -81,7 +81,7 @@ def sql_workflow_list(request):
 
     # 过滤搜索项，模糊检索项包括提交人名称、工单名
     if search:
-        workflow = workflow(Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
+        workflow = workflow.filter(Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
 
     count = workflow.count()
     workflow_list = workflow.order_by('-create_time')[offset:limit].values(
