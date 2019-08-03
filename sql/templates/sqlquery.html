@@ -470,6 +470,7 @@
 
         // 一键重新查询
         function re_query(query_log_id) {
+            sessionStorage.setItem('re_query', 'true');
             let row_data = $('#sql-log').bootstrapTable('getRowByUniqueId', query_log_id);
             $("#instance_name").selectpicker('val', row_data['instance_name']);
             if ($("#instance_name").val()) {
@@ -487,10 +488,13 @@
             editor.clearSelection();
             $("#limit_num").val(limit_num);
             if (instance_name && db_name && sql) {
+                $('input[type=button]').addClass('disabled');
+                $('input[type=button]').prop('disabled', true);
                 sqlquery()
             } else {
                 alert("信息不完整，无法一键查询！")
             }
+            sessionStorage.removeItem('re_query');
         }
     </script>
     <!-- 执行结果  -->
@@ -757,8 +761,6 @@
 
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
-            $('input[type=button]').addClass('disabled');
-            $('input[type=button]').prop('disabled', true);
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
@@ -883,7 +885,11 @@
         }
 
         $("#instance_name").change(function () {
-            get_instance(false)
+            if (sessionStorage.getItem('re_query')) {
+                get_instance(false)
+            } else {
+                get_instance(true)
+            }
         });
 
 
