@@ -367,6 +367,12 @@ class TestMysql(TestCase):
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
         self.assertEqual(check_result, 'SELECT USER FROM usertable limit 1;')
 
+    def test_filter_sql_not_select(self):
+        new_engine = MysqlEngine(instance=self.ins1)
+        sql_without_limit = 'show create table usertable;'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'show create table usertable;')
+
     @patch('sql.engines.mysql.data_masking', return_value=ResultSet())
     def test_query_masking(self, _data_masking):
         query_result = ResultSet()
