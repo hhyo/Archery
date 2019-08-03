@@ -159,6 +159,8 @@ class MysqlEngine(EngineBase):
                 sql = limit_offset.sub(f'limit {limit_num};', sql)
             else:
                 sql = f'{sql} limit {limit_num};'
+        else:
+            sql = f'{sql};'
         return sql
 
     def query_masking(self, db_name=None, sql='', resultset=None):
