@@ -520,6 +520,36 @@ class Config(models.Model):
         verbose_name_plural = u'系统配置'
 
 
+class SysDictType(models.Model):
+    """
+    字典类型表
+    """
+    type_code = models.CharField('字典类型编码', max_length=50, primary_key=True)
+    name = models.CharField('字典类型名称', max_length=50)
+
+    class Meta:
+        managed = True
+        db_table = 'sys_dict_type'
+        verbose_name = u'系统字典类型表'
+        verbose_name_plural = u'系统字典类型表'
+
+
+class SysDict(models.Model):
+    """
+    字典表
+    """
+    code = models.CharField('字典编码', max_length=50, primary_key=True)
+    type_code = models.ForeignKey(SysDictType, on_delete=models.CASCADE)
+    name = models.CharField('字典名称', max_length=100)
+    value = models.CharField('字典值', max_length=100)
+
+    class Meta:
+        managed = True
+        db_table = 'sys_dict'
+        verbose_name = u'系统字典表'
+        verbose_name_plural = u'系统字典表'
+
+
 class AliyunAccessKey(models.Model):
     """
     记录阿里云的认证信息
