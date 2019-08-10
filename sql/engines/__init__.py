@@ -30,6 +30,11 @@ class EngineBase:
         return 'Base engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return False
+
+    @property
     def server_version(self):
         """返回引擎服务器版本，返回对象为tuple (x,y,z)"""
         return tuple()

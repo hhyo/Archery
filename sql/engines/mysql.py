@@ -42,6 +42,11 @@ class MysqlEngine(EngineBase):
         return 'MySQL engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @property
     def seconds_behind_master(self):
         slave_status = self.query(sql='show slave status')
         return slave_status.rows[0][32] if slave_status.rows else None
