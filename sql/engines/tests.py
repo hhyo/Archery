@@ -694,7 +694,7 @@ class TestPgSQL(TestCase):
         self.assertIsInstance(query_result, ResultSet)
         self.assertListEqual(query_result.rows, [(1,)])
 
-    @patch('sql.engines.pgsql.PgSQLEngine.query',
+    @patch('sql.engines.pgsql.PgSQLEngine._query',
            return_value=ResultSet(rows=[('postgres',), ('archery',), ('template1',), ('template0',)]))
     def test_get_all_databases(self, _query):
         new_engine = PgSQLEngine(instance=self.ins)
