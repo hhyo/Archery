@@ -79,13 +79,6 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(db_name, tb_name)
-        column_list = [row[0] for row in result.rows]
-        result.rows = column_list
-        return result
-
-    def describe_table(self, db_name, tb_name):
-        """return ResultSet 类似查询"""
         sql = f"""SELECT 
             COLUMN_NAME,
             COLUMN_TYPE,
@@ -100,7 +93,15 @@ class MysqlEngine(EngineBase):
             TABLE_SCHEMA = '{db_name}'
                 AND TABLE_NAME = '{tb_name}'
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(sql=sql)
+        result = self.query(db_name=db_name, sql=sql)
+        column_list = [row[0] for row in result.rows]
+        result.rows = column_list
+        return result
+
+    def describe_table(self, db_name, tb_name):
+        """return ResultSet 类似查询"""
+        sql = f"show create table {tb_name};"
+        result = self.query(db_name=db_name, sql=sql)
         return result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
