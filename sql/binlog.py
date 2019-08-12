@@ -34,16 +34,18 @@ def binlog_list(request):
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
     query_engine = get_engine(instance=instance)
-    binlog = query_engine.query('information_schema', 'show binary logs;')
-    column_list = binlog.column_list
-    rows = []
-    for row in binlog.rows:
-        row_info = {}
-        for row_index, row_item in enumerate(row):
-            row_info[column_list[row_index]] = row_item
-        rows.append(row_info)
-
-    result = {'status': 0, 'msg': 'ok', 'data': rows}
+    query_result = query_engine.query('information_schema', 'show binary logs;')
+    if not query_result.error:
+        column_list = query_result.column_list
+        rows = []
+        for row in query_result.rows:
+            row_info = {}
+            for row_index, row_item in enumerate(row):
+                row_info[column_list[row_index]] = row_item
+            rows.append(row_info)
+        result = {'status': 0, 'msg': 'ok', 'data': rows}
+    else:
+        result = {'status': 1, 'msg': query_result.error}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
