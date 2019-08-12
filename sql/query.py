@@ -33,6 +33,7 @@ def query(request):
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
     limit_num = int(request.POST.get('limit_num', 0))
+    schema_name = request.POST.get('schema_name', None)
     user = request.user
 
     result = {'status': 0, 'msg': 'ok', 'data': {}}
@@ -91,7 +92,12 @@ def query(request):
             run_date = (datetime.datetime.now() + datetime.timedelta(seconds=max_execution_time))
             add_kill_conn_schedule(schedule_name, run_date, instance.id, thread_id)
         with FuncTimer() as t:
-            query_result = query_engine.query(db_name, sql_content, limit_num)
+            # 获取主从延迟信息
+            seconds_behind_master = query_engine.seconds_behind_master
+            if instance.db_type == 'pgsql':  # TODO 此处判断待优化，请在 修改传参方式后去除
+                query_result = query_engine.query(db_name, sql_content, limit_num, schema_name=schema_name)
+            else:
+                query_result = query_engine.query(db_name, sql_content, limit_num)
         query_result.query_time = t.cost
         # 返回查询结果后删除schedule
         if thread_id:
@@ -139,8 +145,7 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
-            if hasattr(query_engine, 'seconds_behind_master'):
-                result['data']['seconds_behind_master'] = query_engine.seconds_behind_master
+            result['data']['seconds_behind_master'] = seconds_behind_master
             if int(limit_num) == 0:
                 limit_num = int(query_result.affected_rows)
             else:

@@ -42,6 +42,11 @@ class MysqlEngine(EngineBase):
         return 'MySQL engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @property
     def seconds_behind_master(self):
         slave_status = self.query(sql='show slave status')
         return slave_status.rows[0][32] if slave_status.rows else None
@@ -74,13 +79,6 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(db_name, tb_name)
-        column_list = [row[0] for row in result.rows]
-        result.rows = column_list
-        return result
-
-    def describe_table(self, db_name, tb_name):
-        """return ResultSet 类似查询"""
         sql = f"""SELECT 
             COLUMN_NAME,
             COLUMN_TYPE,
@@ -95,7 +93,15 @@ class MysqlEngine(EngineBase):
             TABLE_SCHEMA = '{db_name}'
                 AND TABLE_NAME = '{tb_name}'
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(sql=sql)
+        result = self.query(db_name=db_name, sql=sql)
+        column_list = [row[0] for row in result.rows]
+        result.rows = column_list
+        return result
+
+    def describe_table(self, db_name, tb_name):
+        """return ResultSet 类似查询"""
+        sql = f"show create table {tb_name};"
+        result = self.query(db_name=db_name, sql=sql)
         return result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
@@ -159,6 +165,8 @@ class MysqlEngine(EngineBase):
                 sql = limit_offset.sub(f'limit {limit_num};', sql)
             else:
                 sql = f'{sql} limit {limit_num};'
+        else:
+            sql = f'{sql};'
         return sql
 
     def query_masking(self, db_name=None, sql='', resultset=None):

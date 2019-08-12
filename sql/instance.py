@@ -349,4 +349,7 @@ def describe(request):
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
+    if result['data']['error']:
+        result['status'] = 1
+        result['msg'] = result['data']['error']
     return HttpResponse(json.dumps(result), content_type='application/json')
