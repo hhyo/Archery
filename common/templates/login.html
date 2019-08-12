@@ -32,9 +32,11 @@
             <div class="form-group">
                 <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>登录</button>
             </div>
-            <div class="form-group">
-                <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
-            </div>
+            {% if sign_up_enabled %}
+                <div class="form-group">
+                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
+                </div>
+            {% endif %}
         </form>
     </div>
 </div>
