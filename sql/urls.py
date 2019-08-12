@@ -45,6 +45,7 @@ urlpatterns = [
     path('group/', views.group),
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
+    path('instanceuser/', views.instanceuser),
     path('instanceuser/<int:instance_id>/', views.instanceuser),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
