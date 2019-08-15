@@ -118,6 +118,18 @@ class InceptionEngine(EngineBase):
                                 {sql_tmp}
                                 inception_magic_commit;"""
             one_line_execute_result = self.query(sql=sql_execute, close_conn=False)
+
+            # 执行报错，inception crash或者执行中连接异常的场景
+            if one_line_execute_result.error and not one_line_execute_result.rows:
+                execute_result.error = one_line_execute_result.error
+                execute_result.rows = [ReviewResult(
+                    stage='Execute failed',
+                    errlevel=2,
+                    stagestatus='异常终止',
+                    errormessage=f'Inception Error: {one_line_execute_result.error}',
+                    sql=sql_tmp)]
+                return execute_result
+
             # 把结果转换为ReviewSet
             for r in one_line_execute_result.rows:
                 execute_result.rows += [ReviewResult(inception_result=r)]

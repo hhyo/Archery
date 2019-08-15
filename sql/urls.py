@@ -45,6 +45,7 @@ urlpatterns = [
     path('group/', views.group),
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
+    path('instanceuser/', views.instanceuser),
     path('instanceuser/<int:instance_id>/', views.instanceuser),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
@@ -95,6 +96,7 @@ urlpatterns = [
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
+    path('query/favorite/', query.favorite),
     path('query/explain/', sql.sql_optimize.explain),
     path('query/applylist/', sql.query_privileges.query_priv_apply_list),
     path('query/userprivileges/', sql.query_privileges.user_query_priv),

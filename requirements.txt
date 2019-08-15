@@ -4,7 +4,6 @@ pymysql==0.9.3
 requests==2.21.0
 simplejson==3.16.0
 pycryptodome==3.8.2
-sqlparse==0.3.0
 moz_sql_parser==2.44.19084
 mybatis_mapper2sql==0.1.8
 django-auth-ldap==2.0.0
@@ -12,7 +11,7 @@ python-dateutil==2.8.0
 pymongo==3.8.0
 psycopg2-binary==2.8.3
 mysql-replication==0.19
-django-q==1.0.1
+django-q==1.0.2
 django-redis==4.10.0
 pyodbc==4.0.26
 wtforms_json==0.3.3

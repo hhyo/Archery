@@ -35,10 +35,12 @@ def process(request):
         else:
             sql = "{} where command= '{}';".format(base_sql, command_type)
         query_engine = get_engine(instance=instance)
-        processlist = query_engine.query('information_schema', sql).to_dict()
-
-        result = {'status': 0, 'msg': 'ok', 'rows': processlist}
-
+        query_result = query_engine.query('information_schema', sql)
+        if not query_result.error:
+            processlist = query_result.to_dict()
+            result = {'status': 0, 'msg': 'ok', 'rows': processlist}
+        else:
+            result = {'status': 1, 'msg': query_result.error}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
@@ -154,35 +156,66 @@ def trxandlocks(request):
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    sql = '''
-    SELECT
-      rtrx.`trx_state`                                                        AS "等待的状态",
-      rtrx.`trx_started`                                                      AS "等待事务开始时间",
-      rtrx.`trx_wait_started`                                                 AS "等待事务等待开始时间",
-      lw.`requesting_trx_id`                                                  AS "等待事务ID",
-      rtrx.trx_mysql_thread_id                                                AS "等待事务线程ID",
-      rtrx.`trx_query`                                                        AS "等待事务的sql",
-      CONCAT(rl.`lock_mode`, '-', rl.`lock_table`, '(', rl.`lock_index`, ')') AS "等待的表信息",
-      rl.`lock_id`                                                            AS "等待的锁id",
-      lw.`blocking_trx_id`                                                    AS "运行的事务id",
-      trx.trx_mysql_thread_id                                                 AS "运行的事务线程id",
-      CONCAT(l.`lock_mode`, '-', l.`lock_table`, '(', l.`lock_index`, ')')    AS "运行的表信息",
-      l.lock_id                                                               AS "运行的锁id",
-      trx.`trx_state`                                                         AS "运行事务的状态",
-      trx.`trx_started`                                                       AS "运行事务的时间",
-      trx.`trx_wait_started`                                                  AS "运行事务的等待开始时间",
-      trx.`trx_query`                                                         AS "运行事务的sql"
-    FROM information_schema.`INNODB_LOCKS` rl
-      , information_schema.`INNODB_LOCKS` l
-      , information_schema.`INNODB_LOCK_WAITS` lw
-      , information_schema.`INNODB_TRX` rtrx
-      , information_schema.`INNODB_TRX` trx
-    WHERE rl.`lock_id` = lw.`requested_lock_id`
-          AND l.`lock_id` = lw.`blocking_lock_id`
-          AND lw.requesting_trx_id = rtrx.trx_id
-          AND lw.blocking_trx_id = trx.trx_id;'''
-
     query_engine = get_engine(instance=instance)
+    server_version = query_engine.server_version
+    if server_version < (8, 0, 1):
+        sql = '''
+            SELECT
+              rtrx.`trx_state`                                                        AS "等待的状态",
+              rtrx.`trx_started`                                                      AS "等待事务开始时间",
+              rtrx.`trx_wait_started`                                                 AS "等待事务等待开始时间",
+              lw.`requesting_trx_id`                                                  AS "等待事务ID",
+              rtrx.trx_mysql_thread_id                                                AS "等待事务线程ID",
+              rtrx.`trx_query`                                                        AS "等待事务的sql",
+              CONCAT(rl.`lock_mode`, '-', rl.`lock_table`, '(', rl.`lock_index`, ')') AS "等待的表信息",
+              rl.`lock_id`                                                            AS "等待的锁id",
+              lw.`blocking_trx_id`                                                    AS "运行的事务id",
+              trx.trx_mysql_thread_id                                                 AS "运行的事务线程id",
+              CONCAT(l.`lock_mode`, '-', l.`lock_table`, '(', l.`lock_index`, ')')    AS "运行的表信息",
+              l.lock_id                                                               AS "运行的锁id",
+              trx.`trx_state`                                                         AS "运行事务的状态",
+              trx.`trx_started`                                                       AS "运行事务的时间",
+              trx.`trx_wait_started`                                                  AS "运行事务的等待开始时间",
+              trx.`trx_query`                                                         AS "运行事务的sql"
+            FROM information_schema.`INNODB_LOCKS` rl
+              , information_schema.`INNODB_LOCKS` l
+              , information_schema.`INNODB_LOCK_WAITS` lw
+              , information_schema.`INNODB_TRX` rtrx
+              , information_schema.`INNODB_TRX` trx
+            WHERE rl.`lock_id` = lw.`requested_lock_id`
+                  AND l.`lock_id` = lw.`blocking_lock_id`
+                  AND lw.requesting_trx_id = rtrx.trx_id
+                  AND lw.blocking_trx_id = trx.trx_id;'''
+
+    else:
+        sql = '''
+            SELECT
+              rtrx.`trx_state`                                                           AS "等待的状态",
+              rtrx.`trx_started`                                                         AS "等待事务开始时间",
+              rtrx.`trx_wait_started`                                                    AS "等待事务等待开始时间",
+              lw.`REQUESTING_ENGINE_TRANSACTION_ID`                                      AS "等待事务ID",
+              rtrx.trx_mysql_thread_id                                                   AS "等待事务线程ID",
+              rtrx.`trx_query`                                                           AS "等待事务的sql",
+              CONCAT(rl.`lock_mode`, '-', rl.`OBJECT_SCHEMA`, '(', rl.`INDEX_NAME`, ')') AS "等待的表信息",
+              rl.`ENGINE_LOCK_ID`                                                        AS "等待的锁id",
+              lw.`BLOCKING_ENGINE_TRANSACTION_ID`                                        AS "运行的事务id",
+              trx.trx_mysql_thread_id                                                    AS "运行的事务线程id",
+              CONCAT(l.`lock_mode`, '-', l.`OBJECT_SCHEMA`, '(', l.`INDEX_NAME`, ')')    AS "运行的表信息",
+              l.ENGINE_LOCK_ID                                                           AS "运行的锁id",
+              trx.`trx_state`                                                            AS "运行事务的状态",
+              trx.`trx_started`                                                          AS "运行事务的时间",
+              trx.`trx_wait_started`                                                     AS "运行事务的等待开始时间",
+              trx.`trx_query`                                                            AS "运行事务的sql"
+            FROM performance_schema.`data_locks` rl
+              , performance_schema.`data_locks` l
+              , performance_schema.`data_lock_waits` lw
+              , information_schema.`INNODB_TRX` rtrx
+              , information_schema.`INNODB_TRX` trx
+            WHERE rl.`ENGINE_LOCK_ID` = lw.`REQUESTING_ENGINE_LOCK_ID`
+                  AND l.`ENGINE_LOCK_ID` = lw.`BLOCKING_ENGINE_LOCK_ID`
+                  AND lw.REQUESTING_ENGINE_TRANSACTION_ID = rtrx.trx_id
+                  AND lw.BLOCKING_ENGINE_TRANSACTION_ID = trx.trx_id;'''
+
     query_result = query_engine.query('information_schema', sql)
     if not query_result.error:
         trxandlocks = query_result.to_dict()

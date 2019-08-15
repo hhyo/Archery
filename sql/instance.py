@@ -14,7 +14,7 @@ from sql.plugins.schemasync import SchemaSync
 from .models import Instance, ParamTemplate, ParamHistory
 
 
-@permission_required('sql.menu_instance', raise_exception=True)
+@permission_required('sql.menu_instance_list', raise_exception=True)
 def lists(request):
     """获取实例列表"""
     limit = int(request.POST.get('limit'))
@@ -55,10 +55,12 @@ def lists(request):
                         content_type='application/json')
 
 
-@permission_required('sql.menu_instance', raise_exception=True)
+@permission_required('sql.menu_instance_user', raise_exception=True)
 def users(request):
     """获取实例用户列表"""
     instance_id = request.POST.get('instance_id')
+    if not instance_id:
+        return HttpResponse(json.dumps({'status': 0, 'msg': '', 'data': []}), content_type='application/json')
     try:
         instance = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist:
@@ -67,18 +69,22 @@ def users(request):
 
     sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
     query_engine = get_engine(instance=instance)
-    db_users = query_engine.query('mysql', sql_get_user).rows
-    # 获取用户权限信息
-    data = []
-    for db_user in db_users:
-        user_info = {}
-        user_priv = query_engine.query('mysql', 'show grants for {};'.format(db_user[0]), close_conn=False).rows
-        user_info['user'] = db_user[0]
-        user_info['privileges'] = user_priv
-        data.append(user_info)
+    query_result = query_engine.query('mysql', sql_get_user)
+    if not query_result.error:
+        db_users = query_result.rows
+        # 获取用户权限信息
+        data = []
+        for db_user in db_users:
+            user_priv = query_engine.query('mysql', 'show grants for {};'.format(db_user[0]), close_conn=False).rows
+            data.append({
+                'user': db_user[0],
+                'privileges': user_priv
+            })
+        result = {'status': 0, 'msg': 'ok', 'rows': data}
+    else:
+        result = {'status': 1, 'msg': query_result.error}
     # 关闭连接
     query_engine.close()
-    result = {'status': 0, 'msg': 'ok', 'rows': data}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
@@ -349,4 +355,7 @@ def describe(request):
     except Exception as msg:
         result['status'] = 1
         result['msg'] = str(msg)
+    if result['data']['error']:
+        result['status'] = 1
+        result['msg'] = result['data']['error']
     return HttpResponse(json.dumps(result), content_type='application/json')

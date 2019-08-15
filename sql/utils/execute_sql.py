@@ -1,8 +1,7 @@
 # -*- coding: UTF-8 -*-
-import simplejson as json
 
 from common.utils.const import WorkflowDict
-from sql.engines.models import ReviewResult
+from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute
 from sql.utils.workflow_audit import Audit
@@ -39,36 +38,23 @@ def execute_callback(task):
     workflow.finish_time = task.stopped
 
     if not task.success:
-        # 不成功会返回错误堆栈信息，构造一个错误信息追加到执行结果后面
+        # 不成功会返回错误堆栈信息，构造一个错误信息
         workflow.status = 'workflow_exception'
-        if workflow.sqlworkflowcontent.execute_result:
-            execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
-        else:
-            execute_result = []
-        execute_result.append(ReviewResult(
-            id=0,
+        execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
+        execute_result.rows = [ReviewResult(
             stage='Execute failed',
             errlevel=2,
             stagestatus='异常终止',
             errormessage=task.result,
-            sql='执行异常信息',
-            affected_rows=0,
-            actual_affected_rows=0,
-            sequence='0_0_0',
-            backup_dbname=None,
-            execute_time=0,
-            sqlsha1='').__dict__)
-        execute_result = json.dumps(execute_result)
+            sql=workflow.sqlworkflowcontent.sql_content)]
     elif task.result.warning or task.result.error:
         execute_result = task.result
         workflow.status = 'workflow_exception'
-        execute_result = execute_result.json()
     else:
         execute_result = task.result
         workflow.status = 'workflow_finish'
-        execute_result = execute_result.json()
     # 保存执行结果
-    workflow.sqlworkflowcontent.execute_result = execute_result
+    workflow.sqlworkflowcontent.execute_result = execute_result.json()
     workflow.sqlworkflowcontent.save()
     workflow.save()
 

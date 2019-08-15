@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>SQL审核平台</title>
+    <title>Archery-SQL审核查询平台</title>
 
     <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -35,7 +35,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/index/">SQL审核平台</a>
+            <a class="navbar-brand" href="/index/"><strong>Archery</strong></a>
         </div>
 
         <!-- /.navbar-header -->
@@ -104,6 +104,11 @@
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
                                         <a href="/sqlquery/">在线查询</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_data_dictionary %}
+                                    <li>
+                                        <a href="/data_dictionary/">数据字典</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_queryapplylist %}
@@ -190,14 +195,14 @@
                                         <a href="/dbdiagnostic/">会话管理</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_instance_user %}
+                                    <li>
+                                        <a href="/instanceuser/">用户管理</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_param %}
                                     <li>
                                         <a href="/instanceparam/">参数配置</a>
-                                    </li>
-                                {% endif %}
-                                {% if perms.sql.menu_data_dictionary %}
-                                    <li>
-                                        <a href="/data_dictionary/">数据字典</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
@@ -269,7 +274,10 @@
             {% block content %}
             {% endblock content %}
             <!--底部部分 -->
-            <hr>
+            <footer class="text-center">
+                <hr>
+                <p><strong>&copy; Archery</strong>&nbsp;(v1.6.7)</p>
+            </footer>
         </div>
     </div>
     <!-- /#page-wrapper -->

@@ -18,7 +18,7 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
 from common.utils.const import Const, WorkflowDict
@@ -219,7 +219,10 @@ def sqlquery(request):
     """SQL在线查询页面"""
     # 主动创建标签
     InstanceTag.objects.get_or_create(tag_code='can_read', defaults={'tag_name': '支持查询', 'active': True})
-    return render(request, 'sqlquery.html')
+    # 收藏语句
+    user = request.user
+    favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
+    return render(request, 'sqlquery.html', {'favorites': favorites})
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -287,9 +290,9 @@ def instance(request):
 
 
 @permission_required('sql.menu_instance', raise_exception=True)
-def instanceuser(request, instance_id):
+def instanceuser(request):
     """实例用户管理页面"""
-    return render(request, 'instanceuser.html', {'instance_id': instance_id})
+    return render(request, 'instanceuser.html')
 
 
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)

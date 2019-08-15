@@ -16,16 +16,17 @@ logger = logging.getLogger('default')
 
 class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
-        db_name = db_name or 0
-        conn = pymongo.MongoClient('mongodb://%s:%s@%s' % (self.user, self.password, self.host))
+        conn = pymongo.MongoClient(self.host, self.port, connect=True, connectTimeoutMS=10000)
+        if self.user and self.password:
+            conn.admin.authenticate(self.user, self.password)
         return conn
 
     @property
-    def name(self): # pragma: no cover
+    def name(self):  # pragma: no cover
         return 'Mongo'
 
     @property
-    def info(self): # pragma: no cover
+    def info(self):  # pragma: no cover
         return 'Mongo engine'
 
     def get_all_databases(self):
@@ -61,20 +62,17 @@ class MongoEngine(EngineBase):
             conn = self.get_connection()
             db = conn[db_name]
             collect = db[sql.split('.')[0]]
-            rows = []
             match = re.compile(r'[(](.*)[)]', re.S)
             sql = re.findall(match, sql)[0]
             if sql != '':
                 sql = json.loads(sql)
-                for i in collect.find(sql).limit(limit_num):
-                    rows.append(json_util.dumps(i))
+                result = collect.find(sql).limit(limit_num)
             else:
-                for i in collect.find().limit(limit_num):
-                    rows.append(json_util.dumps(i))
-
+                result = collect.find(sql).limit(limit_num)
+            rows = json.loads(json_util.dumps(result))
             result_set.column_list = ['Result']
             if isinstance(rows, list):
-                result_set.rows = tuple([x] for x in rows)
+                result_set.rows = tuple([json.dumps(x, ensure_ascii=False)] for x in rows)
                 result_set.affected_rows = len(rows)
         except Exception as e:
             logger.error(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")

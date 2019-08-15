@@ -42,6 +42,11 @@ class MysqlEngine(EngineBase):
         return 'MySQL engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @property
     def seconds_behind_master(self):
         slave_status = self.query(sql='show slave status')
         return slave_status.rows[0][32] if slave_status.rows else None
@@ -74,13 +79,6 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(db_name, tb_name)
-        column_list = [row[0] for row in result.rows]
-        result.rows = column_list
-        return result
-
-    def describe_table(self, db_name, tb_name):
-        """return ResultSet 类似查询"""
         sql = f"""SELECT 
             COLUMN_NAME,
             COLUMN_TYPE,
@@ -95,7 +93,15 @@ class MysqlEngine(EngineBase):
             TABLE_SCHEMA = '{db_name}'
                 AND TABLE_NAME = '{tb_name}'
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(sql=sql)
+        result = self.query(db_name=db_name, sql=sql)
+        column_list = [row[0] for row in result.rows]
+        result.rows = column_list
+        return result
+
+    def describe_table(self, db_name, tb_name):
+        """return ResultSet 类似查询"""
+        sql = f"show create table {tb_name};"
+        result = self.query(db_name=db_name, sql=sql)
         return result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
@@ -142,13 +148,26 @@ class MysqlEngine(EngineBase):
         return result
 
     def filter_sql(self, sql='', limit_num=0):
-        # 对查询sql增加limit限制，# TODO limit改写待优化
-        sql_lower = sql.lower().rstrip(';').strip()
-        if re.match(r"^select", sql_lower):
-            if re.search(r"limit\s+(\d+)$", sql_lower) is None:
-                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
-                    return f"{sql.rstrip(';')} limit {limit_num};"
-        return f"{sql.rstrip(';')};"
+        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
+        sql = sql.rstrip(';').strip()
+        if re.match(r"^select", sql, re.I):
+            # LIMIT N
+            limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)
+            # LIMIT N, N 或LIMIT N OFFSET N
+            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
+            if limit_n.search(sql):
+                sql_limit = limit_n.search(sql).group(1)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = limit_n.sub(f'limit {limit_num};', sql)
+            elif limit_offset.search(sql):
+                sql_limit = limit_offset.search(sql).group(3)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = limit_offset.sub(f'limit {limit_num};', sql)
+            else:
+                sql = f'{sql} limit {limit_num};'
+        else:
+            sql = f'{sql};'
+        return sql
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,

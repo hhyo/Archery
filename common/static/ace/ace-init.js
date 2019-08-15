@@ -1,9 +1,12 @@
 //初始化ace编辑器对象
-editor = ace.edit("sql_content_editor");
+var editor = ace.edit("sql_content_editor");
+ace.config.set('basePath', '/static/ace');
+ace.config.set('modePath', '/static/ace');
+ace.config.set('themePath', '/static/ace');
 
 //设置风格和语言（更多风格和语言，请到github上相应目录查看）
-theme = "textmate";
-language = "mysql"; // TODO 可以按照实例类型自动变更
+var theme = "textmate";
+var language = "text";
 editor.setTheme("ace/theme/" + theme);
 editor.session.setMode("ace/mode/" + language);
 editor.$blockScrolling = Infinity;
@@ -27,12 +30,15 @@ editor.setOptions({
     enableLiveAutocompletion: true
 });
 
-//绑定快捷键
+//绑定查询快捷键
 editor.commands.addCommand({
     name: "alter",
     bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
     exec: function (editor) {
-        sqlquery();
+        let pathname = window.location.pathname;
+        if (pathname === "/sqlquery/") {
+            sqlquery();
+        }
     }
 });
 
@@ -153,3 +159,36 @@ function setColumnsCompleteData(result) {
         });
     }
 }
+
+// 实例变更时修改language
+$("#instance_name").change(function () {
+    let optgroup = $('#instance_name :selected').parent().attr('label');
+    if (optgroup === "MySQL") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mysql");
+    } else if (optgroup === "MsSQL") {
+        editor.setTheme("ace/theme/" + "sqlserver");
+        editor.session.setMode("ace/mode/" + "sqlserver");
+    } else if (optgroup === "Redis") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "text");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+    } else if (optgroup === "PgSQL") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "pgsql");
+    } else if (optgroup === "Oracle") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "sql");
+    } else if (optgroup === "Mongo") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mongodb");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+    } else {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mysql");
+    }
+});

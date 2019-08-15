@@ -81,8 +81,7 @@ def sql_workflow_list(request):
 
     # 过滤搜索项，模糊检索项包括提交人名称、工单名
     if search:
-        workflow = SqlWorkflow.objects.filter(Q(engineer_display__icontains=search) |
-                                              Q(workflow_name__icontains=search))
+        workflow = workflow.filter(Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search))
 
     count = workflow.count()
     workflow_list = workflow.order_by('-create_time')[offset:limit].values(
@@ -152,11 +151,6 @@ def submit(request):
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
-    # 未开启备份选项，强制设置备份
-    sys_config = SysConfig()
-    if not sys_config.get('enable_backup_switch'):
-        is_backup = True
-
     # 验证组权限（用户是否在该组、该组是否有指定实例）
     try:
         user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
@@ -171,6 +165,11 @@ def submit(request):
     except Exception as e:
         context = {'errMsg': str(e)}
         return render(request, 'error.html', context)
+
+    # 未开启备份选项，并且engine支持备份，强制设置备份
+    sys_config = SysConfig()
+    if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
+        is_backup = True
 
     # 按照系统配置确定是自动驳回还是放行
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
