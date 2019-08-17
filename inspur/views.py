@@ -21,9 +21,9 @@ logger = logging.getLogger('default')
 
 @permission_required('inspur.menu_sqlupdate', raise_exception=True)
 def sqlupdate1(request):
-
+    
     # 获取用户关联实例列表
-    instances = [instance_name for instance_name in user_instances(request.user, 'all')]
+    instances = [instance_name for instance_name in user_instances(request.user)]
     if request.POST.get('fiter')=='请输入数据库名称！':
         dbfiter = 'liu'
     elif (request.POST.get('fiter')):
