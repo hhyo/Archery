@@ -38,7 +38,8 @@ def login(request):
     """登录页面"""
     if request.user and request.user.is_authenticated:
         return HttpResponseRedirect('/')
-    return render(request, 'login.html')
+
+    return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)

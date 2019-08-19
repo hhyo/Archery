@@ -654,11 +654,11 @@
 
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
-                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+/)) {
+                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe) {
                         var tb_name = $("#table_name").val();
                     } else {
-                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+/)[1];
+                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
                     if (tb_name !== active_li_title) {
                         tab_add(tb_name);
