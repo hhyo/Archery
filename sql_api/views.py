@@ -5,11 +5,10 @@ import archery
 
 
 def info(request):
-    archery_version = '.'.join(str(i) for i in archery.version)
     django_q_version = '.'.join(str(i) for i in django_q.VERSION)
     system_info = {
         'archery': {
-            'version': archery_version
+            'version': archery.display_version
         },
         'django_q': {
             'version': django_q_version
