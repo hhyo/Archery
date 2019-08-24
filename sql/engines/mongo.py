@@ -75,6 +75,6 @@ class MongoEngine(EngineBase):
                 result_set.rows = tuple([json.dumps(x, ensure_ascii=False)] for x in rows)
                 result_set.affected_rows = len(rows)
         except Exception as e:
-            logger.error(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         return result_set

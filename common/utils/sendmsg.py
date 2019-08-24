@@ -65,7 +65,7 @@ class MsgSender(object):
 
         try:
             if not to:
-                logger.error('收件人为空，无法发送邮件')
+                logger.warning('收件人为空，无法发送邮件')
                 return
             if not isinstance(to, list):
                 raise TypeError('收件人需要为列表')

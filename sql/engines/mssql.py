@@ -139,7 +139,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.error(f"MsSQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(f"MsSQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -202,7 +202,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             try:
                 cursor.execute(statement)
             except Exception as e:
-                logger.error(f"Mssql命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+                logger.warning(f"Mssql命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
                 execute_result.error = str(e)
                 execute_result.rows.append(ReviewResult(
                     id=rowid,
