@@ -1,6 +1,10 @@
 # -*- coding:utf-8 -*-
 import logging
 import traceback
+
+import sqlparse
+from sqlparse.tokens import Keyword
+
 from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
@@ -13,6 +17,14 @@ logger = logging.getLogger('default')
 def data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
     try:
+        # 解析查询语句，禁用部分Inception无法解析关键词
+        p = sqlparse.parse(sql)[0]
+        for token in p.tokens:
+            if token.ttype is Keyword and token.value.upper() in ['UNION', 'UNION ALL']:
+                logger.warning(f'数据脱敏异常，错误信息：不支持该查询语句脱敏！请联系管理员')
+                sql_result.error = '不支持该查询语句脱敏！请联系管理员'
+                sql_result.status = 1
+                return sql_result
         # 通过inception获取语法树,并进行解析
         inception_engine = InceptionEngine()
         query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql)
@@ -20,7 +32,7 @@ def data_masking(instance, db_name, sql, sql_result):
         table_hit_columns, hit_columns = analyze_query_tree(query_tree, instance)
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
     except Exception as msg:
-        logger.error(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
+        logger.warning(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
         sql_result.status = 1
     else:
