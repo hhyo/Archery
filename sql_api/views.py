@@ -121,7 +121,7 @@ def info(request):
             'backup_info': backup_info
         },
         'runtime_info': {
-            'python_version': platform.python_build(),
+            'python_version': platform.python_version(),
             'mysql_info': mysql_info,
             'redis_info': redis_info,
             'sys_argv': sys.argv,
