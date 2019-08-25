@@ -1,3 +1,4 @@
+import django_q
 import pkg_resources
 import platform
 import sys
@@ -7,17 +8,36 @@ from common.config import SysConfig
 from django.db import connection
 from django_redis import get_redis_connection
 from django.http import JsonResponse
+from django_q.status import Stat
+from django_q.models import Success, Failure
+from django_q.brokers import get_broker
+from django.utils import timezone
+from common.utils.permission import superuser_required
 import archery
 
 
 def info(request):
+    # 获取django_q信息
+    django_q_version = '.'.join(str(i) for i in django_q.VERSION)
+
+    system_info = {
+        'archery': {
+            'version': archery.display_version
+        },
+        'django_q': {
+            'version': django_q_version,
+        }
+    }
+    return JsonResponse(system_info)
+
+
+@superuser_required
+def debug(request):
+    # 获取完整信息
+    full = request.GET.get('full')
+
     # 系统配置
     sys_config = SysConfig().sys_config
-    # 移除敏感信息
-    sys_config['soar_test_dsn'] = ''
-    sys_config['mail_smtp_server'] = ''
-    sys_config['mail_smtp_user'] = ''
-    sys_config['mail_smtp_password'] = ''
 
     # MySQL信息
     cursor = connection.cursor()
@@ -37,7 +57,37 @@ def info(request):
         'used_memory_human': full_redis_info.get('used_memory_human'),
     }
 
-    # djang_q状态
+    # django_q
+    django_q_version = '.'.join(str(i) for i in django_q.VERSION)
+    broker = get_broker()
+    stats = Stat.get_all(broker=broker)
+    queue_size = broker.queue_size()
+    lock_size = broker.lock_size()
+    if lock_size:
+        queue_size = '{}({})'.format(queue_size, lock_size)
+    q_broker_stats = {
+        'info': broker.info(),
+        'Queued': queue_size,
+        'Success': Success.objects.count(),
+        'Failures': Failure.objects.count(),
+    }
+    q_cluster_stats = []
+    for stat in stats:
+        # format uptime
+        uptime = (timezone.now() - stat.tob).total_seconds()
+        hours, remainder = divmod(uptime, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        uptime = '%d:%02d:%02d' % (hours, minutes, seconds)
+        q_cluster_stats.append({
+            'host': stat.host,
+            'cluster_id': stat.cluster_id,
+            'state': stat.status,
+            'pool': len(stat.workers),
+            'tq': stat.task_q_size,
+            'rq': stat.done_q_size,
+            'rc': stat.reincarnations,
+            'up': uptime
+        })
 
     # Inception和goInception信息
     inception_host = sys_config.get('inception_host')
@@ -48,7 +98,6 @@ def info(request):
     inception_remote_backup_port = sys_config.get('inception_remote_backup_port', '')
     inception_remote_backup_user = sys_config.get('inception_remote_backup_user', '')
     inception_remote_backup_password = sys_config.get('inception_remote_backup_password', '')
-    sys_config['inception_remote_backup_password'] = ''
 
     # inception
     try:
@@ -69,6 +118,7 @@ def info(request):
         }
     except Exception as e:
         inception_info = f'获取Inception信息报错:{e}'
+        full_inception_info = inception_info
 
     # goInception
     try:
@@ -90,6 +140,7 @@ def info(request):
         }
     except Exception as e:
         goinception_info = f'获取goInception信息报错:{e}'
+        full_goinception_info = goinception_info
 
     # 备份库
     try:
@@ -114,16 +165,22 @@ def info(request):
         'archery': {
             'version': archery.display_version
         },
+        'django_q': {
+            'version': django_q_version,
+            'conf': django_q.conf.Conf.conf,
+            'q_cluster_stats': q_cluster_stats if q_cluster_stats else '没有正在运行的集群信息，请检查django_q状态',
+            'q_broker_stats': q_broker_stats
+        },
         'inception': {
             'enable_goinception': sys_config.get('go_inception'),
-            'inception_info': inception_info,
-            'goinception_info': goinception_info,
+            'inception_info': full_inception_info if full else inception_info,
+            'goinception_info': full_goinception_info if full else goinception_info,
             'backup_info': backup_info
         },
         'runtime_info': {
             'python_version': platform.python_version(),
             'mysql_info': mysql_info,
-            'redis_info': redis_info,
+            'redis_info': full_redis_info if full else redis_info,
             'sys_argv': sys.argv,
             'platform': platform.uname()
         },
