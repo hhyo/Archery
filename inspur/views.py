@@ -70,7 +70,7 @@ def updatelog_save(username, db_name, instance_name, sql_content, cost_time, sql
         update_log.save()
 
 
-@permission_required('sql.menu_sqlupdate', raise_exception=True)
+@permission_required('inspur.menu_sqlupdate', raise_exception=True)
 def updatelog(request):
     # 获取用户信息
     user = request.user
@@ -96,12 +96,12 @@ def updatelog(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-@permission_required('sql.menu_sqlupdate', raise_exception=True)
+@permission_required('inspur.menu_sqlupdate', raise_exception=True)
 def dbfiter(request):
     dbfiter = json.loads(request.POST.get('fiter'))
     print(dbfiter)
     # 获取用户关联实例列表
-    instances = [instance_name for instance_name in user_instances(request.user, 'all')]
+    instances = [instance_name for instance_name in user_instances(request.user)]
 
     context = {'instances': instances}
     database_list = []
@@ -135,7 +135,7 @@ def updatelog_save(username, db_name, instance_name, sql_content, cost_time, sql
         update_log.save()
 
 
-@permission_required('sql.menu_sqlupdate', raise_exception=True)
+@permission_required('inspur.menu_sqlupdate', raise_exception=True)
 def updatelog(request):
     # 获取用户信息
     user = request.user
@@ -163,7 +163,7 @@ def updatelog(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-@permission_required('sql.menu_sqlupdate', raise_exception=True)
+@permission_required('inspur.menu_sqlupdate', raise_exception=True)
 def update1(request):
     db_list = simplejson.loads(request.POST.get('db_list'))
     sql_content = request.POST.get('sql_content')
