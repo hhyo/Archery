@@ -8,5 +8,7 @@ archery/settings.py.github
 archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
+inspur/migrations/
 venv
+*__pycache__
 .vscode/
