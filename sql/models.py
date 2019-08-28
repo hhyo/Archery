@@ -32,6 +32,7 @@ DB_TYPE_CHOICES = (
     ('pgsql', 'PgSQL'),
     ('oracle', 'Oracle'),
     ('mongo', 'Mongo'),
+    ('phoenix', 'Phoenix'),
     ('inception', 'Inception'),
     ('goinception', 'goInception'))
 
