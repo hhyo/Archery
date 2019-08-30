@@ -157,7 +157,7 @@ class PgSQLEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.error(f"PgSQL命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"PgSQL命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -258,7 +258,7 @@ class PgSQLEngine(EngineBase):
                 ))
                 line += 1
         except Exception as e:
-            logger.error(f"PGSQL命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"PGSQL命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
             # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(

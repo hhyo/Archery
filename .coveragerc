@@ -2,6 +2,7 @@
 include =
     common*
     sql*
+    sql_api*
 omit =
     docs*
     src*

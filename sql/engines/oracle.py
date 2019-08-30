@@ -151,7 +151,7 @@ class OracleEngine(EngineBase):
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
             if sql_lower.find(' rownum ') == -1:
-                if sql_lower.find(' where ') == -1:
+                if sql_lower.find('where') == -1:
                     return f"{sql.rstrip(';')} WHERE ROWNUM <= {limit_num}"
                 else:
                     return f"{sql.rstrip(';')} AND ROWNUM <= {limit_num}"
@@ -181,7 +181,7 @@ class OracleEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.error(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -274,7 +274,7 @@ class OracleEngine(EngineBase):
                 ))
                 line += 1
         except Exception as e:
-            logger.error(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
             # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(

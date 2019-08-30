@@ -32,6 +32,7 @@ DB_TYPE_CHOICES = (
     ('pgsql', 'PgSQL'),
     ('oracle', 'Oracle'),
     ('mongo', 'Mongo'),
+    ('phoenix', 'Phoenix'),
     ('inception', 'Inception'),
     ('goinception', 'goInception'))
 
@@ -601,6 +602,7 @@ class Permission(models.Model):
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),
+            ('menu_instance_user', '菜单 实例用户列表'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),

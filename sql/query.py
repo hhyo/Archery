@@ -121,21 +121,21 @@ def query(request):
                         result['msg'] = f'数据脱敏异常：{masking_result.error}'
                     # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                     else:
+                        logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{masking_result.error}')
                         query_result.error = None
                         priv_check = False
                         result['data'] = query_result.__dict__
-                    logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{masking_result.error}')
                 # 正常脱敏
                 else:
                     result['data'] = masking_result.__dict__
             except Exception as msg:
-                logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{msg}')
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if config.get('query_check'):
                     result['status'] = 1
                     result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{msg}'
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
+                    logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}')
                     query_result.error = None
                     priv_check = False
                     result['data'] = query_result.__dict__

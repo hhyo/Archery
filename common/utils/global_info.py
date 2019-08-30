@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from sql.utils.workflow_audit import Audit
+from archery import display_version
 
 
 def global_info(request):
@@ -16,4 +17,5 @@ def global_info(request):
 
     return {
         'todo': todo,
+        'archery_version': display_version
     }

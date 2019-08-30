@@ -38,7 +38,8 @@ def login(request):
     """登录页面"""
     if request.user and request.user.is_authenticated:
         return HttpResponseRedirect('/')
-    return render(request, 'login.html')
+
+    return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)
@@ -290,9 +291,9 @@ def instance(request):
 
 
 @permission_required('sql.menu_instance', raise_exception=True)
-def instanceuser(request, instance_id):
+def instanceuser(request):
     """实例用户管理页面"""
-    return render(request, 'instanceuser.html', {'instance_id': instance_id})
+    return render(request, 'instanceuser.html')
 
 
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)

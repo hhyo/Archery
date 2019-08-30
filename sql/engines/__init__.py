@@ -125,3 +125,6 @@ def get_engine(instance=None):  # pragma: no cover
     elif instance.db_type == 'goinception':
         from .goinception import GoInceptionEngine
         return GoInceptionEngine(instance=instance)
+    elif instance.db_type == 'phoenix':
+        from .phoenix import PhoenixEngine
+        return PhoenixEngine(instance=instance)

@@ -35,10 +35,12 @@ def process(request):
         else:
             sql = "{} where command= '{}';".format(base_sql, command_type)
         query_engine = get_engine(instance=instance)
-        processlist = query_engine.query('information_schema', sql).to_dict()
-
-        result = {'status': 0, 'msg': 'ok', 'rows': processlist}
-
+        query_result = query_engine.query('information_schema', sql)
+        if not query_result.error:
+            processlist = query_result.to_dict()
+            result = {'status': 0, 'msg': 'ok', 'rows': processlist}
+        else:
+            result = {'status': 1, 'msg': query_result.error}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')

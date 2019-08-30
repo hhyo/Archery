@@ -1,6 +1,10 @@
 # -*- coding:utf-8 -*-
 import logging
 import traceback
+
+import sqlparse
+from sqlparse.tokens import Keyword
+
 from sql.engines.inception import InceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
@@ -13,6 +17,14 @@ logger = logging.getLogger('default')
 def data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
     try:
+        # 解析查询语句，禁用部分Inception无法解析关键词
+        p = sqlparse.parse(sql)[0]
+        for token in p.tokens:
+            if token.ttype is Keyword and token.value.upper() in ['UNION', 'UNION ALL']:
+                logger.warning(f'数据脱敏异常，错误信息：不支持该查询语句脱敏！请联系管理员')
+                sql_result.error = '不支持该查询语句脱敏！请联系管理员'
+                sql_result.status = 1
+                return sql_result
         # 通过inception获取语法树,并进行解析
         inception_engine = InceptionEngine()
         query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql)
@@ -20,7 +32,7 @@ def data_masking(instance, db_name, sql, sql_result):
         table_hit_columns, hit_columns = analyze_query_tree(query_tree, instance)
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
     except Exception as msg:
-        logger.error(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
+        logger.warning(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
         sql_result.status = 1
     else:
@@ -56,7 +68,7 @@ def data_masking(instance, db_name, sql, sql_result):
 
 def analyze_query_tree(query_tree, instance):
     """解析query_tree,获取语句信息,并返回命中脱敏规则的列信息"""
-    select_list = query_tree.get('select_list', [])
+    old_select_list = query_tree.get('select_list', [])
     table_ref = query_tree.get('table_ref', [])
 
     # 获取全部激活的脱敏字段信息，减少循环查询，提升效率
@@ -78,22 +90,31 @@ def analyze_query_tree(query_tree, instance):
         table_hit_columns = []  # 涉及表命中的列，仅select *需要
 
         # 判断是否存在不支持脱敏的语法
-        for select_item in select_list:
-            if select_item['type'] not in ('FIELD_ITEM', 'aggregate'):
+        for select_item in old_select_list:
+            if select_item['type'] not in ('FIELD_ITEM', 'aggregate', 'FUNC_ITEM'):
                 raise Exception('不支持该查询语句脱敏！请联系管理员')
-            if select_item['type'] == 'aggregate':
+            elif select_item['type'] == 'aggregate':
                 if select_item['aggregate'].get('type') not in ('FIELD_ITEM', 'INT_ITEM'):
                     raise Exception('不支持该查询语句脱敏！请联系管理员')
-
-        # 获取select信息的规则，仅处理type为FIELD_ITEM和aggregate类型的select信息，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*],
-        select_index = [
-            select_item['field'] if select_item['type'] == 'FIELD_ITEM' else select_item['aggregate'].get('field')
-            for
-            select_item in select_list if select_item['type'] in ('FIELD_ITEM', 'aggregate')]
+            # 增加单列函数的脱敏
+            elif select_item['type'] == 'FUNC_ITEM':
+                if len(select_item['args']) != 1:
+                    raise Exception('不支持该查询语句脱敏！请联系管理员')
 
         # 处理select_list，为统一的{'type': 'FIELD_ITEM', 'db': 'archery_master', 'table': 'sql_users', 'field': 'email'}格式
-        select_list = [select_item if select_item['type'] == 'FIELD_ITEM' else select_item['aggregate'] for
-                       select_item in select_list if select_item['type'] in ('FIELD_ITEM', 'aggregate')]
+        # 获取select信息的规则，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*]
+        select_index = []
+        select_list = []
+        for select_item in old_select_list:
+            if select_item['type'] == 'FIELD_ITEM':
+                select_index.append(select_item['field'])
+                select_list.append(select_item)
+            elif select_item['type'] == 'aggregate':
+                select_index.append(select_item['aggregate'].get('field'))
+                select_list.append(select_item['aggregate'])
+            elif select_item['type'] == 'FUNC_ITEM':
+                select_index.append(select_item['args'][0].get('field'))
+                select_list.append(select_item['args'][0])
 
         if select_index:
             # 如果发现存在field='*',则遍历所有表,找出所有的命中字段
