@@ -7,7 +7,6 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.core import serializers
 from django.db import connection, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse
@@ -123,7 +122,6 @@ def query(request):
                     else:
                         logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{masking_result.error}')
                         query_result.error = None
-                        priv_check = False
                         result['data'] = query_result.__dict__
                 # 正常脱敏
                 else:
@@ -137,7 +135,6 @@ def query(request):
                 else:
                     logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}')
                     query_result.error = None
-                    priv_check = False
                     result['data'] = query_result.__dict__
         # 无需脱敏的语句
         else:
