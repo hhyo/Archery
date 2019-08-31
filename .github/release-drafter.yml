@@ -1,16 +1,16 @@
 name-template: 'Release v$NEXT_PATCH_VERSION'
 tag-template: 'v$NEXT_PATCH_VERSION'
 categories:
-  - title: '变更说明：'
+  - title: '变更说明'
     labels:
       - 'feature'
       - 'enhancement'
-  - title: '修复说明：'
+  - title: '修复说明'
     labels:
       - 'fix'
       - 'bugfix'
       - 'bug'
-  - title: '易用性改进：'
+  - title: '易用性改进'
     labels:
       - 'ease of use'
 exclude-labels:
@@ -19,10 +19,10 @@ change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 template: |
   ## Release date: xxx年xx月xx日
 
-  代码变更: v$PREVIOUS_TAG...v$NEXT_PATCH_VERSION
+  代码变更: https://github.com/hhyo/Archery/compare/v$PREVIOUS_TAG...v$NEXT_PATCH_VERSION
   贡献者: $CONTRIBUTORS
 
   $CHANGES
 
-  升级步骤：
+  ## 升级步骤：
   - https://github.com/hhyo/Archery/wiki/升级
