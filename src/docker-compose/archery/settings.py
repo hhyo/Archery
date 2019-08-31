@@ -31,7 +31,6 @@ INSTALLED_APPS = (
     'django_q',
     'sql',
     'sql_api',
-    'themis',
     'common',
 )
 
@@ -134,17 +133,6 @@ DATABASES = {
             'CHARSET': 'utf8mb4',
         },
     }
-}
-
-# themis审核所需mongodb数据库，账号角色必须有"anyAction" to "anyResource"权限
-MONGODB_DATABASES = {
-    "default": {
-        "NAME": 'themis',
-        "USER": 'root',
-        "PASSWORD": '123456',
-        "HOST": 'mongo',
-        "PORT": 27017,
-    },
 }
 
 # Django-Q
