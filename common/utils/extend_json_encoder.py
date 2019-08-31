@@ -12,7 +12,8 @@ def convert(o):
 
 @convert.register(datetime)
 def _(o):
-    return o.strftime('%Y-%m-%d %H:%M:%S')
+    # return o.strftime('%Y-%m-%d %H:%M:%S')
+    return o.isoformat(' ')
 
 
 @convert.register(date)
