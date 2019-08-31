@@ -19,10 +19,10 @@ change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 template: |
   ## Release date: xxx年xx月xx日
 
-  代码变更: https://github.com/hhyo/Archery/compare/v$PREVIOUS_TAG...v$NEXT_PATCH_VERSION
+  代码变更: https://github.com/hhyo/Archery/compare/$PREVIOUS_TAG...v$NEXT_PATCH_VERSION
   贡献者: $CONTRIBUTORS
 
   $CHANGES
 
-  ## 升级步骤：
+  ## 升级步骤
   - https://github.com/hhyo/Archery/wiki/升级
