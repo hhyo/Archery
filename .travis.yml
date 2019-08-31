@@ -9,7 +9,7 @@ services:
 install:
   - pip install codecov coverage flake8 mycli==1.19.0 -r requirements.txt
 before_script:
-  - flake8 . --count --exclude=./.*,./themis --select=E9,F63,F7,F82 --show-source --statistics
+  - flake8 . --count --exclude=./.* --select=E9,F63,F7,F82 --show-source --statistics
   - mysql -e "CREATE DATABASE archery CHARSET UTF8;"
   - python manage.py makemigrations
   - python manage.py makemigrations sql

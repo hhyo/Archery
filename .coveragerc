@@ -4,8 +4,7 @@ include =
     sql*
     sql_api*
 omit =
-    docs*
     src*
     downloads*
     sql/migrations/*
-    themis*
+
