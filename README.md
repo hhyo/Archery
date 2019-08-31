@@ -114,7 +114,6 @@ python manage.py test -v 3
 ### 功能依赖
 - 可视化 [pyecharts](https://github.com/pyecharts/pyecharts)
 - MySQL审核/执行/备份 [goInception](https://github.com/hanchuanchuan/goInception)|[inception](https://github.com/hhyo/inception)
-- 数据库审核 [Themis](https://github.com/CreditEaseDBA/Themis)
 - MySQL索引优化 [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
 - SQL优化/压缩 [SOAR](https://github.com/XiaoMi/soar)
 - Binlog2SQL [binlog2sql](https://github.com/danfengcao/binlog2sql)
