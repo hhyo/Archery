@@ -5,6 +5,7 @@ services:
     image: redis:5
     container_name: redis
     restart: always
+    command: redis-server --requirepass 123456
     expose:
       - "6379"
 
