@@ -36,7 +36,7 @@ def slowquery_review(request):
     sql_slow_log = json.loads(slowsql)['Items']['SQLSlowLog']
     for SlowLog in sql_slow_log:
         SlowLog['SQLId'] = str(SlowLog['SQLHASH'])
-        SlowLog['CreateTime'] = Aliyun.aliyun_time_format(SlowLog['CreateTime'])
+        SlowLog['CreateTime'] = Aliyun.utc2local(SlowLog['CreateTime'], utc_format="%Y-%m-%dZ")
 
     result = {"total": json.loads(slowsql)['TotalRecordCount'], "rows": sql_slow_log,
               "PageSize": json.loads(slowsql)['PageRecordCount'], "PageNumber": json.loads(slowsql)['PageNumber']}
@@ -76,8 +76,8 @@ def slowquery_review_history(request):
     # 格式化时间\过滤HostAddress
     sql_slow_record = json.loads(slowsql)['Items']['SQLSlowRecord']
     for SlowRecord in sql_slow_record:
-        SlowRecord['ExecutionStartTime'] = Aliyun.aliyun_time_format(SlowRecord['ExecutionStartTime']).strftime(
-            "%Y-%m-%d %H:%M:%S")
+        SlowRecord['ExecutionStartTime'] = Aliyun.utc2local(SlowRecord['ExecutionStartTime'],
+                                                            utc_format='%Y-%m-%dT%H:%M:%SZ')
         SlowRecord['HostAddress'] = SlowRecord['HostAddress'].split('[')[0]
 
     result = {"total": json.loads(slowsql)['TotalRecordCount'], "rows": sql_slow_record,

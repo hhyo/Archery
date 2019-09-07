@@ -11,7 +11,7 @@ from django.db import connection, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
@@ -172,7 +172,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 返回查询结果
     try:
-        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
                             content_type='application/json')
     # 虽然能正常返回，但是依然会乱码
     except UnicodeDecodeError:
