@@ -13,6 +13,11 @@ class Users(AbstractUser):
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        self.failed_login_count = min(127, self.failed_login_count)
+        self.failed_login_count = max(0, self.failed_login_count)
+        super(Users, self).save(*args, **kwargs)
+
     def __str__(self):
         if self.display:
             return self.display
