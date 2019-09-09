@@ -5,22 +5,21 @@ from django.db import connection
 
 
 class ChartDao(object):
-    # 直接在archery数据库查询数据，用于报表
+    # 直接在Archery数据库查询数据，用于报表
     @staticmethod
     def __query(sql):
         cursor = connection.cursor()
-        effect_row = cursor.execute(sql)
+        cursor.execute(sql)
         rows = cursor.fetchall()
         fields = cursor.description
         column_list = []
         if fields:
             for i in fields:
                 column_list.append(i[0])
-        result = {}
-        result['column_list'] = column_list
-        result['rows'] = rows
-        result['effect_row'] = effect_row
-        return result
+        return {
+            'column_list': column_list,
+            'rows': rows
+        }
 
     # 获取连续时间
     @staticmethod
@@ -40,6 +39,7 @@ class ChartDao(object):
             then 'DDL'
           when syntax_type = 2
             then 'DML'
+          else '其他'
           end as syntax_type,
           count(*)
         from sql_workflow

@@ -14,8 +14,7 @@ django-q==1.0.2
 django-redis==4.10.0
 pyodbc==4.0.26
 gunicorn==19.9.0
-pyecharts==0.5.11
-pyecharts_snapshot==0.1.7
+pyecharts==1.5.0
 aliyun-python-sdk-rds==2.1.1
 pycryptodome==3.8.2
 cx-Oracle==7.1.3
