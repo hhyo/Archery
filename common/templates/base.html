@@ -18,9 +18,6 @@
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
     <!-- django i18n -->
     <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
-    {% for jsfile_name in script_list %}
-        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
-    {% endfor %}
 </head>
 <body>
 

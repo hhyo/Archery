@@ -113,5 +113,4 @@ def pyecharts(request):
     # 可视化展示页面
     page = Page(layout=Page.SimplePageLayout)
     page.add(bar1, pie1, bar2, pie2, line1, pie4, pie5)
-    print(page.render_embed())
     return render(request, "dashboard.html", {"chart": page.render_embed()})
