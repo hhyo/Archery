@@ -48,7 +48,7 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status')
+        slave_status = self.query(sql='show slave status', close_conn=False)
         return slave_status.rows[0][32] if slave_status.rows else None
 
     @property

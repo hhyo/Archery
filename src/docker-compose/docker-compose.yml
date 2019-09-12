@@ -13,8 +13,8 @@ services:
     image: mysql:5.7
     container_name: mysql
     restart: always
-    expose:
-      - "3306"
+    ports:
+      - "3306:3306"
     volumes:
       - "./mysql/my.cnf:/etc/mysql/my.cnf"
       - "./mysql/datadir:/var/lib/mysql"

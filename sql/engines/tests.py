@@ -522,7 +522,7 @@ class TestMysql(TestCase):
     def test_seconds_behind_master(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.seconds_behind_master
-        _query.assert_called_once_with(sql="show slave status")
+        _query.assert_called_once_with(sql="show slave status", close_conn=False)
 
 
 class TestRedis(TestCase):
