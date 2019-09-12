@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
+from sql.utils.ding_api import get_ding_user_id
 from sql.models import Users, ResourceGroup,ResourceGroup2User
 
 logger = logging.getLogger('default')
@@ -108,6 +109,10 @@ def authenticate_entry(request):
     new_auth = ArcheryAuth(request)
     result = new_auth.authenticate()
     if result['status'] == 0:
+        # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
+        if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
+            get_ding_user_id(request.POST.get('username'))
+
         result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')
