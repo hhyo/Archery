@@ -7,13 +7,12 @@ import threading
 import time
 import requests
 import json
-import redis
-from archery.settings import CACHES
+from django_redis import get_redis_connection
 from common.config import SysConfig
 from sql.models import Users
 
 logger = logging.getLogger('default')
-rs = redis.StrictRedis(host="127.0.0.1", port=6379, password=CACHES['default']['OPTIONS']['PASSWORD'], db=2)
+rs = get_redis_connection('dingding')
 sys_config = SysConfig()
 corp_id = sys_config.get('ding_corp_id')
 corp_secret = sys_config.get('ding_corp_secret')
