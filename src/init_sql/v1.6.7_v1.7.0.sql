@@ -10,3 +10,22 @@ alter table sql_users
 
 insert into django_q_schedule(func,schedule_type,repeats,task,name) values
   ('sql.tasks.ding.sync_ding_user_id','D',-2,'31144b2144724d7b81fe663e0211094b','同步钉钉用户ID');
+
+-- 增加实例账号管理权限，变更菜单权限信息
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 管理实例账号', @content_type_id, 'instance_account_manage');
+UPDATE auth_permission set name='菜单 实例账号管理',codename='menu_instance_account' where codename='menu_instance_user';
+
+-- 增加实例账号表
+CREATE TABLE `instance_account` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user` varchar(128) NOT NULL COMMENT '账号',
+  `host` varchar(64) NOT NULL COMMENT '主机',
+  `password` varchar(128) NOT NULL COMMENT '密码',
+  `remark` varchar(255) NOT NULL COMMENT '备注',
+  `sys_time` datetime(6) NOT NULL COMMENT '系统时间',
+  `instance_id` int(11) NOT NULL COMMENT '实例',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_instance_id_user_host` (`instance_id`,`user`,`host`),
+  CONSTRAINT `fk_account_sql_instance_id` FOREIGN KEY (`instance_id`) REFERENCES `sql_instance` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

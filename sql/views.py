@@ -290,10 +290,10 @@ def instance(request):
     return render(request, 'instance.html', {'tags': tags})
 
 
-@permission_required('sql.menu_instance', raise_exception=True)
-def instanceuser(request):
-    """实例用户管理页面"""
-    return render(request, 'instanceuser.html')
+@permission_required('sql.menu_instance_account', raise_exception=True)
+def instanceaccount(request):
+    """实例账号管理页面"""
+    return render(request, 'instanceaccount.html')
 
 
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)

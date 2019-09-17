@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     {% load staticfiles %}
@@ -155,9 +155,9 @@
                                         <a href="/dbdiagnostic/">会话管理</a>
                                     </li>
                                 {% endif %}
-                                {% if perms.sql.menu_instance_user %}
+                                {% if perms.sql.menu_instance_account %}
                                     <li>
-                                        <a href="/instanceuser/">用户管理</a>
+                                        <a href="/instanceaccount/">账号管理</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_param %}

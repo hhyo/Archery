@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
-    QueryPrivileges, \
+    QueryPrivileges, InstanceAccount, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
@@ -171,6 +171,19 @@ class WorkflowLogAdmin(admin.ModelAdmin):
     list_display = (
         'operation_type_desc', 'operation_info', 'operator_display', 'operation_time',)
     list_filter = ('operation_type_desc', 'operator_display')
+
+
+# 实例用户列表
+@admin.register(InstanceAccount)
+class InstanceAccountAdmin(admin.ModelAdmin):
+    list_display = ('user', 'host', 'instance', 'remark')
+    search_fields = ('user', 'host')
+    list_filter = ('instance', 'host')
+    list_display_links = ('user',)
+
+    # 仅支持修改备注
+    def get_readonly_fields(self, request, obj=None):
+        return ('user', 'host', 'instance', ) if obj else ()
 
 
 # 实例参数配置表
