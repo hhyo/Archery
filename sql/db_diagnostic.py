@@ -80,7 +80,7 @@ def create_kill_session(request):
 @permission_required('sql.process_kill', raise_exception=True)
 def kill_session(request):
     instance_name = request.POST.get('instance_name')
-    request_params = request.POST.get('request_params')
+    thread_ids = request.POST.get('ThreadIDs')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
@@ -93,9 +93,14 @@ def kill_session(request):
     if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
         result = aliyun_kill_session(request)
     else:
-        kill_sql = request_params
-        execute_engine = get_engine(instance=instance)
-        execute_engine.execute('information_schema', kill_sql)
+        thread_ids = thread_ids.replace('[', '').replace(']', '')
+        engine = get_engine(instance=instance)
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(thread_ids)
+        all_kill_sql = engine.query('information_schema', sql)
+        kill_sql = ''
+        for row in all_kill_sql.rows:
+            kill_sql = kill_sql + row[0]
+        engine.execute('information_schema', kill_sql)
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),

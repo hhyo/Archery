@@ -449,32 +449,42 @@
 
         //终止会话
         function kill_session() {
-            var instance_name = $("#instance_name").val();
-            var request_params = $("#request_params").val();
-            if (request_params) {
-                //发送请求构造会话数据
-                $.ajax({
-                    type: "post",
-                    url: "/db_diagnostic/kill_session/",
-                    dataType: "json",
-                    data: {
-                        instance_name: instance_name,
-                        request_params: request_params
-                    },
-                    traditional: true,
-                    complete: function () {
-                        //刷新页面
-                        get_process_list();
-                        $("#command-div").show();
-                        $("#process-toolbar").show();
-                    },
-                    success: function (data) {
-                        if (data.status === 0) {
+            var AllSelections = $("#process-list").bootstrapTable('getSelections');
+            if (AllSelections.length > 0) {
+                //获取选择的线程id
+                var AllSelectionIds = [];
+                for (var i = 0; i < AllSelections.length; i++) {
+                    AllSelectionIds.push(AllSelections[i]['id'])
+                }
+                var instance_name = $("#instance_name").val();
+                var request_params = $("#request_params").val();
+                if (request_params) {
+                    //发送请求构造会话数据
+                    $.ajax({
+                        type: "post",
+                        url: "/db_diagnostic/kill_session/",
+                        dataType: "json",
+                        data: {
+                            instance_name: instance_name,
+                            ThreadIDs: JSON.stringify(AllSelectionIds)
+                        },
+                        traditional: true,
+                        complete: function () {
+                            //刷新页面
+                            get_process_list();
+                            $("#command-div").show();
+                            $("#process-toolbar").show();
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                            }
                         }
-                    }
-                })
+                    })
+                } else {
+                    alert("所选会话已终止！")
+                }
             } else {
-                alert("所选会话已终止！")
+                alert("请先选择要终止的会话")
             }
         }
 
