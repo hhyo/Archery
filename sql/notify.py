@@ -8,6 +8,7 @@ from sql.utils.resource_group import auth_group_users
 from common.utils.sendmsg import MsgSender
 from common.utils.const import WorkflowDict
 from sql.utils.workflow_audit import Audit
+from sql.utils.ding_api import DingSender
 
 import logging
 
@@ -148,6 +149,10 @@ def notify_for_audit(audit_id, **kwargs):
     if sys_config.get('ding'):
         if webhook_url:
             msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    if sys_config.get('ding_to_person'):
+        ding_sender = DingSender()
+        for user in msg_to:
+            ding_sender.send_msg(user.ding_user_id, msg_title + '\n' + msg_content)
 
 
 def notify_for_execute(workflow):
@@ -158,7 +163,7 @@ def notify_for_execute(workflow):
     """
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
-    if not sys_config.get('mail') and not sys_config.get('ding'):
+    if not sys_config.get('mail') and not sys_config.get('ding') and not sys_config.get('ding_to_person'):
         logger.info('未开启消息通知，可在系统设置中开启')
         return None
     # 获取当前审批和审批流程
@@ -193,6 +198,10 @@ def notify_for_execute(workflow):
         webhook_url = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
         if webhook_url:
             MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    if sys_config.get('ding_to_person'):
+        # 单独发送钉钉通知给申请人
+        for user in msg_to:
+            DingSender().send_msg(user.ding_user_id, msg_title + '\n' + msg_content)
 
     # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
