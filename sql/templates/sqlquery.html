@@ -77,6 +77,7 @@
                                     <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
+                                    <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -654,11 +655,11 @@
 
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
-                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+/)) {
+                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe) {
                         var tb_name = $("#table_name").val();
                     } else {
-                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+/)[1];
+                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
                     if (tb_name !== active_li_title) {
                         tab_add(tb_name);
@@ -822,6 +823,13 @@
                 $("#redis_help_tab").remove();
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', false);
+                $("#nav-tabs a:last").tab('show');
+            }  else if (optgroup === "Phoenix") {
+                $("#div-table_name").show();
+                $("#div-schema_name").remove();
+                $("#redis_help_tab").remove();
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").remove();
                 $("#nav-tabs a:last").tab('show');
             } else {
                 $("#div-table_name").show();
@@ -1062,6 +1070,7 @@
                             $("#optgroup-redis").empty();
                             $("#optgroup-pgsql").empty();
                             $("#optgroup-mongo").empty();
+                            $("#optgroup-phoenix").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
@@ -1076,6 +1085,8 @@
                                     $("#optgroup-oracle").append(instance);
                                 } else if (result[i]['db_type'] === 'mongo') {
                                     $("#optgroup-mongo").append(instance);
+                                } else if (result[i]['db_type'] === 'phoenix') {
+                                    $("#optgroup-phoenix").append(instance);
                                 }
                             }
                             $('#instance_name').selectpicker('render');

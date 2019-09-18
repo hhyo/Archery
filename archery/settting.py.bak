@@ -31,7 +31,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_q',
     'sql',
-    'themis',
+    'sql_api',
     'common',
     'inspur',
 )
@@ -138,6 +138,7 @@ DATABASES = {
     }
 }
 
+<<<<<<< HEAD:archery/settting.py.bak
 # themis审核所需mongodb数据库，账号角色必须有"anyAction" to "anyResource"权限
 MONGODB_DATABASES = {
     "default": {
@@ -149,6 +150,8 @@ MONGODB_DATABASES = {
     },
 }
 
+=======
+>>>>>>> 1ff6a771fcab6ce9f432150d4067cd5ff8c81a47:archery/settings.py
 # Django-Q
 Q_CLUSTER = {
     'name': 'archery',
@@ -171,6 +174,15 @@ CACHES = {
         "LOCATION": "redis://192.168.99.100:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": ""
+        }
+    },
+    "dingding": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": ""
         }
     }
 }

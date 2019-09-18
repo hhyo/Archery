@@ -3,7 +3,11 @@ from django.contrib import admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include(('sql_api.urls', 'sql_api'), namespace="sql_api")),
     path('', include(('sql.urls', 'sql'), namespace="sql")),
+<<<<<<< HEAD:archery/urls.py.bak
     path('themis/', include(('themis.urls', 'themis'), namespace="themis")),
     path('', include(('inspur.urls', 'inspur'), namespace="inspur")),
+=======
+>>>>>>> 1ff6a771fcab6ce9f432150d4067cd5ff8c81a47:archery/urls.py
 ]

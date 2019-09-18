@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from sql.utils.workflow_audit import Audit
-from common.config import SysConfig
+from archery import display_version
 
 
 def global_info(request):
@@ -17,5 +17,5 @@ def global_info(request):
 
     return {
         'todo': todo,
-        'sign_up_enabled': SysConfig().get('sign_up_enabled')
+        'archery_version': display_version
     }

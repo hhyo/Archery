@@ -7,12 +7,11 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.core import serializers
 from django.db import connection, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
@@ -121,23 +120,21 @@ def query(request):
                         result['msg'] = f'数据脱敏异常：{masking_result.error}'
                     # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                     else:
+                        logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{masking_result.error}')
                         query_result.error = None
-                        priv_check = False
                         result['data'] = query_result.__dict__
-                    logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{masking_result.error}')
                 # 正常脱敏
                 else:
                     result['data'] = masking_result.__dict__
             except Exception as msg:
-                logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{msg}')
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if config.get('query_check'):
                     result['status'] = 1
                     result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{msg}'
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
+                    logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}')
                     query_result.error = None
-                    priv_check = False
                     result['data'] = query_result.__dict__
         # 无需脱敏的语句
         else:
@@ -175,7 +172,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 返回查询结果
     try:
-        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
                             content_type='application/json')
     # 虽然能正常返回，但是依然会乱码
     except UnicodeDecodeError:

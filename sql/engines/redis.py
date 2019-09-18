@@ -77,7 +77,7 @@ class RedisEngine(EngineBase):
             if limit_num > 0:
                 result_set.rows = result_set.rows[0:limit_num]
         except Exception as e:
-            logger.error(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         return result_set
 
@@ -128,7 +128,7 @@ class RedisEngine(EngineBase):
                 ))
                 line += 1
         except Exception as e:
-            logger.error(f"Redis命令执行报错，语句：{cmd or sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"Redis命令执行报错，语句：{cmd or sql}， 错误信息：{traceback.format_exc()}")
             # 追加当前报错语句信息到执行结果中
             execute_result.error = str(e)
             execute_result.rows.append(ReviewResult(

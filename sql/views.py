@@ -38,7 +38,8 @@ def login(request):
     """登录页面"""
     if request.user and request.user.is_authenticated:
         return HttpResponseRedirect('/')
-    return render(request, 'login.html')
+
+    return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)
@@ -376,7 +377,7 @@ def workflowsdetail(request, audit_id):
 def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件
-    file = os.path.join(settings.BASE_DIR, 'docs/mysql_db_design_guide.md')
+    file = os.path.join(settings.BASE_DIR, 'docs/docs.md')
     with open(file, 'r') as f:
         md = f.read().replace('\n', '\\n')
     return render(request, 'dbaprinciples.html', {'md': md})

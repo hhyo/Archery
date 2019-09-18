@@ -141,6 +141,23 @@ class TestUser(TestCase):
         # init 只调用一次
         mock_init.assert_called_once()
 
+    def test_out_ranged_failed_login_count(self):
+        # 正常保存
+        self.u1.failed_login_count = 64
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(64, self.u1.failed_login_count)
+        # 超过127视为127
+        self.u1.failed_login_count = 256
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(127, self.u1.failed_login_count)
+        # 小于0视为0
+        self.u1.failed_login_count = -1
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(0, self.u1.failed_login_count)
+
 
 class TestQueryPrivilegesCheck(TestCase):
     """测试权限校验"""

@@ -1247,6 +1247,17 @@ class TestDataMasking(TestCase):
         self.assertEqual(r.status, 1)
         self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
+    def test_data_masking_does_not_support_keyword(self, ):
+        """不支持的关键字"""
+
+        sqls = ["select id from test union select email from activity_email_all_in_one;",
+                "select id from test union all select email from activity_email_all_in_one;"]
+        for sql in sqls:
+            query_result = ReviewSet(full_sql=sql)
+            r = data_masking(self.ins, 'archery', sql, query_result)
+            self.assertEqual(r.status, 1)
+            self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+
     def test_brute_mask(self):
         sql = """select * from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))

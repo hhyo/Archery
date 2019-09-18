@@ -18,9 +18,6 @@
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
     <!-- django i18n -->
     <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
-    {% for jsfile_name in script_list %}
-        <script src="{{ host }}/{{ jsfile_name }}.js"></script>
-    {% endfor %}
 </head>
 <body>
 
@@ -68,6 +65,11 @@
                 <!-- /.dropdown-user -->
             </li>
             <!-- /.dropdown -->
+            <li>
+                <a href="https://github.com/hhyo/Archery" target="_blank">
+                    <i class="fa fa-github fa-lg" aria-hidden="true"></i>
+                </a>
+            </li>
         </ul>
         <!-- /.navbar-top-links -->
 
@@ -152,35 +154,6 @@
                             <!-- /.nav-second-level -->
                         </li>
                     {% endif %}
-                    {% if perms.sql.menu_themis %}
-                        <li>
-                            <a href="#"><i class="fa fa-stethoscope fa-fw"></i> 数据库审核<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a target="_blank" href="/themis/">规则设置</a>
-                                </li>
-                                <li>
-                                    <a href="#">规则增加<span class="fa arrow"></span></a>
-                                    <ul class="nav nav-third-level collapse">
-                                        <li>
-                                            <a target="_blank" href="/themis/sqlreview/rule/simple/addition">简单规则</a>
-                                        </li>
-                                        <li>
-                                            <a target="_blank" href="/themis/sqlreview/rule/complex/addition">复杂规则</a>
-                                        </li>
-                                    </ul>
-                                    <!-- /.nav-third-level -->
-                                </li>
-                                <li>
-                                    <a target="_blank" href="/themis/new/version/sql/review/rule/info/index">任务发布</a>
-                                </li>
-                                <li>
-                                    <a target="_blank" href="/themis/new/version/sql/review/task/index">任务查询</a>
-                                </li>
-                            </ul>
-                            <!-- /.nav-second-level -->
-                        </li>
-                    {% endif %}
                     {% if perms.sql.menu_instance %}
                         <li>
                             <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
@@ -250,14 +223,7 @@
                     {% endif %}
                     {% if perms.sql.menu_document %}
                         <li>
-                            <a href="#"><i class="fa fa-sitemap fa-fw"></i> 相关文档<span
-                                    class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="/dbaprinciples/">设计规范</a>
-                                </li>
-                            </ul>
-                            <!-- /.nav-second-level -->
+                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -276,7 +242,7 @@
             <!--底部部分 -->
             <footer class="text-center">
                 <hr>
-                <p><strong>&copy; Archery</strong>&nbsp;(v1.6.7)</p>
+                <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
             </footer>
         </div>
     </div>
@@ -319,6 +285,25 @@
         }
         return cookieValue;
     }
+
+    // 解决下拉筛选项被表格遮挡
+    // https://github.com/twbs/bootstrap/issues/11037#issuecomment-274870381
+    $('.table-responsive').on('shown.bs.dropdown', function (e) {
+        var t = $(this),
+            m = $(e.target).find('.dropdown-menu'),
+            tb = t.offset().top + t.height(),
+            mb = m.offset().top + m.outerHeight(true),
+            d = 20; // Space for shadow + scrollbar.
+        if (t[0].scrollWidth > t.innerWidth()) {
+            if (mb + d > tb) {
+                t.css('padding-bottom', ((mb + d) - tb));
+            }
+        } else {
+            t.css('overflow', 'visible');
+        }
+    }).on('hidden.bs.dropdown', function () {
+        $(this).css({'padding-bottom': '', 'overflow': ''});
+    });
 </script>
 {% block js %}
 {% endblock %}

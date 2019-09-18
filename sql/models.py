@@ -10,8 +10,14 @@ class Users(AbstractUser):
     用户信息扩展
     """
     display = models.CharField('显示的中文名', max_length=50, default='')
+    ding_user_id = models.CharField('钉钉UserID', max_length=50, blank=True, null=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        self.failed_login_count = min(127, self.failed_login_count)
+        self.failed_login_count = max(0, self.failed_login_count)
+        super(Users, self).save(*args, **kwargs)
 
     def __str__(self):
         if self.display:
@@ -32,6 +38,7 @@ DB_TYPE_CHOICES = (
     ('pgsql', 'PgSQL'),
     ('oracle', 'Oracle'),
     ('mongo', 'Mongo'),
+    ('phoenix', 'Phoenix'),
     ('inception', 'Inception'),
     ('goinception', 'goInception'))
 
@@ -608,7 +615,6 @@ class Permission(models.Model):
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
-            ('menu_themis', '菜单 数据库审核'),
             ('sql_submit', '提交SQL上线工单'),
             ('sql_review', '审核SQL上线工单'),
             ('sql_execute_for_resource_group', '执行SQL上线工单(资源组粒度)'),
