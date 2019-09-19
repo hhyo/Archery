@@ -29,3 +29,23 @@ CREATE TABLE `instance_account` (
   UNIQUE KEY `uniq_instance_id_user_host` (`instance_id`,`user`,`host`),
   CONSTRAINT `fk_account_sql_instance_id` FOREIGN KEY (`instance_id`) REFERENCES `sql_instance` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- 增加实例账号管理权限，变更菜单权限信息
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 数据库管理', @content_type_id, 'menu_database');
+
+
+-- 增加实例数据库表
+CREATE TABLE `instance_database` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `db_name` varchar(128) NOT NULL COMMENT '账号',
+  `username` varchar(30) NOT NULL COMMENT '负责人',
+  `user_display` varchar(50) NOT NULL DEFAULT '负责人中文名',
+  `remark` varchar(255) NOT NULL COMMENT '备注',
+  `sys_time` datetime(6) NOT NULL COMMENT '系统时间',
+  `instance_id` int(11) NOT NULL COMMENT '实例',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_database_sql_instance_id` FOREIGN KEY (`instance_id`) REFERENCES `sql_instance` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
