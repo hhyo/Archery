@@ -55,40 +55,6 @@ def lists(request):
                         content_type='application/json')
 
 
-@permission_required('sql.menu_instance_user', raise_exception=True)
-def users(request):
-    """获取实例用户列表"""
-    instance_id = request.POST.get('instance_id')
-    if not instance_id:
-        return HttpResponse(json.dumps({'status': 0, 'msg': '', 'data': []}), content_type='application/json')
-    try:
-        instance = Instance.objects.get(id=instance_id)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    sql_get_user = '''select concat("\'", user, "\'", '@', "\'", host,"\'") as query from mysql.user;'''
-    query_engine = get_engine(instance=instance)
-    query_result = query_engine.query('mysql', sql_get_user)
-    if not query_result.error:
-        db_users = query_result.rows
-        # 获取用户权限信息
-        data = []
-        for db_user in db_users:
-            user_priv = query_engine.query('mysql', 'show grants for {};'.format(db_user[0]), close_conn=False).rows
-            data.append({
-                'user': db_user[0],
-                'privileges': user_priv
-            })
-        result = {'status': 0, 'msg': 'ok', 'rows': data}
-    else:
-        result = {'status': 1, 'msg': query_result.error}
-    # 关闭连接
-    query_engine.close()
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')
-
-
 @permission_required('sql.param_view', raise_exception=True)
 def param_list(request):
     """
@@ -289,17 +255,21 @@ def instance_resource(request):
     :param request:
     :return:
     """
+    instance_id = request.POST.get('instance_id')
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
     schema_name = request.POST.get('schema_name')
     tb_name = request.POST.get('tb_name')
 
     resource_type = request.POST.get('resource_type')
-    try:
-        instance = Instance.objects.get(instance_name=instance_name)
-    except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
-        return HttpResponse(json.dumps(result), content_type='application/json')
+    if instance_id:
+        instance = Instance.objects.get(id=instance_id)
+    else:
+        try:
+            instance = Instance.objects.get(instance_name=instance_name)
+        except Instance.DoesNotExist:
+            result = {'status': 1, 'msg': '实例不存在', 'data': []}
+            return HttpResponse(json.dumps(result), content_type='application/json')
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:

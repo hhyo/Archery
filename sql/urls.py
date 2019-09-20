@@ -6,8 +6,8 @@ from django.views.i18n import JavaScriptCatalog
 import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog, \
-    data_dictionary
+from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
+    resource_group, binlog, data_dictionary
 from sql.utils import tasks
 
 urlpatterns = [
@@ -45,8 +45,7 @@ urlpatterns = [
     path('group/', views.group),
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
-    path('instanceuser/', views.instanceuser),
-    path('instanceuser/<int:instance_id>/', views.instanceuser),
+    path('instanceaccount/', views.instanceaccount),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
@@ -81,7 +80,14 @@ urlpatterns = [
     path('group/user_all_instances/', resource_group.user_all_instances),
 
     path('instance/list/', instance.lists),
-    path('instance/users/', instance.users),
+
+    path('instance/user/list', instance_account.users),
+    path('instance/user/create/', instance_account.create),
+    path('instance/user/edit/', instance_account.edit),
+    path('instance/user/grant/', instance_account.grant),
+    path('instance/user/reset_pwd/', instance_account.reset_pwd),
+    path('instance/user/delete/', instance_account.delete),
+
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
     path('instance/describetable/', instance.describe),
