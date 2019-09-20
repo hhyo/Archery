@@ -8,6 +8,7 @@ delete from auth_permission where codename='menu_themis';
 alter table sql_users
   add ding_user_id varchar(50) default null comment '钉钉user_id';
 
+-- 添加同步任务（需要先配置钉钉个人通知后添加）
 insert into django_q_schedule(func,schedule_type,repeats,task,name) values
   ('sql.tasks.ding.sync_ding_user_id','D',-2,'31144b2144724d7b81fe663e0211094b','同步钉钉用户ID');
 
@@ -40,8 +41,8 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 �
 CREATE TABLE `instance_database` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `db_name` varchar(128) NOT NULL COMMENT '账号',
-  `username` varchar(30) NOT NULL COMMENT '负责人',
-  `user_display` varchar(50) NOT NULL DEFAULT '负责人中文名',
+  `owner` varchar(30) NOT NULL COMMENT '负责人',
+  `owner_display` varchar(50) NOT NULL DEFAULT '负责人中文名',
   `remark` varchar(255) NOT NULL COMMENT '备注',
   `sys_time` datetime(6) NOT NULL COMMENT '系统时间',
   `instance_id` int(11) NOT NULL COMMENT '实例',

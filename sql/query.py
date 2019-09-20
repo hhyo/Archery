@@ -41,7 +41,7 @@ def query(request):
     except Instance.DoesNotExist:
         result['status'] = 1
         result['msg'] = '实例不存在'
-        return result
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, limit_num]:
