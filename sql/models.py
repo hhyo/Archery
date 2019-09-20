@@ -491,6 +491,25 @@ class InstanceAccount(models.Model):
         verbose_name_plural = '实例账号列表'
 
 
+class InstanceDatabase(models.Model):
+    """
+    实例数据库列表
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    db_name = fields.EncryptedCharField(verbose_name='数据库名', max_length=128)
+    owner = models.CharField('负责人', max_length=50, default='', blank=True)
+    owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
+    remark = models.CharField('备注', max_length=255, default='', blank=True)
+    sys_time = models.DateTimeField('系统修改时间', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'instance_database'
+        unique_together = ('instance', 'db_name')
+        verbose_name = '实例数据库'
+        verbose_name_plural = '实例数据库列表'
+
+
 class ParamTemplate(models.Model):
     """
     实例参数模板配置
@@ -629,6 +648,7 @@ class Permission(models.Model):
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),
+            ('menu_database', '菜单 数据库管理'),
             ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),

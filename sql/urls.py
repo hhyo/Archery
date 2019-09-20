@@ -3,6 +3,7 @@
 from django.urls import path
 from django.views.i18n import JavaScriptCatalog
 
+import sql.instance_database
 import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
@@ -46,6 +47,7 @@ urlpatterns = [
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
     path('instanceaccount/', views.instanceaccount),
+    path('database/', views.database),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
@@ -87,6 +89,10 @@ urlpatterns = [
     path('instance/user/grant/', instance_account.grant),
     path('instance/user/reset_pwd/', instance_account.reset_pwd),
     path('instance/user/delete/', instance_account.delete),
+
+    path('instance/database/list/', sql.instance_database.databases),
+    path('instance/database/create/', sql.instance_database.create),
+    path('instance/database/edit/', sql.instance_database.edit),
 
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
