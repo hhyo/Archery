@@ -208,7 +208,7 @@
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
                                                    type="checkbox">
-                                            开启备份选项(建议不开启, 强制要求备份)
+                                            是否开启备份选项(默认关闭, 强制要求备份)
                                         </label>
                                     </div>
                                 </div>
@@ -481,7 +481,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="ding_to_person"
-                                       class="col-sm-4 control-label">DING_To_One</label>
+                                       class="col-sm-4 control-label">DING_TO_PERSON</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
@@ -545,9 +545,9 @@
                                            class="col-sm-4 control-label">DingDeptIDs</label>
                                     <div class="col-sm-5">
                                         <textarea class="form-control"
-                                               id="ding_dept_ids"
-                                               key="ding_dept_ids"
-                                               placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
+                                                  id="ding_dept_ids"
+                                                  key="ding_dept_ids"
+                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
                                     </div>
                                 </div>
                             </div>
