@@ -557,7 +557,7 @@ class Config(models.Model):
     配置信息表
     """
     item = models.CharField('配置项', max_length=50, primary_key=True)
-    value = models.CharField('配置项值', max_length=200)
+    value = fields.EncryptedCharField(verbose_name='配置项值', max_length=200)
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:

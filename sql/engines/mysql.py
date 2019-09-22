@@ -183,7 +183,7 @@ class MysqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         config = SysConfig()
         # 进行Inception检查，获取检测结果
-        if config.get('go_inception'):
+        if not config.get('inception'):
             try:
                 inception_engine = GoInceptionEngine()
                 inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
@@ -255,7 +255,7 @@ class MysqlEngine(EngineBase):
         if workflow.is_manual == 1:
             return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
         # inception执行
-        elif SysConfig().get('go_inception'):
+        elif not SysConfig().get('inception'):
             inception_engine = GoInceptionEngine()
             return inception_engine.execute(workflow)
         else:
@@ -303,7 +303,7 @@ class MysqlEngine(EngineBase):
         """控制osc执行，获取进度、终止、暂停、恢复等
             get、kill、pause、resume
         """
-        if SysConfig().get('go_inception'):
+        if not SysConfig().get('inception'):
             go_inception_engine = GoInceptionEngine()
             return go_inception_engine.osc_control(**kwargs)
         else:

@@ -496,7 +496,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.GoInceptionEngine')
     def test_osc_go_inception(self, _inception_engine):
-        self.sys_config.set('go_inception', 'true')
+        self.sys_config.set('inception', 'false')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
@@ -505,7 +505,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_osc_inception(self, _inception_engine):
-        self.sys_config.set('go_inception', 'false')
+        self.sys_config.set('inception', 'true')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
