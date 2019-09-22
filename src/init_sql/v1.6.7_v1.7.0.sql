@@ -32,7 +32,7 @@ CREATE TABLE `instance_account` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- 增加实例账号管理权限，变更菜单权限信息
+-- 增加实例数据库权限
 set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 数据库管理', @content_type_id, 'menu_database');
 
@@ -50,3 +50,7 @@ CREATE TABLE `instance_database` (
   CONSTRAINT `fk_database_sql_instance_id` FOREIGN KEY (`instance_id`) REFERENCES `sql_instance` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+-- 增加资源组粒度的查询权限
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('可查询所在资源组内的所有实例', @content_type_id, 'query_resource_group_instance');
