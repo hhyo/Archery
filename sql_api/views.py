@@ -172,7 +172,7 @@ def debug(request):
             'q_broker_stats': q_broker_stats
         },
         'inception': {
-            'enable_goinception': sys_config.get('go_inception'),
+            'enable_inception': sys_config.get('inception'),
             'inception_info': full_inception_info if full else inception_info,
             'goinception_info': full_goinception_info if full else goinception_info,
             'backup_info': backup_info

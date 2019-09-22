@@ -54,14 +54,13 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
+                        <button id='check_goincption' class='btn-sm btn-info'>测试goInception连接</button>&nbsp;
                         <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
-                        <button id='check_goincption' class='btn-sm btn-info' style="display: none">测试goInception连接
-                        </button>
                         <h6 style="color:red">注：默认使用goInception进行MySQL的审核和执行，Inception作为查询表权限校验和脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="go_inception"
+                                <label for="inception"
                                        class="col-sm-4 control-label">INCEPTION</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
@@ -725,9 +724,6 @@
                     $("#div-ding-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").show();
-                    $("#check_goincption").show()
                 }
             } else {
                 $(this).val(false);
@@ -738,9 +734,6 @@
                     $("#div-ding-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").hide();
-                    $("#check_goincption").hide()
                 }
             }
         });
