@@ -684,7 +684,7 @@
                             "title": column,
                             "sortable": true,
                             cellStyle: function (value, row, index) {
-                                if (!value) {
+                                if (!value && typeof (value) !== "undefined" && value !== 0) {
                                     return {
                                         css: {
                                             color: 'darkgrey'
@@ -692,8 +692,7 @@
                                     }
                                 } else {
                                     return {
-                                        css: {
-                                        }
+                                        css: {}
                                     }
                                 }
                             },

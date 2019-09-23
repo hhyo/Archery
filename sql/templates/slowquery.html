@@ -52,6 +52,10 @@
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
@@ -279,13 +283,17 @@
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
+                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
                     search: false,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: false,
-                    exportDataType: "all",
+                    showExport: true,                   //是否显示导出按钮
+                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                    exportOptions: {
+                        ignoreColumn: [0],  //忽略某些列的索引数组
+                        fileName: 'slowquery_review'  //文件名称设置
+                    },
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列
@@ -398,13 +406,17 @@
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
+                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
                     search: false,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: false,
-                    exportDataType: "all",
+                    showExport: true,                   //是否显示导出按钮
+                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                    exportOptions: {
+                        ignoreColumn: [0],  //忽略某些列的索引数组
+                        fileName: 'slowquery_review_history'  //文件名称设置
+                    },
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列
