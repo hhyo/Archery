@@ -40,6 +40,7 @@ def slowquery_review(request):
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
         limit = offset + limit
+        search = request.POST.get('search')
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -49,7 +50,8 @@ def slowquery_review(request):
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__db_max=db_name,
-                slowqueryhistory__ts_min__range=(start_time, end_time)
+                slowqueryhistory__ts_min__range=(start_time, end_time),
+                fingerprint__icontains=search
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -64,6 +66,7 @@ def slowquery_review(request):
             slowsql_obj = SlowQuery.objects.filter(
                 slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 slowqueryhistory__ts_min__range=(start_time, end_time),
+                fingerprint__icontains=search
             ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
                 CreateTime=Max('slowqueryhistory__ts_max'),
                 DBName=Max('slowqueryhistory__db_max'),  # 数据库
@@ -112,6 +115,7 @@ def slowquery_review_history(request):
         sql_id = request.POST.get('SQLId')
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
+        search = request.POST.get('search')
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -122,7 +126,8 @@ def slowquery_review_history(request):
             slow_sql_record_obj = SlowQueryHistory.objects.filter(
                 hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                 checksum=sql_id,
-                ts_min__range=(start_time, end_time)
+                ts_min__range=(start_time, end_time),
+                sample__icontains=search
             ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                        DBName=F('db_max'),  # 数据库名
                        HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),  # 用户名
@@ -140,7 +145,8 @@ def slowquery_review_history(request):
                 slow_sql_record_obj = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
                     db_max=db_name,
-                    ts_min__range=(start_time, end_time)
+                    ts_min__range=(start_time, end_time),
+                    sample__icontains=search
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                            DBName=F('db_max'),  # 数据库名
                            HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),
@@ -157,7 +163,8 @@ def slowquery_review_history(request):
                 # 获取慢查明细数据
                 slow_sql_record_obj = SlowQueryHistory.objects.filter(
                     hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    ts_min__range=(start_time, end_time)
+                    ts_min__range=(start_time, end_time),
+                    sample__icontains=search
                 ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
                            DBName=F('db_max'),  # 数据库名
                            HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),

@@ -284,7 +284,7 @@
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
                     pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: false,                      //是否显示表格搜索
+                    search: true,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
@@ -313,7 +313,8 @@
                             StartTime: StartTime,
                             EndTime: EndTime,
                             limit: params.limit,
-                            offset: params.offset
+                            offset: params.offset,
+                            search: params.search
                         }
                     },
                     //格式化详情
@@ -379,6 +380,10 @@
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
                     },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
@@ -407,7 +412,7 @@
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
                     pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
-                    search: false,                      //是否显示表格搜索
+                    search: true,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
@@ -438,7 +443,8 @@
                             StartTime: StartTime,
                             EndTime: EndTime,
                             limit: params.limit,
-                            offset: params.offset
+                            offset: params.offset,
+                            search: params.search
                         }
                     },
                     //格式化详情
@@ -505,6 +511,10 @@
                     locale: 'zh-CN',
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
