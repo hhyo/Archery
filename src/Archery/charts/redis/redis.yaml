@@ -1,0 +1,64 @@
+---
+# Source: redis/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archery-redis
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: archery
+
+---
+# Source: redis/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archery-redis
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/instance: archery
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/instance: archery
+    spec:
+      containers:
+        - name: redis
+          image: "redis:5"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: redis
+          resources:
+            {}
+            
+
+---
+# Source: redis/templates/ingress.yaml
+
+

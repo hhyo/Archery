@@ -1,0 +1,4 @@
+[djangoq.errorreporters]
+rollbar = django_q_rollbar:Rollbar
+sentry = django_q_sentry:Sentry
+
