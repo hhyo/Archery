@@ -1,0 +1,16 @@
+dependencies:
+  - name: redis
+    version: 0.1.0
+    repository: http://example.com/charts
+  - name: mysql
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: mongo
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: inception
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: goinception
+    version: 0.1.0
+    repository: http://another.example.com/charts
