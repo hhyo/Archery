@@ -496,7 +496,7 @@ class InstanceDatabase(models.Model):
     实例数据库列表
     """
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = fields.EncryptedCharField(verbose_name='数据库名', max_length=128)
+    db_name = models.CharField('数据库名', max_length=128)
     owner = models.CharField('负责人', max_length=50, default='', blank=True)
     owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
     remark = models.CharField('备注', max_length=255, default='', blank=True)
