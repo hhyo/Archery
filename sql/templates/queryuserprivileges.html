@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <ul class="breadcrumb">
+        <li><a href="/queryapplylist/">申请列表</a></li>
+        <li class="active">权限管理</li>
+    </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <div class="form-group">
-            <select id=user_display class="form-control selectpicker show-tick bs-select-hidden " name="user_display_list"
+            <select id=user_display class="form-control selectpicker show-tick bs-select-hidden "
+                    name="user_display_list"
                     data-live-search="true">
                 <option value="all" selected="selected">全部</option>
                 {% if user.is_superuser %}
@@ -139,8 +144,7 @@
                     formatter: function (value, row, index) {
                         if (value === 1) {
                             return 'DATABASE';
-                        }
-                        else {
+                        } else {
                             return 'TABLE';
                         }
                     }
@@ -225,8 +229,7 @@
                             $('#modify_privileges').modal('hide');
                             $('#deleted_privileges').modal('hide');
                             queryuserprivileges()
-                        }
-                        else {
+                        } else {
                             alert(data.msg)
                         }
                     },
@@ -234,8 +237,7 @@
                         alert(errorThrown);
                     }
                 })
-            }
-            else {
+            } else {
                 alert("请填写完整")
             }
         }
