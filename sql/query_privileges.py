@@ -52,6 +52,12 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         priv_limit = int(SysConfig().get('admin_query_limit', 5000))
         result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
         return result
+    # 如果有can_query_resource_group_instance, 视为资源组管理员, 可查询资源组内所有实例数据
+    if user.has_perm('sql.query_resource_group_instance'):
+        if user_instances(user, tag_codes=['can_read']).filter(pk=instance.pk).exists():
+            priv_limit = int(SysConfig().get('admin_query_limit', 5000))
+            result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
+            return result
     # explain和show create跳过权限校验
     if re.match(r"^explain|^show\s+create", sql_content, re.I):
         return result

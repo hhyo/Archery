@@ -1,0 +1,1577 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group ">
+            <select id=instance class="form-control selectpicker" name="instance_list"
+                    title="请选择实例"
+                    data-live-search="true">
+            </select>
+        </div>
+        <div class="form-group">
+            <select id="saved" class="form-control selectpicker"
+                    title="全部">
+                <option value="" selected="selected">全部</option>
+                <option value="true">已录入</option>
+            </select>
+        </div>
+        <div class="form-group ">
+            <button id="btn-create-account" type="button" class="btn btn-default" disabled="disabled"
+                    data-toggle="modal" data-target="#create-account">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                创建账号
+            </button>
+        </div>
+    </div>
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="user-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+    <!-- 创建账号模态框 -->
+    <div class="modal fade" id="create-account" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">创建账号</h4>
+                    <h6 style="color:red">注：新创建的账号无权限，需要使用授权功能授予相关权限</h6>
+                </div>
+                <div class="modal-body form-group">
+                    <div class="form-group row">
+                        <label for="user" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库账号</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="user" class="form-control" autocomplete="off"
+                                   aria-describedby="userHelpBlock"
+                                   placeholder="请输入账号名称">
+                            <small id="userHelpBlock" class="form-text text-muted">
+                                帐号名需要1-16个字符，由字母、数字和特殊字符组成；
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="host" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>主机</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="host" class="form-control" autocomplete="new-password"
+                                   aria-describedby="hostHelpBlock"
+                                   placeholder="请输入主机">
+                            <small id="hostHelpBlock" class="form-text text-muted">
+                                1. IP形式，支持填入% <br>
+                                2. 多个主机以|分隔符分隔
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password1" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" id="password1" class="form-control" autocomplete="new-password"
+                                   aria-describedby="passwordHelpBlock"
+                                   placeholder="请输入密码">
+                            <small id="passwordHelpBlock" class="form-text text-muted">
+                                密码需要8-32个字符，至少包含英文、数字和特殊符号
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password2" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>确认密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" id="password2" class="form-control"
+                                   autocomplete="new-password"
+                                   placeholder="请再次输入密码">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="remark" class="form-control"
+                                   autocomplete="off"
+                                   placeholder="请输入备注">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="create_account()">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 修改账号模态框 -->
+    <div class="modal fade" id="edit-account" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">修改/录入账号 </h4>
+                    <h6 style="color:red">注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能</h6>
+                </div>
+                <div class="modal-body form-group">
+
+                    <div class="form-group row">
+                        <label for="edit-user" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库账号</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit-user" class="form-control" autocomplete="off"
+                                   readonly="readonly"
+                                   placeholder="请输入账号名称">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="edit-host" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>主机</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit-host" class="form-control" autocomplete="off"
+                                   readonly="readonly"
+                                   placeholder="请输入主机">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="edit-password1" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" id="edit-password" class="form-control" autocomplete="new-password"
+                                   placeholder="请输入密码，留空则不修改录入信息">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="edit-remark" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit-remark" class="form-control"
+                                   autocomplete="off"
+                                   placeholder="请输入备注">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="resetEditBtn">修改/录入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 权限变更模态框 -->
+    <div class="modal fade" id="grants-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">授权变更
+                        实例: <span id="modify-instance" style="color: red"></span>
+                        账号: <span id="modify-user" style="color: red"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    对象选择
+                                </div>
+                                <div class="panel-body">
+                                    <div class="form-group">
+                                        <h5 class="control-label text-bold">选择授权类型：</h5>
+                                        <div class="form-group">
+                                            <select id="priv-type" name="priv-type"
+                                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                                    data-name="配置项" title="请选择配置项" required>
+                                                <option value="0" selected="selected">全局权限</option>
+                                                <option value="1">库权限</option>
+                                                <option value="2">表权限</option>
+                                                <option value="3">列权限</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="div-db" class="form-group" style="display: none">
+                                        <h5 class="control-label text-bold">请选择数据库：</h5>
+                                        <div class="form-group">
+                                            <select id="db_name" name="db_name"
+                                                    data-live-search="true"
+                                                    data-none-selected-text="请选择数据库"
+                                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                                    data-name="数据库" required>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="div-tb" class="form-group" style="display: none">
+                                        <h5 class="control-label text-bold">请选择表：</h5>
+                                        <div class="form-group">
+                                            <select id="tb_name" name="tb_name"
+                                                    data-live-search="true"
+                                                    data-none-selected-text="请选择表"
+                                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                                    data-name="表" required>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="div-col" class="form-group" style="display: none">
+                                        <h5 class="control-label text-bold">请选择列：</h5>
+                                        <div class="form-group">
+                                            <select id="col_name" name="col_name"
+                                                    data-live-search="true"
+                                                    data-none-selected-text="请选择列"
+                                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                                    data-name="表" required>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    权限选择
+                                </div>
+                                <div class="panel-body" id="div-global-priv">
+                                    <div class="col-sm-3">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_数据_priv">数据</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="SELECT" id="checkbox_Select_priv">
+                                                <label for="checkbox_Select_priv">
+                                                    <code>
+                                                        <dfn>SELECT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INSERT" id="checkbox_Insert_priv">
+                                                <label for="checkbox_Insert_priv">
+                                                    <code>
+                                                        <dfn>INSERT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="UPDATE" id="checkbox_Update_priv">
+                                                <label for="checkbox_Update_priv">
+                                                    <code>
+                                                        <dfn>UPDATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DELETE" id="checkbox_Delete_priv">
+                                                <label for="checkbox_Delete_priv">
+                                                    <code>
+                                                        <dfn>DELETE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="FILE" id="checkbox_File_priv">
+                                                <label for="checkbox_File_priv">
+                                                    <code>
+                                                        <dfn>FILE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_结构_priv">结构</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="CREATE" id="checkbox_Create_priv">
+                                                <label for="checkbox_Create_priv">
+                                                    <code>
+                                                        <dfn>CREATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="ALTER" id="checkbox_Alter_priv">
+                                                <label for="checkbox_Alter_priv">
+                                                    <code>
+                                                        <dfn>ALTER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INDEX" id="checkbox_Index_priv">
+                                                <label for="checkbox_Index_priv">
+                                                    <code>
+                                                        <dfn>INDEX</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DROP" id="checkbox_Drop_priv">
+                                                <label for="checkbox_Drop_priv">
+                                                    <code>
+                                                        <dfn>DROP</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE TEMPORARY TABLES"
+                                                       id="checkbox_Create_tmp_table_priv">
+                                                <label for="checkbox_Create_tmp_table_priv">
+                                                    <code>
+                                                        <dfn>CREATE TEMPORARY TABLES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SHOW VIEW"
+                                                       id="checkbox_Show_view_priv">
+                                                <label for="checkbox_Show_view_priv">
+                                                    <code>
+                                                        <dfn>SHOW VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE ROUTINE"
+                                                       id="checkbox_Create_routine_priv">
+                                                <label for="checkbox_Create_routine_priv">
+                                                    <code>
+                                                        <dfn>CREATE ROUTINE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="ALTER ROUTINE"
+                                                       id="checkbox_Alter_routine_priv">
+                                                <label for="checkbox_Alter_routine_priv">
+                                                    <code>
+                                                        <dfn>ALTER ROUTINE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="EXECUTE" id="checkbox_Execute_priv">
+                                                <label for="checkbox_Execute_priv">
+                                                    <code>
+                                                        <dfn>EXECUTE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE VIEW"
+                                                       id="checkbox_Create_view_priv">
+                                                <label for="checkbox_Create_view_priv">
+                                                    <code>
+                                                        <dfn>CREATE VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="EVENT" id="checkbox_Event_priv">
+                                                <label for="checkbox_Event_priv">
+                                                    <code>
+                                                        <dfn>EVENT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="TRIGGER" id="checkbox_Trigger_priv">
+                                                <label for="checkbox_Trigger_priv">
+                                                    <code>
+                                                        <dfn>TRIGGER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_管理_priv">管理</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="GRANT" id="checkbox_Grant_priv">
+                                                <label for="checkbox_Grant_priv">
+                                                    <code>
+                                                        <dfn>GRANT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SUPER" id="checkbox_Super_priv">
+                                                <label for="checkbox_Super_priv">
+                                                    <code>
+                                                        <dfn>SUPER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="PROCESS" id="checkbox_Process_priv">
+                                                <label for="checkbox_Process_priv">
+                                                    <code>
+                                                        <dfn>PROCESS</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="RELOAD" id="checkbox_Reload_priv">
+                                                <label for="checkbox_Reload_priv">
+                                                    <code>
+                                                        <dfn>RELOAD</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SHUTDOWN" id="checkbox_Shutdown_priv">
+                                                <label for="checkbox_Shutdown_priv">
+                                                    <code>
+                                                        <dfn>SHUTDOWN</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SHOW DATABASES" id="checkbox_Show_db_priv">
+                                                <label for="checkbox_Show_db_priv">
+                                                    <code>
+                                                        <dfn>SHOW DATABASES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="LOCK TABLES"
+                                                       id="checkbox_Lock_tables_priv">
+                                                <label for="checkbox_Lock_tables_priv">
+                                                    <code>
+                                                        <dfn>LOCK TABLES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="REFERENCES"
+                                                       id="checkbox_References_priv">
+                                                <label for="checkbox_References_priv">
+                                                    <code>
+                                                        <dfn>REFERENCES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="REPLICATION CLIENT"
+                                                       id="checkbox_Repl_client_priv">
+                                                <label for="checkbox_Repl_client_priv">
+                                                    <code>
+                                                        <dfn>REPLICATION CLIENT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="REPLICATION SLAVE"
+                                                       id="checkbox_Repl_slave_priv">
+                                                <label for="checkbox_Repl_slave_priv">
+                                                    <code>
+                                                        <dfn>REPLICATION SLAVE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE USER"
+                                                       id="checkbox_Create_user_priv">
+                                                <label for="checkbox_Create_user_priv">
+                                                    <code>
+                                                        <dfn>CREATE USER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="panel-body" id="div-db-priv" style="display: none">
+                                    <div class="col-sm-3">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_数据_priv">数据</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="SELECT"
+                                                       id="checkbox_Select_priv">
+                                                <label for="checkbox_Select_priv">
+                                                    <code>
+                                                        <dfn>SELECT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INSERT"
+                                                       id="checkbox_Insert_priv">
+                                                <label for="checkbox_Insert_priv">
+                                                    <code>
+                                                        <dfn>INSERT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="UPDATE"
+                                                       id="checkbox_Update_priv">
+                                                <label for="checkbox_Update_priv">
+                                                    <code>
+                                                        <dfn>UPDATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DELETE"
+                                                       id="checkbox_Delete_priv">
+                                                <label for="checkbox_Delete_priv">
+                                                    <code>
+                                                        <dfn>DELETE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_结构_priv">结构</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="CREATE"
+                                                       id="checkbox_Create_priv">
+                                                <label for="checkbox_Create_priv">
+                                                    <code>
+                                                        <dfn>CREATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="ALTER"
+                                                       id="checkbox_Alter_priv">
+                                                <label for="checkbox_Alter_priv">
+                                                    <code>
+                                                        <dfn>ALTER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INDEX"
+                                                       id="checkbox_Index_priv">
+                                                <label for="checkbox_Index_priv">
+                                                    <code>
+                                                        <dfn>INDEX</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DROP"
+                                                       id="checkbox_Drop_priv">
+                                                <label for="checkbox_Drop_priv">
+                                                    <code>
+                                                        <dfn>DROP</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE TEMPORARY TABLES"
+                                                       id="checkbox_Create_tmp_table_priv">
+                                                <label for="checkbox_Create_tmp_table_priv">
+                                                    <code>
+                                                        <dfn>CREATE TEMPORARY TABLES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SHOW VIEW"
+                                                       id="checkbox_Show_view_priv">
+                                                <label for="checkbox_Show_view_priv">
+                                                    <code>
+                                                        <dfn>SHOW VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE ROUTINE"
+                                                       id="checkbox_Create_routine_priv">
+                                                <label for="checkbox_Create_routine_priv">
+                                                    <code>
+                                                        <dfn>CREATE ROUTINE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="ALTER ROUTINE"
+                                                       id="checkbox_Alter_routine_priv">
+                                                <label for="checkbox_Alter_routine_priv">
+                                                    <code>
+                                                        <dfn>ALTER ROUTINE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="EXECUTE"
+                                                       id="checkbox_Execute_priv">
+                                                <label for="checkbox_Execute_priv">
+                                                    <code>
+                                                        <dfn>EXECUTE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE VIEW"
+                                                       id="checkbox_Create_view_priv">
+                                                <label for="checkbox_Create_view_priv">
+                                                    <code>
+                                                        <dfn>CREATE VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="EVENT"
+                                                       id="checkbox_Event_priv">
+                                                <label for="checkbox_Event_priv">
+                                                    <code>
+                                                        <dfn>EVENT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="TRIGGER"
+                                                       id="checkbox_Trigger_priv">
+                                                <label for="checkbox_Trigger_priv">
+                                                    <code>
+                                                        <dfn>TRIGGER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_管理_priv">管理</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="GRANT"
+                                                       id="checkbox_Grant_priv">
+                                                <label for="checkbox_Grant_priv">
+                                                    <code>
+                                                        <dfn>GRANT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="LOCK TABLES"
+                                                       id="checkbox_Lock_tables_priv">
+                                                <label for="checkbox_Lock_tables_priv">
+                                                    <code>
+                                                        <dfn>LOCK TABLES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="REFERENCES"
+                                                       id="checkbox_References_priv">
+                                                <label for="checkbox_References_priv">
+                                                    <code>
+                                                        <dfn>REFERENCES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="panel-body" id="div-tb-priv" style="display: none">
+                                    <div class="col-sm-3">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_数据_priv">数据</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="SELECT"
+                                                       id="checkbox_Select_priv">
+                                                <label for="checkbox_Select_priv">
+                                                    <code>
+                                                        <dfn>SELECT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INSERT"
+                                                       id="checkbox_Insert_priv">
+                                                <label for="checkbox_Insert_priv">
+                                                    <code>
+                                                        <dfn>INSERT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="UPDATE"
+                                                       id="checkbox_Update_priv">
+                                                <label for="checkbox_Update_priv">
+                                                    <code>
+                                                        <dfn>UPDATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DELETE"
+                                                       id="checkbox_Delete_priv">
+                                                <label for="checkbox_Delete_priv">
+                                                    <code>
+                                                        <dfn>DELETE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-5">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_结构_priv">CREATE</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="CREATE"
+                                                       id="checkbox_Create_priv">
+                                                <label for="checkbox_Create_priv">
+                                                    <code>
+                                                        <dfn>CREATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="ALTER"
+                                                       id="checkbox_Alter_priv">
+                                                <label for="checkbox_Alter_priv">
+                                                    <code>
+                                                        <dfn>ALTER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INDEX"
+                                                       id="checkbox_Index_priv">
+                                                <label for="checkbox_Index_priv">
+                                                    <code>
+                                                        <dfn>INDEX</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="DROP"
+                                                       id="checkbox_Drop_priv">
+                                                <label for="checkbox_Drop_priv">
+                                                    <code>
+                                                        <dfn>DROP</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="SHOW VIEW"
+                                                       id="checkbox_Show_view_priv">
+                                                <label for="checkbox_Show_view_priv">
+                                                    <code>
+                                                        <dfn>SHOW VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="CREATE VIEW"
+                                                       id="checkbox_Create_view_priv">
+                                                <label for="checkbox_Create_view_priv">
+                                                    <code>
+                                                        <dfn>CREATE VIEW</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="TRIGGER"
+                                                       id="checkbox_Trigger_priv">
+                                                <label for="checkbox_Trigger_priv">
+                                                    <code>
+                                                        <dfn>TRIGGER</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_管理_priv">管理</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="GRANT"
+                                                       id="checkbox_Grant_priv">
+                                                <label for="checkbox_Grant_priv">
+                                                    <code>
+                                                        <dfn>GRANT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="REFERENCES"
+                                                       id="checkbox_References_priv">
+                                                <label for="checkbox_References_priv">
+                                                    <code>
+                                                        <dfn>REFERENCES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="panel-body" id="div-col-priv" style="display: none">
+                                    <div class="col-sm-3">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_数据_priv">数据</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="SELECT"
+                                                       id="checkbox_Select_priv">
+                                                <label for="checkbox_Select_priv">
+                                                    <code>
+                                                        <dfn>SELECT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="INSERT"
+                                                       id="checkbox_Insert_priv">
+                                                <label for="checkbox_Insert_priv">
+                                                    <code>
+                                                        <dfn>INSERT</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <input type="checkbox" name="UPDATE"
+                                                       id="checkbox_Update_priv">
+                                                <label for="checkbox_Update_priv">
+                                                    <code>
+                                                        <dfn>UPDATE</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <fieldset>
+                                            <legend>
+                                                <label for="checkall_管理_priv">管理</label>
+                                            </legend>
+                                            <div>
+                                                <input type="checkbox" name="REFERENCES"
+                                                       id="checkbox_References_priv">
+                                                <label for="checkbox_References_priv">
+                                                    <code>
+                                                        <dfn>REFERENCES</dfn>
+                                                    </code>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="grantsBtn">执行
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="reset-pwd" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">修改密码
+                        实例: <span id="reset-instance" style="color: red"></span>
+                        账号: <span id="reset-user" style="color: red"></span></h4>
+                    <h6 style="color:red">注：此操作会修改账号密码，同时变更平台录入信息，请谨慎操作</h6>
+                </div>
+                <div class="modal-body form-group">
+                    <div class="form-group row">
+                        <label for="password1" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" id="reset-pwd1" class="form-control" autocomplete="new-password"
+                                   aria-describedby="resetpwdHelpBlock"
+                                   placeholder="请输入密码">
+                            <small id="resetpwdHelpBlock" class="form-text text-muted">
+                                密码需要8-32个字符，至少包含英文、数字和特殊符号
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password2" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>确认密码</label>
+                        <div class="col-sm-9">
+                            <input type="password" id="reset-pwd2" class="form-control"
+                                   autocomplete="new-password"
+                                   placeholder="请再次输入密码">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="resetPwdBtn">修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 删除账号模态框 -->
+    <div class="modal fade" id="delete-account" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">删除账号
+                        实例: <span id="delete-instance" style="color: red"></span>
+                        账号: <span id="delete-user" style="color: red"></span></h4>
+                </div>
+                <div class="modal-body form-group">
+                    <span style="color: red">
+                        确认删除该账号？请预先统计该账号近期的连接和访问情况，做好风险防范措施！
+                    </span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="deleteBtn">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        //权限切换
+        $("#priv-type").change(function () {
+            let priv_type = $("#priv-type").val();
+            let db_name = $("#db_name");
+            let tb_name = $("#tb_name");
+            let col_name = $("#col_name");
+            if (priv_type === '0') {
+                $("#div-global-priv").show();
+                $("#div-db-priv").hide();
+                $("#div-tb-priv").hide();
+                $("#div-col-priv").hide();
+                $("#div-db").hide();
+                $("#div-tb").hide();
+                $("#div-col").hide();
+            } else if (priv_type === '1') {
+                $("#div-global-priv").hide();
+                $("#div-db-priv").show();
+                $("#div-tb-priv").hide();
+                $("#div-col-priv").hide();
+                $("#div-db").show();
+                $("#div-tb").hide();
+                $("#div-col").hide();
+                // 库多选
+                db_name.attr("multiple", "true");
+                db_name.selectpicker('destroy');
+                db_name.val('');
+                db_name.selectpicker({
+                    actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+                    countSelectedText: "已选中{0}项",
+                    selectedTextFormat: "count > 3"
+                }, 'refresh');
+            } else if (priv_type === '2') {
+                $("#div-global-priv").hide();
+                $("#div-db-priv").hide();
+                $("#div-tb-priv").show();
+                $("#div-col-priv").hide();
+                $("#div-db").show();
+                $("#div-tb").show();
+                $("#div-col").hide();
+                // 库单选
+                db_name.removeAttr("multiple");
+                db_name.selectpicker('destroy');
+                db_name.val('');
+                db_name.selectpicker('refresh');
+                // 表多选
+                tb_name.attr("multiple", "true");
+                tb_name.selectpicker('destroy');
+                tb_name.val('');
+                tb_name.selectpicker({
+                    actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+                    countSelectedText: "已选中{0}项",
+                    selectedTextFormat: "count > 3"
+                }, 'refresh');
+            } else if (priv_type === '3') {
+                $("#div-global-priv").hide();
+                $("#div-db-priv").hide();
+                $("#div-tb-priv").hide();
+                $("#div-col-priv").show();
+                $("#div-db").show();
+                $("#div-tb").show();
+                $("#div-col").show();
+                // 库单选
+                db_name.removeAttr("multiple");
+                db_name.selectpicker('destroy');
+                db_name.val('');
+                db_name.selectpicker('refresh');
+                // 表单选
+                tb_name.removeAttr("multiple");
+                tb_name.selectpicker('destroy');
+                tb_name.val('');
+                tb_name.selectpicker('refresh');
+                // 列多选
+                col_name.attr("multiple", "true");
+                col_name.selectpicker('destroy');
+                col_name.val('');
+                col_name.selectpicker({
+                    actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+                    countSelectedText: "已选中{0}项",
+                    selectedTextFormat: "count > 3"
+                }, 'refresh');
+            }
+        });
+
+        //获取账号列表
+        function user_list() {
+            //初始化table
+            $('#user-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/instance/user/list",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    fileName: 'instance_user'  //文件名称设置
+                },
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "user_host",               //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        if ($("#instance").val()) {
+                            return {
+                                search: params.search,
+                                instance_id: $("#instance").val(),
+                                saved: $("#saved").val()
+                            }
+                        }
+                    },
+                columns: [
+                    {
+                        title: '账号',
+                        field: 'user_host',
+                        formatter: function (value, row, index) {
+                            if (row.saved) {
+                                return "<a target=\"_blank\" href=\"/admin/sql/instanceaccount/" + row.id + "/change/\">" + value + "</a>"
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '帐号名',
+                        field: 'user',
+                        visible: false
+                    }, {
+                        title: '主机',
+                        field: 'host',
+                        visible: false
+                    }, {
+                        title: '权限',
+                        field: 'privileges',
+                        formatter: function (value, row, index) {
+                            var priv = '';
+                            for (var i = 0; i < value.length; i++) {
+                                priv = priv + value[i] + ';</br>'
+                            }
+                            return priv
+                        },
+                        width: "60%"
+                    }, {
+                        title: '备注',
+                        field: 'remark'
+                    }, {
+                        title: '操作',
+                        field: '',
+                        formatter: function (value, row, index) {
+                            let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
+                            let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
+                            let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
+                            let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                            return btn_edit + btn_modify_grants + btn_reset_passwd + btn_del_account
+                        }
+                    }],
+                onLoadSuccess: function (data) {
+                    if (data.status !== 0) {
+                        alert("数据加载失败！" + data.msg);
+                        $('#btn-create-account').addClass('disabled');
+                        $('#btn-create-account').prop('disabled', true);
+                    } else if ($("#instance").val()) {
+                        $("#btn-create-account").removeClass('disabled');
+                        $("#btn-create-account").prop('disabled', false);
+
+                    }
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                }
+            });
+
+        }
+
+        //获取实例数据库
+        function db_list() {
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_id: $("#instance").val(),
+                    resource_type: "database"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data.data;
+                        let db_name = $("#db_name");
+                        db_name.empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            db_name.append(name);
+                        }
+                        db_name.val('');
+                        db_name.selectpicker('render');
+                        db_name.selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //获取表
+        function tb_list() {
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_id: $("#instance").val(),
+                    db_name: $("#db_name").val(),
+                    resource_type: "table"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data.data;
+                        let tb_name = $("#tb_name");
+                        tb_name.empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            tb_name.append(name);
+                        }
+                        tb_name.val('');
+                        tb_name.selectpicker('render');
+                        tb_name.selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        //获取表
+        function col_list() {
+            $.ajax({
+                type: "post",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_id: $("#instance").val(),
+                    db_name: $("#db_name").val(),
+                    tb_name: $("#tb_name").val(),
+                    resource_type: "column"
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        let result = data.data;
+                        let col_name = $("#col_name");
+                        col_name.empty();
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            col_name.append(name);
+                        }
+                        col_name.val('');
+                        col_name.selectpicker('render');
+                        col_name.selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        // 选项变动
+        $("#saved").change(function () {
+            user_list();
+            if ($("#instance").val()) {
+                db_list();
+            }
+        });
+
+        //实例变动
+        $("#instance").change(function () {
+            user_list();
+            if ($("#instance").val()) {
+                let ins_name = $("#instance option:selected").text();
+                $("#modify-instance").text(ins_name);
+                $("#reset-instance").text(ins_name);
+                $("#delete-instance").text(ins_name);
+                db_list();
+            }
+        });
+
+        //数据库变动
+        $("#db_name").change(function () {
+            let priv_type = $("#priv-type").val();
+            if (priv_type === '2' || priv_type === '3') {
+                tb_list();
+            }
+        });
+
+        //表变动
+        $("#tb_name").change(function () {
+            let priv_type = $("#priv-type").val();
+            if (priv_type === '3') {
+                col_list();
+            }
+        });
+
+        //创建账号
+        function create_account() {
+            if (!$("#instance").val()) {
+                alert("请选择实例！");
+            } else {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/create/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user: $("#user").val(),
+                        host: $("#host").val(),
+                        password1: $("#password1").val(),
+                        password2: $("#password2").val(),
+                        remark: $("#remark").val()
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#create-account').modal('hide');
+                            $("#create-account input").val("");
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+
+        }
+
+        //编辑、录入账号
+        function show_edit_modal(obj) {
+            let user_host = $(obj).attr("user_host");
+            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+            let user = row_data['user'];
+            let host = row_data['host'];
+            let remark = row_data['remark'];
+            $("#edit-user").val(user);
+            $("#edit-host").val(host);
+            $("#edit-remark").val(remark);
+            $("#edit-account").modal('show');
+
+            //变更密码
+            $("#resetEditBtn").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/edit/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user_host: user_host,
+                        user: user,
+                        host: host,
+                        password: $("#edit-password").val(),
+                        remark: $("#edit-remark").val()
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#edit-account').modal('hide');
+                            $("#edit-account input").val("");
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        }
+
+        //修改权限
+        function show_grants_modal(obj) {
+            let user_host = $(obj).attr("user_host");
+            $("#modify-user").text(user_host);
+            $("#grants-modal").modal('show');
+
+            //变更账号权限
+            $("#grantsBtn").unbind("click").click(function () {
+                let priv_type = $("#priv-type").val();
+                let db_name = $("#db_name").val();
+                let tb_name = $("#tb_name").val();
+                let col_name = $("#col_name").val();
+                let div_global_priv = $("#div-global-priv");
+                let div_db_priv = $("#div-db-priv");
+                let div_tb_priv = $("#div-tb-priv");
+                let div_col_priv = $("#div-col-priv");
+                let global_privs = [];
+                let db_privs = [];
+                let tb_privs = [];
+                let col_privs = [];
+                div_global_priv.find('input[type="checkbox"]:checked').each(
+                    function () {
+                        let priv_name = $(this).attr("name");
+                        global_privs.push(priv_name);
+                    }
+                );
+                div_db_priv.find('input[type="checkbox"]:checked').each(
+                    function () {
+                        let priv_name = $(this).attr("name");
+                        db_privs.push(priv_name);
+                    }
+                );
+                div_tb_priv.find('input[type="checkbox"]:checked').each(
+                    function () {
+                        let priv_name = $(this).attr("name");
+                        tb_privs.push(priv_name);
+                    }
+                );
+                div_col_priv.find('input[type="checkbox"]:checked').each(
+                    function () {
+                        let priv_name = $(this).attr("name");
+                        col_privs.push(priv_name);
+                    }
+                );
+                let privs = {
+                    "global_privs": global_privs,
+                    "db_privs": db_privs,
+                    "tb_privs": tb_privs,
+                    "col_privs": col_privs
+                };
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/grant/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user_host: $("#modify-user").text(),
+                        priv_type: priv_type,
+                        privs: JSON.stringify(privs),
+                        db_name: db_name,
+                        tb_name: tb_name,
+                        col_name: col_name
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#grants-modal').modal('hide');
+                            $(":checkbox").each(function () {
+                                this.checked = false
+                            });
+                            $("#priv-type").val("0");
+                            $("#priv-type").trigger("change");
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        }
+
+        //变更密码
+        function show_reset_modal(obj) {
+            let user_host = $(obj).attr("user_host");
+            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+            let user = row_data['user'];
+            let host = row_data['host'];
+            $("#reset-user").text(user_host);
+            $("#reset-pwd").modal('show');
+
+            //变更密码
+            $("#resetPwdBtn").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/reset_pwd/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user_host: user_host,
+                        user: user,
+                        host: host,
+                        reset_pwd1: $("#reset-pwd1").val(),
+                        reset_pwd2: $("#reset-pwd2").val(),
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#reset-pwd').modal('hide');
+                            $("#reset-pwd input").val("");
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        }
+
+        //删除账号
+        function show_delete_modal(obj) {
+            let user_host = $(obj).attr("user_host");
+            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+            let user = row_data['user'];
+            let host = row_data['host'];
+            $("#delete-user").text(user_host);
+            $("#delete-account").modal('show');
+
+            $("#deleteBtn").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/delete/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user_host: user_host,
+                        user: user,
+                        host: host,
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#delete-account').modal('hide');
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+
+
+        }
+
+        //初始化数据
+        $(document).ready(function () {
+            user_list();
+            //获取账号实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance").append(instance);
+                            }
+                            $('#instance').selectpicker('render');
+                            $('#instance').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

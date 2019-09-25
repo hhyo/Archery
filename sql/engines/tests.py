@@ -389,6 +389,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_execute_check_select_sql(self, _inception_engine):
+        self.sys_config.set('inception', 'true')
         sql = 'select * from user'
         inc_row = ReviewResult(id=1,
                                errlevel=0,
@@ -409,6 +410,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_execute_check_critical_sql(self, _inception_engine):
+        self.sys_config.set('inception', 'true')
         self.sys_config.set('critical_ddl_regex', '^|update')
         self.sys_config.get_all_config()
         sql = 'update user set id=1'
@@ -431,6 +433,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_execute_check_normal_sql(self, _inception_engine):
+        self.sys_config.set('inception', 'true')
         sql = 'update user set id=1'
         row = ReviewResult(id=1,
                            errlevel=0,
@@ -455,6 +458,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_execute_workflow(self, _inception_engine):
+        self.sys_config.set('inception', 'true')
         sql = 'update user set id=1'
         _inception_engine.return_value.execute.return_value = ReviewSet(full_sql=sql)
         new_engine = MysqlEngine(instance=self.ins1)
@@ -496,7 +500,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.GoInceptionEngine')
     def test_osc_go_inception(self, _inception_engine):
-        self.sys_config.set('go_inception', 'true')
+        self.sys_config.set('inception', 'false')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
@@ -505,7 +509,7 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.InceptionEngine')
     def test_osc_inception(self, _inception_engine):
-        self.sys_config.set('go_inception', 'false')
+        self.sys_config.set('inception', 'true')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
@@ -868,6 +872,7 @@ class TestPgSQL(TestCase):
             execute_result = new_engine.execute_workflow(workflow=wf)
             self.assertIsInstance(execute_result, ReviewSet)
             self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
 
 class TestModel(TestCase):
 

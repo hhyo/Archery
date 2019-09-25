@@ -21,3 +21,8 @@ inception_osc_min_table_size=10
 inception_osc_chunk_time=0.1
 inception_enable_blob_type=1
 inception_check_column_default_value=1
+
+inception_enable_select_star=ON
+inception_enable_identifer_keyword=ON
+inception_enable_autoincrement_unsigned=ON
+inception_check_identifier=OFF

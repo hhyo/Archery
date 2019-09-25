@@ -54,7 +54,6 @@
                             <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                             <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
                             <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
-
                         </select>
                     </div>
                     <div class="form-group">
@@ -94,13 +93,14 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="limit_num" name="limit_num"
-                                title="请选择查询限制行数:"
-                                class="form-control selectpicker show-tick bs-select-hidden ">
+                        <input id="limit_num" list="limits" type="number"
+                               class="form-control "
+                               placeholder="请选择查询限制行数:">
+                        <datalist id="limits">
                             <option value=100>100</option>
                             <option value=500>500</option>
                             <option value=1000>1000</option>
-                        </select>
+                        </datalist>
                     </div>
                     <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
@@ -495,6 +495,7 @@
             var table_name = $("#table_name").val();
             var valid_date = $("#valid_date").val();
             var limit_num = $("#limit_num").val();
+            alert(limit_num);
             var apply_remark = $("#apply_remark").val();
             var workflow_auditors = $("#workflow_auditors").val();
             var group_name = $("#group_name").val();

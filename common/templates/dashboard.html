@@ -1,5 +1,171 @@
 {% extends "base.html" %}
 
 {% block content %}
-    {{ chart|safe }}
+    <!-- /.row -->
+    <div class="row">
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-check fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ count_stats.sql_wf_cnt }}</div>
+                            <div>SQL上线工单</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/sqlworkflow/">
+                    <div class="panel-footer">
+                        <span class="pull-left">更多</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-green">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-search fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ count_stats.query_wf_cnt }}</div>
+                            <div>SQL查询工单</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/queryapplylist/">
+                    <div class="panel-footer">
+                        <span class="pull-left">更多</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-yellow">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-user fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ count_stats.user_cnt }}</div>
+                            <div>平台用户</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/admin/sql/users/">
+                    <div class="panel-footer">
+                        <span class="pull-left">更多</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-red">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-database fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ count_stats.ins_cnt }}</div>
+                            <div>实例数量</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/instance/">
+                    <div class="panel-footer">
+                        <span class="pull-left">更多</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询统计
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    {{ chart.line1|safe }}
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线数量
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    {{ chart.bar1|safe }}
+                    <!-- /.row -->
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线用户
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    {{ chart.bar2|safe }}
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-8 -->
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线统计
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    {{ chart.pie1|safe }}
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> DB检索行数
+                </div>
+                <div class="panel-body">
+                    {{ chart.pie5|safe }}
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询用户
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    {{ chart.pie4|safe }}
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel .chat-panel -->
+        </div>
+        <!-- /.col-lg-4 -->
+    </div>
+    <!-- /.row -->
 {% endblock content %}

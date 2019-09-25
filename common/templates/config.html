@@ -54,23 +54,48 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
+                        <button id='check_goincption' class='btn-sm btn-info'>测试goInception连接</button>&nbsp;
                         <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
-                        <button id='check_goincption' class='btn-sm btn-info' style="display: none">测试goInception连接
-                        </button>
+                        <h6 style="color:red">注：默认使用goInception进行MySQL的审核和执行，Inception作为查询表权限校验和脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="go_inception"
-                                       class="col-sm-4 control-label">GO_INCEPTION</label>
+                                <label for="inception"
+                                       class="col-sm-4 control-label">INCEPTION</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
-                                            <input id="go_inception"
-                                                   key="go_inception"
-                                                   value="{{ config.go_inception }}"
+                                            <input id="inception"
+                                                   key="inception"
+                                                   value="{{ config.inception }}"
                                                    type="checkbox">
-                                            是否启用goInception
+                                            是否切换为Inception审核
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="div-go-inception-config">
+                                <div class="form-group">
+                                    <label for="go_inception_host"
+                                           class="col-sm-4 control-label">GO_INCEPTION_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="go_inception_host"
+                                               key="go_inception_host"
+                                               value="{{ config.go_inception_host }}"
+                                               placeholder="goInception地址">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="go_inception_port"
+                                           class="col-sm-4 control-label">GO_INCEPTION_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                               id="go_inception_port"
+                                               key="go_inception_port"
+                                               value="{{ config.go_inception_port }}"
+                                               placeholder="goInception端口">
                                     </div>
                                 </div>
                             </div>
@@ -105,7 +130,7 @@
                                                id="inception_remote_backup_host"
                                                key="inception_remote_backup_host"
                                                value="{{ config.inception_remote_backup_host }}"
-                                               placeholder="Inception备份库地址">
+                                               placeholder="备份库地址(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -116,7 +141,7 @@
                                                id="inception_remote_backup_port"
                                                key="inception_remote_backup_port"
                                                value="{{ config.inception_remote_backup_port }}"
-                                               placeholder="Inception备份库端口">
+                                               placeholder="备份库端口(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -127,7 +152,7 @@
                                                id="inception_remote_backup_user"
                                                key="inception_remote_backup_user"
                                                value="{{ config.inception_remote_backup_user }}"
-                                               placeholder="Inception备份库用户">
+                                               placeholder="备份库用户(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -138,37 +163,10 @@
                                                id="inception_remote_backup_password"
                                                key="inception_remote_backup_password"
                                                value="{{ config.inception_remote_backup_password }}"
-                                               placeholder="Inception备份库用户密码">
+                                               placeholder="备份库用户密码(Inception/goInception复用)">
                                     </div>
                                 </div>
                             </div>
-
-                            <div id="div-go-inception-config" style="display: none">
-                                <hr/>
-                                <div class="form-group">
-                                    <label for="go_inception_host"
-                                           class="col-sm-4 control-label">GO_INCEPTION_HOST</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="go_inception_host"
-                                               key="go_inception_host"
-                                               value="{{ config.go_inception_host }}"
-                                               placeholder="goInception地址">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="go_inception_port"
-                                           class="col-sm-4 control-label">GO_INCEPTION_PORT</label>
-                                    <div class="col-sm-5">
-                                        <input type="number" class="form-control"
-                                               id="go_inception_port"
-                                               key="go_inception_port"
-                                               value="{{ config.go_inception_port }}"
-                                               placeholder="goInception端口">
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
@@ -208,7 +206,7 @@
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
                                                    type="checkbox">
-                                            开启备份选项(建议不开启, 强制要求备份)
+                                            是否开启备份选项(默认关闭, 强制要求备份)
                                         </label>
                                     </div>
                                 </div>
@@ -269,6 +267,7 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
+                        <h6 style="color:red">注：开启Inception检测和脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -481,7 +480,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="ding_to_person"
-                                       class="col-sm-4 control-label">DING_To_One</label>
+                                       class="col-sm-4 control-label">DING_TO_PERSON</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
@@ -494,7 +493,7 @@
                             </div>
                             <div id="div-ding-config" style="display: none">
                                 <i class="ace-icon fa fa-hand-o-right"></i>
-                                创建钉钉Archer微应用参考：<a
+                                创建钉钉Archery微应用参考：<a
                                     href="https://g.alicdn.com/dingding/opendoc/docs/_isvguide/tab3.html">钉钉企业接入开发文档</a>
                                 <div class="form-group">
                                     <label for="ding_agent_id"
@@ -545,9 +544,9 @@
                                            class="col-sm-4 control-label">DingDeptIDs</label>
                                     <div class="col-sm-5">
                                         <textarea class="form-control"
-                                               id="ding_dept_ids"
-                                               key="ding_dept_ids"
-                                               placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
+                                                  id="ding_dept_ids"
+                                                  key="ding_dept_ids"
+                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -725,9 +724,6 @@
                     $("#div-ding-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").show();
-                    $("#check_goincption").show()
                 }
             } else {
                 $(this).val(false);
@@ -738,9 +734,6 @@
                     $("#div-ding-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").hide();
-                    $("#check_goincption").hide()
                 }
             }
         });

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     {% load staticfiles %}
@@ -155,9 +155,15 @@
                                         <a href="/dbdiagnostic/">会话管理</a>
                                     </li>
                                 {% endif %}
-                                {% if perms.sql.menu_instance_user %}
+                                {% if perms.sql.menu_database %}
                                     <li>
-                                        <a href="/instanceuser/">用户管理</a>
+                                        <a href="/database/">数据库管理</a>
+                                    </li>
+                                {% endif %}
+
+                                {% if perms.sql.menu_instance_account %}
+                                    <li>
+                                        <a href="/instanceaccount/">账号管理</a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_param %}
@@ -165,6 +171,14 @@
                                         <a href="/instanceparam/">参数配置</a>
                                     </li>
                                 {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_tools %}
+                        <li>
+                            <a href="#"><i class="fa fa-plug fa-fw"></i> 小工具<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
                                         <a href="/binlog2sql/">Binlog2SQL</a>

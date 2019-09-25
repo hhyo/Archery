@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from mirage import fields
+
 from common.utils.aes_decryptor import Prpcrypt
 from django.utils.translation import gettext as _
 
@@ -470,6 +472,44 @@ class DataMaskingRules(models.Model):
         verbose_name_plural = u'脱敏规则配置'
 
 
+class InstanceAccount(models.Model):
+    """
+    实例账号列表
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    user = fields.EncryptedCharField(verbose_name='账号', max_length=128)
+    host = models.CharField(verbose_name='主机', max_length=64)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=128, default='', blank=True)
+    remark = models.CharField('备注', max_length=255)
+    sys_time = models.DateTimeField('系统修改时间', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'instance_account'
+        unique_together = ('instance', 'user', 'host')
+        verbose_name = '实例账号列表'
+        verbose_name_plural = '实例账号列表'
+
+
+class InstanceDatabase(models.Model):
+    """
+    实例数据库列表
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    db_name = fields.EncryptedCharField(verbose_name='数据库名', max_length=128)
+    owner = models.CharField('负责人', max_length=50, default='', blank=True)
+    owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
+    remark = models.CharField('备注', max_length=255, default='', blank=True)
+    sys_time = models.DateTimeField('系统修改时间', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'instance_database'
+        unique_together = ('instance', 'db_name')
+        verbose_name = '实例数据库'
+        verbose_name_plural = '实例数据库列表'
+
+
 class ParamTemplate(models.Model):
     """
     实例参数模板配置
@@ -517,7 +557,7 @@ class Config(models.Model):
     配置信息表
     """
     item = models.CharField('配置项', max_length=50, primary_key=True)
-    value = models.CharField('配置项值', max_length=200)
+    value = fields.EncryptedCharField(verbose_name='配置项值', max_length=200)
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:
@@ -608,7 +648,8 @@ class Permission(models.Model):
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),
-            ('menu_instance_user', '菜单 实例用户列表'),
+            ('menu_database', '菜单 数据库管理'),
+            ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
@@ -632,6 +673,7 @@ class Permission(models.Model):
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
             ('trxandlocks_view', '查看锁信息'),
+            ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),
             ('param_edit', '修改实例参数'),
         )

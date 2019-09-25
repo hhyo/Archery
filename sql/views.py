@@ -290,10 +290,19 @@ def instance(request):
     return render(request, 'instance.html', {'tags': tags})
 
 
-@permission_required('sql.menu_instance', raise_exception=True)
-def instanceuser(request):
-    """实例用户管理页面"""
-    return render(request, 'instanceuser.html')
+@permission_required('sql.menu_instance_account', raise_exception=True)
+def instanceaccount(request):
+    """实例账号管理页面"""
+    return render(request, 'instanceaccount.html')
+
+
+@permission_required('sql.menu_database', raise_exception=True)
+def database(request):
+    """实例数据库管理页面"""
+    # 获取所有有效用户，通知对象
+    active_user = Users.objects.filter(is_active=1)
+
+    return render(request, 'database.html', {"active_user": active_user})
 
 
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)

@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group ">
+            <select id=instance class="form-control selectpicker" name="instance_list"
+                    title="请选择实例"
+                    data-live-search="true">
+            </select>
+        </div>
+        <div class="form-group">
+            <select id="saved" class="form-control selectpicker"
+                    title="全部">
+                <option value="" selected="selected">全部</option>
+                <option value="true">已录入</option>
+            </select>
+        </div>
+        <div class="form-group ">
+            <button id="btn-create-database" type="button" class="btn btn-default" disabled="disabled"
+                    data-toggle="modal" data-target="#modal-create-database">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                创建数据库
+            </button>
+        </div>
+    </div>
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="database-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+    <!-- 创建数据库模态框 -->
+    <div class="modal fade" id="modal-create-database" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">创建数据库</h4>
+                </div>
+                <div class="modal-body form-group">
+                    <div class="form-group row">
+                        <label for="db_name" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库名称</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="db_name" class="form-control" autocomplete="off"
+                                   aria-describedby="dbHelpBlock"
+                                   placeholder="请输入数据库名称">
+                            <small id="dbHelpBlock" class="form-text text-muted">
+                                由字母、数字、下划线、中划线组成，字母开头，字母或数字结尾，最长64个字符
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="owner" class="col-sm-3 col-form-label">
+                            负责人</label>
+                        <div class="col-sm-9">
+                            <select id="owner" name="owner"
+                                    class="selectpicker show-tick form-control bs-select-hidden "
+                                    data-live-search="true"
+                                    title="请选择数据库负责人"
+                                    data-none-selected-text="请选择数据库负责人">
+                                {% for user_info in active_user %}
+                                    <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="remark" class="form-control"
+                                   autocomplete="off"
+                                   placeholder="请输入备注">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">创建
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 变更数据库模态框 -->
+    <div class="modal fade" id="modal-edit-database" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">编辑/录入数据库信息</h4>
+                </div>
+                <div class="modal-body form-group">
+                    <div class="form-group row">
+                        <label for="edit_db_name" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库名称</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit_db_name" class="form-control" autocomplete="off"
+                                   readonly="readonly"
+                                   aria-describedby="dbHelpBlock"
+                                   placeholder="请输入数据库名称">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="edit_owner" class="col-sm-3 col-form-label">
+                            负责人</label>
+                        <div class="col-sm-9">
+                            <select id="edit_owner" name="edit_owner"
+                                    class="selectpicker show-tick form-control bs-select-hidden "
+                                    data-live-search="true"
+                                    data-none-selected-text="请选择数据库负责人">
+                                {% for user_info in active_user %}
+                                    <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="edit_remark" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <input type="text" id="edit_remark" class="form-control"
+                                   autocomplete="off"
+                                   placeholder="请输入备注">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="btnEditDb">创建
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load staticfiles %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        //获取列表
+        function database_list() {
+            //初始化table
+            $('#database-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/instance/database/list/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    fileName: 'database'  //文件名称设置
+                },
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "db_name",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        if ($("#instance").val()) {
+                            return {
+                                search: params.search,
+                                instance_id: $("#instance").val(),
+                                saved: $("#saved").val()
+                            }
+                        }
+                    },
+                columns: [
+                    {
+                        title: '数据库名',
+                        field: 'db_name'
+                    }, {
+                        title: '字符集',
+                        field: 'charset'
+                    }, {
+                        title: '排序规则',
+                        field: 'collation'
+                    }, {
+                        title: '授权账号',
+                        field: 'grantees',
+                        formatter: function (value, row, index) {
+                            let grantee = '';
+                            for (let i = 0; i < value.length; i++) {
+                                grantee = grantee + value[i] + '</br>'
+                            }
+                            return grantee
+                        }
+                    }, {
+                        title: '负责人',
+                        field: 'owner',
+                        visible: false,
+                    }, {
+                        title: '负责人',
+                        field: 'owner_display'
+                    }, {
+                        title: '备注',
+                        field: 'remark'
+                    }, {
+                        title: '操作',
+                        field: '',
+                        formatter: function (value, row, index) {
+                            let btn_edit = "<button class=\"btn btn-primary btn-xs\" db_name=\"" + row.db_name + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
+                            return btn_edit
+                        }
+                    }],
+                onLoadSuccess: function (data) {
+                    if (data.status !== 0) {
+                        alert("数据加载失败！" + data.msg);
+                        $('#btn-create-database').addClass('disabled');
+                        $('#btn-create-database').prop('disabled', true);
+                    } else if ($("#instance").val()) {
+                        $("#btn-create-database").removeClass('disabled');
+                        $("#btn-create-database").prop('disabled', false);
+
+                    }
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                }
+            });
+
+        }
+
+        //实例变动
+        $("#instance").change(function () {
+            database_list()
+        });
+
+        // 选项变动
+        $("#saved").change(function () {
+            database_list();
+            if ($("#instance").val()) {
+                database_list();
+            }
+        });
+
+        //创建数据库
+        function create_database() {
+            if (!$("#instance").val()) {
+                alert("请选择实例！");
+            } else {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/database/create/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        db_name: $("#db_name").val(),
+                        owner: $("#owner").val(),
+                        remark: $("#remark").val()
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#modal-create-database').modal('hide');
+                            $("#modal-create-database input").val("");
+                            database_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+
+        }
+
+        //修改数据库
+        function show_edit_modal(obj) {
+            let db_name = $(obj).attr("db_name");
+            let row_data = $('#database-list').bootstrapTable('getRowByUniqueId', db_name);
+            let owner = row_data['owner'];
+            let remark = row_data['remark'];
+            $("#edit_db_name").val(db_name);
+            $("#edit_owner").val(owner);
+            $("#edit_owner").selectpicker('refresh');
+            $("#edit_remark").val(remark);
+            $('#modal-edit-database').modal('show');
+
+            //变更用户权限
+            $("#btnEditDb").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/database/edit/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        db_name: db_name,
+                        owner: $("#edit_owner").val(),
+                        remark: $("#edit_remark").val(),
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#modal-edit-database').modal('hide');
+                            $("#modal-edit-database input").val("");
+                            database_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        }
+
+        //初始化数据
+        $(document).ready(function () {
+            database_list();
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance").append(instance);
+                            }
+                            $('#instance').selectpicker('render');
+                            $('#instance').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        });
+
+
+    </script>
+{% endblock %}

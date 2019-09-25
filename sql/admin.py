@@ -5,21 +5,21 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
-    QueryPrivileges, \
+    QueryPrivileges, InstanceAccount, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
 # 用户管理
 @admin.register(Users)
 class UsersAdmin(UserAdmin):
-    list_display = ('id', 'ding_user_id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
+    list_display = ('id','username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
     search_fields = ('id', 'username', 'display', 'email')
     list_display_links = ('id', 'username',)
     ordering = ('id',)
     # 编辑页显示内容
     fieldsets = (
         ('认证信息', {'fields': ('username', 'password')}),
-        ('个人信息', {'fields': ('ding_user_id', 'display', 'email')}),
+        ('个人信息', {'fields': ('display', 'email', 'ding_user_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('其他信息', {'fields': ('date_joined',)}),
     )
@@ -171,6 +171,19 @@ class WorkflowLogAdmin(admin.ModelAdmin):
     list_display = (
         'operation_type_desc', 'operation_info', 'operator_display', 'operation_time',)
     list_filter = ('operation_type_desc', 'operator_display')
+
+
+# 实例用户列表
+@admin.register(InstanceAccount)
+class InstanceAccountAdmin(admin.ModelAdmin):
+    list_display = ('user', 'host', 'instance', 'remark')
+    search_fields = ('user', 'host')
+    list_filter = ('instance', 'host')
+    list_display_links = ('user',)
+
+    # 仅支持修改备注
+    def get_readonly_fields(self, request, obj=None):
+        return ('user', 'host', 'instance',) if obj else ()
 
 
 # 实例参数配置表

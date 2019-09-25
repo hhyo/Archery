@@ -682,7 +682,21 @@
                         columns.push({
                             "field": i,
                             "title": column,
-                            "sortable": true
+                            "sortable": true,
+                            cellStyle: function (value, row, index) {
+                                if (!value && typeof (value) !== "undefined" && value !== 0) {
+                                    return {
+                                        css: {
+                                            color: 'darkgrey'
+                                        }
+                                    }
+                                } else {
+                                    return {
+                                        css: {}
+                                    }
+                                }
+                            },
+
                         });
                     });
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
@@ -700,8 +714,7 @@
                                         //替换所有的空格
                                         sql = sql.replace(/\s/g, " ");
                                         return sql;
-
-                                    }
+                                    },
                                 }
                                 ],
                                 locale: 'zh-CN'
@@ -720,6 +733,7 @@
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
                                 fileName: 'export_result'  //文件名称设置
                             },
+                            undefinedText: '(null)',
                             showColumns: true,
                             showToggle: true,
                             clickToSelect: true,
@@ -824,7 +838,7 @@
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', false);
                 $("#nav-tabs a:last").tab('show');
-            }  else if (optgroup === "Phoenix") {
+            } else if (optgroup === "Phoenix") {
                 $("#div-table_name").show();
                 $("#div-schema_name").remove();
                 $("#redis_help_tab").remove();
