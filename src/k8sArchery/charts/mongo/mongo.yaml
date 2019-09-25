@@ -1,0 +1,77 @@
+---
+# Source: mongo/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archery-mongo
+  labels:
+    app.kubernetes.io/name: mongo
+    helm.sh/chart: mongo-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mongo
+    app.kubernetes.io/instance: archery
+
+---
+# Source: mongo/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archery-mongo
+  labels:
+    app.kubernetes.io/name: mongo
+    helm.sh/chart: mongo-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mongo
+      app.kubernetes.io/instance: archery
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mongo
+        app.kubernetes.io/instance: archery
+    spec:
+      containers:
+        - name: mongo
+          image: "mongo:3.6"
+          imagePullPolicy: IfNotPresent        
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: root
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: "123456"
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mongo
+          resources:
+            {}
+              
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/mongo-db
+    
+      volumes:
+        - name: mongo-data
+          hostPath:
+            path: /mongo/datadir
+
+---
+# Source: mongo/templates/ingress.yaml
+
+

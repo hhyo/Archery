@@ -1,0 +1,142 @@
+---
+# Source: mysql/templates/configMap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: my-config
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+data:
+  my.cnf: |-
+    [mysqld_safe]
+    socket          = /var/run/mysqld/mysqld.sock
+    nice            = 0
+  
+    [mysqld]
+    pid-file        = /var/run/mysqld/mysqld.pid
+    socket          = /var/run/mysqld/mysqld.sock
+    port            = 3306
+    basedir         = /usr
+    datadir         = /var/lib/mysql
+    tmpdir          = /tmp
+    lc-messages-dir = /usr/share/mysql
+    skip-external-locking
+    lower_case_table_names=1
+    default-time_zone = '+8:00'
+  
+    innodb_buffer_pool_size = 512M
+  
+    server-id              = 100
+    log_bin                        = /var/log/mysql/mysql-bin.log
+    expire_logs_days        = 1
+    max_binlog_size         = 500M
+  
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_general_ci
+  
+    slow_query_log_file = mysql-slow.log
+    slow_query_log      = 1
+    long_query_time = 1
+  
+    [client]
+    default-character-set=utf8mb4
+  
+    [mysqldump]
+    quick
+    quote-names
+    max_allowed_packet      = 1024M
+  
+  
+    !includedir /etc/mysql/conf.d/
+  
+
+---
+# Source: mysql/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archery-mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: archery
+
+---
+# Source: mysql/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archery-mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archery
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+      app.kubernetes.io/instance: archery
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/instance: archery
+    spec:
+      containers:
+        - name: mysql
+          image: "mysql:5.7"
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: MYSQL_DATABASE
+            value: archery
+          - name: MYSQL_ROOT_PASSWORD
+            value: "123456"
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mysql
+          resources:
+            {}
+            
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+            - mountPath: /etc/mysql/my.cnf
+              name: my-cnf
+              subPath: my.cnf
+            
+      volumes:
+        - hostPath:
+            path: /data/mysqldb
+          name: mysql-data
+        - configMap:
+            name: my-config
+          name: my-cnf
+        
+
+---
+# Source: mysql/templates/ingress.yaml
+
+
+---
+# Source: mysql/templates/mysql.yaml
+

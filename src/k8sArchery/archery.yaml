@@ -1,0 +1,2525 @@
+---
+# Source: archery/charts/goinception/templates/configMap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: goinception-config
+  labels:
+    app.kubernetes.io/name: goinception
+    helm.sh/chart: goinception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+data:
+  config.toml: |-
+    host="0.0.0.0"
+    advertise_address=""
+    port=4000
+    [inc]
+    check_autoincrement_datatype=true
+    check_autoincrement_init_value=true
+    check_autoincrement_name=true
+    check_column_comment=true
+    check_column_default_value=true
+    check_column_position_change=true
+    check_column_type_change=true
+    check_dml_limit=true
+    check_dml_orderby=true
+    check_dml_where=true
+    check_identifier=true
+    check_index_prefix=true
+    check_insert_field=true
+    check_primary_key=true
+    check_table_comment=true
+    check_timestamp_default=true
+    check_timestamp_count=false
+    enable_autoincrement_unsigned=true
+    enable_blob_type=true
+    enable_column_charset=true
+    enable_drop_database=true
+    enable_drop_table=true
+    enable_enum_set_bit=false
+    enable_fingerprint=true
+    enable_foreign_key=false
+    enable_json_type=true
+    enable_identifer_keyword=false
+    enable_not_innodb=false
+    enable_nullable=false
+    enable_null_index_name=false
+    enable_orderby_rand=true
+    enable_partition_table=true
+    enable_pk_columns_only_int=true
+    enable_select_star=false
+    enable_set_charset=true
+    enable_set_collation=false
+    enable_set_engine=false
+    max_char_length=0
+    max_insert_rows=0
+    max_keys=5
+    max_key_parts=5
+    max_update_rows=5000
+    max_primary_key_parts=1
+    max_allowed_packet=33554432
+    merge_alter_table=true
+    check_float_double=true
+    support_charset="utf8,utf8mb4"
+    support_collation="utf8_general_ci,utf8mb4_general_ci"
+    backup_host="mysql"
+    backup_port=3306
+    backup_user="root"
+    backup_password="123456"
+    #安全更新是否开启.
+    #-1表示不做操作,基于远端数据库[默认值]
+    #0表示关闭安全更新
+    #1表示开启安全更新
+    sql_safe_updates=0
+    #lang="en-US"
+    lang="zh-CN"
+    #是否记录全量日志
+    general_log=false
+    #开启统计功能
+    enable_sql_statistic=true
+    [inc_level]
+    er_cant_set_engine=2
+    er_cant_set_collation=2
+    er_table_must_have_comment=2
+    er_column_have_no_comment=2
+    er_table_must_have_pk=2
+    er_index_name_idx_prefix=1
+    er_index_name_uniq_prefix=1
+    er_autoinc_unsigned=2
+    er_alter_table_once=2
+    er_pk_too_many_parts=2
+    [osc]
+    osc_on=false
+    osc_min_table_size=16
+    osc_print_none=false
+    osc_bin_dir="/usr/local/bin"
+    [ghost]
+    ghost_on=false
+    ghost_allow_on_master=true
+    ghost_assume_rbr=true
+    ghost_chunk_size=1000
+    ghost_concurrent_rowcount=true
+    ghost_cut_over="atomic"
+    ghost_cut_over_lock_timeout_seconds=3
+    ghost_default_retries=60
+    ghost_heartbeat_interval_millis=500
+    ghost_max_lag_millis=1500
+    ghost_approve_renamed_columns=true
+    ghost_exponential_backoff_max_interval=64
+    ghost_dml_batch_size=10
+    [log]
+    # Log level: debug, info, warn, error, fatal.
+    level="error"
+    # Log format, one of json, text, console.
+    format="console"
+  
+---
+# Source: archery/charts/inception/templates/configMap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: inception-config
+  labels:
+    app.kubernetes.io/name: inception
+    helm.sh/chart: inception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+data:
+  inc.cnf: |-
+    [inception]
+    general_log=1
+    general_log_file=inception.log
+    port=6669
+    socket=/tmp/inc.socket
+    character-set-client-handshake=0
+    character-set-server=utf8mb4
+    inception_language_code=zh-CN
+    inception_remote_system_password=123456
+    inception_remote_system_user=root
+    inception_remote_backup_port=3306
+    inception_remote_backup_host=archery-mysql
+    inception_support_charset=utf8,utf8mb4
+    inception_enable_nullable=0
+    inception_check_primary_key=1
+    inception_check_column_comment=1
+    inception_check_table_comment=1
+    inception_osc_on=OFF
+    inception_osc_bin_dir=/usr/bin
+    inception_osc_min_table_size=10
+    inception_osc_chunk_time=0.1
+    inception_enable_blob_type=1
+    inception_check_column_default_value=1
+  
+
+---
+# Source: archery/charts/mysql/templates/configMap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: my-config
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+data:
+  my.cnf: |-
+    [mysqld_safe]
+    socket          = /var/run/mysqld/mysqld.sock
+    nice            = 0
+  
+    [mysqld]
+    pid-file        = /var/run/mysqld/mysqld.pid
+    socket          = /var/run/mysqld/mysqld.sock
+    port            = 3306
+    basedir         = /usr
+    datadir         = /var/lib/mysql
+    tmpdir          = /tmp
+    lc-messages-dir = /usr/share/mysql
+    skip-external-locking
+    lower_case_table_names=1
+    default-time_zone = '+8:00'
+  
+    innodb_buffer_pool_size = 512M
+  
+    server-id              = 100
+    log_bin                        = /var/log/mysql/mysql-bin.log
+    expire_logs_days        = 1
+    max_binlog_size         = 500M
+  
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_general_ci
+  
+    slow_query_log_file = mysql-slow.log
+    slow_query_log      = 1
+    long_query_time = 1
+  
+    [client]
+    default-character-set=utf8mb4
+  
+    [mysqldump]
+    quick
+    quote-names
+    max_allowed_packet      = 1024M
+  
+  
+    !includedir /etc/mysql/conf.d/
+  
+
+---
+# Source: archery/templates/configMap.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: archery-config
+  labels:
+    app.kubernetes.io/name: archery
+    helm.sh/chart: archery-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+data:
+  analysis_slow_query.sh: |-
+    #!/bin/bash
+    DIR="$( cd "$( dirname "$0"  )" && pwd  )"
+    cd $DIR
+  
+    #配置archery数据库的连接地址
+    monitor_db_host="mysql"
+    monitor_db_port=3306
+    monitor_db_user="root"
+    monitor_db_password="123456"
+    monitor_db_database="archery"
+  
+    #实例慢日志位置
+    slowquery_file="/home/mysql/log_slow.log"
+    pt_query_digest="/usr/bin/pt-query-digest"
+  
+    #实例连接信息
+    hostname="mysql_host:mysql_port" # 和archery实例配置内容保持一致，用于archery做筛选
+  
+    #获取上次分析时间，初始化时请删除last_analysis_time_$hostname文件，可分析全部日志数据
+    if [ -s last_analysis_time_$hostname ]; then
+        last_analysis_time=`cat last_analysis_time_$hostname`
+    else
+        last_analysis_time='1000-01-01 00:00:00'
+    fi
+  
+    #收集日志
+    #RDS需要增加--no-version-check选项
+    $pt_query_digest \
+    --user=$monitor_db_user --password=$monitor_db_password --port=$monitor_db_port \
+    --review h=$monitor_db_host,D=$monitor_db_database,t=mysql_slow_query_review  \
+    --history h=$monitor_db_host,D=$monitor_db_database,t=mysql_slow_query_review_history  \
+    --no-report --limit=100% --charset=utf8 \
+    --since "$last_analysis_time" \
+    --filter="\$event->{Bytes} = length(\$event->{arg}) and \$event->{hostname}=\"$hostname\"  and \$event->{client}=\$event->{ip} " \
+    $slowquery_file > /tmp/analysis_slow_query.log
+  
+    echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
+  settings.py: |-
+    # -*- coding: UTF-8 -*-
+  
+    # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+    import os
+  
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+  
+    # SECURITY WARNING: keep the secret key used in production secret!
+    SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
+  
+    # SECURITY WARNING: don't run with debug turned on in production!
+    DEBUG = True
+  
+    ALLOWED_HOSTS = ['*']
+  
+    # 解决nginx部署跳转404
+    USE_X_FORWARDED_HOST = True
+  
+    # 请求限制
+    DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+  
+    # Application definition
+    INSTALLED_APPS = (
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'django_q',
+        'sql',
+        'sql_api',
+        'common',
+        'themis',
+    )
+  
+    MIDDLEWARE = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'django.middleware.security.SecurityMiddleware',
+        'common.middleware.check_login_middleware.CheckLoginMiddleware',
+        'common.middleware.exception_logging_middleware.ExceptionLoggingMiddleware',
+    )
+  
+    ROOT_URLCONF = 'archery.urls'
+  
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [os.path.join(BASE_DIR, 'common/templates')],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'common.utils.global_info.global_info',
+                ],
+            },
+        },
+    ]
+  
+    WSGI_APPLICATION = 'archery.wsgi.application'
+  
+    # Internationalization
+    LANGUAGE_CODE = 'zh-hans'
+  
+    TIME_ZONE = 'Asia/Shanghai'
+  
+    USE_I18N = True
+  
+    USE_TZ = False
+  
+    # 时间格式化
+    USE_L10N = False
+    DATETIME_FORMAT = 'Y-m-d H:i:s'
+    DATE_FORMAT = 'Y-m-d'
+  
+    # Static files (CSS, JavaScript, Images)
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+    STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
+  
+    # 扩展django admin里users字段用到，指定了sql/models.py里的class users
+    AUTH_USER_MODEL = "sql.Users"
+  
+    # 密码校验
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+            'OPTIONS': {
+                'min_length': 9,
+            }
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        },
+    ]
+  
+    ############### 以下部分需要用户根据自己环境自行修改 ###################
+  
+    # SESSION 设置
+    SESSION_COOKIE_AGE = 60 * 300  # 300分钟
+    SESSION_SAVE_EVERY_REQUEST = True
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
+  
+    # 该项目本身的mysql数据库地址
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'archery',
+            'USER': 'root',
+            'PASSWORD': '123456',
+            'HOST': 'mysql',
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4'
+            },
+            'TEST': {
+                'NAME': 'test_archery',
+                'CHARSET': 'utf8mb4',
+            },
+        }
+    }
+  
+    # Django-Q
+    Q_CLUSTER = {
+        'name': 'archery',
+        'workers': 4,
+        'recycle': 500,
+        'timeout': 60,
+        'compress': True,
+        'cpu_affinity': 1,
+        'save_limit': 0,
+        'queue_limit': 50,
+        'label': 'Django Q',
+        'django_redis': 'default',
+        'sync': False  # 本地调试可以修改为True，使用同步模式
+    }
+  
+    # 缓存配置
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/0",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "PASSWORD": ""
+            }
+        },
+        "dingding": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://redis:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "PASSWORD": ""
+            }
+        }
+    }
+  
+    # LDAP
+    ENABLE_LDAP = False
+    if ENABLE_LDAP:
+        import ldap
+        from django_auth_ldap.config import LDAPSearch
+  
+        AUTHENTICATION_BACKENDS = (
+            'django_auth_ldap.backend.LDAPBackend',  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
+            'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
+        )
+  
+        AUTH_LDAP_SERVER_URI = "ldap://xxx"
+        AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=xxx,dc=xxx,dc=xxx"
+        # ldap认证的另一种方式,使用时注释AUTH_LDAP_USER_DN_TEMPLATE
+        """
+        AUTH_LDAP_BIND_DN = "cn=xxx,ou=xxx,dc=xxx,dc=xxx"
+        AUTH_LDAP_BIND_PASSWORD = "***********"
+        AUTH_LDAP_USER_SEARCH = LDAPSearch('ou=xxx,dc=xxx,dc=xxx',ldap.SCOPE_SUBTREE, '(cn=%(user)s)',)
+        """
+        AUTH_LDAP_ALWAYS_UPDATE_USER = True  # 每次登录从ldap同步用户信息
+        AUTH_LDAP_USER_ATTR_MAP = {  # key为archery.sql_users字段名，value为ldap中字段名，用户同步信息
+            "username": "cn",
+            "display": "displayname",
+            "email": "mail"
+        }
+  
+    # LOG配置
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '[%(asctime)s][%(threadName)s:%(thread)d][task_id:%(name)s][%(filename)s:%(lineno)d][%(levelname)s]- %(message)s'
+            },
+        },
+        'handlers': {
+            'default': {
+                'level': 'DEBUG',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': 'downloads/log/archery.log',
+                'maxBytes': 1024 * 1024 * 100,  # 5 MB
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose'
+            }
+        },
+        'loggers': {
+            'default': {  # default日志
+                'handlers': ['console', 'default'],
+                'level': 'DEBUG'
+            },
+            'django-q': {  # django_q模块相关日志
+                'handlers': ['console', 'default'],
+                'level': 'DEBUG',
+                'propagate': False
+            },
+            'django_auth_ldap': {  # django_auth_ldap模块相关日志
+                'handlers': ['console', 'default'],
+                'level': 'DEBUG',
+                'propagate': False
+            },
+            # 'django.db': {  # 打印SQL语句，方便开发
+            #     'handlers': ['console', 'default'],
+            #     'level': 'DEBUG',
+            #     'propagate': False
+            # },
+            'django.request': {  # 打印请求错误堆栈信息，方便开发
+                'handlers': ['console', 'default'],
+                'level': 'DEBUG',
+                'propagate': False
+            },
+        }
+    }
+  soar.yaml: |-
+    # 是否允许测试环境与线上环境配置相同
+    allow-online-as-test: false
+    # 是否清理测试时产生的临时文件
+    drop-test-temporary: true
+    # 语法检查小工具
+    only-syntax-check: false
+    sampling-data-factor: 100
+    sampling: false
+    sampling-statistic-target: 100
+    profiling: false
+    trace: false
+    # 日志级别，[0:Emergency, 1:Alert, 2:Critical, 3:Error, 4:Warning, 5:Notice, 6:Informational, 7:Debug]
+    log-level: 3
+    log-output: /opt/archery/downloads/log/soar.log
+    # 优化建议输出格式
+    report-type: markdown
+    ignore-rules:
+    - ""
+    # 启发式算法相关配置
+    max-join-table-count: 5
+    max-group-by-cols-count: 5
+    max-distinct-count: 5
+    max-index-cols-count: 5
+    max-total-rows: 9999999
+    spaghetti-query-length: 2048
+    allow-drop-index: false
+    # EXPLAIN相关配置
+    explain-sql-report-type: pretty
+    explain-type: extended
+    explain-format: traditional
+    explain-warn-select-type:
+    - ""
+    explain-warn-access-type:
+    - ALL
+    explain-max-keys: 3
+    explain-min-keys: 0
+    explain-max-rows: 10000
+    explain-warn-extra:
+    - ""
+    explain-max-filtered: 100
+    explain-warn-scalability:
+    - O(n)
+    query: ""
+    list-heuristic-rules: false
+    list-test-sqls: false
+    verbose: true
+  startup.sh: |-
+    #!/bin/bash
+  
+    cd /opt/archery
+  
+    echo 切换python运行环境
+    source /opt/venv4archery/bin/activate
+  
+    echo 修改重定向端口
+    if [[ -z $NGINX_PORT ]]; then
+        sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
+    else
+        sed -i "s/nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
+    fi
+  
+    echo 启动nginx
+    /usr/sbin/nginx
+  
+    echo 收集所有的静态文件到STATIC_ROOT
+    python3 manage.py collectstatic -v0 --noinput
+  
+    echo 启动Django Q cluster
+    supervisord -c qcluster_supervisord.conf
+  
+    echo 启动服务
+    settings=${1:-"archery.settings"}
+    ip=${2:-"127.0.0.1"}
+    port=${3:-8888}
+  
+    gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --log-level=debug --error-logfile=/tmp/archery.err -b ${ip}:${port} --preload --timeout 600  archery.wsgi:application
+  rule.json: |-
+  
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d11b"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"item_type\" : \"materialized_from_subquery\"}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "materialized_from_subquery", 
+          "rule_name" : "MATERIALIZED_FROM_SUBQUERY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "1.使用连接查询", 
+              "2.避免大的结果集"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d11d"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"dependent\" : true}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "dependent", 
+          "rule_name" : "DEPENDENT", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "使用连接查询"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d120"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"access_type\" : \"unique_subquery\"}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "unique_subquery", 
+          "rule_name" : "UNIQUE_SUBQUERY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "子查询改写为表关联"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d121"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"cacheable\" : false}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "cacheable", 
+          "rule_name" : "CACHEABLE", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "无后续补充"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d128"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "扫描行数", 
+                  "parm_name" : "ROWS"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"access_type\" : \"ALL\",\"$or\": [{\"rows\" : {\"$gt\":1}}, {\"rows_examined_per_scan\": {\"$gt\":1}}],\"citem_type\":{\"$ne\":\"materialized_from_subquery\"}}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){if(x.rows){rows=x.rows}else{rows=x.rows_examined_per_scan}db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio,\"rows\":rows})})})", 
+          "rule_desc" : "全表扫描", 
+          "rule_name" : "TABLE_FULL_SCAN", 
+          "rule_status" : "ON", 
+          "rule_summary" : "大表全表扫描，行数超过阀值，扫描了多余的数据，建议使用索引来避免", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "1.缺索引评估创建索引", 
+              "2.取max、min值评估创建索引", 
+              "3.索引失效重建索引，分区表维护记得维护索引", 
+              "4.对条件字段使用函数或表达式a.函数、表达式放到等于号的右边b.创建函数索引(下策)", 
+              "5.出现隐式转换a.不同类型的谓词匹配先显式转换b.表定义根据数据选择正确的数据类型", 
+              "6.使用不等运算符<>!=做查询条件a.尽量少用不等判断；b.如果列值是连续，可把否定操作更改为两个区间；c.如果列值不多，可用inlist枚举其他所有值", 
+              "7.模糊匹配％a％,％a建议精确匹配", 
+              "8.sql逻辑，比如最大值，改用窗口函数", 
+              "9.弱选择sql，返回结果集较大建议a.添加更多的谓词减少数据的访问，比如时间b.改造分区表c.使用覆盖索引", 
+              "10.统计信息不准确数据批量加载程序触发收集统计信息"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d129"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"using_temporary_table\" : true}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "临时表排序", 
+          "rule_name" : "USING_TEMPORARY_TABLE", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "避免大排序"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d12a"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"using_filesort\" : true}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "磁盘排序", 
+          "rule_name" : "USING_FILESORT", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "避免大排序"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d12b"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"access_type\" : \"fulltext\"}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "fulltext", 
+          "rule_name" : "FULLTEXT", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "不建议使用全文索引，大字段使用外部存储方式"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d12c"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"access_type\" : \"index_merge\"}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "index_merge", 
+          "rule_name" : "INDEX_MERGE", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "创建复合索引"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d12e"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.planitem.find({\"schemas\":\"@schema_name@\",\"citem_type\" : \"nested_loop\",\"citem.3\":{\"$exists\":1}}).forEach(function(x){db.sqlinfo.find({checksum:x.checksum}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})})", 
+          "rule_desc" : "multi_tab_join", 
+          "rule_name" : "MULTI_TAB_JOIN", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "sql逻辑改写，减少表关联"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d133"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_parms" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.sqlinfo.find({\"sqlplan_json.complex\":1}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio})})", 
+          "rule_desc" : "complex_sql", 
+          "rule_name" : "COMPLEX_SQL", 
+          "rule_status" : "ON", 
+          "rule_summary" : "", 
+          "rule_type" : "SQLPLAN", 
+          "solution" : [
+              "sql过于复杂，无法得到json格式执行计划，建议在逻辑和业务上避免此类复杂sql"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d134"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_datas" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }, 
+              {
+                  "parm_desc" : "锁定时间总和", 
+                  "parm_name" : "Lock_time_sum"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.sqlinfo.find({\"Lock_time_sum\" : {$gt:60}}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio, \"Lock_time_sum\" :y.Lock_time_sum})})", 
+          "rule_desc" : "Lock_time_sum", 
+          "rule_name" : "LOCK_TIME_SUM", 
+          "rule_status" : "ON", 
+          "rule_summary" : "锁定时间过长", 
+          "rule_type" : "SQLSTAT", 
+          "solution" : [
+              "对sql消耗资源评估是否合理，能否优化"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d135"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : 10.0, 
+          "output_datas" : [
+              {
+                  "parm_desc" : "CHECKSUM", 
+                  "parm_name" : "CHECKSUM"
+              }, 
+              {
+                  "parm_desc" : "执行次数", 
+                  "parm_name" : "ts_cnt"
+              }, 
+              {
+                  "parm_desc" : "平均执行时间", 
+                  "parm_name" : "query_time_avg"
+              }, 
+              {
+                  "parm_desc" : "平均返回记录数", 
+                  "parm_name" : "rows_sent_avg"
+              }, 
+              {
+                  "parm_desc" : "扫描命中率", 
+                  "parm_name" : "index_ratio"
+              }, 
+              {
+                  "parm_desc" : "锁定时间总和", 
+                  "parm_name" : "Lock_time_sum"
+              }
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "db.sqlinfo.find({\"index_ratio\" : {$gt:10000}}).forEach(function(y){db.@tmp@.save({\"checksum\" :y.checksum,\"ts_cnt\" :y.ts_cnt,\"query_time_avg\" :y.query_time_avg,\"rows_sent_avg\" :y.rows_sent_avg,\"index_ratio\" :y.index_ratio, \"Lock_time_sum\" :y.Lock_time_sum})})", 
+          "rule_desc" : "index_ratio", 
+          "rule_name" : "INDEX_RATIO", 
+          "rule_status" : "ON", 
+          "rule_summary" : "扫描命中率过低", 
+          "rule_type" : "SQLSTAT", 
+          "solution" : [
+              "对sql消耗资源评估是否合理，能否优化"
+          ], 
+          "weight" : 0.1
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d13e"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "(cross join)|(outer join)", 
+          "rule_desc" : "存在全连接或外连接,cross join或outer join情况", 
+          "rule_name" : "BAD_JOIN", 
+          "rule_status" : "ON", 
+          "rule_summary" : "存在全连接或外连接,cross join或outer join情况", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写为innerjoin"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d13f"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_desc" : "delete或update中必须出现where子句，防止出现意外的全部删除或更新动作", 
+          "rule_name" : "DML_ALLDATA", 
+          "rule_status" : "ON", 
+          "rule_summary" : "delete或update中必须出现where子句，防止出现意外的全部删除或更新动作", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "1.建议加where条件", 
+              "2.全表删除用truncate"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d146"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "or个数", 
+                  "parm_name" : "or_num", 
+                  "parm_value" : NumberInt(5), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "多个过滤条件通过or连接", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_name" : "TOOMANY_OR", 
+          "rule_status" : "ON", 
+          "rule_summary" : "多个过滤条件通过or连接,防止优化器出现选择异常", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改用临时表存入变量"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d147"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "like .\\%", 
+          "rule_desc" : "谓词条件使用like %xxx,无法使用索引", 
+          "rule_name" : "LIKE_UNINDEX", 
+          "rule_status" : "ON", 
+          "rule_summary" : "谓词条件使用like %xxx,无法使用索引", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "从业务角度出发，分析是否可使用精确运算符或类似like'xx%'"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d14b"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "select段出现子查询", 
+          "rule_name" : "SUBQUERY_SELECT", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "OFF", 
+          "rule_summary" : "select段出现子查询", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写为表关联"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d14d"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "inlist元素个数", 
+                  "parm_name" : "in_list_num", 
+                  "parm_value" : NumberInt(20), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "IN List元素过多", 
+          "rule_name" : "TOOMANY_IN_LIST", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "ON", 
+          "rule_summary" : "IN List元素过多", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改用临时表存入变量"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d14e"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "SQL字符数量", 
+                  "parm_name" : "char_num", 
+                  "parm_value" : NumberInt(1000), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "SQL文本过长", 
+          "rule_name" : "LONG_TEXT", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "ON", 
+          "rule_summary" : "SQL文本过长", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "sql改写为精简语句"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d14f"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_desc" : "重复查询子句", 
+          "rule_name" : "SUBQUERY_REP", 
+          "rule_status" : "ON", 
+          "rule_summary" : "禁止使用重复的查询子句，应使用with as替换子句(仅限Oracle)来提升SQL执行效率", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "1.withas", 
+              "2.改写sql避免重复查询"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d150"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "where段出现子查询", 
+          "rule_name" : "SUBQUERY_WHERE", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "", 
+          "rule_status" : "OFF", 
+          "rule_summary" : "where段出现子查询", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写为表关联"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d152"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "谓词中存在负向操作符,!=,<>,!<,!>,not exists,not", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "(!=)|(<>)|(!>)|(!<)", 
+          "rule_name" : "WHERE_NOT", 
+          "rule_status" : "ON", 
+          "rule_summary" : "谓词中存在负向操作符,!=,<>,!<,!>,not exists,not", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "1.如果列值是连续，可把否定操作，更改为两个区间", 
+              "2.不建议使用不等值运算"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d154"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "(select \\*)|(select .*\\.\\*)", 
+          "rule_desc" : "禁止使用select *，必须明确选择所需的列。", 
+          "rule_name" : "SELECT_ANY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "禁止使用select *，必须明确选择所需的列", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "使用明确的列"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d156"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_desc" : "having段出现子查询", 
+          "rule_name" : "SUBQUERY_HAVING", 
+          "rule_status" : "OFF", 
+          "rule_summary" : "having段出现子查询", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写为表关联"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d157"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "delete或update中出现order by子句,防止删除或更新过程中出现不必要的排序", 
+          "rule_name" : "DML_SORT", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "(\\s)?((update )|(delete )).*order by", 
+          "rule_status" : "ON", 
+          "rule_summary" : "delete或update中出现order by子句,防止删除或更新过程中出现不必要的排序", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "dml操作不需排序"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d159"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "出现union.防止出现不必要的排序动作", 
+          "rule_name" : "UNION", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "ON", 
+          "rule_summary" : "出现union,防止出现不必要的排序动作", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写unionall和sql逻辑中去重"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d15a"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "查询字段引用函数", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "\\)\\s?[<>=]{1,2}", 
+          "rule_name" : "WHERE_FUNC", 
+          "rule_status" : "ON", 
+          "rule_summary" : "禁止在查询字段中引用函数", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "1.函数写在表达式右边", 
+              "2.应用程序实现函数功能"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d15b"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+      
+          ], 
+          "rule_desc" : "from段出现子查询", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_name" : "SUBQUERY_FROM", 
+          "rule_status" : "OFF", 
+          "rule_summary" : "from段出现子查询", 
+          "rule_type" : "TEXT", 
+          "solution" : [
+              "改写为表关联"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d15e"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(6), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "字段名", 
+                  "parm_name" : "title2"
+              }, 
+              {
+                  "parm_desc" : "数据类型", 
+                  "parm_name" : "title3"
+              }
+          ], 
+          "rule_desc" : "大对象字段将影响存取性能、耗费较多空间，建议在数据库之外存储。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "SELECT TABLE_NAME,column_name , DATA_TYPE FROM information_schema.COLUMNS where TABLE_SCHEMA='@username@' and DATA_TYPE in ('blob','mediumblob','longblob','text','mediumblob','longtext') order by table_name", 
+          "rule_name" : "EXIST_LOB_COLUMN", 
+          "rule_status" : "ON", 
+          "rule_summary" : "存在大对象字段", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "建议在数据库外部进行存储大字段"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d15f"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "提取做正则判断记录数上限", 
+                  "parm_name" : "num_row", 
+                  "parm_value" : NumberInt(10000), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "字段名", 
+                  "parm_name" : "title2"
+              }, 
+              {
+                  "parm_desc" : "字段定义类型", 
+                  "parm_name" : "title3"
+              }, 
+              {
+                  "parm_desc" : "字段实际类型", 
+                  "parm_name" : "title4"
+              }
+          ], 
+          "rule_desc" : "根据字段保存内容判断，字段类型定义异常，建议选择适合的数据类型。", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_name" : "COLUMN_WRONG_TYPE", 
+          "rule_status" : "ON", 
+          "rule_summary" : "字段数据类型定义错误", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "合理定义字段类型"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d160"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "字段长度(字节)", 
+                  "parm_name" : "primarykey_length", 
+                  "parm_value" : NumberInt(16), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "table_name"
+              }, 
+              {
+                  "parm_desc" : "主键字段<br>(如果有多个字段，逗号分开)", 
+                  "parm_name" : "primary_type"
+              }, 
+              {
+                  "parm_desc" : "字段类型<br>(如果有多个字段，逗号分开)", 
+                  "parm_name" : "title3"
+              }, 
+              {
+                  "parm_desc" : "字段总长度(字节)", 
+                  "parm_name" : "title4"
+              }
+          ], 
+          "rule_desc" : "应控制主键字段长度，过长的主键字段会造成索引空间消耗过大。", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_name" : "TABLE_PRIMARYKEY_LENGTH", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表主键字段定义长度过长", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "主键设计是否合理"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d161"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "table_name"
+              }
+          ], 
+          "rule_desc" : "时间戳字段是获取增量数据的最佳方法，请为表定义时间戳字段。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select t.table_name from information_schema.`TABLES` t where t.TABLE_SCHEMA ='@username@' and t.TABLE_NAME not in(select c.table_name from information_schema.`COLUMNS` c where (c.COLUMN_NAME like '%UPDATE%' OR c.COLUMN_NAME like '%CREATE%') and c.DATA_TYPE in ('datetime','date','timestamp','time') and c.table_schema ='@username@')", 
+          "rule_name" : "TABLE_WITHOUT_TIMESTAMP", 
+          "rule_status" : "ON", 
+          "rule_summary" : "表没有定义时间戳字段", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "添加时间字段(比如插入、更新的时间戳"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d162"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "字段数", 
+                  "parm_name" : "column_num", 
+                  "parm_value" : NumberInt(40), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "字段数", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "表字段数过多，将造成记录过长，单页存储记录数减少。可考虑拆表处理。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "SELECT table_name,count(1) FROM information_schema.columns WHERE table_schema = '@username@' GROUP BY table_name HAVING count(1)>@column_num@", 
+          "rule_name" : "TABLE_COLUMN_NUM", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表字段数过多", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "表设计时尽量符合三范式来避免数据冗余,使用频率低的字段拆到另外一张表，必要时做表关联取数"
+          ], 
+          "weight" : NumberInt(1)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d163"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "字段长度(字节)", 
+                  "parm_name" : "record_length", 
+                  "parm_value" : "1000", 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "字段内容平均长度<br>(取自avg_row_length，有失真情况)", 
+                  "parm_name" : "title2"
+              }, 
+              {
+                  "parm_desc" : "字段定义长度", 
+                  "parm_name" : "title3"
+              }
+          ], 
+          "rule_desc" : "应控制单表定义长度，避免过长记录。", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_name" : "TABLE_RECORD_LENGTH", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表字段定义长度过长", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "按需定义字段长度"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d164"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }
+          ], 
+          "rule_desc" : "没有定义主键，MySQL会自动创建主键。这不是一种好的设计方法。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select table_name from information_schema.tables where table_schema='@username@' and table_name not in(select table_name from information_schema.statistics where table_schema='@username@' and index_name='PRIMARY')", 
+          "rule_name" : "TABLE_NO_DEF_PRIMARYKEY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "表没有定义主键", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "必须定义主键"
+          ], 
+          "weight" : NumberInt(5)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d165"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "类别", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "对象名", 
+                  "parm_name" : "title2"
+              }, 
+              {
+                  "parm_desc" : "依赖表", 
+                  "parm_name" : "title3"
+              }
+          ], 
+          "rule_desc" : "存储过程、函数、触发器等都将消耗数据库的计算能力，建议通过应用层保证数据约束。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select 'TRIGGER',trigger_name,event_object_table from information_schema.triggers where event_object_schema='@username@' union all (select type,specific_name,''from mysql.proc where db='@username@' order by type)", 
+          "rule_name" : "EXIST_FUNC_PROC_TRIGGER", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表存在函数、存储过程、触发器", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "用应用端程序实现将存储过程、函数、触发器"
+          ], 
+          "weight" : NumberInt(5)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d166"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "表大小(GB)", 
+                  "parm_name" : "table_size", 
+                  "parm_value" : NumberInt(10), 
+                  "parm_unit" : "GB"
+              }
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名称", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "表大小(GB)", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "表的规模过大，将影响表的访问效率、增加维护成本等。常见的解决方案就是使用分区表，将大表转换为分区表。对于大表的访问，可采取分片方式处理。", 
+          "rule_name" : "BIG_TABLE_BY_SIZE", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "ON", 
+          "rule_summary" : "超过指定规模且没有分区的表", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "1.建议分库，分表，分区", 
+              "2.历史数据归档"
+          ], 
+          "weight" : NumberInt(1)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d167"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "表个数", 
+                  "parm_name" : "table_size", 
+                  "parm_value" : NumberInt(5000), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(1), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "库名称", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "数据表个数", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "单库数据表过多，将影响整体性能。必要时，进行业务逻辑的垂直拆分。", 
+          "rule_name" : "BIG_SCHEMA_BY_TABLE_NUM", 
+          "rule_complexity" : "complex", 
+          "rule_cmd" : "default", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单库数据表过多", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "1.建议分库，分表，分区", 
+              "2.历史数据归档"
+          ], 
+          "weight" : NumberInt(1)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d168"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "数据量规模", 
+                  "parm_name" : "row_num", 
+                  "parm_value" : NumberInt(20000000), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表(分区)名称", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "记录数", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "单表(分区)数据表过多，将影响整体性能。必要时，进行分库、分表或定期清理、归档数据。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select table_name,table_rows from information_schema.tables where table_schema='@username@' and CREATE_OPTIONS<>'partitioned' and table_rows>@row_num@ union all select concat(table_name,':',partition_name),table_rows from information_schema.partitions where table_schema='@username@' and table_name not in (select table_name from information_schema.tables where table_schema='@username@' and CREATE_OPTIONS<>'partitioned') and table_rows>@row_num@", 
+          "rule_name" : "BIG_TABLE_BY_ROW_NUM", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表(分区)数据量过大", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "1.建议分库，分表，分区", 
+              "2.历史数据归档"
+          ], 
+          "weight" : NumberInt(1)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d169"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "选择率百分比<br>(接近100最好)", 
+                  "parm_name" : "selectivity", 
+                  "parm_value" : 0.001, 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "索引名", 
+                  "parm_name" : "title2"
+              }, 
+              {
+                  "parm_desc" : "索引唯一值数量", 
+                  "parm_name" : "title3"
+              }, 
+              {
+                  "parm_desc" : "表记录数", 
+                  "parm_name" : "title4"
+              }, 
+              {
+                  "parm_desc" : "索引选择率(~100%，越高越好)", 
+                  "parm_name" : "title5"
+              }
+          ], 
+          "rule_desc" : "索引选择率不高，将导致索引低效，请调整索引字段。", 
+          "rule_cmd" : "default", 
+          "rule_complexity" : "complex", 
+          "rule_name" : "INDEX_SELECTIVITY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "索引选择率不高", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "调整索引字段，索引是否合理"
+          ], 
+          "weight" : NumberInt(1)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d16a"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+      
+          ], 
+          "max_score" : NumberInt(20), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名称", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "外键名", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "外键资源将消耗数据库的计算能力，建议通过应用层保证数据约束。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select table_name,constraint_name from information_schema.table_constraints where CONSTRAINT_SCHEMA='@username@' and table_schema='@username@' and constraint_type='FOREIGN KEY'", 
+          "rule_name" : "TABLE_EXIST_FOREIGN_KEY", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表存在外键", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "应用程序实现外键约束，删除表的外键约束"
+          ], 
+          "weight" : NumberInt(5)
+      }
+      { 
+          "_id" : ObjectId("5b61644153cc7e049902d16b"), 
+          "db_type" : "mysql", 
+          "exclude_obj_type" : "", 
+          "input_parms" : [
+              {
+                  "parm_desc" : "索引数量", 
+                  "parm_name" : "index_num", 
+                  "parm_value" : NumberInt(7), 
+                  "parm_unit" : ""
+              }
+          ], 
+          "max_score" : NumberInt(10), 
+          "output_parms" : [
+              {
+                  "parm_desc" : "表名称", 
+                  "parm_name" : "title1"
+              }, 
+              {
+                  "parm_desc" : "索引数量", 
+                  "parm_name" : "title2"
+              }
+          ], 
+          "rule_desc" : "单表索引数量过多，不仅维护成本高，而且占用更多的空间。", 
+          "rule_complexity" : "simple", 
+          "rule_cmd" : "select * from (select table_name,count(distinct index_name) cnt from information_schema.STATISTICS where table_schema='@username@' and index_name<>'PRIMARY' group by table_name) v where cnt>@index_num@", 
+          "rule_name" : "BIG_TABLE_BY_INDEX_NUM", 
+          "rule_status" : "ON", 
+          "rule_summary" : "单表索引数量过多", 
+          "rule_type" : "OBJ", 
+          "solution" : [
+              "构建战略性索引结构，不要针对每个需求都通过创建索引解决"
+          ], 
+          "weight" : NumberInt(2)
+      }
+      
+
+---
+# Source: archery/charts/goinception/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archeryk8s-goinception
+  labels:
+    app.kubernetes.io/name: goinception
+    helm.sh/chart: goinception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4000
+      targetPort: 4000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: goinception
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/charts/inception/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archeryk8s-inception
+  labels:
+    app.kubernetes.io/name: inception
+    helm.sh/chart: inception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6669
+      targetPort: 6669
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: inception
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/charts/mongo/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archeryk8s-mongo
+  labels:
+    app.kubernetes.io/name: mongo
+    helm.sh/chart: mongo-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mongo
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/charts/mysql/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/charts/redis/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: archeryk8s
+  labels:
+    app.kubernetes.io/name: archery
+    helm.sh/chart: archery-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9123
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: archery
+    app.kubernetes.io/instance: archeryk8s
+
+---
+# Source: archery/charts/goinception/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s-goinception
+  labels:
+    app.kubernetes.io/name: goinception
+    helm.sh/chart: goinception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: goinception
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: goinception
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      containers:
+        - name: goinception
+          image: "hanchuanchuan/goinception:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: goinception
+              containerPort: 4000
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: goinception
+          resources:
+            {}
+            
+      volumes:
+        - configMap:
+            name: goinception-config
+          name: goinception-config-volume
+        
+
+---
+# Source: archery/charts/inception/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s-inception
+  labels:
+    app.kubernetes.io/name: inception
+    helm.sh/chart: inception-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inception
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: inception
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      containers:
+        - name: inception
+          image: "hhyo/inception:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: inception
+              containerPort: 6669
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: inception
+          resources:
+            {}
+            
+      volumes:
+        - configMap:
+            name: inception-config
+          name: inception-config-volume
+        
+
+---
+# Source: archery/charts/mongo/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s-mongo
+  labels:
+    app.kubernetes.io/name: mongo
+    helm.sh/chart: mongo-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mongo
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mongo
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      containers:
+        - name: mongo
+          image: "mongo:3.6"
+          imagePullPolicy: IfNotPresent        
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: root
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: "123456"
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mongo
+          resources:
+            {}
+              
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/mongo-db
+    
+      volumes:
+        - name: mongo-data
+          hostPath:
+            path: /mongo/datadir
+
+---
+# Source: archery/charts/mysql/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s-mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    helm.sh/chart: mysql-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      containers:
+        - name: mysql
+          image: "mysql:5.7"
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: MYSQL_DATABASE
+            value: archery
+          - name: MYSQL_ROOT_PASSWORD
+            value: "123456"
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mysql
+          resources:
+            {}
+            
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+            - mountPath: /etc/mysql/my.cnf
+              name: my-cnf
+              subPath: my.cnf
+            
+      volumes:
+        - hostPath:
+            path: /data/mysqldb
+          name: mysql-data
+        - configMap:
+            name: my-config
+          name: my-cnf
+        
+
+---
+# Source: archery/charts/redis/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s-redis
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      containers:
+        - name: redis
+          image: "redis:5"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: redis
+          resources:
+            {}
+            
+
+---
+# Source: archery/templates/deployment.yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: archeryk8s
+  labels:
+    app.kubernetes.io/name: archery
+    helm.sh/chart: archery-0.1.0
+    app.kubernetes.io/instance: archeryk8s
+    app.kubernetes.io/managed-by: Tiller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: archery
+      app.kubernetes.io/instance: archeryk8s
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: archery
+        app.kubernetes.io/instance: archeryk8s
+    spec:
+      initContainers:
+        - image: busybox
+          name: init-container
+          imagePullPolicy: IfNotPresent
+          args:
+            - "mkdir"
+            - "-p"
+            - "/opt/archery/downloads/{binlog2sql,log,schemasync}"
+          volumeMounts:
+          - mountPath: /opt/archery/downloads
+            name: archery-download
+          - mountPath: /opt/archery/src/script
+            name: archery-script
+      containers:
+        - name: archery
+          image: "hhyo/archery:1.6.7"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NGINX_PORT
+              value: "9123"
+          args:
+          - "bash"
+          - "/opt/archery/src/docker/startup.sh"
+          ports:
+            - name: archery
+              containerPort: 9123
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: archery
+          resources:
+            {}
+            
+          volumeMounts:
+            - mountPath: /opt/archery/archery/settings.py
+              name: archery-settings
+              subPath: settings.py
+            - mountPath: /etc/soar.yaml
+              name: archery-settings
+              subPath: soar.yaml
+            - mountPath: /opt/archery/src/script/analysis_slow_query.sh
+              name: archery-settings
+              subPath: analysis_slow_query.sh
+            - mountPath: /opt/archery/src/script/rule.json
+              name: archery-settings
+              subPath: rule.json
+            - mountPath: /opt/archery/src/docker/startup.sh
+              name: archery-settings
+              subPath: startup.sh
+            
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: archery-config
+          name: archery-settings
+        - hostPath:
+            path: /data/archery/downloads
+          name: archery-download
+        - hostPath:
+            path: /data/archery/scripts
+          name: archery-script
+        
+
+---
+# Source: archery/charts/goinception/templates/ingress.yaml
+
+
+---
+# Source: archery/charts/inception/templates/ingress.yaml
+
+
+---
+# Source: archery/charts/mongo/templates/ingress.yaml
+
+
+---
+# Source: archery/charts/mysql/templates/ingress.yaml
+
+
+---
+# Source: archery/charts/mysql/templates/mysql.yaml
+
+---
+# Source: archery/charts/redis/templates/ingress.yaml
+
+
+---
+# Source: archery/templates/ingress.yaml
+
+

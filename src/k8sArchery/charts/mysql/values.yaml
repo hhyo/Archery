@@ -1,0 +1,115 @@
+# Default values for mysql.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: mysql
+  tag: 5.7
+  pullPolicy: IfNotPresent
+env:
+  MYSQL_DATABASE: archery
+  MYSQL_ROOT_PASSWORD: 123456
+nameOverride: ""
+fullnameOverride: ""
+
+
+service:
+  type: ClusterIP
+  port: 3306
+  targtPort: 3306
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+
+volumeMounts:
+  - name: mysql-data
+    mountPath: /var/lib/mysql
+  - name: my-cnf
+    subPath: my.cnf
+    mountPath: /etc/mysql/my.cnf
+
+configMap:
+  enabled: true
+  data:
+    my.cnf: |-
+      [mysqld_safe]
+      socket          = /var/run/mysqld/mysqld.sock
+      nice            = 0
+      
+      [mysqld]
+      pid-file        = /var/run/mysqld/mysqld.pid
+      socket          = /var/run/mysqld/mysqld.sock
+      port            = 3306
+      basedir         = /usr
+      datadir         = /var/lib/mysql
+      tmpdir          = /tmp
+      lc-messages-dir = /usr/share/mysql
+      skip-external-locking
+      lower_case_table_names=1
+      default-time_zone = '+8:00'
+      
+      innodb_buffer_pool_size = 512M
+      
+      server-id              = 100
+      log_bin                        = /var/log/mysql/mysql-bin.log
+      expire_logs_days        = 1
+      max_binlog_size         = 500M
+      
+      character-set-server = utf8mb4
+      collation-server = utf8mb4_general_ci
+      
+      slow_query_log_file = mysql-slow.log
+      slow_query_log      = 1
+      long_query_time = 1
+      
+      [client]
+      default-character-set=utf8mb4
+      
+      [mysqldump]
+      quick
+      quote-names
+      max_allowed_packet      = 1024M
+      
+      
+      !includedir /etc/mysql/conf.d/
+
+
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+volumes: 
+- name: mysql-data
+  hostPath:
+    path: /data/mysqldb
+- name: my-cnf
+  configMap:
+    name: my-config
