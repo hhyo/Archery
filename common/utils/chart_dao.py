@@ -132,3 +132,19 @@ class ChartDao(object):
         order by sum(effect_row) desc
         limit 10;'''.format(cycle)
         return self.__query(sql)
+
+    # 慢日志历史趋势图(按次数)
+    def slow_query_review_history_by_cnt(self, checksum):
+        sql = f"""select sum(ts_cnt),date(date_add(ts_min, interval 8 HOUR))
+from mysql_slow_query_review_history
+where checksum = '{checksum}'
+group by date(date_add(ts_min, interval 8 HOUR));"""
+        return self.__query(sql)
+
+    # 慢日志历史趋势图(按时长)
+    def slow_query_review_history_by_pct_95_time(self, checksum):
+        sql = f"""select truncate(Query_time_pct_95,6),date(date_add(ts_min, interval 8 HOUR))
+from mysql_slow_query_review_history
+where checksum = '{checksum}'
+group by date(date_add(ts_min, interval 8 HOUR));"""
+        return self.__query(sql)

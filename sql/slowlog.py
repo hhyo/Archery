@@ -5,6 +5,10 @@ from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
 from django.http import HttpResponse
+from pyecharts.charts import Line
+from pyecharts import options as opts
+from common.utils.chart_dao import ChartDao
+
 from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
@@ -198,3 +202,30 @@ def slowquery_review_history(request):
         # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+def report(request):
+    """返回慢SQL历史趋势"""
+    checksum = request.GET.get('checksum')
+    cnt_data = ChartDao().slow_query_review_history_by_cnt(checksum)
+    pct_data = ChartDao().slow_query_review_history_by_pct_95_time(checksum)
+    cnt_x_data = [row[1] for row in cnt_data['rows']]
+    cnt_y_data = [int(row[0]) for row in cnt_data['rows']]
+    pct_y_data = [str(row[0]) for row in pct_data['rows']]
+    line = Line(init_opts=opts.InitOpts(width='800', height='380px'))
+    line.add_xaxis(cnt_x_data)
+    line.add_yaxis("慢查次数", cnt_y_data, is_smooth=True,
+                   markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="max", name='最大值'),
+                                                         opts.MarkLineItem(type_="average", name='平均值')]))
+    line.add_yaxis("慢查时长(95%)", pct_y_data, is_smooth=True, is_symbol_show=False)
+    line.set_series_opts(areastyle_opts=opts.AreaStyleOpts(opacity=0.5, ))
+    line.set_global_opts(title_opts=opts.TitleOpts(title='SQL历史趋势'),
+                         legend_opts=opts.LegendOpts(selected_mode='single'),
+                         xaxis_opts=opts.AxisOpts(
+                             axistick_opts=opts.AxisTickOpts(is_align_with_label=True),
+                             is_scale=False,
+                             boundary_gap=False,
+                         ), )
+
+    result = {"status": 0, "msg": '', "data": line.render_embed()}
+    return HttpResponse(json.dumps(result), content_type='application/json')

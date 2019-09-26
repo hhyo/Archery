@@ -319,16 +319,36 @@
                     },
                     //格式化详情
                     detailFormatter: function (index, row) {
-                        var html = [];
+                        let html = [];
                         $.each(row, function (key, value) {
                             if (key === 'SQLText') {
-                                var sql = window.sqlFormatter.format(value);
+                                let sql = window.sqlFormatter.format(value);
                                 //替换所有的换行符
                                 sql = sql.replace(/\r\n/g, "<br>");
                                 sql = sql.replace(/\n/g, "<br>");
                                 //替换所有的空格
                                 sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<span>' + sql + '</span>');
+                                html.push('<div class="col-lg-4">' + sql + '</div>');
+                            }
+                        });
+                        $.ajax({
+                            type: "get",
+                            url: "/slowquery/report/",
+                            async: false,
+                            dataType: "json",
+                            data: {
+                                checksum: row.SQLId,
+                            },
+                            complete: function () {
+                            },
+                            success: function (data) {
+                                if (data.status === 0) {
+                                    let chart = data.data;
+                                    html.push('<div class="col-lg-8">' + chart + '</div>')
+                                }
+                            },
+                            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                alert(errorThrown);
                             }
                         });
                         return html.join('');
