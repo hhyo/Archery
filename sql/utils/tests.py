@@ -1249,6 +1249,8 @@ class TestDataMasking(TestCase):
 
     def test_data_masking_does_not_support_keyword(self, ):
         """不支持的关键字"""
+        self.sys_config.set('query_check', 'true')
+        self.sys_config.get_all_config()
 
         sqls = ["select id from test union select email from activity_email_all_in_one;",
                 "select id from test union all select email from activity_email_all_in_one;"]
