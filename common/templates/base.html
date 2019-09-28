@@ -304,6 +304,8 @@
         }
     }).on('hidden.bs.dropdown', function () {
         $(this).css({'padding-bottom': '', 'overflow': ''});
+    }).on('page-change.bs.table', function () {
+        $(this).css({'padding-bottom': '', 'overflow': ''});
     });
 </script>
 {% block js %}
