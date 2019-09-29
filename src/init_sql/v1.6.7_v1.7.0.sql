@@ -54,3 +54,7 @@ CREATE TABLE `instance_database` (
 -- 增加资源组粒度的查询权限
 set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('可查询所在资源组内的所有实例', @content_type_id, 'query_resource_group_instance');
+
+-- 增加工具插件的权限
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 工具插件', @content_type_id, 'menu_menu_tools');

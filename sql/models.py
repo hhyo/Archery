@@ -496,7 +496,7 @@ class InstanceDatabase(models.Model):
     实例数据库列表
     """
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    db_name = fields.EncryptedCharField(verbose_name='数据库名', max_length=128)
+    db_name = models.CharField('数据库名', max_length=128)
     owner = models.CharField('负责人', max_length=50, default='', blank=True)
     owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
     remark = models.CharField('备注', max_length=255, default='', blank=True)
@@ -652,6 +652,7 @@ class Permission(models.Model):
             ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
+            ('menu_menu_tools', '菜单 工具插件'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
