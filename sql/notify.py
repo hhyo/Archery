@@ -8,7 +8,6 @@ from sql.utils.resource_group import auth_group_users
 from common.utils.sendmsg import MsgSender
 from common.utils.const import WorkflowDict
 from sql.utils.workflow_audit import Audit
-from sql.utils.ding_api import DingSender
 
 import logging
 
@@ -142,17 +141,15 @@ def notify_for_audit(audit_id, **kwargs):
 
     # 处理接收人信息
     msg_to_email = [user.email for user in msg_to if user.email]
+    msg_to_ding_user = [user.ding_user_id for user in msg_to if user.ding_user_id]
     # 发送通知
     msg_sender = MsgSender()
     if sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_to_email, list_cc_addr=msg_cc_email)
-    if sys_config.get('ding'):
-        if webhook_url:
-            msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-    if sys_config.get('ding_to_person'):
-        ding_sender = DingSender()
-        for user in msg_to:
-            ding_sender.send_msg(user.ding_user_id, msg_title + '\n' + msg_content)
+    if sys_config.get('ding') and webhook_url:
+        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    if sys_config.get('ding_to_person') and msg_to_ding_user:
+        msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
 
 
 def notify_for_execute(workflow):
@@ -188,6 +185,7 @@ def notify_for_execute(workflow):
     # 处理接收人信息
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
+    msg_to_ding_user = [user.ding_user_id for user in msg_to if user.ding_user_id]
 
     # 判断是发送钉钉还是发送邮件
     msg_sender = MsgSender()
@@ -198,10 +196,8 @@ def notify_for_execute(workflow):
         webhook_url = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
         if webhook_url:
             MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
-    if sys_config.get('ding_to_person'):
-        # 单独发送钉钉通知给申请人
-        for user in msg_to:
-            DingSender().send_msg(user.ding_user_id, msg_title + '\n' + msg_content)
+    if sys_config.get('ding_to_person') and msg_to_ding_user:
+        msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
 
     # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
