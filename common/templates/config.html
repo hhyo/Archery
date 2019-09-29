@@ -534,7 +534,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="ding_archer_username"
+                                    <label for="ding_archery_username"
                                            class="col-sm-4 control-label">Archery2Ding</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
@@ -750,8 +750,8 @@
                 var v1 = $("#ding_agent_id").val();
                 var v2 = $("#ding_app_key").val();
                 var v3 = $("#ding_app_secret").val();
-                var v4 = $("#ding_root_dept_id").val();
-                var v5 = $("#ding_archer_username").val();
+                var v4 = $("#ding_dept_ids").val();
+                var v5 = $("#ding_archery_username").val();
                 if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
                     alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
                     return;
@@ -989,11 +989,11 @@
             var v1 = $("#ding_agent_id").val();
             var v2 = $("#ding_app_key").val();
             var v3 = $("#ding_app_secret").val();
-            var v4 = $("#ding_root_dept_id").val();
-            var v5 = $("#ding_archer_username").val();
-            if (!(v1 && v2 && v3 && v4 && v5)) {
+            var v4 = $("#ding_dept_ids").val();
+            var v5 = $("#ding_archery_username").val();
+            if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
                 alert("请先保存相关配置信息！");
-                return
+                return;
             }
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
