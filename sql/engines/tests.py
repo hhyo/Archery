@@ -456,11 +456,13 @@ class TestMysql(TestCase):
         with self.assertRaises(RuntimeError):
             new_engine.execute_check(db_name=0, sql=sql)
 
+    @patch.object(MysqlEngine, 'query')
     @patch('sql.engines.mysql.InceptionEngine')
-    def test_execute_workflow(self, _inception_engine):
+    def test_execute_workflow(self, _inception_engine, _query):
         self.sys_config.set('inception', 'true')
         sql = 'update user set id=1'
         _inception_engine.return_value.execute.return_value = ReviewSet(full_sql=sql)
+        _query.return_value.rows = (('0',),)
         new_engine = MysqlEngine(instance=self.ins1)
         execute_result = new_engine.execute_workflow(self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
