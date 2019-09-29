@@ -1,0 +1,56 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "inception.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "inception.name" . }}
+    helm.sh/chart: {{ include "inception.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "inception.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "inception.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: inception
+              containerPort: 6669
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: inception
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+         {{- with .Values.volumeMounts }}
+          volumeMounts:
+            - name: inception-config-volume
+              subPath: inc.cnf
+              mountPath: /etc/inc.cnf
+       {{- end }}
+       {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

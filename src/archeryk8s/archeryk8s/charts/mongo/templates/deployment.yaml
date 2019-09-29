@@ -1,0 +1,64 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "mongo.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "mongo.name" . }}
+    helm.sh/chart: {{ include "mongo.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mongo.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mongo.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}        
+          env:
+          {{- with .Values.env }}
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: {{ .ROOT_USERNAME }}
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: "{{ .ROOT_PASSWORD }}"
+          {{- end }}
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: mongo
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.volumes }}  
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/mongo-db
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{ if .Values.volumes }}
+      volumes:
+        - name: mongo-data
+          hostPath:
+            path: /mongo/datadir
+    {{- end }}

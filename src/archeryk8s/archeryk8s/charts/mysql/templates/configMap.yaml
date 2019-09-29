@@ -1,0 +1,15 @@
+{{- if .Values.configMap.enabled -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: my-config
+  labels:
+    app.kubernetes.io/name: {{ include "mysql.name" . }}
+    helm.sh/chart: {{ include "mysql.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.configMap.data }}
+data:
+{{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end }}
