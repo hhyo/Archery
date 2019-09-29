@@ -1,0 +1,20 @@
+dependencies:
+  - name: redis
+    version: 1.1.15
+    repository: https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+    condition: usePassword
+    #- name: redis
+    #version: 0.1.0
+    #respository: http://another.example.com/charts
+  - name: mysql
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: mongo
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: inception
+    version: 0.1.0
+    repository: http://another.example.com/charts
+  - name: goinception
+    version: 0.1.0
+    repository: http://another.example.com/charts
