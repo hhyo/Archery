@@ -34,10 +34,6 @@ class MsgSender(object):
             self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
             # 钉钉信息
             self.ding_agent_id = sys_config.get('ding_agent_id')
-            self.ding_app_key = sys_config.get('ding_app_key')
-            self.ding_app_secret = sys_config.get('ding_app_secret')
-            self.ding_app_secret = sys_config.get('ding_app_secret')
-            self.ding_archery_username = sys_config.get('ding_archery_username')
 
         if self.MAIL_REVIEW_SMTP_PORT:
             self.MAIL_REVIEW_SMTP_PORT = int(self.MAIL_REVIEW_SMTP_PORT)

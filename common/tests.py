@@ -170,7 +170,7 @@ class DingTest(TestCase):
                     'content': self.content
                 }
             })
-            self.assertIn('钉钉推送成功', lg.output[0])
+            self.assertIn('钉钉Webhook推送成功', lg.output[0])
         post.return_value.json.return_value = {'errcode': 1, 'errmsg': 'test_error'}
         with self.assertLogs('default', level='ERROR') as lg:
             sender.send_ding(self.url, self.content)

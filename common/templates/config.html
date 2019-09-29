@@ -985,6 +985,16 @@
 
         // 同步钉钉用户信息
         $("#sync_ding_user").click(function () {
+            // 先检查配置信息
+            var v1 = $("#ding_agent_id").val();
+            var v2 = $("#ding_app_key").val();
+            var v3 = $("#ding_app_secret").val();
+            var v4 = $("#ding_root_dept_id").val();
+            var v5 = $("#ding_archer_username").val();
+            if (!(v1 && v2 && v3 && v4 && v5)) {
+                alert("请先保存相关配置信息！");
+                return
+            }
             $(this).addClass('disabled');
             $(this).prop('disabled', true);
             $.ajax({
