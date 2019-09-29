@@ -5,14 +5,14 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
-    QueryPrivileges, InstanceAccount, \
+    QueryPrivileges, InstanceAccount, InstanceDatabase, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
 # 用户管理
 @admin.register(Users)
 class UsersAdmin(UserAdmin):
-    list_display = ('id','username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
+    list_display = ('id', 'username', 'display', 'email', 'is_superuser', 'is_staff', 'is_active')
     search_fields = ('id', 'username', 'display', 'email')
     list_display_links = ('id', 'username',)
     ordering = ('id',)
@@ -173,10 +173,23 @@ class WorkflowLogAdmin(admin.ModelAdmin):
     list_filter = ('operation_type_desc', 'operator_display')
 
 
+# 实例数据库列表
+@admin.register(InstanceDatabase)
+class InstanceDatabaseAdmin(admin.ModelAdmin):
+    list_display = ('db_name', 'owner_display', 'instance', 'remark')
+    search_fields = ('db_name',)
+    list_filter = ('instance', 'owner_display')
+    list_display_links = ('db_name',)
+
+    # 仅支持修改备注
+    def get_readonly_fields(self, request, obj=None):
+        return ('instance', 'owner', 'owner_display') if obj else ()
+
+
 # 实例用户列表
 @admin.register(InstanceAccount)
 class InstanceAccountAdmin(admin.ModelAdmin):
-    list_display = ('user', 'host', 'instance', 'remark')
+    list_display = ('user', 'host', 'password', 'instance', 'remark')
     search_fields = ('user', 'host')
     list_filter = ('instance', 'host')
     list_display_links = ('user',)

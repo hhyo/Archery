@@ -3,19 +3,20 @@ set @perm_id=(select id from auth_permission where codename='menu_themis');
 delete from auth_group_permissions where permission_id=@perm_id;
 delete from sql_users_user_permissions where permission_id=@perm_id;
 delete from auth_permission where codename='menu_themis';
+-- 增加实例账号管理权限，变更菜单权限信息
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 管理实例账号', @content_type_id, 'instance_account_manage');
+UPDATE auth_permission set name='菜单 实例账号管理',codename='menu_instance_account' where codename='menu_instance_user';
+-- 增加实例数据库权限
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 数据库管理', @content_type_id, 'menu_database');
+-- 增加资源组粒度的查询权限
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('可查询所在资源组内的所有实例', @content_type_id, 'query_resource_group_instance');
+-- 增加工具插件的权限
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 工具插件', @content_type_id, 'menu_menu_tools');
 
 -- 添加钉钉user id
 alter table sql_users
-  add ding_user_id varchar(50) default null comment '钉钉user_id';
+  add ding_user_id varchar(64) default null comment '钉钉user_id';
 
--- 添加同步任务（需要先配置钉钉个人通知后添加）
-insert into django_q_schedule(func,schedule_type,repeats,task,name) values
-  ('sql.tasks.ding.sync_ding_user_id','D',-2,'31144b2144724d7b81fe663e0211094b','同步钉钉用户ID');
-
--- 增加实例账号管理权限，变更菜单权限信息
-set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
-INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 管理实例账号', @content_type_id, 'instance_account_manage');
-UPDATE auth_permission set name='菜单 实例账号管理',codename='menu_instance_account' where codename='menu_instance_user';
 
 -- 增加实例账号表
 CREATE TABLE `instance_account` (
@@ -32,11 +33,6 @@ CREATE TABLE `instance_account` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- 增加实例数据库权限
-set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
-INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 数据库管理', @content_type_id, 'menu_database');
-
-
 -- 增加实例数据库表
 CREATE TABLE `instance_database` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -51,6 +47,3 @@ CREATE TABLE `instance_database` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- 增加资源组粒度的查询权限
-set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
-INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('可查询所在资源组内的所有实例', @content_type_id, 'query_resource_group_instance');

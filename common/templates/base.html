@@ -177,7 +177,7 @@
                     {% endif %}
                     {% if perms.sql.menu_tools %}
                         <li>
-                            <a href="#"><i class="fa fa-plug fa-fw"></i> 小工具<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
@@ -303,6 +303,8 @@
             t.css('overflow', 'visible');
         }
     }).on('hidden.bs.dropdown', function () {
+        $(this).css({'padding-bottom': '', 'overflow': ''});
+    }).on('page-change.bs.table', function () {
         $(this).css({'padding-bottom': '', 'overflow': ''});
     });
 </script>

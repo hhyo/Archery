@@ -371,6 +371,7 @@
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
+                        <h6 style="color:red">注：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -473,7 +474,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="ding" key="ding" value="{{ config.ding }}"
-                                                   type="checkbox"> 是否开启钉钉通知
+                                                   type="checkbox"> 是否开启钉钉Webhook通知
                                         </label>
                                     </div>
                                 </div>
@@ -492,51 +493,55 @@
                                 </div>
                             </div>
                             <div id="div-ding-config" style="display: none">
-                                <i class="ace-icon fa fa-hand-o-right"></i>
-                                创建钉钉Archery微应用参考：<a
-                                    href="https://g.alicdn.com/dingding/opendoc/docs/_isvguide/tab3.html">钉钉企业接入开发文档</a>
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建钉钉Archery微应用参考：<a target="_blank"
+                                                        href="https://ding-doc.dingtalk.com/doc#/bgb96b/aw3h75  ">钉钉企业接入开发文档</a>
+                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户
+                                </button>
+                                </div>
                                 <div class="form-group">
                                     <label for="ding_agent_id"
-                                           class="col-sm-4 control-label">AgentID</label>
+                                           class="col-sm-4 control-label">AgentId</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
                                                id="ding_agent_id"
                                                key="ding_agent_id"
                                                value="{{ config.ding_agent_id }}"
-                                               placeholder="微应用Archer的ID">
+                                               placeholder="微应用Archery的AgentId">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="ding_corp_id"
-                                           class="col-sm-4 control-label">CorpId</label>
+                                    <label for="ding_app_key"
+                                           class="col-sm-4 control-label">AppKey</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
-                                               id="ding_corp_id"
-                                               key="ding_corp_id"
-                                               value="{{ config.ding_corp_id }}"
-                                               placeholder="企业在钉钉内的唯一标识">
+                                               id="ding_app_key"
+                                               key="ding_app_key"
+                                               value="{{ config.ding_app_key }}"
+                                               placeholder="微应用Archery的AppKey">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="ding_corp_secret"
-                                           class="col-sm-4 control-label">CorpSecret</label>
+                                    <label for="ding_app_secret"
+                                           class="col-sm-4 control-label">AppSecret</label>
                                     <div class="col-sm-5">
                                         <input type="password" class="form-control"
-                                               id="ding_corp_secret"
-                                               key="ding_corp_secret"
-                                               value="{{ config.ding_corp_secret }}"
-                                               placeholder="企业的访问密钥">
+                                               id="ding_app_secret"
+                                               key="ding_app_secret"
+                                               value="{{ config.ding_app_secret }}"
+                                               placeholder="微应用Archery的AppSecret">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="ding_archer_username"
+                                    <label for="ding_archery_username"
                                            class="col-sm-4 control-label">Archery2Ding</label>
                                     <div class="col-sm-5">
                                         <input type="text" class="form-control"
-                                               id="ding_archer_username"
-                                               key="ding_archer_username"
-                                               value="{{ config.ding_archer_username }}"
-                                               placeholder="Archer.username对应钉钉里的字段">
+                                               id="ding_archery_username"
+                                               key="ding_archery_username"
+                                               value="{{ config.ding_archery_username }}"
+                                               placeholder="Archery.username对应钉钉里的字段">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -743,10 +748,10 @@
             // 当开启钉钉通知到个人时，企业id和secret等必须填写
             if ($("#ding_to_person").val() == 'true') {
                 var v1 = $("#ding_agent_id").val();
-                var v2 = $("#ding_corp_id").val();
-                var v3 = $("#ding_corp_secret").val();
-                var v4 = $("#ding_root_dept_id").val();
-                var v5 = $("#ding_archer_username").val();
+                var v2 = $("#ding_app_key").val();
+                var v3 = $("#ding_app_secret").val();
+                var v4 = $("#ding_dept_ids").val();
+                var v5 = $("#ding_archery_username").val();
                 if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
                     alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
                     return;
@@ -901,7 +906,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('inception和备份库测试连接成功，请点击保存生效！')
+                        alert('Inception和备份库测试连接成功，请点击保存生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -934,7 +939,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('inception和备份库测试连接成功，请点击保存生效！')
+                        alert('goInception和备份库测试连接成功，请点击保存生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -968,6 +973,43 @@
                 success: function (data) {
                     if (data.status === 0) {
                         alert('测试邮件已成功发送给当前用户，注意查收，请点击保存生效！')
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        // 同步钉钉用户信息
+        $("#sync_ding_user").click(function () {
+            // 先检查配置信息
+            var v1 = $("#ding_agent_id").val();
+            var v2 = $("#ding_app_key").val();
+            var v3 = $("#ding_app_secret").val();
+            var v4 = $("#ding_dept_ids").val();
+            var v5 = $("#ding_archery_username").val();
+            if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
+                alert("请先保存相关配置信息！");
+                return;
+            }
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
+            $.ajax({
+                type: "post",
+                url: "/4admin/sync_ding_user/",
+                dataType: "json",
+                data: {},
+                complete: function () {
+                    $("#sync_ding_user").removeClass('disabled');
+                    $("#sync_ding_user").prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        alert('已添加定时同步任务并且触发同步，点击确认查看任务状态');
+                        window.open('/admin/django_q/schedule/?q=sync_ding_user_id')
                     } else {
                         alert(data.msg);
                     }

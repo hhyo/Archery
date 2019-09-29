@@ -9,7 +9,7 @@ import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
     resource_group, binlog, data_dictionary
-from sql.utils import tasks
+from sql.utils import tasks, ding_api
 
 urlpatterns = [
     path('', views.index),
@@ -125,10 +125,13 @@ urlpatterns = [
     path('slowquery/optimize_sqladvisor/', sql.sql_optimize.optimize_sqladvisor),
     path('slowquery/optimize_sqltuning/', sql.sql_optimize.optimize_sqltuning),
     path('slowquery/optimize_soar/', sql.sql_optimize.optimize_soar),
+    path('slowquery/report/', slowlog.report),
 
     path('db_diagnostic/process/', db_diagnostic.process),
     path('db_diagnostic/create_kill_session/', db_diagnostic.create_kill_session),
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
+
+    path('4admin/sync_ding_user/', ding_api.sync_ding_user)
 ]
