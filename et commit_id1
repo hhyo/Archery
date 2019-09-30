@@ -1,0 +1,1325 @@
+[33mb582286a0d0061cd72819593489e6df1b45e91b5[m[33m ([m[1;36mHEAD -> [m[1;32marchery-charts[m[33m, [m[1;31morigin/archery-charts[m[33m)[m 优化redis,mysql chart,去掉mongo chart
+[33m54454c29308ee512be4f8a6f29459d579ccfeebc[m 优化redis,mysql chart,去掉mongo chart
+[33ma38b92f49c371c388e25c0df4a9aecb6212c4faa[m 优化redis,mysql chart,去掉mongo chart
+[33me75949b8e8e9370632df173ca96c343d75bbab1e[m 优化redis,mysql chart,去掉mongo chart
+[33mbf09924decf3534179493dcee2c0a672c374bb6d[m 优化redis,mysql chart,去掉mongo chart
+[33me8b2ccfa95f3da34ad85afae1b0dfd29601dc59b[m Merge branch 'master' of https://github.com/hhyo/Archery into archery-charts
+[33m9f3d7b300cfe61b35e2072ccfb95acb7ca1cf160[m 优化redis,mysql chart,去掉mongo chart
+[33m0e4785d3589a23385d8350b82c35a66eb6e8347e[m 优化redis,mysql chart,去掉mongo chart
+[33m372166978ce11a1772b415d6047aa877bb315735[m 优化redis,mysql chart,去掉mongo chart
+[33m009120020491df40547e700fdd7de4a0bf8705a6[m[33m ([m[1;31mupstream/master[m[33m)[m 修改变更语句 #463
+[33m4781f6249a7b6b81ac6a6074a0f3fed8f716e37d[m add django-mirage-field
+[33m39eaa7b78d6e2259e49ba6bba28538628da46e3c[m Update README.md
+[33mb9cc89f322905070c5ad8c40a5b202e3d82065ca[m 优化redis,mysql chart,去掉mongo chart
+[33m6dbc155fdba114d775949a01e3a80d3bc13442bb[m 优化redis,mysql chart,去掉mongo chart
+[33m8bffaee9748279673053be1eaf30c47c78477f70[m Merge branch 'master' of https://github.com/hhyo/Archery into archeryk8s
+[33m0fee9686a45aff321013c64eb26ce70ba4ad1cd1[m[33m ([m[1;33mtag: v1.7.0[m[33m)[m 修改配置项名称
+[33m77186e006c343152c4e42569732859d5aef0e060[m 整合版本变更语句
+[33m51beb94ec3a62712ff2724b925b0f7acccbe54a2[m 增加配置校验
+[33m8ba59b0471894bededb2dd09797072d7387428e8[m 修改钉钉个人通知，支持手动触发同步
+[33m25163bd42b676c2dd17b3a9fd03d98c0c8c9eee9[m 执行工单时判断实例read_only状态 fix #409
+[33m4e6733b77cef55bfea59880b7b02c33467abe2ca[m 补充工具插件权限
+[33m813cf5a832340142197cf9aeda1d3bc2dff4312d[m update test case
+[33mcd04c8317d513cd697892fc2778307784e4b3a4b[m 增加请求压缩 #460
+[33m74a71e6fec7ae573becf5943c693df0a300cc3fc[m 解决表格分页大小调整时选项错乱的问题
+[33mf753f57f1f73a63e28c3d3a9e1051c627d185033[m 仅开启query_check时禁用union语法
+[33m16837064b20359a8b54002363cc5d8af797247aa[m 慢查询详情展示慢SQL历史趋势
+[33mf4631e3e9d2325806943b1a743811ece93333dc2[m 管理后台增加实例数据库列表展示
+[33m7d8b01bfd6a4d863ccb49a8026d1efbea933f616[m 二级菜单页面增加面包屑，方便跳转
+[33m30092a4a713e1c39e532ec11d4207649aef1c11d[m 慢日志增加模糊查询
+[33m063a5dc9ef6f9eba122a37a7eab5de904b8c7bde[m 添加archery helm
+[33m8083d3fd612d9c1489e26b4422544912ead50789[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33m66b39c0f32a2e7697882a7ab3c326c277401b6e8[m 查询null值判断调整；慢日志支持前端导出，最多展示1000条
+[33m1a4a2c22ff92a7a5169e6b56edfe3537488ce6bf[m goInception相关信息调整
+[33m61f11c803c205a6dc49166c2267ca24cfca82d4b[m MySQL审核默认使用goInception，系统配置信息使用django-mirage-field加密
+[33mdf8bb525bb37862c77cfc8e15d744b464234aba8[m 增加资源组粒度的查询权限 fix #398
+[33m1ead6d4d841b51c7f32e6963592cc0f4c1399b8f[m 回滚菜单栏的更改，空白问题仍存在
+[33m8b476e6e55f772d0af866ba90157045b5d911129[m 查询权限申请限制行数支持手动输入 fix #404
+[33m9042b9d722e1723dfe997f02377fbf8f260eb50f[m 在线查询结果为null时显示为 (null) 并且置灰显示 fix #401
+[33m34169c20bd55ec78aa2e34dd1b00aa0058fc82c1[m fix #454
+[33m067e5ebf93ae5692ea95e2e90a0c061e94e1cdc9[m 优化dashboard展示和导航栏样式问题
+[33m1a91332abd93886502c2e03d5d75f48c6ee030f4[m fix #439 和其他调整
+[33m460348d004da2a048ffe86719187e1a4ed75dac8[m Merge pull request #457 from hhyo/feature/manage-mysql-database
+[33m692dc6718f836e05df028af7365ed09bdf82ca02[m Merge pull request #452 from hhyo/feature/manage-mysql-user
+[33mb7fb1ad431d796554be9c707ccb7ef3d962e7a2d[m[33m ([m[1;31mupstream/feature/manage-mysql-database[m[33m)[m 增加 MySQL 实例数据库管理模块
+[33md0c3c2a6f99e3ee3650efb889473bb9f05a9a5de[m[33m ([m[1;31mupstream/feature/manage-mysql-user[m[33m)[m 完善 MySQL 账号管理，支持新增、授权、改密和删除
+[33m170c2c002dfe5bc8f96b3cb545d1cde05487b622[m 忽略外部传入的SQL，后端自己构建执行语句
+[33m3c4c120ef48a09533ac036d0483b941cb06a07e9[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33m1ff6a771fcab6ce9f432150d4067cd5ff8c81a47[m Merge pull request #447 from yyukai/feature/ding2person
+[33m2f84f59bcfe41c01616cbc1d7e85afff6a1c45fa[m docker的setting文件添加钉钉redis配置
+[33m28a79b9705774d33339ae92c11c0260938901b8f[m docker的setting文件添加钉钉redis配置
+[33md010b2021238a5897c517da011f0dcfb886fb221[m 使用django_redis访问存放钉钉id的redis
+[33m18e3882aed072a1a170ef9e7d46bf358424de684[m 添加同步钉钉用户id的定时任务
+[33m6aec3c1109551c8abb24aa7f351660e1b248cc8e[m 用户表添加钉钉user_id字段
+[33m6e77b3ffd389e824bcfc0854eeea63840f27bc96[m 添加发送钉钉通知到个人
+[33me2b7520f9350e3af89728a89a5a32a560a5ffa8d[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33m6743274549d0927a0d52c0011d6698e757f67e9a[m update testcase
+[33m0299c04794970de5d5867ab025efc8437a5a70a7[m 真香修复
+[33meaf550d082ebe79c8b8725700c984bba19f5284a[m Merge pull request #422 from hhyo/feature/upgrade-pyecharts
+[33m9142b09c24bd2b407e32134ae23965e8a8ad5b89[m upgrade pyecharts==1.5.0
+[33m80cb4c111ab967f4f99b6ed4a11f83f95b6122ae[m 端口映射、Redis密码
+[33m8b9e146d379c32fd9e2d10a01f46bceac484538e[m Merge pull request #438 from hhyo/bugfix/failed_login_count-out-range
+[33m9127e44d970d951302d151b71cc622638eefecd0[m[33m ([m[1;31mupstream/bugfix/failed_login_count-out-range[m[33m)[m bugfix: set User.failed_login_coun range to 0-127
+[33md3a0016766db6cf6e59baecf81428d1c9d4627f9[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33mdb0c63e047085a7fedcfd8c86fb98e3386f0ba8c[m Merge pull request #430 from hhyo/feature/update-rds
+[33maa607ded1a1bc5bfb930c4c5c3ec12e37dcda75e[m RDS依赖更新以及utc时间转换方法调整
+[33mc4306b5896cfadc92896da94ccf28165734eb19f[m Merge pull request #429 from hhyo/feature/user-defined-docs
+[33md1a4d9ba222cf4af025ae6e6511188af22a3ec01[m 允许自行替换docs.md文件，展示相关文档信息
+[33mac87d8e85edf165f24838c700df52aa37f9a48a4[m 处理json序列化方法，仅在线查询完整展示时间 #414 #418
+[33m974e62a2d6b88b1724ec6b8df8bc00e4efd5f144[m Merge pull request #428 from hhyo/bugfix/table-dropdown
+[33mb2ad58c11c0f2bbcc66b0489cd8440037e97f149[m 解决下拉筛选项被表格遮挡的问题 fix #413
+[33mf0bce0a17b575d85c5deebd403bdbcabc3772747[m Merge pull request #425 from hhyo/LeoQuote-patch-1
+[33me8bdf88824052accf11716c9fca367ccb7c28c9e[m Redis连接增加密码
+[33m64dca652888ccbfe8c220541a616750bd4b336fd[m 将除了web端外的所有app从port改为expose,不再向外暴露对应端口, 降低安全风险
+[33mf86d412a42b2bf89b5a10c2d64d4c94fe325027c[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33mc0b334a2b20b63fb235020d0551da41179e02888[m 删除Themis相关菜单
+[33mdf19dcfe6f3d20cb5e3f91b3b0f8edec34701bad[m update version v1.7.0
+[33mc9854df5f46e4a614f7b1ba92465d2b191754733[m Merge pull request #419 from hhyo/feature/remove-themis-app
+[33m070c9893e14df4c695bcbc54ecec9bf6e2d9ea37[m Merge pull request #421 from hhyo/feature/remove-docs
+[33ma478efa2eab2bf03568e4b0af30d8a4bc6fd24e6[m remove docs
+[33mc887a758c36d57c8d2570640fb1f0c99882eb261[m Merge pull request #420 from hhyo/bugfix/priv-check-error
+[33m468eea7f20c5a5646cb9de5889bae202477d5f64[m 修复脱敏异常时将权限校验标记为跳过的问题
+[33mcac9c91d7e1477ea184380cb4c042fdb3aa5f362[m 移除docker-compose的mongodb信息
+[33m5bd9ddc3a5dfc552b02206e195d413dc9b3f4c2a[m 移除Themis模块，提升版本为v1.7.0
+[33mb31573d78fc77cb6b13777d8b25d815ac33732a9[m Merge pull request #418 from hhyo/bugfix/date-format
+[33m3e50f653179da7102afc3863c73331cbd5d5ff4a[m 调整JSON序列化的时间格式，fix #414
+[33mee2c800c005c8fd61cc4ed46967192112ea2f49e[m 版本号和升级说明调整
+[33m0d956c2a24e4c00def3e207b789902dd73951233[m 调整release模版
+[33mcfec3fa765879c4b7e12e940aefa62570cd37fd3[m 调整release模版
+[33mcceaae6901076e69f34df4dcfa16c4a604bffb79[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33m3eb01a7bd19eb61bde92359e815b8b34c012f72a[m Merge pull request #408 from bekylin/feature/phoenix-support
+[33m3e0aa769c7c158b92708040026a27f10e79fd2f8[m 1. 增加对Phoenix的支持 2. 增加SQL上线功能 3. 根据建议fix代码
+[33mde2353474d4fffec6371c8883e1a96354a1e2bee[m[33m ([m[1;33mtag: v1.6.7[m[33m)[m update version v1.6.7
+[33md7c0919c982dc119cb692485d073d4a833bc1fc2[m 调整docker-compose配置
+[33m7f1f359784f01330cd7d8e0ce4544703aa93f7e3[m Merge pull request #396 from hhyo/feat/update-info-debug-api
+[33m2916634147045c5fcb9fd3447baf1e3f37d08ae6[m 区分debug信息和info信息，增django_q的相关信息
+[33m1e52e99307f25b7c42d01b9e5277d97eb41eb69b[m 修改获取python版本信息
+[33m5f9a7abec93dffec92e849d2bf31f74836c5e03f[m 修改debug api，完善部分系统信息
+[33m4504c03a2d8b2a61dfc31821c602881fcd92475f[m 依赖顺序调整，更新mybatis_mapper2sql==0.1.9
+[33md7cf5e07834538a4329d5c4baac704b50468baa0[m 顶栏增加github地址
+[33m1b1b1e56801120e9af2f9dbe770727825b0eca26[m 调整部分日志等级为警告，因为相关错误都会在前台展示
+[33mb468ef3f92f1136e2940cef3713e2a1fb2d1ef0c[m 脱敏校验开启时，禁用联合查询 fix#395
+[33me4cb68bc5c1b4e6cdb75d3b3d73e2055cbe3fb96[m 调整登录判断中间件，忽略/api/info接口
+[33m0779f9440e146eccec5279a88ff9122a798af05d[m 增加单列函数的查询脱敏，类from_unixtime等 #395
+[33me99ce8513b977c53a8bd9c31fbfd972957c94635[m Merge pull request #393 from hhyo/add-draft-robot
+[33macc1bd4dcc15437bbbc7cf1f63ed4d7d86ce8450[m Create release-drafter.yml
+[33m1e96c947c1c33e971be1f8269b25935e29a597e2[m Merge pull request #385 from hhyo/feat/add-info-debug-api
+[33m3c2525e71b420856b2e52dd8e3ca85eb09d8711d[m[33m ([m[1;31mupstream/feat/add-info-debug-api[m[33m)[m delete unused Client
+[33mee38158c71116eb3c334c7ec3d42cd3d92a0a8ae[m add __init__.py & apps.py
+[33mace65aec467c58fa11b9135b40c98d2c49900c27[m bump version to 1.6.7
+[33m48a177542b3f33a4eb1dd3cb17403e812b9552f2[m feat: add global context archery_version.
+[33mdc724c8bbc7d9e1b15f31cf48665eab81b850e2e[m feat: add django_q version
+[33m5f5af1b13a169bd31a58976a62734817c1cd19b8[m feat: first draft of info api 😂
+[33m5072126067fa5914a96bb46ea86f5b11988698db[m 注册和表结构显示逻辑优化
+[33ma22853a45c19e1392d4f9c5dc0bda3ddf4896368[m  底部位置调整
+[33me0b99bef41a871ac9bf925047a47d763fb159752[m update django-q==1.0.2
+[33mdfc10527957ab6a9c1b0ada16d9c9cd782d1da93[m Merge pull request #384 from yzypals/forfixoracle
+[33m929bb0ed874a968e70bceb9be94a233c68e2e459[m 修复oracle 行数限制功能bug
+[33me575e8e60d51aeecdbf10afe4e7851a7eaf6f44c[m 调整binlog列表测试用例，注释断言
+[33mcd7f7e2d8cb6fc355320fd6a57c629f8683c35bf[m 剥离实例用户为单独的管理菜单，便于后续完善用户管理功能 提示版本号为v1.6.7，增加全局footer显示版本信息
+[33m93fd50b221dcd674a42d0023a1cf0886c09ef047[m binlog列表获取异常时增加抛错信息
+[33m5344f7038933fbc643765ee7896e252c1009869e[m 部分错误和展示细节调整
+[33m465463c5555c62fd5f9b94814fceafe49c3bf554[m 注册用户按钮按照配置控制是否显示
+[33m37315e96ca9161e920c4c19cd2eecf0c0981e896[m Merge remote-tracking branch 'refs/remotes/upstream/master' into local
+[33m7f900a92e953b49dbc6b539a55e4819f46f41460[m engine增加实例同步延迟属性
+[33mb4355bbfefd75e350160b592a091d808934f64fc[m 调整查询时获取同步延迟的时间
+[33m8a6953d09f2b2478777793ecffb33ad947ec3508[m 数据字典菜单移动到SQL查询菜单下
+[33m6b946bfef7174ce6835728b06cb62b785108441a[m 调整MySQL查看表结构的展示内容
+[33mfe1023a4f5a4d48f3fc0c6ee5b419ed77bd09d3f[m Merge pull request #334 from yzypals/forpr
+[33m648cca98bdecc9d334e87466260528403cb4c71c[m 完善pgsql 单元测试
+[33m819c9f003548446e5da3a87db27e8b8ae9b47642[m engine增加是否支持备份属性
+[33m74c3f223d73a8728bd06b63506a17b14cb379d62[m redis上线工单支持执行多个命令
+[33m78b4172c433c1ebe84473b7494adc1d4338cb788[m 整合修改意见
+[33m8b1bfb961b20cdbbeda31672453d5148f271ab59[m 添加pgsql上线测试用例
+[33ma20c61423682847d9938d89eac221c3b3f4bc4cd[m   添加 pgsql 上线功能     优化pgsql创建连接逻辑     暂时解决pgsql无法查看表结构问题     暂时解决query 参数传递问题
+[33m7929526db50802b7ec76bb6f8417cbbe7df1ca18[m 调整一键查询按钮禁用策略，提升实例切换体验
+[33m56e173b84deeebba1b20db209d172810f90dcf93[m 补充测试，还原依赖兼容问题
+[33maa4fc91d08ac10bd6806ca9d736ffd9fabab054a[m 解决 SQL 工单搜索报错的问题  fix #363
+[33mc8162d983785b1ed499160f393f3f90582d76041[m 解决show create table 语句查询结果不显示的问题  fix #355
+[33m447275ec4c4984af18579e1b92cf603a44fa1260[m 依赖调整 fix #356
+[33m5adca24c08120a10b64b34dff832bf540b09a91c[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33m27cab96e73d71bfd273a4bc48e8daa68ddf74a50[m 一键查询的limit值也获取前端指定的值
+[33m0ac5c7637d68bc634324afbbcc654dab5f3c4ea9[m[33m ([m[1;33mtag: v1.6.6[m[33m)[m 一键查询时也主动禁用按钮
+[33ma345f519709e91e700ef153296639488da043f6b[m 解决MySQL查询limit改写时，SQL语句中更小的limit值被覆盖的问题
+[33m6077f53c8f5193150595a672e328218061af75c7[m 解决一键查询后，编辑器未开启自动补全的问题
+[33mdd3bf16b1f0ae200cc88750a53dc24e48a8b4f74[m Merge pull request #352 from hhyo/feature/query-favorites
+[33m771ac8b583ece43d5433bdd9e48d37934e3cd420[m 在线查询新增查询语句收藏以及快捷查询功能  fix #333
+[33me858f36f83d6836f7b70cdfbe183af1b31f33f54[m 完善MySQL查询的limit改写功能 fix #143
+[33m28ebb6d3ef83bd22ea258d1ae01430d43f45e11b[m 解决mysql8.0查看锁信息报错的问题 fix #314
+[33mce085841e8b86e636858052c74dde0d263bf76b9[m Ace初始化时设置默认的Theme和Mode
+[33m5ebc696ac8b0a85394220c1fd5becb717fdb5468[m 调整mongodb的查询结果处理方式，支持中文展示
+[33mbbb033628b703fc73112cf628628162ac2db2f2c[m 优化不同类型实例的编辑器体验
+[33m7c2e692b29144f9c3218921c42b2b133fb3ec678[m mongodb实例允许authenticate为None，支持端口指定
+[33m6524fe1785b217bea7a5591d8d0f9254041c0e16[m Merge branch 'master' of https://github.com/hhyo/Archery into local
+[33mbedf30d87d319581f6df8a57d5270bc3523c8241[m 优化慢日志信息展示
+[33md7cc2d82c40b920de73b05c128121747ee6a4e9b[m 修复工单执行过程中Inception崩溃或者其他异常场景，工单状态仍显示正常结束的问题
+[33m4a2c0a612e70ff56a675b667cb2d239fd7ac648f[m Merge pull request #345 from chuancyzhang/master
+[33mc35b1d62fafaba4274875e67e26b0e9e66607b1e[m 修改 OracleEngine 使其不需要 dba 权限。
+[33m2181534b52ecdb270731bee4272045ec1719293f[m 修改代码检测中部分代码风格问题
+[33m76e1aa510454990bb1db7c932f0a168d2b1b3f7a[m 修改代码检测中的Hardcoded password
+[33m71bd2b6112790c86af3f001e98497d51815acc87[m 移除未使用的引用
+[33m3fa935aabcb1f2cf7fb290a03df6160638218383[m 错误文案调整 #336
+[33m9878dfcfdc3e712214476d7e1934525f1f69ff3a[m mongo查询权限申请和错误工单展示调整
+[33m3e1f42662ddd499d0d665df8c12d55283824e3e4[m fix
+[33m7809b0ed7ba0617b589709f590353b2224114be7[m Merge pull request #335 from MagMongoing/master
+[33m87ffca86effdb29a76db94d8de6b84e25c047b3d[m Merge pull request #335 from MagMongoing/master
+[33m0c54f2318221b6cb49656bb3bf3ff5f59b4ad86b[m 添加ldap密码认证方式
+[33m9bb3af6c4b9980baf468cc9b9ab2f7f8749d758d[m add mongo optgroup
+[33m5b8d6d1744bea4bd41398f21628c915e60ce1606[m Merge pull request #332 from jackielulu17325/archery-jackie
+[33me7b2d9779e48ca1bc1b1a4bda2590b4e2d6fc0cf[m feat: 添加单元测试, 把通用性功能放在Base, 跳过一些单元测试检测
+[33m3d50e4e701dbe337f046585a1c96ab1f1f0ef085[m feat: 添加mongoEngine 的部分单元测试
+[33mcc75761084217e6dfa3c1bc7b02a620495181258[m feat: add mongo.py
+[33m3b28dc05828ea417bf1000ccaac39f1d7a804f77[m 优化会话管理模块的错误信息展示
+[33ma0873665b46cc337a42f1bffaf0599eba1be8c64[m 提升版本号为v1.6.6 MySQL实例connect_timeout设置为10s
+[33madae91a01f910f28e161c19ac38d385aa88039bb[m Merge pull request #329 from codacy-badger/codacy-badge
+[33mcc0c5c858b56b0d602c4bfb042568d1864742c27[m Add Codacy badge
+[33m621eb6c520e9306827161916d852e62d8782fa9c[m Merge pull request #325 from cclauss/patch-1
+[33m8dd536f1a412ba92df6204e1d20a0754d87fb808[m flake8 . --exclude=./.*,./themis
+[33mc9ed508ca1585d05983c7f188ce7b928b4feed8f[m Travis CI: Add tests to find undefined names
+[33m08a285b376fe161aa8d4cb4df14edf00f2d183dd[m[33m ([m[1;33mtag: v1.6.5[m[33m)[m goInception的mysql客户端调整为MySQLdb 降低mysqlclient版本，解决Inception审核信息乱码的问题 版本提升为v1.6.5
+[33m0e6163a931ac2042579efa16e1117b916154fa62[m fix #312
+[33m6dd166ea0fb9b3b4bd535c6aaf6cc26ae9e7bd75[m fix #307
+[33m2a5c06d9c60b3b3f2a720a0393ded3101f70c585[m[33m ([m[1;33mtag: v1.6.4[m[33m)[m Merge pull request #303 from hhyo/feature/mysql-slave-status
+[33mb8263266517ac70432837abc77b3c7b4a542fd37[m MySQL查询结果增加同步延迟状态展示
+[33m78a18637aef42541305e65015981f4e4aed474f1[m Merge pull request #302 from hhyo/max_execution_time
+[33m3cfddab42448364a682dd393099b9f30831de4cd[m 解决单元测试执行慢的问题 #294
+[33ma2601313f4a8597520c072238af06930b7dc58f6[m 解决在线查询超时后，查询会话没有主动关闭的问题
+[33madf2f3838e906721ba87639c10dd389dcdd38c29[m update requirements
+[33m5bd4ceaa149b95d986a4276796ccc8b6897b21ed[m 解决使用title属性后默认选中第一个值的问题
+[33m83b9a5997fd839ecbb7ecfc9330b0d55be32877e[m 部分前端筛选项细节优化，提升版本号为v1.6.4
+[33m6401b3b9e67f5262a46615176d36094d7b59297c[m fix #294
+[33ma4bc50377e76791fa4809b38025405f3101d47a8[m fix #295
+[33m3a056f23635b5f3c22ed22ea0f4e17600db5b6fa[m Merge pull request #293 from hhyo/bugfix/double-init
+[33m3ea1c067a1470e883beca4e7fb643c113b343060[m 更改用户初始化逻辑, 使初始化过程无状态, 可执行多次
+[33mf27451544b5a93f7f2c45627e1490f44d64b27c3[m[33m ([m[1;33mtag: v1.6.3[m[33m)[m 注册页面禁用回车按钮 #268
+[33mdafafc21444a43dd4581ab695801b065eb1ba59e[m 调整数据字典实例列表获取逻辑，补充测试用例和权限
+[33m1f56f69a61b1dcff74edecad002acd3f070e863e[m Merge pull request #266 from yyukai/master
+[33m1a2318943ee12f160ad237dcdcc831055e963690[m Merge pull request #288 from hhyo/feature/filter-sqlworkflow
+[33m4714d7ef600fab17816ec99bdca635460bafbccc[m SQL工单列表增加实例、资源组、发起时间筛选项
+[33mc245330852c30fb70ab65d285800270640289408[m sql_utils测试用例调整
+[33m5d39f9fcdd9aa38e297ebcb985597acdb90ce37e[m 优化MySQL上线SQL检测和提交的效率 #223
+[33m794c982bbb232f61081523a72cfc64aab75e569c[m 工单详情增加审核结果解析IndexError异常的处理 增加查询脱敏失败的日志记录
+[33me7b5f1bf6dcdb6ea835a004cbeb067f41538f385[m 修改获取用户关联实例的入参格式
+[33mc5612c6ad818c3e671df449cbd2c4f401e32a301[m 添加数据字典功能
+[33m7cb44134fe5f98c3a1808e9c07e39c6b51cde2c9[m 提升版本号为v1.6.3 优化获取用户实例列表的方法，提升查询效率 各前端页面的实例列表改为ajax异步获取，提升效率 fix#278
+[33md6100848e6b30dfeb0f6df59363caacf8691d4cd[m[33m ([m[1;33mtag: v1.6.2[m[33m)[m Merge pull request #273 from AceAttorney/feature/add-sp_helptext
+[33m877ec2e79e7484ae94df952d45cbc9afc0386615[m Merge pull request #274 from hhyo/feature/add-default-charset
+[33m6e1959fb8dc8197656cb806265a7bbf034a4d1e6[m 实例配置增加默认字符集
+[33m09390ee852d28d67653d2cac30d83b073dcb3eb8[m 利用dockerize控制启动顺序
+[33med0caf25300b05cdc36c04f7bddce5f42f2d55a7[m 调整查询权限校验细节，放行explain和show create语句 检测到语法错误时提前返回，不再去校验库表权限 修复测试用例中mock Exception的错误写法
+[33mafee887aef5714afd4ddb65ec8a56da4200d94cd[m Merge pull request #260 from yzypals/etime
+[33m0c51bf74b72bb424b46f2f2bd237b947cfb8e58c[m 使用daterangepicker替换datetimepicker，前端更简洁 定时执行也判断是否在执行时间范围内 修改部分变量定义，补充数据库变更脚本 补充测试用例
+[33m3670a89d426b1c6b02eecceb266a94ceebc59453[m  增加sql上线可执行时间选择，且审核人可修改这个时间
+[33m9a96d3b302a60644a3108136a2d5bab83b4a643b[m 参数模板已配置的参数可以点击进入编辑页面
+[33m49ce99063b5ad35514c59b971f1b200e81400033[m 添加sp_helptext单元测试。
+[33mfffd1a5ab0919ff0f4910ed539dc916595dcacec[m 简化字符串拼接写法。
+[33mc966b65c3c470146265c0510faca9847be8555a4[m 添加可执行命令白名单及放行sp_helptext命令。
+[33m4e9e11b5198f9f36bd0812c94d0298957a29bae9[m Merge pull request #272 from AceAttorney/bugfix-dbname变量
+[33m2d29a549c68c26ee83e0777acb58fa9705d32afc[m 修复bug
+[33mae3c4e7ba204cd3da091713c213c1390ef4cf155[m 修复bug，上次pr把变量花括号漏了
+[33ma4ce8ed37bd9afd60f1cad36f294b1a88f40f2c9[m Merge pull request #263 from AceAttorney/featrue/pyodbc-go-syntax
+[33m9865e6c888db2279f57bb6b76f11f45b0ab8096c[m 修改变量名。
+[33m74689a8929ac9829ddcef1c5032fd50d6db16da0[m 修改travis-ci构建配置。
+[33m5eb9cbb2c11716e46384119bdda9077420922471[m 添加 sqlserver execute_check单元测试。
+[33m901ed7fe5eb964a03b7495e58fdec5e9f6d3142d[m 使用正则匹配go，且忽略大小写。
+[33m9a5cc8006f5e3252e11b61f530779796340c228e[m 检查时添加rowid
+[33m5f1181f40be8a3fa98d21506242b2183f1373cda[m 修改pyodbc不识别GO语句,使用GO作为关键字切分sql再执行通过.
+[33m4be082ea8f26ef30e278fa691f10fb977a556412[m Merge pull request #267 from AceAttorney/bugfix/filter-mssqldb
+[33md052568b0bc82bf13363bdb32514d70ca4631622[m Merge branch 'master' into bugfix/filter-mssqldb
+[33m685cd5ba526dcdc6ff4c9eb0a548016b322f259b[m 减少warning警告。
+[33m28b5de4f1b31433f0c657d4e8c8234ace207822a[m 修改关键数据库过滤为sqlserver的。
+[33mc2c44c9586ac49034da12bfdcb717f26cbf7ee66[m django-admin的链接都调整为后台打开
+[33m976eee10f6f9013edd9498387b30a905df2aa23d[m Merge pull request #261 from flyingonthebed/patch-3
+[33m1ce867724a1031e664eacb0e23faf4e66de08685[m 修复Django后台查询个人权限，筛选用户时报500错误
+[33m82e8aca83dd2026170faf92f42c19a5e4b56645e[m Merge pull request #239 from yzypals/rgr
+[33m3ca364a82531b5bda584ed7e2dab41e98746807e[m 提升版本号，增加部分测试用例，修复auth_group_users的错误
+[33m750f0434377e0c2afa9c5e83a007754d787d6f4e[m 调整资源组关联拆分表的模型定义，新增数据迁移脚本 用户和实例添加页面新增资源组关联操作，便于维护
+[33m5682d116d65a027688fb2840850ffd5b3fefbf68[m 拆分资源组关联表为2张表，用外键做关联，使用户或实例删除时关联表会自动删除，便于管理 实例标签使用系统自己manytomany
+[33m5ff77f701e18b8e1e59637886c7451de8a596391[m 还原部分selectpicker默认选择项
+[33m192a3e68e8e5efa7fd890687a9018ccb062e8d8d[m 修复禁用语句检测结果重复的问题
+[33m4344c7611bb3c8f10ab7fdaed7e1e8da769a2794[m 调整view方法的顺序和菜单保持一致，使用marked.js转html替换设计规范页面，方便自行调整
+[33m9da79d3ad8b8aa1ae218c769f2d5da572d801e6b[m fix #252 使用title属性替换selectpicker的默认选择项
+[33m1a523b56f09057dc4b3ad42c723bcf0f5fe7dfa8[m Merge pull request #250 from yzypals/master
+[33md6d26989bf9eeb3f2f8e497824bef6ec2532ed1b[m xiufu oracle clog bug
+[33mfdefc0f84df9b32834cac959e0a3e7e03cd602e2[m[33m ([m[1;33mtag: v1.6.1[m[33m)[m compose先恢复，dockerize启动存在异常
+[33m62376558f694efce178c8ff9a3e90a4348480eca[m 优化docker-compose
+[33m5b724847fdfdf43aeae616d9fcf35bc2ddf2e632[m 增加消息模块测试用例
+[33m48d7ac765014dae8a235513cf32b1e5f78c7966e[m 标签不存在自动创建
+[33mb0906fde94a42b0a30bb9d8994be0f233cefcd02[m 增加静态资源版本控制
+[33mf3c17bcd7507590246234c2c44f273b3ebacaf89[m fix #243
+[33m0bb21c17001afc90639152fe5d44417c316d04f5[m fix #217
+[33m318a040acaffd39ed3aca0b85f2271d20dac2570[m Update notify.py (#240)
+[33m033cc92f4a25f8e66275bc64150be29bbd50a250[m 消息通知日志记录统一在发送时处理
+[33m21b1c2b82cff5d5d1369a6e3404d028fcf7a5564[m 统一消息接收人，去除消息类型
+[33me729804c503f9a35c1a41b642181d233e67b3384[m 修复实例列表搜索报错的问题 fix #237
+[33m32608aa5f6d7923bea2aea5f2489ce1ec85cb4f7[m Merge pull request #236 from hhyo/LeoQuote-patch-1
+[33mad9bd5898a4f665c43077488f466fe211b7a4132[m 暂时绕过mssql 的测试
+[33m7576428b8459acf77437c3e4e114e3c327862ed8[m 权限校验中, mssql 改为只简单校验db权限, 不做具体的语句解析
+[33m0053eabfe9b435155562c8fe7ad4b8125a54a5f8[m Merge pull request #235 from AceAttorney/bug-fix/mssql-odbc
+[33mdcca35adb8c24a308923d61eb69ebcf030988888[m 修改mssql连接串，解决实例不能连接问题。
+[33mc69abc44a6da6b63a4fd97f21b3d0392039ee6ff[m 认证代码细节调整
+[33m48e4b23f7130c262d18a115f94097777f1fe098a[m 修复sql导出字段的引号问题，fix #228
+[33ma4d26228791a5cecf34be7a8bddfbc461b3600ba[m 修复定时执行超时的问题，fix #231
+[33mafa983146028ba9dd183eb7c216348d036f0e7fc[m Merge pull request #230 from hhyo/bugfix/stable-qcluster
+[33m521d5d6a27ebb5ff6f06d71fd4652df92e09e719[m qcluster 启动方式改为supervisor启动, 增加稳定性
+[33me09dd4e884ff9d7a3030657614136a5fd1a16bcb[m Merge pull request #212 from hhyo/feature/mssql-execution
+[33m7a2ac9dfd4ac641b08c578658ea00bd01e1e1f8e[m 新增 ``reviewset`` 测试
+[33mcd0e933c77201238d9899d126ee7525ceb5e9150[m 修复单元测试
+[33m995eb3664534d1b82285ed7bd0a134f12a02abb9[m 新增mssql 执行
+[33m8875f44b1da53e0f97fbfb8f139a1341d04cc304[m Merge pull request #226 from hhyo/LeoQuote-patch-1
+[33me8739e75572b7069a65d8eb64f3a1f921838ab81[m settings 中增加 import ldap
+[33m547b6f10f599210509d16aa81825700553a6bf9e[m 修复 LDAP 启用后报错，找不到 LDAPSearch 方法 (#222)
+[33m3eebbfff2a1fea2f6bddacc61dc8733c529e5eb4[m 更新版本号 v1.6.1
+[33m98165ef63eb6386423d03c1768c84b348aa9d470[m Merge pull request #221 from hhyo/feature/inception_params_setting
+[33m84d9f63b67326bc5ecfeefbedb78a915fc4a671c[m 增加goinception参数模板初始化脚本
+[33m4a36e99fd3d2a8a7d9553925c634af00572a1216[m Merge pull request #220 from hhyo/feature/osc
+[33me0762714e9f7942de5b83c0ea41888c34c037e52[m 实例参数管理支持管理inception的参数
+[33m954e9a3ff2304c082b8c812df7c9d4797a3f325f[m 解决终止osc的二次确认无效的问题
+[33m43d1736ae905a78a7cc1b73bc75185c7c15f0880[m SQL工单详情增加日志列表，增加osc执行控制，包括进度查看、暂停、恢复、终止
+[33ma4c9ecce917954976ebc2dc6db168ffa97e63014[m 用例数据修改
+[33m1c0585ff227053a905e8cdb161116f4351255b82[m 依赖调整
+[33m31d7b56aa7514c7b25f18d31bdcb5812e4cca2b1[m 补充脱敏功能单测用例，修复brute_mask的bug
+[33m7b09bd2c1db8f0f9b07f136d70c9ea91742a4e6c[m 补充测试用例，修复一个隐藏bug #156
+[33m0feb822af3ef90423dab3756dfe390b3616780f2[m 完善engine测试
+[33mc8d6a99f665616bae8ce1508e72b481a679bb435[m 剔除无效引用
+[33m7c74757e48175b84bf5e266543a09a607d9700df[m 完善oracle engine测试
+[33m46928985e3285f124814824cb7d7e5cc46d0d282[m 高危和禁用语句检查只遍历一次，依然存在性能问题
+[33md8aeb1f77486049e25cd6edf1d85a2ada41d0541[m add oracle instantclient
+[33m2c808306c1d30e2744304a7466be80346f6361f9[m 增加数据初始化命令
+[33mb924d7c08b333107e3beb39b0c7f3ede4515cce2[m 文案表述修改
+[33m203de9d2cd141c74ca526720546be4c47db3b274[m 增加禁用和高危语句检测
+[33m46cb013256f5a15ffd4de6a4e4842d9885691b56[m[33m ([m[1;33mtag: v1.6.0[m[33m)[m 将报错语句后面的语句也追加到执行结果中
+[33mea16839bb58a69dad5516290a31bf633d2af1fef[m Merge pull request #215 from yzypals/myoracle
+[33m2fd8906fbe1abcc03663332f1d4727e1ec52ac29[m 增加 oracle engine 的部分单元测试
+[33mdbe44974be437407666960b432ef5d48f4be2f2d[m 修复oracle 未填写sid或service_name的情况下 提示连接成功的bug
+[33m06ee1cf404d5ce0ee9b03e56c11fbb58764cdc24[m Merge branch 'master' of github.com:hhyo/archery
+[33m73ef2328ffb424cf1be4d71b60725cc8a7bf040a[m 修复binlog2sql选择时间过滤后无法正常解析的问题 fix #209
+[33mc3a32a95048414c82660c856c6bd07fb4c98e0e8[m Merge pull request #213 from hhyo/LeoQuote-patch-1
+[33m238e468bc82f7cd0ce62329fbd8e5328c48eda78[m Dockerfile 中新增 ncurses-devel 安装
+[33m412daeefa5ec7c13ff9e4b73792bb4d406d3b266[m 仅对比结果的keys
+[33mfc3cbeb4296a2db83b31c3174d1e3d960e337326[m 增加工单语句执行时间统计，oracle执行事务调整为单语句
+[33mee0413961e497af1f0185d5ede15869267be87f7[m 修改enable_backup_switch的测试用例
+[33m379c304c6ce599b9b4b8ca632d98ca451d69ef81[m 强制开启备份时隐藏前端选项 #198
+[33mb603b45312e070114d5b371ecdafd0f3f222dcb7[m 修改工单提交页面关于是否备份的相关文案 (#205)
+[33m784b6459478a9adad3dab657ab6a005964975be9[m Merge pull request #203 from yzypals/myoracle
+[33m84693e79fe040192ff96f66e016674e36e3fe6e6[m 修复oracle查询语句有注释报错 且让查询历史中显示注释
+[33m58241ee3158461e051678980569b96d1c99fc4a0[m 暂时移除engine中的工单执行进度信息
+[33m42a721ebecbd5fc1557c8cc9329d3a1c4e7b160e[m 使用sqlparse切分语句，支持中文字符
+[33mea4c72181c3d1dbcfc91c3b22fcfbe81f8ccdeab[m 修复oracle查询未填写schema时报错的问题 (#201)
+[33mbedb3bd89de5d06616d285101e10116eff67dbaa[m 移除engine中涉及工单状态和工单结果的信息 #195 (#202)
+[33me4d348705ec8784a83dd311c0b5083824449545f[m Merge pull request #200 from hhyo/feature/force-backup
+[33m1a88d691fca57fe3b4b812396f7e52ecc27c950d[m 在配置页增加配置, 修改提交页面的一个小坑
+[33mc5686eea7b7d508fc11c22d19619079b328e5fbd[m 新增配置项, enable_backup_switch, 允许工单提交人选择不备份
+[33m5ad4663d9549cf80ce5b5e494412ab73f0e3ded0[m Merge pull request #199 from hhyo/feature/user-can-query-all
+[33md83ef46fc4eb6c58082203e26d0584b7741457cc[m 修正拼写错误, 修正单元测试
+[33md09d5763886a5aa7d7fb8450c2c2bbcff274198c[m 新增权限 query_all_instances
+[33m692f285f2db013eae5f01632dd1f0514638775b5[m 补全上线语句结尾的分号
+[33m7145551bf597072c48e989491bd5d34117db9afd[m 修复获取资源组关联实例列表的逻辑错误
+[33m024d8b7fa586dc3aff80bc3dbeca41813b46b5da[m Merge pull request #196 from yzypals/myoracle
+[33m1999782be14c69c69ab38032b4fc576a696413a8[m 修复oracle查询参数报错 ， 添加系统表过滤
+[33m947ad157f065ee7f0f76e7e92e60caa92d06ab64[m 修复无法添加标签代码的问题
+[33m1dac12f0aa585c1f08b42140862ccdfc6fb22367[m Merge pull request #193 from yzypals/myoracle
+[33m7e20a7b02a26021cbc772f3e65b141e7d601ff29[m 实例管理界面oracle显示错误
+[33m264f0f88555e554844eef2479dd8bff9742ab962[m 下拉样式修改
+[33m88a7e766e0b04900d75c22686b12b701080b0bb1[m Merge pull request #189 from hhyo/add-mo-file
+[33m5184195ce289f596e8892ed108fe8f08562f8c42[m mo翻译文件相关修改
+[33me7e989ce9c6e0fc0c2247c018fc098c9246a866e[m 库权限校验增加排序，解决case偶尔失败的问题
+[33m6a130a4219c9bced5877ef5b80b59d69c930ae61[m 修改权限验证用例
+[33mebe3734886f91f7b49673081c5b98c920ea23993[m 获取库表名去除`号
+[33md057ba194a57c4160b6166fff8b44b7d0ee225f0[m 调整版本号v1.6.0
+[33m27551199a266771918bdeed04abc7b46376e27c4[m Merge pull request #175 from hhyo/oracle
+[33m35b53c794370a7ba6806d85b77f9a2fd27f767e1[m[33m ([m[1;31morigin/oracle[m[33m)[m query_check用例修改
+[33m99dddaceedddc47c5e455f2bd24561dfa566a2c4[m 细节调整
+[33ma08b97fe0e4f50ec953a552d7b00e9dce80812cc[m 回滚一些修改， oracle引擎内新建一个伪 get_all_databases
+[33md1bc2538fa24310f5531550beebceb51f96ef48f[m 新增一个oracle engine的测试， 修复修改init 方法造成 InceptionEngine初始化失败的问题
+[33m71a0ce01f8d35d1f45cff54d593a93e94d5554c2[m __init__.py 处理oracle类型
+[33m6863038847568b9a2ba868992e13d56aa69d9ec7[m 1. oracle 在线查询 2. oracle 权限申请 3. 数据库变更执行 v1.5.0_v1.5.1.sql
+[33m2324a47236fae507bc4a6037f49128d26e8762ea[m 利用sqlparse解析做在线查询库权限校验
+[33m312318c5afc16abc63482603b6d08a5edb7476e2[m 增加通过moz_sql_parser解析sql的方法
+[33m52459dd405e1db03ed139170f6482480ef581c27[m 用例调整
+[33m04be84653353fafe5c4b3b7b5a3ec87ce1036c23[m * SQL上线新增配置项manual，控制是否开启手工执行确认的功能 * 确认手工执行结束的工单，详情展示的信息为提交信息 #178 #180
+[33m592718efea54c5424620f2a569e55bdd71004bc9[m 修改详情页json部分逻辑
+[33m2a2b512c768ee8a0329bd5fcfb24cd48fe0316eb[m 调整单元测试, 使用英文报错信息规避json dump问题
+[33m4a39b4a9401eb4438687b06e8424a1b20f5c1daf[m 新增单元测试
+[33m2722393d7478b8ab03a53ee6fd4cd91410a72785[m 修改手工工单逻辑, 调整详情页兼容无执行结果
+[33m342b5965090927ce1547aacabfd852390153d94c[m 添加手动执行功能 (#178)
+[33md1dcf6c826bb094c6673a52ea9a920e2c4041262[m Merge pull request #162 from hhyo/feature/instance_tag
+[33m77e4b5281c541909a78f4f40d1d3b0c5c3019a26[m Merge pull request #171 from flyingonthebed/patch-2
+[33mef2aa25e78a42f4e3985bf5f4f28515186937301[m 语法修复
+[33mdc3622a9c68b8e50533d71cfef570b051540c495[m Merge pull request #170 from flyingonthebed/patch-1
+[33me3f565bc5803e7fa9f2278879ce140ee1131d3f5[m 修复LDAP新用户无法登陆的问题
+[33m8e819b60dc3dda2185a96c8daf7f29c8c7a1cedb[m fix #165 数据库名显示长度调整
+[33m5932ee14c5f762f5363fbf38f3a3528c92f4c85f[m 调整SQL上线和查询实例列表通过标签获取
+[33m501e592bd50b916fb0446a70e95bca0db705ac3f[m 增加唯一约束，禁止修改标签代码
+[33m26ab3d6d3eeaeded7d7986ebbbedfff6fae0165c[m 增加实例标签功能
+[33ma86cc24cc4293db83ab9d7a02e603a508c5df2d2[m 修改下拉菜单样式
+[33m5f6f6d7bba792814634e5e85e6d9f97ca760a6d2[m 样式修改
+[33mfa8bc5822bde00e055550aece825121f28946803[m get_connection时传入db_name #164
+[33me583c287711bfd4eac10c8a79b5b82285f468278[m Merge pull request #167 from hhyo/bugfix/use-issue-mssql
+[33m140f19bd88aff53048a353b87b81fb1779ba855d[m 修改mssql对应的use语句， 规避特殊符号问题。 #164
+[33m72c279dba46cf01735c97e6314d26b13ba2faab0[m Merge pull request #166 from hhyo/bugfix/fix-mysql-dbname-with-symbols
+[33md45704c13f6c520139ea8d4de67bc2bd19bb6577[m 新增inception引擎的修改，规避db名中的特殊符号问题。
+[33m6a1b5f328d79a798ef27bbc013c7067b62638a79[m 在mysql引擎中，use {db_name} 的语句中增加`` 防止特殊符号问题 fix #164
+[33m6dbeddcba5735f6d9501a4dc201763c175127faa[m Merge pull request #161 from hhyo/bugfix/utf8mb4
+[33mf19be0b64fd30f870df6151ef7c8ff2f2d88a172[m MySQL连接字符集修改为utf8mb4
+[33mef8e91a124e34da909f79189b8d469e0b0e045cf[m Merge pull request #157 from yyukai/master
+[33m4a18b93d7d0e1d4617e45cbc63bb9651b302a9fe[m add v1.5.3_v1.5.4.sql
+[33m9bd023b80099d08584586b588e3d54c6f9db1163[m rename
+[33m0965c0171dcb89a53b39f73fdb468d9bed2c7161[m 1.5.3_comment.sql (#155)
+[33m8d68a094c17c644bc500069ac6a22034e5f1619b[m 添加通知插件 toastr.js
+[33m862a51764bf7cd8b62d88e89f01e5acf55fbf1cf[m 1.sql查询 新增redis帮助文档；完全禁止keys命令 2.其他一些小东西修改
+[33m0d31175506adf2e18732e90ac9ec4154ec0a5cf3[m[33m ([m[1;33mtag: v1.5.3[m[33m)[m 调整登录后跳转的测试用例
+[33mb2b54f94d27f324755d19fb1b944c1cec1d18d0b[m v1.5.3
+[33mafe4d047b28f4fbfe5fd7cbf0ceee4ef9c983002[m 支持自主配置系统index路径
+[33m9b5bc2fedd9cc7397d40a1ad27b62bfe9eebd55f[m fix #151
+[33meea33546a6f5e57b63b0c4e44f3f3463a003b0dd[m 移除镜像地址
+[33mf5f415e8caca9665efa89c1a565c7a68cf0bee4b[m 格式调整
+[33md47923e728c55f07e058025549a218aa2dc9b797[m 增加goInception的Docker信息
+[33m8e0d53486c22e79146c41fd9cf0a47e058806900[m 修改通知信息
+[33m65216a074f795e496039bb067a57e733d65df05d[m Merge pull request #139 from flyingonthebed/patch-4
+[33mf17dbbeb8b2ed77d971b5ad69a730ab2fbe465e2[m Merge pull request #140 from flyingonthebed/patch-5
+[33mbdf6faf7ff8db681cd5c2afa0540be59fe91b9c5[m 增加Redis查询帮助说明
+[33m61679036ae48e863f3da85b35acd4292f602a366[m 修改 gunicorn 为后台启动
+[33m25d9a0131b954e1eca4c617f8b94bc33cb28e816[m 修改 debug.sh 文件为后台启动
+[33ma4e2bce9c7dbed68cc09efdcf16234ce11587443[m add msodbc
+[33m85dbbf241500948ffa1602e6de0a0cfde7d97ec9[m[33m ([m[1;33mtag: v1.5.2[m[33m)[m v1.5.2
+[33m3ba2c7f5891d3519be5ca6e69f93e2ab1b87b676[m Merge pull request #136 from hhyo/feature/goinception
+[33m62a5b2e682135e6e0b8efc7627a496ce24247ae2[m[33m ([m[1;31morigin/feature/goinception[m[33m)[m 可配置goInception替代Inception审核
+[33ma10196ded6cabe2e16f48563a7cdc89d285670e4[m 测试用例和前端页面调整
+[33m38107164438766075789aab324f6db25c7fb430a[m 修改获取实例元数据的返回格式，便于展示异常信息
+[33m1f34b883d260cdc0bbe4f515fcb36d7c4aa60431[m 补充测试信息
+[33m11234a47a3546a7392c8a1c0d94d29407eaf0077[m add HitCount
+[33mee020fe803418b63730f55342e69664ca1ae4a59[m 补充相关文件夹
+[33me740f491625113bc794fd5b1eb1d3e7d8a3bdc41[m 移除install.zip，增加docker-compose文件夹
+[33ma2ff5454f5c2659518bd2730cb9d9667c1c6d5b1[m 整理数据库脚本
+[33m2cb917d202c3e3c18d53781040a8eb7e563aca1b[m 加密数据在不做修改的情况下，不做二次加密 #114
+[33me3c2c43f0d361e100abf246b1d269db1bf0bff99[m update test case
+[33m4911169fb318e384c34f8698575a278264b84316[m[33m ([m[1;33mtag: v1.5.1[m[33m)[m 1.5.1
+[33m0247e01daecc296b80fd4f524c4d93b10bface2d[m 禁止keys命令
+[33mdff5330c6739a2bdc1294bfea043222891671feb[m Merge pull request #131 from hhyo/bugfix/fix-redis-failure
+[33m6997cd8849fac3360e7b58384339e5be7f5d6929[m 修复redis查询失败的问题。
+[33me2a09701e4fbdc72c8292d4c28ae119ed6b21903[m Merge pull request #130 from hhyo/edit_stale
+[33md52323e5ad641b543bed02d70f1222646dae4b58[m 更改机器人配置
+[33mddfa6894770c4037fd9a5fb1ff133e43862fc908[m[33m ([m[1;33mtag: v1.5.0[m[33m)[m Merge pull request #125 from hhyo/max_execution_time
+[33mf36e9f1b779e6830b003874ece51cf8936c49e12[m 测试用例修改
+[33md94c001405ec9a4ae42d74487f2e506eed3e1878[m 处理异常信息，使用缓存获取结果
+[33madc630417797eb5431d73dd2f94e7fd01154887e[m 修改测试用例
+[33m40180b10f822da502d3031e4776c4b47b0f1d273[m task命名修改，增加在线查询超时时间配置，超时连接主动关闭 #100
+[33m2edf4601f48053a0aa1cdf53a45c86e689bb62db[m 补充session信息
+[33mad5da6783dfcf05bdfd01da3791c3abdd8da726e[m v1.5.0
+[33m3eb81efaeddd3464a9a0aa7776bd540bdd1166af[m ace的language默认设置为mysql
+[33m5bd3e6761f916a6293b2d7f3e633ad22a33564c9[m syntax_type调整
+[33m4c73236f991c38bfbd6e36f8d68427ed88e7b147[m 仅保留使用实例获取engine
+[33mca8747d60b1b15cdf8a5a7408b641e6617bc11fd[m 表格样式调整
+[33mfcc4982232a620977fef9a18db68cd44b23982ea[m 解决sql_tuning表解析失败时的前端展示问题, fix #122
+[33m431b5ab437b063edc3aceb42fa24b43acc21f7bd[m 是否正常脱敏的判断调整
+[33m43a4bf8bd9ae765abaa4299389817360c2b7bb17[m tuning样式修改
+[33m9c1e68a9422aaa52e582323777f40a1513f43f78[m 参数配置表格样式调整
+[33m4125717685cfc229ad95262266925c1117d44052[m rds字段模型调整为布尔值
+[33mb75b368373d63ac002c440b30c3fccfca50a6482[m 修改问题模板
+[33m8f118849fb866f8a4bb317557f619525fbfa96d6[m 调整部分字段模型为布尔值
+[33m4044556ef4e1966975fcf515b8769d408b18ef93[m 补充workflow_status和rule_type的choices定义
+[33m1264f5272dc2bebf44abd279b942ce28747579fa[m 是否备份字段修改为布尔值
+[33ma8a236db12fce2784fb4aeddc7e744026af0b983[m 简化方法，增加TODO
+[33mfb0f0ac8ea2b3dad1007a6ce17c63333908d35e0[m 增加审核错误数量
+[33mb60174fd3fd84fac686543ccb75b41bd11040372[m redis查询结果行数判断调整
+[33m29c66b0c1b1ae6718d6babdec6c4d8639acbb2c4[m Merge pull request #115 from hhyo/feature/param_setting
+[33m8ace4940cef014878828e685cbba4cd4d005c5e8[m 修改测试用例
+[33m2153bc5ec0d8ee77c20a02f13a6089b35bed88e0[m 修改工单执行状态的判断
+[33mc73a81f2583ede936141fdcd07b66ca08b0f062c[m 权限调整
+[33m8dcc9e1d0558ce2aec4050fe9bf0de6d61503a22[m 补充依赖信息
+[33m7b793e18d2b829ec2fb22ec055f05a9796270bf8[m 补充测试用例
+[33m8c48a2f6c329a3d62a94e5fb90a01b9037bb19cf[m 审核日志获取增加容错处理
+[33m895519e78885b3be38ce2cedc32adcfad70014a8[m 修改mysql版本判断方法
+[33m487c3d6c19b7b9e622cc1cc681336d93971d869c[m 调整admin显示信息
+[33m9a60c6af751a9f51f8daf8565496d6a462323b4d[m 增加实例参数配置模块，仅支持MySQL
+[33m795ae3add4db10a3189bee4b5814970546cd2268[m 简化按钮显示和隐藏的写法
+[33mb7275639593bc20d0c9b02ec11b40580508537c3[m 实例列表增加数据库类型筛选项
+[33m6b1263b26cc143470d03caf4956ca3de868dad16[m theims过滤数据类型
+[33m73ffe1a480e6d14bcf58f94429541c4fb8fedae2[m 补充engines测试
+[33m3c5ef7725a828d36779f679dd1b0bd19aff1215f[m 移除todo
+[33mfdf72cefc60b8a4157f1a100ca8df7b7ca379241[m add
+[33m17c1478c194795c8cb282cddecd124c471ec9690[m 增加会话过期设置
+[33mabb066be9f3627760d3a9f0687186d8e2ec15a80[m 日志完善，同时修复 #76 中编辑命令报错的问题
+[33mcef687314e0b69b2f41ae30cbaac2c3f903134dd[m Merge pull request #101 from hhyo/redis
+[33mef7bcdb6c32826fd18a85da83b5d666ec42a7581[m 补充测试用例
+[33m8d6612cba9be89b4beea5a980b83ab2e0c482047[m 简单实现redis上线，检测未做处理，仅作为接入样例
+[33mb335b7c986f4cf18e19c980df44c91150ccf8ce3[m 调整部分列表的获取方式
+[33m21c978f805418b39f67b615c72c79854a2b81f5e[m Create CODE_OF_CONDUCT.md
+[33m4af6643c0d7cfbb4a827e5b734fa45f17d9600f5[m Create CONTRIBUTING.md
+[33mf6fa75349bf5352a65db766af39dfc32b55b0ac1[m update mybatis_mapper2sql==0.1.7
+[33m67cbcfbf0d73fdd87d6c7fdc694aa64cf7cc15ae[m 获取源数据库列表增加resource_type参数
+[33mc24a059eaa15fe5183a6f626f739a247755c4f94[m 修改schema的判断条件
+[33m38d9a52fc00170659b52c930420a490b00a047ac[m 查询结果标签标题获取修改
+[33m7f0d598b63355a64f911daab5ce2369cf1239772[m Merge pull request #92 from hhyo/workflow_code_optimization
+[33ma633d674a7024001eebf591ecfe53da4c4b90600[m 修改MySQL工单类型判断
+[33m9a193a75efcef7388f95e4e7bc4f7780d345cbcf[m 自动审批判断增加实例数据库类型判断
+[33m70903180745bb105b10abc9e970d4960cac39dba[m 将工单检测和提交都完全交给engine实现
+[33m2daf027f3cdbf5c68847dcad11874c730243a99e[m flag立起来
+[33meeb4b3169a28e9afc3c03656e8572e4b80eeea50[m 查询权限审核详情增加最后操作信息
+[33m2091e407bf6a2803273c15c509b873282e492765[m TODO
+[33mecf037f56be686c57797adbdc742ce5f66ab20ba[m Merge pull request #94 from hhyo/add-996-badge
+[33mb988dcd2d3ec7f9345ecc26e1ad32369ad9889b4[m 在readme 页面增加一个 966 badge,以支持 996.icu
+[33m3c27ed57483c971ba587accb44351d4f7c409de0[m Merge pull request #93 from hhyo/upgrade_frontend_component
+[33m533c8abc98d6fd476d1c0d8e66f824498f7925c0[m upgrade ace.js==1.4.3
+[33m2efea8d9339b3fc3f5b1709f1a97a34f67d0e08a[m 过滤仅mysql支持的场景
+[33md50355ebf96ff20d5a5d625ada6c507bf07de340[m 机器人文案修改 (#88)
+[33mb89cee300f24f9165819220e68782db7d0981945[m Update README.md
+[33m0ffefc94578bce37e5e0065c5775339096556193[m 切换到非PgSQL实例时，清空模式数据
+[33m2d1126aac6bb4480ecad4eb3045faa8bb186774b[m 获取字段信息的错误修正
+[33m774fc7c36dbd7818c67c62062fa6eaa1db98e218[m 查看表结构时列名默认放在第一个字段，用于ace自动补全
+[33m12d120d2c942bf8204adeeba67ff63f1a98dd0c2[m 修正表名获取语句
+[33m481962eb2a2a418e73d7959d95864e2c34a936cf[m 仅mysql实例显示binlog清理按钮
+[33mba19876cb68f73e50396f8d53fd916c639724466[m 修改版本号v1.5.0
+[33m3ecd69bd5568e2bfe26c1206f05b3ae3464e3f94[m Merge pull request #91 from hhyo/pgsql
+[33m44e0b595d58e12c2fa7ea96fd0d98f447e9b2f3d[m 使用Engines接入PostgreSQL查询，并整合实例资源获取的方法
+[33m0c52de6c81292e63e42948c0cf2b760b26e11d71[m BaseEngine的获取表、字段信息新增Schema参数，便于接入PostgreSQL
+[33m8a09aba01de1414671c7fab745bcf44086a1b93d[m 实例检测逻辑修改，支持不同数据库实例
+[33m4f1051a3f9e0946ae5618bfd27405a4075847d7b[m engineBase中不再能用workflow对象初始化后相关修改
+[33m405813046a75d7b36980f0d561c4d0f530b078c7[m SQL引擎新增filter_sql方法，用于SQL改写
+[33m5d70b8b6c93115c8e1b98ec26188d6e72d364033[m 前端选择项展示调整
+[33m13f46f785fe8dac092d3690506041ac301e67675[m 增加decode_responses并且忽略encoding_errors
+[33m4f7489e629227229e9eee09a1e35cbf5276e1eb0[m 修改模板，增加issue bot
+[33m0189a21fc06620e37b7b09e52dd7ebb09a537be8[m Update issue templates
+[33md98f73040a9ec22e711d9c3f2ef0eac303987005[m 修改query结果序列化方式
+[33m398d17c2d7a9e7dff3f00c2c8e027e6f321b2cc7[m Merge pull request #86 from hhyo/redis
+[33m0b477459eb600499bf7ae2af9348f2aa135b59fd[m 补充RedisEngine测试用例
+[33m0d5566a683e259c4753970cdc36cb7eb72d91d5b[m 修改版本号v1.4.6
+[33mec556f7c48d3221181ada9ac635a50f1b44cf9b9[m 新增redis在线查询
+[33m3e127e24c14dc7107c2beae82d6b14f853e7fb79[m 是否脱敏由引擎内部判断
+[33m61adb590d330126e1085a76965b125ca39e71e80[m query_check补充limit时前置修改
+[33ma257338cc392c88e67f7f5060d181609040ab22d[m 补充查询权限的测试用例
+[33md46373c4019ed0222d772cfc890e761e48db7a8c[m 剔除mysql查询show create table 的权限校验
+[33m2fb0da6434706be77a230f56723ff79c3fa06a41[m 完善异常提示信息
+[33m8f380bc7ce5b5334b9988a3944cf8c6ba4840f5a[m 权限申请校验使用拆分后的校验函数
+[33mc3505008469f3952a8de8815ae2e3ed8b450f53c[m engineBase中不再能用workflow对象初始化， 在get_engine中获取实例，并用获取到的实例初始化
+[33m8922f44b3865f1e3ac6048d3fcb9b6dcec997319[m 查询模块优化，便于接入其他类型数据库
+[33m2e21a6d9dc10aa83f64bd77c1205d9872e80bf19[m 第一步梳理清逻辑
+[33m6a16e9100ea6acd8a8d9111bf7f08b64d575fd2f[m[33m ([m[1;33mtag: v1.4.5[m[33m)[m 解决关闭inception检测后子查询仍无法查询的问题
+[33ma137919f090bae1bb561a3df3418beba8ea5276c[m 支持刷新按钮获取新的锁信息
+[33mc9159b088bea9ab8dc135f766039e28d75874461[m 修复子查询场景下提示信息误导的问题
+[33m8ec82183fa3cbe275e47cc49ad270c1c3f6feea2[m 权限管理列表数据去重
+[33ma90176944435d57b2867154d5be561b55134ef8c[m 修改travis-ci链接
+[33m9675c6e8bbf7c6a8bedf33d685de981c8b3bc6db[m 实例管理新增binlog清理功能，新增权限binlog_del
+[33mfa3081986e89c1aaa075fe217002950d365a271d[m 模糊搜索修改为忽略大小写
+[33m714eb766c2ac740aa9e31da94e6ec93df266597c[m 查询权限部分代码优化，fix #75
+[33m01ecc6dbcbdc665471f4923afc037929aa422192[m 发布themis任务时，非对象类型必须选择起止日期
+[33m8cb8762c8fe37372017ddcc6f7adf0e5d92557d4[m 添加规则页面易用性改进，支持显示规则详细，并且支持编辑 #76
+[33mea8adf76376d744f24e1388b91a2a8b419aed157[m 工单列表修改，符合新的权限条件
+[33m8898552dc8068d9aa2cbe0d2a6c8b75e0df124ec[m 修改判断是否可执行的逻辑，增加测试用例
+[33mf112c1704613dce72cd3694e103b1966a71d90de[m 修改CI地址
+[33mf1fd150557cd62709ec276bfd893c30cc7be1f35[m 增加binlog部署
+[33m4b4bb90faedf7d1d69b2fb1c0ff7492baaed3e68[m 增加binlog2sql的测试用例
+[33m68f20d8f3dc602626d55e176d43ca38d617a0543[m 增加binlog2sql解析结束的消息通知
+[33m7d2a908c9dbdc21818acd64cf5256043d224f148[m 版本修改v1.4.5
+[33mfb8db9a8a5744e6641aead333e4642fbfad08393[m binlog2sql以plugin的形式对接，降低代码复杂度
+[33mcc21fcbaba2e1b225ee40a5cbc805d111ff6c5c4[m gunicorn启动增加配置--preload
+[33m6844eb2503c850fc944d9ff73d0d6f0ffea81a5f[m CI依赖增加
+[33me8406337b9cb605c8147c6eb8a91073e14b139fe[m 调整日志等级
+[33me3c8f7151b5b76a0235115c3eed3afa9959a5f90[m 补全引擎未使用，先删除mycli的依赖
+[33m80684c3fe0ea560dc222ffc143b1992426f8a3b8[m 删除audit_remark和reviewok_time，从工单日志获取相关信息
+[33m8d429416ccf9c380e51e01552f70fef8552fdf89[m 支持工单执行异常的信息展示和状态变更
+[33ma9d7d2bfbe19984ed5b01da0903dc49f29ae4eb0[m 列说明调整
+[33m4ccb04fa3eced1b53d3eb961c58586230edf9348[m 错误语句订正
+[33mff59db940a05c5577d7d255656c604553b220a33[m 完成前后端相关修改
+[33m57299feca4198ea2e24e5b09453573fea04e2a28[m 权限申请详情页新增数据库显示
+[33m3de4b28893343c3a9d146397e3c7fec547ec22ea[m model定义修改，拆分sql_workflow以及部分字段定义修改
+[33m917f49153215c38cab30d01d0d42aa2bb097f21a[m SQL执行权限区分资源组粒度和提交人粒度，便于提交人自助上线工单
+[33m3882645a0a5a83f0f1b9dea703e3f231fdc2cc0d[m 获取用户实例列表增加数据库类型过滤
+[33m904cb6d231e90723ae0cd2dae9b998688efd60f3[m 工单名称超过20字的隐藏，悬浮显示
+[33m099ff72d74b9763195f5d85023440520f13467c8[m 完成脱敏字段和RDS配置的修改
+[33md5ea8c254e60cb3e13f3b6541e5b872fc0cf4910[m 简化初始化engine的代码，增加用工单初始化engine的测试。
+[33m7a78840b845a5964eadb4874db89ac00e9f90920[m 替换instance_name获取方式
+[33m0be6581921d56d489827f1bb802cb9431891af90[m 增加Instance外键更新和数据清洗语句
+[33m26bbe9263de1a291a434ff4abe70953f1b4d1991[m 补充一个工单自动审核时候的修改 喜迎覆盖率上涨
+[33mc97b89707ed928538a8b40c3b51b382fd8203ecc[m 前端和测试用例修改
+[33m420c9a80a784852bcbe49fd595e879535ffa89e4[m name转id的第一版，初步测试查询权限功能可用。
+[33m31513267d4bac0bd49defe48d4244adb5ce8239a[m 涉及到实例的全部都增加一个instance 外键,后续用来调用, first commit of replacement
+[33m9548c599de6eb65c1ee624cd4782a4faa7866edb[m 布局样式修改
+[33mdd458ece290a328c62dbdcdf58f76dfba56b28da[m 调整markdown样式，开启gfm
+[33m625058481b7cb4291825003b148d128878f732e7[m 补全text空判断
+[33m8a4cde37e0e3cd611e3c03bac0260679bbe705cf[m 允许不选择实例直接分析语句
+[33mac7b13d427bf0785bebf377c09494fbc450704a5[m 使用安全的方法获取表信息
+[33mc1ca1ed4709e4ee26d72760d509a4e6ee78f0170[m 调整markdown样式
+[33m04921994125fc8e4ac4a78d43a176ce13a6c46ed[m 说明调整
+[33m945d3189225bef02353eabc4992243f661fbd893[m 调整部分配置
+[33mde6932265625056ff8c25f931d4c529c2cb414ee[m 文案修改
+[33m21596c58d223b04c6f68bf4cb9451626a5b9f18d[m 修改返回数据结构，兼容新版BT
+[33m4f3c900ebf579bb9f77e9b373d975b1e7e13df55[m 细化plugin的测试
+[33m4b04ffeb76616ab4dd36adf99ec76d5ff7a962f9[m 增加release版本
+[33m6354b7011f37bf127326e196d895077b51f44bf3[m 增加SQL分析模块，支持分析SQL脚本和MyBatis3 Mapper XML file
+[33m009bd349e33e34fe62a941b7280efc388cb5de22[m 返回数据结构调整，兼容新版BT
+[33mc938c9d221d72a3b51c41d5c1562afb4992b56b6[m 表格样式调整
+[33m6c1f12bca789afaee881130a166bd4c873be9fae[m 补充soar拓展方法
+[33m7a37ca7250909ac164afb67ce64d8fb3fbd90c91[m 调整日志设置，避免多次打印错误信息
+[33m17c07f3c7b4c810453db19b39a56380530cc6966[m 修改命令format方法
+[33m3b222b460c30e0659e0bd2fcf664a2af48793a1c[m 删除注释使用sqlparse实现
+[33mc75cf0ae8e4ec6f348fdad79618a8b456141a67d[m 表解析依赖调整为mycli
+[33m95c6f54b9ad1d7282c69929b76e3e223274a9fc1[m 修改返回caption
+[33m6d015759d7a1de5c4124090dae4bfdf942ac15c5[m 增加sql补全引擎，未做实际引用
+[33m5f801fdd156d91ce355570d8420d0c69ec9cf63e[m 自动补全修改
+[33m18542115ac7baee1a7dd3b449a85e7422c62fa40[m 清除无效引用
+[33m950ae1321e8fd952b221cfd372fc37f44414afce[m 升级bootstrap-table和export插件版本到最新版， 并且添加导出格式xlsx的依赖， 修复导出excel格式显示文件已损坏的问题
+[33mc0b853f60a57c02942ab6042af5cf2d2ef328781[m 补充部分权限
+[33m8589320a373f644dbd53c1c5734de37120567380[m 修复SQLTuning无法解析多表的问题
+[33m3db737dd4fe1f8ba8401e099883a84ca0c1ea8e8[m binlog2sql默认选中only_dml
+[33m48e96e462e43b91161ce28d34ceec8f30d98f188[m 调整依赖，去除DeprecationWarning
+[33mf60c14606e9e17a3403cf41d3b79db8c912d4f3b[m 权限校验做了一些bugfix
+[33mb1c79348ab6bc8eee7e491453535ee73a0ca4923[m 修复由于对象初始化默认值为空列表导致的bug #63
+[33mce5bcb702e546c55f85a6a824d8a39b6d3146d7a[m 修改plugin路径
+[33m2e12bed6c34778873289605262262d25184bf279[m 增加国际化编译步骤
+[33mc6bf78ef8c0bc83e208b3ecf48b3353f4af5dd40[m[33m ([m[1;33mtag: v1.4.3[m[33m)[m 补充工单抄送用户信息
+[33ma29b86ddc86f3bca4b6ae72def220f8e2fdef954[m 禁止部分表单自动填充
+[33m07a218627ee75c303c7086b55f3c03cea979d7f2[m 修正脱敏过程中部分语法树解析错误的场景 fix #62
+[33m9375130d3a4c11a04031f4a2699a29f029210017[m 修复异步任务中， 回调取不到国际化后的status的问题。并且增加了异步回调的测试
+[33m2c6a75d5d329bb96db074844bf9279fe19df7029[m tuning的方法合并至sql_optimize
+[33mec9ec5c5cf8d9be61897f2d1e4327dfe50cd246f[m Merge branch 'master' of github.com:hhyo/archery
+[33m54cbb2ca317615f7d301783d07a5881df3eced17[m 修改列表获取count和list的方式
+[33m3a1d1b7cdf46f6cd4f94c33b2965feec34d048e9[m 一些bug修复和改进
+[33m9d75022b7573557763479f0cc122b870629b6fdf[m 部分代码清理
+[33m3aa03ca92302c085400896ada869dba420078c7e[m 表结构同步采用plugin形式实现
+[33m17bd4099c1fbea6ccb6e5e9b5b80afdf029b7b18[m sql优化部分代码合并
+[33ma90606610479e3616bb3214765791e611cf1b6ea[m Merge pull request #60 from hhyo/feature/plugins
+[33m48c4e3e0cb58a4f4407866ec23231b76ffea4268[m 调整测试用例
+[33m91635ab1eadf5b2d9562b16c4852992e597b8b67[m 使用patch装饰器进行mock
+[33med861b057f89c814bd79085e1a70a52761a8d378[m 抽象调用命令行工具，做成plugin的形式 fix #59
+[33m0603b667d34b24996198ba41ae28fc28464a723a[m 补充查询权限申请的消息通知
+[33ma5230c3584d7f4ceed3fe45887f0e7c6435df22c[m 调整版本号
+[33m3e08efc5570a958e4249bafc856263babe3724d7[m 使用get_column_display获取工单类型
+[33me58ddabaaade148db20ea48dec96c881d7e04c0e[m 消息通知统一到notify文件中
+[33mcea5c256b247874e064197513f7e04b7335ae8a9[m Revert: 调整函数写法，方便寻找依赖
+[33md18e8e672e95437bac67a4186f713ac1bac216e3[m 修改自动审批通过时的状态
+[33m6b67483c66132e986e038501fba9a88fa1445ee9[m 调整终止工单时的消息逻辑
+[33m48aa363cd246a3856325a1d359c89395bae7f28a[m 调整函数写法，方便寻找依赖
+[33m427e705af27493692a5a7f45981c1d5a9b4a5d97[m 简化消息通知调用方法，调整日志等级
+[33mfa0a859ad3e134eb6be0ae55b0a9eb1d34790655[m 简化获取工单列表的写法
+[33me3c6df796bf2a951c587acc4dd08230427b213ed[m 增加编译翻译文件和安装gettext的步骤
+[33m83ab2bdd26909aff587879886284badd5ba5508f[m 增加display修改为not null，调整版本号
+[33m527381835a2dc7f741646e3be87783ace3bc86de[m 修改工单筛选项
+[33mf13205e2f52f5b87359f638507cf31c3615d1f46[m 优化执行结果页的tab新增逻辑，体验更优
+[33m202bf690120c06d5d1a7ed478436b472346cff28[m 查询日志增加完整语句列，方便导出
+[33m1f57c7c1f2fbd61e9160f8b851b90a055fc987f0[m 回滚页面显示导出按钮
+[33m4863500476f24bc81c527d3a80c501d89f2c68a2[m display修改为not null
+[33m3c78752321db81ffbdb47857ccfc773a1d0ea49e[m 调整工作流类
+[33mf32fb864389e17112be9871788f129927f4c289f[m fix #53
+[33m44d53dd8257d365eef3829184f4dcb39173799ad[m 修正一个手误 🤦‍
+[33m331c6926e4d695e4ad9db2792f53fcaafbdb4ca6[m 一些js脚本的国际化和漏洞修复
+[33me2e759ec7a9c8ce283821ee6ef854677b34a5733[m Delete bug_report.md
+[33m087af08a2d538f6163d98d5b6cbef75c7b7e9707[m 修改配置界面文案, 和代码逻辑统一 #54
+[33mb7c1253e1abd6e733a531a70b44e659de37a3203[m 更新issue 模板
+[33m94b32a6f8ee8cd4c0c67d71f26a658cf9fe843b2[m 修改依赖清单
+[33me0abf09bb1bba54e300f486b4966ce5735349673[m * 将工单状态从汉字替换为英语的表示, 显示名使用国际化组件显示, 代码中只使用英语名, 方便后期修改文案 * 尽量的增加了单元测试 * 修正一些文件中文件编码定义不规范的问题
+[33mc983aa6963822feedad88da36b6147b29e2e3105[m[33m ([m[1;33mtag: v1.4.2[m[33m)[m v1.4.2
+[33mf374b53b789bd1211cd5dfc3ea31bfe398c5c6d0[m 增加SQL上线工单列表的测试用例
+[33m418426ecde6ed5a53fc134ed9d4eb4cb2f586d00[m Upgrade django to version 2.0.13
+[33m4e5fade00339f343f297c0d84b1eb108fdcbd452[m fix #48
+[33m49b7ef2c07450c3993a9c1d2bc362394d36badbc[m 修改docker-compose.yml
+[33m950a553aa80616ca5d0cfc18b15e7678710a3ed8[m fix #50
+[33mbd37bef6cc48f233d1a49b8242c8be7f5ce51b91[m 已登录用户直接跳转主页. 增加配套单元测试.
+[33m35956576bd69da16c207d30ca853c687f2612c08[m fix themis提交非对象类型的审核任务报错
+[33m4c96335ccb1b2f2e408379177541353e57441c20[m fix #47
+[33m91f9d1f8fc87803945b950414462f07092cf64ed[m[33m ([m[1;33mtag: v1.4.1[m[33m)[m v1.4.1
+[33m9e2159e23a6baf390a231da285c5533837271460[m fix 开启自动审批后提交工单报错的异常
+[33m95962e247431810a8e4f478081a39292cb452ea9[m[33m ([m[1;33mtag: v1.4.0[m[33m)[m v1.4.0
+[33m479ed542e480e4d9d941f110d277cfaa21ea2ca5[m add .coveragerc
+[33mfdc4076c782ed8bf8ae94c2b518088e396b43071[m Upgrade django to version 2.0.10
+[33ma56575d4919f662af408669889ac881fa907caa9[m 增加engine的测试, 修改一个describe的bug
+[33mfb58c722c5c9b46c653628d4cb7fc82a87eaf4b2[m Merge pull request #43 from flyinginbed/master
+[33md7c3daad2082f1f55cc91663f92993fc7cbdd31e[m 增加pyodbc依赖
+[33mf2f8421f0a76d472f637a479aa257f43bdeec6a0[m 新增engine里的mssql测试
+[33md86ef2513a887d051af62e75131a2b5eeaefab91[m command 中密码添加单引号
+[33m36b1ba0a367357f3d1b094fad2b6f6fefa00fb7e[m Update README.md
+[33m1ba751f637f36e9bb5c46fe441df61cbcdddbb12[m 一些小修补 * 新增一些单元测试 * 对chart_dao 进行一些小的修改, 以便测试, 将cycle 从月单位改为了天单位, 现在报表都是31天前到现在的报表了.而不是整一个月
+[33m9f720ecb930c7e00264abcaf75f14ee0f7a270ed[m merge 后的小修改
+[33m46a26dd5b703abc62c92ef05554f029e47d85395[m 新增一批common组件的单元测试, 调整了一个页面的权限
+[33m5757dd7036117acbba54b8d3d60700bc5bafbfd3[m 新增query的单元测试, 第一版
+[33mdb27b44197eeec0985d5cf91cd167fa993a672a9[m 修复disable_star关闭时导致的异常
+[33maa85dfdc6683b6a07ced8baf973c605f684ff3b8[m[33m ([m[1;31morigin/feature/gh-ost[m[33m)[m add qcluster start
+[33m0580d8ca292f1a04d134238ed9075212697ae4a2[m query异常场景的显示调整
+[33mad798aff2e138370ac8ac51f5fa4d7d6114f37fb[m 细节修改
+[33m11f0ae6d7a22a183f80477c056a69eafbb3ca184[m fix #25
+[33mdb686a6e4ebf8b68319842ac800e7848a0cfe35a[m 统一sysconfig的调用
+[33m2ad0c21acfd80acaca76da5cc5d045996ea179ab[m fix 查询提示和语法树打印的bug
+[33md8490a80d90e3d8c9bbbec0042f18a8839765d23[m Merge pull request #38 from hhyo/feature/clean
+[33m0761212914bd97d8e288cef8594370bada6d0430[m 移除inceptionDao，方法合并到engines中，同时合并分支feature/gh-ost中移除pt-osc的代码
+[33m537c5d468a599f81592ff63aa81526e49e14adc0[m  清理decrypt调用，统一在model中使用
+[33mabe2146200b10a22d78f97fa25ae0938ec00ba1f[m 删除Dao相关调用，转移到engines
+[33m83100efe5f9e148935d7749361008e4ef4620fe4[m Update issue templates
+[33ma8c1edbc3edf381882e6209c420f349138d5e42c[m 增加一个复用conn的标志
+[33md73995151b73476901df8e4ba87425930e59e4d7[m 修复因为django_q timeout 参数导致的任务假死
+[33m68bbab7cdb616333d9b70b770010d5b5b48725e8[m 修改 engine 的connection方法, 更名为get_connection
+[33mf535fab0f25aa1aec444e00587a1a03d6bb76ec2[m add coverage report add codecov badge
+[33md2ba5a3d19ba63205aaae4d40dddd2e32171da25[m 修复超级用户无权限的bug
+[33m13730fb35b530f4b45b1e4fc81b97e5109b37f1b[m 修复不经inception解析语法树时的超时bug
+[33m16645efc50ba8fd617f323e8eb51fba85e8cc8eb[m 设置rows 的默认值为空列表, 防止无法iter 的exception
+[33m3a145e6bccfd60305035425af9ec56f3eec2844d[m 更改mssql 查询前筛查, 改正了一个bug , 以及禁用所有数据转换,字符串操作, 数学操作的相关函数.
+[33m8c29c0a0542e50ee5e54b3c01d7706c8bd8d6082[m 修复一个手误bug
+[33m8953c754369b1edbb7200015e8b17be5a6fc0ac5[m Merge pull request #30 from hhyo/feature/add-sqlengines
+[33me850f427277e9aaa4fccc75b340f34b2df894431[m 前端修改,调整错误文案
+[33m06e8448a7d38c448bb723fb08d48b78c2faa4628[m 新增一个mssql 的引擎, 正常查询流程可以基本适配, 未验证非正常流程, 比如语法错误等. 以及一些前端修改
+[33m6d31abccb9264103ffde22543b81356b01e691c1[m 修改实例db_list, table_list, column_list 等方法, 使用引擎查询.
+[33mf0c4a5d2e3fcee6984dd22290f0640a47004e642[m 完成查询页面和执行, 定时执行的引擎改造
+[33mdcc5a88670f3a3ebaeac6a21bb490f214ffe40f9[m 抽象化SQL 引擎第一个提交, 完成SQL预审部分的功能
+[33mf46bce32c58204107b9b78d1e1ec17c8dd3524bc[m Merge pull request #31 from hhyo/v1.4.0
+[33m790bb016f94e6172fd9cd37e1f38bf5e6e771e71[m fix 20
+[33m95a2d64212335db0d508c70c14462adfdf437e00[m 移除错误信息
+[33m060c0217c8fddd6e1e8f731c7d265b82a2d462b9[m Merge pull request #29 from hhyo/v1.4.0
+[33mcd7f5a960e7be9b2fe6768ec0d20e76c257c75e4[m Merge pull request #28 from LeoQuote/master
+[33m321b66aa550f826b5f4e5be3eb0a9ccea8c8c0bd[m fix #20
+[33mda21c4442938dca1f6af27e163796625c05f283d[m 更改升级版本时, 丢弃 djangoaps 库的顺序, 防止外键报错
+[33m96b981b5432a3ac9be579bfa1fc614ebc65d0251[m 增加django-Q 的dockerfile
+[33m04983de7869197eb677eae5060190f51145d329a[m 新增一个选项, 可以禁用 select *
+[33mf836ea49ae91b29d740b695c563eefd2d127fb24[m 缓存获取配置失败时从DB获取
+[33me3cc080323275d10b4f7dae5e51f117abfc6ec53[m Merge pull request #24 from hhyo/v1.4.0
+[33m311c01f9052ce8d79e2d07409c32a012062bb5cd[m add redis-server
+[33m3b74d67a9053cc98808d44f384f2d372f58f86be[m 移除django_apscheduler，使用django_q替换，fix #21
+[33m9d5dac7e21a35df440b1e1e6d690fee1b6e7d342[m 前端细节调整
+[33m04b7eb1c680f3b0f9fdc3c396d8c91bfc9524d51[m 修改资源组model名称
+[33m86498627a0575667ae93212cd31adca2afcdc973[m Merge pull request #22 from LeoQuote/master
+[33m5f6030ab0a908161d122251ae42ef9723ea8fae8[m add app
+[33md5bf195e970f4bc21bf85e67ab88c13e1d29dd1d[m 使用django-Q 重新实现定时执行, 初步测试可以运行
+[33m089134878e29ff990d5b8b7d5d72ebb658d16480[m 细节调整
+[33mbccd25ae2292f3beb67f7c577c401a5d7e237951[m Update README.md
+[33ma05af9bfdcbffd69ed4ed4aa4f526e007e89dd31[m 更新docker地址
+[33m4d8059120d4cb666155dad7c6548998fb19b09ce[m ldap 授权失败增加else, 防止用户不存在的时候用户名密码失败报错
+[33m2f8f477629b1af9375ce72301fdf112f92a241f9[m Merge pull request #19 from LeoQuote/master
+[33m7d01cd4980a4f346189ce4d453089c0db29b4c39[m 修复密码输入错误后抛出exception的错误, 修改测试脚本, 在进行注册测试前打开注册开关
+[33m8a44c3e2a1d3b5bd70051eb56a776be335fc0c4e[m 修改配置项的类型，提交回滚请求bug fix
+[33ma4dc7d8ce2f1231152cdde6325459e12b52a5b08[m Merge pull request #17 from LeoQuote/master
+[33m485b420cdc441e0d3244adbfa21f49765e933877[m 重构了``auth.py`` , 增加了注册是否开启的开关,默认关闭
+[33m324b8db753e67308c0255df75cdfbdfc46417c15[m add Continuous
+[33m5c20f9285d1447889ab76e2822c13a851b228fa8[m Merge pull request #15 from LeoQuote/master
+[33m47a46ee26c663ed51d489b4a796a0ef8597a379e[m * 增加一个配置项: 默认资源组, 在用户创建时自动关联; * 更改user 的str函数, 改为没有display就直接返回用户名; * 更改base.html , 把 user.display 改为 直接user, 这样可以直接使用 str(user)
+[33m9cb26cb4b5e6d6e1ce3a39b1213519dbdeec45ab[m Update README.md
+[33m3504748cc9996bd668c9d72c5a7eb3be0b8651dc[m 简化列展示，自动填充信息
+[33m03a219c5e2b81c1dc0c2534e013b2f4607cfd712[m 捕获inception异常并提示
+[33ma1a4954198686cc7d19b1af34a2599bdfa301f71[m 删除无用配置项
+[33md2895851224e3e464aa603d149729fc3a743e3fb[m 更新docker地址
+[33me8539776affb9ca77a7631a9c827905fae921f08[m sqladvisor和soar版本调整
+[33m739ea4bd987f21dd51c1d5803b4b904196f1c5d9[m add docs requirements
+[33m831e8d86ccd5836c20c8abf5d7b9bc8efc06345c[m add docs
+[33medf7950b5595764b02a460cfdcb337291b147319[m change variable names
+[33maeecf54b26283ed33f83fa8871cbc6dba3cfe5ca[m Update README.md
+[33m668c18e75fbde3fde84d58b6d286e39f9bad649a[m Update README.md
+[33mae49d8f80486494b9cceec1f562594e1498d660f[m Update README.md
+[33mbf7a27fc2bc6a91d126c450b51dc63166c09f8c0[m change variable names
+[33mf9293f716df65913c3068e22ecb05c3a47135a86[m Update README.md
+[33m7303b55310d9f0901e27a4eb8ce6b32de82a06df[m docker.io/centos:7
+[33md702956092bf7744a72a2dcfd7590463f35ec919[m[33m ([m[1;33mtag: v1.3.8[m[33m)[m Merge branch 'master' of github.com:hhyo/archery
+[33ma6398c8d23979dc003ad369d20087a8bbb871e8b[m v1.3.8
+[33md61b88864b4a5b53d9d4ccb1ab2b3dea24750181[m add log
+[33m7692fd3fd7816e378a06b492040aad50d052a25e[m 查询统计显示中文名
+[33ma51e74831a5839d49f26a597d162360d4dd94d77[m 提示信息修改
+[33m52bb161644c5f227cbfc1502a47d29d3c2607107[m update
+[33m58d6b65c978bc03c45ce1866b4b783e19c0ff9c3[m 优化
+[33m019c75f23f43348a3ad948d7e9eae46208ff24eb[m 修改工单执行结束的通知对象
+[33m6bab8067685b0e1d7b48bf660a78ad73bb679914[m 调用消息发送前重新获取一次消息内容
+[33md7f9740020816eb50644550f4949a48bc5cdf2f0[m 消息内容获取增加另外一条路径
+[33m77b9af900ab6a8ca329ff6b67e24cf83dfc548a4[m 工单日志兼容自动审核不通过的情形
+[33mae2a4d5352d903241fee29de3b4ded8e0b59f3b9[m 修改弹出提示
+[33me5e3c7dd28680525d327db1ee7f0102b6b29449c[m SQL上线增加配置项AUTO_REVIEW_WRONG，可以自主控制审批不通过的场景
+[33m078319044a7323caf35146bb71b02c1c881aebc7[m 解决多条语句手工执行提示异常的问题
+[33mdb1833a71626cb6312982fea0d2b8bbc01c25271[m change variable names
+[33me4cc92299c8418eadc8602ee904a8942800648a6[m 解决部分blob字段查询报错的问题
+[33m84da1be9738523a6b95f824ad0f17d8827bba257[m 修复通知未开启仍尝试发送的问题
+[33mfe81433dc9be8917a95f809029a30eac0fa992ba[m SQL上线通知人支持多选
+[33mdbe864120c060ff0b800ab83cebfe6d1873a5104[m Update Dockerfile
+[33m6ddaef0831a4865e5f19cd7e68a6c4262eafc874[m[33m ([m[1;33mtag: v1.3.7[m[33m)[m 更新soar版本为v0.9.0
+[33m676f3d6842ad560dfe938daff20be3323bb1044d[m v1.3.7
+[33mbd212e54c82a02bdf1e62e7477022ec42565efff[m 修改django_apscheduler日志等级
+[33m7172d7f81dfd3c28e0b796e725de9a397d4fe3ec[m 消息优化
+[33m83f374a396d7d02b203b04d5d4c9885280a9c56c[m 和docker保持一致
+[33m170ee1d5547eb090396ab2b208dd459ddac57ca0[m rds配置经验证可以去除region_id
+[33mfe128afceecb7f6a7d4e6386f9972e9c542b82c7[m model修改，rds配置增加禁用字段
+[33mada5bc855d270cd96dbc82bf7e01e841b874140d[m Update README.md
+[33md3b67e70cbab05a31109efdaf80a5b6b97576a5f[m 完善消息日志信息
+[33mc317ead31d507946991ea9be5599c7b102c4316c[m 提示表述调整
+[33m0d3674c00acf500ae1f85c7b3b9b503d7bc67c03[m 修改描述
+[33m9462e11a82ef5ac4e786f7a33893a403813c05e6[m fix #11
+[33m507f1cd9742548e9f15d55aa4fcc43d75927a11d[m fix回车登录的问题
+[33m5642126403a33839994ef2a4c96ca281c336f7b9[m 恢复依赖库
+[33m46d0babb2953aedaca5bb87c88b64b77eedfdc0d[m 剔除rds配置项，按照关联关系判断，每次重新ctl，降低部分响应效率
+[33m3f279153747038ed5e938b59cca6ac64c27752b6[m 增加rds依赖
+[33m4b10cb8c5cf3eb8e705c23d25ad0223889c9d354[m 剔除pymysql依赖，去除部分影响阅读的日志
+[33ma5d22597f0d4f8d5dcfda94b427fa0fdefd852fc[m 优化配置检测逻辑
+[33mef37d35bdfbb309ac0cf809c2baea296361c63b5[m rds认证信息增加region_id，去除rds_dbinstanceid唯一的约束
+[33m1e0bc3e910a22bb1d1bcf65c8c4a73395af67b74[m 统一表述
+[33m249455813f0fba3eb663523430da634600d38563[m 简化docker部署配置
+[33mc4ab2638a6f9e5d313db8bd8c8360540d4828a21[m 新增docker-compose目录配置样例
+[33m6313b72456d9c468945af3584c13d24e674e7055[m 解决关联对象翻页异常的问题
+[33m666cb332cbae571ce03456eadea41badccf910ba[m 增加soar配置文件
+[33m3bccc8d9ea66b6c2ca06ceb65cd2ba3718a58a2a[m 补充soar权限
+[33med14a4613db523271c9eb8f002b0d0ca66fb55b8[m[33m ([m[1;33mtag: v1.3.6[m[33m)[m v1.3.6
+[33m3b84f03a4db125013b9a873079027d968db65d95[m Update README.md
+[33me05c06ee18eb2c967fd49b4b5a72d271abcccbe4[m 依赖库升级
+[33md2a3660f536c6b3beb7627d2f746dc7a059e0867[m 结果展示调整
+[33mc4671f58fd6cc936ec23cb91bacea2518fc2f8b1[m 支持count(*)和count(1)的解析
+[33m9c5ec16859e848c9763173b6156998f0a1b004dd[m 修正慢日志统计历史数据错误
+[33m99a1d5787285d338e447f79ec36f56ed34bd447a[m[33m ([m[1;33mtag: v1.3.5[m[33m)[m v1.3.5
+[33m4cf294aaa703f1e7e0df1808f83a6874e97fab72[m 去除python3.4的构建
+[33md24d6dd03de4b3834b9b56a615691da4b461d806[m add marked.js
+[33me268846bc6b18f4b399f21126265518a5f7038fa[m case修改
+[33m51e19b3c62cd50a3ecb22bf4f97e068ade755356[m sql优化新增获取soar建议，其他细节优化
+[33m408c5b62c3f0e10e60b7da56daa9a8eb1265f462[m[33m ([m[1;33mtag: v1.3.4[m[33m)[m v1.3.4
+[33m124a00b8e9cf5b2dd1b94c7d1144937fccb13f58[m 注册用户增加密码强度校验
+[33m6e60f9372c7db2bb115b3816cb93bddb1c2463cb[m 依赖调整
+[33m1a8c76540d484a22ea68d267ae7cb5a3a634aecf[m 获取回滚语句采取长连接查询，删除部分;判断
+[33m020f190dfc16a173aaf9c738ebbcd800bda86fb8[m Update README.md
+[33m49911b1a39f4b82ca9e227007f81ed2aff627885[m[33m ([m[1;33mtag: v1.3.3[m[33m)[m v1.3.3
+[33m7ba170244f3cd7e88eea2801e4e94cd829df3f71[m 依赖和设置调整
+[33m659a73c56306b5d86cbc3999636296ae92315d06[m 代码优化
+[33mb98c47efd5b7b98d613b956f62a7d7bd81d80632[m 解决connection close的问题
+[33m457f2802f69d7636a946aea133c2d38dfa908800[m 处理逻辑优化
+[33mcebfe086703f53214b6518fc12dc390fe5d004f1[m v1.3.2
+[33md5194efd3c5c42fe84eb45f8c6e7e929e2cbd882[m[33m ([m[1;33mtag: v1.3.2[m[33m)[m 补充工单执行日志
+[33mf84e613ec2158c803bb0f9cd683b4c69bedb76af[m test travis build
+[33me07311705de33418b1a0f57ffbc83d9c9d904f79[m test travis build
+[33m194a89d7155329358ebcae35d66cbd1f5a8f567e[m Update README.md
+[33mc4a5d86e6cee5f97c58f0bd80f88201b3f4f632b[m Update README.md
+[33mc96563c26c3a1508f073bb12b156f99adaa9312f[m update
+[33mb955b8d6d1646de5652e3d41b30318eaa62ab5fd[m 审核通过但未执行的工单，执行人可以打回
+[33mb38d4d1cc968af4eb3f661dd6a304b5d83d00ba6[m 补充权限信息
+[33m39f9f52f767bc5fa3633eeacc2a69999ba8109df[m try except的地方记录日志
+[33mc3df97eef269520335d510641c6e2e71ed5aa5ce[m 增加schemasync模块
+[33mf3d75b88c48d93ad167a03162965bcc1f817b031[m InceptionDao优化
+[33m6759fea24f25e3cf2208b5f6f324314a5b83b5b9[m 修改缓存backend为本地，多worker部署时用内存存在问题
+[33m14734d8a245559cb1078449235de11fc2cd29b19[m inception统计图表查询
+[33m046b30ee6828c373c849e1ee0c72fb6da4a1814d[m ==
+[33m40a95f5e89509874fcfcfdc606999d054b7fa3cf[m 错误信息关闭转义
+[33m6d2d7c4ce83fb4c9ed1d54f3696bc8051e7edfd4[m update
+[33m29988f91894c13e130e5a3b70934190ad6e6eaa5[m v1.3.2
+[33me0fa61241762a9fd225a660337e1c1925f38d3ef[m 增加图片
+[33m527bea1be1e4b442588126f1f20d4eb02f894e29[m 权限校验状态判断
+[33m30e6e5e907a885e14153d24d6fca4310c8e0f482[m 提交sql增加表信息补全提示
+[33m427d3b509c80a40ac496b049a09e6e25c594895d[m 表结构变更脚本
+[33maddea254322a712c550b5d5360465913b426c57f[m 优化脱敏逻辑，历史查询记录新增权限校验和脱敏状态
+[33m38ca13ec9c948f36ed2a239980df996d891ee2f4[m 部分变量名修改
+[33mee8dffe41f4d2a47053fcd7a3f5d5f82e6b1ed2c[m 会话和表空间开启前端搜索
+[33m4b40c7b76b8e5e3bb17bf52940bf1e8e07a45a61[m 配置读取增加缓存，以及True&False转化
+[33mfa232523db72e23c088b01c3640c3b042859f56b[m dao支持会话复用，修改相关调用
+[33m9affc62aef3dc8cc212c83f6eab6845c6b68c76a[m 剔除无效代码
+[33m1f5efdf01bfa816357da348a99349ab8e7f174f3[m 邮件检测修改
+[33m45103954447a55adcfc9e3bfc6ff407706b45174[m Inception连接方式修改
+[33m4953b7c84d3f99acfe04cdc3849555928b6c5f9e[m sql_tuning结果调整
+[33mbb810af8e08da213833f777e9985f50d26163657[m Update README.md
+[33m58019ab2af944660749e99a7039bd8c92ac58d78[m Update README.md
+[33m5b9e642db47301a9ce51560a9e86e9c47bd7e99e[m Update README.md
+[33mc4bea4f1b42344df7c5a640577f91356d4855478[m[33m ([m[1;33mtag: v1.3.1[m[33m)[m  修复审批通过后再取消没有记录工单日志
+[33m516b4ac071d1f988f66c218127cd6aa12075e9b6[m v1.3.1
+[33md9402b2f58308f68bbb7944f48e1309c21f69d5e[m v1.3.1
+[33m57512e95aa3ed4db153b9839e7f99f91bcb5607f[m 增加配置检测，支持检测Inception、email、实例连接等配置信息
+[33mfb3c8006453644081d8f31b30648f428a6704472[m fixes #9
+[33m7687812dad5868d3e346f350ac33d742dee2b476[m 消息发送增加try catch
+[33m129a1c8f5119354dabe8402e6a4ff0e8fc2f5532[m 解决添加规则不抛出提示信息的问题
+[33m93b6f5d7e1dafa703abf7c85d1395152f836dbc4[m 简化说明
+[33m77e0c2ba429257f321aa6b01d4c9dd18cc1165df[m 简化说明
+[33m926148efb30cd9e5ea2a0d5f4743934e26b7b0e8[m[33m ([m[1;33mtag: v1.3.0[m[33m)[m 更新说明
+[33mbb9abfeeb5796708a7e5c479112c2b5313f2974a[m 完善工单日志 新增binlog2sql模块，在线解析binlog sql_tuning展示信息优化 慢日志明细列说明调整 除上线和查询区分主从实例外，其他均展示所有实例 结构调整和其他细节优化
+[33ma2bf3c66359cfb719f929de3adbe2c5b7070201c[m 防止工单提交XSS攻击
+[33mea16b86dedc0129240c224455f821e1430c6c69c[m 防止工单审核XSS攻击
+[33mdaf4efac50fccb8fb51a5a888e69259cbec3085e[m 格式化提交工单，防止js注入
+[33m7ae33591be3522cfac5fde755727cccbf26839e0[m detail页面去除转义
+[33mb23e3ba7796c3b259cd985bd9a0219369e9e1106[m 表结构输出不做转义
+[33ma11f790881f3b241ff78408541a6f634269fdf7c[m 过滤sys库
+[33mf57fddcf59b4e7928c75877a915685554a529691[m themis基类增加访问权限控制
+[33m09854b0b7e70a82bd2c7cbb182e1b34116a1103c[m 调整任务时间、自定义规则的json、去除规则命令长度限制
+[33m71a4810021f3dbddf49d615ae01c2d9ae4c4f62b[m 查询权限审核增加二次校验，在线查询结果序列化方式修改
+[33m70443110f4d181cf176e360ee746c9b2d5079d97[m 开启所有表格转义HTML字符串
+[33mf2d53f2f16515e46ca1f0c35efb444d0a3dfc556[m 所有方法都开启csrf保护
+[33mb0af7364ca55757a9cc4712ef564594ee836ceb8[m Merge branch 'master' into v1.3.0
+[33m69f40f5280e30dfe3ed36d1854792d9581c0c145[m[33m ([m[1;33mtag: v1.2.0[m[33m)[m mail_ssl配置判断调整
+[33m9c94a6cc4e1253b48aef821fd91a312047ed6082[m Merge branch 'master' into v1.3.0
+[33mbd23b2644120e9ccfc9cd333248ba54daafefb64[m 暂时恢复job方法，避免构建失败
+[33m2f2a89d9221e7b2deb29f070c2a7d5244784479d[m Merge branch 'master' into v1.3.0
+[33mbd68c0ead2317efb3c529a46b08e3c605d10a32e[m 配置名称订正
+[33me75888b2d58271eb597ed368d66a45fb34ed6c2f[m Merge branch 'master' into v1.3.0
+[33me4e168b461de74858cacbcbfbd7528b50480579e[m 新增DDL工单通知，对应配置项ddl_notify_auth_group，用于配置接收DDL工单的权限组 优化配置文件保存逻辑，去除首尾空格 优化邮件收件人为空时的处理，不影响钉钉消息推送 统一消息内执行和审核的工单id
+[33m5726842ae48bb3a3177be60a41df6df12b28929e[m Merge branch 'master' into v1.3.0
+[33m45d1ea811845d2bf4586a34dc20ce6a015d707f2[m 错误id订正
+[33m93a429887ad97683b00a5e15fad464f8d63b5c5d[m 执行前都可以驳回或者取消工单
+[33m1e481f9261b8a9c9a2832b77ca22a3945360a20f[m 任务发布只获取主库
+[33mff2acbce2db8a51ddbca56f960574d26d6ce227b[m 删除无效url
+[33m56a5a3ac621462a6983d39645c63e4c3f8bc78a7[m 调整项目结构，增加themis数据库审核
+[33m6517faf7a59a6e55fc8397a63fcc121d5a7ee36d[m 删除未完成的功能
+[33m44c830b6982fc6d462046decb0960959d1416833[m 邮件配置支持SSL
+[33m5a90593b389e54250637a302a75a01e20c7a046b[m 脱敏细节调整
+[33m225b16c316b5257f9f456c21e050913731e88a32[m 错误定义订正
+[33mde82f60c14fac8ac9c401c2d926dde0227297331[m rename src sql
+[33mc5c36318983c3a1476b0662723222e045f922f93[m 资源组相关信息通过id获取
+[33m04ff12133dff38453d9b7b1cffdf95b4f8ef8dfc[m 捕获Inception连接日志，查询的Inception配置动态获取
+[33mc6e60499ef87a4e1eca43c0d3033a8c7c5397818[m 管理员可查看所有待办数据
+[33m84a15e9755b3bcf880b00ef812cb089411ad3c5e[m[33m ([m[1;33mtag: v1.2.0Beta2[m[33m)[m 捕获消息日志
+[33m7323c817d9cb8da7818c3e7459d86a569fbd0f78[m Merge branch 'master' of github.com:hhyo/archer
+[33m0dac106fa4bc6155ed60a00200623edeac8d576c[m 增加debug日志，方便定位问题
+[33mb27bab915d2af5acbb5b3a00231738fbaf7da8ba[m 权限信息插入时id不做强关联
+[33m9480a41326edcc5bb605129b0c3b8f4c02b5c4ac[m JSONEncoder增加timedelta类型
+[33m870860de94c5b662df895476486803899afeb0ff[m 统一各表用户名长度
+[33maf390f4df2d982a9caa6facdcefff6e0bc324b58[m Update .travis.yml
+[33md41b3bbd5495ddd1fe37ed94604240ec25cf3e5c[m Update README.md
+[33md2b8b695a6990bd597a46e2245efdf2347fba5fc[m Merge branch 'master' of github.com:hhyo/archer
+[33m989532a23693827fe2088cbea182c900b84eac73[m 增加主键信息
+[33m1245c4391b68f346e849ef768b6a75a7af14ef04[m Update README.md
+[33m35986aa41134a35fbc21c5790f280af4e1e1d03a[m 修改对应模型定义
+[33m12eb471686f6bc574516ab37e73299f81260193b[m 慢日志列表兼容pt3.0.11
+[33m2af87fbb64af232dccfb01c9ddedd2a3c79a86bb[m 慢日志表结构兼容pt3.0.11
+[33m5d33926aefcb5bda4ca94b9db6a7ce0d6f9f92ee[m 增加脱敏规则判断
+[33m6307a96f5f1a757267069a5bbeb5e810053e5694[m 针对有函数的查询脱敏逻辑完善
+[33md320170aceab405b4c4ded4375df047b3aad8b1b[m 完善查询统计
+[33ma905700b3d85a75e1ff70d0c84accdb1d4b834f0[m 用户管理模块，仅完成展示
+[33m191764c3fa7c1ff22fb58389d5d2b0e5834c58fe[m 增加实例用户管理
+[33me46fa11de1cc0a15c863334d40891ea9a6821dcd[m 实例列表列变更
+[33mdcfffc3f7981c1e51afcfd310bea9e908fd4e4f1[m 脚本修改
+[33m0c3ee05b8e048f8614faa2b259c300890d900351[m Merge branch 'master' of github.com:hhyo/archer
+[33m09ed6223c329e2ac098ba40088826d205d8d7b42[m 将主库和从库表合并为一个实例表
+[33m96a973579f0bd9e707ec632e186d93a7772041ce[m 增加实例管理，优化dao模块
+[33m0a277906867482694e3934a4e5926bcfecfcb30c[m 通过增加一个线程执行jobs，解决部分用户任务没有执行问题
+[33m9118e5b20dd27bf38edec2b50924ed1c5590b8a6[m 管理员无需关联组也可审核
+[33m159a7c40d12dc4f9389b0442385c3c8ade6ca0ab[m 审核通过后执行前都可以选择立即执行SQL或者终止流程
+[33m4e1bec12c1db7713f2423ba689e0d73f866155be[m first test_case
+[33mf0ef43f0a380793f00205e2b9ba90a247e66037b[m Update README.md
+[33me8104277aa9ebfce3e9149c19477c4369e93c2e9[m Update .travis.yml
+[33me612ff913c682a76fc059ed8e68a060bbc7992d6[m Update .travis.yml
+[33m9b974a50bf4b1e042fc2210e061b16839250e97b[m Update .travis.yml
+[33mff3a5c2d37c0b9d51370c99ede02caa673ae42e9[m 增加测试配置
+[33m08152f1af7850395a0586fd2b159b723f1f5ad02[m travis-ci
+[33m4ffd3906a213bf245bf1ce296d8abe89ab30817e[m 开启model管理，方便单测
+[33med727eb2c340b0c2c1df39a884dbd64d799525a5[m[33m ([m[1;33mtag: v1.2.0Beta[m[33m)[m 仅修改model描述，字段名先不做变更
+[33m9871f9417850a39c00293a16873cbb41654f894b[m v1.2.0 Beta
+[33m83aac6be615edb725c595351639bae505e1cdd5e[m 完善资源组、权限组、工作流的说明
+[33m3521f968ae89dda28d90419549951711b63be6a9[m 资源组描述信息修改
+[33mb2f3b0cd2ce353dcbe32404188ba64f49bfd1590[m ldap登录和注册用户自动关联默认权限组
+[33m6feaf03b9629e85e0c85b1ce1f41cca323fb56bc[m 判断用户当前是否是可审核工单
+[33mc9f2ca9056d85a42747163b52ab3a010a8a56ac1[m 命名冲突处理
+[33m9f430cd6e09dfbe93584dbf69b33dc4b8b545810[m 空审批流的限制
+[33m259a3c1f2a0c55cdd8ab3bf6d5f237e92b060556[m 兼容旧数据，给出提示信息
+[33m708259b5252d6017e92367fd8addd8c0076049a6[m 工作流审批由配置单个用户调整为配置权限组
+[33m12b4d48edb809597f8a77f46ce05197bc75da0c8[m 调整变更语句
+[33md3c7953d33f66b7bde74d3f1ab2c5e771db42e09[m 利用django自带权限管理模块进行权限管理，去除角色字段，采取权限组来区分用户权限
+[33m338039902a9fa9dd1501edc7d8acb4b3b218db44[m 将消息通知从工作流剥离
+[33m9f60bd0571c66e74717cd853db103793942abbc3[m 提交工单时审批流程获取方式修改
+[33m4b49664f04530fd713e51f704c34b9364eb12331[m 删除图片
+[33mcd9c848317a35de89c1bf048278f0486bc43e091[m 简化docker配置
+[33mfba074408cc2ca48d2715f14296701f068a65dd3[m 更新说明
+[33m7ed0ed57946fa0bf79e066cedc906ca5a9ae748b[m 清理无效文件
+[33mc97bba8be895e992d3df8bed840721a352c458de[m 更新部署说明
+[33m04c22401f261681b2f8dc6cb9302764583da754b[m[33m ([m[1;33mtag: v1.1.7[m[33m)[m 版本号更新
+[33m33fe9a867075d49eedff8e9e6e640b6b1e5023a2[m v1.1.7
+[33m64f19b2cd603581e38bac62f79c6aaa7c77f9857[m 高危SQL语句支持自定义正则判断条件，开启后匹配语句将自动审核不通过
+[33m9f376e4e75e6542ca3a70f81042ba7651ea1cbd4[m 注册url过滤
+[33m5e71ecc4c46e58285a2185af9b8b748156dda55c[m 调整model类名，菜单地址调整
+[33m6b1d4605e5de75047094297790be42367aedf5fb[m 调整model类名
+[33ma2fcf8d44e16beb156cf2bb1023a64cdca2dfd51[m clean
+[33mdd57e494dc0deeba0caff106c8da34007d4652bd[m 抄送人和审批流程配置显示中文名
+[33m08d2b05431c65b5821a097d1d54e6e49bd84a86d[m 增加组说明
+[33m1b80af65c8a66cceea3c548fa759b77ba5f824e8[m 修复组关联对象列表数量错误
+[33m4ff1f17bda7548fd7bf53f4d138abeb4f7bd24cd[m Update README.md
+[33m8fa292bbb02f9e903ac2733fb6886afcc4bf5147[m 完善说明
+[33mf8388dafdc7f96428eeb7d361fc8ab9d5c0b1bb8[m 登录样式修改
+[33m4a3a7e9f3feb3d32fbaa6830cdeb0a34d9cb1fa6[m 剔除无效导入
+[33m4d1320a3260a16d2bd3c3d9dfc8f152d0560141d[m 静态资源结构调整
+[33mdec96a33f2b364f95086ec6925f430d2f9475da2[m 增加SQL查询统计分析
+[33m0021c7c8a6accee868d79e0c9438e37a5d3dfb1a[m 页面信息简化
+[33m0d20d04f12948b398ef888052240e37937ce2f8a[m 删除有歧义的代码
+[33mefc5fc42a2156f45a3f4b30700a8a242a46f480d[m v1.1.6
+[33m8d344d813953c3a6508d823e0700c2c9dda08e9e[m v1.1.6
+[33m1c924ca75fde3534a3f9746ef08862589e452f29[m django==2.0.7
+[33m9af3e5f0639c9576af93a63ff1817a58f952dd78[m 管理员可查看所有主从库信息
+[33m72a241908c2237bfe236aaf4be81535caa301f4f[m 修复审核通过后执行前审核人无法终止的问题
+[33m504a72ed109588f2a8b44916ad4a84cc7b8a7325[m[33m ([m[1;33mtag: v1.1.5[m[33m)[m v1.1.5
+[33me192ca69e2d610bc59a9f10165c7fd1c8ab9b157[m 解决密码加密可能报错的问题
+[33mfe8352ccf9fc4faa17103f341d62dcaafc60a7fa[m 钉钉消息标题添加
+[33m536ee430dff62ee6a42b658f6344cb41e6741f6c[m django-apscheduler==0.2.12，解决启动抛错的问题
+[33mc2830ebe0df51d168b20511497906e3ef842141c[m[33m ([m[1;33mtag: v1.1.4[m[33m)[m 1.1.4
+[33mc7cfc4b9c46e1877d2b27b1219d666f1c8802afd[m 修改消息通知地址
+[33m8ee396656a248d5efc5f2e642e0185d6f87b6b51[m 增加ldap日志信息，消息通知审核人显示中文名
+[33me3e0fc96971a43ffe4cb19987cb0875abecc4b92[m[33m ([m[1;33mtag: v1.1.3[m[33m)[m v1.1.3
+[33m5d6199b44941ff727f6fe6333456922bd96021d8[m 修复会话管理进程获取错误的问题
+[33m637f33b3e4e3583fb776010f28fddab92f6fbd73[m Update README.md
+[33md78fd0a7bc06156d285e1be7dc51bc5ff4f99ee1[m 更新说明
+[33mfaabc4fe806bb9421c0a59228e428390d5d00f0c[m 更新说明
+[33m375d39f461d664cfef4f88d2237c58e8e0f04cc0[m 兼容rds表空间为空时的情况
+[33m034c569ba42218be237fa6ddf16705930f74f685[m 慢日志分析初始化时间调整
+[33mff3cf0ca9abe8fc49700933a01475a71da76aaf5[m 支持同时管理rds和本地数据库
+[33m2c5a35df09aeaaf0ba861f1f742dc7b93a147cf8[m 表格数据加载错误提示信息调整
+[33m91df9c666c87d4af17038a5e420087e99d4d1cb2[m Update analysis_slow_query.sh
+[33m6c0cbbb25e68518acd33a232d03637f6b8a3ad37[m 组关系管理限制为仅管理员可操作
+[33m96a1ecb2f96c6067a79f0cc70b16781c55fdc098[m[33m ([m[1;33mtag: v1.1.2[m[33m)[m 获取组管理对象结构调整
+[33m15d44d7936720fc999d919e0f8e29768f713e47b[m 饼图调整
+[33m1853d0bcda1c1bfb5acb606eda504b733d78ec0f[m Release v1.1.2
+[33md5850c61ab8c61e12248a2a933d41b211108b190[m 新增组关联对象管理前端页面
+[33mfb223abd11cbd590387f84eff644cb0fa4b5aed6[m Update analysis_slow_query.sh
+[33m92cdac07e9880959bc81f2731ea3a537c2157d34[m 补全数据初始化脚本
+[33m3421705782e080d42bbe6c2f931267955a112922[m Update README.md
+[33m1ca0c785ba370efecae81cbd68ead685325905e5[m[33m ([m[1;33mtag: v1.1.1[m[33m)[m Release 1.1.1
+[33m0e358ad79764b65a3405540b0169940373bad113[m 修复锁信息查看失败的问题
+[33m770fc1ae2aeeabc2268a3eff3bfe583fb32d7d99[m 更新脚本地址
+[33m8004b964d071a334ba0aedeccf469a229aa73399[m 更新v1.1.0说明
+[33mea0650de887212fe6f9b40441e36f931244c9c8e[m[33m ([m[1;33mtag: v1.1.0[m[33m)[m Release 1.1.0
+[33m153b3ca17f7f56fd6d0e057a46a6e96e91304fbf[m sqltuning兼容5.7以下版本
+[33m1a0149d80d7a225acde77734888e99d0994857e1[m 回滚页面支持显示完整的执行语句
+[33m82de8f9adab0d930040572616f9a4c16eb23c78d[m 页面申请用户信息显示中文名
+[33m359833a60900ca013bbab8edf37b7acd70e8e012[m 新增钉钉通知
+[33m5c6506e11dc43f51dafd1855f51d80dcf85282a4[m Release v1.0.0
+[33mfb4b3eb767dec3f0bd07f3fb206e6d3055f12c75[m 细节调整
+[33m399db13fa90b0e99f263318325bf000ac264c60a[m 删除max_allowed_packet参数
+[33mc57b058c57cd6b89961d3fe7b400be30add91757[m add init_sql
+[33mef06b7dde4787b64ec8a0ed04a39112a7c77dbb8[m 调整url，使用2.0风格，实例信息新增锁信息查询
+[33m28b7c743a0863cf1b97c023357b122d8702e6e09[m 配置表需手动维护
+[33m36cbb1960b0c747f7c395e58ad83fc1d25896a7f[m SQL优化新增sqltuning方式
+[33m32a469a08a6a3ff601dc38ae13d815830da7a8c3[m 增加Top表空间查看
+[33m88f7910995df1b54a7607010d2d9ee4c75097050[m 更新Dockerfile
+[33mc1f59b7029a25924b5c8161c8162aefe5330457e[m 报表简单使用pyecharts
+[33m5137b87bf6b7d52265fbcd660aba5d08cd0d8ec6[m update readme
+[33m26b0a1150b65aa41706f4233a587740aa8ef20f7[m 修复待办列表参数错误
+[33mad5850e2e77ca0d99010fb573e0f4d34c4e7a289[m 新增自动审批配置，支持正则判断工单是否需要人工审批
+[33m6aefe227afc0391282e7ac811fe9427aa79ce343[m 去除多余的全局变量
+[33m0144d5af8e54ddf1cb8172bd2414c3c87a977a37[m 目录调整
+[33m8a79fc80533e98cb71b765a658764e6661cfaddd[m 查询时获取从库信息
+[33ma90cc553aa1e2a85ab3f8fd5f768fe5123ec8f55[m 主库、从库信息全部按照组来过滤，用户必须关联对应组才能访问
+[33m100713694844226c8b5f60c1e2943729e9d73389[m 解决密码加密存储出现的异常
+[33mffdbf472f993fdb50ab180a77b3ba6a43444df72[m 菜单和model调整
+[33meceba06e4e1c5ef63cdf352c94e5ee1171c7826b[m Update README.md
+[33m82b3c3e9b47cda168be95a1253a8b42c78f58316[m 隐藏未完成的组管理
+[33m58828331b23b6c796d16f7cfc2a7c2e5a3afae07[m readme
+[33m7b8bdde9ff7ab6b1871ec389b8206a63b0bf034b[m Django调整为2.0.6
+[33m56e96439aaf3a1f691cdf3dabe49efa586a4ad13[m 注册时密码隐藏
+[33m63f6d4ef522ad6248b447edde9d5ec5188cc8b8b[m SQL工单区分语法 实现简陋的注册功能
+[33mac5c133e7f451fc9d77af6f8eceb17706097c831[m 全局信息添加loginUser
+[33m7c778b5675c9d1f99422ce2fbc783d722e0bc57f[m add menu static
+[33m7af9c498317f1bcc7b12df166b3ae7af69cee956[m del loginname
+[33m65296bbdc2e80083b46a5d2ef3746195c986a787[m Merge branch 'master' of github.com:hhyo/archer
+[33mc6c59f38cbec9efec97e3f237e8e6ed570dc0871[m 修改菜单以及登出方式
+[33m6d997e7b7425520cc5223128f8103ddae48ff319[m rds配置判断
+[33mebef6f300ce8abb16c6f477db74a5b15087c3397[m 更新说明
+[33m9e8e7bfd27f80748c5a44fdf4d8a426425fcdcc4[m 默认打开系统设置
+[33m55412715585054b623ef3898af8abb6ac5b28a15[m 增加管理员判断
+[33m2efd3d94c1b677f996ba1cc71712d816590164ea[m 去除配置跳转，SQL上线增加组信息过滤
+[33me48506c84d1ab1dc616e9d276036641fecb1c214[m 调整组说明
+[33m4842ae5896008af042a9b2a861092c906cfe1121[m 调整说明
+[33mc42725e7beef9bddfbfa2cb15b3630c8d9448434[m 更新在线体验地址
+[33m9b325c0722e9938ea92ad122f023af1efd17e4e0[m 更新慢日志收集脚本，简化配置
+[33m3202fd2a4dba0242ea3e83abe838cb64c0f56d2e[m 平台不支持的语法状态在提交时也变成待审核，但是会做出相应提示
+[33m569aa7e78f7990c5aac4f5922e6fd78d7a8b392d[m 除执行结果外消息通知独立默认，便于后面接入钉钉通知
+[33m3b1be083c24297f933aae2f19d3d2f87954be840[m 查询和脱敏遇到语法树为非标准格式json时，采取正则替换，替换不了的抛出具体异常
+[33mec63a7d94630bd3f8ff2edb4e8531cb8b04ad371[m 开放其他show语句的执行，优化判断正则表达式
+[33m5c3aa903ba627458015e61a34d0a7740aa1330ec[m 慢日志查询时间调整 会话过期后请求跳转处理
+[33m4a9181c0174ecaafe309dbf8ac8d0585b5bd580d[m 去除底部浮层，kill process提示信息修改
+[33mf0d933de155ed5a5a86121121e7cd732f316ce3e[m update model
+[33m8cebabbfcc27ee23d59ea8e35447843bf22a0ead[m update model
+[33m24aaf5411ae1cbe23735c82e8312f56e31f69f97[m update model
+[33me915199bda552fab63f6d827d8cbe707fd7bddf6[m 主库会话管理模块，同时兼容本地实例和RDS
+[33mdf2627e91b7513c47c0147f4a622ce38d13d32c8[m 修改模型定义
+[33m3a4017043e75253e2d550b03cc246cb9804b17ba[m update
+[33m56a1c3e474a429665a7eb5af775c80040e685f11[m update
+[33mda149fa2b42314d47a0861cdca2fe3f576a52412[m 增加主库和用户组关联
+[33m988f5b91f7fae111dd9cb19bfa03436c292cad3d[m hide the password on forms
+[33m7719eaf215c8126bbe3ddb73e8bedfc937c30cd0[m update readme
+[33mfd9062adfb1e3e2a48acaebbc689a50acf2ce6dd[m update templates
+[33m7413e6da1c87b2ee883b2af0c040ca128bf3d04f[m add static
+[33m39d62f8b141a2c43344b41024bb91cb37eeeebfd[m 兼容无配置的场景
+[33m377b70c7eb421192fe907a295e0b445f7e2e1519[m add system config
+[33mb55d964503d4e7365dd213488cca7a7e728c9b17[m 系统配置项转移到数据库
+[33mae06fd05e188d7832534a73a9c792eee426e7642[m update project structure
+[33m665ba12c076571d7f0556d65ea3460fb7800b9b9[m update project structure
+[33m2973baeb0c70b51eff23ab0f222bc9a3f53db2a6[m update README
+[33m847a03caa0a970b21978d2fdb7aa38418d9b781b[m update
+[33mf7169dac616e1dcce773bfb0b2945252bd088caa[m clean
+[33mc7e50c8e1cb751590831459f3f22c6051cb81baa[m 除SQL审核\查询模块外，其他模块默认关闭，可修改相关配置项开启
+[33m0abcdb4fa404f32ad1684d12a9efa33f13addf17[m update README
+[33mbf1f4aeed7a9e0dadf1727f54473b91bfca7b829[m update README
+[33maa31c885b4bda49e8d9179fa03d15dc3253ec17f[m fix sql commont
+[33m65ccef08614313cd29c3b7b0e3f11becee6ec075[m fix bug explain
+[33mc237227b063364fda64786aa074c4985a0360c94[m Merge branch 'master' of github.com:hhyo/archer
+[33m81bdeb77ff31fe7f9b8373805bdc7ed97e3a6ffa[m 提交sql上线时保留注释信息
+[33m6091f53fc6df50d425f46d9aa713f14ce05ae77a[m 压缩图片，修改上传SQL逻辑为追加
+[33m8097b84cd78156a101e022d284197d83ee84002a[m 优化代码，job只提供定时任务方法，不涉及业务
+[33m3aaee69fe15b040b39880b81365c8e219ef8122c[m 解决sql查询无法使用注释的问题
+[33m3b1730fda25f7e01fd04ac0b03ee0726a542702c[m 解决非String数据无法脱敏的问题
+[33mbe5c7619d7ade13d5af86da27ad63904c1775077[m 回滚语句按照语句块倒序显示，并且展示对应的执行语句概要
+[33mb10a81c3e4b07f53e450ff285a18f51fd1225651[m update Dockerfile
+[33m24b590f6134a97481a286acedef28fa4aaaff6ac[m update Dockerfile
+[33mdeaaa02a2e958b5f62bb9293430406965fe9911a[m update Dockerfile
+[33m1c65ed6f6efe76281133f91e6f7208914ed7b1f0[m update readme
+[33m9d1e59db498c1340242a362f16ed1e046a638356[m 解决查询结果html未转义的问题
+[33m0dea3a6a880708bf2404917877e07e6b458b0adb[m json序列化模块统一调整为simplejson 解决bigint前端显示丢失精度的问题
+[33ma0b291527036d2113859c1a27c15b0ed88451934[m 没有中文名默认显示用户名
+[33m8d9a44586aabdefe7f0a1f904469acda85e3bfca[m 优化detail详情显示 解决审批流配置的bug 申请校验审批流，防止恶意绕过
+[33m390ed56fa21c17f52b9c7c75035aafc9c75b8ea9[m 提交SQL时默认删除/*...*/，和以 -- 开始的单行注释 解决审核驳回后状态没更新的bug
+[33md7980ce9581a1ce74638b6bfdc5c753848b05f63[m 提示策略调整
+[33m1bfe1f8433fe2816b386a70e71d59f55918ff4f6[m 提示信息调整
+[33m4c275494b5b95fa8b06516240f62e15405a0e5ee[m 完善log 信息
+[33m34c55f0c57411633da115058c807723efb3ce853[m 增加job任务执行日志，方便定位问题
+[33m484687dfb3a2f8828d55a304bbe60323b1bd32c0[m 增加心跳检测job防止任务执行完成后调度器自动关闭
+[33med36955d7e0e20042ea0054f2e2bf82c0d9f4253[m 审核人执行增加二次确认
+[33m53e0cfc34b19959c1f0409fe6ff7efc688393ca0[m 去除全局锁
+[33m7527c597cf11ba07ffd1c14918ac183124e94bef[m 用全局锁确保scheduler只运行一次，解决django使用多进程部署时apscheduler重复运行的问题
+[33m9f330d9393c0e7c95800ec0e24ce6a2c2d44c6dd[m update Dockerfile
+[33mbcfcca8a31643f9e02b924640d003ca5bef717a5[m 发起申请时数据库必选
+[33m4e216382fd1cedd8a774cdec737e20bd6133e5ed[m 新增定时执行SQL工单 审核通过后可由申请人或者审核人设定工单定时执行，执行前可终止、可修改执行时间
+[33m4ff0295e368c8ca4885f23c206de755121659b25[m 按钮控制调整
+[33m996ebe5252a4a080130740d740f5168e8759efce[m 异常信息转为字符串处理
+[33m18882ef437b279e98083b28a934dd69c0fb25b28[m 捕获各类异常，提示信息更友好，方便定位问题
+[33m68e3add4e424d5779dd1ff85cb3e3deb76815fcb[m 工单保存项目名称信息
+[33m582f72690422f25289dbde2019b2a5716406ec0f[m 页面样式调整
+[33m0e169cf6704cf2820e4ca6d94cea8af212c79877[m 去除大部分的外键关联，外键坑比较多，弃用。
+[33ma85444423f602c4957f8768f1944d693931aaf66[m 提交工单限定数据库，禁止一个工单涉及多个数据库
+[33m0a2880735fefc9f2fe5f26f1281fc246f582b92c[m 配置优化
+[33me286e3e80ced6a4fa227c24e5664afca50498b87[m 修改admin配置
+[33mcca18bcdee343d3a2ca51842c37ef91e63c8cb93[m 样式调整
+[33m91970dce0e0a58e7ec3933d30e6bf8ec2361260e[m 调整后台认证方式
+[33m588f8c7a92d54ad823b6bd372d7b602221245374[m 精简ldap的配置，修改用户信息同步方案
+[33m77c63ddae0bff97d621bcd97284d6a4dd0784ba2[m 样式调整
+[33m421d12d07bbee825e22813fbc29225cb19e1d835[m 修改配置
+[33m2c7687643e3d7f46e93fb3ccdf03063ca8df05f3[m 样式优化，去除单独的SQL上线页面，整合到SQL工单内做跳转
+[33md81f18834624ff7d0b42dae408c97d16d6f040b1[m 解决退出登录后需要两次登录的问题
+[33m8eb6fc72f6016742733d3ce8e3dd6b19e13d4797[m 解决查看自动审核不通过的工单报错的问题
+[33mc84532c0f4b9039a84d50138608894526c81ee2f[m update Dockerfile
+[33mf6c0636b4b678656f181ab381829030e3f5bfc51[m update Dockerfile
+[33m0b74eb079d0b6b7fd0dd92450aba107256776416[m update Dockerfile
+[33m952ec42256eb623cb1963728577b6bce67b1a41c[m update Dockerfile
+[33m9f3d2bcaf7fb0fccf3402ec5dabb3b6ce350f6c3[m fix rollback bug
+[33m97c4257c9274f8244a73ffbb0b2de2d9fba81a70[m update Dockerfile
+[33m22ad4eb8aa4c9e1b46a79b7cd6a5e8edbb448992[m update startup.sh
+[33m747f784cb415da211a114bcd97e93051a8560d5e[m update startup.sh
+[33m2237054b6c3d431c8f755a43d724215f219becfa[m update startup.sh
+[33ma77bbb3bec0b567a7541b89434c0e6ccd3fc7f7b[m 仅dba角色可以跳过inception执行
+[33m1e6a435d667ed698f9bd312fb1475812920b595c[m update readme
+[33m88bb867b5fb4112188946e8680055988402c932e[m 增加项目组管理，所有审批流程和项目组关联 SQL上线工单接入工作流，支持多级审批 增加配置管理页面，可配置项目组和审批流程 审核和执行分离，审核通过后再选择执行
+[33ma339fcaae650b797426f28b1e55b570b93f572f0[m Update README.md
+[33m47490c22a6f4b489f479af3e65d03231b79e15ee[m 增加设计规范文档的MD和HTML格式。via kylexlau
+[33m75779c4a6041229640a056b6c41d92d94ec73eba[m 解决SQL查询时间过长造成query_log保存失败的问题 仅开启邮件通知时才发送登录失败的邮件
+[33m6c13d6b447fdccf94bb76008f8c7b1d559593aca[m update README
+[33md82ad090b78c208a8138ed3c52402478065cdace[m 详情按钮控制调整
+[33m6d1c9bf809538f5ba580e0b03d5ee5080e7a4e76[m 权限申请页面显示当前审核人信息
+[33mf1035d481e42b81954937c077a3c66d56aa615d1[m 发起工单新增通知人选项，工单信息将会抄送通知人
+[33ma9387954f0582860c009d373c394e54fe677a2d8[m add url
+[33meed81b7f803cab696bfedf570411cb7760dcd62f[m 前端细节体验优化
+[33m8be5d859141bdf4f6c304a1eccb16d8591ab8e8f[m sqladvisor默认输出完整信息
+[33m15392d5884765f89dc43217188b8b16612b5649e[m 解决docker镜像nginx反向代理django应用非80端口，跳转错误的问题
+[33me1105c3b143e6a1132bd27651fdb976f6365c8cb[m sqladvisor命令增加引号防止特殊字符导致运行报错，感谢Nick反馈
+[33m9b7c822123bc9d6d990bb5e82feaa675593a2275[m update Dockerfile
+[33m932d115b899d30e8cefef414a6ba5e2019f1e8f2[m update install script
+[33medbf7ec5fcfdc5a509d0ccfb041aee98f3bebbcb[m update README
+[33meb0477991694b110ddd9d90ed9693899398af4ca[m update README
+[33mdaadf050761dcc68b8e29e7b346bdf3ca542f3c9[m update README
+[33mb96730d61d27dec9922396d2de0b44c679132af1[m update README
+[33m4881121e55230404e63bd825c51e787a4639953a[m 页面相关信息未配置时自动跳转到指定配置页面 修改一键安装脚本
+[33m20e98f6866b58ab7a303bd0ea7a4d6c4234f2268[m init_sql
+[33mb5031b3af20e8dd6b7ffb92a47d7193c60fbab09[m update init_sql
+[33m2577291da0f5323283dbba5a3b7355397dfbbf98[m update processor
+[33m97aa0556e488c941bfb30af5a4b7e40658c436c0[m 页面显示调整为中文名
+[33m6aa1a3b5c94bfcdc416f8af272d581cc92ebcc71[m update readme
+[33m81ce989742cf2b0cc5811aec9c748cccb744662f[m 登录时自动认证管理后台，避免二次登录
+[33mf454aeefccde7c5c0139ac66328705f14fcd15f9[m 慢查和优化都获取主库信息
+[33mad80ecae850321c0d7979fab29993f2de8eb8efc[m update readme
+[33ma7530347c7044c6e6fa149cd76601e16294b5d27[m update readme
+[33md7890fb778dab5512d198bc0c3fe04a36c18c131[m update Dockerfile
+[33m6415000dcab85e886cc6e608e93b7f974248b712[m add docker startup.sh
+[33m419fe4e953eddff254fb1116164a6ffbf987d4a1[m update readme
+[33mbc313f11c3d05d9e4bb87f55072b2d9b167eb204[m update Dockerfile
+[33m2046314369f23ee944483b29c18fcfc62d877fd6[m Update Dockerfile
+[33m9c1bfb0159d524740a1062201ba91630f500e6e0[m add Dockerfile
+[33m0b8192ef3a489d500de885b9e61257b21446e050[m add Dockerfile
+[33md730dacf0fdd108d23dba6aeb41d8aec0f55c79e[m 工单列表只查询所需字段，提示效率
+[33m24e26a29507e77963168e14c970adfaedd7dee58[m 兼容列表未知状态
+[33m6e758b060d166715199bb66a1d48b71543822811[m 增加全局异常捕获，方便定位问题
+[33m00f98b357837cc788b8d43beff16082995493b0c[m 图表优化，via绝望的生鱼片
+[33m346b79e1944288b31fada04c65ed7557d88092c6[m 解决detail页面执行后刷新异常
+[33m98d7078009c55a40694c2a570a9e880b04f14d2b[m 修改终止osc的提示
+[33mf2087ef43e776b94b0fcbaed0dc6e63054677305[m update style
+[33m7818efc6970bb7047982770cf8c1ab303d2812e2[m update style
+[33mb752070b1811ccfbacc7209129ab87eab91972fb[m osc终止后刷新页面
+[33m02127632ebdcfadf9c7b4d7835ccf8e43d08a414[m 优化detail页面性能
+[33m69c5fd050d65d04170e1064b1dee2a2363d0a7f0[m update readme
+[33m3fd09b61811d06a219f4ff9d46bf3a846511d2b9[m 菜单展示调整
+[33m350422c8460ddb72d61db4e1ae0779ad7b6ea96d[m 新增慢日志收集和展示
+[33m6b11ee4a215753da6287fdbdc8c0f7a9f18cb24e[m 捕获异常后才重新连接，减少性能损耗。
+[33md9b03c7c5f3d7f2978c8aec903726120d7994358[m 保存执行结果时重新获取数据库连接，防止Lost connection
+[33md01e725855b4f89865b0f6e725e67c124e4dab71[m 采取异步回调的方式执行语句，防止出现持续执行中的异常
+[33m34860132e3c1aef59d49a2f29aac5ef6ee8cb36a[m 按钮控制优化
+[33m630ee6459faec655d7370ce9f019814bb67376bb[m 进程状态切换
+[33m9701c337186ad0e8a315dba71595b606d5babfd9[m 表空间信息也支持导出
+[33m8b659dc14b8ce312046b44c8ce87813e7516df77[m 时间格式调整
+[33ma5ba29c975a2d8c5f0b1390c8ab5c7b962860e70[m rds管理相关选择控件优化
+[33m9a5bb76694e5724fb12cac30b4cd57fb641fbc46[m 权限申请部分细节优化 debug.sh增加--insecure参数，防止debug=True时静态资源报错
+[33m096fe2b36b8a1e803a713520d6f52859df91bd0a[m 工单列表增加执行异常筛选
+[33m3901c27c1744f51cdd721f9dc5d9f55d2c7cc83a[m rds进程管理终止进程按钮不显示的问题修复
+[33mad20e581967b1c2ba55efe4beedfee5dc186cb76[m 新增跳过inception直接执行工单的流程 提交工单支持上传sql文件 优化工单检测结果展示，提交时做二次确认 调整js加载，每个页面只加载所需的js文件
+[33md16a3410f59a1c053dabf4b8059ef855f7cb2c13[m readme增加功能配置说明
+[33mc4d926ac44daebfc51991ef3eb3ea5a061100934[m 增加阿里云rds相关模块 增加sqladvisor模块
+[33m3e649a094013b4d89ee4f4f2dc413fa0adb029bf[m 功能截图
+[33m4b6fb695589a5f1eb2803da4404461c06047151a[m 邮件发送支持发送附件内容
+[33m19d7db3ee750922861973fd2530d0bc6c3cbf639[m 审核和查询分离，支持审核通过后由审核人或者发起人自由选择执行
+[33mb171ed8e43691bf26891abca8703b6d5c159577a[m 修改nginx配置引导
+[33mdf0a4d189a60b7adcba53e018337ac4cedeefaef[m 查询权限管理区分表权限和库权限。
+[33m2b54270a30ce22fe2a515ba1949e686fa5b67be6[m 去除审核人查看待审核工单前置的功能，修改tab名称
+[33mafb4173a14a56486702752742bc3e3d0a41a9c04[m 历史工单列表样式调整，增加导出、搜索功能，支持搜索提交人和工单名称 在线查询新增美化sql功能
+[33m8f7e481074d096740664a8fd6a07f30a2bd90920[m 工单详情新增快速上线其他实例的入口 工单提交页面输入域更换，检查结果展示调整，体验更加 工单提交按钮增加限制，必须要点击检测后才会激活
+[33m1a7042f2d75f4422ef07f58ce030a5ff4aa99b1a[m 调整样式，兼容手机等小屏设备显示。 按钮增加防止重复点击的限制。 sql上线页面点击清空选项后选择器没有重置的问题修复
+[33mb5ce0fa4ea14f4443c538ced6a6c484364c16bc5[m 增加管理员的结果集限制配置项
+[33m386397784c936cb8d513dedb15e4ec15f97c1abb[m 关闭强制跳过inception解析参数后无法返回数据的问题修复
+[33m692254da0490e84566952ae1a024fb201ec54c31[m 优化sql查询细节体验和审核配置错误的提示信息
+[33m3b83c6b724b07ef66677542c2aaee40336e62bba[m 修改结果集保存的逻辑，避免数量和返回数据结果集不一致
+[33mc1b7b95a940e527b4402190917109d834ec53863[m 修复最大查询限制为0的问题，修复其他审核列表的权限问题
+[33mc9e6f87cf652249053623fd610c2246d0053c399[m 修复查询权限校验逻辑遗漏用户判断，优化权限校验的效率
+[33m95b6db66f67032c0d09147e2da2bd505335f896b[m 修复查询权限校验逻辑遗漏用户判断
+[33m484b83f6f2bebf7f59c60c1af1bf422e5abcc5bf[m 查询权限申请和审核增加事务控制，保证数据一致性，审核菜单开放
+[33m35beeefafa271b9cca800968463b14a5bbc92b7e[m 1.新增在线查询模块，支持查询权限管理，动态脱敏查询 2.admin管理使用django-admin-bootstrapped样式，操作体验更佳
+[33mdbd2956acda47f2c8a6a3027ed7cd52e017d00f1[m Merge pull request #1 from jly8866/master
+[33m9d199df545ed9a3e1377c399fa813af03fed5890[m Merge pull request #56 from woshihaoren/master
+[33m0f2cd0c04593b78006d5f98e63cf058f05ea9a85[m admin后台加固
+[33md977965d074c86bea4993e9ce7fb9f516e2028e9[m admin后台加固
+[33m47a4f5066828ef401524d5f00d87a5bf753978b8[m 登录失败等安全相关 支持配置
+[33m6e2bcef21a7235a436906f2dc952aff3530b07e6[m Merge pull request #50 from woshihaoren/master
+[33mcb3e9c4d068f51cba15568ead1a6933276fb8ed1[m Merge remote-tracking branch 'origin/master'
+[33m4f6652351ea1027be8e132364bc5805e964364e8[m Update README.md
+[33m3d879bdef8e38f901b76ed04f0d19cb97a285d0a[m 禁用LDAP，不在需要安装ldap相关的包
+[33m5e0371c73ea1ab22b75893e29d37586a0c4f4f04[m Update README.md
+[33m44787fad369117f20bcf1b9a31e58505fdbb8687[m Merge pull request #46 from boomballa/patch-1
+[33mb0d3ae7b2f95b1bdf3ebfbf8433644b7db9dccdc[m Update inception.py
+[33m8efe024e56ae81c930a4082c934c3cbfda2de488[m Merge pull request #44 from woshihaoren/master
+[33m87f68fb9482e63ef97251bf12d048d7f5aa30096[m add hide ldap for not enable
+[33mfcf114455c8c51dfb16b5a55f3333f311a6c5131[m add ldap sync remove print
+[33me1f51d7dcf02b5bb6bd712aeda7004f344e37878[m add ldap sync
+[33m75cac29f533f743ddde86429438543dd0188c959[m Merge pull request #42 from woshihaoren/master
+[33m19dfc7a65ff3dde189e0638e2381e3c2e09fa7e3[m add ldap user login
+[33m267f709084c9791d49d22016932571bf3204a8b1[m readme安装文档更新
+[33m2a559c7915c4e742b269d26d3d00f9e28c1e67cc[m Merge pull request #39 from johnliu2008/master
+[33m21e8243860fe4a387fbc5514159e9157ed256142[m 修复了登录时密码错误却记录了session信息的BUG
+[33me4d2519a6f593e21d8def61b24b4d7f965e86370[m Merge pull request #36 from johnliu2008/master
+[33m6197e68335954ad4956fe99cf722b704814a455e[m 修复detail页面，整个工单都不由pt-osc执行时，显示不正确的问题
+[33m24982cad3e40fe1001c3c42ac52eb3c3bc091423[m Merge pull request #35 from johnliu2008/master
+[33m2b97728f9eeb1785e0e4b2339abc61afb87fbb38[m 新增：在提交给inception之前，预先识别一些Inception不能正确审核的SQL,比如"alter table t1;"或"alter table test.t1;" 以免导致inception core dump
+[33mf8b2e53a7fa35e15c60748d95ee88c47cec0144e[m 修改回滚SQL逻辑，可以由该工单的申请人、审核人、副审核人提交回滚申请，提交时可以修改SQL内容等要素。
+[33maa2ca28976bbbf8d6ed99df1a9e1fdea32cb71d2[m 获取osc进度时，查询完每一行，并且工单状态改变后，手动刷新改为自动刷新
+[33mbd0af9dc7e137f2a1922eeac99e605c4a7b565d0[m Create LICENSE
+[33mf1d90ffb47d0eee3ab19be7dec8d628bc1909213[m 修复单行SQL的工单无法停止OSC进程的问题
+[33mf2cae1dddd969a8e61044d0958ba9829bfd6dc4b[m 修复查询osc进度导致inception core dump的问题。修改了前后端osc进度值判断的逻辑。
+[33m2b9bfa05a254969f8aaea0a71100ce192cee1844[m Merge pull request #33 from johnliu2008/master
+[33mfd9f3caf99f1d430ada27777ac87f103e1a1aa18[m 修复查询osc进度导致inception core dump的问题
+[33mdd9b232506031eb0edf1910690305b4a0344abe7[m Merge pull request #31 from johnliu2008/master
+[33m8dd24916bb4559647f211bb0f74e8d23ee11d0bb[m 新增快速回滚功能
+[33m709383ae69b610bb7088e76c6ee626ce06120982[m Merge pull request #30 from johnliu2008/master
+[33me0860def1447e99de48f121cb6e9fcce84b0b54a[m 修复detail页和autoreview.js中，没有换行的超长SQL导致<td>变形的问题
+[33m7ea64dd8fcbeb685aa9e802024dc31a541fa435c[m Merge pull request #29 from johnliu2008/master
+[33m2565c162d46af99e43dff40ee2c93000634dbe34[m Merge branch 'master' into master
+[33m83c96e7304d7ccc55af4bd6c69bee0af0a2e5c85[m 完善criticalDDL功能的返回值，使之更易于阅读
+[33mcc5814895b81431e60f2fa2a3b1f085bfe40d9ce[m Merge branch 'master' of https://github.com/johnliu2008/archer
+[33ma12b8768336e236c4c47910850f2cad1007cb75f[m 修复https://github.com/jly8866/archer/issues/26 中提到的4个BUG，修复osc进度条更新时潜在的BUG
+[33m70c0b11c7235e4bd5b8bb3417116be7d1d989f67[m Merge pull request #27 from honor100/master
+[33m9ede6daca4de3d69c4021fa35b515c528f4dd9df[m 格式化detail界面sql语句和审核/执行结果
+[33m094627f535c645d07d61740c07cabe204df83241[m Revert "null"
+[33m5fa9aa1edb51c04880b7228cd7c2c54d0f0cb791[m Merge pull request #8 from jly8866/master
+[33mc385bb10742475f169bc45fec8741de404e71fb4[m null
+[33m9898767473237d5acdcc9bfa430d60e82acd802b[m 添加docker镜像初始用户名和密码
+[33m1a68fbb33221f9378cf5ef6c90e885c9219abca9[m Merge pull request #6 from jly8866/master
+[33m393fbf5c9dc1c74e3e8f98f42cf0a4534fc63c36[m Merge pull request #25 from honor100/master
+[33mfcb300ab40525de929c6fd2df10fb17b9568361b[m 增加以下四种状态下的'自动审核不通过','人工终止流程','执行中','执行有异常' 工单修改功能
+[33ma8d8bf3f79c418b351596d6e25da76646552d166[m 修改readme，增加nginx配置文件示例
+[33m07a12960f3ef6d3db54413f44d8b8191ab349ccf[m Update README.md
+[33m8c0e4bc3b4f8f3fd44e954a4cbd35ba7de51cf77[m Update README.md
+[33mfbc283080d100f1bde44cb8b10dbf1799e63d935[m 修改readme，增加docker镜像地址
+[33md1635312354df4666f0fbaecdd70d73d9d1ea2b2[m Merge pull request #24 from johnliu2008/master
+[33m3ed529d41721b9bad6a6838e98ee9a781b8d9765[m BUG FIX：修复选择副审核人时，单选框值错误的问题
+[33m6a8a7b822ccb9470341311c041688d2c608991cd[m 增加django admin静态资源
+[33m8e0b143d4f047c1b4a6634f3a775948ff996fc7d[m 去掉admin
+[33mf897279b1c52b37836a165a77431db1d0804fcfe[m 修改readme
+[33ma6f08233b276dbdaa24fb41619a0176480a91104[m Merge pull request #5 from jly8866/master
+[33m351c94d569e290a7f5a48c473d3186e930b7c463[m 新增django admin界面静态资源，解决nginx获取不到静态资源问题
+[33m6c3dd52450e3a3fdc322f0b8ab735970affe99c3[m 修改readme
+[33m62bd8bb3248845be05de97d39fa91139a4d33182[m 修改readme
+[33m84d1f96da0ee2cc5fb3990cc497caefb363fa133[m 修改readme
+[33m7d14303a426dd25d7568daf7322970360fe82461[m Merge pull request #23 from honor100/master
+[33m1f416d8ac1061390db4235dd6ecbbf6941ef09df[m git add sql/views.py
+[33maa3e18e81e0360ad05aefe1297131a5ce2f988cb[m Merge pull request #22 from johnliu2008/master
+[33m55ec6b635e837a3c88e900f1d2f5cd44bca4ce1b[m 新增： 1.对执行中的工单，增加pt-OSC进度显示，和中止pt-OSC进程的功能 2.README.md文件增加gunicorn和nginx的配置示例，以及pt-OSC进度显示示例
+[33mcce51df85a6ee273a0f425feb09959284543a911[m Merge pull request #18 from johnliu2008/master
+[33m294b2da501e0c8172f733e488391397c6ff62505[m 修改：登录认证功能，增加一个登录失败计数器，5分钟内连续失败5次的账号，会被锁定5分钟
+[33mc4989f303912c5a5f59da5fab8b402852c901a80[m 修改：1.修改查看工单和工单详情页面的时间格式为date:"Y-m-d H:i:s" 2.修改工单详情页面的“当前状态”文字颜色，“已正常结束”状态显示为绿色，其他的显示为红色
+[33ma4522aed52b4eb34268915b36c7ad037965b2a8f[m 新增：查看历史工单页，新增“执行中”、“人工终止流程”选项卡 修改：查看历史工单页，在前端增加角色判断，只有审核人才显示“待我审核的”选项卡
+[33m97f0fe3d33654b677e633cf5b40b26f6a0f5c40e[m Merge pull request #17 from johnliu2008/branch
+[33m9bb1a29e032e916fc03f9fa9e51b759bb5467615[m 修复SQL上线页面集群名字排序问题
+[33m8b2a9d17a81726526a90ad626ad0300ceec583e8[m Merge pull request #11 from johnliu2008/master
+[33m5906294b89f3ed95c123df8a58888477d7197a9b[m 解决SQL语法错误小bug
+[33md7c101008d3bb89b109cf63dcd8ea67f7c792710[m 新增功能：是否过滤【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】等高危DDL操作：
+[33mf23db0f9b34b87e88d32d8b58b65136cd7902634[m 解决“近三个月内工单数量”图表对应的SQL语句不规范，在严格的SQL_MODE下会报500的问题
+[33m58c94bfc2afdf4c9d6e6de2f242c46ace92b85c6[m Merge pull request #2 from jly8866/master
+[33m868b4f0fa8993a4723b9c292afb0b772f1082e89[m 功能点：1.提交sql前端表单验证 2.图表统计 3.回车键登录
+[33m3bc18ccffa17215a5e392eb042ae810fa3f7326a[m Merge pull request #9 from wowkingah/master
+[33me0aa2f257d0ef55d914ac4f47f364fd987ef04ac[m 修改submitSql中按钮大小及显示
+[33m6dc64198ae97dcee00ee383cf96b532bae68e8d0[m 更新submitSql中按钮位置与颜色
+[33m3a0f192bbe258f2e48905bdaad52fc660f6b9298[m submitSql.html updated.
+[33mfa3c49e34387606afc86eb9045c0ed473e7a815a[m readme updated
+[33m9b4d4eefd162b73f49f15f9577f948217545e15a[m 新增发起SQL上线页面'帮我检查SQL'功能
+[33m5dd141a884fdeab2fb450b7fecd1200540c812ff[m [修改]：将workflowId拼接到邮件的Title后面，方便区分
+[33mab4c36b0ca8b2b7a9b2c5e105621f5956b40f835[m Merge pull request #1 from jly8866/master
+[33m9e885e886aa2f37c029e33283fb041ebfa6373a3[m Merge pull request #7 from Thy0108/master
+[33me8ac66bef04dc5b013057004cd59294b0e7becbe[m Standardized indentation
+[33m2eb9adeb05a6194c7897f614e22176d61da9fd92[m Merge pull request #8 from johnliu2008/master
+[33m66e74a1306a544de291c6e736d13438999b58949[m [修改]：修改登录按钮，使之能够被TABLE键搜索到
+[33mcd1110d43f1a834088aa28457548dfca5b43f79f[m [修改]：修正“查看回滚SQL”时多条SQL只显示一条的问题
+[33m8b84c043defc4d6aa75ed9dd32100e356fe9f287[m Add  Refused to execute the list of mail and part of the message content
+[33mf41a8ce059d93dc3a78e07361a6827b86edfd6f3[m 还原PAGE_LIMIT 默认值为 12，而不是2
+[33ma932512cbd3cd5eeadc92b0ea94b2ed0ef0fcc8f[m [查看历史工单]页，增加功能：当某个分页的数据条数< PAGE_LIMIT时，不显示后面的分页链接
+[33m8b53854eeedd8f343243387701f6e3a7aa17bb80[m readme updated
+[33mad78df8361ee4a0cee17260b3bee34aea479a02e[m Merge pull request #5 from johnliu2008/master
+[33md9f4126cf25963f27c392f6f114b45df0f58ce58[m processor.py里leftMenuBtns1重新命名为leftMenuBtnsCommon，leftMenuBtns2重新命名为leftMenuBtnsDoc
+[33mb254b1231a09e30586cc54550ef62d9596b01ee2[m 修改全部工单、审核不通过、已执行完毕界面工程师只能看到自己发起的工单，审核人可以看到全部。 （从@某某某提交的群文件copy来的）
+[33m3e50607716c7aac3b769ecd2cd4b8e260bcb8935[m 在左边菜单栏这里，我加了一个判断，只有root用户才能看到所有的菜单，普通用户看不到配置菜单,免得普通用户点进去之后，一直报403
+[33mf366846d97f9df7326b47fb491e1dfb679eba1ed[m 删除一条注释
+[33me768162167ee459002a3a0ec0c9e766e6b168e17[m 修改密码
+[33m91cae98cf5c5cd438b4365f38501d4134691a4ba[m add startup.sh and stop.sh
+[33m168785db360b30db86af2ebf4ae2dd7774a76bee[m qq grup
+[33mc11498b201e8632ef3c3824b045175bfdf225f7c[m sendmail fix
+[33me2bec3e455714c1dbae5b76d6a3bff8ee68f2dd6[m readme
+[33m7f83b3799a3fd159cbe7e59007d1c29b1a3bbb77[m 新增SQL审核规则，可自定义
+[33m855a3bfc65944866bdad363f4e572f8d7851e66d[m readme
+[33mc7a0ea42100e41d2acb1054ade26022dc02bda56[m readme
+[33m67303c619e61cad87d018193facc630b970ff0a1[m MySQL数据库规范提交
+[33mb2bb6a60766c8fc9afd2e65e7e7f837482fa0ca6[m delete
+[33m0de61e64bee248a25ee9c3841d3a41be1b7373b5[m readme
+[33mc92b17d3f2e38af6ce36b5521a886c47a3382471[m migrations deleted.
+[33mb2929c27b8f86ad8cabab08f571c4c959b4eb773[m bug fix.
+[33mf40652d6f08937ff4251365875bec29b0f6e6072[m readme
+[33m63f25f58850bde2e331d706f13693aa1ea5ab0e0[m readme
+[33mf79a5d703ae5f67548311a3be8e215159f27a7ce[m 密码加密sql/aes_decryptor模块
+[33mba3bdd03aa6f1508ba07e73a707d9a363e86d4c2[m 自动审核通过后自动发邮件功能给审核人
+[33mc6d9987076d5c75720a8bdc7bd462f0a9356ba6f[m readme
+[33madd773c5bc2dd66d0d8e7d53e8cdbb545cd6bceb[m readme
+[33m356623fd9a1ee1f5b3ff3f7d592cc1e99fcce2bd[m readme
+[33m0a1f786472c4057e1e6084216f4ac07d84213518[m readme.
+[33m4929fcbe42e1bc5a86b1b48060d7374b66c32661[m readme updated.
+[33m1ede3c2884e5e38884cc5526b9470827a65b5e5e[m admin和archer系统用户权限合一，superuser也可以登录archer系统发单与审核.且密码加密
+[33m8b3f3ea0ee6a884d26c94e07aafdb8080e5465d1[m utf8 fixed.
+[33m86431cac78ac79ef96cee6dbb82c15af276da43e[m pymysql
+[33mf516832a0321b1535dd21f5083f9b728478c6b08[m readme updated.
+[33m08c2076c47fa276e562b2be8e5152b5ec53cb9ce[m readme updated
+[33m341a82e5b026f8b1f9c906593981deef533597d1[m readme updated.
+[33m36ec269be75f1ddabf620742d4fe2abfb2dc6956[m readme updated.
+[33m4d79e1214db1b59a703e57492f3d2ce488b32852[m some import bug fixes.
+[33mb1b02a5a222cd86b6822c23ed6ceec99fddc8f87[m delete bak.
+[33m288e9c2dc8bff93e9b7080e0f071deaa88c75e6c[m 修复字符集bug
+[33mc85047a6b9f85113fe2597c94d81c11b4ea30f70[m screenshorts updated.
+[33m6d2ee8eae1d3037da1670fa06df5b5f7603efc70[m screenshorts updated.
+[33mdd33aa82135b3c5431415d250c32942f390620c4[m screenshorts
+[33mb5d7d0ea601ff9f473f88bc618d378b2056c1d1b[m readme
+[33m6f72ff1f80964709b7f07d0e36b4e4d7b688a1d9[m readme
+[33md8e8811b5e148ece936da98d8f2e42f15b87710a[m Update README.md
+[33m54642ccd49ea6eec8c1af7acd96af0ca7c61b074[m readme updated
+[33m05e317eecd6db31315e0fbb2ffe064e48c1f9b1c[m Update README.md
+[33mffb89d524aa31b1b4e0a2e4f482e1e8fc5166417[m readme updated.
+[33mbe8565b413258e69dd08b07061bbec51db3e4a2c[m fix bug
+[33mc8451a519c2511ac99b63f775ed6cc54b5288198[m fix bug.
+[33mc0f1e7c1beac28dff0018fbf415a143357e96f37[m static_root
+[33m7aa11723ab652482210e0c75edaa9a567189bc97[m pymysql.
+[33me63129f410ffdd8f15c0c6f7fe4cd2c072c10436[m 所有历史工单展示
+[33m343a70d9d3c51eabf803bbe040476d13b9ce02bc[m 自动审核，人工审核，回滚功能
+[33m4d2e33d969e4e4102e54e2174861dfc59ff0a348[m delete sth.
+[33m029954fe236878f206fb402f4e23c6ffc50eda45[m submitsql
+[33m1f927ecc6b3c23d87d605da9d340da418df9b72b[m django admin, middleware.
+[33mdf1a8f24b804c295594310ab546229367a6fb4df[m user login, main menu.
+[33me23d75886f3ed9fa9fc01f84b2e3924d704ff01e[m base.html
+[33m376e1ef3b47f63994add4a57e520d4feaa1b082e[m django 1
+[33mf0b8899447b5cd08a811ce992d420d7d278f2dd2[m django.
+[33mf01debbd77ce0f2c313d5f712131ef3024dfbb3f[m django framework.
+[33m9064fdda9cb30560af572e4896ad65220ff91a5a[m Initial commit
