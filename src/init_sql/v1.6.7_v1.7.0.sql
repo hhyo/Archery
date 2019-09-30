@@ -3,6 +3,7 @@ set @perm_id=(select id from auth_permission where codename='menu_themis');
 delete from auth_group_permissions where permission_id=@perm_id;
 delete from sql_users_user_permissions where permission_id=@perm_id;
 delete from auth_permission where codename='menu_themis';
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
 -- 增加实例账号管理权限，变更菜单权限信息
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 管理实例账号', @content_type_id, 'instance_account_manage');
 UPDATE auth_permission set name='菜单 实例账号管理',codename='menu_instance_account' where codename='menu_instance_user';
