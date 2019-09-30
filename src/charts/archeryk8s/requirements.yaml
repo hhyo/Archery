@@ -6,4 +6,4 @@ dependencies:
   - name: mysql
     version: 0.3.5
     repository: https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-    #condition:  mysql.mysqlRootPassword="archery",mysql.mysqlDatabase="archery",persistence.enabled=false
+    #    condition:  mysql.mysqlRootPassword="archery",mysql.mysqlDatabase="archery",persistence.enabled=false
