@@ -2,8 +2,8 @@ dependencies:
   - name: redis
     version: 1.1.15
     repository: https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-    condition: redis.usePassword="",redis.persistence.enabled=false
+    #    condition: redis.usePassword="",redis.persistence.enabled=false
   - name: mysql
     version: 0.3.5
     repository: https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-    condition:  mysql.mysqlRootPassword="archery",mysql.mysqlDatabase="archery",persistence.enabled=false
+    #condition:  mysql.mysqlRootPassword="archery",mysql.mysqlDatabase="archery",persistence.enabled=false
