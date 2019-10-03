@@ -13,7 +13,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 9123
   targetPort: 9123
 
@@ -30,15 +30,6 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-# localvolume:
-# enabled: false
-# size: 10Gi
-# accessMode: ReadWriteOnce
-# storageClass: local-volume-storage
-# localPath: /archery_data
-# volumeHosts: ["i-j6c3mz44mj5p226ch1jt", "i-j6c3mz44mj5p226ch1jv","i-j6c3mz44mj5p226ch1jt"]
-# localPath，定指pods的存储资源放在哪些worker节点上
-
 # subcharts redis
 redis:
   usePassword: ""
@@ -49,7 +40,20 @@ mysql:
   mysqlRootPassword: archery
   mysqlDatabase: archery
   persistence:
-    enabled: false
+    enabled: true
+    storageClass: "alicloud-disk-efficiency"
+    accessMode: ReadWriteOnce
+    size: 20Gi
+  ## Persist data to a persistent volume
+  ## database data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+
   configurationFiles:
     mysql.cnf: |-
        [mysqld_safe]
@@ -98,9 +102,6 @@ volumeMounts:
   - name: archery-settings
     subPath: analysis_slow_query.sh
     mountPath: /opt/archery/src/script/analysis_slow_query.sh
-  - name: archery-settings
-    subPath: rule.json
-    mountPath: /opt/archery/src/script/rule.json
   - name: archery-settings
     subPath: startup.sh
     mountPath: /opt/archery/src/docker/startup.sh
@@ -159,7 +160,6 @@ configMap:
             'sql',
             'sql_api',
             'common',
-            'themis',
         )
         
         MIDDLEWARE = (
@@ -492,7 +492,5 @@ configMap:
       
       gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --log-level=debug --error-logfile=/tmp/archery.err -b ${ip}:${port} --preload --timeout 600  archery.wsgi:application
 
-#目前放configMap中，存在格式问题，暂时提出一个参数放出来，并在安装的时候需要指定文件传入，--set-file ruleJson=rule.json
-ruleJson: {}
 
 

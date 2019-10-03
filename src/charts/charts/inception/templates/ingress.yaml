@@ -30,7 +30,7 @@ spec:
     - host: {{ . | quote }}
       http:
         paths:
-	{{- range $ingressPaths }}
+  {{- range $ingressPaths }}
           - path: {{ . }}
             backend:
               serviceName: {{ $fullName }}
