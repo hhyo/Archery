@@ -7,7 +7,7 @@ mysql的存储持久化，请查看values.yaml的方法进行配置
 cd charts/archeryk8s && helm dependency update
 
 3、install:
-helm install ./ --name archery --set-file ruleJson=rule.json --namespace=default
+helm install ./ --name archery --namespace=default
 
 4、run:
 kubectl exec -it archeryk8s-xxxx bash
