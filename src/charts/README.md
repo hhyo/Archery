@@ -10,7 +10,7 @@ cd charts/archeryk8s && helm dependency update
 helm install ./ --name archery --namespace=default
 
 4、run:
-kubectl exec -it archeryk8s-xxxx bash
+kubectl exec -it archery-xxxx bash
 /////////////////////////////////////
 source /opt/venv4archery/bin/activate
 python3 manage.py makemigrations sql
