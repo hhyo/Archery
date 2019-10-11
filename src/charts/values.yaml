@@ -474,7 +474,7 @@ configMap:
         $slowquery_file > /tmp/analysis_slow_query.log
         
         echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
-<<<<<<< HEAD
+
     init-archery.sh: |-
        #!/bin/bash
        yum install expect -y
@@ -526,16 +526,6 @@ configMap:
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
     
-=======
-    startup.sh: |-
-      #!/bin/bash
-      
-      cd /opt/archery
-      
-      echo 切换python运行环境
-      source /opt/venv4archery/bin/activate
-      
->>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
       echo 修改重定向端口
       if [[ -z $NGINX_PORT ]]; then
           sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
