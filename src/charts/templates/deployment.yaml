@@ -50,6 +50,10 @@ spec:
             httpGet:
               path: /
               port: archery
+          lifecycle:
+            postStart:
+              exec:
+                command: ['/bin/bash','/opt/archery/src/docker/init-archery.sh']
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- with .Values.volumeMounts }}
