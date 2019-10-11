@@ -41,7 +41,6 @@ mysql:
   mysqlDatabase: archery
   persistence:
     enabled: true
-    storageClass: "alicloud-disk-efficiency"
     accessMode: ReadWriteOnce
     size: 20Gi
   ## Persist data to a persistent volume
