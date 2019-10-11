@@ -9,6 +9,9 @@ cd charts/archeryk8s && helm dependency update
 3、install:
 helm install ./ --name archery --namespace=default
 
+<<<<<<< HEAD
+4、visit:
+=======
 4、run:
 kubectl exec -it archery-xxxx bash
 /////////////////////////////////////
@@ -21,8 +24,15 @@ python3 manage.py loaddata initial_data.json
 python3 manage.py createsuperuser
 
 5、visit:
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
 i 本机访问
 kubectl port-forward pods/archery-xxxxxx 9123:9123
 ii 集群外访问
 将svc配置为nodePort或loadBalance，或开启ingress
 
+<<<<<<< HEAD
+默认用户名：admin
+默认密码：Archery!@#$
+
+=======
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d

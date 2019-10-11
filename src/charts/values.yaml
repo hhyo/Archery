@@ -40,8 +40,12 @@ mysql:
   mysqlRootPassword: archery
   mysqlDatabase: archery
   persistence:
-    enabled: true
+<<<<<<< HEAD
+    enabled: false
     storageClass: "alicloud-disk-efficiency"
+=======
+    enabled: true
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
     accessMode: ReadWriteOnce
     size: 20Gi
   ## Persist data to a persistent volume
@@ -105,6 +109,15 @@ volumeMounts:
   - name: archery-settings
     subPath: startup.sh
     mountPath: /opt/archery/src/docker/startup.sh
+<<<<<<< HEAD
+  - name: archery-settings
+    subPath: init-archery.sh
+    mountPath: /opt/archery/src/docker/init-archery.sh
+  - name: archery-settings
+    subPath: expect.sh
+    mountPath: /opt/archery/src/docker/expect.sh
+=======
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
 nodeSelector: {}
 
 tolerations: []
@@ -461,6 +474,59 @@ configMap:
         $slowquery_file > /tmp/analysis_slow_query.log
         
         echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
+<<<<<<< HEAD
+    init-archery.sh: |-
+       #!/bin/bash
+       yum install expect -y
+       echo 安装交互expect
+       cd /opt/archery
+       echo 切换python运行环境
+       source /opt/venv4archery/bin/activate
+     
+       python3 manage.py makemigrations sql
+       python3 manage.py migrate 
+       #数据初始化
+       python3 manage.py loaddata initial_data.json
+       #创建管理用户
+       #python3 manage.py createsuperuser
+       bash /opt/archery/src/docker/expect.sh
+    expect.sh: |-
+      #!/bin/bash
+      /usr/bin/expect <<EOF
+      #此处传参无效，__TODO____
+      #密码需要符合要求:最少8位包括大小写特殊符号
+      #set user "admin"
+      #set email "huming@meiqia.com"
+      #set passwd "Mq2019!@#$%"
+      
+      spawn python3 manage.py createsuperuser
+      set timeout 3
+      #传用户名
+      expect "Username:"
+      send "admin\r"
+      
+      expect {
+                "Error*" {exit}
+      }
+      #传参邮箱
+      expect "Email address:" 
+      send "hu_archery@gmail.com\r"
+      #传参密码
+      expect "Password:" 
+      send "Archery!@#$\r"
+      #传参密码验证
+      expect "Password (again):"
+      send "Archery!@#$\r"
+      
+      expect eof
+      EOF
+    startup.sh: |-
+      #!/bin/bash
+      cd /opt/archery
+      echo 切换python运行环境
+      source /opt/venv4archery/bin/activate
+    
+=======
     startup.sh: |-
       #!/bin/bash
       
@@ -469,6 +535,7 @@ configMap:
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
       
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
       echo 修改重定向端口
       if [[ -z $NGINX_PORT ]]; then
           sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf

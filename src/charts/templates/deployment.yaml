@@ -42,6 +42,13 @@ spec:
           args:
           - "bash"
           - "/opt/archery/src/docker/startup.sh"
+<<<<<<< HEAD
+          lifecycle:
+            postStart:
+              exec:
+                command: ['/bin/bash','/opt/archery/src/docker/init-archery.sh']
+=======
+>>>>>>> 1165377163c12b830d42dca7e2d7c1570dd1494d
           ports:
             - name: archery
               containerPort: 9123
