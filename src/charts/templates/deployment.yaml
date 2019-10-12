@@ -32,6 +32,11 @@ spec:
             name: archery-download
           - mountPath: /opt/archery/src/script
             name: archery-script
+      initContainers:
+        - image: busybox
+          name: init-mysql
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until nslookup archery-mysql; do echo waiting for mysql; sleep 2; done;']
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -39,9 +44,10 @@ spec:
           env:
             - name: NGINX_PORT
               value: "9123"
-          args:
-          - "bash"
-          - "/opt/archery/src/docker/startup.sh"
+          # command: 
+          # - /bin/bash
+          # - -c
+          # - cd /opt/archery && dockerize -wait tcp://archery-mysql:3306 -wait tcp://archery-redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh
           ports:
             - name: archery
               containerPort: 9123
