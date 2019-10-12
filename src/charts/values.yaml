@@ -496,8 +496,6 @@ configMap:
       
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
-      #新增初始化脚本，需等mysql,redis启动好，才能初始化，不然有问题
-      # bash /opt/archery/src/docker/init-archery.sh
 
       echo 修改重定向端口
       if [[ -z $NGINX_PORT ]]; then
