@@ -8,6 +8,7 @@ from django.http import HttpResponse, JsonResponse
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
+from sql.utils.resource_group import user_instances
 from .models import Instance, InstanceAccount
 
 
@@ -20,9 +21,9 @@ def users(request):
     if not instance_id:
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     # 获取已录入用户
     cnf_users = dict()
@@ -76,9 +77,9 @@ def create(request):
     remark = request.POST.get('remark', '')
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     if not all([user, host, password1, password2]):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
@@ -120,9 +121,9 @@ def edit(request):
     remark = request.POST.get('remark', '')
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     if not all([user, host]):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
@@ -202,9 +203,9 @@ def grant(request):
 
     # 执行变更语句
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     engine = get_engine(instance=instance)
     exec_result = engine.execute(db_name='information_schema', sql=grant_sql)
@@ -230,9 +231,9 @@ def reset_pwd(request):
         return JsonResponse({'status': 1, 'msg': '两次输入密码不一致', 'data': []})
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     # TODO 目前使用系统自带验证，后续实现验证器校验
     try:
@@ -265,9 +266,9 @@ def delete(request):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     engine = get_engine(instance=instance)
     exec_result = engine.execute(db_name='information_schema', sql=f"DROP USER {user_host};")
