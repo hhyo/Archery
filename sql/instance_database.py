@@ -79,7 +79,7 @@ group by TABLE_SCHEMA;"""
                         content_type='application/json')
 
 
-@permission_required('sql.db_manage', raise_exception=True)
+@permission_required('sql.menu_database', raise_exception=True)
 def create(request):
     """创建数据库"""
     instance_id = request.POST.get('instance_id', 0)
@@ -111,7 +111,7 @@ def create(request):
     return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
 
-@permission_required('sql.db_manage', raise_exception=True)
+@permission_required('sql.menu_database', raise_exception=True)
 def edit(request):
     """编辑/录入数据库"""
     instance_id = request.POST.get('instance_id', 0)
