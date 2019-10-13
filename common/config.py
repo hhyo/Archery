@@ -41,11 +41,15 @@ class SysConfig(object):
                         items['value'] = False
                     sys_config[items['item']] = items['value']
                 self.sys_config = sys_config
-                # 更新缓存
-                cache.set('sys_config', self.sys_config, timeout=None)
             except Exception as m:
                 logger.error(f"获取系统配置信息失败:{m}{traceback.format_exc()}")
                 self.sys_config = {}
+            else:
+                try:
+                    # 更新缓存
+                    cache.set('sys_config', self.sys_config, timeout=None)
+                except Exception as m:
+                    logger.error(f"更新缓存失败:{m}{traceback.format_exc()}")
 
     def get(self, key, default_value=None):
         value = self.sys_config.get(key, default_value)
