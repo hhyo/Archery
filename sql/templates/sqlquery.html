@@ -741,6 +741,8 @@
                             pagination: true,
                             pageSize: 30,
                             pageList: [30, 50, 100, 500, 1000],
+                            search: true,                      //是否显示表格搜索
+                            strictSearch: false,                //是否全匹配搜索
                             locale: 'zh-CN'
                         });
                     }
@@ -831,6 +833,7 @@
                 $("#div-table_name").hide();
                 $("#btn-format").attr('disabled', true);
                 $("#btn-explain").attr('disabled', true);
+                $("#redis_help_tab").remove();
                 redis_help_tab_add()
             } else if (optgroup === "MySQL") {
                 $("#div-table_name").show();
