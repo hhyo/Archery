@@ -12,6 +12,7 @@ from django.http import JsonResponse, HttpResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.models import Instance, InstanceDatabase, Users
+from sql.utils.resource_group import user_instances
 
 __author__ = 'hhyo'
 
@@ -26,9 +27,9 @@ def databases(request):
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     # 获取已录入数据库
     cnf_dbs = dict()
@@ -79,7 +80,7 @@ group by TABLE_SCHEMA;"""
                         content_type='application/json')
 
 
-@permission_required('sql.db_manage', raise_exception=True)
+@permission_required('sql.menu_database', raise_exception=True)
 def create(request):
     """创建数据库"""
     instance_id = request.POST.get('instance_id', 0)
@@ -91,9 +92,9 @@ def create(request):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     try:
         owner_display = Users.objects.get(username=owner).display
@@ -111,7 +112,7 @@ def create(request):
     return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
 
-@permission_required('sql.db_manage', raise_exception=True)
+@permission_required('sql.menu_database', raise_exception=True)
 def edit(request):
     """编辑/录入数据库"""
     instance_id = request.POST.get('instance_id', 0)
@@ -123,9 +124,9 @@ def edit(request):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
 
     try:
-        instance = Instance.objects.get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
-        return JsonResponse({'status': 1, 'msg': '实例不存在', 'data': []})
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     try:
         owner_display = Users.objects.get(username=owner).display

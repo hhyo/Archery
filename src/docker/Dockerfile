@@ -24,6 +24,10 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && yum -y install kde-l10n-Chinese \
     && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
+
+ENV LANG en_US.UTF-8
+ENV LC_ALL zh_CN.utf8
+
 #dockerize
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
@@ -76,10 +80,6 @@ RUN cd /opt \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
     && mv /opt/soar /opt/archery/src/plugins/ \
     && mv /opt/tmp_binlog2sql /opt/archery/src/plugins/binlog2sql
-
-
-ENV LANG en_US.UTF-8
-ENV LC_ALL zh_CN.utf8
 
 #port
 EXPOSE 9123
