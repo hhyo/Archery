@@ -23,9 +23,13 @@ def notify_for_audit(audit_id, **kwargs):
     """
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
-    if not sys_config.get('mail') and not sys_config.get('ding'):
+    wx_status = sys_config.get('wx')
+    if not sys_config.get('mail') and not sys_config.get('ding') and not wx_status:
         logger.info('未开启消息通知，可在系统设置中开启')
         return None
+
+    wx_msg_content = ''
+
     # 获取审核信息
     audit_detail = Audit.detail(audit_id=audit_id)
     audit_id = audit_detail.audit_id
@@ -93,6 +97,23 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_title,
             workflow_url,
             workflow_content)
+
+        # 企业微信消息格式
+        if wx_status:
+            wx_msg_content = "[【{}】新的工单申请（点击查看）]({})\n" \
+                             ">发起时间：<font color=\"comment\">{}</font>\n" \
+                             ">发起人：<font color=\"comment\">{}</font>\n" \
+                             ">组：<font color=\"comment\">{}</font>\n" \
+                             ">目标实例：<font color=\"comment\">{}</font>\n"\
+                             ">数据库：<font color=\"comment\">{}</font>\n" \
+                             ">审批流程：<font color=\"comment\">{}</font>\n" \
+                             ">当前审批：<font color=\"comment\">{}</font>\n" \
+                             ">工单名称：<font color=\"comment\">{}</font>\n".format(
+                workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                workflow_from, group_name, instance, db_name, workflow_auditors, current_workflow_auditors,
+                workflow_title
+            )
+
     elif status == WorkflowDict.workflow_status['audit_success']:  # 审核通过
         msg_title = "[{}]工单审核通过#{}".format(workflow_type_display, audit_id)
         # 接收人，仅发送给申请人
@@ -108,6 +129,20 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_title,
             workflow_url,
             workflow_content)
+
+        if wx_status:
+            wx_msg_content = "[【{}】工单审核通过（点击查看）]({})\n" \
+                             ">发起时间：<font color=\"comment\">{}</font>\n" \
+                             ">发起人：<font color=\"comment\">{}</font>\n" \
+                             ">组：<font color=\"comment\">{}</font>\n" \
+                             ">目标实例：<font color=\"comment\">{}</font>\n" \
+                             ">数据库：<font color=\"comment\">{}</font>\n" \
+                             ">审批流程：<font color=\"comment\">{}</font>\n" \
+                             ">工单名称：<font color=\"comment\">{}</font>\n".format(
+                workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                workflow_from, group_name, instance, db_name, workflow_auditors, workflow_title
+            )
+
     elif status == WorkflowDict.workflow_status['audit_reject']:  # 审核驳回
         msg_title = "[{}]工单被驳回#{}".format(workflow_type_display, audit_id)
         # 接收人，仅发送给申请人
@@ -120,6 +155,19 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_title,
             workflow_url,
             workflow_audit_remark)
+
+        if wx_status:
+            wx_msg_content = "[【{}】工单被驳回（点击查看）]({})\n" \
+                             ">发起时间：<font color=\"comment\">{}</font>\n" \
+                             ">目标实例：<font color=\"comment\">{}</font>\n" \
+                             ">数据库：<font color=\"comment\">{}</font>\n" \
+                             ">工单名称：<font color=\"comment\">{}</font>\n" \
+                             ">驳回原因：<font color=\"comment\">{}</font>\n" \
+                             "提醒：此工单审核不通过，请按照驳回原因进行修改！".format(
+                workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                instance, db_name, workflow_title, workflow_audit_remark
+            )
+
     elif status == WorkflowDict.workflow_status['audit_abort']:  # 审核取消，通知所有审核人
         msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
         # 接收人，发送给该资源组内对应权限组所有的用户
@@ -136,6 +184,19 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_title,
             workflow_url,
             workflow_audit_remark)
+
+        if wx_status:
+            wx_msg_content = "[【{}】提交人主动终止工单（点击查看）]({})\n" \
+                             ">发起时间：<font color=\"comment\">{}</font>\n" \
+                             ">发起人：<font color=\"comment\">{}</font>\n" \
+                             ">组：<font color=\"comment\">{}</font>\n" \
+                             ">目标实例：<font color=\"comment\">{}</font>\n" \
+                             ">数据库：<font color=\"comment\">{}</font>\n" \
+                             ">工单名称：<font color=\"comment\">{}</font>\n" \
+                             ">终止原因：<font color=\"comment\">{}</font>\n".format(
+                workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+                workflow_from, group_name, instance, db_name, workflow_title, workflow_audit_remark
+            )
     else:
         raise Exception('工单状态不正确')
 
@@ -150,6 +211,9 @@ def notify_for_audit(audit_id, **kwargs):
         msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
     if sys_config.get('ding_to_person') and msg_to_ding_user:
         msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
+    if wx_status:
+        user_list = [user.wx_user_id for user in msg_to if user.wx_user_id]
+        msg_sender.send_wx2user(wx_msg_content, user_list)
 
 
 def notify_for_execute(workflow):
@@ -160,7 +224,11 @@ def notify_for_execute(workflow):
     """
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
-    if not sys_config.get('mail') and not sys_config.get('ding') and not sys_config.get('ding_to_person'):
+    wx_status = sys_config.get('wx')
+    wx_msg_content = ''
+
+    if not sys_config.get('mail') and not sys_config.get('ding') and not sys_config.get('ding_to_person') \
+            and not wx_status:
         logger.info('未开启消息通知，可在系统设置中开启')
         return None
     # 获取当前审批和审批流程
@@ -178,6 +246,16 @@ def notify_for_execute(workflow):
         url,
         re.sub('[\r\n\f]{2,}', '\n', workflow.sqlworkflowcontent.sql_content[0:500].replace('\r', '')))
 
+    if wx_status:
+        wx_msg_content = "[工单执行完毕（点击查看）]({})\n" \
+                         ">发起人：<font color=\"comment\">{}</font>\n" \
+                         ">组：<font color=\"comment\">{}</font>\n" \
+                         ">审批流程：<font color=\"comment\">{}</font>\n" \
+                         ">工单名称：<font color=\"comment\">{}</font>\n" \
+                         ">审批流程：<font color=\"comment\">{}</font>\n".format(
+            url, workflow.engineer_display, workflow.group_name, audit_auth_group, workflow.workflow_name,
+            re.sub('[\r\n\f]{2,}', '\n', workflow.sqlworkflowcontent.sql_content[0:500].replace('\r', '')))
+
     # 邮件通知申请人，抄送DBA
     msg_to = Users.objects.filter(username=workflow.engineer)
     msg_cc = auth_group_users(auth_group_names=['DBA'], group_id=workflow.group_id)
@@ -186,6 +264,7 @@ def notify_for_execute(workflow):
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [user.ding_user_id for user in msg_to if user.ding_user_id]
+    msg_to_wx_user = [user.wx_user_id for user in msg_to].extend([user.wx_user_id for user in msg_cc])
 
     # 判断是发送钉钉还是发送邮件
     msg_sender = MsgSender()
@@ -198,6 +277,9 @@ def notify_for_execute(workflow):
             MsgSender.send_ding(webhook_url, msg_title + '\n' + msg_content)
     if sys_config.get('ding_to_person') and msg_to_ding_user:
         msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
+
+    if wx_status:
+        msg_sender.send_wx2user(wx_msg_content, msg_to_wx_user)
 
     # DDL通知
     if sys_config.get('mail') and sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
