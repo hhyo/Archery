@@ -54,7 +54,7 @@ def notify_for_audit(audit_id, **kwargs):
         workflow_type_display = WorkflowDict.workflow_type['query_display']
         workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
         instance = workflow_detail.instance.instance_name
-        db_name = ''
+        db_name = ' '
         if workflow_detail.priv_type == 1:
             workflow_content = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
                 workflow_detail.db_list,
