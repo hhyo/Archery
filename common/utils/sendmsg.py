@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+import json
 import email
 import smtplib
 import requests
@@ -11,7 +12,7 @@ from email.utils import formataddr
 
 from common.config import SysConfig
 from sql.utils.ding_api import get_access_token
-
+from sql.utils.wx_api import get_wx_access_token, get_wx_headers
 logger = logging.getLogger('default')
 
 
@@ -34,6 +35,8 @@ class MsgSender(object):
             self.MAIL_REVIEW_FROM_PASSWORD = sys_config.get('mail_smtp_password')
             # 钉钉信息
             self.ding_agent_id = sys_config.get('ding_agent_id')
+            # 企业微信信息
+            self.wx_agent_id = sys_config.get('wx_agent_id')
 
         if self.MAIL_REVIEW_SMTP_PORT:
             self.MAIL_REVIEW_SMTP_PORT = int(self.MAIL_REVIEW_SMTP_PORT)
@@ -167,3 +170,24 @@ class MsgSender(object):
 返回错误信息:{}
 请求url:{}
 请求data:{}""".format(r_json['errcode'], r_json['errmsg'], userid_list, data))
+
+    def send_wx2user(self, msg, user_list):
+        to_user = '|'.join(user_list)
+        send_url = 'https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=%s' % get_wx_access_token()
+        dict_data = {
+            "touser": to_user,
+            "msgtype": "markdown",
+            "agentid": self.wx_agent_id,
+            "markdown": {
+                "content": msg
+            },
+        }
+        res = requests.post(send_url, json=dict_data, headers=get_wx_headers(), timeout=5, verify=True)
+        r_json = res.json()
+        if r_json['errcode'] == 0:
+            logger.debug(f'企业微信推送成功\n通知对象：{to_user}')
+        else:
+            logger.error("""企业微信推送失败
+                            错误码:{}
+                            返回错误信息:{}
+                            """.format(r_json['errcode'], json.dumps(r_json)))

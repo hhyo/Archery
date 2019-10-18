@@ -19,7 +19,7 @@ class UsersAdmin(UserAdmin):
     # 编辑页显示内容
     fieldsets = (
         ('认证信息', {'fields': ('username', 'password')}),
-        ('个人信息', {'fields': ('display', 'email', 'ding_user_id')}),
+        ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('其他信息', {'fields': ('date_joined',)}),
     )

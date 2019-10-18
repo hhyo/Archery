@@ -13,6 +13,7 @@ class Users(AbstractUser):
     """
     display = models.CharField('显示的中文名', max_length=50, default='')
     ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True, null=True)
+    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True, null=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
 
