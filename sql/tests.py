@@ -722,9 +722,10 @@ class TestQuery(TestCase):
         archer_config = SysConfig()
         archer_config.set('disable_star', False)
 
+    @patch('sql.query.user_instances')
     @patch('sql.query.get_engine')
     @patch('sql.query.query_priv_check')
-    def testCorrectSQL(self, _priv_check, _get_engine):
+    def testCorrectSQL(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_sql = 'select some from some_table limit 100;'
         some_db = 'some_db'
@@ -744,6 +745,7 @@ class TestQuery(TestCase):
         _get_engine.return_value.query.return_value = q_result
         _get_engine.return_value.seconds_behind_master = 100
         _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
+        _user_instances.return_value.get.return_value = self.slave1
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
                                     'db_name': some_db,
@@ -755,9 +757,10 @@ class TestQuery(TestCase):
         self.assertEqual(r_json['data']['column_list'], ['some'])
         self.assertEqual(r_json['data']['seconds_behind_master'], 100)
 
+    @patch('sql.query.user_instances')
     @patch('sql.query.get_engine')
     @patch('sql.query.query_priv_check')
-    def testSQLWithoutLimit(self, _priv_check, _get_engine):
+    def testSQLWithoutLimit(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_limit = 100
         sql_without_limit = 'select some from some_table'
@@ -771,6 +774,7 @@ class TestQuery(TestCase):
         _get_engine.return_value.filter_sql.return_value = sql_with_limit
         _get_engine.return_value.query.return_value = q_result
         _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
+        _user_instances.return_value.get.return_value = self.slave1
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': sql_without_limit,
                                     'db_name': some_db,
@@ -824,7 +828,7 @@ class TestQuery(TestCase):
                 "limit": 14,
                 "offset": 0, }
         r = c.get('/query/querylog/', data=data)
-        self.assertEqual(r.json()['total'],1)
+        self.assertEqual(r.json()['total'], 1)
 
     def test_star(self):
         """测试查询语句收藏"""
@@ -1417,7 +1421,7 @@ class TestOptimize(TestCase):
                 "db_name": settings.DATABASES['default']['TEST']['NAME']
                 }
         r = self.client.post(path='/slowquery/optimize_sqltuning/')
-        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
 
         # 获取sys_parm
         data['option[]'] = 'sys_parm'

@@ -5,6 +5,7 @@ from django.http import HttpResponse
 
 from sql.engines import get_engine
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.utils.resource_group import user_instances
 from .models import AliyunRdsConfig, Instance
 
 from .aliyun_rds import process_status as aliyun_process_status, create_kill_session as aliyun_create_kill_session, \
@@ -18,9 +19,9 @@ def process(request):
     command_type = request.POST.get('command_type')
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
@@ -53,9 +54,9 @@ def create_kill_session(request):
     thread_ids = request.POST.get('ThreadIDs')
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     result = {'status': 0, 'msg': 'ok', 'data': []}
@@ -84,9 +85,9 @@ def kill_session(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
@@ -113,9 +114,9 @@ def tablesapce(request):
     instance_name = request.POST.get('instance_name')
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 判断是RDS还是其他实例
@@ -156,9 +157,9 @@ def trxandlocks(request):
     instance_name = request.POST.get('instance_name')
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     query_engine = get_engine(instance=instance)
