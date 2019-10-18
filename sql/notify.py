@@ -212,7 +212,13 @@ def notify_for_audit(audit_id, **kwargs):
     if sys_config.get('ding_to_person') and msg_to_ding_user:
         msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
     if wx_status:
-        user_list = [user.wx_user_id for user in msg_to if user.wx_user_id]
+        user_list = []
+        for user in msg_to:
+            if user.wx_user_id:
+                user_list.append(user.wx_user_id)
+            else:
+                user_list.append(user.username)
+        # user_list = [user.wx_user_id for user in msg_to if user.wx_user_id]
         msg_sender.send_wx2user(wx_msg_content, user_list)
 
 
@@ -264,7 +270,6 @@ def notify_for_execute(workflow):
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [user.ding_user_id for user in msg_to if user.ding_user_id]
-    msg_to_wx_user = [user.wx_user_id for user in msg_to].extend([user.wx_user_id for user in msg_cc])
 
     # 判断是发送钉钉还是发送邮件
     msg_sender = MsgSender()
@@ -279,6 +284,12 @@ def notify_for_execute(workflow):
         msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
 
     if wx_status:
+        msg_to_wx_user = []
+        for user in msg_to:
+            if user.wx_user_id:
+                msg_to_wx_user.append(user.wx_user_id)
+            else:
+                msg_to_wx_user.append(user.username)
         msg_sender.send_wx2user(wx_msg_content, msg_to_wx_user)
 
     # DDL通知
