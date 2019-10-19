@@ -32,7 +32,6 @@ spec:
             name: archery-download
           - mountPath: /opt/archery/src/script
             name: archery-script
-      initContainers:
         - image: busybox
           name: init-mysql
           imagePullPolicy: IfNotPresent
@@ -44,10 +43,6 @@ spec:
           env:
             - name: NGINX_PORT
               value: "9123"
-          # command: 
-          # - /bin/bash
-          # - -c
-          # - cd /opt/archery && dockerize -wait tcp://archery-mysql:3306 -wait tcp://archery-redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh
           ports:
             - name: archery
               containerPort: 9123
