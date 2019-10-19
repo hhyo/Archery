@@ -574,9 +574,9 @@
                                 <div class="form-group">
                                     <i class="ace-icon fa fa-hand-o-right"></i>
                                     创建企业微信应用参考：<a target="_blank"
-                                                        href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
-{#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
-                                </button>
+                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
                                 </div>
                                 <div class="form-group">
                                     <label for="wx_corpid"
@@ -615,6 +615,35 @@
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
+                        <hr/>
+                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
+                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
+                        <hr/>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="aliyun_ak"
+                                       class="col-sm-4 control-label">AccessKeyID</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="aliyun_ak"
+                                           key="aliyun_ak"
+                                           value="{{ config.aliyun_ak }}"
+                                           placeholder="AccessKeyID">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="aliyun_secret"
+                                       class="col-sm-4 control-label">AccessKeySecret</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="aliyun_secret"
+                                           key="aliyun_secret"
+                                           value="{{ config.aliyun_secret }}"
+                                           placeholder="AccessKeySecret">
+                                </div>
+                            </div>
+                        </div>
+                        <h5 style="color: darkgrey"><b>其他</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
