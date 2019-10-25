@@ -1,7 +1,0 @@
-# ExtremelyLongMsgKAT_224.txt
-# Algorithm Name: Keccak
-# Principal Submitter: The Keccak Team (Guido Bertoni, Joan Daemen, Michaël Peeters and Gilles Van Assche)
-
-Repeat = 16777216
-Text = abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmno
-MD = C42E4AEE858E1A8AD2976896B9D23DD187F64436EE15969AFDBC68C5
