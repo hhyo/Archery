@@ -9,4 +9,6 @@ archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
 venv
+env
 nohup.out
+src/docker-compose/mysql/datadir/
