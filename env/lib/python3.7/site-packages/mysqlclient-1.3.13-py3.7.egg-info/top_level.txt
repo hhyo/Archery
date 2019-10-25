@@ -1,0 +1,3 @@
+MySQLdb
+_mysql
+_mysql_exceptions

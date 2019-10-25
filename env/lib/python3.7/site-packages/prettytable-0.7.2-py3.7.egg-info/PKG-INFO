@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: prettytable
+Version: 0.7.2
+Summary: A simple Python library for easily displaying tabular data in a visually appealing ASCII table format
+Home-page: http://code.google.com/p/prettytable
+Author: Luke Maurits
+Author-email: luke@maurits.id.au
+License: BSD (3 clause)
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.4
+Classifier: Programming Language :: Python :: 2.5
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Topic :: Text Processing

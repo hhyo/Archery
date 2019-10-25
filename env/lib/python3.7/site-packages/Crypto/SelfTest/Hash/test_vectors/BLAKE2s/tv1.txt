@@ -1,0 +1,36 @@
+#
+# Compute the function h(100) for each digest size from 1 to 32, where:
+#   h(1) = Hash("")
+#   h(x) = Hash(h(x-1) + h(x-2) + ... + h(1))
+#
+digest: d3
+digest: d61f
+digest: a27ef6
+digest: dcf93511
+digest: ef7d1f664b
+digest: a3b1d9a391c2
+digest: 75dae3283b6de5
+digest: bb7d01b685f17e4e
+digest: 154c17197a3e409372
+digest: d5ece54d02f09665c8e2
+digest: 078576a174bdbf879f548d
+digest: 3207ceaa9592179bf492e42d
+digest: c52a64fa2a8235eed0c70f7f6c
+digest: 0def3f9317cf40ef230b80d7a4da
+digest: 16fb9675fb40afe183c2ee13a9b859
+digest: 8acd543291933e4ac1548904553b486f
+digest: 901a5c217a4ba360992c26ab6491aa8363
+digest: bf8bb21a200a1c972cfe6c188cc4b7fe1098
+digest: 65d9ce3c6f8b606a2417178f304638b1a8bc54
+digest: 33d9c57e33cd208b82d771fe0347caf303a9d6d9
+digest: 4ade30b34b5b5235134b189f276ab0733c9038b505
+digest: 4454cc9fcd04ef6f45cdbd131f042c609870ed1dcacc
+digest: 631ba8d46279052eb12e6d043be158a69e31e8cdcfe2c0
+digest: 857e5108030354252b3421d5fc75e633590a60eef2e93382
+digest: 6633f8a0b131b39a84e2253b7e4b04fb7de62554d72239b069
+digest: 85b8b55b304e12424614e4b37bfb3da25ef0d9859305da0e1be1
+digest: 43ad51b7ed6f4f695ca090a539f877f93bddc690195593bdf0cd21
+digest: 21bf7c481817a3cd71671c6519a7a829d5137324bfa1a340bbb8928b
+digest: 7a51d96744348b6f5e666bfa6a3a5a6ed6104c79f0b6ac8b0f550321c8
+digest: d3f1a340e735cf0be01f194ae5754a9f08309d4d7e4b9fc16f9813ebf98a
+digest: 69ad7695fa071bde9ddf2c0182c1598af26131ca05e63acacd84f60db201e6

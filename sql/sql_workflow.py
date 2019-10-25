@@ -2,6 +2,7 @@
 import datetime
 import logging
 import traceback
+import threading
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -98,21 +99,8 @@ def sql_workflow_list(request):
                         content_type='application/json')
 
 
-@permission_required('sql.sql_submit', raise_exception=True)
-def check(request):
-    """SQL检测按钮, 此处没有产生工单"""
-    sql_content = request.POST.get('sql_content')
-    instance_name = request.POST.get('instance_name')
-    instance = Instance.objects.get(instance_name=instance_name)
-    db_name = request.POST.get('db_name')
-
-    result = {'status': 0, 'msg': 'ok', 'data': {}}
-    # 服务器端参数验证
-    if sql_content is None or instance_name is None or db_name is None:
-        result['status'] = 1
-        result['msg'] = '页面提交参数可能为空'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
+def sql_check(sql_content, instance, db_name):
+    result = {}
     # 交给engine进行检测
     try:
         check_engine = get_engine(instance=instance)
@@ -123,41 +111,53 @@ def check(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 处理检测结果
-    result['data']['rows'] = check_result.to_dict()
-    result['data']['CheckWarningCount'] = check_result.warning_count
-    result['data']['CheckErrorCount'] = check_result.error_count
-    return HttpResponse(json.dumps(result), content_type='application/json')
+    global all_check_res
+    # result['data']['rows'] = check_result.to_dict()
+    # result['data']['CheckWarningCount'] = check_result.warning_count
+    # result['data']['CheckErrorCount'] = check_result.error_count
+
+    all_check_res['data']['rows'].extend(check_result.to_dict())
+    all_check_res['data']['CheckWarningCount'] += check_result.warning_count
+    all_check_res['data']['CheckErrorCount'] += check_result.error_count
 
 
 @permission_required('sql.sql_submit', raise_exception=True)
-def submit(request):
-    """正式提交SQL, 此处生成工单"""
-    sql_content = request.POST.get('sql_content').strip()
-    workflow_title = request.POST.get('workflow_name')
-    # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
-    group_name = request.POST.get('group_name')
-    group_id = ResourceGroup.objects.get(group_name=group_name).group_id
+def check(request):
+    """SQL检测按钮, 此处没有产生工单"""
+    sql_content = request.POST.get('sql_content')
     instance_name = request.POST.get('instance_name')
     instance = Instance.objects.get(instance_name=instance_name)
-    db_name = request.POST.get('db_name')
-    is_backup = True if request.POST.get('is_backup') == 'True' else False
-    notify_users = request.POST.getlist('notify_users')
-    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
-    run_date_start = request.POST.get('run_date_start')
-    run_date_end = request.POST.get('run_date_end')
+    db_names = request.POST.get('db_names', default='')
+    db_names = db_names.split(',') if db_names else []
+
+    global all_check_res
+    # all_check_res = {'status': 0, 'msg': 'ok', 'data': {}}
+    all_check_res = {'status': 0, 'msg': 'ok', 'data': {"rows": [], "CheckWarningCount": 0, "CheckErrorCount": 0}}
 
     # 服务器端参数验证
-    if None in [sql_content, db_name, instance_name, db_name, is_backup]:
-        context = {'errMsg': '页面提交参数可能为空'}
-        return render(request, 'error.html', context)
+    if sql_content is None or instance_name is None or db_names is None:
+        all_check_res['status'] = 1
+        all_check_res['msg'] = '页面提交参数可能为空'
+        return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
-    # 验证组权限（用户是否在该组、该组是否有指定实例）
-    try:
-        user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
-    except instance.DoesNotExist:
-        context = {'errMsg': '你所在组未关联该实例！'}
-        return render(request, 'error.html', context)
+    threads = []
+    for db_name in db_names:
+        t = threading.Thread(target=sql_check,
+                             args=(sql_content, instance, db_name))
+        threads.append(t)
+        t.start()
 
+    # 等待所有线程任务结束。
+    for t in threads:
+        t.join()
+
+    # if all_check_res['data']['CheckErrorCount'] > 0:
+    #     all_check_res['status'] = 1
+
+    return HttpResponse(json.dumps(all_check_res), content_type='application/json')
+
+
+def sql_submit(request, instance, db_name, sql_content, workflow_title, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end):
     # 再次交给engine进行检测，防止绕过
     try:
         check_engine = get_engine(instance=instance)
@@ -182,6 +182,7 @@ def submit(request):
     # 调用工作流生成工单
     # 使用事务保持数据一致性
     try:
+        print('Start running sql for tenant {}'.format(db_name))
         with transaction.atomic():
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
@@ -223,7 +224,59 @@ def submit(request):
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
-    return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
+    global workflow_ids
+    workflow_ids.append(workflow_id)
+
+
+@permission_required('sql.sql_submit', raise_exception=True)
+def submit(request):
+    """正式提交SQL, 此处生成工单"""
+    sql_content = request.POST.get('sql_content').strip()
+    workflow_title = request.POST.get('workflow_name')
+    # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
+    group_name = request.POST.get('group_name')
+    group_id = ResourceGroup.objects.get(group_name=group_name).group_id
+    instance_name = request.POST.get('instance_name')
+    instance = Instance.objects.get(instance_name=instance_name)
+    db_names = request.POST.get('db_names', default='')
+    is_backup = True if request.POST.get('is_backup') == 'True' else False
+    notify_users = request.POST.getlist('notify_users')
+    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    run_date_start = request.POST.get('run_date_start')
+    run_date_end = request.POST.get('run_date_end')
+
+    db_names = db_names.split(',') if db_names else []
+    print('Debug tenants {}'.format(db_names))
+
+    # 服务器端参数验证
+    if None in [sql_content, db_names, instance_name, db_names, is_backup]:
+        context = {'errMsg': '页面提交参数可能为空'}
+        return render(request, 'error.html', context)
+
+    # 验证组权限（用户是否在该组、该组是否有指定实例）
+    try:
+        user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
+    except instance.DoesNotExist:
+        context = {'errMsg': '你所在组未关联该实例！'}
+        return render(request, 'error.html', context)
+
+    global workflow_ids
+    workflow_ids = []
+    threads = []
+    for db_name in db_names:
+        t = threading.Thread(target=sql_submit,
+                             args=(request, instance, db_name, sql_content, workflow_title + ' for ' + db_name, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end))
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+
+    print('Debug transactions number: {}'.format(len(workflow_ids)))
+    # return HttpResponseRedirect(reverse('sql:detail', args=(workflow_ids[0],)))
+    all_check_res = {'status': 0, 'msg': 'ok', 'data': workflow_ids}
+
+    return HttpResponse(json.dumps(all_check_res), content_type='application/json')
+    # return HttpResponseRedirect('/sqlworkflow')
 
 
 @permission_required('sql.sql_review', raise_exception=True)

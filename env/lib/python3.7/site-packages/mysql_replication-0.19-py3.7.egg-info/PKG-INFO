@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: mysql-replication
+Version: 0.19
+Summary: Pure Python Implementation of MySQL replication protocol build on top of PyMYSQL.
+Home-page: https://github.com/noplay/python-mysql-replication
+Author: Julien Duponchelle
+Author-email: julien@duponchelle.info
+License: Apache 2
+Description: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: test

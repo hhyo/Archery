@@ -1,0 +1,1116 @@
+{
+  "global_endpoints": {
+    "domain": "domain.aliyuncs.com",
+    "cdn": "cdn.aliyuncs.com",
+    "ram": "ram.aliyuncs.com",
+    "cbn": "cbn.aliyuncs.com",
+    "drds": "drds.aliyuncs.com",
+    "emr": "emr.aliyuncs.com",
+    "sts": "sts.aliyuncs.com",
+    "cs": "cs.aliyuncs.com",
+    "cr": "cr.aliyuncs.com",
+    "hbase": "hbase.aliyuncs.com",
+    "ros": "ros.aliyuncs.com",
+    "ess": "ess.aliyuncs.com",
+    "gpdb": "gpdb.aliyuncs.com",
+    "dds": "mongodb.aliyuncs.com",
+    "jaq": "jaq.aliyuncs.com",
+    "cloudauth": "cloudauth.aliyuncs.com",
+    "live": "live.aliyuncs.com",
+    "hpc": "hpc.aliyuncs.com",
+    "ddosbasic": "antiddos.aliyuncs.com",
+    "dm": "dm.aliyuncs.com",
+    "domain-intl": "domain-intl.aliyuncs.com",
+    "cloudwf": "cloudwf.aliyuncs.com",
+    "ecs": "ecs-cn-hangzhou.aliyuncs.com",
+    "vpc": "vpc.aliyuncs.com",
+    "redisa": "r-kvstore.aliyuncs.com",
+    "codepipeline": "cds.cn-beijing.aliyuncs.com",
+    "vipaegis": "aegis.cn-hangzhou.aliyuncs.com",
+    "rds": "rds.aliyuncs.com",
+    "petadata": "petadata.aliyuncs.com",
+    "httpdns": "httpdns-api.aliyuncs.com",
+    "green": "green.aliyuncs.com",
+    "alidns": "alidns.aliyuncs.com",
+    "push": "cloudpush.aliyuncs.com",
+    "itaas": "itaas.aliyuncs.com",
+    "cms": "metrics.cn-hangzhou.aliyuncs.com",
+    "slb": "slb.aliyuncs.com"
+  },
+  "location_code_mapping": {
+    "cloudapi": "apigateway",
+    "sas-api": "sas",
+    "chatbot": "beebot",
+    "aegis": "vipaegis",
+    "cds": "codepipeline",
+    "r-kvstore": "redisa"
+  },
+  "regional_endpoint_pattern": {
+    "apigateway": "apigateway.[RegionId].aliyuncs.com",
+    "domain": "domain.aliyuncs.com",
+    "dm": "dm.[RegionId].aliyuncs.com",
+    "ess": "ess.[RegionId].aliyuncs.com",
+    "beebot": "chatbot.[RegionId].aliyuncs.com",
+    "domain-intl": "domain-intl.aliyuncs.com",
+    "batchcompute": "batchcompute.[RegionId].aliyuncs.com",
+    "dds": "mongodb.[RegionId].aliyuncs.com",
+    "iot": "iot.[RegionId].aliyuncs.com",
+    "drds": "drds.aliyuncs.com",
+    "arms": "arms.[RegionId].aliyuncs.com",
+    "emr": "emr.[RegionId].aliyuncs.com",
+    "csb": "csb.[RegionId].aliyuncs.com",
+    "polardb": "polardb.aliyuncs.com",
+    "ccc": "ccc.[RegionId].aliyuncs.com",
+    "cloudphoto": "cloudphoto.[RegionId].aliyuncs.com"
+  },
+  "regions": [
+    "me-east-1",
+    "us-east-1",
+    "ap-northeast-1",
+    "ap-southeast-5",
+    "cn-hongkong",
+    "cn-shenzhen",
+    "ap-southeast-3",
+    "ap-southeast-2",
+    "ap-south-1",
+    "cn-huhehaote",
+    "cn-qingdao",
+    "cn-beijing",
+    "cn-shanghai",
+    "cn-hangzhou",
+    "ap-southeast-1",
+    "us-west-1",
+    "eu-central-1",
+    "cn-zhangjiakou",
+    "cn-chengdu",
+    "eu-west-1"
+  ],
+  "regional_endpoints": {
+    "bastionhost": {
+      "cn-hangzhou": "yundun-bastionhost.aliyuncs.com"
+    },
+    "xianzhi": {
+      "cn-hangzhou": "xianzhi.aliyuncs.com"
+    },
+    "rtc": {
+      "cn-hangzhou": "rtc.aliyuncs.com"
+    },
+    "nlp": {
+      "cn-shanghai": "nlp.cn-shanghai.aliyuncs.com"
+    },
+    "trademark": {
+      "cn-hangzhou": "trademark.aliyuncs.com"
+    },
+    "cdn": {
+      "cn-hangzhou": "cdn.aliyuncs.com"
+    },
+    "sca": {
+      "cn-hangzhou": "qualitycheck.cn-hangzhou.aliyuncs.com"
+    },
+    "drds": {
+      "ap-southeast-1": "drds.ap-southeast-1.aliyuncs.com",
+      "cn-hangzhou":"drds.cn-hangzhou.aliyuncs.com"
+    },
+    "arms": {
+      "cn-beijing": "arms.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "arms.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "arms.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "arms.cn-hongkong.aliyuncs.com",
+      "ap-southeast-1": "arms.ap-southeast-1.aliyuncs.com",
+      "cn-shenzhen": "arms.cn-shenzhen.aliyuncs.com",
+      "cn-qingdao": "arms.cn-qingdao.aliyuncs.com"
+    },
+    "iovcc": {
+      "cn-shanghai": "iovcc.cn-shanghai.aliyuncs.com"
+    },
+    "ddosrewards": {
+      "cn-hangzhou": "ddosright.cn-hangzhou.aliyuncs.com"
+    },
+    "ons": {
+      "us-west-1": "ons.us-west-1.aliyuncs.com",
+      "cn-beijing": "ons.cn-beijing.aliyuncs.com",
+      "me-east-1": "ons.me-east-1.aliyuncs.com",
+      "us-east-1": "ons.us-east-1.aliyuncs.com",
+      "ap-northeast-1": "ons.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-2": "ons.ap-southeast-2.aliyuncs.com",
+      "cn-shanghai": "ons.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "ons.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "ons.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "ons.ap-southeast-3.aliyuncs.com",
+      "cn-hangzhou": "ons.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1": "ons.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "ons.cn-hangzhou.aliyuncs.com",
+      "eu-central-1": "ons.eu-central-1.aliyuncs.com",
+      "cn-qingdao": "ons.cn-qingdao.aliyuncs.com",
+      "cn-zhangjiakou":"ons.cn-zhangjiakou.aliyuncs.com",
+      "cn-huhehaote":"ons.cn-huhehaote.aliyuncs.com",
+      "eu-west-1":"ons.eu-west-1.aliyuncs.com"
+    },
+    "hbase": {
+      "cn-huhehaote": "hbase.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "hbase.me-east-1.aliyuncs.com",
+      "ap-southeast-2": "hbase.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-3": "hbase.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-5": "hbase.ap-southeast-5.aliyuncs.com",
+      "ap-south-1": "hbase.ap-south-1.aliyuncs.com",
+      "eu-central-1": "hbase.eu-central-1.aliyuncs.com",
+      "cn-qingdao":"hbase.aliyuncs.com",
+      "cn-beijing":"hbase.aliyuncs.com",
+      "cn-hangzhou":"hbase.aliyuncs.com",
+      "cn-shanghai":"hbase.aliyuncs.com",
+      "cn-shenzhen":"hbase.aliyuncs.com",
+      "ap-southeast-1":"hbase.aliyuncs.com",
+      "us-west-1":"hbase.aliyuncs.com",
+      "us-east-1":"hbase.aliyuncs.com"
+    },
+    "ros": {
+      "cn-hangzhou": "ros.aliyuncs.com"
+    },
+    "pts": {
+      "cn-hangzhou": "pts.aliyuncs.com"
+    },
+    "polardb": {
+      "cn-huhehaote": "polardb.cn-huhehaote.aliyuncs.com",
+      "cn-qingdao": "polardb.aliyuncs.com",
+      "cn-beijing": "polardb.aliyuncs.com",
+      "cn-hangzhou": "polardb.aliyuncs.com",
+      "cn-shanghai": "polardb.aliyuncs.com",
+      "ap-southeast-5": "polardb.ap-southeast-5.aliyuncs.com",
+      "ap-south-1": "polardb.ap-south-1.aliyuncs.com",
+      "cn-shenzhen":"polardb.aliyuncs.com",
+      "cn-hongkong":"polardb.aliyuncs.com"
+    },
+    "ddosdip": {
+      "ap-southeast-1": "ddosdip.ap-southeast-1.aliyuncs.com"
+    },
+    "ehs": {
+      "cn-huhehaote": "ehpc.cn-huhehaote.aliyuncs.com",
+      "cn-beijing": "ehpc.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "ehpc.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "ehpc.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "ehpc.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "ehpc.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-1": "ehpc.ap-southeast-1.aliyuncs.com",
+      "cn-qingdao": "ehpc.cn-qingdao.aliyuncs.com",
+      "eu-central-1": "ehpc.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "ehpc.cn-zhangjiakou.aliyuncs.com",
+      "ap-southeast-2":"ehpc.ap-southeast-2.aliyuncs.com"
+    },
+    "gpdb": {
+      "cn-huhehaote": "gpdb.cn-huhehaote.aliyuncs.com",
+      "ap-south-1": "gpdb.ap-south-1.aliyuncs.com",
+      "ap-southeast-2": "gpdb.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-3": "gpdb.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-5": "gpdb.ap-southeast-5.aliyuncs.com",
+      "eu-central-1": "gpdb.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "gpdb.cn-zhangjiakou.aliyuncs.com",
+      "cn-beijing":"gpdb.aliyuncs.com",
+      "cn-hangzhou":"gpdb.aliyuncs.com",
+      "cn-shanghai":"gpdb.aliyuncs.com",
+      "cn-shenzhen":"gpdb.aliyuncs.com",
+      "ap-southeast-1":"gpdb.aliyuncs.com",
+      "ap-northeast-1":"gpdb.ap-northeast-1.aliyuncs.com",
+      "eu-west-1":"gpdb.eu-west-1.aliyuncs.com",
+      "us-west-1":"gpdb.aliyuncs.com",
+      "us-east-1":"gpdb.aliyuncs.com"
+    },
+    "waf": {
+      "cn-hangzhou": "wafopenapi.cn-hangzhou.aliyuncs.com"
+    },
+    "cloudfirewall": {
+      "cn-hangzhou": "cloudfw.cn-hangzhou.aliyuncs.com"
+    },
+    "baas": {
+      "cn-hangzhou": "baas.cn-hangzhou.aliyuncs.com",
+      "ap-northeast-1": "baas.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-1": "baas.ap-southeast-1.aliyuncs.com",
+      "cn-beijing":"baas.aliyuncs.com",
+      "cn-shanghai":"baas.aliyuncs.com",
+      "cn-shenzhen":"baas.aliyuncs.com"
+    },
+    "imm": {
+      "cn-shanghai": "imm.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "imm.cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen": "imm.cn-shenzhen.aliyuncs.com",
+      "cn-beijing": "imm.cn-beijing.aliyuncs.com",
+      "ap-southeast-1": "imm.ap-southeast-1.aliyuncs.com",
+      "cn-zhangjiakou":"imm.cn-zhangjiakou.aliyuncs.com"
+    },
+    "live": {
+      "cn-beijing": "live.aliyuncs.com",
+      "cn-hangzhou": "live.aliyuncs.com",
+      "ap-northeast-1": "live.aliyuncs.com",
+      "cn-shanghai": "live.aliyuncs.com",
+      "ap-southeast-1": "live.aliyuncs.com",
+      "eu-central-1": "live.aliyuncs.com",
+      "cn-shenzhen":"live.aliyuncs.com"
+    },
+    "qualitycheck": {
+      "cn-hangzhou": "qualitycheck.cn-hangzhou.aliyuncs.com"
+    },
+    "cloudauth": {
+      "cn-hangzhou": "cloudauth.aliyuncs.com"
+    },
+    "ims": {
+      "cn-hangzhou": "ims.aliyuncs.com"
+    },
+    "oas": {
+      "cn-hangzhou": "cn-hangzhou.oas.aliyuncs.com",
+      "cn-shenzhen": "cn-shenzhen.oas.aliyuncs.com",
+      "cn-beijing": "cn-beijing.oas.aliyuncs.com"
+    },
+    "drdspre": {
+      "ap-southeast-1": "drds.ap-southeast-1.aliyuncs.com",
+      "cn-qingdao":"drds.cn-qingdao.aliyuncs.com",
+      "cn-beijing":"drds.cn-beijing.aliyuncs.com",
+      "cn-hangzhou":"drds.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"drds.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen":"drds.cn-shenzhen.aliyuncs.com",
+      "cn-hongkong":"drds.cn-hangzhou.aliyuncs.com"
+    },
+    "oss": {
+      "cn-qingdao": "oss-cn-qingdao.aliyuncs.com",
+      "cn-beijing": "oss-cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "oss-cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "oss-cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "oss-cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "oss-cn-shenzhen.aliyuncs.com",
+      "ap-southeast-1": "oss-ap-southeast-1.aliyuncs.com",
+      "us-west-1": "oss-us-west-1.aliyuncs.com"
+    },
+    "ddosbasic": {
+      "cn-huhehaote": "antiddos-openapi.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "antiddos-openapi.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "antiddos-openapi.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "antiddos-openapi.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "antiddos-openapi.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "antiddos-openapi.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "antiddos-openapi.ap-south-1.aliyuncs.com",
+      "eu-central-1": "antiddos-openapi.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "antiddos-openapi.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"antiddos.aliyuncs.com",
+      "cn-beijing":"antiddos.aliyuncs.com",
+      "cn-hangzhou":"antiddos.aliyuncs.com",
+      "cn-shanghai":"antiddos.aliyuncs.com",
+      "cn-shenzhen":"antiddos.aliyuncs.com",
+      "cn-hongkong":"antiddos.aliyuncs.com",
+      "ap-southeast-1":"antiddos.aliyuncs.com",
+      "eu-west-1":"antiddos-openapi.eu-west-1.aliyuncs.com",
+      "us-west-1":"antiddos.aliyuncs.com",
+      "us-east-1":"antiddos.aliyuncs.com"
+    },
+    "dm": {
+      "ap-southeast-2": "dm.ap-southeast-2.aliyuncs.com"
+    },
+    "ddoscoo": {
+      "cn-hangzhou": "ddoscoo.cn-hangzhou.aliyuncs.com"
+    },
+    "smartag": {
+      "cn-shanghai": "smartag.cn-shanghai.aliyuncs.com",
+      "cn-hongkong":"smartag.cn-hongkong.aliyuncs.com",
+      "ap-southeast-1":"smartag.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2":"smartag.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-3":"smartag.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-5":"smartag.ap-southeast-5.aliyuncs.com",
+      "eu-central-1":"smartag.eu-central-1.aliyuncs.com"
+    },
+    "actiontrail": {
+      "cn-huhehaote": "actiontrail.cn-huhehaote.aliyuncs.com",
+      "ap-south-1": "actiontrail.ap-south-1.aliyuncs.com",
+      "cn-beijing": "actiontrail.cn-beijing.aliyuncs.com",
+      "me-east-1": "actiontrail.me-east-1.aliyuncs.com",
+      "us-east-1": "actiontrail.us-east-1.aliyuncs.com",
+      "ap-northeast-1": "actiontrail.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-2": "actiontrail.ap-southeast-2.aliyuncs.com",
+      "cn-shanghai": "actiontrail.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "actiontrail.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "actiontrail.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "actiontrail.ap-southeast-3.aliyuncs.com",
+      "cn-hangzhou": "actiontrail.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-5": "actiontrail.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-1": "actiontrail.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "actiontrail.us-west-1.aliyuncs.com",
+      "eu-central-1": "actiontrail.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "actiontrail.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"actiontrail.cn-qingdao.aliyuncs.com",
+      "eu-west-1":"actiontrail.eu-west-1.aliyuncs.com"
+    },
+    "vpc": {
+      "cn-huhehaote": "vpc.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "vpc.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "vpc.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "vpc.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "vpc.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "vpc.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "vpc.ap-south-1.aliyuncs.com",
+      "eu-central-1": "vpc.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "vpc.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"vpc.aliyuncs.com",
+      "cn-beijing":"vpc.aliyuncs.com",
+      "cn-hangzhou":"vpc.aliyuncs.com",
+      "cn-shanghai":"vpc.aliyuncs.com",
+      "cn-shenzhen":"vpc.aliyuncs.com",
+      "cn-hongkong":"vpc.aliyuncs.com",
+      "ap-southeast-1":"vpc.aliyuncs.com",
+      "eu-west-1":"vpc.eu-west-1.aliyuncs.com",
+      "us-west-1":"vpc.aliyuncs.com",
+      "us-east-1":"vpc.aliyuncs.com"
+    },
+    "ots": {
+      "cn-huhehaote": "ots.cn-huhehaote.aliyuncs.com",
+      "cn-beijing": "ots.cn-beijing.aliyuncs.com",
+      "me-east-1": "ots.me-east-1.aliyuncs.com",
+      "cn-hangzhou": "ots.cn-hangzhou.aliyuncs.com",
+      "ap-northeast-1": "ots.ap-northeast-1.aliyuncs.com",
+      "cn-shanghai": "ots.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1": "ots.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "ots.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "ots.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-5": "ots.ap-southeast-5.aliyuncs.com",
+      "ap-south-1": "ots.ap-south-1.aliyuncs.com",
+      "eu-central-1": "ots.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou":"ots.cn-zhangjiakou.aliyuncs.com",
+      "eu-west-1":"ots.eu-west-1.aliyuncs.com",
+      "us-west-1":"ots.us-west-1.aliyuncs.com",
+      "us-east-1":"ots.us-east-1.aliyuncs.com"
+    },
+    "redisa": {
+      "cn-huhehaote": "r-kvstore.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "r-kvstore.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "r-kvstore.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "r-kvstore.ap-southeast-5.aliyuncs.com",
+      "cn-hongkong": "r-kvstore.cn-hongkong.aliyuncs.com",
+      "ap-southeast-1": "r-kvstore.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "r-kvstore.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "r-kvstore.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "r-kvstore.ap-south-1.aliyuncs.com",
+      "eu-central-1": "r-kvstore.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "r-kvstore.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"r-kvstore.aliyuncs.com",
+      "cn-beijing":"r-kvstore.aliyuncs.com",
+      "cn-hangzhou":"r-kvstore.aliyuncs.com",
+      "cn-shanghai":"r-kvstore.aliyuncs.com",
+      "cn-shenzhen":"r-kvstore.aliyuncs.com",
+      "eu-west-1":"r-kvstore.eu-west-1.aliyuncs.com",
+      "us-west-1":"r-kvstore.aliyuncs.com",
+      "us-east-1":"r-kvstore.aliyuncs.com"
+    },
+    "codepipeline": {
+      "cn-beijing": "cds.cn-beijing.aliyuncs.com"
+    },
+    "csb": {
+      "cn-hangzhou": "csb.cn-hangzhou.aliyuncs.com",
+      "cn-beijing": "csb.cn-beijing.aliyuncs.com"
+    },
+    "apigateway": {
+      "cn-shanghai": "apigateway.cn-shanghai.aliyuncs.com",
+      "cn-qingdao": "apigateway.cn-qingdao.aliyuncs.com",
+      "cn-beijing": "apigateway.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "apigateway.cn-hangzhou.aliyuncs.com",
+      "ap-northeast-1": "apigateway.ap-northeast-1.aliyuncs.com",
+      "us-west-1": "apigateway.us-west-1.aliyuncs.com",
+      "ap-southeast-5": "apigateway.ap-southeast-5.aliyuncs.com",
+      "cn-hongkong": "apigateway.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "apigateway.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "apigateway.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "apigateway.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-1": "apigateway.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "apigateway.ap-south-1.aliyuncs.com",
+      "eu-central-1": "apigateway.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou":"apigateway.cn-zhangjiakou.aliyuncs.com",
+      "cn-huhehaote":"apigateway.cn-huhehaote.aliyuncs.com",
+      "eu-west-1":"apigateway.eu-west-1.aliyuncs.com",
+      "us-east-1":"apigateway.us-east-1.aliyuncs.com",
+      "me-east-1":"apigateway.me-east-1.aliyuncs.com"
+    },
+    "beebot": {
+      "cn-shanghai": "chatbot.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "chatbot.cn-hangzhou.aliyuncs.com"
+    },
+    "cas": {
+      "cn-hangzhou": "cas.aliyuncs.com",
+      "ap-southeast-2":"cas.ap-southeast-2.aliyuncs.com",
+      "ap-northeast-1":"cas.ap-northeast-1.aliyuncs.com",
+      "eu-central-1":"cas.eu-central-1.aliyuncs.com",
+      "me-east-1":"cas.me-east-1.aliyuncs.com"
+    },
+    "mts": {
+      "ap-south-1": "mts.ap-south-1.aliyuncs.com",
+      "cn-beijing": "mts.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "mts.cn-hangzhou.aliyuncs.com",
+      "ap-northeast-1": "mts.ap-northeast-1.aliyuncs.com",
+      "cn-shanghai": "mts.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "mts.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "mts.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-1": "mts.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "mts.us-west-1.aliyuncs.com",
+      "eu-central-1": "mts.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou":"mts.cn-zhangjiakou.aliyuncs.com",
+      "eu-west-1":"mts.eu-west-1.aliyuncs.com"
+    },
+    "pvtz": {
+      "cn-hangzhou": "pvtz.aliyuncs.com",
+      "ap-southeast-1": "pvtz.aliyuncs.com"
+    },
+    "petadata": {
+      "cn-huhehaote": "petadata.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "petadata.me-east-1.aliyuncs.com",
+      "ap-southeast-2": "petadata.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-5": "petadata.ap-southeast-5.aliyuncs.com",
+      "eu-central-1": "petadata.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "petadata.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"petadata.aliyuncs.com",
+      "cn-beijing":"petadata.aliyuncs.com",
+      "cn-hangzhou":"petadata.aliyuncs.com",
+      "cn-shanghai":"petadata.aliyuncs.com",
+      "cn-shenzhen":"petadata.aliyuncs.com",
+      "cn-hongkong":"petadata.aliyuncs.com",
+      "ap-southeast-1":"petadata.aliyuncs.com",
+      "us-west-1":"petadata.aliyuncs.com",
+      "us-east-1":"petadata.aliyuncs.com"
+    },
+    "ensdisk": {
+      "cn-hangzhou": "ens.aliyuncs.com"
+    },
+    "onsvip": {
+      "cn-beijing": "ons.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "ons.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "ons.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen": "ons.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-1": "ons.ap-southeast-1.aliyuncs.com",
+      "cn-qingdao": "ons.cn-qingdao.aliyuncs.com"
+    },
+    "emr": {
+      "cn-huhehaote": "emr.cn-huhehaote.aliyuncs.com",
+      "ap-south-1": "emr.ap-south-1.aliyuncs.com",
+      "me-east-1": "emr.me-east-1.aliyuncs.com",
+      "us-east-1": "emr.us-east-1.aliyuncs.com",
+      "ap-northeast-1": "emr.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-2": "emr.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-3": "emr.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-5": "emr.ap-southeast-5.aliyuncs.com",
+      "eu-central-1": "emr.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "emr.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"emr.cn-qingdao.aliyuncs.com",
+      "cn-beijing":"emr.aliyuncs.com",
+      "cn-hangzhou":"emr.aliyuncs.com",
+      "cn-shanghai":"emr.aliyuncs.com",
+      "cn-shenzhen":"emr.aliyuncs.com",
+      "cn-hongkong":"emr.cn-hongkong.aliyuncs.com",
+      "ap-southeast-1":"emr.aliyuncs.com",
+      "eu-west-1":"emr.eu-west-1.aliyuncs.com",
+      "us-west-1":"emr.aliyuncs.com"
+    },
+    "hdm": {
+      "cn-shanghai": "hdm-api.aliyuncs.com"
+    },
+    "cms": {
+      "ap-southeast-5": "metrics.ap-southeast-5.aliyuncs.com",
+      "cn-huhehaote": "metrics.cn-huhehaote.aliyuncs.com",
+      "ap-northeast-1": "metrics.ap-northeast-1.aliyuncs.com",
+      "ap-south-1": "metrics.ap-south-1.aliyuncs.com",
+      "ap-southeast-3": "metrics.ap-southeast-3.aliyuncs.com",
+      "cn-qingdao":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-beijing":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-zhangjiakou":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-hangzhou":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen":"metrics.cn-hangzhou.aliyuncs.com",
+      "cn-hongkong":"metrics.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1":"metrics.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-2":"metrics.cn-hangzhou.aliyuncs.com",
+      "eu-west-1":"metrics.eu-west-1.aliyuncs.com",
+      "us-west-1":"metrics.cn-hangzhou.aliyuncs.com",
+      "us-east-1":"metrics.cn-hangzhou.aliyuncs.com",
+      "eu-central-1":"metrics.cn-hangzhou.aliyuncs.com",
+      "me-east-1":"metrics.cn-hangzhou.aliyuncs.com"
+    },
+    "luban": {
+      "cn-shanghai": "luban.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "luban.cn-hangzhou.aliyuncs.com"
+    },
+    "slb": {
+      "cn-huhehaote": "slb.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "slb.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "slb.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "slb.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "slb.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "slb.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "slb.ap-south-1.aliyuncs.com",
+      "eu-central-1": "slb.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "slb.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"slb.aliyuncs.com",
+      "cn-beijing":"slb.aliyuncs.com",
+      "cn-hangzhou":"slb.aliyuncs.com",
+      "cn-shanghai":"slb.aliyuncs.com",
+      "cn-shenzhen":"slb.aliyuncs.com",
+      "cn-hongkong":"slb.aliyuncs.com",
+      "ap-southeast-1":"slb.aliyuncs.com",
+      "eu-west-1":"slb.eu-west-1.aliyuncs.com",
+      "us-west-1":"slb.aliyuncs.com",
+      "us-east-1":"slb.aliyuncs.com"
+    },
+    "vod": {
+      "cn-shanghai": "vod.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "vod.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen": "vod.cn-shanghai.aliyuncs.com",
+      "cn-beijing": "vod.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1":"vod.ap-southeast-1.aliyuncs.com",
+      "eu-central-1":"vod.eu-central-1.aliyuncs.com"
+    },
+    "domain": {
+      "cn-hangzhou": "domain.aliyuncs.com",
+      "ap-southeast-1": "domain-intl.aliyuncs.com"
+    },
+    "imagesearch": {
+      "ap-southeast-1": "imagesearch.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2": "imagesearch.ap-southeast-2.aliyuncs.com",
+      "cn-shanghai":"imagesearch.cn-shanghai.aliyuncs.com",
+      "ap-northeast-1":"imagesearch.ap-northeast-1.aliyuncs.com"
+    },
+    "ddos": {
+      "cn-hangzhou": "ddospro.cn-hangzhou.aliyuncs.com",
+      "cn-hongkong": "ddospro.cn-hongkong.aliyuncs.com"
+    },
+    "sas": {
+      "cn-hangzhou": "sas.aliyuncs.com"
+    },
+    "odpsmayi": {
+      "cn-shanghai": "bsb.cloud.alipay.com",
+      "ap-southeast-1": "bsb.cloud.alipay.com"
+    },
+    "gameshield": {
+      "cn-hangzhou": "gameshield.aliyuncs.com",
+      "cn-zhangjiakou": "gameshield.cn-zhangjiakou.aliyuncs.com"
+    },
+    "kvstore": {
+      "ap-northeast-1": "r-kvstore.ap-northeast-1.aliyuncs.com"
+    },
+    "ddosbgp": {
+      "cn-huhehaote": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "cn-qingdao": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "cn-beijing": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "cn-hangzhou": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "cn-hongkong": "ddosbgp.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "ddosbgp.cn-hangzhou.aliyuncs.com",
+      "us-west-1": "ddosbgp.us-west-1.aliyuncs.com",
+      "cn-zhangjiakou": "ddosbgp.cn-hangzhou.aliyuncs.com"
+    },
+    "ess": {
+      "cn-huhehaote": "ess.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "ess.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "ess.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "ess.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "ess.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "ess.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "ess.ap-south-1.aliyuncs.com",
+      "eu-central-1": "ess.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "ess.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"ess.aliyuncs.com",
+      "cn-beijing":"ess.aliyuncs.com",
+      "cn-hangzhou":"ess.aliyuncs.com",
+      "cn-shanghai":"ess.aliyuncs.com",
+      "cn-shenzhen":"ess.aliyuncs.com",
+      "cn-hongkong":"ess.aliyuncs.com",
+      "ap-southeast-1":"ess.aliyuncs.com",
+      "eu-west-1":"ess.eu-west-1.aliyuncs.com",
+      "us-west-1":"ess.aliyuncs.com",
+      "us-east-1":"ess.aliyuncs.com"
+    },
+    "clouddesktop": {
+      "cn-shanghai": "clouddesktop.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "clouddesktop.cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen": "clouddesktop.cn-shenzhen.aliyuncs.com",
+      "cn-beijing": "clouddesktop.cn-beijing.aliyuncs.com"
+    },
+    "dds": {
+      "cn-huhehaote": "mongodb.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "mongodb.me-east-1.aliyuncs.com",
+      "ap-southeast-2": "mongodb.ap-southeast-2.aliyuncs.com",
+      "cn-zhangjiakou": "mongodb.cn-zhangjiakou.aliyuncs.com",
+      "ap-southeast-3": "mongodb.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-5": "mongodb.ap-southeast-5.aliyuncs.com",
+      "ap-south-1": "mongodb.ap-south-1.aliyuncs.com",
+      "eu-central-1": "mongodb.eu-central-1.aliyuncs.com",
+      "cn-qingdao":"mongodb.aliyuncs.com",
+      "cn-beijing":"mongodb.aliyuncs.com",
+      "cn-hangzhou":"mongodb.aliyuncs.com",
+      "cn-shanghai":"mongodb.aliyuncs.com",
+      "cn-shenzhen":"mongodb.aliyuncs.com",
+      "cn-hongkong":"mongodb.aliyuncs.com",
+      "ap-southeast-1":"mongodb.aliyuncs.com",
+      "ap-northeast-1":"mongodb.ap-northeast-1.aliyuncs.com",
+      "eu-west-1":"mongodb.eu-west-1.aliyuncs.com",
+      "us-west-1":"mongodb.aliyuncs.com",
+      "us-east-1":"mongodb.aliyuncs.com"
+    },
+    "alidnsgtm": {
+      "cn-hangzhou": "alidns.aliyuncs.com",
+      "ap-southeast-1": "alidns.aliyuncs.com"
+    },
+    "yunmarket": {
+      "cn-hangzhou": "market.aliyuncs.com"
+    },
+    "pcdn": {
+      "cn-hangzhou": "pcdn.aliyuncs.com"
+    },
+    "nas": {
+      "cn-huhehaote": "nas.cn-huhehaote.aliyuncs.com",
+      "cn-qingdao": "nas.cn-qingdao.aliyuncs.com",
+      "cn-beijing": "nas.cn-beijing.aliyuncs.com",
+      "us-east-1": "nas.us-east-1.aliyuncs.com",
+      "ap-southeast-2": "nas.ap-southeast-2.aliyuncs.com",
+      "cn-shanghai": "nas.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "nas.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "nas.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "nas.ap-southeast-3.aliyuncs.com",
+      "cn-hangzhou": "nas.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-5": "nas.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-1": "nas.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "nas.ap-south-1.aliyuncs.com",
+      "eu-central-1": "nas.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "nas.cn-zhangjiakou.aliyuncs.com",
+      "ap-northeast-1":"nas.ap-northeast-1.aliyuncs.com",
+      "us-west-1":"nas.us-west-1.aliyuncs.com"
+    },
+    "ivision": {
+      "cn-hangzhou": "ivision.cn-hangzhou.aliyuncs.com",
+      "cn-beijing": "ivision.cn-beijing.aliyuncs.com"
+    },
+    "ens": {
+      "cn-hangzhou": "ens.aliyuncs.com"
+    },
+    "kms": {
+      "cn-huhehaote": "kms.cn-huhehaote.aliyuncs.com",
+      "us-west-1": "kms.us-west-1.aliyuncs.com",
+      "cn-beijing": "kms.cn-beijing.aliyuncs.com",
+      "me-east-1": "kms.me-east-1.aliyuncs.com",
+      "us-east-1": "kms.us-east-1.aliyuncs.com",
+      "ap-northeast-1": "kms.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-2": "kms.ap-southeast-2.aliyuncs.com",
+      "cn-zhangjiakou": "kms.cn-zhangjiakou.aliyuncs.com",
+      "cn-shanghai": "kms.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "kms.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "kms.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "kms.ap-southeast-3.aliyuncs.com",
+      "cn-hangzhou": "kms.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-5": "kms.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-1": "kms.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "kms.ap-south-1.aliyuncs.com",
+      "eu-central-1": "kms.eu-central-1.aliyuncs.com",
+      "cn-qingdao": "kms.cn-qingdao.aliyuncs.com",
+      "eu-west-1":"kms.eu-west-1.aliyuncs.com"
+    },
+    "hpc": {
+      "cn-hangzhou": "hpc.aliyuncs.com",
+      "cn-beijing": "hpc.aliyuncs.com"
+    },
+    "green": {
+      "cn-shanghai": "green.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "green.cn-hangzhou.aliyuncs.com",
+      "us-west-1": "green.us-west-1.aliyuncs.com",
+      "cn-beijing": "green.cn-beijing.aliyuncs.com",
+      "ap-southeast-1": "green.ap-southeast-1.aliyuncs.com"
+    },
+    "odpsplusmayi": {
+      "cn-shanghai": "bsb.cloud.alipay.com",
+      "cn-hangzhou": "bsb.cloud.alipay.com",
+      "ap-southeast-1": "bsb.cloud.alipay.com"
+    },
+    "hcs_sgw": {
+      "cn-shanghai": "sgw.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "sgw.cn-shanghai.aliyuncs.com",
+      "cn-qingdao":"sgw.cn-shanghai.aliyuncs.com",
+      "cn-beijing":"sgw.cn-shanghai.aliyuncs.com",
+      "cn-zhangjiakou":"sgw.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen":"sgw.cn-shanghai.aliyuncs.com",
+      "cn-hongkong":"sgw.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1":"sgw.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2":"sgw.ap-southeast-2.aliyuncs.com",
+      "eu-central-1":"sgw.eu-central-1.aliyuncs.com"
+    },
+    "emas": {
+      "cn-shanghai": "mhub.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "mhub.cn-hangzhou.aliyuncs.com"
+    },
+    "iot": {
+      "cn-shanghai": "iot.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1": "iot.ap-southeast-1.aliyuncs.com",
+      "us-east-1": "iot.us-east-1.aliyuncs.com",
+      "ap-northeast-1": "iot.ap-northeast-1.aliyuncs.com",
+      "us-west-1": "iot.us-west-1.aliyuncs.com",
+      "eu-central-1": "iot.eu-central-1.aliyuncs.com"
+    },
+    "eci": {
+      "cn-shanghai": "eci.aliyuncs.com",
+      "cn-hangzhou": "eci.aliyuncs.com",
+      "us-west-1": "eci.aliyuncs.com",
+      "cn-beijing": "eci.aliyuncs.com",
+      "cn-shenzhen":"eci.aliyuncs.com",
+      "ap-southeast-1":"eci.aliyuncs.com"
+    },
+    "hsm": {
+      "cn-beijing": "hsm.aliyuncs.com",
+      "cn-hangzhou": "hsm.aliyuncs.com",
+      "cn-shanghai": "hsm.aliyuncs.com",
+      "cn-hongkong": "hsm.aliyuncs.com",
+      "cn-shenzhen": "hsm.aliyuncs.com",
+      "ap-southeast-1": "hsm.aliyuncs.com"
+    },
+    "fc": {
+      "cn-shanghai": "cn-shanghai.fc.aliyuncs.com",
+      "cn-hangzhou": "cn-hangzhou.fc.aliyuncs.com",
+      "cn-shenzhen": "cn-shenzhen.fc.aliyuncs.com",
+      "cn-beijing": "cn-beijing.fc.aliyuncs.com",
+      "ap-southeast-2": "ap-southeast-2.fc.aliyuncs.com",
+      "cn-huhehaote":"cn-huhehaote.fc.aliyuncs.com"
+    },
+    "ecs": {
+      "cn-huhehaote": "ecs.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "ecs.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "ecs.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "ecs.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "ecs.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "ecs.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "ecs.ap-south-1.aliyuncs.com",
+      "eu-central-1": "ecs.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "ecs.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"ecs-cn-hangzhou.aliyuncs.com",
+      "cn-beijing":"ecs-cn-hangzhou.aliyuncs.com",
+      "cn-hangzhou":"ecs-cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"ecs-cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen":"ecs-cn-hangzhou.aliyuncs.com",
+      "cn-hongkong":"ecs-cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1":"ecs-cn-hangzhou.aliyuncs.com",
+      "eu-west-1":"ecs.eu-west-1.aliyuncs.com",
+      "us-west-1":"ecs-cn-hangzhou.aliyuncs.com",
+      "us-east-1":"ecs-cn-hangzhou.aliyuncs.com"
+    },
+    "batchcompute": {
+      "cn-huhehaote": "batchcompute.cn-huhehaote.aliyuncs.com",
+      "us-west-1": "batchcompute.us-west-1.aliyuncs.com",
+      "cn-beijing": "batchcompute.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "batchcompute.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "batchcompute.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1": "batchcompute.ap-southeast-1.aliyuncs.com",
+      "cn-shenzhen": "batchcompute.cn-shenzhen.aliyuncs.com",
+      "cn-qingdao": "batchcompute.cn-qingdao.aliyuncs.com",
+      "cn-zhangjiakou": "batchcompute.cn-zhangjiakou.aliyuncs.com"
+    },
+    "vipaegis": {
+      "cn-hangzhou": "aegis.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-3": "aegis.ap-southeast-3.aliyuncs.com"
+    },
+    "rds": {
+      "cn-huhehaote": "rds.cn-huhehaote.aliyuncs.com",
+      "me-east-1": "rds.me-east-1.aliyuncs.com",
+      "ap-northeast-1": "rds.ap-northeast-1.aliyuncs.com",
+      "ap-southeast-5": "rds.ap-southeast-5.aliyuncs.com",
+      "ap-southeast-3": "rds.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-2": "rds.ap-southeast-2.aliyuncs.com",
+      "ap-south-1": "rds.ap-south-1.aliyuncs.com",
+      "eu-central-1": "rds.eu-central-1.aliyuncs.com",
+      "cn-zhangjiakou": "rds.cn-zhangjiakou.aliyuncs.com",
+      "cn-qingdao":"rds.aliyuncs.com",
+      "cn-beijing":"rds.aliyuncs.com",
+      "cn-hangzhou":"rds.aliyuncs.com",
+      "cn-shanghai":"rds.aliyuncs.com",
+      "cn-shenzhen":"rds.aliyuncs.com",
+      "cn-hongkong":"rds.aliyuncs.com",
+      "ap-southeast-1":"rds.aliyuncs.com",
+      "eu-west-1":"rds.eu-west-1.aliyuncs.com",
+      "us-west-1":"rds.aliyuncs.com",
+      "us-east-1":"rds.aliyuncs.com"
+    },
+    "cloudap": {
+      "cn-hangzhou": "cloudwf.aliyuncs.com"
+    },
+    "openanalytics": {
+      "cn-beijing": "openanalytics.cn-beijing.aliyuncs.com",
+      "cn-hangzhou": "openanalytics.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "openanalytics.cn-shanghai.aliyuncs.com",
+      "ap-southeast-1": "openanalytics.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "openanalytics.ap-southeast-3.aliyuncs.com",
+      "cn-zhangjiakou": "openanalytics.cn-zhangjiakou.aliyuncs.com",
+      "cn-shenzhen":"openanalytics.cn-shenzhen.aliyuncs.com",
+      "eu-west-1":"openanalytics.eu-west-1.aliyuncs.com"
+    },
+    "hcs_mgw": {
+      "cn-shanghai": "mgw.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "mgw.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1": "mgw.ap-southeast-1.aliyuncs.com"
+    },
+    "dcdn": {
+      "cn-hangzhou": "dcdn.aliyuncs.com",
+      "ap-southeast-1": "dcdn.aliyuncs.com"
+    },
+    "elasticsearch": {
+      "ap-south-1": "elasticsearch.ap-south-1.aliyuncs.com",
+      "cn-hangzhou": "elasticsearch.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai": "elasticsearch.cn-shanghai.aliyuncs.com",
+      "cn-hongkong": "elasticsearch.cn-hongkong.aliyuncs.com",
+      "cn-shenzhen": "elasticsearch.cn-shenzhen.aliyuncs.com",
+      "ap-southeast-3": "elasticsearch.ap-southeast-3.aliyuncs.com",
+      "ap-southeast-1": "elasticsearch.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "elasticsearch.us-west-1.aliyuncs.com",
+      "cn-qingdao":"elasticsearch.cn-qingdao.aliyuncs.com",
+      "cn-beijing":"elasticsearch.cn-beijing.aliyuncs.com",
+      "cn-zhangjiakou":"elasticsearch.cn-zhangjiakou.aliyuncs.com",
+      "ap-southeast-2":"elasticsearch.ap-southeast-2.aliyuncs.com",
+      "ap-southeast-5":"elasticsearch.ap-southeast-5.aliyuncs.com",
+      "ap-northeast-1":"elasticsearch.ap-northeast-1.aliyuncs.com",
+      "eu-central-1":"elasticsearch.eu-central-1.aliyuncs.com"
+    },
+    "alidns": {
+      "cn-hangzhou": "alidns.aliyuncs.com"
+    },
+    "cps": {
+      "cn-hangzhou": "cloudpush.aliyuncs.com"
+    },
+    "ccc": {
+      "cn-shanghai": "ccc.cn-shanghai.aliyuncs.com",
+      "cn-hangzhou": "ccc.cn-hangzhou.aliyuncs.com"
+    },
+    "cloudphoto": {
+      "cn-shanghai": "cloudphoto.cn-shanghai.aliyuncs.com"
+    },
+    "dts": {
+      "cn-qingdao": "dts.aliyuncs.com",
+      "cn-beijing": "dts.aliyuncs.com",
+      "cn-zhangjiakou": "dts.aliyuncs.com",
+      "cn-huhehaote": "dts.aliyuncs.com",
+      "cn-hangzhou": "dts.aliyuncs.com",
+      "cn-shanghai": "dts.aliyuncs.com",
+      "cn-shenzhen": "dts.aliyuncs.com",
+      "cn-hongkong": "dts.aliyuncs.com",
+      "ap-southeast-1": "dts.aliyuncs.com"
+    },
+    "dysmsapi": {
+      "cn-shenzhen": "dysmsapi.aliyuncs.com",
+      "cn-huhehaote": "dysmsapi.aliyuncs.com",
+      "cn-qingdao": "dysmsapi.aliyuncs.com",
+      "cn-beijing": "dysmsapi.aliyuncs.com",
+      "cn-shanghai": "dysmsapi.aliyuncs.com",
+      "cn-hangzhou": "dysmsapi.aliyuncs.com",
+      "cn-zhangjiakou": "dysmsapi.aliyuncs.com",
+      "cn-chengdu": "dysmsapi.aliyuncs.com",
+      "cn-hongkong": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "me-east-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "us-east-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-northeast-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-5": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "dysmsapi.ap-southeast-1.aliyuncs.com",
+      "eu-central-1": "dysmsapi.ap-southeast-1.aliyuncs.com"
+    },
+    "dybaseapi": {
+      "cn-shenzhen": "dybaseapi.aliyuncs.com",
+      "cn-huhehaote": "dybaseapi.aliyuncs.com",
+      "cn-qingdao": "dybaseapi.aliyuncs.com",
+      "cn-beijing": "dybaseapi.aliyuncs.com",
+      "cn-shanghai": "dybaseapi.aliyuncs.com",
+      "cn-hangzhou": "dybaseapi.aliyuncs.com",
+      "cn-zhangjiakou": "dybaseapi.aliyuncs.com",
+      "cn-chengdu": "dybaseapi.aliyuncs.com",
+      "cn-hongkong": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "me-east-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "us-east-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-northeast-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-5": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "dybaseapi.ap-southeast-1.aliyuncs.com",
+      "eu-central-1": "dybaseapi.ap-southeast-1.aliyuncs.com"
+    },
+    "bssopenapi": {
+      "cn-qingdao": "business.aliyuncs.com",
+      "cn-beijing": "business.aliyuncs.com",
+      "cn-zhangjiakou": "business.aliyuncs.com",
+      "cn-huhehaote": "business.aliyuncs.com",
+      "cn-hangzhou": "business.aliyuncs.com",
+      "cn-shanghai": "business.aliyuncs.com",
+      "cn-shenzhen": "business.aliyuncs.com",
+      "cn-hongkong": "business.aliyuncs.com",
+      "ap-southeast-1": "business.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-2": "business.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-3": "business.ap-southeast-1.aliyuncs.com",
+      "ap-southeast-5": "business.ap-southeast-1.aliyuncs.com",
+      "ap-northeast-1": "business.ap-southeast-1.aliyuncs.com",
+      "us-west-1": "business.ap-southeast-1.aliyuncs.com",
+      "us-east-1": "business.ap-southeast-1.aliyuncs.com",
+      "eu-central-1": "business.ap-southeast-1.aliyuncs.com",
+      "eu-west-1": "business.ap-southeast-1.aliyuncs.com",
+      "me-east-1": "business.ap-southeast-1.aliyuncs.com",
+      "ap-south-1": "business.ap-southeast-1.aliyuncs.com"
+    },
+    "faas": {
+      "cn-hangzhou": "faas.cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen": "faas.cn-shenzhen.aliyuncs.com",
+      "cn-shanghai": "faas.cn-shanghai.aliyuncs.com",
+      "cn-beijing": "faas.cn-beijing.aliyuncs.com",
+      "cn-zhangjiakou": "faas.cn-zhangjiakou.aliyuncs.com"
+    },
+    "dmsenterprise":{
+      "cn-qingdao":"dms-enterprise.aliyuncs.com",
+      "cn-beijing":"dms-enterprise.aliyuncs.com",
+      "cn-hangzhou":"dms-enterprise.aliyuncs.com",
+      "cn-shanghai":"dms-enterprise.aliyuncs.com",
+      "cn-shenzhen":"dms-enterprise.aliyuncs.com",
+      "ap-northeast-1":"dms-enterprise.aliyuncs.com"
+    },
+    "alikafka":{
+      "cn-qingdao":"alikafka.cn-qingdao.aliyuncs.com",
+      "cn-beijing":"alikafka.cn-beijing.aliyuncs.com",
+      "cn-zhangjiakou":"alikafka.cn-zhangjiakou.aliyuncs.com",
+      "cn-huhehaote":"alikafka.cn-huhehaote.aliyuncs.com",
+      "cn-hangzhou":"alikafka.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"alikafka.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen":"alikafka.cn-shenzhen.aliyuncs.com",
+      "cn-hongkong":"alikafka.cn-hongkong.aliyuncs.com"
+    },
+    "foas":{
+      "cn-qingdao":"foas.cn-qingdao.aliyuncs.com",
+      "cn-beijing":"foas.cn-beijing.aliyuncs.com",
+      "cn-zhangjiakou":"foas.cn-zhangjiakou.aliyuncs.com",
+      "cn-hangzhou":"foas.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"foas.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen":"foas.cn-shenzhen.aliyuncs.com",
+      "ap-northeast-1":"foas.ap-northeast-1.aliyuncs.com"
+    },
+    "cbn":{
+      "cn-qingdao":"cbn.aliyuncs.com",
+      "cn-beijing":"cbn.aliyuncs.com",
+      "cn-zhangjiakou":"cbn.aliyuncs.com",
+      "cn-huhehaote":"cbn.aliyuncs.com",
+      "cn-hangzhou":"cbn.aliyuncs.com",
+      "cn-shanghai":"cbn.aliyuncs.com",
+      "cn-shenzhen":"cbn.aliyuncs.com",
+      "cn-hongkong":"cbn.aliyuncs.com",
+      "ap-southeast-1":"cbn.aliyuncs.com",
+      "ap-southeast-2":"cbn.aliyuncs.com",
+      "ap-southeast-3":"cbn.aliyuncs.com",
+      "ap-southeast-5":"cbn.aliyuncs.com",
+      "ap-northeast-1":"cbn.aliyuncs.com",
+      "eu-west-1":"cbn.aliyuncs.com",
+      "us-west-1":"cbn.aliyuncs.com",
+      "us-east-1":"cbn.aliyuncs.com",
+      "eu-central-1":"cbn.aliyuncs.com",
+      "me-east-1":"cbn.aliyuncs.com",
+      "ap-south-1":"cbn.aliyuncs.com"
+    },
+    "alidfs":{
+      "cn-beijing":"dfs.cn-beijing.aliyuncs.com",
+      "cn-shanghai":"dfs.cn-shanghai.aliyuncs.com"
+    },
+    "airec":{
+      "cn-beijing":"airec.cn-beijing.aliyuncs.com",
+      "cn-hangzhou":"airec.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"airec.cn-shanghai.aliyuncs.com"
+    },
+    "scdn":{
+      "cn-hangzhou":"scdn.aliyuncs.com"
+    },
+    "saf":{
+      "cn-hangzhou":"saf.cn-shanghai.aliyuncs.com",
+      "cn-shanghai":"saf.cn-shanghai.aliyuncs.com",
+      "cn-shenzhen":"saf.cn-shenzhen.aliyuncs.com"
+    },
+    "linkwan":{
+      "cn-hangzhou":"linkwan.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"linkwan.cn-shanghai.aliyuncs.com"
+    },
+    "linkedmall":{
+      "cn-hangzhou":"linkedmall.aliyuncs.com",
+      "cn-shanghai":"linkedmall.aliyuncs.com"
+    },
+    "vs":{
+      "cn-hangzhou":"vs.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai":"vs.cn-shanghai.aliyuncs.com"
+    },
+    "ccs":{
+      "cn-hangzhou":"ccs.aliyuncs.com"
+    },
+    "hitsdb":{
+      "cn-hangzhou":"hitsdb.aliyuncs.com"
+    },
+    "uis":{
+      "cn-hangzhou":"uis.cn-hangzhou.aliyuncs.com"
+    },
+    "alimt":{
+      "cn-hangzhou":"mt.cn-hangzhou.aliyuncs.com"
+    },
+    "cccvn":{
+      "cn-shanghai":"voicenavigator.cn-shanghai.aliyuncs.com"
+    },
+    "drdspost":{
+      "cn-shanghai":"drds.cn-shanghai.aliyuncs.com",
+      "cn-hongkong":"drds.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1":"drds.ap-southeast-1.aliyuncs.com"
+    },
+    "dbs" : {
+      "cn-hangzhou" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "cn-shanghai" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "cn-qingdao" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "cn-beijing" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "cn-shenzhen" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "cn-hongkong" : "dbs-api.cn-hangzhou.aliyuncs.com",
+      "ap-southeast-1" : "dbs-api.ap-southeast-1.aliyuncs.com",
+      "ap-northeast-1" : "dbs-api.ap-northeast-1.aliyuncs.com"
+    }
+  },
+  "document_id": {
+    "vod": "60574",
+    "domain": "42875",
+    "cdn": "27148",
+    "ram": "28672",
+    "drds": "51111",
+    "sas": "28498",
+    "sts": "28756",
+    "csb": "64837",
+    "ons": "44416",
+    "cs": "26043",
+    "cr": "60716",
+    "ros": "28899",
+    "polardb": "58764",
+    "ess": "25925",
+    "batchcompute": "44717",
+    "dds": "61715",
+    "waf": "62847",
+    "arms": "42924",
+    "jaq": "35037",
+    "cloudauth": "60687",
+    "nas": "62598",
+    "live": "48207",
+    "hpc": "35201",
+    "slb": "27565",
+    "rds": "26223",
+    "dm": "29434",
+    "iot": "30557",
+    "cloudwf": "58111",
+    "ecs": "25484",
+    "vpc": "34962",
+    "redisa": "60831",
+    "codepipeline": "62887",
+    "apigateway": "43590",
+    "vipaegis": "28449",
+    "beebot": "60760",
+    "emr": "28140",
+    "mts": "29212",
+    "httpdns": "52679",
+    "green": "28427",
+    "ccc": "63027",
+    "alidns": "29739",
+    "push": "30074",
+    "itaas": "55759",
+    "cms": "28615",
+    "qualitycheck": "50807",
+    "cloudphoto": "59902"
+  }
+}
+

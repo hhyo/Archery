@@ -1,0 +1,2 @@
+class EncryptedFieldException(Exception):
+    pass

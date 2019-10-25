@@ -1,0 +1,72 @@
+Metadata-Version: 2.1
+Name: mo-future
+Version: 2.48.19205
+Summary: More future! Make Python 2/3 compatibility a bit easier
+Home-page: https://github.com/klahnakoski/mo-files
+Author: Kyle Lahnakoski
+Author-email: kyle@lahnakoski.com
+License: MPL 2.0
+Description: # mo-future
+        
+        More future!  Make Python 2/3 compatibility a little bit easier
+        
+        ### Problem 
+        
+        `future` or `six` are hard to use: It is easy to google how to import an object in Python2, or Python3, but finding the full path in these compatibility libraries is difficult. 
+        
+        ## Solution
+        
+        All the modules and types required for compatibility are put into the `mo-future` top-level module so they are  easy to find.
+        
+        
+        ### Flat namespace
+        
+        Instead of 
+        
+        ```python
+            from future.utils import text_type
+        ```
+        
+        you get the same, but without having to discover what sub-module the `text_type` is hiding:  
+        
+        ```python
+            from mo_future import text_type
+        ```
+        
+        
+        ### Simpler imports
+        
+        Instead of writing conditional imports like 
+        
+        ```python
+            try:
+                from io import StringIO
+            except:
+                from StringIO import StringIO
+        ```
+        
+        or 
+        
+        ```python
+            if PY3:
+                from io import StringIO
+            else:
+                from StringIO import StringIO
+        ```
+        
+        you can use `mo-future`:
+        
+        ```python
+            from mo_future import StringIO
+        ```
+        
+        
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.6
+Description-Content-Type: text/markdown

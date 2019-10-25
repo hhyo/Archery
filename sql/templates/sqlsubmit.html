@@ -58,7 +58,8 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <select id="db_name" name="db_name"
+                                <select id="db_names" name="db_names"
+                                        multiple="multiple"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-name="数据库" data-placeholder="请选择数据库！"
                                         data-live-search="true"
@@ -267,22 +268,29 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
-                         if ($("#db_name").val()){
-                             $("#db_name").selectpicker().trigger("change");
+                         $("#db_names").selectpicker('val', sessionStorage.getItem('editDbname'));
+                         if ($("#db_names").val()){
+                             $("#db_names").selectpicker().trigger("change");
                          }
                     }
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        $("#db_name").empty();
+                        $("#db_names").empty();
+                        {#var name = new Array();#}
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            $("#db_name").append(name);
-                        }
-                        $('#db_name').selectpicker('render');
-                        $('#db_name').selectpicker('refresh');
+                            {#name[i] = result[i];#}
+                            $("#db_names").append(name);
+                        };
+
+                        {#$("#db_names").append(result);#}
+                        {#var db_names = $("#db_names");#}
+                        {#console.log(db_names);#}
+
+                        $('#db_names').selectpicker('render');
+                        $('#db_names').selectpicker('refresh');
                         //自动补全提示
                         setDbsCompleteData(result)
                     } else {
@@ -295,7 +303,14 @@
             });
         });
         //数据库变更获取表名称补全提示
-        $("#db_name").change(function () {
+        $("#db_names").change(function () {
+            {#db_names = document.getElementById("db_names");#}
+            {#dbs = new Array();#}
+            {#for (var i = 0; i < db_names.length; i++) {#}
+            {#    if (db_names.options[i].selected == true && db_names.options[i].text != "" && db_names.options[i].text != null)#}
+            {#        dbs[i] = db_names.options[i].text;#}
+            {#        console.log(dbs[i]);#}
+            {#  #}
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "post",
@@ -303,7 +318,9 @@
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val(),
+                    db_names: $("#db_names").val().join(','),
+                    {#db_names: dbs,#}
+                    {#db_names: new Array("t1","t2"),#}
                     resource_type: "table"
                 },
                 complete: function () {
@@ -332,7 +349,10 @@
                     //如果为null则设置为''
                     var value = fieldElement.val() || '';
                     if (value) {
-                        value = value.trim();
+                        {#console.log(value);#}
+                        if (!value instanceof Array) {
+                            value = value.trim();
+                        };
                     }
                     if (!value || value === fieldElement.attr('data-placeholder')) {
                         alert(fieldElement.attr('data-placeholder'));
@@ -359,9 +379,39 @@
             }
         );
 
+        function commit_order() {
+            $.ajax({
+                        type: "post",
+                        url: "/autoreview/",
+                        dataType: "json",
+                        data: {
+                            sql_content: editor.getValue(),
+                            workflow_name: $("#workflow_name").val(),
+                            group_name: $("#group_name").val(),
+                            instance_name: $("#instance_name").val(),
+                            db_names: $("#db_names").val().join(','),
+                            is_backup: $("#is_backup").val(),
+                            run_date_start: $("#run_date_start").val(),
+                            run_date_end: $("#run_date_end").val()
+                        },
+                        success: function (data) {
+                            if (data.status === 0) {
+                                //转到工单列表
+                                window.location.href = '/sqlworkflow';
+                            } else {
+                                alert(data.msg);
+                            }
+                        },
+                        error: function (data) {
+                            alert("工单提交异常！");
+                        },
+                    })
+        }
+
         //SQL提交
         $("#btn-submitsql").click(function () {
             //获取form对象，判断输入，通过则提交
+
             var formSubmit = $("#form-submitsql");
             var sqlContent = editor.getValue();
             $("#sql_content").val(sqlContent);
@@ -374,7 +424,8 @@
                 if (CheckWarningCount > 0 || CheckErrorCount > 0) {
                     $('#submitComfirm').modal('show');
                 } else {
-                    formSubmit.submit();
+                    commit_order();
+                    {#formSubmit.submit();#}
                     $('input[type=button]').addClass('disabled');
                     $('input[type=button]').prop('disabled', true);
                 }
@@ -387,7 +438,8 @@
             var formSubmit = $("#form-submitsql");
             var sqlContent = editor.getValue();
             $("#sql_content").val(sqlContent);
-            formSubmit.submit();
+            commit_order();
+            {#formSubmit.submit();#}
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
         });
@@ -405,6 +457,7 @@
             $('input[type=button]').prop('disabled', true);
             //先做表单验证，成功了提交ajax给后端
             let formSubmit = $("#form-submitsql");
+            console.log(formSubmit);
             var sqlContent = editor.getValue();
             $("#sql_content").val(sqlContent);
             if (validateForm(formSubmit)) {
@@ -426,7 +479,7 @@
                 data: {
                     sql_content: editor.getValue(),
                     instance_name: $("#instance_name").val(),
-                    db_name: $("#db_name").val()
+                    db_names: $("#db_names").val().join(',')
                 },
                 complete: function () {
                     $("#btn-format").removeClass('disabled');
@@ -536,11 +589,19 @@
                             }
                         );
                         //记录审核结果
-                        sessionStorage.setItem('CheckWarningCount', result['CheckWarningCount']);
-                        sessionStorage.setItem('CheckErrorCount', result['CheckErrorCount']);
+                        var warn_count = result['CheckWarningCount'];
+                        var error_count = result['CheckErrorCount'];
+                        console.log('Debug sql audit res', warn_count, error_count);
+                        sessionStorage.setItem('CheckWarningCount', warn_count);
+                        sessionStorage.setItem('CheckErrorCount', error_count);
                         $("#inception-result").show();
-                        $('input[type=button]').removeClass('disabled');
-                        $('input[type=button]').prop('disabled', false);
+                        if (error_count < 1) {
+                            $('input[type=button]').removeClass('disabled');
+                            $('input[type=button]').prop('disabled', false);
+                        }
+                        else {
+                            alert('请解决SQL检测错误再提交！');
+                        };
                     } else {
                         alert(data.msg);
                     }
@@ -602,9 +663,9 @@
                         }
                         $('#instance_name').selectpicker('render');
                         $('#instance_name').selectpicker('refresh');
-                        $("#db_name").empty();
-                        $('#db_name').selectpicker('render');
-                        $('#db_name').selectpicker('refresh');
+                        $("#db_names").empty();
+                        $('#db_names').selectpicker('render');
+                        $('#db_names').selectpicker('refresh');
                     } else {
                         alert(data.msg);
                     }

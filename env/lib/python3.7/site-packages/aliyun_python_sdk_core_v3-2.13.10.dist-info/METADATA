@@ -1,0 +1,44 @@
+Metadata-Version: 2.1
+Name: aliyun-python-sdk-core-v3
+Version: 2.13.10
+Summary: The core module of Aliyun Python SDK.
+Home-page: https://github.com/aliyun/aliyun-openapi-python-sdk
+Author: Alibaba Cloud
+Author-email: alibaba-cloud-sdk-dev-team@list.alibaba-inc.com
+License: Apache License 2.0
+Keywords: aliyun,sdk,core
+Platform: any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Software Development
+Requires-Dist: jmespath (<1.0.0,>=0.9.3)
+
+======================
+aliyun-python-sdk-core
+======================
+
+
+This is the core module of Aliyun Python SDK.
+
+Aliyun Python SDK is the official software development kit. It makes things easy to integrate your Python application,
+library, or script with Aliyun services.
+
+This module works on Python versions:
+
+   * 2.6.5 and greater
+
+
+Documentation:
+
+Please visit http://develop.aliyun.com/sdk/python
+

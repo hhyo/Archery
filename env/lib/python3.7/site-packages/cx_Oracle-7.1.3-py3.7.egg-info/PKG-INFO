@@ -1,0 +1,22 @@
+Metadata-Version: 1.1
+Name: cx-Oracle
+Version: 7.1.3
+Summary: Python interface to Oracle
+Home-page: https://oracle.github.io/python-cx_Oracle
+Author: Anthony Tuininga
+Author-email: anthony.tuininga@gmail.com
+License: BSD License
+Description: Python interface to Oracle Database conforming to the Python DB API 2.0 specification.
+        See http://www.python.org/topics/database/DatabaseAPI-2.0.html.
+Keywords: Oracle
+Platform: UNKNOWN
+Classifier: Development Status :: 6 - Mature
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: C
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Database

@@ -1,0 +1,22 @@
+Private-Key: (384 bit)
+priv:
+    01:fd:4e:5f:2e:27:db:90:b9:14:38:e9:b8:f8:bf:
+    41:51:b9:88:2f:b0:ad:fd:1e:c4:e5:ad:1a:f8:1b:
+    d7:30:71:97:fc:5f:ec:a3:62:7e:ca:04:3e:f3:a6:
+    5c:08:d5
+pub:
+    04:d4:44:77:98:13:ea:9f:b6:08:49:91:e0:a8:81:
+    a9:2b:5e:34:95:26:54:7b:95:28:50:04:7a:6b:5c:
+    58:7a:ca:3f:de:c8:79:3c:31:d8:05:fd:22:77:c2:
+    5d:43:ac:b1:b4:03:e1:75:4d:77:8d:8b:9f:64:26:
+    5a:79:88:37:61:1a:b9:80:ea:f4:f9:e4:15:16:4a:
+    36:0c:10:1c:12:dd:b4:c5:16:d1:87:cc:b2:e0:8c:
+    f4:12:ff:b1:bd:2c:07
+ASN1 OID: secp384r1
+NIST CURVE: P-384
+-----BEGIN EC PRIVATE KEY-----
+MIGkAgEBBDAB/U5fLifbkLkUOOm4+L9BUbmIL7Ct/R7E5a0a+BvXMHGX/F/so2J+
+ygQ+86ZcCNWgBwYFK4EEACKhZANiAATURHeYE+qftghJkeCogakrXjSVJlR7lShQ
+BHprXFh6yj/eyHk8MdgF/SJ3wl1DrLG0A+F1TXeNi59kJlp5iDdhGrmA6vT55BUW
+SjYMEBwS3bTFFtGHzLLgjPQS/7G9LAc=
+-----END EC PRIVATE KEY-----

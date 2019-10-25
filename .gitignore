@@ -9,3 +9,4 @@ archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
 venv
+nohup.out

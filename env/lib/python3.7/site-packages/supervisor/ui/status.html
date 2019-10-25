@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:meld="https://github.com/Supervisor/supervisor">
+<head>
+  <title>Supervisor Status</title>
+  <link href="stylesheets/supervisor.css" rel="stylesheet" type="text/css" />
+  <link href="images/icon.png" rel="icon" type="image/png" />
+</head>
+<body>
+<div id="wrapper">
+
+  <div id="header">
+    <img src="images/supervisor.gif" alt="Supervisor status" />
+  </div>
+
+  <div meld:id="content">
+    <div class="hidden" meld:id="statusmessage">#</div>
+
+    <form meld:id="form" action="index.html" method="post">
+      <ul id="buttons" class="clr">
+        <li id="refresh"><a href="index.html?action=refresh">&amp;nbsp;</a></li>
+        <li id="restart_all"><a href="index.html?action=restartall">&amp;nbsp;</a></li>
+        <li id="stop_all"><a href="index.html?action=stopall">&amp;nbsp;</a></li>
+      </ul>
+
+      <table cellspacing="0" meld:id="statustable">
+        <thead>
+        <tr>
+          <th class="state">State</th>
+          <th class="desc">Description</th>
+          <th class="name">Name</th>
+          <th class="action">Action</th>
+        </tr>
+        </thead>
+
+        <tbody meld:id="tbody">
+          <tr meld:id="tr" class="">
+            <td meld:id="status_td" class="status"><span meld:id="status_text" class="statusnominal">nominal</span></td>
+            <td meld:id="info_td"><span meld:id="info_text">Info</span></td>
+            <td meld:id="name_td"><a href="#" meld:id="name_anchor" target="_blank">Name</a></td>
+            <td meld:id="action_td" class="action">
+              <ul>
+                <li meld:id="actionitem_td">
+                  <a href="#" name="#" meld:id="actionitem_anchor">Action</a>
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </form>
+
+  </div>
+
+  <div class="push">
+  </div>
+</div>
+
+<div id="footer" class="clr">
+  <div class="left">
+    <a href="http://supervisord.org">Supervisor</a> <span meld:id="supervisor_version">#</span>
+  </div>
+  <div class="right">
+    &amp;copy; 2006-<span meld:id="copyright_date">#</span> <strong><a href="http://agendaless.com/">Agendaless Consulting and Contributors</a></strong>
+  </div>
+</div>
+</body>
+</html>

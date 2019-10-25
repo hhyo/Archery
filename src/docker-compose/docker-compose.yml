@@ -8,11 +8,15 @@ services:
     command: redis-server --requirepass 123456
     expose:
       - "6379"
+    ports:
+      - "6379:6379"
 
   mysql:
     image: mysql:5.7
     container_name: mysql
     restart: always
+    expose:
+      - "3306"
     ports:
       - "3306:3306"
     volumes:
@@ -26,24 +30,32 @@ services:
     image: hhyo/inception
     container_name: inception
     restart: always
+    ports:
+      - "6669:6669"
     expose:
       - "6669"
     volumes:
       - "./inception/inc.cnf:/etc/inc.cnf"
+#    links:
+#      - mysql:mysql
 
   goinception:
     image: hanchuanchuan/goinception
     container_name: goinception
     restart: always
+    ports:
+      - "4000:4000"
     expose:
       - "4000"
     volumes:
       - "./inception/config.toml:/etc/config.toml"
+#    links:
+#      - mysql:mysql
 
   archery:
     image: hhyo/archery
     container_name: archery
-    restart: always
+    restart: "no"
     ports:
       - "9123:9123"
     volumes:
@@ -54,3 +66,8 @@ services:
     entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
     environment:
       NGINX_PORT: 9123
+#    links:
+#      - mysql:mysql
+#      - redis:redis
+#      - inception:inception
+#      - goinception:goinception

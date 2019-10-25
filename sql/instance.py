@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
 import time
+import threading
 
 import simplejson as json
 from django.conf import settings
@@ -249,40 +250,22 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-def instance_resource(request):
-    """
-    获取实例内的资源信息，database、schema、table、column
-    :param request:
-    :return:
-    """
-    instance_id = request.POST.get('instance_id')
-    instance_name = request.POST.get('instance_name')
-    db_name = request.POST.get('db_name')
-    schema_name = request.POST.get('schema_name')
-    tb_name = request.POST.get('tb_name')
-
-    resource_type = request.POST.get('resource_type')
-    if instance_id:
-        instance = Instance.objects.get(id=instance_id)
-    else:
-        try:
-            instance = Instance.objects.get(instance_name=instance_name)
-        except Instance.DoesNotExist:
-            result = {'status': 1, 'msg': '实例不存在', 'data': []}
-            return HttpResponse(json.dumps(result), content_type='application/json')
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-
+def sql_order(instance, schema_name, db_name, tb_name, resource_type):
+    result = {}
     try:
         query_engine = get_engine(instance=instance)
+        # resource = {}
         if resource_type == 'database':
             resource = query_engine.get_all_databases()
-        elif resource_type == 'schema' and db_name:
-            resource = query_engine.get_all_schemas(db_name=db_name)
+            # print('Debug databases {}'.format(resource))
+        elif resource_type == 'schema':
+                resource = query_engine.get_all_schemas(db_name=db_name)
+
         elif resource_type == 'table' and db_name:
             if schema_name:
-                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+                    resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
             else:
-                resource = query_engine.get_all_tables(db_name=db_name)
+                    resource = query_engine.get_all_tables(db_name=db_name)
         elif resource_type == 'column' and db_name and tb_name:
             if schema_name:
                 resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
@@ -295,11 +278,64 @@ def instance_resource(request):
         result['msg'] = str(msg)
     else:
         if resource.error:
-            result['status'] = 1
-            result['msg'] = resource.error
+                result['status'] = 1
+                result['msg'] = resource.error
         else:
-            result['data'] = resource.rows
-    return HttpResponse(json.dumps(result), content_type='application/json')
+                result['data'] = resource.rows
+    print('Debug result in sql order {}'.format(result['data']))
+    global all_result
+    # if isinstance(resource, dict):
+    #     all_result["data"].append(result['data'])
+    # else:
+    all_result["data"] = result['data']
+
+
+def instance_resource(request):
+    """
+    获取实例内的资源信息，database、schema、table、column
+    :param request:
+    :return:
+    """
+    instance_id = request.POST.get('instance_id')
+    instance_name = request.POST.get('instance_name')
+    db_names = request.POST.get('db_names', default='')
+    schema_name = request.POST.get('schema_name')
+    tb_name = request.POST.get('tb_name')
+    resource_type = request.POST.get('resource_type')
+
+    db_names = db_names.split(',') if db_names else []
+    # print('Debug databases now {}'.format(db_names))
+
+    if instance_id:
+        instance = Instance.objects.get(id=instance_id)
+    else:
+        try:
+            instance = Instance.objects.get(instance_name=instance_name)
+        except Instance.DoesNotExist:
+            result = {'status': 1, 'msg': '实例不存在', 'data': []}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
+    global all_result
+    all_result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    threads = []
+    if db_names:
+        for db_name in db_names:
+            t = threading.Thread(target=sql_order,
+                             args=(instance, schema_name, db_name, tb_name, resource_type))
+            threads.append(t)
+            t.start()
+    else:
+        t = threading.Thread(target=sql_order,
+                             args=(instance, schema_name, '', tb_name, resource_type))
+        threads.append(t)
+        t.start()
+
+    # 等待所有线程任务结束。
+    for t in threads:
+        t.join()
+    print('Debug result {}'.format(all_result))
+    return HttpResponse(json.dumps(all_result), content_type='application/json')
 
 
 def describe(request):

@@ -1,0 +1,348 @@
+Traceback (most recent call last):
+  File "manage.py", line 8, in <module>
+    from django.core.management import execute_from_command_line
+ModuleNotFoundError: No module named 'django'
+Traceback (most recent call last):
+  File "manage.py", line 8, in <module>
+    from django.core.management import execute_from_command_line
+ModuleNotFoundError: No module named 'django'
+[2019-10-24 14:25:18,166][MainThread:4574653760][task_id:django-q][cluster.py:54][INFO]- Q Cluster-22535 starting.
+[2019-10-24 14:25:18,201][MainThread:4574653760][task_id:django-q][cluster.py:350][INFO]- Process-1:1 ready for work at 22562
+[2019-10-24 14:25:18,209][MainThread:4574653760][task_id:django-q][cluster.py:350][INFO]- Process-1:3 ready for work at 22564
+[2019-10-24 14:25:18,209][MainThread:4574653760][task_id:django-q][cluster.py:350][INFO]- Process-1:2 ready for work at 22563
+[2019-10-24 14:25:18,220][MainThread:4574653760][task_id:django-q][cluster.py:202][INFO]- Process-1 guarding cluster at 22561
+[2019-10-24 14:25:18,230][MainThread:4574653760][task_id:django-q][cluster.py:286][INFO]- Process-1:6 pushing tasks at 22567
+[2019-10-24 14:25:18,230][MainThread:4574653760][task_id:django-q][cluster.py:321][INFO]- Process-1:5 monitoring at 22566
+[2019-10-24 14:25:18,225][MainThread:4574653760][task_id:django-q][cluster.py:350][INFO]- Process-1:4 ready for work at 22565
+[2019-10-24 14:25:18,243][MainThread:4574653760][task_id:django-q][cluster.py:205][INFO]- Q Cluster-22535 running.
+/Users/sunywalden/PycharmProjects/Archery/env/lib/python3.7/site-packages/django/db/backends/mysql/base.py:71: Warning: (1052, "Column 'syntax_type' in group statement is ambiguous")
+  return self.cursor.execute(query, args)
+[24/Oct/2019 14:25:27] "GET /dashboard/ HTTP/1.1" 200 5174
+[24/Oct/2019 14:25:27] "GET /static/sb-admin-2/css/sb-admin-2.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap/css/bootstrap.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/metisMenu/css/metisMenu.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-select/css/bootstrap-select.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/font-awesome/css/font-awesome.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-table/css/bootstrap-table.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/jquery/jquery.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/metisMenu/js/metisMenu.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/sb-admin-2/js/sb-admin-2.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/echarts/echarts.min.js HTTP/1.1" 200 747390
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-table/js/bootstrap-table-zh-CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-select/js/bootstrap-select.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/sql-formatter/sql-formatter.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/dist/js/formatter.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-table/js/bootstrap-table.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap-select/js/i18n/defaults-zh_CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap/js/bootstrap.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/bootstrap/css/bootstrap.min.css.map HTTP/1.1" 304 0
+[24/Oct/2019 14:25:27] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:25:27] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:25:28] "GET /static/font-awesome/fonts/fontawesome-webfont.woff2?v=4.6.3 HTTP/1.1" 304 0
+[24/Oct/2019 14:25:28] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:25:28] "GET /static/bootstrap-select/js/bootstrap-select.min.js.map HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /sqlworkflow/ HTTP/1.1" 200 6377
+[24/Oct/2019 14:25:36] "GET /static/daterangepicker/css/daterangepicker.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /static/daterangepicker/js/moment.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /static/daterangepicker/js/daterangepicker.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /static/bootstrap-table/js/tableExport.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /static/bootstrap-table/js/bootstrap-table-export.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:36] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:25:36] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:25:36] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:25:36] "GET /static/bootstrap/fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 304 0
+[24/Oct/2019 14:25:37] "POST /sqlworkflow_list/ HTTP/1.1" 200 233
+[24/Oct/2019 14:25:40] "GET /submitsql/ HTTP/1.1" 200 9182
+[24/Oct/2019 14:25:40] "GET /static/bootstrap-fileinput/css/fileinput.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/ace.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/ext-language_tools.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/mode-mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/theme-github.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/snippets/mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/bootstrap-fileinput/js/fileinput.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/ace/ace-init.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /static/bootstrap-fileinput/js/locales/zh.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:40] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:25:40] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:25:41] "GET /static/bootstrap-fileinput/img/loading.gif HTTP/1.1" 304 0
+[24/Oct/2019 14:25:41] "GET /static/ace/snippets/text.js HTTP/1.1" 304 0
+[24/Oct/2019 14:25:41] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:25:54] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 14:25:54] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 14:25:59] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 14:26:03] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:26:11] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:31:21] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:31:32] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:34:09] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:35:43] "GET /submitsql/ HTTP/1.1" 200 9181
+[24/Oct/2019 14:35:44] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:35:44] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:35:44] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:36:24] "GET /submitsql/ HTTP/1.1" 200 9177
+[24/Oct/2019 14:36:24] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:36:24] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:36:24] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:36:29] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 14:36:29] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 14:36:38] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 14:36:50] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:37:03] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:45:52] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+Performing system checks...
+
+System check identified no issues (0 silenced).
+October 24, 2019 - 14:25:19
+Django version 2.0.13, using settings 'archery.settings'
+Starting development server at http://0.0.0.0:9123/
+Quit the server with CONTROL-C.
+[24/Oct/2019 14:54:14] "GET /submitsql/ HTTP/1.1" 200 9191
+[24/Oct/2019 14:54:14] "GET /static/metisMenu/css/metisMenu.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/font-awesome/css/font-awesome.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/sb-admin-2/css/sb-admin-2.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-select/css/bootstrap-select.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-table/css/bootstrap-table.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-fileinput/css/fileinput.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap/js/bootstrap.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/daterangepicker/css/daterangepicker.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-select/js/bootstrap-select.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-select/js/i18n/defaults-zh_CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/sql-formatter/sql-formatter.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/dist/js/formatter.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/ace.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/ext-language_tools.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/mode-mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/snippets/mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/ace-init.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/theme-github.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/daterangepicker/js/moment.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-fileinput/js/locales/zh.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/jquery/jquery.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/metisMenu/js/metisMenu.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-table/js/bootstrap-table-zh-CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/daterangepicker/js/daterangepicker.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-fileinput/js/fileinput.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/sb-admin-2/js/sb-admin-2.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-table/js/bootstrap-table.min.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap/css/bootstrap.min.css HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:54:14] "GET /static/font-awesome/fonts/fontawesome-webfont.woff2?v=4.6.3 HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/bootstrap/css/bootstrap.min.css.map HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:54:14] "GET /static/bootstrap-fileinput/img/loading.gif HTTP/1.1" 304 0
+[24/Oct/2019 14:54:14] "GET /static/ace/snippets/text.js HTTP/1.1" 304 0
+[24/Oct/2019 14:54:15] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:54:15] "GET /static/bootstrap-select/js/bootstrap-select.min.js.map HTTP/1.1" 304 0
+[24/Oct/2019 14:54:15] "GET /static/bootstrap/fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 304 0
+[24/Oct/2019 14:54:27] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 14:54:27] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 14:54:34] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 14:54:37] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:54:42] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+Performing system checks...
+
+System check identified no issues (0 silenced).
+October 24, 2019 - 14:53:22
+Django version 2.0.13, using settings 'archery.settings'
+Starting development server at http://0.0.0.0:9123/
+Quit the server with CONTROL-C.
+[24/Oct/2019 14:56:19] "GET /submitsql/ HTTP/1.1" 200 9192
+[24/Oct/2019 14:56:19] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 14:56:19] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 14:56:19] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 14:56:31] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 14:56:31] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 14:56:36] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 14:56:39] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 14:56:42] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+Performing system checks...
+
+System check identified no issues (0 silenced).
+October 24, 2019 - 14:55:57
+Django version 2.0.13, using settings 'archery.settings'
+Starting development server at http://0.0.0.0:9123/
+Quit the server with CONTROL-C.
+Debug tables None
+Debug tables None
+Debug tables None
+[24/Oct/2019 15:05:06] "GET /submitsql/ HTTP/1.1" 200 9205
+[24/Oct/2019 15:05:06] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:05:07] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:05:07] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:05:25] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 15:05:25] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 15:05:33] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 15:05:35] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:05:40] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:10:05] "GET /submitsql/ HTTP/1.1" 200 9208
+[24/Oct/2019 15:10:06] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:10:06] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:10:06] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:10:20] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 15:10:20] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 15:10:27] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 15:10:32] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:10:35] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:10:59] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+Performing system checks...
+
+System check identified no issues (0 silenced).
+October 24, 2019 - 15:02:05
+Django version 2.0.13, using settings 'archery.settings'
+Starting development server at http://0.0.0.0:9123/
+Quit the server with CONTROL-C.
+Debug databases: None
+Debug databases: None
+Debug databases: None
+Debug databases: None
+Debug databases: None
+Debug databases: None
+Debug databases: None
+[24/Oct/2019 15:14:08] "GET /static/bootstrap/css/bootstrap.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/metisMenu/css/metisMenu.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/sb-admin-2/css/sb-admin-2.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/font-awesome/css/font-awesome.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-select/css/bootstrap-select.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-table/css/bootstrap-table.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-fileinput/css/fileinput.min.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/daterangepicker/css/daterangepicker.css HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap/js/bootstrap.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/sb-admin-2/js/sb-admin-2.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-select/js/bootstrap-select.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-select/js/i18n/defaults-zh_CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-table/js/bootstrap-table.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-table/js/bootstrap-table-zh-CN.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/sql-formatter/sql-formatter.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/ace.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/mode-mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/theme-github.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/snippets/mysql.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/ace-init.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-fileinput/js/fileinput.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/daterangepicker/js/moment.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-fileinput/js/locales/zh.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/daterangepicker/js/daterangepicker.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /submitsql/ HTTP/1.1" 200 9202
+[24/Oct/2019 15:14:08] "GET /static/jquery/jquery.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/metisMenu/js/metisMenu.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/dist/js/formatter.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/ext-language_tools.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:14:08] "GET /static/font-awesome/fonts/fontawesome-webfont.woff2?v=4.6.3 HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-fileinput/img/loading.gif HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/bootstrap/css/bootstrap.min.css.map HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/ace/snippets/text.js HTTP/1.1" 304 0
+[24/Oct/2019 15:14:08] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:14:08] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:14:08] "GET /static/bootstrap-select/js/bootstrap-select.min.js.map HTTP/1.1" 304 0
+[24/Oct/2019 15:14:09] "GET /static/bootstrap/fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 304 0
+[24/Oct/2019 15:14:22] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 15:14:22] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 15:14:29] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 15:14:42] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:14:50] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:16:20] "GET / HTTP/1.1" 302 0
+/Users/sunywalden/PycharmProjects/Archery/env/lib/python3.7/site-packages/django/db/backends/mysql/base.py:71: Warning: (1052, "Column 'syntax_type' in group statement is ambiguous")
+  return self.cursor.execute(query, args)
+[24/Oct/2019 15:16:20] "GET /dashboard/ HTTP/1.1" 200 5176
+[24/Oct/2019 15:16:20] "GET /static/echarts/echarts.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:16:20] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:16:24] "GET /sqlworkflow/ HTTP/1.1" 200 6377
+[24/Oct/2019 15:16:24] "GET /static/bootstrap-table/js/bootstrap-table-export.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:16:24] "GET /static/bootstrap-table/js/tableExport.min.js HTTP/1.1" 304 0
+[24/Oct/2019 15:16:24] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:16:24] "POST /sqlworkflow_list/ HTTP/1.1" 200 233
+[24/Oct/2019 15:16:26] "GET /submitsql/ HTTP/1.1" 200 9209
+[24/Oct/2019 15:16:26] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:16:37] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 15:16:37] "POST /group/auditors/ HTTP/1.1" 200 80
+[2019-10-24 15:16:40,282][Thread-58:123145461927936][task_id:default][mysql.py:124][WARNING]- MySQL语句执行报错，语句：show databases，错误信息Traceback (most recent call last):
+  File "/Users/sunywalden/PycharmProjects/Archery/sql/engines/mysql.py", line 111, in query
+    conn = self.get_connection(db_name=db_name)
+  File "/Users/sunywalden/PycharmProjects/Archery/sql/engines/mysql.py", line 32, in get_connection
+    connect_timeout=10)
+  File "/Users/sunywalden/PycharmProjects/Archery/env/lib/python3.7/site-packages/MySQLdb/__init__.py", line 85, in Connect
+    return Connection(*args, **kwargs)
+  File "/Users/sunywalden/PycharmProjects/Archery/env/lib/python3.7/site-packages/MySQLdb/connections.py", line 204, in __init__
+    super(Connection, self).__init__(*args, **kwargs2)
+_mysql_exceptions.OperationalError: (2005, "Unknown MySQL server host 'mysql' (0)")
+
+[24/Oct/2019 15:16:40] "POST /instance/instance_resource/ HTTP/1.1" 200 85
+[24/Oct/2019 15:16:53] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 15:17:00] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:17:03] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:17:54] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:17:54] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:20:24] "GET /submitsql/ HTTP/1.1" 200 9188
+[24/Oct/2019 15:20:25] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:20:25] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:20:25] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:20:54] "GET /submitsql/ HTTP/1.1" 302 0
+[24/Oct/2019 15:20:54] "GET /login/ HTTP/1.1" 200 2594
+[24/Oct/2019 15:20:54] "GET /static/dist/css/login.css HTTP/1.1" 200 428
+[24/Oct/2019 15:20:54] "GET /static/bootstrap/css/bootstrap.min.css HTTP/1.1" 200 121457
+[24/Oct/2019 15:20:54] "GET /static/bootstrap/js/bootstrap.min.js HTTP/1.1" 200 39680
+[24/Oct/2019 15:20:54] "GET /static/jquery/jquery.min.js HTTP/1.1" 200 86927
+[24/Oct/2019 15:20:55] "GET /static/bootstrap/css/bootstrap.min.css.map HTTP/1.1" 200 540434
+[24/Oct/2019 15:20:59] "POST /authenticate/ HTTP/1.1" 200 40
+[24/Oct/2019 15:21:00] "GET /index/ HTTP/1.1" 302 0
+[24/Oct/2019 15:21:00] "GET /dashboard/ HTTP/1.1" 200 5174
+[24/Oct/2019 15:21:00] "GET /static/sb-admin-2/css/sb-admin-2.css HTTP/1.1" 200 8437
+[24/Oct/2019 15:21:00] "GET /static/font-awesome/css/font-awesome.min.css HTTP/1.1" 200 29063
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-select/css/bootstrap-select.min.css HTTP/1.1" 200 10717
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-table/css/bootstrap-table.min.css HTTP/1.1" 200 5603
+[24/Oct/2019 15:21:00] "GET /static/sb-admin-2/js/sb-admin-2.js HTTP/1.1" 200 1626
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-select/js/i18n/defaults-zh_CN.min.js HTTP/1.1" 200 949
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-table/js/bootstrap-table.min.js HTTP/1.1" 200 68074
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-table/js/bootstrap-table-zh-CN.min.js HTTP/1.1" 200 1510
+[24/Oct/2019 15:21:00] "GET /static/echarts/echarts.min.js HTTP/1.1" 200 747390
+[24/Oct/2019 15:21:00] "GET /static/dist/js/formatter.js HTTP/1.1" 200 3045
+[24/Oct/2019 15:21:00] "GET /static/metisMenu/js/metisMenu.min.js HTTP/1.1" 200 4955
+[24/Oct/2019 15:21:00] "GET /static/sql-formatter/sql-formatter.min.js HTTP/1.1" 200 41157
+[24/Oct/2019 15:21:00] "GET /static/bootstrap-select/js/bootstrap-select.min.js HTTP/1.1" 200 50638
+[24/Oct/2019 15:21:00] "GET /static/metisMenu/css/metisMenu.min.css HTTP/1.1" 200 2181
+[24/Oct/2019 15:21:00] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:21:00] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:21:00] "GET /static/font-awesome/fonts/fontawesome-webfont.woff2?v=4.6.3 HTTP/1.1" 200 71896
+[24/Oct/2019 15:21:01] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:21:01] "GET /static/bootstrap-select/js/bootstrap-select.min.js.map HTTP/1.1" 200 62283
+[24/Oct/2019 15:21:03] "GET /sqlworkflow/ HTTP/1.1" 200 6377
+[24/Oct/2019 15:21:03] "GET /static/daterangepicker/css/daterangepicker.css HTTP/1.1" 200 8402
+[24/Oct/2019 15:21:03] "GET /static/daterangepicker/js/moment.min.js HTTP/1.1" 200 51638
+[24/Oct/2019 15:21:03] "GET /static/bootstrap-table/js/bootstrap-table-export.min.js HTTP/1.1" 200 5259
+[24/Oct/2019 15:21:03] "GET /static/daterangepicker/js/daterangepicker.js HTTP/1.1" 200 63818
+[24/Oct/2019 15:21:03] "GET /static/bootstrap-table/js/tableExport.min.js HTTP/1.1" 200 36115
+[24/Oct/2019 15:21:03] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:21:03] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:21:03] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:21:03] "GET /static/bootstrap/fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028
+[24/Oct/2019 15:21:03] "POST /sqlworkflow_list/ HTTP/1.1" 200 233
+[24/Oct/2019 15:21:05] "GET /submitsql/ HTTP/1.1" 200 9186
+[24/Oct/2019 15:21:05] "GET /static/bootstrap-fileinput/css/fileinput.min.css HTTP/1.1" 200 8374
+[24/Oct/2019 15:21:05] "GET /static/ace/mode-mysql.js HTTP/1.1" 200 6840
+[24/Oct/2019 15:21:05] "GET /static/ace/ace-init.js HTTP/1.1" 200 5652
+[24/Oct/2019 15:21:05] "GET /static/ace/ext-language_tools.js HTTP/1.1" 200 35523
+[24/Oct/2019 15:21:05] "GET /static/ace/snippets/mysql.js HTTP/1.1" 200 505
+[24/Oct/2019 15:21:05] "GET /static/ace/theme-github.js HTTP/1.1" 200 2503
+[24/Oct/2019 15:21:05] "GET /static/bootstrap-fileinput/js/locales/zh.js HTTP/1.1" 200 4582
+[24/Oct/2019 15:21:05] "GET /static/ace/ace.js HTTP/1.1" 200 366608
+[24/Oct/2019 15:21:05] "GET /static/bootstrap-fileinput/js/fileinput.min.js HTTP/1.1" 200 87959
+[24/Oct/2019 15:21:05] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:21:05] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:21:05] "GET /static/bootstrap-fileinput/img/loading.gif HTTP/1.1" 200 847
+[24/Oct/2019 15:21:05] "GET /static/ace/snippets/text.js HTTP/1.1" 200 459
+[24/Oct/2019 15:21:05] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:21:11] "GET /sqlworkflow/ HTTP/1.1" 200 6377
+[24/Oct/2019 15:21:12] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:21:12] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:21:12] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:21:12] "POST /sqlworkflow_list/ HTTP/1.1" 200 233
+[24/Oct/2019 15:21:14] "GET /submitsql/ HTTP/1.1" 200 9187
+[24/Oct/2019 15:21:14] "GET /jsi18n/ HTTP/1.1" 200 2510
+[24/Oct/2019 15:21:14] "GET /static/metisMenu/css/metisMenu.min.css.map HTTP/1.1" 404 1729
+[24/Oct/2019 15:21:14] "GET /static/metisMenu/js/metisMenu.min.js.map HTTP/1.1" 404 1723
+[24/Oct/2019 15:21:24] "POST /group/instances/ HTTP/1.1" 200 191
+[24/Oct/2019 15:21:24] "POST /group/auditors/ HTTP/1.1" 200 80
+[24/Oct/2019 15:21:29] "POST /instance/instance_resource/ HTTP/1.1" 200 173
+[24/Oct/2019 15:21:33] "POST /instance/instance_resource/ HTTP/1.1" 200 132
+[24/Oct/2019 15:21:42] "POST /instance/instance_resource/ HTTP/1.1" 200 132
