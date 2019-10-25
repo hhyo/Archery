@@ -12,5 +12,5 @@ venv
 env
 nohup.out
 src/docker-compose/mysql/datadir/
-*/*/*/*/*.log
 !.gitkeep
+.github
