@@ -12,6 +12,7 @@ from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
+from sql.utils.multi_thread import multi_thread
 from .models import Instance, ParamTemplate, ParamHistory
 
 
@@ -250,14 +251,13 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-def sql_order(instance, schema_name, db_name, tb_name, resource_type):
+def sql_order(db_name, instance, schema_name, tb_name, resource_type):
+    """提交SQL工单"""
     result = {}
     try:
         query_engine = get_engine(instance=instance)
-        # resource = {}
         if resource_type == 'database':
             resource = query_engine.get_all_databases()
-            # print('Debug databases {}'.format(resource))
         elif resource_type == 'schema':
                 resource = query_engine.get_all_schemas(db_name=db_name)
 
@@ -283,10 +283,9 @@ def sql_order(instance, schema_name, db_name, tb_name, resource_type):
         else:
                 result['data'] = resource.rows
     print('Debug result in sql order {}'.format(result['data']))
+
+    # 结果写入全局变量
     global all_result
-    # if isinstance(resource, dict):
-    #     all_result["data"].append(result['data'])
-    # else:
     all_result["data"] = result['data']
 
 
@@ -303,8 +302,8 @@ def instance_resource(request):
     tb_name = request.POST.get('tb_name')
     resource_type = request.POST.get('resource_type')
 
+    # 逗号分隔的多租户字符串转换为列表
     db_names = db_names.split(',') if db_names else []
-    # print('Debug databases now {}'.format(db_names))
 
     if instance_id:
         instance = Instance.objects.get(id=instance_id)
@@ -318,22 +317,12 @@ def instance_resource(request):
     global all_result
     all_result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    threads = []
+    # 多线程
     if db_names:
-        for db_name in db_names:
-            t = threading.Thread(target=sql_order,
-                             args=(instance, schema_name, db_name, tb_name, resource_type))
-            threads.append(t)
-            t.start()
+        multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
     else:
-        t = threading.Thread(target=sql_order,
-                             args=(instance, schema_name, '', tb_name, resource_type))
-        threads.append(t)
-        t.start()
+        sql_order('', instance, schema_name, tb_name, resource_type)
 
-    # 等待所有线程任务结束。
-    for t in threads:
-        t.join()
     print('Debug result {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')
 

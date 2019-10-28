@@ -196,6 +196,7 @@ class SqlWorkflow(models.Model):
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    # db_name = models.CharField('数据库', max_length=64)
     db_name = models.CharField('数据库', max_length=64)
     syntax_type = models.IntegerField('工单类型 0、未知，1、DDL，2、DML', choices=((0, '其他'), (1, 'DDL'), (2, 'DML')), default=0)
     is_backup = models.BooleanField('是否备份', choices=((False, '否'), (True, '是'),), default=True)

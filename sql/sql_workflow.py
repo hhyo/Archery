@@ -23,6 +23,7 @@ from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
 from sql.utils.workflow_audit import Audit
+from sql.utils.multi_thread import multi_thread
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
 
@@ -99,7 +100,8 @@ def sql_workflow_list(request):
                         content_type='application/json')
 
 
-def sql_check(sql_content, instance, db_name):
+def sql_check(db_name, sql_content, instance):
+    """SQL检测"""
     result = {}
     # 交给engine进行检测
     try:
@@ -110,12 +112,8 @@ def sql_check(sql_content, instance, db_name):
         result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 处理检测结果
+    # 检测结果写入全局变量
     global all_check_res
-    # result['data']['rows'] = check_result.to_dict()
-    # result['data']['CheckWarningCount'] = check_result.warning_count
-    # result['data']['CheckErrorCount'] = check_result.error_count
-
     all_check_res['data']['rows'].extend(check_result.to_dict())
     all_check_res['data']['CheckWarningCount'] += check_result.warning_count
     all_check_res['data']['CheckErrorCount'] += check_result.error_count
@@ -131,7 +129,6 @@ def check(request):
     db_names = db_names.split(',') if db_names else []
 
     global all_check_res
-    # all_check_res = {'status': 0, 'msg': 'ok', 'data': {}}
     all_check_res = {'status': 0, 'msg': 'ok', 'data': {"rows": [], "CheckWarningCount": 0, "CheckErrorCount": 0}}
 
     # 服务器端参数验证
@@ -140,24 +137,14 @@ def check(request):
         all_check_res['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
-    threads = []
-    for db_name in db_names:
-        t = threading.Thread(target=sql_check,
-                             args=(sql_content, instance, db_name))
-        threads.append(t)
-        t.start()
-
-    # 等待所有线程任务结束。
-    for t in threads:
-        t.join()
-
-    # if all_check_res['data']['CheckErrorCount'] > 0:
-    #     all_check_res['status'] = 1
+    # 多线程处理多个租户
+    multi_thread(sql_check, db_names, (sql_content, instance))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
 
-def sql_submit(request, instance, db_name, sql_content, workflow_title, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end):
+def sql_submit(db_name, request, instance, sql_content, workflow_title, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end):
+    """提交SQL工单"""
     # 再次交给engine进行检测，防止绕过
     try:
         check_engine = get_engine(instance=instance)
@@ -186,7 +173,7 @@ def sql_submit(request, instance, db_name, sql_content, workflow_title, group_id
         with transaction.atomic():
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
-                workflow_name=workflow_title,
+                workflow_name=workflow_title + ' for tenant ' + db_name,
                 group_id=group_id,
                 group_name=group_name,
                 engineer=request.user.username,
@@ -195,6 +182,7 @@ def sql_submit(request, instance, db_name, sql_content, workflow_title, group_id
                 status=workflow_status,
                 is_backup=is_backup,
                 instance=instance,
+                # db_name=db_name,
                 db_name=db_name,
                 is_manual=0,
                 syntax_type=check_result.syntax_type,
@@ -224,6 +212,7 @@ def sql_submit(request, instance, db_name, sql_content, workflow_title, group_id
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
+    # 结果写入全局变量
     global workflow_ids
     workflow_ids.append(workflow_id)
 
@@ -262,21 +251,15 @@ def submit(request):
 
     global workflow_ids
     workflow_ids = []
-    threads = []
-    for db_name in db_names:
-        t = threading.Thread(target=sql_submit,
-                             args=(request, instance, db_name, sql_content, workflow_title + ' for ' + db_name, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end))
-        threads.append(t)
-        t.start()
-    for t in threads:
-        t.join()
+
+    # # 多线程执行多个租户
+    multi_thread(sql_submit, db_names, (request, instance, sql_content, workflow_title, group_id, group_name, \
+                                        is_backup, list_cc_addr, run_date_start, run_date_end))
 
     print('Debug transactions number: {}'.format(len(workflow_ids)))
-    # return HttpResponseRedirect(reverse('sql:detail', args=(workflow_ids[0],)))
     all_check_res = {'status': 0, 'msg': 'ok', 'data': workflow_ids}
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
-    # return HttpResponseRedirect('/sqlworkflow')
 
 
 @permission_required('sql.sql_review', raise_exception=True)
