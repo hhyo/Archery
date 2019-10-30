@@ -13,7 +13,7 @@ class ReviewResult:
         go_inception的结果列 = ['order_id', 'stage', 'error_level', 'stage_status', 'error_message', 'sql',
                               'affected_rows', 'sequence', 'backup_dbname', 'execute_time', 'sqlsha1', 'backup_time']
         """
-        if inception_result:
+        if inception_result and isinstance(inception_result, (tuple, list)):
             self.id = inception_result[0] or 0
             self.stage = inception_result[1] or ''
             self.errlevel = inception_result[2] or 0
@@ -25,7 +25,8 @@ class ReviewResult:
             self.backup_dbname = inception_result[8] or ''
             self.execute_time = inception_result[9] or ''
             self.sqlsha1 = inception_result[10] or ''
-            self.backup_time = inception_result[11] if len(inception_result) >= 12 else ''
+            self.backup_time = inception_result[11] or ''
+            self.db_name = inception_result[12] if len(inception_result) >= 13 else ''
             self.actual_affected_rows = ''
         else:
             self.id = kwargs.get('id', 0)
@@ -40,6 +41,7 @@ class ReviewResult:
             self.execute_time = kwargs.get('execute_time', '')
             self.sqlsha1 = kwargs.get('sqlsha1', '')
             self.backup_time = kwargs.get('backup_time', '')
+            self.db_name = kwargs.get('db_name', '')
             self.actual_affected_rows = kwargs.get('actual_affected_rows', '')
 
 

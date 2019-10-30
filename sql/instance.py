@@ -10,10 +10,13 @@ from django.http import HttpResponse
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.get_logger import get_logger
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
 from sql.utils.multi_thread import multi_thread
 from .models import Instance, ParamTemplate, ParamHistory
+
+logger = get_logger()
 
 
 @permission_required('sql.menu_instance_list', raise_exception=True)
@@ -253,19 +256,25 @@ def schemasync(request):
 
 def sql_order(db_name, instance, schema_name, tb_name, resource_type):
     """提交SQL工单"""
-    result = {}
+    logger.debug("Starting!")
+    logger.debug(resource_type, instance.host, instance.db_type)
+
+    result = {"data": []}
+
     try:
         query_engine = get_engine(instance=instance)
         if resource_type == 'database':
+            logger.debug('database!')
             resource = query_engine.get_all_databases()
+            logger.debug(resource.to_dict())
         elif resource_type == 'schema':
-                resource = query_engine.get_all_schemas(db_name=db_name)
+            resource = query_engine.get_all_schemas(db_name=db_name)
 
         elif resource_type == 'table' and db_name:
             if schema_name:
-                    resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
             else:
-                    resource = query_engine.get_all_tables(db_name=db_name)
+                resource = query_engine.get_all_tables(db_name=db_name)
         elif resource_type == 'column' and db_name and tb_name:
             if schema_name:
                 resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
@@ -274,15 +283,17 @@ def sql_order(db_name, instance, schema_name, tb_name, resource_type):
         else:
             raise TypeError('不支持的资源类型或者参数不完整！')
     except Exception as msg:
+        logger.debug(msg)
         result['status'] = 1
         result['msg'] = str(msg)
     else:
         if resource.error:
-                result['status'] = 1
-                result['msg'] = resource.error
+            result['status'] = 1
+            result['msg'] = resource.error
+            logger.error('Error catched in sql order for {0}: {1}'.format(db_name, result['data']))
         else:
-                result['data'] = resource.rows
-    print('Debug result in sql order {}'.format(result['data']))
+            result['data'] = resource.rows
+            logger.debug('Debug result in sql order {0}'.format(result['data']))
 
     # 结果写入全局变量
     global all_result
@@ -295,12 +306,12 @@ def instance_resource(request):
     :param request:
     :return:
     """
-    instance_id = request.POST.get('instance_id')
-    instance_name = request.POST.get('instance_name')
+    instance_id = request.POST.get('instance_id', default='')
+    instance_name = request.POST.get('instance_name', default='')
     db_names = request.POST.get('db_names', default='')
-    schema_name = request.POST.get('schema_name')
-    tb_name = request.POST.get('tb_name')
-    resource_type = request.POST.get('resource_type')
+    schema_name = request.POST.get('schema_name', default='')
+    tb_name = request.POST.get('tb_name', default='')
+    resource_type = request.POST.get('resource_type', default='database')
 
     # 逗号分隔的多租户字符串转换为列表
     db_names = db_names.split(',') if db_names else []
@@ -321,9 +332,10 @@ def instance_resource(request):
     if db_names:
         multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
     else:
+        logger.debug(resource_type)
         sql_order('', instance, schema_name, tb_name, resource_type)
 
-    print('Debug result {}'.format(all_result))
+    logger.info('Debug result in instance resource {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')
 
 

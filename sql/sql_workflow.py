@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import logging
+from logging.handlers import RotatingFileHandler
 import traceback
 import threading
+import os
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -14,6 +16,7 @@ from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 
+from common.utils.get_logger import get_logger
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -29,7 +32,8 @@ from django_q.tasks import async_task
 
 from sql.engines import get_engine
 
-logger = logging.getLogger('default')
+log_name = os.path.split(__file__)[-1]
+logger = get_logger(name=log_name)
 
 
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
@@ -89,7 +93,7 @@ def sql_workflow_list(request):
     workflow_list = workflow.order_by('-create_time')[offset:limit].values(
         "id", "workflow_name", "engineer_display",
         "status", "is_backup", "create_time",
-        "instance__instance_name", "db_name",
+        "instance__instance_name", "db_names",
         "group_name", "syntax_type")
 
     # QuerySet 序列化
@@ -100,17 +104,21 @@ def sql_workflow_list(request):
                         content_type='application/json')
 
 
-def sql_check(db_name, sql_content, instance):
+def sql_check(db_name, instance, sql_content):
     """SQL检测"""
+
+    logger.debug("Debug db_name in custom sql_check {0}".format(db_name))
     result = {}
     # 交给engine进行检测
+    check_engine = get_engine(instance=instance)
     try:
-        check_engine = get_engine(instance=instance)
         check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
+    finally:
+        logger.info('Debug sql check for {}: {}'.format(db_name, sql_content.strip))
 
     # 检测结果写入全局变量
     global all_check_res
@@ -128,6 +136,7 @@ def check(request):
     db_names = request.POST.get('db_names', default='')
     db_names = db_names.split(',') if db_names else []
 
+    logger.debug("Debug db_names in simplecheck api {0}".format(db_names))
     global all_check_res
     all_check_res = {'status': 0, 'msg': 'ok', 'data': {"rows": [], "CheckWarningCount": 0, "CheckErrorCount": 0}}
 
@@ -138,42 +147,85 @@ def check(request):
         return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
     # 多线程处理多个租户
-    multi_thread(sql_check, db_names, (sql_content, instance))
+    multi_thread(sql_check, db_names, (instance, sql_content))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
 
-def sql_submit(db_name, request, instance, sql_content, workflow_title, group_id, group_name, is_backup, list_cc_addr, run_date_start, run_date_end):
-    """提交SQL工单"""
-    # 再次交给engine进行检测，防止绕过
-    try:
-        check_engine = get_engine(instance=instance)
-        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
-    except Exception as e:
-        context = {'errMsg': str(e)}
-        return render(request, 'error.html', context)
-
+def check_backup(instance):
+    """检查备份设置"""
+    is_backup = False
+    check_engine = get_engine(instance=instance)
     # 未开启备份选项，并且engine支持备份，强制设置备份
     sys_config = SysConfig()
     if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
         is_backup = True
 
+    return is_backup
+
+
+def workflow_check(db_name, instance, sql_content):
+    """工单审核"""
+    # 再次交给engine进行检测，防止绕过
+    logger.debug('Debug db_name in workflow_check {0}'.format(db_name))
+    logger.info('Check database {} for SQL {}'.format(db_name, sql_content))
+    logger.debug("Debug sql content {}: {}".format(type(sql_content), sql_content))
+    check_engine = get_engine(instance=instance)
+    try:
+        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
+    except Exception as e:
+            logger.error("Error catched while execute sql for database {}: {}".format(db_name, str(e)))
+            return False, str(e)
+
     # 按照系统配置确定是自动驳回还是放行
+    sys_config = SysConfig()
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':
-        workflow_status = 'workflow_autoreviewwrong'
+            workflow_status = 'workflow_autoreviewwrong'
     elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
-        workflow_status = 'workflow_autoreviewwrong'
+            workflow_status = 'workflow_autoreviewwrong'
+    else:
+        pass
+
+    logger.debug("Debug sql review result in workflow_check {}".format(check_result.to_dict()))
+    logger.info("Debug sql review result in workflow_check {}".format(check_result))
+
+    return check_result, workflow_status
+
+
+def sql_submit(db_names, request, instance, sql_content, workflow_title, group_id, group_name, list_cc_addr, run_date_start, run_date_end):
+    """提交SQL工单"""
+
+    logger.debug('Debug db_names in sql_submit {0}'.format(db_names))
+    is_backup = check_backup(instance)
+    check_result, workflow_status = {}, {}
+    for db_name in db_names:
+        check_result[db_name], workflow_status[db_name] = workflow_check(db_name, instance, sql_content)
+        if check_result[db_name] is False:
+            logger.error(workflow_status[db_name])
+            context = {'errMsg': workflow_status[db_name]}
+            return context
+
+    workflow_status = 'workflow_autoreviewwrong' \
+        if 'workflow_autoreviewwrong' in workflow_status.values()\
+        else 'workflow_manreviewing'
+
+    tenant_first = db_names[0]
+    syntax_type = check_result[tenant_first].syntax_type
+
+    # 获取对象的值
+    check_result = {k: v.to_dict() for k, v in check_result.items()}
+    logger.info('SQL check result {}'.format(check_result))
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
     try:
-        print('Start running sql for tenant {}'.format(db_name))
+        logger.info('Start running sql for tenant {}'.format(db_names))
         with transaction.atomic():
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
-                workflow_name=workflow_title + ' for tenant ' + db_name,
+                workflow_name=workflow_title,
                 group_id=group_id,
                 group_name=group_name,
                 engineer=request.user.username,
@@ -182,17 +234,17 @@ def sql_submit(db_name, request, instance, sql_content, workflow_title, group_id
                 status=workflow_status,
                 is_backup=is_backup,
                 instance=instance,
-                # db_name=db_name,
-                db_name=db_name,
+                db_names=','.join(db_names),
                 is_manual=0,
-                syntax_type=check_result.syntax_type,
+                syntax_type=syntax_type,
                 create_time=timezone.now(),
                 run_date_start=run_date_start or None,
                 run_date_end=run_date_end or None
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
-                                              review_content=check_result.json(),
+                                              # review_content=check_result.json(),
+                                              review_content=json.dumps(check_result),
                                               execute_result=''
                                               )
             workflow_id = sql_workflow.id
@@ -203,8 +255,9 @@ def sql_submit(db_name, request, instance, sql_content, workflow_title, group_id
     except Exception as msg:
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-    else:
+        return context
+    # else:
+    finally:
         # 自动审核通过才进行消息通知
         if workflow_status == 'workflow_manreviewing':
             # 获取审核信息
@@ -213,8 +266,7 @@ def sql_submit(db_name, request, instance, sql_content, workflow_title, group_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
     # 结果写入全局变量
-    global workflow_ids
-    workflow_ids.append(workflow_id)
+        return workflow_id
 
 
 @permission_required('sql.sql_submit', raise_exception=True)
@@ -235,7 +287,8 @@ def submit(request):
     run_date_end = request.POST.get('run_date_end')
 
     db_names = db_names.split(',') if db_names else []
-    print('Debug tenants {}'.format(db_names))
+
+    logger.debug("Debug db_names in execute {0}".format(db_names))
 
     # 服务器端参数验证
     if None in [sql_content, db_names, instance_name, db_names, is_backup]:
@@ -249,16 +302,16 @@ def submit(request):
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
-    global workflow_ids
-    workflow_ids = []
+    workflow_id = sql_submit(db_names, request, instance, sql_content, workflow_title, group_id,
+                             group_name, list_cc_addr, run_date_start, run_date_end)
 
-    # # 多线程执行多个租户
-    multi_thread(sql_submit, db_names, (request, instance, sql_content, workflow_title, group_id, group_name, \
-                                        is_backup, list_cc_addr, run_date_start, run_date_end))
+    if not isinstance(workflow_id, int):
+        logger.error('Got error while audit workflow {}'.format(workflow_id))
+        return render(request, 'error.html', workflow_id)
+    else:
+        all_check_res = {'status': 0, 'msg': 'ok', 'data': workflow_id}
 
-    print('Debug transactions number: {}'.format(len(workflow_ids)))
-    all_check_res = {'status': 0, 'msg': 'ok', 'data': workflow_ids}
-
+    logger.info('All SQL check result: {}'.format(all_check_res))
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
 
@@ -336,16 +389,16 @@ def passed(request):
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
-def execute(request):
+def perm_check(request, workflow_id):
     """
-    执行SQL
+    SQL上线权限校验
     :param request:
+    :param workflow_id:
     :return:
     """
-    # 校验多个权限
     if not (request.user.has_perm('sql.sql_execute') or request.user.has_perm('sql.sql_execute_for_resource_group')):
         raise PermissionDenied
-    workflow_id = int(request.POST.get('workflow_id', 0))
+
     if workflow_id == 0:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
@@ -357,8 +410,15 @@ def execute(request):
     if on_correct_time_period(workflow_id) is False:
         context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
         return render(request, 'error.html', context)
+
+
+def get_operation_info(mode):
+    """
+    根据执行模式更新工单审计信息
+    :param mode: str
+    :return:
+    """
     # 根据执行模式进行对应修改
-    mode = request.POST.get('mode')
     if mode == "auto":
         status = "workflow_executing"
         operation_type = 5
@@ -371,6 +431,26 @@ def execute(request):
         operation_type_desc = '手工工单'
         operation_info = "确认手工执行结束"
         finish_time = datetime.datetime.now()
+
+    return status, operation_type, operation_type_desc, operation_info, finish_time
+
+
+def execute(request):
+    """
+    执行SQL
+    :param request:
+    :return:
+    """
+
+    workflow_id = int(request.POST.get('workflow_id', 0))
+    mode = request.POST.get('mode')
+
+    # 校验多个权限
+    perm_check(request, workflow_id)
+
+    # 根据执行模式修改
+    status, operation_type, operation_type_desc, operation_info, finish_time = get_operation_info(mode)
+
     # 将流程状态修改为对应状态
     SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
 
@@ -384,6 +464,7 @@ def execute(request):
                   operator=request.user.username,
                   operator_display=request.user.display
                   )
+
     if mode == "auto":
         # 加入执行队列
         async_task('sql.utils.execute_sql.execute', workflow_id,

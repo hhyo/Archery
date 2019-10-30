@@ -50,14 +50,14 @@ def notify_for_audit(audit_id, **kwargs):
         workflow_type_display = WorkflowDict.workflow_type['query_display']
         workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
         instance = workflow_detail.instance.instance_name
-        db_name = ''
+        db_names = ''
         if workflow_detail.priv_type == 1:
             workflow_content = '''数据库清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
                 workflow_detail.db_list,
                 datetime.datetime.strftime(workflow_detail.valid_date, '%Y-%m-%d %H:%M:%S'),
                 workflow_detail.limit_num)
         elif workflow_detail.priv_type == 2:
-            db_name = workflow_detail.db_list
+            db_names = workflow_detail.db_list
             workflow_content = '''数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n'''.format(
                 workflow_detail.db_list,
                 workflow_detail.table_list,
@@ -69,7 +69,7 @@ def notify_for_audit(audit_id, **kwargs):
         workflow_type_display = WorkflowDict.workflow_type['sqlreview_display']
         workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
         instance = workflow_detail.instance.instance_name
-        db_name = workflow_detail.db_name
+        db_names = workflow_detail.db_names
         workflow_content = re.sub('[\r\n\f]{2,}', '\n',
                                   workflow_detail.sqlworkflowcontent.sql_content[0:500].replace('\r', ''))
     else:
@@ -87,7 +87,7 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_from,
             group_name,
             instance,
-            db_name,
+            db_names,
             workflow_auditors,
             current_workflow_auditors,
             workflow_title,
@@ -103,7 +103,7 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_from,
             group_name,
             instance,
-            db_name,
+            db_names,
             workflow_auditors,
             workflow_title,
             workflow_url,
@@ -116,7 +116,7 @@ def notify_for_audit(audit_id, **kwargs):
         msg_content = '''发起时间：{}\n目标实例：{}\n数据库：{}\n工单名称：{}\n工单地址：{}\n驳回原因：{}\n提醒：此工单被审核不通过，请按照驳回原因进行修改！'''.format(
             workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
             instance,
-            db_name,
+            db_names,
             workflow_title,
             workflow_url,
             workflow_audit_remark)
@@ -132,7 +132,7 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_from,
             group_name,
             instance,
-            db_name,
+            db_names,
             workflow_title,
             workflow_url,
             workflow_audit_remark)

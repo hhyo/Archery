@@ -25,8 +25,10 @@ from common.utils.const import Const, WorkflowDict
 from sql.utils.resource_group import user_groups
 
 import logging
+from common.utils.get_logger import get_logger
 
-logger = logging.getLogger('default')
+log_name = os.path.split(__file__)[-1]
+logger = get_logger(name=log_name)
 
 
 def index(request):
@@ -103,6 +105,7 @@ def detail(request, workflow_id):
         rows = workflow_detail.sqlworkflowcontent.execute_result
     else:
         rows = workflow_detail.sqlworkflowcontent.review_content
+
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != 'workflow_autoreviewwrong':
         # 获取当前审批和审批流程
@@ -151,30 +154,14 @@ def detail(request, workflow_id):
     review_result = ReviewSet()
     if rows:
         try:
-            # 检验rows能不能正常解析
             loaded_rows = json.loads(rows)
-            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-            if isinstance(loaded_rows[-1], list):
-                for r in loaded_rows:
-                    review_result.rows += [ReviewResult(inception_result=r)]
-                rows = review_result.json()
-        except IndexError:
-            review_result.rows += [ReviewResult(
-                id=1,
-                sql=workflow_detail.sqlworkflowcontent.sql_content,
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
         except json.decoder.JSONDecodeError:
-            review_result.rows += [ReviewResult(
-                id=1,
-                sql=workflow_detail.sqlworkflowcontent.sql_content,
-                # 迫于无法单元测试这里加上英文报错信息
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
+            loaded_rows = eval(rows)
+        else:
+            for k, v in loaded_rows.items():
+                for record in v:
+                    review_result.rows.extend([{**record, "db_name": k}])
+            rows = review_result.rows
     else:
         rows = workflow_detail.sqlworkflowcontent.review_content
 

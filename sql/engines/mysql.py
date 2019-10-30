@@ -3,9 +3,11 @@ import logging
 import traceback
 import MySQLdb
 import re
+import os
 import sqlparse
 from MySQLdb.connections import numeric_part
 
+from sql.utils.multi_thread import multi_thread
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
@@ -13,12 +15,15 @@ from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
-
-logger = logging.getLogger('default')
+from common.utils.get_logger import get_logger
 
 
 class MysqlEngine(EngineBase):
-    def get_connection(self, db_name=None):
+    def __init__(self, instance=None):
+        super().__init__(instance=instance)
+        self.logger = get_logger()
+
+    def get_connection(self, db_name=''):
         if self.conn:
             self.thread_id = self.conn.thread_id()
             return self.conn
@@ -104,7 +109,7 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name='', sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
@@ -121,14 +126,14 @@ class MysqlEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
                 self.close()
         return result_set
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name='', sql=''):
         # 查询语句的检查、注释去除、切分
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         # 删除注释语句，进行语法判断，执行第一条有效sql
@@ -169,7 +174,7 @@ class MysqlEngine(EngineBase):
             sql = f'{sql};'
         return sql
 
-    def query_masking(self, db_name=None, sql='', resultset=None):
+    def query_masking(self, db_name='', sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
@@ -179,27 +184,33 @@ class MysqlEngine(EngineBase):
             mask_result = resultset
         return mask_result
 
-    def execute_check(self, db_name=None, sql=''):
+    def execute_check(self, db_name='', sql=''):
         """上线单执行前的检查, 返回Review set"""
         config = SysConfig()
         # 进行Inception检查，获取检测结果
         if not config.get('inception'):
+            self.logger.debug("SQL check via goinception")
+            self.logger.debug("Debug db_name in mysql.execute_check {0}".format(db_name))
+            goinception_engine = GoInceptionEngine()
             try:
-                inception_engine = GoInceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+                inc_check_result = goinception_engine.execute_check(db_name=db_name, instance=self.instance, sql=sql)
             except Exception as e:
-                logger.debug(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.eror(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.debug("goInception检测语句报错：错误信息{traceback.format_exc()}")
                 raise RuntimeError(f"goInception检测语句报错，请注意检查系统配置中goInception配置，错误信息：\n{e}")
+            finally:
+                self.logger.debug('Debug sql check res for database {}: {}'.format(db_name, inc_check_result.to_dict()))
         else:
+            self.logger.debug("SQL check via inception")
+            inception_engine = InceptionEngine()
             try:
-                inception_engine = InceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+                inc_check_result = inception_engine.execute_check(db_name=db_name, instance=self.instance,  sql=sql)
             except Exception as e:
-                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.error(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
                 raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
         # 判断Inception检测结果
         if inc_check_result.error:
-            logger.debug(f"Inception检测语句报错：错误信息{inc_check_result.error}")
+            self.logger.debug(f"Inception检测语句报错：错误信息{inc_check_result.error}")
             raise RuntimeError(f"Inception检测语句报错，错误信息：\n{inc_check_result.error}")
 
         # 禁用/高危语句检查
@@ -251,25 +262,47 @@ class MysqlEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
+        self.logger.debug("Entering execute_workflow, start execute workflow {0} ".format(workflow))
+        self.logger.debug("Debug sql content {0}".format(workflow.sqlworkflowcontent.sql_content))
+
         # 判断实例是否只读
-        read_only = self.query(sql='select @@read_only;').rows[0][0]
+        db_names = workflow.db_names.split(',') if workflow.db_names else []
+        read_only = self.query(db_name=db_names[0], sql='select @@read_only;').rows[0][0]
         if read_only:
-            result = ReviewSet(
-                full_sql=workflow.sqlworkflowcontent.sql_content,
-                rows=[ReviewResult(id=1, errlevel=2,
-                                   stagestatus='Execute Failed',
-                                   errormessage='实例read_only=1，禁止执行变更语句!',
-                                   sql=workflow.sqlworkflowcontent.sql_content)])
-            result.error = '实例read_only=1，禁止执行变更语句!',
+            result = {}
+            for db_name in db_names:
+                result[db_name] = (
+                    ReviewResult(
+                        id=len(result) + 1,
+                        errlevel=2,
+                        stagestatus='Execute Failed',
+                        errormessage='实例read_only=1，禁止执行变更语句!',
+                        sql=workflow.sqlworkflowcontent.sql_content,
+                        db_name=db_name
+                    )
+                )
+
+            result.error = '实例read_only=1，禁止执行变更语句!'
+
             return result
+
+        global execute_res
+        execute_res = {}
+
         # 原生执行
         if workflow.is_manual == 1:
-            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
-        # inception执行
+            self.logger.info('SQL execute via mysql client directly!')
+            # 多线程执行SQL
+            multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
+            return execute_res
+        # goinception执行
         elif not SysConfig().get('inception'):
-            inception_engine = GoInceptionEngine()
-            return inception_engine.execute(workflow)
+            self.logger.info('SQL execute via goinception!')
+            go_inception_engine = GoInceptionEngine()
+            return go_inception_engine.execute(workflow)
+        # inception执行
         else:
+            self.logger.info('SQL execute via inception!')
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
@@ -284,11 +317,17 @@ class MysqlEngine(EngineBase):
             conn.commit()
             cursor.close()
         except Exception as e:
-            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
+        finally:
+            self.logger.info("Debug SQL execute result once execution has been done.{}".format(result.to_dict()))
         if close_conn:
             self.close()
-        return result
+
+        global execute_res
+        execute_res[db_name] = result.to_dict()
+
+        # return execute_res
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""

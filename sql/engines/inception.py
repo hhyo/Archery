@@ -5,16 +5,22 @@ import traceback
 import MySQLdb
 import simplejson as json
 import sqlparse
+import os
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
+from sql.utils.multi_thread import multi_thread
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-
-logger = logging.getLogger('default')
+from common.utils.get_logger import get_logger
 
 
 class InceptionEngine(EngineBase):
+    def __init__(self, instance=None):
+        super().__init__(instance=instance)
+        # log_name = os.path.split(__file__)[-1]
+        self.logger = get_logger()
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -42,7 +48,7 @@ class InceptionEngine(EngineBase):
                                passwd=backup_password,
                                charset='utf8mb4')
 
-    def execute_check(self, instance=None, db_name=None, sql=''):
+    def execute_check(self, db_name=None, instance=None,  sql=''):
         """inception check"""
         check_result = ReviewSet(full_sql=sql)
         # 检查 inception 不支持的函数
@@ -95,7 +101,18 @@ class InceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        db_names = workflow.db_names.split(',') if workflow.db_names else []
+
+        global execute_res
+        execute_res = {}
+
+        multi_thread(self.execute_sql, db_names, (instance, workflow))
+
+        return execute_res
+
+    def execute_sql(self, db_name, instance, workflow):
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
+        global execute_res
         if workflow.is_backup:
             str_backup = "--enable-remote-backup"
         else:
@@ -107,7 +124,7 @@ class InceptionEngine(EngineBase):
                          use `{workflow.db_name}`;
                          {workflow.sqlworkflowcontent.sql_content}
                          inception_magic_commit;"""
-        split_result = self.query(sql=sql_split)
+        split_result = self.query(db_name=db_name, sql=sql_split)
 
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
@@ -128,7 +145,7 @@ class InceptionEngine(EngineBase):
                     stagestatus='异常终止',
                     errormessage=f'Inception Error: {one_line_execute_result.error}',
                     sql=sql_tmp)]
-                return execute_result
+                # return execute_result
 
             # 把结果转换为ReviewSet
             for r in one_line_execute_result.rows:
@@ -139,7 +156,8 @@ class InceptionEngine(EngineBase):
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
-        return execute_result
+        # return execute_result
+        execute_res[db_name] = execute_result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
@@ -158,7 +176,7 @@ class InceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.error(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         if close_conn:
             self.close()
@@ -229,7 +247,7 @@ class InceptionEngine(EngineBase):
                     # 拼接成回滚语句列表,['源语句'，'回滚语句']
                     list_backup_sql.append([sql, '\n'.join([back_info[0] for back_info in list_backup])])
             except Exception as e:
-                logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
+                self.logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
         return list_backup_sql
 

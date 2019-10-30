@@ -34,7 +34,7 @@ def is_auto_review(workflow_id):
             if auto_review:
                 # 更新影响行数加测,总语句影响行数超过指定数量则需要人工审核
                 review_engine = get_engine(instance=workflow.instance)
-                inception_review = review_engine.execute_check(db_name=workflow.db_name, sql=sql_content).to_dict()
+                inception_review = review_engine.execute_check(db_name=workflow.db_names[0], sql=sql_content).to_dict()
                 all_affected_rows = 0
                 for review_result in inception_review:
                     sql = review_result.get('sql', '')

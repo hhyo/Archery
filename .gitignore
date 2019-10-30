@@ -2,6 +2,7 @@
 *.swp
 *.lock
 *.log
+logs
 .idea/
 .DS_Store
 archery/settings.py.github
