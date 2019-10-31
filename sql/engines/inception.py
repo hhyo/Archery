@@ -108,7 +108,7 @@ class InceptionEngine(EngineBase):
 
         multi_thread(self.execute_sql, db_names, (instance, workflow))
 
-        return execute_res
+        return json.loads(json.dumps(execute_res))
 
     def execute_sql(self, db_name, instance, workflow):
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
@@ -162,7 +162,7 @@ class InceptionEngine(EngineBase):
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
-        conn = self.get_connection()
+        conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
@@ -205,7 +205,16 @@ class InceptionEngine(EngineBase):
         """
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
-        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        if isinstance(workflow.sqlworkflowcontent.execute_result, (type("{}"), str)):
+            print(workflow.sqlworkflowcontent.execute_result)
+            try:
+                list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result.replace("\n", " "))
+            except Exception as e:
+                logging.error(e)
+                list_execute_result = []
+
+        else:
+            list_execute_result = workflow.sqlworkflowcontent.execute_result
         # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []

@@ -186,7 +186,7 @@ def rollback(request):
     try:
         list_backup_sql = query_engine.get_rollback(workflow=workflow)
     except Exception as msg:
-        logger.error(msg.__str__())
+        logger.error(msg)
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
