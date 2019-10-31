@@ -4,8 +4,6 @@ ENV VERSION v1.7.0
 
 WORKDIR /opt/archery
 
-RUN mkdir /opt/archery
-
 COPY . /opt/archery/
 
 #python3.6
