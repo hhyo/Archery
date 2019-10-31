@@ -1,6 +1,8 @@
 FROM docker.io/centos:7
 
 ENV VERSION v1.7.0
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
 
 WORKDIR /opt/archery
 
@@ -79,10 +81,6 @@ RUN cd /opt \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
     && mv /opt/soar /opt/archery/src/plugins/ \
     && mv /opt/tmp_binlog2sql /opt/archery/src/plugins/binlog2sql
-
-
-ENV LANG en_US.UTF-8
-ENV LC_ALL zh_CN.utf8
 
 #port
 EXPOSE 9123
