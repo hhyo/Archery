@@ -1,6 +1,6 @@
 FROM docker.io/centos:7
 
-ENV VERSION v1.7.0
+ENV VERSION feature/muti-tenant
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV DOCKERIZE_VERSION v0.6.1
