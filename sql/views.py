@@ -155,8 +155,9 @@ def detail(request, workflow_id):
     if rows:
         try:
             loaded_rows = json.loads(rows)
-        except json.decoder.JSONDecodeError:
-            loaded_rows = eval(rows)
+        except json.decoder.JSONDecodeError as e:
+            logger.error(e.msg)
+            loaded_rows = {}
         else:
             for k, v in loaded_rows.items():
                 for record in v:
@@ -181,11 +182,11 @@ def rollback(request):
     workflow_id = int(workflow_id)
     workflow = SqlWorkflow.objects.get(id=workflow_id)
 
+    query_engine = get_engine(instance=workflow.instance)
     try:
-        query_engine = get_engine(instance=workflow.instance)
         list_backup_sql = query_engine.get_rollback(workflow=workflow)
     except Exception as msg:
-        logger.error(traceback.format_exc())
+        logger.error(msg.__str__())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)

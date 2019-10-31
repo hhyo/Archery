@@ -45,20 +45,22 @@ def execute_callback(task):
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
 
-    logger.debug("Debug task result in callback {0}".format(task.result))
+    print("Debug task result in callback {0}".format(task.result))
+    logger.info("Debug task result in callback {0}".format(task.result))
 
-    task_res = task.result.values()
-    result_warning, result_error = 0, 0
+    task_res = task.result
     execute_result = []
+    result_error = []
 
     for res in task_res:
-        logger.debug("Debug result {0}".format(res))
-        if res.error:
-            result_error += res.error
-        if res.warning:
-            result_warning += res.warning
-        if res.rows:
-            execute_result.extend(res.rows)
+        logger.debug("Debug task result {0}".format(res))
+        if res["errormessage"]:
+            logger.error("Execute sql error: {0}".format(res["errormessage"]))
+            result_error.append(res["errormessage"])
+        # if res.warning:
+        #     print("Debug res.warning {0}".format(res.warning))
+        else:
+            execute_result.extend(res)
 
     if not task.success:
         # 不成功会返回错误堆栈信息，构造一个错误信息
@@ -70,11 +72,13 @@ def execute_callback(task):
             stagestatus='异常终止',
             errormessage=task.result,
             sql=workflow.sqlworkflowcontent.sql_content)]
-    elif result_warning or result_error:
+    # elif result_warning or result_error:
+    elif result_error:
         execute_result = task.result
         workflow.status = 'workflow_exception'
     else:
-        execute_result = task.result.values()
+        # execute_result = task.result.values()
+        execute_result = task.result
         workflow.status = 'workflow_finish'
     # 保存执行结果
     workflow.sqlworkflowcontent.execute_result = execute_result
