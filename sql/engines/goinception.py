@@ -4,6 +4,7 @@ import re
 import traceback
 import MySQLdb
 import os
+import json
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
@@ -82,7 +83,7 @@ class GoInceptionEngine(EngineBase):
 
         self.logger.debug("Debug execute result in goinception {0}".format(execute_res))
 
-        return execute_res
+        return json.loads(json.dumps(execute_res))
 
     def execute_sql(self, db_name, instance, workflow):
 
@@ -133,7 +134,8 @@ class GoInceptionEngine(EngineBase):
                 break
         # return execute_result
         # execute_res[db_name] = execute_result
-        execute_res.extend(execute_result.to_dict())
+        # execute_res.extend(execute_result.to_dict())
+        execute_res.extend(execute_result.json())
 
     def query(self, db_name='', sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """

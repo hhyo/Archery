@@ -156,7 +156,7 @@ def detail(request, workflow_id):
         try:
             loaded_rows = json.loads(rows)
         except json.decoder.JSONDecodeError as e:
-            logger.error(e.msg)
+            logger.error(e)
             loaded_rows = {}
         else:
             for k, v in loaded_rows.items():
