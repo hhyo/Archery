@@ -1,7 +1,5 @@
 FROM sunnywalden/archery-multi-tenant:base
 
-ENV VERSION feature/muti-tenant
-
 WORKDIR /opt/archery
 
 COPY . /opt/archery/
@@ -9,8 +7,6 @@ COPY . /opt/archery/
 #archery
 RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
-#    && git clone https://github.com/hhyo/archery.git \
-    && cd archery && git checkout $VERSION \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \

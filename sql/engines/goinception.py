@@ -76,14 +76,14 @@ class GoInceptionEngine(EngineBase):
         self.logger.debug("Debug tenants {0}".format(db_names))
 
         global execute_res
-        # execute_res = {}
-        execute_res = []
+        execute_res = {}
+        # execute_res = []
 
         multi_thread(self.execute_sql, db_names, (instance, workflow))
 
         self.logger.debug("Debug execute result in goinception {0}".format(execute_res))
 
-        return json.loads(json.dumps(execute_res))
+        return execute_res
 
     def execute_sql(self, db_name, instance, workflow):
 
@@ -123,6 +123,7 @@ class GoInceptionEngine(EngineBase):
             execute_result.rows += [ReviewResult(inception_result=r)]
 
         print("Debug execute result {0}".format(inception_result.rows))
+        print(execute_result.rows)
 
         self.logger.debug('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
         self.logger.info('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
@@ -133,9 +134,9 @@ class GoInceptionEngine(EngineBase):
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
         # return execute_result
-        # execute_res[db_name] = execute_result
+        execute_res[db_name] = execute_result.to_dict()
         # execute_res.extend(execute_result.to_dict())
-        execute_res.extend(execute_result.json())
+        # execute_res.extend(execute_result.to_dict())
 
     def query(self, db_name='', sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """

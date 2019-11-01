@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import os
+import json
 
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
@@ -78,9 +79,13 @@ def execute_callback(task):
         workflow.status = 'workflow_exception'
     else:
         # execute_result = task.result.values()
-        execute_result = task.result
+        if isinstance(execute_result, (dict)):
+            execute_result = json.dumps(task.result.values())
+        else:
+            execute_result = json.dumps(task.result)
         workflow.status = 'workflow_finish'
     # 保存执行结果
+    print("Final execute result save to mysql {0}".format(execute_result))
     workflow.sqlworkflowcontent.execute_result = execute_result
     workflow.sqlworkflowcontent.save()
     workflow.save()

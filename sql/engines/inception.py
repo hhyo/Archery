@@ -206,7 +206,8 @@ class InceptionEngine(EngineBase):
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
         if isinstance(workflow.sqlworkflowcontent.execute_result, (str)):
-            execute_result = workflow.sqlworkflowcontent.execute_result.replace('\\n', " ")
+            execute_result = workflow.sqlworkflowcontent.execute_result
+            # execute_result = workflow.sqlworkflowcontent.execute_result.replace('\\n', " ")
             # execute_result = execute_result.replace("'", '"')
             print(execute_result)
             try:
