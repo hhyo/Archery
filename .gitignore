@@ -2,6 +2,7 @@
 *.swp
 *.lock
 *.log
+*.pid
 logs
 .idea/
 .DS_Store
