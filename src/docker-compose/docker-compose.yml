@@ -60,7 +60,7 @@ services:
     ports:
       - "9123:9123"
     volumes:
-      - "../../:/opt/archery"
+      - "../docker/startup.sh:/opt/archery/src/docker/startup.sh"
       - "./archery/settings.py:/opt/archery/archery/settings.py"
       - "./archery/soar.yaml:/etc/soar.yaml"
       - "./archery/docs.md:/opt/archery/docs/docs.md"

@@ -6,8 +6,8 @@ echo 切换python运行环境
 source /opt/venv4archery/bin/activate
 
 echo 初始化数据
-python3 manage.py makemigrations
-python3 manage.py migrate
+#python3 manage.py makemigrations
+#python3 manage.py migrate
 
 echo 修改重定向端口
 if [[ -z $NGINX_PORT ]]; then
