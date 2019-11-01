@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunAccessKey, AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
+    AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
@@ -19,7 +19,7 @@ class UsersAdmin(UserAdmin):
     # 编辑页显示内容
     fieldsets = (
         ('认证信息', {'fields': ('username', 'password')}),
-        ('个人信息', {'fields': ('display', 'email', 'ding_user_id')}),
+        ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('其他信息', {'fields': ('date_joined',)}),
     )
@@ -214,13 +214,6 @@ class ParamHistoryAdmin(admin.ModelAdmin):
     list_display = ('variable_name', 'instance', 'old_var', 'new_var', 'user_display', 'create_time')
     search_fields = ('variable_name',)
     list_filter = ('instance', 'user_display')
-
-
-# 阿里云的认证信息
-@admin.register(AliyunAccessKey)
-class AliAccessKeyAdmin(admin.ModelAdmin):
-    list_display = ('ak', 'secret', 'is_enable', 'remark',)
-    search_fields = ['ak']
 
 
 # 阿里云实例配置信息
