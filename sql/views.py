@@ -27,8 +27,8 @@ from sql.utils.resource_group import user_groups
 import logging
 from common.utils.get_logger import get_logger
 
-log_name = os.path.split(__file__)[-1]
-logger = get_logger(name=log_name)
+# log_name = os.path.split(__file__)[-1]
+logger = get_logger()
 
 
 def index(request):
