@@ -13,7 +13,7 @@ RUN cd /opt \
     && git clone https://github.com/sunnywalden/Archery.git -b feature/muti-tenant --depth 3 \
     && mv /opt/Archery /opt/archery \
     && cd /opt/archery \
-    && git checkout $VERSION \
+#    && git checkout $VERSION \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
