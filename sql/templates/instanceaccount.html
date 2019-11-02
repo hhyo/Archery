@@ -1156,7 +1156,7 @@
         //获取实例数据库
         function db_list() {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -1190,7 +1190,7 @@
         //获取表
         function tb_list() {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -1225,7 +1225,7 @@
         //获取表
         function col_list() {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
