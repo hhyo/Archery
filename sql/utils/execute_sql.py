@@ -46,8 +46,8 @@ def execute_callback(task):
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
 
-    print("Debug task result in callback {0}".format(task.result))
-    print("Debug task result in callback {0}".format(task.result))
+    logger.info("Debug task result in callback {0}".format(task.result))
+    logger.info("Debug task result in callback {0}".format(task.result))
 
     task_res = task.result
     execute_result = []
@@ -59,7 +59,7 @@ def execute_callback(task):
             logger.error("Execute sql error: {0}".format(res["errormessage"]))
             result_error.append(res["errormessage"])
         # if res.warning:
-        #     print("Debug res.warning {0}".format(res.warning))
+        #     logger.info("Debug res.warning {0}".format(res.warning))
         else:
             execute_result.extend(res)
 
@@ -85,7 +85,7 @@ def execute_callback(task):
             execute_result = json.dumps(task.result)
         workflow.status = 'workflow_finish'
     # 保存执行结果
-    print("Final execute result save to mysql {0}".format(execute_result))
+    logger.info("Final execute result save to mysql {0}".format(execute_result))
     workflow.sqlworkflowcontent.execute_result = execute_result
     workflow.sqlworkflowcontent.save()
     workflow.save()

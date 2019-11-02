@@ -126,7 +126,7 @@ class MysqlEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            print(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.info(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -189,28 +189,28 @@ class MysqlEngine(EngineBase):
         config = SysConfig()
         # 进行Inception检查，获取检测结果
         if not config.get('inception'):
-            print("SQL check via goinception")
-            print("Debug db_name in mysql.execute_check {0}".format(db_name))
+            self.logger.info("SQL check via goinception")
+            self.logger.info("Debug db_name in mysql.execute_check {0}".format(db_name))
             goinception_engine = GoInceptionEngine()
             try:
                 inc_check_result = goinception_engine.execute_check(db_name=db_name, instance=self.instance, sql=sql)
             except Exception as e:
-                print(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
-                print("goInception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.info(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.info("goInception检测语句报错：错误信息{traceback.format_exc()}")
                 raise RuntimeError(f"goInception检测语句报错，请注意检查系统配置中goInception配置，错误信息：\n{e}")
             finally:
-                print('Debug sql check res for database {}: {}'.format(db_name, inc_check_result.to_dict()))
+                self.logger.info('Debug sql check res for database {}: {}'.format(db_name, inc_check_result.to_dict()))
         else:
-            print("SQL check via inception")
+            self.logger.info("SQL check via inception")
             inception_engine = InceptionEngine()
             try:
                 inc_check_result = inception_engine.execute_check(db_name=db_name, instance=self.instance,  sql=sql)
             except Exception as e:
-                print(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.info(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
                 raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
         # 判断Inception检测结果
         if inc_check_result.error:
-            print(f"Inception检测语句报错：错误信息{inc_check_result.error}")
+            self.logger.info(f"Inception检测语句报错：错误信息{inc_check_result.error}")
             raise RuntimeError(f"Inception检测语句报错，错误信息：\n{inc_check_result.error}")
 
         # 禁用/高危语句检查
@@ -262,8 +262,8 @@ class MysqlEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
-        print("Entering execute_workflow, start execute workflow {0} ".format(workflow))
-        print("Debug sql content {0}".format(workflow.sqlworkflowcontent.sql_content))
+        self.logger.info("Entering execute_workflow, start execute workflow {0} ".format(workflow))
+        self.logger.info("Debug sql content {0}".format(workflow.sqlworkflowcontent.sql_content))
 
         # 判断实例是否只读
         db_names = workflow.db_names.split(',') if workflow.db_names else []
@@ -291,18 +291,18 @@ class MysqlEngine(EngineBase):
 
         # 原生执行
         if workflow.is_manual == 1:
-            print('SQL execute via mysql client directly!')
+            self.logger.info('SQL execute via mysql client directly!')
             # 多线程执行SQL
             multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
             return execute_res
         # goinception执行
         elif not SysConfig().get('inception'):
-            print('SQL execute via goinception!')
+            self.logger.info('SQL execute via goinception!')
             go_inception_engine = GoInceptionEngine()
             return go_inception_engine.execute(workflow)
         # inception执行
         else:
-            print('SQL execute via inception!')
+            self.logger.info('SQL execute via inception!')
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
@@ -317,10 +317,10 @@ class MysqlEngine(EngineBase):
             conn.commit()
             cursor.close()
         except Exception as e:
-            print(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.info(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
         finally:
-            print("Debug SQL execute result once execution has been done.{}".format(result.to_dict()))
+            self.logger.info("Debug SQL execute result once execution has been done.{}".format(result.to_dict()))
         if close_conn:
             self.close()
 

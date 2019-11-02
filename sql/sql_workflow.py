@@ -32,8 +32,7 @@ from django_q.tasks import async_task
 
 from sql.engines import get_engine
 
-log_name = os.path.split(__file__)[-1]
-logger = get_logger(name=log_name)
+logger = get_logger()
 
 
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
