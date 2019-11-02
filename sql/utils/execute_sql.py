@@ -47,7 +47,7 @@ def execute_callback(task):
     workflow.finish_time = task.stopped
 
     print("Debug task result in callback {0}".format(task.result))
-    logger.info("Debug task result in callback {0}".format(task.result))
+    print("Debug task result in callback {0}".format(task.result))
 
     task_res = task.result
     execute_result = []

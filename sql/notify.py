@@ -24,7 +24,7 @@ def notify_for_audit(audit_id, **kwargs):
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
     if not sys_config.get('mail') and not sys_config.get('ding'):
-        logger.info('未开启消息通知，可在系统设置中开启')
+        print('未开启消息通知，可在系统设置中开启')
         return None
     # 获取审核信息
     audit_detail = Audit.detail(audit_id=audit_id)
@@ -161,7 +161,7 @@ def notify_for_execute(workflow):
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
     if not sys_config.get('mail') and not sys_config.get('ding') and not sys_config.get('ding_to_person'):
-        logger.info('未开启消息通知，可在系统设置中开启')
+        print('未开启消息通知，可在系统设置中开启')
         return None
     # 获取当前审批和审批流程
     base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
@@ -231,7 +231,7 @@ def notify_for_binlog2sql(task):
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
     if not sys_config.get('mail') and not sys_config.get('ding'):
-        logger.info('未开启消息通知，可在系统设置中开启')
+        print('未开启消息通知，可在系统设置中开启')
         return None
 
     # 发送邮件通知

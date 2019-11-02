@@ -335,7 +335,7 @@ def instance_resource(request):
         logger.debug(resource_type)
         sql_order('', instance, schema_name, tb_name, resource_type)
 
-    logger.info('Debug result in instance resource {}'.format(all_result))
+    print('Debug result in instance resource {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')
 
 

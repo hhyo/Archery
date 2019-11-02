@@ -176,7 +176,7 @@ class InceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            self.logger.error(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            print(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         if close_conn:
             self.close()
@@ -259,7 +259,7 @@ class InceptionEngine(EngineBase):
                     # 拼接成回滚语句列表,['源语句'，'回滚语句']
                     list_backup_sql.append([sql, '\n'.join([back_info[0] for back_info in list_backup])])
             except Exception as e:
-                self.logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
+                print(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
         return list_backup_sql
 

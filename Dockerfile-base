@@ -3,15 +3,16 @@ FROM docker.io/centos:7
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV DOCKERIZE_VERSION v0.6.1
+ENV PYTHON_VERSION 3.7.5
 
 WORKDIR /opt
 
 #python3.6
 RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
-    && wget "https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tar.xz" \
-    && tar -xvJf Python-3.6.5.tar.xz \
-    && cd /opt/Python-3.6.5 \
+    && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
+    && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
+    && cd /opt/Python-$PYTHON_VERSION \
     && ./configure prefix=/usr/local/python3 \
     && make && make install \
     && ln -fs /usr/local/python3/bin/python3 /usr/bin/python3 \
@@ -20,8 +21,8 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
     && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
     && virtualenv venv4archery --python=python3 \
-    && rm -rf Python-3.6.5 \
-    && rm -rf Python-3.6.5.tar.xz \
+    && rm -rf Python-$PYTHON_VERSION \
+    && rm -rf Python-$PYTHON_VERSION.tar.xz \
 #locale
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && yum -y install kde-l10n-Chinese \

@@ -36,9 +36,9 @@ class GoInceptionEngine(EngineBase):
     def execute_check(self, db_name='', instance=None,  sql=''):
         """inception check"""
         check_result = ReviewSet(full_sql=sql)
-        self.logger.debug("Debug db_name in goinception.execute_check {0}".format(db_name))
-        self.logger.info('Debug before doing execute check:{0}'.format(check_result.to_dict()))
-        self.logger.debug('Debug before doing execute check: {0}'.format(check_result.to_dict()))
+        print("Debug db_name in goinception.execute_check {0}".format(db_name))
+        print('Debug before doing execute check:{0}'.format(check_result.to_dict()))
+        print('Debug before doing execute check: {0}'.format(check_result.to_dict()))
         # inception 校验
         check_result.rows = []
         inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--check=1;*/
@@ -62,18 +62,18 @@ class GoInceptionEngine(EngineBase):
         check_result.checked = True
         check_result.error = inception_result.error
         check_result.warning = inception_result.warning
-        self.logger.debug('Debug execute check {0}'.format(check_result.to_dict()))
+        print('Debug execute check {0}'.format(check_result.to_dict()))
         return check_result
 
     def execute(self, workflow=None):
         """执行上线单"""
 
-        self.logger.debug("Entering goIncetion execute!")
+        print("Entering goIncetion execute!")
 
         instance = workflow.instance
         db_names = workflow.db_names.split(',') if workflow.db_names else []
 
-        self.logger.debug("Debug tenants {0}".format(db_names))
+        print("Debug tenants {0}".format(db_names))
 
         global execute_res
         execute_res = {}
@@ -81,14 +81,14 @@ class GoInceptionEngine(EngineBase):
 
         multi_thread(self.execute_sql, db_names, (instance, workflow))
 
-        self.logger.debug("Debug execute result in goinception {0}".format(execute_res))
+        print("Debug execute result in goinception {0}".format(execute_res))
 
         return execute_res
 
     def execute_sql(self, db_name, instance, workflow):
 
-        self.logger.debug("Start execute sql for {0} via goInception.".format(db_name))
-        self.logger.info("Start execute sql for {0} via goInception.".format(db_name))
+        print("Start execute sql for {0} via goInception.".format(db_name))
+        print("Start execute sql for {0} via goInception.".format(db_name))
 
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
 
@@ -125,8 +125,8 @@ class GoInceptionEngine(EngineBase):
         print("Debug execute result {0}".format(inception_result.rows))
         print(execute_result.rows)
 
-        self.logger.debug('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
-        self.logger.info('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
+        print('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
+        print('Debug goinception execute sql result {0}'.format(execute_result.to_dict()))
 
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         for r in execute_result.rows:
@@ -141,12 +141,12 @@ class GoInceptionEngine(EngineBase):
     def query(self, db_name='', sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
 
-        self.logger.debug("Debug db_name in goinception.query: {0}".format(db_name))
+        print("Debug db_name in goinception.query: {0}".format(db_name))
         if db_name:
-            self.logger.debug("Starting flash sql for {0} in goInception.".format(db_name))
-            self.logger.info("Starting flash sql for {0}".format(db_name))
+            print("Starting flash sql for {0} in goInception.".format(db_name))
+            print("Starting flash sql for {0}".format(db_name))
         else:
-            self.logger.debug("Query database: {0}".format(sql))
+            print("Query database: {0}".format(sql))
 
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
@@ -163,11 +163,11 @@ class GoInceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            self.logger.error(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
+            print(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
             result_set.error = str(e)
         finally:
-            self.logger.info("goInception execute sql for {0} success!".format(db_name))
-            self.logger.info("Debug goInception execute result: {0}".format(result_set.to_dict()))
+            print("goInception execute sql for {0} success!".format(db_name))
+            print("Debug goInception execute result: {0}".format(result_set.to_dict()))
         if close_conn:
             self.close()
         return result_set

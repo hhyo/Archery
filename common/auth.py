@@ -30,7 +30,7 @@ def init_user(user):
             group = Group.objects.get(name=default_auth_group)
             user.groups.add(group)
         except Group.DoesNotExist:
-            logger.info(f'无name为[{default_auth_group}]的权限组，无法默认关联，请到系统设置进行配置')
+            print(f'无name为[{default_auth_group}]的权限组，无法默认关联，请到系统设置进行配置')
     # 添加到默认资源组
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
@@ -39,7 +39,7 @@ def init_user(user):
                 user_id=user.id,
                 resource_group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id)
         except ResourceGroup.DoesNotExist:
-            logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
+            print(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
 
 
 class ArcheryAuth(object):

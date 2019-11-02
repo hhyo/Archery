@@ -118,7 +118,7 @@ def sql_check(db_name, instance, sql_content):
         result['msg'] = str(e)
         return HttpResponse(json.dumps(result), content_type='application/json')
     finally:
-        logger.info('Debug sql check for {}: {}'.format(db_name, sql_content.strip))
+        print('Debug sql check for {}: {}'.format(db_name, sql_content.strip))
 
     # 检测结果写入全局变量
     global all_check_res
@@ -168,7 +168,7 @@ def workflow_check(db_name, instance, sql_content):
     """工单审核"""
     # 再次交给engine进行检测，防止绕过
     logger.debug('Debug db_name in workflow_check {0}'.format(db_name))
-    logger.info('Check database {} for SQL {}'.format(db_name, sql_content))
+    print('Check database {} for SQL {}'.format(db_name, sql_content))
     logger.debug("Debug sql content {}: {}".format(type(sql_content), sql_content))
     check_engine = get_engine(instance=instance)
     try:
@@ -189,7 +189,7 @@ def workflow_check(db_name, instance, sql_content):
         pass
 
     logger.debug("Debug sql review result in workflow_check {}".format(check_result.to_dict()))
-    logger.info("Debug sql review result in workflow_check {}".format(check_result))
+    print("Debug sql review result in workflow_check {}".format(check_result))
 
     return check_result, workflow_status
 
@@ -216,12 +216,12 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
 
     # 获取对象的值
     check_result = {k: v.to_dict() for k, v in check_result.items()}
-    logger.info('SQL check result {}'.format(check_result))
+    print('SQL check result {}'.format(check_result))
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
     try:
-        logger.info('Start running sql for tenant {}'.format(db_names))
+        print('Start running sql for tenant {}'.format(db_names))
         with transaction.atomic():
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
@@ -311,7 +311,7 @@ def submit(request):
     else:
         all_check_res = {'status': 0, 'msg': 'ok', 'data': workflow_id}
 
-    logger.info('All SQL check result: {}'.format(all_check_res))
+    print('All SQL check result: {}'.format(all_check_res))
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
 
