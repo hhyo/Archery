@@ -9,7 +9,7 @@ services:
     expose:
       - "6379"
     ports:
-      - "6379:6379"
+      - "6399:6379"
 
   mysql:
     image: mysql:5.7
@@ -18,7 +18,7 @@ services:
     expose:
       - "3306"
     ports:
-      - "3306:3306"
+      - "3326:3306"
     volumes:
       - "./mysql/my.cnf:/etc/mysql/my.cnf"
       - "./mysql/datadir:/var/lib/mysql"
@@ -31,7 +31,7 @@ services:
     container_name: inception
     restart: always
     ports:
-      - "6669:6669"
+      - "6689:6669"
     expose:
       - "6669"
     volumes:
@@ -44,7 +44,7 @@ services:
     container_name: goinception
     restart: always
     ports:
-      - "4000:4000"
+      - "4020:4000"
     expose:
       - "4000"
     volumes:
