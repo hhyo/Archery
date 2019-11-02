@@ -11,8 +11,8 @@ RUN cd /opt \
     && yum -y install openldap-devel gettext nginx \
     && source /opt/venv4archery/bin/activate \
     && git clone https://github.com/sunnywalden/Archery.git -b feature/muti-tenant --depth 3 \
-    && mv /opt/Archery /opt/archery \
-    && git init \
+    && mv /opt/Archery $WORKDIR \
+    && cd $WORKDIR \
     && git checkout $VERSION \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
