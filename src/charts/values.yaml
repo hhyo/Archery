@@ -28,7 +28,7 @@ ingress:
 
   hosts:
     - dba.archery.local
-  tls:
+  tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
