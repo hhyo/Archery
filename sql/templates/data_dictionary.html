@@ -167,7 +167,7 @@
         $("#instance_name").change(function () {
             $('#db_name').empty();
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

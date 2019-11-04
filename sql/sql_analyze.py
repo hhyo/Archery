@@ -54,7 +54,7 @@ def analyze(request):
             # 获取实例连接信息
             instance_info = Instance.objects.get(instance_name=instance_name)
             online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
-                                                                  pwd=instance_info.raw_password,
+                                                                  pwd=instance_info.password,
                                                                   host=instance_info.host,
                                                                   port=instance_info.port,
                                                                   db=db_name)

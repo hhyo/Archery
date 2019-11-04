@@ -382,7 +382,7 @@
         //实例变更获取数据库列表/权限类型
         $("#instance_name").change(function () {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -431,7 +431,7 @@
         //数据库变更获取表名称
         $("#db_name").change(function () {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

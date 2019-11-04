@@ -68,7 +68,7 @@ class InceptionEngine(EngineBase):
 
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                             --port={instance.port};--enable-check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
@@ -101,7 +101,7 @@ class InceptionEngine(EngineBase):
         else:
             str_backup = "--disable-remote-backup"
         # 根据inception的要求，执行之前最好先split一下
-        sql_split = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host}; 
+        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={instance.host}; 
                          --port={instance.port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
                          use `{workflow.db_name}`;
@@ -112,7 +112,7 @@ class InceptionEngine(EngineBase):
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
             sql_tmp = splitRow[1]
-            sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+            sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                                 --port={instance.port};--enable-execute;--enable-ignore-warnings;{str_backup};*/
                                 inception_magic_start;
                                 {sql_tmp}
@@ -168,7 +168,7 @@ class InceptionEngine(EngineBase):
         """
         将sql交给inception打印语法树。
         """
-        sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+        sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                           --port={instance.port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;

@@ -57,7 +57,7 @@ def optimize_sqladvisor(request):
     args = {"h": instance_info.host,
             "P": instance_info.port,
             "u": instance_info.user,
-            "p": instance_info.raw_password,
+            "p": instance_info.password,
             "d": db_name,
             "v": verbose,
             "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
@@ -108,7 +108,7 @@ def optimize_soar(request):
 
     # 目标实例的连接信息
     online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
-                                                          pwd=instance_info.raw_password,
+                                                          pwd=instance_info.password,
                                                           host=instance_info.host,
                                                           port=instance_info.port,
                                                           db=db_name)

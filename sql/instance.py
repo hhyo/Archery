@@ -6,6 +6,7 @@ import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
+from django.views.decorators.cache import cache_page
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -204,12 +205,12 @@ def schemasync(request):
         "tag": tag,
         "output-directory": output_directory,
         "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=instance_info.user,
-                                                                            pwd=instance_info.raw_password,
+                                                                            pwd=instance_info.password,
                                                                             host=instance_info.host,
                                                                             port=instance_info.port,
                                                                             database=db_name),
         "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=target_instance_info.user,
-                                                                            pwd=target_instance_info.raw_password,
+                                                                            pwd=target_instance_info.password,
                                                                             host=target_instance_info.host,
                                                                             port=target_instance_info.port,
                                                                             database=target_db_name)
@@ -249,19 +250,20 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
+@cache_page(60 * 5)
 def instance_resource(request):
     """
     获取实例内的资源信息，database、schema、table、column
     :param request:
     :return:
     """
-    instance_id = request.POST.get('instance_id')
-    instance_name = request.POST.get('instance_name')
-    db_name = request.POST.get('db_name')
-    schema_name = request.POST.get('schema_name')
-    tb_name = request.POST.get('tb_name')
+    instance_id = request.GET.get('instance_id')
+    instance_name = request.GET.get('instance_name')
+    db_name = request.GET.get('db_name')
+    schema_name = request.GET.get('schema_name')
+    tb_name = request.GET.get('tb_name')
 
-    resource_type = request.POST.get('resource_type')
+    resource_type = request.GET.get('resource_type')
     if instance_id:
         instance = Instance.objects.get(id=instance_id)
     else:

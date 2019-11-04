@@ -141,8 +141,7 @@ def submit(request):
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
     is_backup = True if request.POST.get('is_backup') == 'True' else False
-    notify_users = request.POST.getlist('notify_users')
-    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    cc_users = request.POST.getlist('cc_users')
     run_date_start = request.POST.get('run_date_start')
     run_date_end = request.POST.get('run_date_end')
 
@@ -221,7 +220,7 @@ def submit(request):
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60)
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 

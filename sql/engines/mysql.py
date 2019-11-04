@@ -5,6 +5,7 @@ import MySQLdb
 import re
 import sqlparse
 from MySQLdb.connections import numeric_part
+from MySQLdb.constants import FIELD_TYPE
 
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
@@ -18,17 +19,23 @@ logger = logging.getLogger('default')
 
 
 class MysqlEngine(EngineBase):
+
     def get_connection(self, db_name=None):
+        # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
+        conversions = MySQLdb.converters.conversions
+        conversions[FIELD_TYPE.BIT] = lambda data: data == b'\x01'
         if self.conn:
             self.thread_id = self.conn.thread_id()
             return self.conn
         if db_name:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         db=db_name, charset=self.instance.charset or 'utf8mb4',
+                                        conv=conversions,
                                         connect_timeout=10)
         else:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         charset=self.instance.charset or 'utf8mb4',
+                                        conv=conversions,
                                         connect_timeout=10)
         self.thread_id = self.conn.thread_id()
         return self.conn

@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
 
-from common.utils.aes_decryptor import Prpcrypt
 from django.utils.translation import gettext as _
 
 
@@ -55,19 +54,13 @@ class Instance(models.Model):
     db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=0)
-    user = models.CharField('用户名', max_length=100, default='', blank=True)
-    password = models.CharField('密码', max_length=300, default='', blank=True)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True)
     charset = models.CharField('字符集', max_length=20, default='', blank=True)
     service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
-
-    @property
-    def raw_password(self):
-        """ 返回明文密码 str """
-        pc = Prpcrypt()  # 初始化
-        return pc.decrypt(self.password)
 
     def __str__(self):
         return self.instance_name
@@ -77,17 +70,6 @@ class Instance(models.Model):
         db_table = 'sql_instance'
         verbose_name = u'实例配置'
         verbose_name_plural = u'实例配置'
-
-    def save(self, *args, **kwargs):
-        pc = Prpcrypt()  # 初始化
-        if self.password:
-            if self.id:
-                old_password = Instance.objects.get(id=self.id).password
-            else:
-                old_password = ''
-            # 密码有变动才再次加密保存
-            self.password = pc.encrypt(self.password) if old_password != self.password else self.password
-        super(Instance, self).save(*args, **kwargs)
 
 
 class ResourceGroup(models.Model):

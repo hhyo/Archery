@@ -12,8 +12,12 @@ from django_q.status import Stat
 from django_q.models import Success, Failure
 from django_q.brokers import get_broker
 from django.utils import timezone
+
+from common.utils.aes_decryptor import Prpcrypt
 from common.utils.permission import superuser_required
 import archery
+from sql.models import Instance
+from mirage.tools import Migrator
 
 
 def info(request):
@@ -188,3 +192,25 @@ def debug(request):
         'packages': installed_packages_list
     }
     return JsonResponse(system_info)
+
+
+@superuser_required
+def mirage(request):
+    """迁移加密的Instance数据，保留一定版本后删除"""
+    try:
+        pc = Prpcrypt()
+        mg_user = Migrator(app="sql", model="Instance", field="user")
+        mg_password = Migrator(app="sql", model="Instance", field="password")
+        # 还原密码
+        for ins in Instance.objects.all():
+            # 忽略解密错误的数据(本身为异常数据)
+            try:
+                Instance(pk=ins.pk, password=pc.decrypt(ins.password)).save(update_fields=['password'])
+            except:
+                pass
+        # 使用django-mirage-field重新加密
+        mg_user.encrypt()
+        mg_password.encrypt()
+        return JsonResponse({"msg": "ok"})
+    except Exception as msg:
+        return JsonResponse({"msg": f"{msg}"})

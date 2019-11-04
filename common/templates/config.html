@@ -228,6 +228,17 @@
                             </div>
                             <div id="div-auto-review-config" style="display: none">
                                 <div class="form-group">
+                                    <label for="auto_review_tag"
+                                           class="col-sm-4 control-label">AUTO_REVIEW_TAG</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="auto_review_tag"
+                                               key="auto_review_tag"
+                                               value="{{ config.auto_review_tag }}"
+                                               placeholder="自动审批的实例标签CODE，多个使用逗号分隔">
+                                    </div>
+                                </div>
+                                <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                     <div class="col-sm-5">

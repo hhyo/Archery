@@ -1,7 +1,8 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
-from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Users, Instance
 
 from common.utils.chart_dao import ChartDao
@@ -14,6 +15,7 @@ from pyecharts.charts import Pie, Bar, Line
 CurrentConfig.ONLINE_HOST = '/static/echarts/'
 
 
+@cache_page(60 * 60)
 @permission_required('sql.menu_dashboard', raise_exception=True)
 def pyecharts(request):
     """dashboard view"""
@@ -121,22 +123,11 @@ def pyecharts(request):
     }
 
     # 获取统计数据
-    try:
-        dashboard_count_stats = cache.get('dashboard_count_stats')
-    except Exception:
-        dashboard_count_stats = {
-            "sql_wf_cnt": SqlWorkflow.objects.count(),
-            "query_wf_cnt": QueryPrivilegesApply.objects.count(),
-            "user_cnt": Users.objects.count(),
-            "ins_cnt": Instance.objects.count()
-        }
-    else:
-        dashboard_count_stats = dashboard_count_stats or {
-            "sql_wf_cnt": SqlWorkflow.objects.count(),
-            "query_wf_cnt": QueryPrivilegesApply.objects.count(),
-            "user_cnt": Users.objects.count(),
-            "ins_cnt": Instance.objects.count()
-        }
-        cache.set("dashboard_count_stats", dashboard_count_stats, 600)
+    dashboard_count_stats = {
+        "sql_wf_cnt": SqlWorkflow.objects.count(),
+        "query_wf_cnt": QueryPrivilegesApply.objects.count(),
+        "user_cnt": Users.objects.count(),
+        "ins_cnt": Instance.objects.count()
+    }
 
     return render(request, "dashboard.html", {"chart": chart, "count_stats": dashboard_count_stats})
