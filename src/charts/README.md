@@ -9,6 +9,9 @@
 i 本机访问 kubectl port-forward pods/archery-xxxxxx 9123:9123 
 ii 集群外访问 将svc配置为nodePort或loadBalance，或开启ingress
 
+默认关闭ingress，如需开启ingress，请在values.yaml设置为true，并修改ingress默认域名配置。
+
+
 默认用户名：admin
 默认密码：Archery2019
 

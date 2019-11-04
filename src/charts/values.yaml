@@ -22,10 +22,13 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  paths: []
+  paths:
+    - /
+  servicePort: 9123
+
   hosts:
-    - chart-example.local
-  tls: []
+    - dba.archery.local
+  tls:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
@@ -40,7 +43,7 @@ mysql:
   mysqlRootPassword: archery
   mysqlDatabase: archery
   persistence:
-    enabled: false
+    enabled: true
     accessMode: ReadWriteOnce
     size: 20Gi
   ## Persist data to a persistent volume
@@ -485,7 +488,8 @@ configMap:
         username=DJANGO_SU_NAME,
         email=DJANGO_SU_EMAIL,
         password=DJANGO_SU_PASSWORD)
-      except: 
+      except Exception as e: 
+        if e.:
         print('Error,用户重复创建或创建失败，请登录pod检查!')
         exit(0)
       else:

@@ -1,6 +1,7 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "archery.fullname" . -}}
 {{- $ingressPaths := .Values.ingress.paths -}}
+{{- $servicePort := .Values.ingress.servicePort -}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -30,11 +31,11 @@ spec:
     - host: {{ . | quote }}
       http:
         paths:
-	{{- range $ingressPaths }}
+        {{- range $ingressPaths }}
           - path: {{ . }}
             backend:
               serviceName: {{ $fullName }}
-              servicePort: http
-	{{- end }}
+              servicePort: {{ $servicePort }}
+        {{- end }}
   {{- end }}
 {{- end }}
