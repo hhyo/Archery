@@ -488,8 +488,7 @@ configMap:
         username=DJANGO_SU_NAME,
         email=DJANGO_SU_EMAIL,
         password=DJANGO_SU_PASSWORD)
-      except Exception as e: 
-        if e.:
+      except: 
         print('Error,用户重复创建或创建失败，请登录pod检查!')
         exit(0)
       else:
