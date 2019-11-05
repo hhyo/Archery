@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: hhyo/archery
-  tag: 1.6.7
+  tag: 1.7.0
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -22,9 +22,12 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  paths: []
+  paths:
+    - /
+  servicePort: 9123
+
   hosts:
-    - chart-example.local
+    - dba.archery.local
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
@@ -32,7 +35,7 @@ ingress:
 
 # subcharts redis
 redis:
-  usePassword: ""
+  usePassword: "123456"
   persistence:
     enabled: false
 # subchats mysql
@@ -104,6 +107,12 @@ volumeMounts:
   - name: archery-settings
     subPath: startup.sh
     mountPath: /opt/archery/src/docker/startup.sh
+  - name: archery-settings
+    subPath: init-archery.sh
+    mountPath: /opt/archery/src/docker/init-archery.sh
+  - name: archery-settings
+    subPath: createsuperuser.py
+    mountPath: /opt/archery/src/docker/createsuperuser.py
 nodeSelector: {}
 
 tolerations: []
@@ -212,7 +221,6 @@ configMap:
         STATIC_URL = '/static/'
         STATIC_ROOT = os.path.join(BASE_DIR, 'static')
         STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
-        STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
         
         # 扩展django admin里users字段用到，指定了sql/models.py里的class users
         AUTH_USER_MODEL = "sql.Users"
@@ -285,7 +293,7 @@ configMap:
                 "LOCATION": "redis://archery-redis:6379/0",
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                    "PASSWORD": ""
+                    "PASSWORD": "123456"
                 }
             },
             "dingding": {
@@ -293,7 +301,7 @@ configMap:
                 "LOCATION": "redis://archery-redis:6379/1",
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                    "PASSWORD": ""
+                    "PASSWORD": "123456"
                 }
             }
         }
@@ -311,12 +319,6 @@ configMap:
         
             AUTH_LDAP_SERVER_URI = "ldap://xxx"
             AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=xxx,dc=xxx,dc=xxx"
-            # ldap认证的另一种方式,使用时注释AUTH_LDAP_USER_DN_TEMPLATE
-            """
-            AUTH_LDAP_BIND_DN = "cn=xxx,ou=xxx,dc=xxx,dc=xxx"
-            AUTH_LDAP_BIND_PASSWORD = "***********"
-            AUTH_LDAP_USER_SEARCH = LDAPSearch('ou=xxx,dc=xxx,dc=xxx',ldap.SCOPE_SUBTREE, '(cn=%(user)s)',)
-            """
             AUTH_LDAP_ALWAYS_UPDATE_USER = True  # 每次登录从ldap同步用户信息
             AUTH_LDAP_USER_ATTR_MAP = {  # key为archery.sql_users字段名，value为ldap中字段名，用户同步信息
                 "username": "cn",
@@ -460,14 +462,44 @@ configMap:
         $slowquery_file > /tmp/analysis_slow_query.log
         
         echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
+    init-archery.sh: |-
+      #!/bin/bash
+      cd /opt/archery
+      echo 切换python运行环境
+      source /opt/venv4archery/bin/activate
+      
+      python3 manage.py makemigrations sql
+      python3 manage.py migrate
+      #数据初始化
+      python3 manage.py loaddata initial_data.json
+      #创建管理用户
+      #python3 manage.py createsuperuser
+      cat /opt/archery/src/docker/createsuperuser.py | python3 manage.py shell
+    createsuperuser.py: |-
+      #/usr/bin/python3 env
+      from django.contrib.auth import get_user_model
+      DJANGO_SU_NAME = "admin"
+      DJANGO_SU_EMAIL = "ll_archery@gmail.com"
+      DJANGO_SU_PASSWORD = "Archery2019"
+      DJANGO_DB_NAME = "archery"
+      User = get_user_model()
+      try:
+        superuser=User.objects.create_superuser(
+        username=DJANGO_SU_NAME,
+        email=DJANGO_SU_EMAIL,
+        password=DJANGO_SU_PASSWORD)
+      except: 
+        print('Error,用户重复创建或创建失败，请登录pod检查!')
+        exit(0)
+      else:
+        superuser.save()
     startup.sh: |-
       #!/bin/bash
-      
       cd /opt/archery
       
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
-      
+
       echo 修改重定向端口
       if [[ -z $NGINX_PORT ]]; then
           sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
