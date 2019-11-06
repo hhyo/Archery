@@ -47,21 +47,26 @@ def execute_callback(task):
     workflow.finish_time = task.stopped
 
     logger.info("Debug task result in callback {0}".format(task.result))
-    logger.info("Debug task result in callback {0}".format(task.result))
 
     task_res = task.result
     execute_result = []
     result_error = []
 
-    for res in task_res:
-        logger.debug("Debug task result {0}".format(res))
-        if res["errormessage"]:
-            logger.error("Execute sql error: {0}".format(res["errormessage"]))
-            result_error.append(res["errormessage"])
+    for database, exe_results in task_res.items():
+        logger.debug("Debug SQL execute task result for database {0}".format(database))
+        # result_error.append(execute_res["errormessage"])
+        # if res["errormessage"]:
+        logger.debug("Debug result {0}, {1}".format(type(exe_results), exe_results))
+        for exe_result in exe_results:
+            res_error = exe_result["errormessage"]
+            if res_error:
+            # logger.error("Execute sql error: {0}".format(res["errormessage"]))
+                logger.error("Execute sql error:{0}".format(res_error))
+                result_error.append(res_error)
         # if res.warning:
         #     logger.info("Debug res.warning {0}".format(res.warning))
-        else:
-            execute_result.extend(res)
+
+        execute_result.extend(exe_results)
 
     if not task.success:
         # 不成功会返回错误堆栈信息，构造一个错误信息
@@ -79,13 +84,18 @@ def execute_callback(task):
         workflow.status = 'workflow_exception'
     else:
         # execute_result = task.result.values()
-        if isinstance(execute_result, (dict)):
-            execute_result = json.dumps(task.result.values())
-        else:
-            execute_result = json.dumps(task.result)
+        # if isinstance(execute_result, (dict, tuple, list)):
+        #     execute_result = task.result.values()
+        # else:
+        #     execute_result = task.result
+        execute_result = json.dumps(execute_result)
         workflow.status = 'workflow_finish'
     # 保存执行结果
     logger.info("Final execute result save to mysql {0}".format(execute_result))
+    execute_result = json.dumps(execute_result)
+    execute_result = execute_result.replace('\\n\\t', ' ')
+    execute_result = execute_result.replace('\\n', ' ')
+    execute_result = execute_result.replace('\\', '').strip('"')
     workflow.sqlworkflowcontent.execute_result = execute_result
     workflow.sqlworkflowcontent.save()
     workflow.save()

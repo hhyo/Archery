@@ -257,7 +257,7 @@ def schemasync(request):
 def sql_order(db_name, instance, schema_name, tb_name, resource_type):
     """提交SQL工单"""
     logger.debug("Starting!")
-    logger.debug(resource_type, instance.host, instance.db_type)
+    logger.debug('Debug instance info {0} {1} {2}'.format(resource_type, instance.host, instance.db_type))
 
     result = {"data": []}
 

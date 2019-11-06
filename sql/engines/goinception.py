@@ -9,6 +9,7 @@ import json
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
 from sql.utils.multi_thread import multi_thread
+from common.utils.object_to_jsonised import jsonised_object
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from common.utils.get_logger import get_logger
@@ -81,7 +82,9 @@ class GoInceptionEngine(EngineBase):
 
         multi_thread(self.execute_sql, db_names, (instance, workflow))
 
-        self.logger.info("Debug execute result in goinception {0}".format(execute_res))
+        # 转换为json对象
+        # execute_result = jsonised_object(execute_res)
+        self.logger.info("Debug execute result in goinception execute func {0}".format(execute_res))
 
         return execute_res
 
@@ -135,8 +138,7 @@ class GoInceptionEngine(EngineBase):
                 break
         # return execute_result
         execute_res[db_name] = execute_result.to_dict()
-        # execute_res.extend(execute_result.to_dict())
-        # execute_res.extend(execute_result.to_dict())
+        # execute_res[db_name] = execute_result.json()
 
     def query(self, db_name='', sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
@@ -166,10 +168,10 @@ class GoInceptionEngine(EngineBase):
             self.logger.error(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
             result_set.error = str(e)
         finally:
-            self.logger.info("goInception execute sql for {0} success!".format(db_name))
+            self.logger.info("goInception execute sql for {0} finished!".format(db_name))
             self.logger.info("Debug goInception execute result: {0}".format(result_set.to_dict()))
         if close_conn:
-            self.close()
+            self.close(conn=conn)
         return result_set
 
     def get_variables(self, variables=None):
@@ -195,7 +197,9 @@ class GoInceptionEngine(EngineBase):
             sql = f"inception {command} osc '{sqlsha1}';"
         return self.query(sql=sql)
 
-    def close(self):
-        if self.conn:
+    def close(self, conn=None):
+        if not conn and self.conn:
             self.conn.close()
             self.conn = None
+        else:
+            conn.close()

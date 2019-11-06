@@ -130,7 +130,7 @@ class MysqlEngine(EngineBase):
             result_set.error = str(e)
         finally:
             if close_conn:
-                self.close()
+                self.close(conn)
         return result_set
 
     def query_check(self, db_name='', sql=''):
@@ -322,7 +322,7 @@ class MysqlEngine(EngineBase):
         finally:
             self.logger.info("Debug SQL execute result once execution has been done.{}".format(result.to_dict()))
         if close_conn:
-            self.close()
+            self.close(conn)
 
         global execute_res
         execute_res[db_name] = result.to_dict()
@@ -360,7 +360,9 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.osc_control(**kwargs)
 
-    def close(self):
-        if self.conn:
-            self.conn.close()
+    def close(self, conn):
+        if not conn and self.conn:
+            conn = self.conn
             self.conn = None
+        if conn:
+            conn.close()

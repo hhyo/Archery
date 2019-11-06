@@ -155,14 +155,16 @@ def detail(request, workflow_id):
     if rows:
         try:
             loaded_rows = json.loads(rows)
-        except json.decoder.JSONDecodeError as e:
-            logger.error(e)
-            loaded_rows = {}
+        except Exception as e:
+            loaded_rows = eval(rows)
         else:
-            for k, v in loaded_rows.items():
-                for record in v:
-                    review_result.rows.extend([{**record, "db_name": k}])
-            rows = review_result.rows
+            try:
+                for k, v in loaded_rows.items():
+                    for record in v:
+                        review_result.rows.extend([{**record, "db_name": k}])
+                rows = review_result.rows
+            except Exception as e:
+                rows = []
     else:
         rows = workflow_detail.sqlworkflowcontent.review_content
 
