@@ -163,7 +163,7 @@ def query(request):
             try:
                 query_log.save()
             except OperationalError:
-                connection.close()
+                close()
                 query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')

@@ -6,8 +6,11 @@ import re
 import os
 import sqlparse
 from MySQLdb.connections import numeric_part
+from DBUtils.PooledDB import PooledDB, SharedDBConnection
+import asyncio
 
 from sql.utils.multi_thread import multi_thread
+from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
@@ -23,20 +26,19 @@ class MysqlEngine(EngineBase):
         super().__init__(instance=instance)
         self.logger = get_logger()
 
-    def get_connection(self, db_name=''):
-        if self.conn:
-            self.thread_id = self.conn.thread_id()
-            return self.conn
+    def get_connection(self, db_name=None):
+        if self.pool: return self.pool
+
         if db_name:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        db=db_name, charset=self.instance.charset or 'utf8mb4',
-                                        connect_timeout=10)
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name, charset='utf8mb4')
         else:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        charset=self.instance.charset or 'utf8mb4',
-                                        connect_timeout=10)
-        self.thread_id = self.conn.thread_id()
-        return self.conn
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password,
+                                   charset='utf8mb4')
+        return self.pool
+
+    def close(self, pool=None):
+        if self.pool:
+            self.pool.close()
 
     @property
     def name(self):
@@ -109,11 +111,14 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
-    def query(self, db_name='', sql='', limit_num=0, close_conn=True):
+    def query(self, db_name='', sql='', limit_num=0, close_conn=False):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            conn = self.get_connection(db_name=db_name)
+            # conn = self.get_connection(db_name=db_name)
+            # cursor = conn.cursor()
+            pool = self.get_connection(db_name=db_name)
+            conn = pool.connection()
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
@@ -121,6 +126,8 @@ class MysqlEngine(EngineBase):
             else:
                 rows = cursor.fetchall()
             fields = cursor.description
+            cursor.close()
+            conn.close()
 
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
@@ -130,7 +137,7 @@ class MysqlEngine(EngineBase):
             result_set.error = str(e)
         finally:
             if close_conn:
-                self.close(conn)
+                self.close()
         return result_set
 
     def query_check(self, db_name='', sql=''):
@@ -191,15 +198,14 @@ class MysqlEngine(EngineBase):
         if not config.get('inception'):
             self.logger.info("SQL check via goinception")
             self.logger.info("Debug db_name in mysql.execute_check {0}".format(db_name))
-            goinception_engine = GoInceptionEngine()
+            go_inception_engine = GoInceptionEngine()
             try:
-                inc_check_result = goinception_engine.execute_check(db_name=db_name, instance=self.instance, sql=sql)
+                inc_check_result = go_inception_engine.execute_check(db_name=db_name, instance=self.instance, sql=sql)
             except Exception as e:
-                self.logger.info(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
-                self.logger.info("goInception检测语句报错：错误信息{traceback.format_exc()}")
+                self.logger.error("goInception检测语句报错：错误信息{}".format(traceback.format_exc()))
                 raise RuntimeError(f"goInception检测语句报错，请注意检查系统配置中goInception配置，错误信息：\n{e}")
-            finally:
-                self.logger.info('Debug sql check res for database {}: {}'.format(db_name, inc_check_result.to_dict()))
+            else:
+                self.logger.info('Debug sql check res for database {0}: {1}'.format(db_name, inc_check_result.to_dict()))
         else:
             self.logger.info("SQL check via inception")
             inception_engine = InceptionEngine()
@@ -293,7 +299,8 @@ class MysqlEngine(EngineBase):
         if workflow.is_manual == 1:
             self.logger.info('SQL execute via mysql client directly!')
             # 多线程执行SQL
-            multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
+            # multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
+            asyncio.run(multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True)))
             return execute_res
         # goinception执行
         elif not SysConfig().get('inception'):
@@ -306,28 +313,30 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql='', close_conn=True):
+    def execute(self, db_name=None, sql='', close_conn=False):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
-        conn = self.get_connection(db_name=db_name)
+
+        pool = self.get_connection(db_name=db_name)
+        conn = pool.connection()
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
                 cursor.execute(statement)
             conn.commit()
             cursor.close()
+            conn.close()
         except Exception as e:
             self.logger.info(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
         finally:
             self.logger.info("Debug SQL execute result once execution has been done.{}".format(result.to_dict()))
         if close_conn:
-            self.close(conn)
+            shutdown_conn(pool=self.pool)
 
+        # 执行结果写入全局变量
         global execute_res
         execute_res[db_name] = result.to_dict()
-
-        # return execute_res
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
@@ -360,9 +369,3 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.osc_control(**kwargs)
 
-    def close(self, conn):
-        if not conn and self.conn:
-            conn = self.conn
-            self.conn = None
-        if conn:
-            conn.close()

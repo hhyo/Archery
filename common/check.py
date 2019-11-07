@@ -26,9 +26,8 @@ def inception(request):
     inception_remote_backup_password = request.POST.get('inception_remote_backup_password', '')
 
     try:
-        conn = MySQLdb.connect(host=inception_host, port=int(inception_port), charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
+        conn = MySQLdb
+        cur = conn
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -39,13 +38,8 @@ def inception(request):
         conn.close()
 
     try:
-        conn = MySQLdb.connect(host=inception_remote_backup_host,
-                               port=int(inception_remote_backup_port),
-                               user=inception_remote_backup_user,
-                               password=inception_remote_backup_password,
-                               charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
+        conn = MySQLdb
+        cur = conn
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -70,9 +64,8 @@ def go_inception(request):
     inception_remote_backup_password = request.POST.get('inception_remote_backup_password', '')
 
     try:
-        conn = MySQLdb.connect(host=go_inception_host, port=int(go_inception_port), charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
+        conn = MySQLdb
+        cur = conn
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
@@ -83,13 +76,8 @@ def go_inception(request):
         conn.close()
 
     try:
-        conn = MySQLdb.connect(host=inception_remote_backup_host,
-                               port=int(inception_remote_backup_port),
-                               user=inception_remote_backup_user,
-                               password=inception_remote_backup_password,
-                               charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
+        conn = MySQLdb
+        cur = conn
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1

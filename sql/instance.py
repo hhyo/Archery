@@ -7,6 +7,7 @@ import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
+import asyncio
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -293,7 +294,7 @@ def sql_order(db_name, instance, schema_name, tb_name, resource_type):
             logger.error('Error catched in sql order for {0}: {1}'.format(db_name, result['data']))
         else:
             result['data'] = resource.rows
-            logger.debug('Debug result in sql order {0}'.format(result['data']))
+            # logger.debug('Debug result in sql order {0}'.format(result['data']))
 
     # 结果写入全局变量
     global all_result
@@ -328,14 +329,15 @@ def instance_resource(request):
     global all_result
     all_result = {'status': 0, 'msg': 'ok', 'data': []}
 
-    # 多线程
+    # 多线程提交工单
     if db_names:
-        multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
+        # multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
+        asyncio.run(multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type)))
     else:
         logger.debug(resource_type)
         sql_order('', instance, schema_name, tb_name, resource_type)
 
-    print('Debug result in instance resource {}'.format(all_result))
+    logger.debug('Debug result in instance resource {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')
 
 

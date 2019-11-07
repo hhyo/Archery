@@ -15,6 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+import asyncio
 
 from common.utils.get_logger import get_logger
 from common.config import SysConfig
@@ -115,9 +116,10 @@ def sql_check(db_name, instance, sql_content):
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
+        logger.error('Sql cehck error {0}'.format(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
-    finally:
-        print('Debug sql check for {}: {}'.format(db_name, sql_content.strip))
+    else:
+        logger.debug('Debug sql check result for {0}: {1}'.format(db_name, check_result.to_dict()))
 
     # 检测结果写入全局变量
     global all_check_res
@@ -146,7 +148,8 @@ def check(request):
         return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
     # 多线程处理多个租户
-    multi_thread(sql_check, db_names, (instance, sql_content))
+    # multi_thread(sql_check, db_names, (instance, sql_content))
+    asyncio.run(multi_thread(sql_check, db_names, (instance, sql_content)))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 

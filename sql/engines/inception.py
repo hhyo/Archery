@@ -6,8 +6,11 @@ import MySQLdb
 import simplejson as json
 import sqlparse
 import os
+import asyncio
+from DBUtils.PooledDB import PooledDB
 
 from common.config import SysConfig
+from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.utils.sql_utils import get_syntax_type
 from sql.utils.multi_thread import multi_thread
 from . import EngineBase
@@ -59,18 +62,68 @@ class InceptionEngine(EngineBase):
         self.logger = get_logger()
 
     def get_connection(self, db_name=None):
-        if self.conn:
-            return self.conn
+        if self.pool:
+            return self.pool
         if hasattr(self, 'instance'):
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4',
-                                        connect_timeout=10)
-            return self.conn
-        archer_config = SysConfig()
-        inception_host = archer_config.get('inception_host')
-        inception_port = int(archer_config.get('inception_port', 6669))
-        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4',
-                                    connect_timeout=10)
-        return self.conn
+            # self.pool = PooledDB(
+            #     creator=MySQLdb,  # 使用链接数据库的模块
+            #     maxconnections=10,  # 连接池允许的最大连接数，0和None表示不限制连接数
+            #     mincached=5,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
+            #     maxcached=8,  # 链接池中最多闲置的链接，0和None不限制
+            #     maxshared=8,
+            #     # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。
+            #     blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
+            #     maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
+            #     setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
+            #     ping=0,
+            #     # ping MySQL服务端，检查是否服务可用。# 如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
+            #     host=self.host,
+            #     port=self.port,
+            #     user=self.user,
+            #     password=self.password,
+            #     database=db_name,
+            #     charset=self.instance.charset or 'utf8mb4',
+            # )
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name, charset=self.instance.charset or 'utf8mb4')
+            # conn = MySQLdb.connect(host=self.host, port=self.port, database=db_name, charset=self.instance.charset or 'utf8mb4',
+            #                             connect_timeout=60)
+            # return conn
+        else:
+            archer_config = SysConfig()
+            inception_host = archer_config.get('inception_host')
+            inception_port = int(archer_config.get('inception_port', 6669))
+            # self.pool = PooledDB(
+            #     creator=MySQLdb,  # 使用链接数据库的模块
+            #     maxconnections=10,  # 连接池允许的最大连接数，0和None表示不限制连接数
+            #     mincached=5,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
+            #     maxcached=8,  # 链接池中最多闲置的链接，0和None不限制
+            #     maxshared=8,
+            #     # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。
+            #     blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
+            #     maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
+            #     setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
+            #     ping=0,
+            #     # ping MySQL服务端，检查是否服务可用。# 如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
+            #     host=inception_host,
+            #     port=inception_port,
+            #     charset='utf8mb4',
+            # )
+            self.pool = setup_conn(inception_host, inception_port)
+        return self.pool
+            # conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4',
+            #                         connect_timeout=60)
+            # return conn
+
+    def close(self, conn=None):
+        # if self.cursor:
+        #     self.cursor.close()
+        if self.pool:
+            self.pool.close()
+        # if conn:
+        #     conn.close()
+        # if not conn and self.conn:
+        #     self.conn.close()
+        # self.conn = None
 
     @staticmethod
     def get_backup_connection():
@@ -140,10 +193,13 @@ class InceptionEngine(EngineBase):
         instance = workflow.instance
         db_names = workflow.db_names.split(',') if workflow.db_names else []
 
+        # 全局变量保存执行结果
         global execute_res
         execute_res = {}
 
-        multi_thread(self.execute_sql, db_names, (instance, workflow))
+        # 多线程执行sql
+        # multi_thread(self.execute_sql, db_names, (instance, workflow))
+        asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
 
         return json.loads(json.dumps(execute_res))
 
@@ -193,16 +249,17 @@ class InceptionEngine(EngineBase):
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
-        # return execute_result
+        # 执行结果写入全局变量
         execute_res[db_name] = execute_result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
-        # 获取该租户的连接
-        conn = self.get_connection(db_name=db_name)
+        # 从线程池获取连接
+        pool = self.get_connection(db_name=db_name)
+        conn = pool.connection()
+        cursor = conn.cursor()
         try:
-            cursor = conn.cursor()
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
@@ -216,9 +273,12 @@ class InceptionEngine(EngineBase):
         except Exception as e:
             self.logger.info(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
+        cursor.close()
+        conn.close()
         if close_conn:
             # 关闭改租户连接
-            self.close(conn=conn)
+            # self.close()
+            shutdown_conn(pool=self.pool)
         return result_set
 
     def query_print(self, instance, db_name=None, sql=''):
@@ -268,7 +328,7 @@ class InceptionEngine(EngineBase):
         list_backup_sql = []
         # 创建连接
         conn = self.get_backup_connection()
-        cur = conn.cursor()
+        cursor = conn.cursor()
 
         rows = []
 
@@ -281,7 +341,7 @@ class InceptionEngine(EngineBase):
 
         for row in rows:
             try:
-                backup_sql = get_rollback_sql(cur, row)
+                backup_sql = get_rollback_sql(cursor, row)
             except Exception as e:
                 self.logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 return []
@@ -315,13 +375,6 @@ class InceptionEngine(EngineBase):
         else:
             raise ValueError('pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！')
         return self.query(sql=sql)
-
-    def close(self, conn):
-        if not conn and self.conn:
-            conn = self.conn
-            self.conn = None
-        if conn:
-            conn.close()
 
 
 def _repair_json_str(json_str):
