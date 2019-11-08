@@ -199,11 +199,17 @@ class InceptionEngine(EngineBase):
 
         # 多线程执行sql
         # multi_thread(self.execute_sql, db_names, (instance, workflow))
-        asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
+        # asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
+        # 异步执行
+        asyncio.run(self.execute_sql(db_names, instance, workflow))
 
         return json.loads(json.dumps(execute_res))
 
-    def execute_sql(self, db_name, instance, workflow):
+    async def async_execute(self, db_names, *args):
+        tasks = [asyncio.create_task(self.execute_sql(db_name, *args)) for db_name in db_names]
+        await asyncio.gather(*tasks)
+
+    async def execute_sql(self, db_name, instance, workflow):
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         global execute_res
         if workflow.is_backup:

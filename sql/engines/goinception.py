@@ -93,13 +93,21 @@ class GoInceptionEngine(EngineBase):
 
         # 多线程执行sql
         # multi_thread(self.execute_sql, db_names, (instance, workflow))
-        asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
+        # asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
+        # 异步执行
+        asyncio.run(self.async_execute(db_names, instance, workflow))
 
         self.logger.info("Debug execute result in goinception execute func {0}".format(execute_res))
 
         return execute_res
 
-    def execute_sql(self, db_name, instance, workflow):
+    async def async_execute(self, db_names, *args):
+        tasks = [asyncio.create_task(self.execute_sql(db_name, *args)) for db_name in db_names]
+        # for task in tasks:
+        #     await task
+        await asyncio.gather(*tasks)
+
+    async def execute_sql(self, db_name, instance, workflow):
 
         self.logger.info("Start execute sql for {0} via goInception.".format(db_name))
         self.logger.info("Start execute sql for {0} via goInception.".format(db_name))

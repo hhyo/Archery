@@ -135,7 +135,7 @@ class MysqlEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            self.logger.info(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            self.logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -302,7 +302,8 @@ class MysqlEngine(EngineBase):
             self.logger.info('SQL execute via mysql client directly!')
             # 多线程执行SQL
             # multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
-            asyncio.run(multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True)))
+            # asyncio.run(multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True)))
+            asyncio.run(self.async_execute(db_names, workflow.sqlworkflowcontent.sql_content, True))
             return execute_res
         # goinception执行
         elif not SysConfig().get('inception'):
@@ -315,7 +316,13 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql='', close_conn=False):
+    async def async_execute(self, db_names, *args):
+        tasks = [asyncio.create_task(self.execute(db_name, *args)) for db_name in db_names]
+        # for task in tasks:
+        #     await task
+        await asyncio.gather(*tasks)
+
+    async def execute(self, db_name=None, sql='', close_conn=False):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
 

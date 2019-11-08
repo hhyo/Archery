@@ -104,7 +104,14 @@ def sql_workflow_list(request):
                         content_type='application/json')
 
 
-def sql_check(db_name, instance, sql_content):
+async def async_check(db_names, *args):
+    tasks = [asyncio.create_task(sql_check(db_name, *args)) for db_name in db_names]
+    # for task in tasks:
+    #     await task
+    await asyncio.gather(*tasks)
+
+
+async def sql_check(db_name, instance, sql_content):
     """SQL检测"""
 
     logger.debug("Debug db_name in custom sql_check {0}".format(db_name))
@@ -149,7 +156,9 @@ def check(request):
 
     # 多线程处理多个租户
     # multi_thread(sql_check, db_names, (instance, sql_content))
-    asyncio.run(multi_thread(sql_check, db_names, (instance, sql_content)))
+    # asyncio.run(multi_thread(sql_check, db_names, (instance, sql_content)))
+    # 异步执行
+    asyncio.run(async_check(db_names, instance, sql_content))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 

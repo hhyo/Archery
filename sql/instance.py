@@ -255,7 +255,7 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-def sql_order(db_name, instance, schema_name, tb_name, resource_type):
+async def sql_order(db_name, instance, schema_name, tb_name, resource_type):
     """提交SQL工单"""
     logger.debug("Starting!")
     logger.debug('Debug instance info {0} {1} {2}'.format(resource_type, instance.host, instance.db_type))
@@ -331,11 +331,14 @@ def instance_resource(request):
 
     # 多线程提交工单
     if db_names:
+        # 多线程执行
         # multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
-        asyncio.run(multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type)))
+        # asyncio.run(multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type)))
+        # 异步执行
+        asyncio.run(sql_order(db_names, instance, schema_name, tb_name, resource_type))
     else:
         logger.debug(resource_type)
-        sql_order('', instance, schema_name, tb_name, resource_type)
+        asyncio.run(sql_order('', instance, schema_name, tb_name, resource_type))
 
     logger.debug('Debug result in instance resource {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')
