@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
-# author: sunnywalden@gmail.com
+
+__author__ = 'sunnywalden@gmail.com'
 
 import MySQLdb
 from DBUtils.PooledDB import PooledDB, SharedDBConnection

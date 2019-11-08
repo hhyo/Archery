@@ -164,7 +164,12 @@ class GoInceptionEngine(EngineBase):
             pool = self.get_connection(db_name=db_name)
         else:
             pool = self.get_connection()
-        conn = pool.connection()
+        try:
+            conn = pool.connection()
+        except Exception as e:
+            self.logger.error("SQL连接失败，请重试！")
+            result_set.error = str(e)
+            return result_set
         cursor = conn.cursor()
         try:
             effect_row = cursor.execute(sql)

@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
-# author: sunnywalden@gmail.com
+
+__author__ = 'sunnywalden@gmail.com'
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -13,7 +14,7 @@ async def multi_thread(func, tenants, *args):
     """多线程执行多个租户"""
 
     start = time.perf_counter()
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(10) as executor:
         to_do = []
         for tenant_name in tenants:
             args_list = [tenant_name]
