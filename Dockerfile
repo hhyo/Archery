@@ -1,4 +1,4 @@
-FROM sunnywalden/archery-multi-tenant:base
+FROM sunnywalden/archery-multi-tenant:base-python37
 
 ENV VERSION feature/muti-tenant
 
