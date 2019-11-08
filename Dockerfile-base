@@ -8,7 +8,7 @@ ENV PYTHON_VERSION 3.7.5
 WORKDIR /opt
 
 #python3.6
-RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
+RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel libffi-devel -y \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
