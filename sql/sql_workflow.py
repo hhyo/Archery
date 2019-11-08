@@ -176,17 +176,17 @@ def workflow_check(db_name, instance, sql_content):
     try:
         check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
     except Exception as e:
-            logger.error("Error catched while execute sql for database {}: {}".format(db_name, str(e)))
-            return False, str(e)
+        logger.error("Error catched while execute sql for database {}: {}".format(db_name, str(e)))
+        return False, str(e)
 
     # 按照系统配置确定是自动驳回还是放行
     sys_config = SysConfig()
     auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
     workflow_status = 'workflow_manreviewing'
     if check_result.warning_count > 0 and auto_review_wrong == '1':
-            workflow_status = 'workflow_autoreviewwrong'
+        workflow_status = 'workflow_autoreviewwrong'
     elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
-            workflow_status = 'workflow_autoreviewwrong'
+        workflow_status = 'workflow_autoreviewwrong'
     else:
         pass
 
@@ -196,7 +196,8 @@ def workflow_check(db_name, instance, sql_content):
     return check_result, workflow_status
 
 
-def sql_submit(db_names, request, instance, sql_content, workflow_title, group_id, group_name, list_cc_addr, run_date_start, run_date_end):
+def sql_submit(db_names, request, instance, sql_content, workflow_title, group_id, group_name, list_cc_addr,
+               run_date_start, run_date_end):
     """提交SQL工单"""
 
     logger.debug('Debug db_names in sql_submit {0}'.format(db_names))
@@ -210,11 +211,14 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
             return context
 
     workflow_status = 'workflow_autoreviewwrong' \
-        if 'workflow_autoreviewwrong' in workflow_status.values()\
+        if 'workflow_autoreviewwrong' in workflow_status.values() \
         else 'workflow_manreviewing'
 
-    tenant_first = db_names[0]
-    syntax_type = check_result[tenant_first].syntax_type
+    if db_names:
+        tenant_first = db_names[0]
+        syntax_type = check_result[tenant_first].syntax_type
+    else:
+        syntax_type = check_result.syntax_type
 
     # 获取对象的值
     check_result = {k: v.to_dict() for k, v in check_result.items()}
@@ -236,7 +240,7 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
                 status=workflow_status,
                 is_backup=is_backup,
                 instance=instance,
-                db_names=','.join(db_names),
+                db_names=','.join(db_names) if db_names else '',
                 is_manual=0,
                 syntax_type=syntax_type,
                 create_time=timezone.now(),
@@ -249,11 +253,11 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
                                               review_content=json.dumps(check_result),
                                               execute_result=''
                                               )
-            workflow_id = sql_workflow.id
-            # 自动审核通过了，才调用工作流
-            if workflow_status == 'workflow_manreviewing':
-                # 调用工作流插入审核信息, 查询权限申请workflow_type=2
-                Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
+        workflow_id = sql_workflow.id
+        # 自动审核通过了，才调用工作流
+        if workflow_status == 'workflow_manreviewing':
+            # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+            Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
@@ -267,7 +271,7 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
             async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
 
-    # 结果写入全局变量
+        # 结果写入全局变量
         return workflow_id
 
 

@@ -32,7 +32,6 @@ class GoInceptionEngine(EngineBase):
             else:
                 self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password,
                                        charset=self.instance.charset or 'utf8mb4')
-
         else:
 
             archer_config = SysConfig()
@@ -43,6 +42,8 @@ class GoInceptionEngine(EngineBase):
         return self.pool
 
     def close(self, pool=None):
+        if not pool:
+            pool = self.pool
         if pool:
             shutdown_conn(pool=pool)
 
