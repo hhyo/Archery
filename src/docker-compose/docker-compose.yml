@@ -3,7 +3,7 @@ version: '3'
 services:
   redis:
     image: redis:5
-    container_name: redis
+    container_name: archery_redis
     restart: always
     command: redis-server --requirepass 123456
     expose:
@@ -13,7 +13,7 @@ services:
 
   mysql:
     image: mysql:5.7
-    container_name: mysql
+    container_name: archery_mysql
     restart: always
     expose:
       - "3306"
@@ -28,7 +28,7 @@ services:
 
   inception:
     image: hhyo/inception
-    container_name: inception
+    container_name: archery_inception
     restart: always
     ports:
       - "6669:6669"
@@ -41,7 +41,7 @@ services:
 
   goinception:
     image: hanchuanchuan/goinception
-    container_name: goinception
+    container_name: archery_goinception
     restart: always
     ports:
       - "4000:4000"
