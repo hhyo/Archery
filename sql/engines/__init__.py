@@ -7,6 +7,9 @@ class EngineBase:
 
     def __init__(self, instance=None):
         self.pool = None
+        self.conn = None
+        self.cursor = None
+        self.thread_id = None
         if instance:
             self.instance = instance
             self.instance_name = instance.instance_name

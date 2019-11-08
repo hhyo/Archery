@@ -34,6 +34,9 @@ class MysqlEngine(EngineBase):
         else:
             self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password,
                                    charset='utf8mb4')
+
+        # self.conn = self.pool.connection()
+        # self.thread_id = self.conn.thread_id()
         return self.pool
 
     def close(self, pool=None):
@@ -115,8 +118,7 @@ class MysqlEngine(EngineBase):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
-            # conn = self.get_connection(db_name=db_name)
-            # cursor = conn.cursor()
+            # 连接池获取连接
             pool = self.get_connection(db_name=db_name)
             conn = pool.connection()
             cursor = conn.cursor()
