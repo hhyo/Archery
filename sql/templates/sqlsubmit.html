@@ -278,16 +278,10 @@
                     if (data.status === 0) {
                         var result = data.data;
                         $("#db_names").empty();
-                        {#var name = new Array();#}
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            {#name[i] = result[i];#}
                             $("#db_names").append(name);
                         };
-
-                        {#$("#db_names").append(result);#}
-                        {#var db_names = $("#db_names");#}
-                        {#console.log(db_names);#}
 
                         $('#db_names').selectpicker('render');
                         $('#db_names').selectpicker('refresh');
@@ -304,14 +298,7 @@
         });
         //数据库变更获取表名称补全提示
         $("#db_names").change(function () {
-            {#db_names = document.getElementById("db_names");#}
-            {#dbs = new Array();#}
-            {#for (var i = 0; i < db_names.length; i++) {#}
-            {#    if (db_names.options[i].selected == true && db_names.options[i].text != "" && db_names.options[i].text != null)#}
-            {#        dbs[i] = db_names.options[i].text;#}
-            {#        console.log(dbs[i]);#}
-            {#  #}
-            //将数据通过ajax提交给获取db_name
+            //将数据通过ajax提交给获取db_names
             $.ajax({
                 type: "post",
                 url: "/instance/instance_resource/",
@@ -319,8 +306,6 @@
                 data: {
                     instance_name: $("#instance_name").val(),
                     db_names: $("#db_names").val().join(','),
-                    {#db_names: dbs,#}
-                    {#db_names: new Array("t1","t2"),#}
                     resource_type: "table"
                 },
                 complete: function () {
