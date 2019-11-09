@@ -53,7 +53,7 @@ services:
       - mysql:mysql
 
   archery:
-    image: sunnywalden/archery-multi-tenant:v1.3.6.4Alpha
+    image: sunnywalden/archery-multi-tenant:v1.7.0.1
     container_name: archery
     restart: "no"
     ports:
