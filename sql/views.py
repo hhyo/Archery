@@ -192,10 +192,12 @@ def rollback(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    db_names = workflow_detail.db_names
     workflow_title = workflow_detail.workflow_name
     rollback_workflow_name = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
     context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow_detail,
-               'rollback_workflow_name': rollback_workflow_name}
+               'rollback_workflow_name': rollback_workflow_name,
+               'db_names': db_names.split(',')}
     return render(request, 'rollback.html', context)
 
 

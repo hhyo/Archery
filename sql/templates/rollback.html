@@ -110,15 +110,21 @@
                     });
                     var allRollBackSql = $("#editSqlContent").val();
                     var editWorkflowNname = "{{ rollback_workflow_name }}";
-                    if (allRollBackSql) {
-                        var editSqlContent = allRollBackSql.split('\n')[0].replace(/`\w+`./, '');
+                    if ( allRollBackSql.indexOf('\n') != -1 ) {
+                        var SqlContent_list = allRollBackSql.split('\n');
+                        var SqlContent = SqlContent_list.filter(
+                            function (s) {
+                                return s && s.trim();
+                            }
+                        );
+                        var editSqlContent = SqlContent[0].replace(/`\w+`./, '');
                     }
                     else {
                         var editSqlContent = allRollBackSql;
-                    }
+                    };
                     var editGroup = "{{ workflow_detail.group_name }}";
                     var editClustername = "{{ workflow_detail.instance.instance_name }}";
-                    var editDbname = "{{ workflow_detail.db_name }}";
+                    var editDbname = "{{ workflow_detail.db_names }}";
                     var editIsbackup = "{{ workflow_detail.is_backup }}";
                     sessionStorage.removeItem('editWorkflowDetailId');
                     sessionStorage.setItem('editWorkflowNname', editWorkflowNname);

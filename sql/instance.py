@@ -2,6 +2,7 @@
 import os
 import time
 import threading
+import re
 
 import simplejson as json
 from django.conf import settings
@@ -256,7 +257,7 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-async def sql_order(db_name, instance, schema_name, tb_name, resource_type):
+async def sql_order(db_name, instance, schema_name, tb_name, resource_type, db_regex='^.+$'):
     """提交SQL工单"""
     logger.debug("Starting!")
     logger.debug('Debug instance info {0} {1} {2}'.format(resource_type, instance.host, instance.db_type))
@@ -268,7 +269,11 @@ async def sql_order(db_name, instance, schema_name, tb_name, resource_type):
         if resource_type == 'database':
             logger.debug('database!')
             resource = query_engine.get_all_databases()
-            logger.debug(resource.to_dict())
+            logger.debug('Debug all databases in instance {}'.format(resource.rows))
+            # 正则筛选数据库
+            regex_str = re.compile(db_regex)
+            resource.rows = tuple(filter(lambda database: re.match(regex_str, database), resource.rows))
+            logger.debug("Debug all databases fit regex {}".format(resource.rows))
         elif resource_type == 'schema':
             resource = query_engine.get_all_schemas(db_name=db_name)
 
@@ -310,6 +315,7 @@ def instance_resource(request):
     """
     instance_id = request.POST.get('instance_id', default='')
     instance_name = request.POST.get('instance_name', default='')
+    db_regex = request.POST.get('db_regex', default='^.+$')
     db_names = request.POST.get('db_names', default='')
     schema_name = request.POST.get('schema_name', default='')
     tb_name = request.POST.get('tb_name', default='')
@@ -339,7 +345,7 @@ def instance_resource(request):
         asyncio.run(async_tasks(sql_order, db_names, instance, schema_name, tb_name, resource_type))
     else:
         logger.debug(resource_type)
-        asyncio.run(sql_order('', instance, schema_name, tb_name, resource_type))
+        asyncio.run(sql_order('', instance, schema_name, tb_name, resource_type, db_regex))
 
     logger.debug('Debug result in instance resource {}'.format(all_result))
     return HttpResponse(json.dumps(all_result), content_type='application/json')

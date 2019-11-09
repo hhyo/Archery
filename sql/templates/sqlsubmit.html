@@ -58,6 +58,13 @@
                                 </select>
                             </div>
                             <div class="form-group">
+                                <input id="db_regex" type="text" autocomplete="off" name="db_regex"
+                                       class="form-control" value="^.+$"
+                                       data-name="数据库正则" data-placeholder="请输入数据库过滤正则表达式！"
+                                       placeholder="请输入数据库过滤正则表达式，如:^.+$"
+                                       required>
+                            </div>
+                            <div class="form-group">
                                 <select id="db_names" name="db_names"
                                         multiple="multiple"
                                         class="form-control selectpicker show-tick bs-select-hidden"
@@ -251,8 +258,8 @@
     </script>
     <!--ace -->
     <script>
-        // 实例变更获取数据库补全提示
-        $("#instance_name").change(function () {
+
+        function getDatabases() {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
             //将数据通过ajax提交给获取db_name
@@ -262,6 +269,7 @@
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
+                    db_regex: $("#db_regex").val(),
                     resource_type: "database"
                 },
                 complete: function () {
@@ -277,9 +285,15 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
+                        // 模糊匹配
+                        var database_dict = {};
+                        database_dict['all'] = result;
+                        {#database_dict[] = ;#}
                         $("#db_names").empty();
+                        var name = "<option value=\"" + result.join(',') + "\">" + '所有' + "</option>";
+                        $("#db_names").append(name);
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_names").append(name);
                         };
 
@@ -295,17 +309,38 @@
                     alert(errorThrown);
                 }
             });
-        });
+        }
+
+                // 实例变更获取数据库补全提示
+        $("#instance_name").change(
+            function() {
+                getDatabases()
+            }
+        );
+
+        $("#db_regex").change(
+            function () {
+                getDatabases()
+            }
+        );
+
         //数据库变更获取表名称补全提示
         $("#db_names").change(function () {
             //将数据通过ajax提交给获取db_names
+            if ( $("#db_names").val() == 'all' ) {
+                var databases = $("#db_names").val().slice(1, -1).join(',');
+            }
+            else {
+                var databases = $("#db_names").val().join(',');
+            }
             $.ajax({
                 type: "post",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
                     instance_name: $("#instance_name").val(),
-                    db_names: $("#db_names").val().join(','),
+                    {#db_regex: $("#db_regex").val(),#}
+                    db_names: databases,
                     resource_type: "table"
                 },
                 complete: function () {
@@ -699,16 +734,20 @@
             // 清空id, 只允许新增不允许修改
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
+            var rollbak_sql = sessionStorage.getItem('editSqlContent');
+            var databases = sessionStorage.getItem('editDbname');
             if (pathname == "/editsql/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
-                editor.setValue(sessionStorage.getItem('editSqlContent'));
+                $("#db_names").val(sessionStorage.getItem('editDbname').split(','));
+                editor.setValue(rollbak_sql);
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
+                alert('Rollback SQL:' + rollbak_sql + ':' + databases);
             } else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
-                editor.setValue(sessionStorage.getItem('editSqlContent'));
+                editor.setValue(rollbak_sql);
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitsql/") {
