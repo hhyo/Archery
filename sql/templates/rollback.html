@@ -108,8 +108,14 @@
                         $(this).button('reset');
                         $(this).dequeue();
                     });
+                    var allRollBackSql = $("#editSqlContent").val();
                     var editWorkflowNname = "{{ rollback_workflow_name }}";
-                    var editSqlContent = $("#editSqlContent").val();
+                    if (allRollBackSql) {
+                        var editSqlContent = allRollBackSql.split('\n')[0].replace(/`\w+`./, '');
+                    }
+                    else {
+                        var editSqlContent = allRollBackSql;
+                    }
                     var editGroup = "{{ workflow_detail.group_name }}";
                     var editClustername = "{{ workflow_detail.instance.instance_name }}";
                     var editDbname = "{{ workflow_detail.db_name }}";
