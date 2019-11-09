@@ -14,6 +14,7 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.get_logger import get_logger
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
+from sql.utils.async_tasks import async_tasks
 from sql.utils.multi_thread import multi_thread
 from .models import Instance, ParamTemplate, ParamHistory
 
@@ -333,9 +334,9 @@ def instance_resource(request):
     if db_names:
         # 多线程执行
         # multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type))
-        # asyncio.run(multi_thread(sql_order, db_names, (instance, schema_name, tb_name, resource_type)))
         # 异步执行
-        asyncio.run(sql_order(db_names, instance, schema_name, tb_name, resource_type))
+        # asyncio.run(sql_order(db_names, instance, schema_name, tb_name, resource_type))
+        asyncio.run(async_tasks(sql_order, db_names, instance, schema_name, tb_name, resource_type))
     else:
         logger.debug(resource_type)
         asyncio.run(sql_order('', instance, schema_name, tb_name, resource_type))

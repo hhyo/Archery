@@ -13,6 +13,7 @@ from common.config import SysConfig
 from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.utils.sql_utils import get_syntax_type
 from sql.utils.multi_thread import multi_thread
+from sql.utils.async_tasks import async_tasks
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from common.utils.get_logger import get_logger
@@ -65,65 +66,17 @@ class InceptionEngine(EngineBase):
         if self.pool:
             return self.pool
         if hasattr(self, 'instance'):
-            # self.pool = PooledDB(
-            #     creator=MySQLdb,  # 使用链接数据库的模块
-            #     maxconnections=10,  # 连接池允许的最大连接数，0和None表示不限制连接数
-            #     mincached=5,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
-            #     maxcached=8,  # 链接池中最多闲置的链接，0和None不限制
-            #     maxshared=8,
-            #     # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。
-            #     blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
-            #     maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
-            #     setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
-            #     ping=0,
-            #     # ping MySQL服务端，检查是否服务可用。# 如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
-            #     host=self.host,
-            #     port=self.port,
-            #     user=self.user,
-            #     password=self.password,
-            #     database=db_name,
-            #     charset=self.instance.charset or 'utf8mb4',
-            # )
             self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name, charset=self.instance.charset or 'utf8mb4')
-            # conn = MySQLdb.connect(host=self.host, port=self.port, database=db_name, charset=self.instance.charset or 'utf8mb4',
-            #                             connect_timeout=60)
-            # return conn
         else:
             archer_config = SysConfig()
             inception_host = archer_config.get('inception_host')
             inception_port = int(archer_config.get('inception_port', 6669))
-            # self.pool = PooledDB(
-            #     creator=MySQLdb,  # 使用链接数据库的模块
-            #     maxconnections=10,  # 连接池允许的最大连接数，0和None表示不限制连接数
-            #     mincached=5,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
-            #     maxcached=8,  # 链接池中最多闲置的链接，0和None不限制
-            #     maxshared=8,
-            #     # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。
-            #     blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
-            #     maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
-            #     setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
-            #     ping=0,
-            #     # ping MySQL服务端，检查是否服务可用。# 如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
-            #     host=inception_host,
-            #     port=inception_port,
-            #     charset='utf8mb4',
-            # )
             self.pool = setup_conn(inception_host, inception_port)
         return self.pool
-            # conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4',
-            #                         connect_timeout=60)
-            # return conn
 
-    def close(self, conn=None):
-        # if self.cursor:
-        #     self.cursor.close()
+    def close(self, pool=None):
         if self.pool:
             self.pool.close()
-        # if conn:
-        #     conn.close()
-        # if not conn and self.conn:
-        #     self.conn.close()
-        # self.conn = None
 
     @staticmethod
     def get_backup_connection():
@@ -199,15 +152,11 @@ class InceptionEngine(EngineBase):
 
         # 多线程执行sql
         # multi_thread(self.execute_sql, db_names, (instance, workflow))
-        # asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
         # 异步执行
-        asyncio.run(self.execute_sql(db_names, instance, workflow))
+        # asyncio.run(self.async_execute(db_names, instance, workflow))
+        asyncio.run(async_tasks(self.execute_sql, db_names, instance, workflow))
 
         return json.loads(json.dumps(execute_res))
-
-    async def async_execute(self, db_names, *args):
-        tasks = [asyncio.create_task(self.execute_sql(db_name, *args)) for db_name in db_names]
-        await asyncio.gather(*tasks)
 
     async def execute_sql(self, db_name, instance, workflow):
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)

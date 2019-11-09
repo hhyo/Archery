@@ -11,6 +11,7 @@ from DBUtils.PooledDB import PooledDB
 from common.config import SysConfig
 from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.utils.sql_utils import get_syntax_type
+from sql.utils.async_tasks import async_tasks
 from sql.utils.multi_thread import multi_thread
 from common.utils.object_to_jsonised import jsonised_object
 from . import EngineBase
@@ -93,19 +94,13 @@ class GoInceptionEngine(EngineBase):
 
         # 多线程执行sql
         # multi_thread(self.execute_sql, db_names, (instance, workflow))
-        # asyncio.run(multi_thread(self.execute_sql, db_names, (instance, workflow)))
         # 异步执行
-        asyncio.run(self.async_execute(db_names, instance, workflow))
+        # asyncio.run(self.async_execute(db_names, instance, workflow))
+        asyncio.run(async_tasks(self.execute_sql, db_names, instance, workflow))
 
         self.logger.info("Debug execute result in goinception execute func {0}".format(execute_res))
 
         return execute_res
-
-    async def async_execute(self, db_names, *args):
-        tasks = [asyncio.create_task(self.execute_sql(db_name, *args)) for db_name in db_names]
-        # for task in tasks:
-        #     await task
-        await asyncio.gather(*tasks)
 
     async def execute_sql(self, db_name, instance, workflow):
 

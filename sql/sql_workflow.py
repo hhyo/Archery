@@ -27,6 +27,7 @@ from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
 from sql.utils.workflow_audit import Audit
+from sql.utils.async_tasks import async_tasks
 from sql.utils.multi_thread import multi_thread
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -104,13 +105,6 @@ def sql_workflow_list(request):
                         content_type='application/json')
 
 
-async def async_check(db_names, *args):
-    tasks = [asyncio.create_task(sql_check(db_name, *args)) for db_name in db_names]
-    # for task in tasks:
-    #     await task
-    await asyncio.gather(*tasks)
-
-
 async def sql_check(db_name, instance, sql_content):
     """SQL检测"""
 
@@ -156,9 +150,9 @@ def check(request):
 
     # 多线程处理多个租户
     # multi_thread(sql_check, db_names, (instance, sql_content))
-    # asyncio.run(multi_thread(sql_check, db_names, (instance, sql_content)))
     # 异步执行
-    asyncio.run(async_check(db_names, instance, sql_content))
+    # asyncio.run(async_check(db_names, instance, sql_content))
+    asyncio.run(async_tasks(sql_check, db_names, instance, sql_content))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 

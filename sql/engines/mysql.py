@@ -10,6 +10,7 @@ from DBUtils.PooledDB import PooledDB, SharedDBConnection
 import asyncio
 
 from sql.utils.multi_thread import multi_thread
+from sql.utils.async_tasks import async_tasks
 from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
@@ -302,8 +303,8 @@ class MysqlEngine(EngineBase):
             self.logger.info('SQL execute via mysql client directly!')
             # 多线程执行SQL
             # multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True))
-            # asyncio.run(multi_thread(self.execute, db_names, (workflow.sqlworkflowcontent.sql_content, True)))
-            asyncio.run(self.async_execute(db_names, workflow.sqlworkflowcontent.sql_content, True))
+            # asyncio.run(self.async_execute(db_names, workflow.sqlworkflowcontent.sql_content, True))
+            asyncio.run(async_tasks(self.execute, db_names, workflow.sqlworkflowcontent.sql_content, True))
             return execute_res
         # goinception执行
         elif not SysConfig().get('inception'):
@@ -316,11 +317,9 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
-    async def async_execute(self, db_names, *args):
-        tasks = [asyncio.create_task(self.execute(db_name, *args)) for db_name in db_names]
-        # for task in tasks:
-        #     await task
-        await asyncio.gather(*tasks)
+    # async def async_execute(self, db_names, *args):
+    #     tasks = [asyncio.create_task(self.execute(db_name, *args)) for db_name in db_names]
+    #     await asyncio.gather(*tasks)
 
     async def execute(self, db_name=None, sql='', close_conn=False):
         """原生执行语句"""
