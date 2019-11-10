@@ -10,8 +10,9 @@ from django.contrib.auth.decorators import permission_required
 
 from common.config import SysConfig
 from sql.plugins.soar import Soar
+from sql.utils.resource_group import user_instances
 from sql.utils.sql_utils import generate_sql
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance
 
@@ -45,6 +46,11 @@ def analyze(request):
     text = request.POST.get('text')
     instance_name = request.POST.get('instance_name')
     db_name = request.POST.get('db_name')
+    try:
+        instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
+
     if not text:
         result = {"total": 0, "rows": []}
     else:
@@ -52,7 +58,6 @@ def analyze(request):
         if instance_name != '' and db_name != '':
             soar_test_dsn = SysConfig().get('soar_test_dsn')
             # 获取实例连接信息
-            instance_info = Instance.objects.get(instance_name=instance_name)
             online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
                                                                   pwd=instance_info.password,
                                                                   host=instance_info.host,
