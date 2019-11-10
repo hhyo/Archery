@@ -169,7 +169,7 @@ def export(request):
     {% for tb in tables %}
     <table border="1" cellspacing="0" cellpadding="0" align="center">
     <caption>表名：{{ tb['TABLE_INFO']['TABLE_NAME'] }}</caption>
-    <caption>注释：{{ tb['TABLE_INFO']['TABLE'] }}</caption>
+    <caption>注释：{{ tb['TABLE_INFO']['TABLE_COMMENT'] }}</caption>
     <tbody><tr><th>字段名</th><th>数据类型</th><th>默认值</th><th>允许非空</th><th>自动递增</th><th>是否主键</th><th>备注</th>
     {% for col in tb['COLUMNS'] %}
     </tr>     
