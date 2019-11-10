@@ -199,6 +199,7 @@ def schemasync(request):
     # 准备参数
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
+    os.makedirs(output_directory, exist_ok=True)
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,

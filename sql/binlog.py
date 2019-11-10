@@ -186,6 +186,7 @@ def binlog2sql_file(args, user):
     instance = args.get('instance')
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
+    os.makedirs(path, exist_ok=True)
     if args.get('flashback'):
         filename = os.path.join(path, f"flashback_{instance.host}_{instance.port}_{timestamp}.sql")
     else:
