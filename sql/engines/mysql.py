@@ -111,12 +111,13 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
+        cursorclass = kwargs.get('cursorclass') or MySQLdb.cursors.Cursor
         try:
             conn = self.get_connection(db_name=db_name)
-            cursor = conn.cursor()
+            cursor = conn.cursor(cursorclass)
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
