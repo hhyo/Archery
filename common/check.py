@@ -149,9 +149,12 @@ def instance(request):
     instance = Instance.objects.get(id=instance_id)
     try:
         engine = get_engine(instance=instance)
-        engine.get_connection()
+        pool = engine.get_connection()
+        conn = pool.connection()
     except Exception as e:
         result['status'] = 1
         result['msg'] = '无法连接实例,\n{}'.format(str(e))
+        logger.error('SQL connect error {}'.format(str(e)))
+
     # 返回结果
     return HttpResponse(json.dumps(result), content_type='application/json')
