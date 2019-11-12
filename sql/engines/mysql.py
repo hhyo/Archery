@@ -30,15 +30,11 @@ class MysqlEngine(EngineBase):
 
     def get_connection(self, db_name=None):
         if self.pool: return self.pool
-
         if db_name:
             self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name, charset='utf8mb4')
         else:
             self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password,
                                    charset='utf8mb4')
-
-        # self.conn = self.pool.connection()
-        # self.thread_id = self.conn.thread_id()
         return self.pool
 
     def close(self, pool=None):

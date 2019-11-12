@@ -92,10 +92,7 @@ class GoInceptionEngine(EngineBase):
         global execute_res
         execute_res = {}
 
-        # 多线程执行sql
-        # multi_thread(self.execute_sql, db_names, (instance, workflow))
         # 异步执行
-        # asyncio.run(self.async_execute(db_names, instance, workflow))
         asyncio.run(async_tasks(self.execute_sql, db_names, instance, workflow))
 
         self.logger.info("Debug execute result in goinception execute func {0}".format(execute_res))

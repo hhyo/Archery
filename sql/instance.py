@@ -259,13 +259,53 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-
 async def sql_order(db_name, instance, schema_name, tb_name, resource_type, db_regex='^.+$'):
     """提交SQL工单"""
     logger.debug("Starting!")
     logger.debug('Debug instance info {0} {1} {2}'.format(resource_type, instance.host, instance.db_type))
 
     result = {"data": []}
+
+    try:
+        query_engine = get_engine(instance=instance)
+        if resource_type == 'database':
+            resource = query_engine.get_all_databases()
+            logger.debug('Debug all databases in instance {}'.format(resource.rows))
+            # 正则筛选数据库
+            regex_str = re.compile(db_regex)
+            resource.rows = tuple(filter(lambda database: re.match(regex_str, database), resource.rows))
+            logger.debug("Debug all databases fit regex {}".format(resource.rows))
+        elif resource_type == 'schema':
+            resource = query_engine.get_all_schemas(db_name=db_name)
+
+        elif resource_type == 'table' and db_name:
+            if schema_name:
+                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
+            else:
+                resource = query_engine.get_all_tables(db_name=db_name)
+        elif resource_type == 'column' and db_name and tb_name:
+            if schema_name:
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
+            else:
+                resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
+        else:
+            raise TypeError('不支持的资源类型或者参数不完整！')
+    except Exception as msg:
+        logger.error("Error {0}".format(msg))
+        result['status'] = 1
+        result['msg'] = str(msg)
+    else:
+        if resource.error:
+            result['status'] = 1
+            result['msg'] = resource.error
+            logger.error('Error catched in sql order for {0}: {1}'.format(db_name, result['data']))
+        else:
+            result['data'] = resource.rows
+
+    # 结果写入全局变量
+    global all_result
+    all_result["data"] = result['data']
+
 
 @cache_page(60 * 5)
 def instance_resource(request):
@@ -341,17 +381,18 @@ def instance_resource(request):
     :param request:
     :return:
     """
-    instance_id = request.POST.get('instance_id', default='')
-    instance_name = request.POST.get('instance_name', default='')
-    db_regex = request.POST.get('db_regex', default='^.+$')
-    db_names = request.POST.get('db_names', default='')
-    schema_name = request.POST.get('schema_name', default='')
-    tb_name = request.POST.get('tb_name', default='')
-    resource_type = request.POST.get('resource_type', default='database')
+    instance_id = request.GET.get('instance_id', default='')
+    instance_name = request.GET.get('instance_name', default='')
+    db_regex = request.GET.get('db_regex', default='^.+$')
+    db_names = request.GET.get('db_names', default='')
+    schema_name = request.GET.get('schema_name', default='')
+    tb_name = request.GET.get('tb_name', default='')
+    resource_type = request.GET.get('resource_type', default='database')
 
     # 逗号分隔的多租户字符串转换为列表
     db_names = db_names.split(',') if db_names else []
 
+    logger.debug("Debug instance name {0}".format(instance_name))
     if instance_id:
         instance = Instance.objects.get(id=instance_id)
     else:

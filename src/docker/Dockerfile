@@ -1,20 +1,17 @@
-FROM sunnywalden/archery-multi-tenant:base-python37
-
-
-WORKDIR /opt/archery
-
-COPY ../.. /opt/archery/
+FROM docker.io/centos:7
 
 ENV VERSION v1.7.1
+
+ENV GIT_VERSION 3.7.5
 
 WORKDIR /opt/archery
 
 #python3.6
 RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
-    && wget "https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tar.xz" \
-    && tar -xvJf Python-3.6.5.tar.xz \
-    && cd /opt/Python-3.6.5 \
+    && wget "https://www.python.org/ftp/python/$GIT_VERSION/Python-$GIT_VERSION.tar.xz" \
+    && tar -xvJf Python-$GIT_VERSION.tar.xz \
+    && cd /opt/Python-$GIT_VERSION \
     && ./configure prefix=/usr/local/python3 \
     && make && make install \
     && ln -fs /usr/local/python3/bin/python3 /usr/bin/python3 \
@@ -23,8 +20,8 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && cd /opt \
     && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
     && virtualenv venv4archery --python=python3 \
-    && rm -rf Python-3.6.5 \
-    && rm -rf Python-3.6.5.tar.xz \
+    && rm -rf Python-$GIT_VERSION \
+    && rm -rf Python-$GIT_VERSION.tar.xz \
 #locale
     && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && yum -y install kde-l10n-Chinese \

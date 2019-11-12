@@ -232,7 +232,6 @@ class InceptionEngine(EngineBase):
         conn.close()
         if close_conn:
             # 关闭改租户连接
-            # self.close()
             shutdown_conn(pool=self.pool)
         return result_set
 
@@ -246,7 +245,12 @@ class InceptionEngine(EngineBase):
                           use `{db_name}`;
                           {sql}
                           inception_magic_commit;"""
-        print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        try:
+            print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        except IndexError:
+            print_info = {}
+            print_info['errlevel'] = 1
+            print_info['errmsg'] = '查询异常'
         # 兼容语法错误时errlevel=0的场景
         if print_info['errlevel'] == 0 and print_info['errmsg'] == 'None':
             return json.loads(_repair_json_str(print_info['query_tree']))

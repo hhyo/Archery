@@ -10,9 +10,10 @@ archery/settings.py.github
 archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
-venv
+venv*
 env
 nohup.out
 src/docker-compose/mysql/datadir/
 !.gitkeep
 .github
+binlog2sql

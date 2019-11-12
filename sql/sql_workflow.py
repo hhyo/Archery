@@ -117,7 +117,7 @@ async def sql_check(db_name, instance, sql_content):
     except Exception as e:
         result['status'] = 1
         result['msg'] = str(e)
-        logger.error('Sql cehck error {0}'.format(e))
+        logger.error('Sql check error {0}'.format(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
     else:
         logger.debug('Debug sql check result for {0}: {1}'.format(db_name, check_result.to_dict()))
@@ -138,12 +138,6 @@ def check(request):
     db_names = request.POST.get('db_names', default='')
     db_names = db_names.split(',') if db_names else []
 
-    # db_name = request.POST.get('db_name')
-    is_backup = True if request.POST.get('is_backup') == 'True' else False
-    cc_users = request.POST.getlist('cc_users')
-    run_date_start = request.POST.get('run_date_start')
-    run_date_end = request.POST.get('run_date_end')
-
     logger.debug("Debug db_names in simplecheck api {0}".format(db_names))
     global all_check_res
     all_check_res = {'status': 0, 'msg': 'ok', 'data': {"rows": [], "CheckWarningCount": 0, "CheckErrorCount": 0}}
@@ -154,10 +148,7 @@ def check(request):
         all_check_res['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(all_check_res), content_type='application/json')
 
-    # 多线程处理多个租户
-    # multi_thread(sql_check, db_names, (instance, sql_content))
     # 异步执行
-    # asyncio.run(async_check(db_names, instance, sql_content))
     asyncio.run(async_tasks(sql_check, db_names, instance, sql_content))
 
     return HttpResponse(json.dumps(all_check_res), content_type='application/json')
@@ -205,7 +196,7 @@ def workflow_check(db_name, instance, sql_content):
     return check_result, workflow_status
 
 
-def sql_submit(db_names, request, instance, sql_content, workflow_title, group_id, group_name, list_cc_addr,
+def sql_submit(db_names, request, instance, sql_content, workflow_title, group_id, group_name, cc_users,
                run_date_start, run_date_end):
     """提交SQL工单"""
 
@@ -231,12 +222,12 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
 
     # 获取对象的值
     check_result = {k: v.to_dict() for k, v in check_result.items()}
-    print('SQL check result {}'.format(check_result))
+    logger.debug('SQL check result {}'.format(check_result))
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
     try:
-        print('Start running sql for tenant {}'.format(db_names))
+        logger.debug('Start running sql for tenant {}'.format(db_names))
         with transaction.atomic():
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
@@ -258,7 +249,6 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
-                                              # review_content=check_result.json(),
                                               review_content=json.dumps(check_result),
                                               execute_result=''
                                               )
@@ -271,8 +261,7 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
         return context
-    # else:
-    finally:
+    else:
         # 自动审核通过才进行消息通知
         if workflow_status == 'workflow_manreviewing':
             # 获取审核信息
@@ -296,8 +285,7 @@ def submit(request):
     instance = Instance.objects.get(instance_name=instance_name)
     db_names = request.POST.get('db_names', default='')
     is_backup = True if request.POST.get('is_backup') == 'True' else False
-    notify_users = request.POST.getlist('notify_users')
-    list_cc_addr = [email['email'] for email in Users.objects.filter(username__in=notify_users).values('email')]
+    cc_users = request.POST.getlist('cc_users')
     run_date_start = request.POST.get('run_date_start')
     run_date_end = request.POST.get('run_date_end')
 
@@ -318,7 +306,7 @@ def submit(request):
         return render(request, 'error.html', context)
 
     workflow_id = sql_submit(db_names, request, instance, sql_content, workflow_title, group_id,
-                             group_name, list_cc_addr, run_date_start, run_date_end)
+                             group_name, cc_users, run_date_start, run_date_end)
 
     if not isinstance(workflow_id, int):
         logger.error('Got error while audit workflow {}'.format(workflow_id))
