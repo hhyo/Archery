@@ -15,5 +15,4 @@ env
 nohup.out
 src/docker-compose/mysql/datadir/
 !.gitkeep
-.github
 binlog2sql
