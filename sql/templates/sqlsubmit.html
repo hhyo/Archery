@@ -98,15 +98,15 @@
                             </div>
                             <!--增加通知人-->
                             <div class="form-group">
-                                <select id="notify_users" name="notify_users"
+                                <select id="cc_users" name="cc_users"
                                         class="selectpicker show-tick form-control bs-select-hidden "
                                         multiple="multiple"
                                         data-name="通知人"
                                         data-live-search="true"
                                         data-selected-text-format="count > 2"
-                                        data-none-selected-text="可选择通知人(邮件抄送)">
+                                        data-none-selected-text="可选择通知人(仅申请通知)">
                                     {% for user_info in active_user %}
-                                        <option value="{{ user_info.username }}">{{ user_info.display }}</option>
+                                        <option value="{{ user_info.username }}">{{ user_info.display }}({{ user_info.username }})</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -264,7 +264,7 @@
             $("#div-backup").show();
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -334,7 +334,7 @@
                 var databases = $("#db_names").val().join(',');
             }
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

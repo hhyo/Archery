@@ -8,6 +8,7 @@ import sqlparse
 from MySQLdb.connections import numeric_part
 from DBUtils.PooledDB import PooledDB, SharedDBConnection
 import asyncio
+from MySQLdb.constants import FIELD_TYPE
 
 from sql.utils.multi_thread import multi_thread
 from sql.utils.async_tasks import async_tasks
@@ -43,6 +44,7 @@ class MysqlEngine(EngineBase):
     def close(self, pool=None):
         if self.pool:
             self.pool.close()
+
 
     @property
     def name(self):

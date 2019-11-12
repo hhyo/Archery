@@ -126,7 +126,7 @@ function setColumnsCompleteData(result) {
         setCompleteData(columns);
     } else {
         $.ajax({
-            type: "post",
+            type: "get",
             url: "/instance/instance_resource/",
             dataType: "json",
             data: {

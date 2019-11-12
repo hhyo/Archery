@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 import asyncio
+from django.views.decorators.cache import cache_page
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -206,18 +207,19 @@ def schemasync(request):
     # 准备参数
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
+    os.makedirs(output_directory, exist_ok=True)
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
         "tag": tag,
         "output-directory": output_directory,
         "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=instance_info.user,
-                                                                            pwd=instance_info.raw_password,
+                                                                            pwd=instance_info.password,
                                                                             host=instance_info.host,
                                                                             port=instance_info.port,
                                                                             database=db_name),
         "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=target_instance_info.user,
-                                                                            pwd=target_instance_info.raw_password,
+                                                                            pwd=target_instance_info.password,
                                                                             host=target_instance_info.host,
                                                                             port=target_instance_info.port,
                                                                             database=target_db_name)
@@ -257,12 +259,38 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
+
 async def sql_order(db_name, instance, schema_name, tb_name, resource_type, db_regex='^.+$'):
     """提交SQL工单"""
     logger.debug("Starting!")
     logger.debug('Debug instance info {0} {1} {2}'.format(resource_type, instance.host, instance.db_type))
 
     result = {"data": []}
+
+@cache_page(60 * 5)
+def instance_resource(request):
+    """
+    获取实例内的资源信息，database、schema、table、column
+    :param request:
+    :return:
+    """
+    instance_id = request.GET.get('instance_id')
+    instance_name = request.GET.get('instance_name')
+    db_name = request.GET.get('db_name')
+    schema_name = request.GET.get('schema_name')
+    tb_name = request.GET.get('tb_name')
+
+    resource_type = request.GET.get('resource_type')
+    if instance_id:
+        instance = Instance.objects.get(id=instance_id)
+    else:
+        try:
+            instance = Instance.objects.get(instance_name=instance_name)
+        except Instance.DoesNotExist:
+            result = {'status': 1, 'msg': '实例不存在', 'data': []}
+            return HttpResponse(json.dumps(result), content_type='application/json')
+    result = {'status': 0, 'msg': 'ok', 'data': []}
+
 
     try:
         query_engine = get_engine(instance=instance)

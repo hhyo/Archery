@@ -6,7 +6,7 @@ from aliyunsdkcore.client import AcsClient
 from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlowLogRecordsRequest, \
     RequestServiceOfCloudDBARequest
 import simplejson as json
-from sql.models import AliyunAccessKey
+from common.config import SysConfig
 import logging
 
 logger = logging.getLogger('default')
@@ -15,13 +15,12 @@ logger = logging.getLogger('default')
 class Aliyun(object):
     def __init__(self):
         try:
-            auth = AliyunAccessKey.objects.get(is_enable=True)
-            ak = auth.raw_ak
-            secret = auth.raw_secret
+            sys_config = SysConfig()
+            ak = sys_config.get('aliyun_ak')
+            secret = sys_config.get('aliyun_secret')
             self.clt = AcsClient(ak=ak, secret=secret)
         except Exception as m:
             raise Exception(f'阿里云认证失败：{m}{traceback.format_exc()}')
-            logger.error(f'阿里云认证失败：{m}{traceback.format_exc()}')
 
     def request_api(self, request, *values):
         if values:

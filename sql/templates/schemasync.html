@@ -121,7 +121,7 @@
         $("#instance_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -155,7 +155,7 @@
         $("#target_instance_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

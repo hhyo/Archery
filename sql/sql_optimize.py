@@ -38,8 +38,8 @@ def optimize_sqladvisor(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     try:
-        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
-    except Exception:
+        instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+    except Instance.DoesNotExist:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例！'
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -51,16 +51,13 @@ def optimize_sqladvisor(request):
         result['msg'] = '请配置SQLAdvisor路径！'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 取出实例的连接信息
-    instance_info = Instance.objects.get(instance_name=instance_name)
-
     # 提交给sqladvisor获取分析报告
     sqladvisor = SQLAdvisor()
     # 准备参数
     args = {"h": instance_info.host,
             "P": instance_info.port,
             "u": instance_info.user,
-            "p": instance_info.raw_password,
+            "p": instance_info.password,
             "d": db_name,
             "v": verbose,
             "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
@@ -95,7 +92,7 @@ def optimize_soar(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
     try:
-        user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+        instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
     except Exception:
         result['status'] = 1
         result['msg'] = '你所在组未关联该实例'
@@ -110,9 +107,8 @@ def optimize_soar(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 目标实例的连接信息
-    instance_info = Instance.objects.get(instance_name=instance_name)
     online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
-                                                          pwd=instance_info.raw_password,
+                                                          pwd=instance_info.password,
                                                           host=instance_info.host,
                                                           port=instance_info.port,
                                                           db=db_name)
@@ -150,9 +146,9 @@ def optimize_sqltuning(request):
     option = request.POST.getlist('option[]')
 
     try:
-        Instance.objects.get(instance_name=instance_name)
+        user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        result = {'status': 1, 'msg': '实例不存在', 'data': []}
+        result = {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
@@ -198,7 +194,7 @@ def explain(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')

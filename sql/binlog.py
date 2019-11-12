@@ -108,7 +108,7 @@ def binlog2sql(request):
     # 提交给binlog2sql进行解析
     binlog2sql = Binlog2Sql()
     # 准备参数
-    args = {"conn_options": fr"-h{instance.host} -u{instance.user} -p'{instance.raw_password}' -P{instance.port} ",
+    args = {"conn_options": fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port} ",
             "stop_never": False,
             "no-primary-key": no_pk,
             "flashback": flashback,
@@ -186,6 +186,7 @@ def binlog2sql_file(args, user):
     instance = args.get('instance')
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
+    os.makedirs(path, exist_ok=True)
     if args.get('flashback'):
         filename = os.path.join(path, f"flashback_{instance.host}_{instance.port}_{timestamp}.sql")
     else:

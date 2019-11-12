@@ -228,6 +228,17 @@
                             </div>
                             <div id="div-auto-review-config" style="display: none">
                                 <div class="form-group">
+                                    <label for="auto_review_tag"
+                                           class="col-sm-4 control-label">AUTO_REVIEW_TAG</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="auto_review_tag"
+                                               key="auto_review_tag"
+                                               value="{{ config.auto_review_tag }}"
+                                               placeholder="自动审批的实例标签CODE，多个使用逗号分隔">
+                                    </div>
+                                </div>
+                                <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                     <div class="col-sm-5">
@@ -371,7 +382,8 @@
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
-                        <h6 style="color:red">注：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
+                        <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
+                        <h6 style="color:red">注2：企业微信开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -555,9 +567,94 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="form-group">
+                                <label for="wx"
+                                       class="col-sm-4 control-label">企业微信</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="wx" key="wx"
+                                                   value="{{ config.wx }}"
+                                                   type="checkbox"> 是否开启企业微信通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-wx-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建企业微信应用参考：<a target="_blank"
+                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_corpid"
+                                           class="col-sm-4 control-label">CorpId</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="wx_corpid"
+                                               key="wx_corpid"
+                                               value="{{ config.wx_corpid }}"
+                                               placeholder="企业微信的企业ID">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_agent_id"
+                                           class="col-sm-4 control-label">AgentId</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="wx_agent_id"
+                                               key="wx_agent_id"
+                                               value="{{ config.wx_agent_id }}"
+                                               placeholder="应用的AgentId">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_app_secret"
+                                           class="col-sm-4 control-label">Secret</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="wx_app_secret"
+                                               key="wx_app_secret"
+                                               value="{{ config.wx_app_secret }}"
+                                               placeholder="应用的Secret">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
+                        <hr/>
+                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
+                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
+                        <hr/>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="aliyun_ak"
+                                       class="col-sm-4 control-label">AccessKeyID</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="aliyun_ak"
+                                           key="aliyun_ak"
+                                           value="{{ config.aliyun_ak }}"
+                                           placeholder="AccessKeyID">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="aliyun_secret"
+                                       class="col-sm-4 control-label">AccessKeySecret</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="aliyun_secret"
+                                           key="aliyun_secret"
+                                           value="{{ config.aliyun_secret }}"
+                                           placeholder="AccessKeySecret">
+                                </div>
+                            </div>
+                        </div>
+                        <h5 style="color: darkgrey"><b>其他</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -729,6 +826,8 @@
                     $("#div-ding-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
+                } else if ($(this).attr("id") === 'wx') {
+                    $("#div-wx-config").show();
                 }
             } else {
                 $(this).val(false);
@@ -739,6 +838,8 @@
                     $("#div-ding-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
+                } else if ($(this).attr("id") === 'wx') {
+                    $("#div-wx-config").hide();
                 }
             }
         });

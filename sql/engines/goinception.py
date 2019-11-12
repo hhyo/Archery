@@ -55,7 +55,7 @@ class GoInceptionEngine(EngineBase):
         self.logger.debug('Debug before doing execute check:{0}'.format(check_result.to_dict()))
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--check=1;*/
+        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
@@ -116,7 +116,7 @@ class GoInceptionEngine(EngineBase):
         else:
             str_backup = "--backup=0"
         # 提交inception执行
-        sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
+        sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
                             inception_magic_start;
                             use `{db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};

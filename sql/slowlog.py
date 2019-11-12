@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
 from django.http import HttpResponse
+from django.views.decorators.cache import cache_page
 from pyecharts.charts import Line
 from pyecharts import options as opts
 from common.utils.chart_dao import ChartDao
@@ -204,6 +205,7 @@ def slowquery_review_history(request):
                         content_type='application/json')
 
 
+@cache_page(60 * 10)
 def report(request):
     """返回慢SQL历史趋势"""
     checksum = request.GET.get('checksum')

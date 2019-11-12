@@ -14,9 +14,12 @@ def is_auto_review(workflow_id):
     :param workflow_id:
     :return:
     """
+
     workflow = SqlWorkflow.objects.get(id=workflow_id)
+    auto_review_tags = SysConfig().get('auto_review_tag', '').split(',')
     # TODO 这里也可以放到engine中实现，但是配置项可能会相对复杂
-    if workflow.instance.db_type == 'mysql':
+    if workflow.instance.db_type == 'mysql' and workflow.instance.instancetag_set.filter(
+            tag_code__in=auto_review_tags).exists():
         # 获取正则表达式
         auto_review_regex = SysConfig().get('auto_review_regex',
                                             '^alter|^create|^drop|^truncate|^rename|^delete')

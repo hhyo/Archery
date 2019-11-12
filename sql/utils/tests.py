@@ -20,7 +20,7 @@ from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroup2User, \
     ResourceGroup2Instance, WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
-    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns
+    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns, InstanceTag, InstanceTagRelations
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel, on_correct_time_period
 from sql.utils.sql_utils import *
@@ -231,10 +231,15 @@ class TestSQLReview(TestCase):
         self.sys_config.set('auto_review', 'true')
         self.sys_config.set('auto_review_regex', '^drop')  # drop语句需要审批
         self.sys_config.set('auto_review_max_update_rows', '2')  # update影响行数大于2需要审批
+        self.sys_config.set('auto_review_tag', 'GA')  # 仅GA开启自动审批
         self.sys_config.get_all_config()
         # 修改工单为update
         self.wfc1.sql_content = "update table users set email='';"
         self.wfc1.save(update_fields=('sql_content',))
+        # 修改工单实例标签
+        tag = InstanceTag.objects.get_or_create(tag_code='GA', defaults={'tag_name': '生产环境', 'active': True})
+        InstanceTagRelations.objects.get_or_create(instance=self.wf1.instance,
+                                                   defaults={'instance_tag': tag[0], 'active': True})
         # mock返回值，update影响行数=3
         _execute_check.return_value.to_dict.return_value = [
             {"id": 1, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",

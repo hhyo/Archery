@@ -1,0 +1,161 @@
+# Default values for goinception.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: hanchuanchuan/goinception
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 4000
+  targetPort: 4000
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+
+configMap:
+  enabled: true
+  data:
+    config.toml: |-
+      host="0.0.0.0"
+      advertise_address=""
+      port=4000
+      [inc]
+      check_autoincrement_datatype=true
+      check_autoincrement_init_value=true
+      check_autoincrement_name=true
+      check_column_comment=true
+      check_column_default_value=true
+      check_column_position_change=true
+      check_column_type_change=true
+      check_dml_limit=true
+      check_dml_orderby=true
+      check_dml_where=true
+      check_identifier=true
+      check_index_prefix=true
+      check_insert_field=true
+      check_primary_key=true
+      check_table_comment=true
+      check_timestamp_default=true
+      check_timestamp_count=false
+      enable_autoincrement_unsigned=true
+      enable_blob_type=true
+      enable_column_charset=true
+      enable_drop_database=true
+      enable_drop_table=true
+      enable_enum_set_bit=false
+      enable_fingerprint=true
+      enable_foreign_key=false
+      enable_json_type=true
+      enable_identifer_keyword=false
+      enable_not_innodb=false
+      enable_nullable=false
+      enable_null_index_name=false
+      enable_orderby_rand=true
+      enable_partition_table=true
+      enable_pk_columns_only_int=true
+      enable_select_star=false
+      enable_set_charset=true
+      enable_set_collation=false
+      enable_set_engine=false
+      max_char_length=0
+      max_insert_rows=0
+      max_keys=5
+      max_key_parts=5
+      max_update_rows=5000
+      max_primary_key_parts=1
+      max_allowed_packet=33554432
+      merge_alter_table=true
+      check_float_double=true
+      support_charset="utf8,utf8mb4"
+      support_collation="utf8_general_ci,utf8mb4_general_ci"
+      backup_host="archery-mysql"
+      backup_port=3306
+      backup_user="root"
+      backup_password="archery"
+      #安全更新是否开启.
+      #-1表示不做操作,基于远端数据库[默认值]
+      #0表示关闭安全更新
+      #1表示开启安全更新
+      sql_safe_updates=0
+      #lang="en-US"
+      lang="zh-CN"
+      #是否记录全量日志
+      general_log=false
+      #开启统计功能
+      enable_sql_statistic=true
+      [inc_level]
+      er_cant_set_engine=2
+      er_cant_set_collation=2
+      er_table_must_have_comment=2
+      er_column_have_no_comment=2
+      er_table_must_have_pk=2
+      er_index_name_idx_prefix=1
+      er_index_name_uniq_prefix=1
+      er_autoinc_unsigned=2
+      er_alter_table_once=2
+      er_pk_too_many_parts=2
+      [osc]
+      osc_on=false
+      osc_min_table_size=16
+      osc_print_none=false
+      osc_bin_dir="/usr/local/bin"
+      [ghost]
+      ghost_on=false
+      ghost_allow_on_master=true
+      ghost_assume_rbr=true
+      ghost_chunk_size=1000
+      ghost_concurrent_rowcount=true
+      ghost_cut_over="atomic"
+      ghost_cut_over_lock_timeout_seconds=3
+      ghost_default_retries=60
+      ghost_heartbeat_interval_millis=500
+      ghost_max_lag_millis=1500
+      ghost_approve_renamed_columns=true
+      ghost_exponential_backoff_max_interval=64
+      ghost_dml_batch_size=10
+      [log]
+      # Log level: debug, info, warn, error, fatal.
+      level="error"
+      # Log format, one of json, text, console.
+      format="console"
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+volumes:
+  - name: goinception-config-volume
+    configMap:
+      name: goinception-config

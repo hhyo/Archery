@@ -16,7 +16,7 @@ class EngineBase:
             self.host = instance.host
             self.port = int(instance.port)
             self.user = instance.user
-            self.password = instance.raw_password
+            self.password = instance.password
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""

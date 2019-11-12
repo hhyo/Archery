@@ -138,6 +138,12 @@ def check(request):
     db_names = request.POST.get('db_names', default='')
     db_names = db_names.split(',') if db_names else []
 
+    # db_name = request.POST.get('db_name')
+    is_backup = True if request.POST.get('is_backup') == 'True' else False
+    cc_users = request.POST.getlist('cc_users')
+    run_date_start = request.POST.get('run_date_start')
+    run_date_end = request.POST.get('run_date_end')
+
     logger.debug("Debug db_names in simplecheck api {0}".format(db_names))
     global all_check_res
     all_check_res = {'status': 0, 'msg': 'ok', 'data': {"rows": [], "CheckWarningCount": 0, "CheckErrorCount": 0}}
@@ -272,7 +278,7 @@ def sql_submit(db_names, request, instance, sql_content, workflow_title, group_i
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, email_cc=list_cc_addr, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60)
 
         # 结果写入全局变量
         return workflow_id

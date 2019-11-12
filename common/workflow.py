@@ -37,7 +37,7 @@ def lists(request):
     )
     # 过滤工单类型
     if workflow_type != 0:
-        workflow_audit.filter(workflow_type=workflow_type)
+        workflow_audit = workflow_audit.filter(workflow_type=workflow_type)
 
     audit_list_count = workflow_audit.count()
     audit_list = workflow_audit.order_by('-audit_id')[offset:limit].values(
