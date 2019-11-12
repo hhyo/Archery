@@ -38,3 +38,4 @@ if [ $? -ne 0 ]; then
 echo "failed"
 else
 echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
+fi
