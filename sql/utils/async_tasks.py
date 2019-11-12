@@ -2,9 +2,8 @@
 
 __author__ = 'sunnywalden@gmail.com'
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 import asyncio
+import time
 
 from common.utils.get_logger import get_logger
 

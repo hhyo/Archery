@@ -1,22 +1,15 @@
 # -*- coding: UTF-8 -*-
-import logging
+import asyncio
 import re
 import traceback
-import MySQLdb
-import os
-import json
-import asyncio
-from DBUtils.PooledDB import PooledDB
 
 from common.config import SysConfig
+from common.utils.get_logger import get_logger
+from sql.utils.async_tasks import async_tasks
 from sql.utils.sql_conn import setup_conn, shutdown_conn
 from sql.utils.sql_utils import get_syntax_type
-from sql.utils.async_tasks import async_tasks
-from sql.utils.multi_thread import multi_thread
-from common.utils.object_to_jsonised import jsonised_object
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from common.utils.get_logger import get_logger
 
 
 class GoInceptionEngine(EngineBase):

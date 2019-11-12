@@ -24,6 +24,7 @@ def notify_for_audit(audit_id, **kwargs):
     :return:
     """
     # 判断是否开启消息通知，未开启直接返回
+    sys_config = SysConfig()
     wx_status = sys_config.get('wx')
     if not sys_config.get('mail') and not sys_config.get('ding') and not wx_status:
         logger.info('未开启消息通知，可在系统设置中开启')

@@ -1,26 +1,21 @@
 # -*- coding: UTF-8 -*-
-import logging
-import traceback
-import MySQLdb
+import asyncio
 import re
-import os
+import traceback
+
 import sqlparse
 from MySQLdb.connections import numeric_part
-from DBUtils.PooledDB import PooledDB, SharedDBConnection
-import asyncio
-from MySQLdb.constants import FIELD_TYPE
 
-from sql.utils.multi_thread import multi_thread
-from sql.utils.async_tasks import async_tasks
-from sql.utils.sql_conn import setup_conn, shutdown_conn
-from sql.engines.goinception import GoInceptionEngine
-from sql.utils.sql_utils import get_syntax_type, remove_comments
-from . import EngineBase
-from .models import ResultSet, ReviewResult, ReviewSet
-from .inception import InceptionEngine
-from sql.utils.data_masking import data_masking
 from common.config import SysConfig
 from common.utils.get_logger import get_logger
+from sql.engines.goinception import GoInceptionEngine
+from sql.utils.async_tasks import async_tasks
+from sql.utils.data_masking import data_masking
+from sql.utils.sql_conn import setup_conn, shutdown_conn
+from sql.utils.sql_utils import get_syntax_type, remove_comments
+from . import EngineBase
+from .inception import InceptionEngine
+from .models import ResultSet, ReviewResult, ReviewSet
 
 
 class MysqlEngine(EngineBase):

@@ -1,10 +1,8 @@
 # -*- coding: UTF-8 -*-
+
+import asyncio
 import datetime
-import logging
-from logging.handlers import RotatingFileHandler
 import traceback
-import threading
-import os
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -15,24 +13,21 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-import asyncio
+from django_q.tasks import async_task
 
-from common.utils.get_logger import get_logger
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.notify import notify_for_audit
-from sql.models import ResourceGroup, Users
-from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
-from sql.utils.workflow_audit import Audit
-from sql.utils.async_tasks import async_tasks
-from sql.utils.multi_thread import multi_thread
-from .models import SqlWorkflow, SqlWorkflowContent, Instance
-from django_q.tasks import async_task
-
+from common.utils.get_logger import get_logger
 from sql.engines import get_engine
+from sql.models import ResourceGroup
+from sql.notify import notify_for_audit
+from sql.utils.async_tasks import async_tasks
+from sql.utils.resource_group import user_groups, user_instances
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
+from sql.utils.tasks import add_sql_schedule, del_schedule
+from sql.utils.workflow_audit import Audit
+from .models import SqlWorkflow, SqlWorkflowContent, Instance
 
 logger = get_logger()
 
