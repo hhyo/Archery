@@ -61,7 +61,7 @@ def users(request):
         result = {'status': 1, 'msg': query_result.error}
 
     # 关闭连接
-    close()
+    query_engine.close()
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 

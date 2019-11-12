@@ -112,7 +112,7 @@ def notify_for_audit(audit_id, **kwargs):
                              ">当前审批：<font color=\"comment\">{}</font>\n" \
                              ">工单名称：<font color=\"comment\">{}</font>\n".format(
                 workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                workflow_from, group_name, instance, db_name, workflow_auditors, current_workflow_auditors,
+                workflow_from, group_name, instance, db_names, workflow_auditors, current_workflow_auditors,
                 workflow_title
             )
 
@@ -143,7 +143,7 @@ def notify_for_audit(audit_id, **kwargs):
                              ">审批流程：<font color=\"comment\">{}</font>\n" \
                              ">工单名称：<font color=\"comment\">{}</font>\n".format(
                 workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                workflow_from, group_name, instance, db_name, workflow_auditors, workflow_title
+                workflow_from, group_name, instance, db_names, workflow_auditors, workflow_title
             )
 
     elif status == WorkflowDict.workflow_status['audit_reject']:  # 审核驳回
@@ -169,7 +169,7 @@ def notify_for_audit(audit_id, **kwargs):
                              ">驳回原因：<font color=\"comment\">{}</font>\n" \
                              "提醒：此工单审核不通过，请按照驳回原因进行修改！".format(
                 workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                instance, db_name, workflow_title, workflow_audit_remark
+                instance, db_names, workflow_title, workflow_audit_remark
             )
 
     elif status == WorkflowDict.workflow_status['audit_abort']:  # 审核取消，通知所有审核人
@@ -200,7 +200,7 @@ def notify_for_audit(audit_id, **kwargs):
                              ">工单名称：<font color=\"comment\">{}</font>\n" \
                              ">终止原因：<font color=\"comment\">{}</font>\n".format(
                 workflow_type_display, workflow_url, workflow_detail.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                workflow_from, group_name, instance, db_name, workflow_title, workflow_audit_remark
+                workflow_from, group_name, instance, db_names, workflow_title, workflow_audit_remark
             )
     else:
         raise Exception('工单状态不正确')
