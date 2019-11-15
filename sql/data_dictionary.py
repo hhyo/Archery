@@ -4,6 +4,7 @@ import os
 
 import MySQLdb
 import simplejson as json
+from django.utils.http import urlquote
 from jinja2 import Template
 
 from archery import settings
@@ -175,7 +176,7 @@ def export(request):
     </tr>     
     <td class="c1">{{ col['COLUMN_NAME'] }}</td>
     <td class="c2">{{ col['COLUMN_TYPE'] }}</td>
-    <td class="c3">{{ col['COLUMN_DEFAULT'] }}</td>
+    <td class="c3">{{ col['COLUMN_DEFAULT'] or '' }}</td>
     <td class="c4">{{ col['IS_NULLABLE'] }}</td>
     <td class="c5">{% if col['EXTRA']=='auto_increment' %} 是 {% endif %}</td>
     <td class="c5">{{ col['COLUMN_KEY'] }}</td>
@@ -220,7 +221,8 @@ def export(request):
     if db_name:
         response = FileResponse(open(f'{path}/{instance_name}_{db_name}.html', 'rb'))
         response['Content-Type'] = 'application/octet-stream'
-        response['Content-Disposition'] = f'attachment;filename="{instance_name}_{db_name}.html"'
+        response['Content-Disposition'] = f'attachment;filename="{urlquote(instance_name)}_{urlquote(db_name)}.html"'
         return response
+
     else:
         return JsonResponse({'status': 0, 'msg': f'实例{instance_name}数据字典导出成功，请到downloads目录下载！', 'data': []})
