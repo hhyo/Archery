@@ -89,7 +89,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             result['filtered_sql'] = sql.strip()
             sql_lower = sql.lower()
         except IndexError:
-            result['has_star'] = True
+            result['bad_query'] = True
             result['msg'] = '没有有效的SQL语句'
             return result
         if re.match(whitelist_pattern, sql_lower) is None:
@@ -98,7 +98,6 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
-            result['bad_query'] = True
             result['has_star'] = True
         if '+' in sql_lower:
             keyword_warning += '禁止使用 + 关键词\n'

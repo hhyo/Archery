@@ -62,7 +62,7 @@ class PhoenixEngine(EngineBase):
             result['filtered_sql'] = sql.strip()
             # sql_lower = sql.lower()
         except IndexError:
-            result['has_star'] = True
+            result['bad_query'] = True
             result['msg'] = '没有有效的SQL语句'
             return result
         if re.match(whitelist_pattern, sql) is None:
