@@ -3,20 +3,32 @@
 {% block content %}
     <!-- 自定义操作按钮-->
     <div class="form-group ">
-        <div id="toolbar" class="form-inline">
-            <div class="form-group">
-                <select id="instance_name" class="form-control selectpicker "
-                        title="请选择实例"
-                        data-live-search="true">
-                </select>
+        <form action="/data_dictionary/export/">
+            <div id="toolbar" class="form-inline">
+                <div class="form-group">
+                    <select id="instance_name" class="form-control selectpicker "
+                            name="instance_name"
+                            title="请选择实例"
+                            data-live-search="true">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="db_name" class="form-control selectpicker "
+                            name="db_name"
+                            title="请选择数据库"
+                            data-live-search="true">
+                    </select>
+                </div>
+                {% if perms.sql.data_dictionary_export %}
+                    <div class="form-group">
+                        <button id="btn_export_dict" type="submit" disabled="disabled" class="btn btn-default">
+                            <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
+                            导出
+                        </button>
+                    </div>
+                {% endif %}
             </div>
-            <div class="form-group">
-                <select id="db_name" class="form-control selectpicker "
-                        title="请选择数据库"
-                        data-live-search="true">
-                </select>
-            </div>
-        </div>
+        </form>
     </div>
 
     <div id="jumpbox" class="modindex-jumpbox">
@@ -191,6 +203,11 @@
                 complete: function () {
                     $('#db_name').selectpicker('render');
                     $('#db_name').selectpicker('refresh');
+                    // 管理员激活导出按钮
+                    if ("{{ request.user.is_superuser }}" === 'True') {
+                        $('#btn_export_dict').removeClass('disabled');
+                        $('#btn_export_dict').prop('disabled', false);
+                    }
                 }
             });
         });
@@ -200,6 +217,7 @@
             get_table_list()
         });
 
+        // 获取表
         function get_table_list() {
             var instance_name = $("#instance_name").val();
             var db_name = $('#db_name').val();
@@ -216,6 +234,9 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
+                            // 激活导出按钮
+                            $('#btn_export_dict').removeClass('disabled');
+                            $('#btn_export_dict').prop('disabled', false);
                             $('#jumpbox').empty();
                             $('#indexTable').empty();
                             var result = data.data;
@@ -253,6 +274,7 @@
             }
         }
 
+        // 展示表信息
         function showTableInfo(ins_name, db_name, tb_name) {
             // console.log(ins_name, db_name, tb_name);
             $.ajax({

@@ -9,8 +9,6 @@ import re
 import xml
 import mybatis_mapper2sql
 import sqlparse
-from moz_sql_parser import parse
-from moz_sql_parser.sql_parser import join_keywords, keywords
 from sql.utils.extract_tables import extract_tables as extract_tables_by_sql_parse
 
 __author__ = 'hhyo'
@@ -83,23 +81,18 @@ def remove_comments(sql, db_type='mysql'):
     return regex.sub(_replacer, sql).strip()
 
 
-def extract_tables(sql, _type=None):
+def extract_tables(sql):
     """
-    获取sql语句中的库、表名，指名select语句通过moz_sql_parser获取，其他语句通过sqlparse获取
+    获取sql语句中的库、表名
     :param sql:
-    :param _type:
     :return:
     """
-    if _type == 'select':
-        tables = list()
-        _extract_tables_by_moz(parse(sql), tables=tables)
-    else:
-        tables = list()
-        for i in extract_tables_by_sql_parse(sql):
-            tables.append({
-                "schema": i.schema,
-                "name": i.name,
-            })
+    tables = list()
+    for i in extract_tables_by_sql_parse(sql):
+        tables.append({
+            "schema": i.schema,
+            "name": i.name,
+        })
     return tables
 
 
@@ -130,27 +123,3 @@ def generate_sql(text):
             row = {"sql_id": num, "sql": statement}
             rows.append(row)
     return rows
-
-
-def _extract_tables_by_moz(moz_parser_dict, tables=None, parent_keyword=None, is_alias=False):
-    parent_keyword = parent_keyword
-    if isinstance(moz_parser_dict, dict):
-        for k in moz_parser_dict.keys():
-            parent_keyword = k if k in list(keywords) else parent_keyword
-            is_alias = True if k == 'name' else False
-            _extract_tables_by_moz(moz_parser_dict[k], tables, parent_keyword, is_alias)
-    elif isinstance(moz_parser_dict, list):
-        for i in moz_parser_dict:
-            _extract_tables_by_moz(i, tables, parent_keyword)
-    elif not is_alias:
-        if parent_keyword in list(join_keywords) or parent_keyword in ['from']:
-            try:
-                schema = moz_parser_dict.split('.')[0]
-                name = moz_parser_dict.split('.')[1]
-            except IndexError:
-                schema = None
-                name = moz_parser_dict
-            tables.append({
-                "schema": schema,
-                "name": name,
-            })

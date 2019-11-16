@@ -101,6 +101,7 @@ urlpatterns = [
     path('data_dictionary/', views.data_dictionary),
     path('data_dictionary/table_list/', data_dictionary.table_list),
     path('data_dictionary/table_info/', data_dictionary.table_info),
+    path('data_dictionary/export/', data_dictionary.export),
 
     path('param/list/', instance.param_list),
     path('param/history/', instance.param_history),

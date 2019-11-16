@@ -82,16 +82,6 @@ class TestSQLUtils(TestCase):
         sql = "select * from user.users a join logs.log b on a.id=b.id;"
         self.assertEqual(extract_tables(sql), [{'name': 'users', 'schema': 'user'}, {'name': 'log', 'schema': 'logs'}])
 
-    def test_extract_tables_by_moz(self):
-        """
-        测试表解析
-        :return:
-        """
-        sql = "select * from user.users a join logs.log b on a.id=b.id where a.id in (select id from logs.log);"
-        self.assertEqual(extract_tables(sql, _type='select'),
-                         [{'name': 'users', 'schema': 'user'}, {'name': 'log', 'schema': 'logs'},
-                          {'name': 'log', 'schema': 'logs'}])
-
     def test_generate_sql_from_sql(self):
         """
         测试从SQl文本中解析SQL

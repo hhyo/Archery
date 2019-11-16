@@ -619,6 +619,7 @@ class Permission(models.Model):
             ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),
             ('param_edit', '修改实例参数'),
+            ('data_dictionary_export', '导出数据字典')
         )
 
 
