@@ -49,12 +49,12 @@ def analyze(request):
     if not text:
         result = {"total": 0, "rows": []}
     else:
-        try:
-            instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
-        except Instance.DoesNotExist:
-            return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
         soar = Soar()
         if instance_name != '' and db_name != '':
+            try:
+                instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+            except Instance.DoesNotExist:
+                return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
             soar_test_dsn = SysConfig().get('soar_test_dsn')
             # 获取实例连接信息
             online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,

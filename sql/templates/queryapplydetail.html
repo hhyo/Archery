@@ -10,7 +10,8 @@
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sql_content }}"/>
     <hr>
-    <table data-toggle="table" class="table table-striped table-hover">
+    <table data-toggle="table" class="table table-striped table-hover"
+           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
