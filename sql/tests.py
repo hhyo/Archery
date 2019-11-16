@@ -2243,6 +2243,7 @@ class TestDataDictionary(TestCase):
     def setUp(self):
         self.sys_config = SysConfig()
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
+        self.u1 = User.objects.create(username='user1', display='中文显示', is_active=True)
         self.client = Client()
         self.client.force_login(self.su)
         # 使用 travis.ci 时实例和测试service保持一致
@@ -2379,3 +2380,89 @@ class TestDataDictionary(TestCase):
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content), {'msg': 'test error', 'status': 1})
+
+    def test_export_instance_does_not_exist(self):
+        """
+        测试导出实例不存在
+        :return:
+        """
+        data = {
+            'instance_name': 'not_exist',
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'data': [], 'msg': '你所在组未关联该实例！', 'status': 1})
+
+    @patch('sql.data_dictionary.user_instances')
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_ins_no_perm(self, _get_engine, _user_instances):
+        """
+        测试导出实例无权限
+        :return:
+        """
+        self.client.force_login(self.u1)
+        data_dictionary_export = Permission.objects.get(codename='data_dictionary_export')
+        self.u1.user_permissions.add(data_dictionary_export)
+        _user_instances.return_value.get.return_value = self.ins
+        data = {
+            'instance_name': self.ins.instance_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertDictEqual(json.loads(r.content),
+                             {'status': 1, 'msg': f'仅管理员可以导出整个实例的字典信息！', 'data': []})
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_db(self, _get_engine):
+        """
+        测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'aliyun_rds_config',
+             'TABLE_TYPE': 'BASE TABLE', 'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 0,
+             'AVG_ROW_LENGTH': 0, 'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 32768, 'DATA_FREE': 0,
+             'AUTO_INCREMENT': 1, 'CREATE_TIME': datetime(2019, 5, 28, 9, 25, 41), 'UPDATE_TIME': None,
+             'CHECK_TIME': None, 'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '',
+             'TABLE_COMMENT': ''},
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'auth_group', 'TABLE_TYPE': 'BASE TABLE',
+             'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 8, 'AVG_ROW_LENGTH': 2048,
+             'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 16384, 'DATA_FREE': 0, 'AUTO_INCREMENT': 9,
+             'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
+             'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.streaming)
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_instance(self, _get_engine):
+        """
+        测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'aliyun_rds_config',
+             'TABLE_TYPE': 'BASE TABLE', 'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 0,
+             'AVG_ROW_LENGTH': 0, 'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 32768, 'DATA_FREE': 0,
+             'AUTO_INCREMENT': 1, 'CREATE_TIME': datetime(2019, 5, 28, 9, 25, 41), 'UPDATE_TIME': None,
+             'CHECK_TIME': None, 'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '',
+             'TABLE_COMMENT': ''},
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'auth_group', 'TABLE_TYPE': 'BASE TABLE',
+             'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 8, 'AVG_ROW_LENGTH': 2048,
+             'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 16384, 'DATA_FREE': 0, 'AUTO_INCREMENT': 9,
+             'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
+             'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
+        data = {
+            'instance_name': self.ins.instance_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content),
+                             {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
