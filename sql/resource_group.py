@@ -54,7 +54,7 @@ def associated_objects(request):
     # 过滤搜索
     if search:
         rows_users = rows_users.filter(user__display__contains=search)
-        rows_instances = rows_instances.filter(instance__instance_name=search)
+        rows_instances = rows_instances.filter(instance__instance_name__contains=search)
     rows_users = rows_users.annotate(
         object_id=F('user_id'),
         object_type=Value(0, output_field=IntegerField()),
