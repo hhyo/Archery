@@ -59,6 +59,9 @@
                     <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-user">
+                    {% if user.is_superuser %}
+                        <li><a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> 系统信息</a></li>
+                    {% endif %}
                     <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
                     <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
                 </ul>
