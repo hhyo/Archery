@@ -8,9 +8,10 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, FileResponse
 from django.urls import reverse
 
+from archery import settings
 from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
@@ -187,12 +188,12 @@ def detail(request, workflow_id):
 
 def rollback(request):
     """展示回滚的SQL页面"""
-    workflow_id = request.GET['workflow_id']
+    workflow_id = request.GET.get('workflow_id')
+    download = request.GET.get('download')
     if workflow_id == '' or workflow_id is None:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-    workflow_id = int(workflow_id)
-    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    workflow = SqlWorkflow.objects.get(id=int(workflow_id))
 
     try:
         query_engine = get_engine(instance=workflow.instance)
@@ -201,12 +202,28 @@ def rollback(request):
         logger.error(traceback.format_exc())
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    workflow_title = workflow_detail.workflow_name
-    rollback_workflow_name = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
-    context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow_detail,
-               'rollback_workflow_name': rollback_workflow_name}
-    return render(request, 'rollback.html', context)
+
+    # 获取数据，存入目录
+    path = os.path.join(settings.BASE_DIR, 'downloads/rollback')
+    os.makedirs(path, exist_ok=True)
+    file_name = f'{path}/rollback_{workflow_id}.sql'
+    with open(file_name, 'w') as f:
+        for sql in list_backup_sql:
+            f.write(f'/*{sql[0]}*/\n{sql[1]}\n')
+
+    # 回滚语句大于4M强制转换为下载，此时前端无法自动填充
+    if os.path.getsize(file_name) > 4194304 or download:
+        response = FileResponse(open(file_name, 'rb'))
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = f'attachment;filename="rollback_{workflow_id}.sql"'
+        return response
+    # 小于4M的删除文件
+    else:
+        os.remove(file_name)
+        rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
+        context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow,
+                   'rollback_workflow_name': rollback_workflow_name}
+        return render(request, 'rollback.html', context)
 
 
 @permission_required('sql.menu_sqlanalyze', raise_exception=True)

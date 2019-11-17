@@ -40,7 +40,9 @@ class InceptionEngine(EngineBase):
                                port=backup_port,
                                user=backup_user,
                                passwd=backup_password,
-                               charset='utf8mb4')
+                               charset='utf8mb4',
+                               autocommit=True
+                               )
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
@@ -231,6 +233,9 @@ class InceptionEngine(EngineBase):
             except Exception as e:
                 logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
+        # 关闭连接
+        if conn:
+            conn.close()
         return list_backup_sql
 
     def get_variables(self, variables=None):

@@ -14,7 +14,7 @@
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
     <table data-toggle="table" class="table table-striped table-hover"
-           style="table-layout:inherit;overflow:hidden;text-overflow:ellipsis;">
+           style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         <thead>
         <tr>
             <th>
@@ -228,6 +228,13 @@
                 <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
                        value="查看回滚SQL"/>
             </form>
+            <form action="/rollback/" method="get" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
+                <input type="hidden" name="download" value="true">
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-info"
+                       value="下载回滚SQL"/>
+            </form>
         {% endif %}
     {% endif %}
     <!--重新修改按钮-->
@@ -368,7 +375,7 @@
             autoUpdateInput: false,
             opens: "left",
             drops: "down",
-            minDate:  moment().startOf('minutes'),
+            minDate: moment().startOf('minutes'),
             startDate: moment().startOf('hour'),
             endDate: moment().startOf('hour'),
             locale: {
