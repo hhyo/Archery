@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: hhyo/archery
-  tag: 1.7.0
+  tag: 1.7.2
   pullPolicy: IfNotPresent
 
 nameOverride: ""
