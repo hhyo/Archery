@@ -9,3 +9,6 @@ archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
 venv
+env
+sonar-project.properties
+.scannerwork
