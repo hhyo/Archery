@@ -1,9 +1,12 @@
 FROM python:3.7.5
 
 RUN mkdir /opt/archery
+
 WORKDIR /opt/archery
-COPY requirements.txt /opt/archery/
-RUN pip install -r requirements.txt
-RUN python manage.py compilemessages
+
 COPY . /opt/archery/
+
+RUN pip install -r requirements.txt \
+    && python manage.py compilemessages
+
 CMD ["python", "manage.py", "qcluster"]

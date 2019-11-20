@@ -1,14 +1,11 @@
-FROM hhyo/archery:base
+FROM hhyo/archery:base-v1.0
+
+COPY . /opt/archery/
 
 WORKDIR /opt/archery
 
-COPY ../.. /opt/archery/
-
 #archery
-RUN cd /opt \
-    && yum -y install openldap-devel gettext nginx \
-    && source /opt/venv4archery/bin/activate \
-    && cd /opt/archery \
+RUN source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \

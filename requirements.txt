@@ -3,6 +3,7 @@ mysqlclient==1.3.13
 pymysql==0.9.3
 requests==2.21.0
 simplejson==3.16.0
+mo-future==2.48.19205
 moz_sql_parser==2.44.19084
 mybatis_mapper2sql==0.1.9
 django-auth-ldap==2.0.0

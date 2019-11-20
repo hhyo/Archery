@@ -10,7 +10,7 @@ ENV LC_ALL zh_CN.utf8
 WORKDIR /opt
 
 #python
-RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
+RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel libffi-devel \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
@@ -53,9 +53,9 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel\
     && virtualenv venv4schemasync  --python=python2 \
     && source venv4schemasync/bin/activate \
     && yum install -y python-devel \
-    && pip install schema-sync mysql-python
+    && pip install schema-sync mysql-python \
 #soar
-RUN cd /opt \
+    && cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \
     && chmod a+x soar \
 #binlog2sql
@@ -69,5 +69,6 @@ RUN cd /opt \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 \
     && yum -y install unixODBC-devel \
 #oracle instantclient
-    && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm
+    && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
+    && yum -y install openldap-devel gettext nginx
 
