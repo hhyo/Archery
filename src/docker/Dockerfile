@@ -1,4 +1,4 @@
-FROM hhyo/archery-base:1.71
+FROM hhyo/archery-base:v1.0
 
 WORKDIR /opt/archery
 
