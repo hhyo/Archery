@@ -4,13 +4,20 @@ ENV PYTHON_VERSION 3.7.5
 ENV DOCKERIZE_VERSION v0.6.1
 ENV SOAR_VERSION 0.11.0
 
+ENV TZ=Asia/Shanghai
 ENV LANG en_US.UTF-8
-ENV LC_ALL zh_CN.utf8
 
 WORKDIR /opt
 
+#locale
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && yum -y install kde-l10n-Chinese \
+    && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
+
+ENV LC_ALL zh_CN.utf8
+
 #python
-RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext nginx \
+RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext nginx \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
@@ -25,17 +32,13 @@ RUN yum -y install wget gcc make zlib-devel openssl openssl-devel ncurses-devel 
     && virtualenv venv4archery --python=python3 \
     && rm -rf Python-$PYTHON_VERSION \
     && rm -rf Python-$PYTHON_VERSION.tar.xz \
-#locale
-    && rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && yum -y install kde-l10n-Chinese \
-    && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8 \
 #dockerize
     && wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
 #sqladvisor
     && yum -y install epel-release \
-    && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel libffi-devel glib2 glib2-devel \
+    && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel  glib2 glib2-devel \
     && yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm \
     && yum -y install Percona-Server-devel-56 Percona-Server-shared-56  Percona-Server-client-56 \
     && cd /opt \
