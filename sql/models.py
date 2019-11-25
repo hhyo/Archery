@@ -593,7 +593,7 @@ class Permission(models.Model):
             ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
-            ('menu_menu_tools', '菜单 工具插件'),
+            ('menu_tools', '菜单 工具插件'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
