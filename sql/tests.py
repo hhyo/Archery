@@ -1034,6 +1034,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -1061,6 +1062,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -1271,6 +1273,7 @@ class TestWorkflowView(TestCase):
             'group_name': self.resource_group1.group_name,
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
+            "demand_url": 'test_url',
             'db_name': 'some_db',
             'is_backup': True,
             'notify_users': ''
@@ -1305,6 +1308,7 @@ class TestWorkflowView(TestCase):
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
             'db_name': 'some_db',
+            "demand_url": 'test_url',
             'is_backup': False,
             'notify_users': ''
         }

@@ -134,6 +134,7 @@ def submit(request):
     """正式提交SQL, 此处生成工单"""
     sql_content = request.POST.get('sql_content').strip()
     workflow_title = request.POST.get('workflow_name')
+    demand_url = request.POST.get('demand_url')
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
@@ -146,7 +147,7 @@ def submit(request):
     run_date_end = request.POST.get('run_date_end')
 
     # 服务器端参数验证
-    if None in [sql_content, db_name, instance_name, db_name, is_backup]:
+    if None in [sql_content, db_name, instance_name, db_name, is_backup, demand_url]:
         context = {'errMsg': '页面提交参数可能为空'}
         return render(request, 'error.html', context)
 
@@ -185,6 +186,7 @@ def submit(request):
             # 存进数据库里
             sql_workflow = SqlWorkflow.objects.create(
                 workflow_name=workflow_title,
+                demand_url=demand_url,
                 group_id=group_id,
                 group_name=group_name,
                 engineer=request.user.username,
