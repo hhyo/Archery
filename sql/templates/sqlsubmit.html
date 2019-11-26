@@ -32,6 +32,11 @@
                                        required>
                             </div>
                             <div class="form-group">
+                                <input id="demand_url" type="text" autocomplete="off" name="demand_url" class="form-control"
+                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
+                                       placeholder="请输入需求链接" required>
+                            </div>
+                            <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
@@ -656,12 +661,15 @@
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
