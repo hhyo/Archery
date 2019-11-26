@@ -5,11 +5,13 @@ import traceback
 import MySQLdb
 import simplejson as json
 import sqlparse
+import asyncio
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from sql.utils.async_tasks import async_tasks
 
 logger = logging.getLogger('default')
 
@@ -97,6 +99,19 @@ class InceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        db_names = []
+        if workflow.db_name: db_names.append(workflow.db_name)
+
+        # 全局变量保存执行结果
+        global execute_res
+        execute_res = {}
+
+        # 异步执行
+        asyncio.run(async_tasks(self.execute_sql, db_names, instance, workflow))
+
+        return json.loads(json.dumps(execute_res))
+
+    async def execute_sql(self, db_name, instance, workflow):
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--enable-remote-backup"
@@ -109,7 +124,7 @@ class InceptionEngine(EngineBase):
                          use `{workflow.db_name}`;
                          {workflow.sqlworkflowcontent.sql_content}
                          inception_magic_commit;"""
-        split_result = self.query(sql=sql_split)
+        split_result = self.query(db_name=db_name, sql=sql_split)
 
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
@@ -119,7 +134,7 @@ class InceptionEngine(EngineBase):
                                 inception_magic_start;
                                 {sql_tmp}
                                 inception_magic_commit;"""
-            one_line_execute_result = self.query(sql=sql_execute, close_conn=False)
+            one_line_execute_result = self.query(db_name=db_name, sql=sql_execute, close_conn=False)
 
             # 执行报错，inception crash或者执行中连接异常的场景
             if one_line_execute_result.error and not one_line_execute_result.rows:
@@ -130,7 +145,6 @@ class InceptionEngine(EngineBase):
                     stagestatus='异常终止',
                     errormessage=f'Inception Error: {one_line_execute_result.error}',
                     sql=sql_tmp)]
-                return execute_result
 
             # 把结果转换为ReviewSet
             for r in one_line_execute_result.rows:
@@ -141,7 +155,8 @@ class InceptionEngine(EngineBase):
             if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
                 execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
                 break
-        return execute_result
+        # 执行结果写入全局变量
+        execute_res[db_name] = execute_result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """

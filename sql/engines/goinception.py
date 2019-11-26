@@ -3,11 +3,13 @@ import logging
 import re
 import traceback
 import MySQLdb
+import asyncio
 
 from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from sql.utils.async_tasks import async_tasks
 
 logger = logging.getLogger('default')
 
@@ -58,6 +60,20 @@ class GoInceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        db_names = []
+        if workflow.db_name:
+            db_names.append(workflow.db_name)
+
+        global execute_result
+
+        # 异步执行
+        asyncio.run(async_tasks(self.execute_sql, db_names, instance, workflow))
+        logger.info("Debug execute result in goinception execute func {0}".format(execute_result))
+        return execute_result
+
+    async def execute_sql(self, db_name, instance, workflow):
+        # 结果写入全局变量
+        global execute_result
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--backup=1"
@@ -67,7 +83,7 @@ class GoInceptionEngine(EngineBase):
         # 提交inception执行
         sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
                             inception_magic_start;
-                            use `{workflow.db_name}`;
+                            use `{db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)

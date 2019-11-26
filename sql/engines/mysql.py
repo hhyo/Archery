@@ -6,6 +6,7 @@ import re
 import sqlparse
 from MySQLdb.connections import numeric_part
 from MySQLdb.constants import FIELD_TYPE
+import asyncio
 
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
@@ -14,6 +15,7 @@ from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
+from sql.utils.async_tasks import async_tasks
 
 logger = logging.getLogger('default')
 
@@ -259,6 +261,7 @@ class MysqlEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
+        global result
         # 判断实例是否只读
         read_only = self.query(sql='select @@read_only;').rows[0][0]
         if read_only:
@@ -272,7 +275,12 @@ class MysqlEngine(EngineBase):
             return result
         # 原生执行
         if workflow.is_manual == 1:
-            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+            db_names = []
+            db_names.append(workflow.sqlworkflowcontent.db_name)
+
+            # 异步执行
+            asyncio.run(async_tasks(self.execute, db_names, workflow.sqlworkflowcontent.sql_content, True))
+            return result
         # inception执行
         elif not SysConfig().get('inception'):
             inception_engine = GoInceptionEngine()
@@ -281,8 +289,10 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql='', close_conn=True):
+    async def execute(self, db_name=None, sql='', close_conn=False):
         """原生执行语句"""
+        # 执行结果写入全局变量
+        global result
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         try:
@@ -296,7 +306,6 @@ class MysqlEngine(EngineBase):
             result.error = str(e)
         if close_conn:
             self.close()
-        return result
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""

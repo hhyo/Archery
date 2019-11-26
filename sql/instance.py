@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import os
 import time
+import asyncio
+import logging
 
 import simplejson as json
 from django.conf import settings
@@ -13,6 +15,10 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
 from .models import Instance, ParamTemplate, ParamHistory
+from sql.utils.async_tasks import async_tasks
+
+
+logger = logging.getLogger('default')
 
 
 @permission_required('sql.menu_instance_list', raise_exception=True)
@@ -263,8 +269,11 @@ def instance_resource(request):
     db_name = request.GET.get('db_name')
     schema_name = request.GET.get('schema_name')
     tb_name = request.GET.get('tb_name')
-
     resource_type = request.GET.get('resource_type')
+
+    # 返回结果
+    global result
+
     if instance_id:
         instance = Instance.objects.get(id=instance_id)
     else:
@@ -273,7 +282,29 @@ def instance_resource(request):
         except Instance.DoesNotExist:
             result = {'status': 1, 'msg': '实例不存在', 'data': []}
             return HttpResponse(json.dumps(result), content_type='application/json')
+
     result = {'status': 0, 'msg': 'ok', 'data': []}
+
+    db_names = []
+    if db_name: db_names.append(db_name)
+
+    # 多线程提交工单
+    if db_names:
+        # 异步执行
+        asyncio.run(async_tasks(sql_order, db_names, instance, schema_name, tb_name, resource_type))
+    else:
+        logger.debug(resource_type)
+        asyncio.run(sql_order('', instance, schema_name, tb_name, resource_type))
+
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+async def sql_order(db_name, instance, schema_name, tb_name, resource_type):
+    """提交SQL工单"""
+
+    # 结果写入全局变量
+    global result
+    result = {"status": 0, "msg": "ok", "data": []}
 
     try:
         query_engine = get_engine(instance=instance)
@@ -302,7 +333,6 @@ def instance_resource(request):
             result['msg'] = resource.error
         else:
             result['data'] = resource.rows
-    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 def describe(request):

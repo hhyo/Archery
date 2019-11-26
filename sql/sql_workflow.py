@@ -2,6 +2,7 @@
 import datetime
 import logging
 import traceback
+import asyncio
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -24,6 +25,7 @@ from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_cor
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
+from sql.utils.async_tasks import async_tasks
 
 from sql.engines import get_engine
 
@@ -105,7 +107,10 @@ def check(request):
     instance_name = request.POST.get('instance_name')
     instance = Instance.objects.get(instance_name=instance_name)
     db_name = request.POST.get('db_name')
+    db_names = []
+    if db_name: db_names.append(db_name)
 
+    global result
     result = {'status': 0, 'msg': 'ok', 'data': {}}
     # 服务器端参数验证
     if sql_content is None or instance_name is None or db_name is None:
@@ -113,7 +118,19 @@ def check(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
+    # 异步执行
+    asyncio.run(async_tasks(sql_check, db_names, instance, sql_content))
+
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+async def sql_check(db_name, instance, sql_content):
+    """SQL检测"""
     # 交给engine进行检测
+
+    # 检测结果写入全局变量
+    global result
+
     try:
         check_engine = get_engine(instance=instance)
         check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
