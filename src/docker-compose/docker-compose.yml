@@ -51,6 +51,7 @@ services:
       - "./archery/soar.yaml:/etc/soar.yaml"
       - "./archery/docs.md:/opt/archery/docs/docs.md"
       - "./archery/downloads:/opt/archery/downloads"
+      - "./archery/sql/migrations:/opt/archery/sql/migrations"
     entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
     environment:
       NGINX_PORT: 9123
