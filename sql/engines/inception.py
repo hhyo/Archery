@@ -12,24 +12,23 @@ from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.async_tasks import async_tasks
+from sql.utils.sql_conn import setup_conn, shutdown_conn
 
 logger = logging.getLogger('default')
 
 
 class InceptionEngine(EngineBase):
     def get_connection(self, db_name=None):
-        if self.conn:
-            return self.conn
+        if self.pool:
+            return self.pool
         if hasattr(self, 'instance'):
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4',
-                                        connect_timeout=10)
-            return self.conn
-        archer_config = SysConfig()
-        inception_host = archer_config.get('inception_host')
-        inception_port = int(archer_config.get('inception_port', 6669))
-        self.conn = MySQLdb.connect(host=inception_host, port=inception_port, charset='utf8mb4',
-                                    connect_timeout=10)
-        return self.conn
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name, charset=self.instance.charset or 'utf8mb4')
+        else:
+            archer_config = SysConfig()
+            inception_host = archer_config.get('inception_host')
+            inception_port = int(archer_config.get('inception_port', 6669))
+            self.pool = setup_conn(inception_host, inception_port)
+        return self.pool
 
     @staticmethod
     def get_backup_connection():
@@ -161,7 +160,8 @@ class InceptionEngine(EngineBase):
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
-        conn = self.get_connection()
+        pool = self.get_connection(db_name=db_name)
+        conn = pool.connection()
         try:
             cursor = conn.cursor()
             effect_row = cursor.execute(sql)
@@ -177,8 +177,11 @@ class InceptionEngine(EngineBase):
         except Exception as e:
             logger.warning(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
+        else:
+            cursor.close()
+            conn.close()
         if close_conn:
-            self.close()
+            self.close(pool=pool)
         return result_set
 
     def query_print(self, instance, db_name=None, sql=''):
@@ -278,10 +281,10 @@ class InceptionEngine(EngineBase):
             raise ValueError('pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！')
         return self.query(sql=sql)
 
-    def close(self):
-        if self.conn:
-            self.conn.close()
-            self.conn = None
+    def close(self, pool=None):
+        pool = pool if pool else self.pool
+        if pool:
+            shutdown_conn(pool=pool)
 
 
 def _repair_json_str(json_str):

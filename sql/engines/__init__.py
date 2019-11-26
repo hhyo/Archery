@@ -6,7 +6,9 @@ class EngineBase:
     """enginebase 只定义了init函数和若干方法的名字, 具体实现用mysql.py pg.py等实现"""
 
     def __init__(self, instance=None):
+        self.pool = None
         self.conn = None
+        self.cursor = None
         self.thread_id = None
         if instance:
             self.instance = instance

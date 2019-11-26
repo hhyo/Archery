@@ -16,6 +16,7 @@ from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
 from sql.utils.async_tasks import async_tasks
+from sql.utils.sql_conn import setup_conn, shutdown_conn
 
 logger = logging.getLogger('default')
 
@@ -26,21 +27,14 @@ class MysqlEngine(EngineBase):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
         conversions = MySQLdb.converters.conversions
         conversions[FIELD_TYPE.BIT] = lambda data: data == b'\x01'
-        if self.conn:
-            self.thread_id = self.conn.thread_id()
-            return self.conn
+        if self.pool: return self.pool
         if db_name:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        db=db_name, charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
-                                        connect_timeout=10)
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password, database=db_name,
+                                   charset='utf8mb4', conv=conversions)
         else:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
-                                        connect_timeout=10)
-        self.thread_id = self.conn.thread_id()
-        return self.conn
+            self.pool = setup_conn(self.host, self.port, user=self.user, password=self.password,
+                                   charset='utf8mb4', conv=conversions)
+        return self.pool
 
     @property
     def name(self):
@@ -118,7 +112,9 @@ class MysqlEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         cursorclass = kwargs.get('cursorclass') or MySQLdb.cursors.Cursor
         try:
-            conn = self.get_connection(db_name=db_name)
+            # 连接池获取连接
+            pool = self.get_connection(db_name=db_name)
+            conn = pool.connection()
             cursor = conn.cursor(cursorclass)
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
@@ -126,6 +122,8 @@ class MysqlEngine(EngineBase):
             else:
                 rows = cursor.fetchall()
             fields = cursor.description
+            cursor.close()
+            conn.close()
 
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = rows
@@ -133,9 +131,9 @@ class MysqlEngine(EngineBase):
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
-        finally:
+        else:
             if close_conn:
-                self.close()
+                self.close(pool=pool)
         return result_set
 
     def query_check(self, db_name=None, sql=''):
@@ -294,18 +292,20 @@ class MysqlEngine(EngineBase):
         # 执行结果写入全局变量
         global result
         result = ResultSet(full_sql=sql)
-        conn = self.get_connection(db_name=db_name)
+        pool = self.get_connection(db_name=db_name)
+        conn = pool.connection()
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
                 cursor.execute(statement)
             conn.commit()
             cursor.close()
+            conn.close()
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
         if close_conn:
-            self.close()
+            self.close(pool=self.pool)
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
@@ -338,7 +338,7 @@ class MysqlEngine(EngineBase):
             inception_engine = InceptionEngine()
             return inception_engine.osc_control(**kwargs)
 
-    def close(self):
-        if self.conn:
-            self.conn.close()
-            self.conn = None
+    def close(self, pool=None):
+        pool = pool if pool else self.pool
+        if pool:
+            shutdown_conn(pool=pool)
