@@ -176,6 +176,7 @@ class SqlWorkflow(models.Model):
     存放各个SQL上线工单的基础内容
     """
     workflow_name = models.CharField('工单内容', max_length=50)
+    demand_url = models.CharField('需求链接', max_length=200)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
