@@ -23,7 +23,7 @@ def _(o):
 
 @convert.register(timedelta)
 def _(o):
-    return o.total_seconds()
+    return o.__str__()
 
 
 @convert.register(Decimal)
