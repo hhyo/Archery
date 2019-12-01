@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+from django_redis import get_redis_connection
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
@@ -68,6 +69,12 @@ def execute_callback(task):
                   operator='',
                   operator_display='系统'
                   )
+
+    # DDL工单结束后清空实例资源缓存
+    if workflow.syntax_type == 1:
+        r = get_redis_connection("default")
+        for key in r.scan_iter(match='*insRes*', count=2000):
+            r.delete(key)
 
     # 发送消息
     notify_for_execute(workflow)

@@ -251,7 +251,7 @@ def schemasync(request):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
-@cache_page(60 * 5)
+@cache_page(60 * 5, key_prefix="insRes")
 def instance_resource(request):
     """
     获取实例内的资源信息，database、schema、table、column
