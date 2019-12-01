@@ -204,7 +204,7 @@ LOGGING = {
         'default': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'downloads/log/archery.log',
+            'filename': 'logs/archery.log',
             'maxBytes': 1024 * 1024 * 100,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',

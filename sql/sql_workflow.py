@@ -215,6 +215,7 @@ def submit(request):
     except Exception as msg:
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
         context = {'errMsg': msg}
+        logger.error(traceback.format_exc())
         return render(request, 'error.html', context)
     else:
         # 自动审核通过才进行消息通知

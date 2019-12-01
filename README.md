@@ -66,7 +66,7 @@ docker restart archery
 
 #日志查看和问题排查
 docker logs archery -f --tail=10
-/downloads/log/archery.log
+logs/archery.log
 ```
 
 #### 访问
