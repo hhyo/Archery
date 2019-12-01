@@ -153,6 +153,12 @@ class MysqlEngine(EngineBase):
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
+        # select语句先使用Explain判断语法是否正确
+        if re.match(r"^select", sql, re.I):
+            explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
+            if explain_result.error:
+                result['bad_query'] = True
+                result['msg'] = explain_result.error
         return result
 
     def filter_sql(self, sql='', limit_num=0):
