@@ -65,7 +65,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
     # 仅MySQL做表权限校验
     if instance.db_type == 'mysql':
         try:
-            table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
+            table_ref = _table_ref(sql_content, instance, db_name)
             # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限
             for table in table_ref:
                 # 既无库权限也无表权限则鉴权失败
@@ -80,7 +80,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
                 limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
             result['data']['limit_num'] = limit_num
         except Exception as msg:
-            logger.error(traceback.format_exc())
+            logger.error(f"无法校验查询语句权限，{instance.instance_name}，{sql_content}，{traceback.format_exc()}")
             result['status'] = 1
             result['msg'] = f"无法校验查询语句权限，请联系管理员，错误信息：{msg}"
     # 其他类型实例仅校验库权限

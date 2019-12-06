@@ -65,7 +65,7 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
-        sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
+        sql_execute = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
@@ -121,10 +121,10 @@ class GoInceptionEngine(EngineBase):
         """
         打印语法树。
         """
-        sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--enable-query-print;*/
+        sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
-                          {sql}
+                          {sql.rstrip(';')};
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[1]
         if print_info.get('errmsg'):
