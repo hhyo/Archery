@@ -211,7 +211,15 @@ LOGGING = {
         'default': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'downloads/log/archery.log',
+            'filename': 'logs/archery.log',
+            'maxBytes': 1024 * 1024 * 100,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'django-q': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'logs/qcluster.log',
             'maxBytes': 1024 * 1024 * 100,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
@@ -228,7 +236,7 @@ LOGGING = {
             'level': 'DEBUG'
         },
         'django-q': {  # django_q模块相关日志
-            'handlers': ['console', 'default'],
+            'handlers': ['console', 'django-q'],
             'level': 'DEBUG',
             'propagate': False
         },
@@ -242,10 +250,10 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': False
         # },
-        'django.request': {  # 打印请求错误堆栈信息，方便开发
-            'handlers': ['console', 'default'],
-            'level': 'DEBUG',
-            'propagate': False
-        },
+        # 'django.request': {  # 打印请求错误堆栈信息，方便开发
+        #     'handlers': ['console', 'default'],
+        #     'level': 'DEBUG',
+        #     'propagate': False
+        # },
     }
 }

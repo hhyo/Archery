@@ -11,7 +11,7 @@ profiling: false
 trace: false
 # 日志级别，[0:Emergency, 1:Alert, 2:Critical, 3:Error, 4:Warning, 5:Notice, 6:Informational, 7:Debug]
 log-level: 3
-log-output: /opt/archery/downloads/log/soar.log
+log-output: /opt/archery/logs/soar.log
 # 优化建议输出格式
 report-type: markdown
 ignore-rules:

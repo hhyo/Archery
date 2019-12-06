@@ -34,9 +34,9 @@ assignees: ''
 
 <!--请务必查看相关错误日志并贴出（这很关键），查看方式
 ```
-/downloads/log/archery.log
-/downloads/log/qcluster.log
-/downloads/log/soar.log
+/logs/archery.log
+/logs/qcluster.log
+/logs/soar.log
 docker logs archery -f --tail=10
 ```
 -->
