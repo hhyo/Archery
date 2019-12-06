@@ -35,7 +35,7 @@ def del_schedule(name):
     try:
         sql_schedule = Schedule.objects.get(name=name)
         Schedule.delete(sql_schedule)
-        logger.debug(f'删除task：{name}')
+        # logger.debug(f'删除task：{name}')
     except Schedule.DoesNotExist:
         pass
 
