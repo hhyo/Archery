@@ -220,7 +220,7 @@
         </form>
     {% endif %}
     <!--查看回滚按钮-->
-    {% if workflow_detail.is_backup %}
+    {% if is_can_rollback %}
         {% if  workflow_detail.status == 'workflow_finish' or  workflow_detail.status == 'workflow_exception' %}
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}

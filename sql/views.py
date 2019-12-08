@@ -7,6 +7,7 @@ from django.conf import settings
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, FileResponse
 from django.urls import reverse
@@ -21,7 +22,7 @@ from sql.utils.tasks import task_info
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
     QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog
 from sql.utils.workflow_audit import Audit
-from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
+from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
 from sql.utils.resource_group import user_groups
 
@@ -100,6 +101,8 @@ def submit_sql(request):
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    if not can_view(request.user, workflow_id):
+        raise PermissionDenied
     if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
         rows = workflow_detail.sqlworkflowcontent.execute_result
     else:
@@ -117,6 +120,8 @@ def detail(request, workflow_id):
         is_can_timingtask = can_timingtask(request.user, workflow_id)
         # 是否可取消
         is_can_cancel = can_cancel(request.user, workflow_id)
+        # 是否可查看回滚信息
+        is_can_rollback = can_rollback(request.user, workflow_id)
 
         # 获取审核日志
         try:
@@ -133,6 +138,7 @@ def detail(request, workflow_id):
         is_can_execute = False
         is_can_timingtask = False
         is_can_cancel = False
+        is_can_rollback = False
         last_operation_info = None
 
     # 获取定时执行任务信息
@@ -181,14 +187,16 @@ def detail(request, workflow_id):
 
     context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
-               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
-               'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
+               'is_can_cancel': is_can_cancel, 'is_can_rollback': is_can_rollback, 'audit_auth_group': audit_auth_group,
+               'manual': manual, 'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
     return render(request, 'detail.html', context)
 
 
 def rollback(request):
     """展示回滚的SQL页面"""
     workflow_id = request.GET.get('workflow_id')
+    if not can_rollback(request.user, workflow_id):
+        raise PermissionDenied
     download = request.GET.get('download')
     if workflow_id == '' or workflow_id is None:
         context = {'errMsg': 'workflow_id参数为空.'}
