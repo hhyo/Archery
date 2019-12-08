@@ -616,6 +616,7 @@ class Permission(models.Model):
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
+            ('trx_view', '查看事务信息'),
             ('trxandlocks_view', '查看锁信息'),
             ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),

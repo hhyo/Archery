@@ -133,6 +133,7 @@ urlpatterns = [
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
+    path('db_diagnostic/innodb_trx/', db_diagnostic.innodb_trx),
 
     path('4admin/sync_ding_user/', ding_api.sync_ding_user)
 ]
