@@ -4,7 +4,7 @@ cd /opt/archery
 
 echo 切换python运行环境
 source /opt/venv4archery/bin/activate
-pip install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
+#pip install -r requirements.txt -i https://mirrors.ustc.edu.cn/pypi/web/simple/
 
 echo 修改重定向端口
 if [[ -z $NGINX_PORT ]]; then
