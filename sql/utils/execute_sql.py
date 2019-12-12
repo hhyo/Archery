@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+from django.db import close_old_connections
 from django_redis import get_redis_connection
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
@@ -34,6 +35,7 @@ def execute_callback(task):
     使用django-q的hook, 传入参数为整个task
     task.result 是真正的结果
     """
+    close_old_connections()
     workflow_id = task.args[0]
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
