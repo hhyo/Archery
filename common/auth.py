@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
-from sql.utils.ding_api import get_ding_user_id
+from common.utils.ding_api import get_ding_user_id
 from sql.models import Users, ResourceGroup,ResourceGroup2User
 
 logger = logging.getLogger('default')

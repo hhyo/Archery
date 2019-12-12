@@ -9,7 +9,8 @@ import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
     resource_group, binlog, data_dictionary
-from sql.utils import tasks, ding_api
+from sql.utils import tasks
+from common.utils import ding_api
 
 urlpatterns = [
     path('', views.index),
