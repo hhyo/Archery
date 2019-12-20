@@ -67,7 +67,7 @@ class MysqlEngine(EngineBase):
             if m:
                 return int(m.group(1))
             return None
-
+        self.get_connection()
         version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
 
