@@ -4,7 +4,6 @@ import traceback
 import MySQLdb
 import re
 import sqlparse
-from MySQLdb.connections import numeric_part
 from MySQLdb.constants import FIELD_TYPE
 
 from sql.engines.goinception import GoInceptionEngine
@@ -55,12 +54,21 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status', close_conn=False)
-        return slave_status.rows[0][32] if slave_status.rows else None
+        slave_status = self.query(sql='show slave status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
+        return slave_status.rows[0].get('Seconds_Behind_Master') if slave_status.rows else None
 
     @property
     def server_version(self):
-        version = self.query(sql="select @@version").rows[0][0]
+        def numeric_part(s):
+            """Returns the leading numeric part of a string.
+            """
+            re_numeric_part = re.compile(r"^(\d+)")
+            m = re_numeric_part.match(s)
+            if m:
+                return int(m.group(1))
+            return None
+
+        version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
 
     def kill_connection(self, thread_id):
