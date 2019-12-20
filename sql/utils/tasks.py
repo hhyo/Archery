@@ -26,7 +26,7 @@ def add_kill_conn_schedule(name, run_date, instance_id, thread_id):
 def add_sync_ding_user_schedule():
     """添加钉钉同步用户定时任务"""
     del_schedule(name='同步钉钉用户ID')
-    schedule('sql.utils.ding_api.sync_ding_user_id',
+    schedule('common.utils.ding_api.sync_ding_user_id',
              name='同步钉钉用户ID', schedule_type='D', repeats=-1, timeout=-1)
 
 
