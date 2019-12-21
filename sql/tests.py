@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
@@ -636,7 +636,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
-class TestQuery(TestCase):
+class TestQuery(TransactionTestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
@@ -799,7 +799,7 @@ class TestQuery(TestCase):
         self.assertEqual(query_log.alias, '')
 
 
-class TestWorkflowView(TestCase):
+class TestWorkflowView(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
