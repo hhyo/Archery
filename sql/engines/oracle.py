@@ -121,7 +121,7 @@ class OracleEngine(EngineBase):
         # 查询语句的检查、注释去除、切分
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         keyword_warning = ''
-        star_patter = r"(^|,| )\*( |\(|$)"
+        star_patter = r"(^|,|\s)\*(\s|\(|$)"
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sqlparse.split(sql)[0]

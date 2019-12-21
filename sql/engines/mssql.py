@@ -78,7 +78,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
                            "reverse", "right", "soundex", "space", "str", "string_agg",
                            "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
-        star_patter = r"(^|,| )\*( |\(|$)"
+        star_patter = r"(^|,|\s)\*(\s|\(|$)"
         sql_whitelist = ['select', 'sp_helptext']
         # 根据白名单list拼接pattern语句
         whitelist_pattern = "^" + "|^".join(sql_whitelist)
@@ -107,7 +107,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             if re.search(pattern, sql_lower) is not None:
                 keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
                 result['bad_query'] = True
-        if result.get('bad_query'):
+        if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result
 
