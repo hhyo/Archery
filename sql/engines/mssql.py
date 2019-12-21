@@ -150,7 +150,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            filtered_result = brute_mask(resultset)
+            filtered_result = brute_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
             filtered_result = resultset
