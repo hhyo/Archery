@@ -58,13 +58,14 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             priv_limit = int(SysConfig().get('admin_query_limit', 5000))
             result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
             return result
-    # explain和show create跳过权限校验
-    if re.match(r"^explain|^show\s+create", sql_content, re.I):
-        return result
 
     # 仅MySQL做表权限校验
     if instance.db_type == 'mysql':
         try:
+            # explain和show create跳过权限校验
+            if re.match(r"^explain|^show\s+create", sql_content, re.I):
+                return result
+            # 其他权限校验
             table_ref = _table_ref(sql_content, instance, db_name)
             # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限
             for table in table_ref:

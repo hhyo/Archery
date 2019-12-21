@@ -92,7 +92,7 @@ class SqlTuning(object):
         for index, table_name in enumerate(self.__extract_tables()):
             object_statistics.append({
                 "structure": self.engine.query(
-                    db_name=self.db_name, sql=f"show create table {table_name};",
+                    db_name=self.db_name, sql=f"show create table `{table_name}`;",
                     close_conn=False).to_sep_dict(),
                 "table_info": self.engine.query(
                     sql=self.sql_table_info % (self.db_name, table_name),

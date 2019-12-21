@@ -115,7 +115,7 @@ class MysqlEngine(EngineBase):
 
     def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
-        sql = f"show create table {tb_name};"
+        sql = f"show create table `{tb_name}`;"
         result = self.query(db_name=db_name, sql=sql)
         return result
 
