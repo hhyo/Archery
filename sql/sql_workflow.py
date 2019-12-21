@@ -134,7 +134,7 @@ def submit(request):
     """正式提交SQL, 此处生成工单"""
     sql_content = request.POST.get('sql_content').strip()
     workflow_title = request.POST.get('workflow_name')
-    demand_url = request.POST.get('demand_url')
+    demand_url = request.POST.get('demand_url', '')
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
