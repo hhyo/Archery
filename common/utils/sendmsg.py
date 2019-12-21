@@ -104,11 +104,11 @@ class MsgSender(object):
             main_msg['Date'] = email.utils.formatdate()
 
             if self.MAIL_SSL:
-                server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # 默认SSL端口是465
+                server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT, timeout=3)
             else:
-                server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # 默认端口是25
+                server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT, timeout=3)
 
-            # 如果提供的密码为空，则不需要登录
+                # 如果提供的密码为空，则不需要登录
             if self.MAIL_REVIEW_FROM_PASSWORD:
                 server.login(self.MAIL_REVIEW_FROM_ADDR, self.MAIL_REVIEW_FROM_PASSWORD)
             server.sendmail(self.MAIL_REVIEW_FROM_ADDR, to + list_cc, main_msg.as_string())
@@ -139,11 +139,7 @@ class MsgSender(object):
         if r_json['errcode'] == 0:
             logger.debug(f'钉钉Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
         else:
-            logger.error("""钉钉Webhook推送失败
-错误码:{}
-返回错误信息:{}
-请求url:{}
-请求data:{}""".format(r_json['errcode'], r_json['errmsg'], url, data))
+            logger.error(f"钉钉Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
 
     def send_ding2user(self, userid_list, content):
         """

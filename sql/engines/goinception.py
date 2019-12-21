@@ -111,7 +111,7 @@ class GoInceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
+            logger.warning(f'goInception语句执行报错，错误信息{traceback.format_exc()}')
             result_set.error = str(e)
         if close_conn:
             self.close()
