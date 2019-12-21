@@ -223,7 +223,8 @@ def submit(request):
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60,
+                       task_name=f'sqlreview-submit-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -297,7 +298,8 @@ def passed(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                   task_name=f'sqlreview-pass-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -352,8 +354,8 @@ def execute(request):
                   )
     if mode == "auto":
         # 加入执行队列
-        async_task('sql.utils.execute_sql.execute', workflow_id,
-                   hook='sql.utils.execute_sql.execute_callback', timeout=-1)
+        async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
+                   timeout=-1, task_name=f'sqlreview-execute-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -382,10 +384,10 @@ def timing_task(request):
         return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
+    schedule_name = f"sqlreview-timing-{workflow_id}"
 
     if on_correct_time_period(workflow_id, run_date) is False:
-        context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
+        context = {'errMsg': '不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!'}
         return render(request, 'error.html', context)
 
     # 使用事务保持数据一致性
@@ -395,7 +397,7 @@ def timing_task(request):
             workflow_detail.status = 'workflow_timingtask'
             workflow_detail.save()
             # 调用添加定时任务
-            add_sql_schedule(task_name, run_date, workflow_id)
+            add_sql_schedule(schedule_name, run_date, workflow_id)
             # 增加工单日志
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type[
@@ -490,7 +492,8 @@ def cancel(request):
         audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
         if audit_detail.current_status == WorkflowDict.workflow_status['audit_abort']:
-            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
+                       task_name=f'sqlreview-cancel-{workflow_id}')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

@@ -259,7 +259,7 @@ def query_priv_apply(request):
         # 消息通知
         audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
                                                workflow_type=WorkflowDict.workflow_type['query']).audit_id
-        async_task(notify_for_audit, audit_id=audit_id, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, timeout=60, task_name=f'query-priv-apply-{apply_id}')
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -389,7 +389,8 @@ def query_priv_audit(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                   task_name=f'query-priv-audit-{apply_id}')
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 

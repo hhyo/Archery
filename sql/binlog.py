@@ -166,9 +166,10 @@ def binlog2sql(request):
         result['status'] = 1
         result['msg'] = str(e)
 
-    # 异步保存到文件，去除conn_options避免展示密码信息
+    # 异步保存到文件
     if save_sql:
-        async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql, timeout=-1)
+        async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql, timeout=-1,
+                   task_name=f'binlog2sql-{time.time()}')
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
