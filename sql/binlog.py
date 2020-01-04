@@ -168,6 +168,7 @@ def binlog2sql(request):
 
     # 异步保存到文件
     if save_sql:
+        args.pop('conn_options')
         async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql, timeout=-1,
                    task_name=f'binlog2sql-{time.time()}')
 
@@ -185,6 +186,8 @@ def binlog2sql_file(args, user):
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
+    conn_options = fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port}"
+    args['conn_options'] = conn_options
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
     os.makedirs(path, exist_ok=True)
