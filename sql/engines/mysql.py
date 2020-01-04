@@ -67,6 +67,7 @@ class MysqlEngine(EngineBase):
             if m:
                 return int(m.group(1))
             return None
+
         self.get_connection()
         version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
@@ -274,8 +275,8 @@ class MysqlEngine(EngineBase):
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
-        read_only = self.query(sql='select @@read_only;').rows[0][0]
-        if read_only:
+        read_only = self.query(sql='SELECT @@global.read_only;').rows[0][0]
+        if read_only in (1, 'ON'):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
                 rows=[ReviewResult(id=1, errlevel=2,
