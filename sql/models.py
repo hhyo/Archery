@@ -587,6 +587,7 @@ class Permission(models.Model):
             ('menu_sqloptimize', '菜单 SQL优化'),
             ('menu_sqladvisor', '菜单 优化工具'),
             ('menu_slowquery', '菜单 慢查日志'),
+            ('menu_sqlstats', '菜单 SQL统计'),
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),

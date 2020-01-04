@@ -146,6 +146,11 @@
                                         <a href="/slowquery/">慢查日志</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_sqlstats %}
+                                    <li>
+                                        <a href="/sqlstats/">SQL统计</a>
+                                    </li>
+                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>

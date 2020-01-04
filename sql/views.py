@@ -307,6 +307,12 @@ def slowquery(request):
     return render(request, 'slowquery.html')
 
 
+@permission_required('sql.menu_sqlstats', raise_exception=True)
+def sqlstats(request):
+    """SQL统计页面"""
+    return render(request, 'sqlstats.html')
+
+
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
     """实例管理页面"""
