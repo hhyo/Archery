@@ -32,6 +32,11 @@
                                        required>
                             </div>
                             <div class="form-group">
+                                <input id="demand_url" type="text" autocomplete="off" name="demand_url" class="form-control"
+                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
+                                       placeholder="请输入需求链接">
+                            </div>
+                            <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
@@ -89,7 +94,8 @@
                                        class="form-control "/>
                             </div>
                             <!--增加通知人-->
-                            <div class="form-group">
+                            <!--TODO 通知人落库，允许查看工单详细-->
+                            <div class="form-group" style="display: none">
                                 <select id="cc_users" name="cc_users"
                                         class="selectpicker show-tick form-control bs-select-hidden "
                                         multiple="multiple"
@@ -157,7 +163,7 @@
     </div>
 {% endblock content %}
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
@@ -645,9 +651,6 @@
         $(document).ready(function () {
             // 初始化上传控件
             init_upload();
-            // 提示信息
-            //editor.setValue("-- 请在此提交SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n");
-            //editor.focus();  //获取焦点
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
             $("#btn-submitsql").prop('disabled', true);
@@ -656,12 +659,15 @@
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();

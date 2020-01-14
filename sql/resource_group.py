@@ -25,7 +25,7 @@ def group(request):
     search = request.POST.get('search', '')
 
     # 过滤搜索条件
-    group_obj = ResourceGroup.objects.filter(group_name__icontains=search)
+    group_obj = ResourceGroup.objects.filter(group_name__icontains=search, is_deleted=0)
     group_count = group_obj.count()
     group_list = group_obj[offset:limit].values("group_id", "group_name", "ding_webhook")
 

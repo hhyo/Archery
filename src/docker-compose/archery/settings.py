@@ -204,7 +204,7 @@ LOGGING = {
         'default': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'downloads/log/archery.log',
+            'filename': 'logs/archery.log',
             'maxBytes': 1024 * 1024 * 100,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
@@ -218,16 +218,16 @@ LOGGING = {
     'loggers': {
         'default': {  # default日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG'
+            'level': 'WARNING'
         },
         'django-q': {  # django_q模块相关日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False
         },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False
         },
         # 'django.db': {  # 打印SQL语句，方便开发
@@ -235,10 +235,10 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': False
         # },
-        'django.request': {  # 打印请求错误堆栈信息，方便开发
-            'handlers': ['console', 'default'],
-            'level': 'DEBUG',
-            'propagate': False
-        },
+        # 'django.request': {  # 打印请求错误堆栈信息，方便开发
+        #     'handlers': ['console', 'default'],
+        #     'level': 'DEBUG',
+        #     'propagate': False
+        # },
     }
 }

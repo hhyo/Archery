@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: hhyo/archery
-  tag: 1.7.2
+  tag: 1.7.4
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -339,7 +339,7 @@ configMap:
                 'default': {
                     'level': 'DEBUG',
                     'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': 'downloads/log/archery.log',
+                    'filename': 'logs/archery.log',
                     'maxBytes': 1024 * 1024 * 100,  # 5 MB
                     'backupCount': 5,
                     'formatter': 'verbose',
@@ -391,7 +391,7 @@ configMap:
         trace: false
         # 日志级别，[0:Emergency, 1:Alert, 2:Critical, 3:Error, 4:Warning, 5:Notice, 6:Informational, 7:Debug]
         log-level: 3
-        log-output: /opt/archery/downloads/log/soar.log
+        log-output: /opt/archery/logs/soar.log
         # 优化建议输出格式
         report-type: markdown
         ignore-rules:

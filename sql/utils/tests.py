@@ -1259,7 +1259,7 @@ class TestDataMasking(TestCase):
         sql = """select * from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
-        r = brute_mask(query_result)
+        r = brute_mask(self.ins, query_result)
         mask_result_rows = [('188****8888',), ('188****8889',), ('188****8810',)]
         self.assertEqual(r.rows, mask_result_rows)
 

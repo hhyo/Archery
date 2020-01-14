@@ -56,7 +56,7 @@
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <button id='check_goincption' class='btn-sm btn-info'>测试goInception连接</button>&nbsp;
                         <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
-                        <h6 style="color:red">注：默认使用goInception进行MySQL的审核和执行，Inception作为查询表权限校验和脱敏解析工具使用</h6>
+                        <h6 style="color:red">注：默认使用goInception进行MySQL的审核执行，Inception作为脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -278,9 +278,23 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启Inception检测和脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="data_masking"
+                                       class="col-sm-4 control-label">DATA_MASKING</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="data_masking"
+                                                   key="data_masking"
+                                                   value="{{ config.data_masking }}" type="checkbox">
+                                            是否开启动态脱敏
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="query_check"
                                        class="col-sm-4 control-label">QUERY_CHECK</label>
@@ -290,7 +304,7 @@
                                             <input id="query_check"
                                                    key="query_check"
                                                    value="{{ config.query_check }}" type="checkbox">
-                                            是否开启Inception检测(表权限和脱敏校验)
+                                            是否开启脱敏校验(无法脱敏的语句会抛错)
                                         </label>
                                     </div>
                                 </div>
@@ -305,20 +319,6 @@
                                                    key="disable_star"
                                                    value="{{ config.disable_star }}" type="checkbox">
                                             禁止在查询时使用 *
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="data_masking"
-                                       class="col-sm-4 control-label">DATA_MASKING</label>
-                                <div class="col-sm-8">
-                                    <div class="switch switch-small">
-                                        <label>
-                                            <input id="data_masking"
-                                                   key="data_masking"
-                                                   value="{{ config.data_masking }}" type="checkbox">
-                                            是否开启动态脱敏
                                         </label>
                                     </div>
                                 </div>
@@ -790,7 +790,7 @@
 {% endblock content %}
 
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>

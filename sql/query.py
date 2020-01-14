@@ -7,7 +7,7 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.db import connection, OperationalError
+from django.db import connection, close_old_connections
 from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
@@ -161,11 +161,9 @@ def query(request):
                 masking=query_result.is_masked
             )
             # 防止查询超时
-            try:
-                query_log.save()
-            except OperationalError:
-                connection.close()
-                query_log.save()
+            if connection.connection and not connection.is_usable():
+                close_old_connections()
+            query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1

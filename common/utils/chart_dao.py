@@ -8,18 +8,26 @@ class ChartDao(object):
     # 直接在Archery数据库查询数据，用于报表
     @staticmethod
     def __query(sql):
-        cursor = connection.cursor()
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        fields = cursor.description
-        column_list = []
-        if fields:
-            for i in fields:
-                column_list.append(i[0])
-        return {
-            'column_list': column_list,
-            'rows': rows
-        }
+        try:
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            fields = cursor.description
+            column_list = []
+            if fields:
+                for i in fields:
+                    column_list.append(i[0])
+            return {
+                'column_list': column_list,
+                'rows': rows,
+                'error': None
+            }
+        except Exception as error:
+            return {
+                'column_list': [],
+                'rows': [],
+                'error': error
+            }
 
     # 获取连续时间
     @staticmethod
@@ -147,4 +155,24 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
 from mysql_slow_query_review_history
 where checksum = '{checksum}'
 group by date(date_add(ts_min, interval 8 HOUR));"""
+        return self.__query(sql)
+
+    # 慢日志TOP SQL(近一周)
+    def slow_query_top(self, hostname_max, db_name, order):
+        if db_name:
+            sql = f"""select sample,db_max,sum(ts_cnt) cnt,ROUND(Query_time_pct_95, 6) query_time_pct_95
+from mysql_slow_query_review_history
+where ts_min > date_sub(date_sub(now(), interval 7 day), interval 8 HOUR)
+and hostname_max='{hostname_max}' and db_max='{db_name}'
+group by checksum
+order by sum({order}) desc
+limit 20;"""
+        else:
+            sql = f"""select sample,db_max,sum(ts_cnt) cnt,ROUND(Query_time_pct_95, 6) query_time_pct_95
+from mysql_slow_query_review_history
+where ts_min > date_sub(date_sub(now(), interval 7 day), interval 8 HOUR)
+and hostname_max='{hostname_max}'
+group by checksum
+order by sum({order}) desc
+limit 20;"""
         return self.__query(sql)

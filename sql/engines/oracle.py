@@ -121,7 +121,7 @@ class OracleEngine(EngineBase):
         # 查询语句的检查、注释去除、切分
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         keyword_warning = ''
-        star_patter = r"(^|,| )\*( |\(|$)"
+        star_patter = r"(^|,|\s)\*(\s|\(|$)"
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sqlparse.split(sql)[0]
@@ -170,7 +170,7 @@ class OracleEngine(EngineBase):
             if any(x[1] == cx_Oracle.CLOB for x in fields):
                 rows = [tuple([(c.read() if type(c) == cx_Oracle.LOB else c) for c in r]) for r in cursor]
                 if int(limit_num) > 0:
-                    rows =  rows[0:int(limit_num)]
+                    rows = rows[0:int(limit_num)]
             else:
                 if int(limit_num) > 0:
                     rows = cursor.fetchmany(int(limit_num))
@@ -193,7 +193,7 @@ class OracleEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            filtered_result = brute_mask(resultset)
+            filtered_result = brute_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
             filtered_result = resultset

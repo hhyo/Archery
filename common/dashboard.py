@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 
 from sql.models import SqlWorkflow, QueryPrivilegesApply, Users, Instance
 
@@ -15,7 +14,6 @@ from pyecharts.charts import Pie, Bar, Line
 CurrentConfig.ONLINE_HOST = '/static/echarts/'
 
 
-@cache_page(60 * 60)
 @permission_required('sql.menu_dashboard', raise_exception=True)
 def pyecharts(request):
     """dashboard view"""

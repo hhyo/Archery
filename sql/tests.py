@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
@@ -275,28 +275,25 @@ class TestQueryPrivilegesCheck(TestCase):
         r = sql.query_privileges._priv_limit(user=self.user, instance=self.slave, db_name=self.db_name, tb_name='test')
         self.assertEqual(r, 1)
 
-    @patch('sql.engines.inception.InceptionEngine.query_print')
+    @patch('sql.engines.goinception.GoInceptionEngine.query_print')
     def test_table_ref(self, _query_print):
         """
-        测试通过inception获取查询语句的table_ref
+        测试通过goInception获取查询语句的table_ref
         :return:
         """
-        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
-                                     'table_ref': [{'db': 'archery', 'table': 'sql_users'}],
-                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+        _query_print.return_value = {'id': 2, 'statement': 'select * from sql_users limit 100', 'errlevel': 0,
+                                     'query_tree': '{"text":"select * from sql_users limit 100","resultFields":null,"SQLCache":true,"CalcFoundRows":false,"StraightJoin":false,"Priority":0,"Distinct":false,"From":{"text":"","TableRefs":{"text":"","resultFields":null,"Left":{"text":"","Source":{"text":"","resultFields":null,"Schema":{"O":"","L":""},"Name":{"O":"sql_users","L":"sql_users"},"DBInfo":null,"TableInfo":null,"IndexHints":null},"AsName":{"O":"","L":""}},"Right":null,"Tp":0,"On":null,"Using":null,"NaturalJoin":false,"StraightJoin":false}},"Where":null,"Fields":{"text":"","Fields":[{"text":"","Offset":33,"WildCard":{"text":"","Table":{"O":"","L":""},"Schema":{"O":"","L":""}},"Expr":null,"AsName":{"O":"","L":""},"Auxiliary":false}]},"GroupBy":null,"Having":null,"OrderBy":null,"Limit":{"text":"","Count":{"text":"","k":2,"collation":0,"decimal":0,"length":0,"i":100,"b":null,"x":null,"Type":{"Tp":8,"Flag":160,"Flen":3,"Decimal":0,"Charset":"binary","Collate":"binary","Elems":null},"flag":0,"projectionOffset":-1},"Offset":null},"LockTp":0,"TableHints":null,"IsAfterUnionDistinct":false,"IsInBraces":false}',
+                                     'errmsg': None}
+        r = sql.query_privileges._table_ref('select * from sql_users limit 100;', self.slave, self.db_name)
+        self.assertListEqual(r, [{'schema': 'test_archery', 'name': 'sql_users'}])
 
-        r = sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
-        self.assertListEqual(r, [{'db': 'archery', 'table': 'sql_users'}])
-
-    @patch('sql.engines.inception.InceptionEngine.query_print')
+    @patch('sql.engines.goinception.GoInceptionEngine.query_print')
     def test_table_ref_wrong(self, _query_print):
         """
-        测试通过inception获取查询语句的table_ref
+        测试通过goInception获取查询语句的table_ref
         :return:
         """
-        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
-                                     'table_ref': [{'db': '', 'table': '*'}],
-                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+        _query_print.side_effect = RuntimeError('语法错误')
         with self.assertRaises(RuntimeError):
             sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
 
@@ -324,7 +321,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertTrue(r)
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_no_priv(self, __db_priv, __tb_priv, __table_ref):
@@ -336,10 +333,10 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'status': 1, 'msg': '你无test_archery.sql_users表的查询权限！请先到查询权限管理进行申请',
+        self.assertDictEqual(r, {'status': 1, 'msg': '你无archery.sql_users表的查询权限！请先到查询权限管理进行申请',
                                  'data': {'priv_check': True, 'limit_num': 0}})
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_db_priv_exist(self, __db_priv, __tb_priv, __table_ref):
@@ -353,7 +350,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=10)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_tb_priv_exist(self, __db_priv, __tb_priv, __table_ref):
@@ -367,75 +364,23 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
-    @patch('sql.query_privileges._table_ref', return_value=SyntaxError())
-    def test_query_priv_check_table_ref_SyntaxError(self, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
-        :return:
-        """
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'status': 1,
-                                 'msg': "你无archery数据库的查询权限！请先到查询权限管理进行申请",
-                                 'data': {'priv_check': True, 'limit_num': 0}})
-
     @patch('sql.query_privileges._table_ref')
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_table_ref_Exception_and_no_db_priv(self, __db_priv, __tb_priv, __table_ref):
         """
-        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
+        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常
         :return:
         """
-        __table_ref.side_effect = SyntaxError('语法错误')
-        self.sys_config.set('query_check', 'true')
+        __table_ref.side_effect = RuntimeError('语法错误')
         self.sys_config.get_all_config()
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
-                                 'msg': "SQL语法错误，语法错误",
+                                 'msg': "无法校验查询语句权限，请联系管理员，错误信息：语法错误",
                                  'data': {'priv_check': True, 'limit_num': 0}})
-
-    @patch('sql.query_privileges._table_ref')
-    @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=1000)
-    def test_query_priv_check_table_ref_Exception_and_open_query_check(self, __db_priv, __tb_priv, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check开启，有库权限
-        :return:
-        """
-        __table_ref.side_effect = RuntimeError('RuntimeError')
-        self.sys_config.set('query_check', 'true')
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'status': 1,
-                                 'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：RuntimeError",
-                                 'data': {'priv_check': True, 'limit_num': 100}})
-
-    @patch('sql.query_privileges._table_ref')
-    @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=1000)
-    def test_query_priv_check_table_ref_Exception_and_close_query_check(self, __db_priv, __tb_priv, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check关闭，有库权限
-        :return:
-        """
-        __table_ref.side_effect = RuntimeError()
-        self.sys_config.set('query_check', 'false')
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': False}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
@@ -691,7 +636,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
-class TestQuery(TestCase):
+class TestQuery(TransactionTestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
@@ -854,7 +799,7 @@ class TestQuery(TestCase):
         self.assertEqual(query_log.alias, '')
 
 
-class TestWorkflowView(TestCase):
+class TestWorkflowView(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -1034,6 +979,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -1061,6 +1007,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -1271,6 +1218,7 @@ class TestWorkflowView(TestCase):
             'group_name': self.resource_group1.group_name,
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
+            "demand_url": 'test_url',
             'db_name': 'some_db',
             'is_backup': True,
             'notify_users': ''
@@ -1305,6 +1253,7 @@ class TestWorkflowView(TestCase):
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
             'db_name': 'some_db',
+            "demand_url": 'test_url',
             'is_backup': False,
             'notify_users': ''
         }

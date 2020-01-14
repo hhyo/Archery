@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Nav tabs -->
+    <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
+        <li id="topsql_tab" class="active">
+            <a href="#topsql" role="tab" data-toggle="tab">TOP SQL</a>
+        </li>
+        <li id="topslowsql_tab">
+            <a href="#topslowsql" role="tab" data-toggle="tab">SLOW SQL</a>
+        </li>
+        <div class="form-inline pull-right">
+            <div class="form-group">
+                <select id=instance_name class="form-control selectpicker" name="instances"
+                        title="请选择实例:"
+                        data-live-search="true">
+                </select>
+            </div>
+            <div class="form-group">
+                <select id=db_name class="form-control selectpicker" name="db_name_list"
+                        title="请选择数据库:"
+                        data-live-search="true">
+                </select>
+            </div>
+            <select id="top_order" name="top_order"
+                    class="form-control height-xs selectpicker"
+                    title="类型"
+                    required>
+                <option value="" disabled>类型</option>
+                <option value="count" selected="selected">频次</option>
+                <option value="latency">效率</option>
+            </select>
+        </div>
+    </ul>
+    <!-- Tab panes -->
+    <div id="tab-content" class="tab-content">
+        <!-- TOP SQL -->
+        <div id="topsql" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <table id="top-sql-list" data-toggle="table" class="table table-hover table-condensed"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+        <!-- SLOW SQL -->
+        <div id="topslowsql" role="tabpanel" class="tab-pane fade table-responsive">
+            <table id="top-slow-sql-list" data-toggle="table" class="table table-hover table-condensed"
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            </table>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load static %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            //获取用户实例列表
+            $(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/group/user_all_instances/",
+                    dataType: "json",
+                    data: {
+                        type: 'master',
+                        db_type: ['mysql']
+                    },
+                    complete: function () {
+                        sessionStorage.setItem('topsql_active_li_id', 'topsql_tab');
+                        if ($('#instance_name').val()) {
+                            $('#instance_name').selectpicker().trigger("change");
+                        }
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            let result = data['data'];
+                            $("#instance_name").empty();
+                            for (let i = 0; i < result.length; i++) {
+                                let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
+                                $("#instance_name").append(instance_name);
+                            }
+                            $('#instance_name').selectpicker('render');
+                            $('#instance_name').selectpicker('refresh');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        });
+
+        //tab切换,保留当前激活的标签id
+        $(function () {
+            $("#nav-tabs").on('shown.bs.tab', "li", function (e) {
+                var active_li_id = $(e.target).parents().attr('id');
+                sessionStorage.setItem('topsql_active_li_id', active_li_id);
+                //刷新数据
+                flush_list()
+            });
+        });
+
+        //刷新数据
+        function flush_list() {
+            if ($("#instance_name").val()) {
+                let topsql_active_li_id = sessionStorage.getItem('topsql_active_li_id');
+                if (topsql_active_li_id === 'topsql_tab') {
+                    get_top_sql();
+                } else if (topsql_active_li_id === 'topslowsql_tab') {
+                    get_top_slow_sql();
+                }
+            }
+        }
+
+        //实例变动获取库
+        $("#instance_name").change(function () {
+            $('#db_name').empty();
+            $.ajax({
+                type: "get",
+                url: "/instance/instance_resource/",
+                dataType: "json",
+                data: {
+                    instance_name: $("#instance_name").val(),
+                    resource_type: "database"
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#db_name").prepend("<option value=\"\" selected=\"selected\">全部数据库</option>");
+                        for (var i = 0; i < result.length; i++) {
+                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                            $("#db_name").append(name);
+                        }
+                        $('#db_name').selectpicker('render');
+                        $('#db_name').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                },
+                complete: function () {
+                    //刷新数据
+                    flush_list()
+                }
+            });
+        });
+
+        //数据库变动获取统计信息
+        $("#db_name").change(function () {
+            //刷新数据
+            flush_list()
+        });
+
+        //统计类型变更
+        $("#top_order").change(function () {
+            //刷新数据
+            flush_list()
+        });
+
+
+        //获取TOP SQL
+        function get_top_sql() {
+            if ($("#instance_name").val()) {
+                $('#top-sql-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'get',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/sqlstats/top/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: false,                     //是否启用排序
+                    sortName: '',
+                    sortOrder: "desc",                   //排序方式
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 14,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    minimumCountColumns: 1,             //最少允许的列数
+                    clickToSelect: false,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'query') {
+                                let sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, "&nbsp;");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    },
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams: function (params) {
+                        return {
+                            instance_name: $("#instance_name").val(),
+                            db_name: $("#db_name").val(),
+                            order: $("#top_order").val(),
+                        }
+                    },
+                    columns: [{
+                        title: '语句',
+                        field: 'query',
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                return value.substr(0, 100) + '...';
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '完整语句',
+                        field: 'query',
+                        visible: false // 默认不显示
+                    }, {
+                        title: '数据库',
+                        field: 'db'
+                    }, {
+                        title: '执行次数',
+                        field: 'exec_count'
+                    }, {
+                        title: '平均等待时间',
+                        field: 'avg_timer_wait',
+                    }],
+                    onLoadSuccess: function (data) {
+                        if (data.status !== 0) {
+                            alert("数据加载失败！" + data.msg);
+                        }
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+
+        //获取TOP SLOW SQL图表
+        function get_top_slow_sql() {
+            if ($("#instance_name").val()) {
+                $('#top-slow-sql-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'get',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/sqlstats/topslow/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: false,                     //是否启用排序
+                    sortName: '',
+                    sortOrder: "desc",                   //排序方式
+                    sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 14,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    minimumCountColumns: 1,             //最少允许的列数
+                    clickToSelect: false,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                    showExport: true,
+                    exportDataType: "all",
+                    cardView: false,                    //是否显示详细视图
+                    detailView: true,                  //是否显示父子表
+                    //格式化详情
+                    detailFormatter: function (index, row) {
+                        var html = [];
+                        $.each(row, function (key, value) {
+                            if (key === 'sample') {
+                                let sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, "&nbsp;");
+                                html.push('<span>' + sql + '</span>');
+                            }
+                        });
+                        return html.join('');
+                    },
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams: function (params) {
+                        return {
+                            instance_name: $("#instance_name").val(),
+                            db_name: $("#db_name").val(),
+                            order: $("#top_order").val(),
+                        }
+                    },
+                    columns: [{
+                        title: '语句',
+                        field: 'sample',
+                        formatter: function (value, row, index) {
+                            if (value.length > 100) {
+                                return value.substr(0, 100) + '...';
+                            } else {
+                                return value
+                            }
+                        }
+                    }, {
+                        title: '完整语句',
+                        field: 'sample',
+                        visible: false // 默认不显示
+                    }, {
+                        title: '数据库',
+                        field: 'db_max'
+                    }, {
+                        title: '执行次数',
+                        field: 'cnt'
+                    }, {
+                        title: '执行时长95%(秒)',
+                        field: 'query_time_pct_95',
+                    }],
+                    onLoadSuccess: function (data) {
+                        if (data.status !== 0) {
+                            alert("数据加载失败！" + data.msg);
+                        }
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    },
+                    responseHandler: function (res) {
+                        //在ajax获取到数据，渲染表格之前，修改数据源
+                        return res;
+                    }
+                });
+            }
+        }
+    </script>
+{% endblock %}

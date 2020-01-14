@@ -22,7 +22,7 @@ from django_q.tasks import async_task
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.engines.inception import InceptionEngine
+from sql.engines.goinception import GoInceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
@@ -58,33 +58,35 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             priv_limit = int(SysConfig().get('admin_query_limit', 5000))
             result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
             return result
-    # explain和show create跳过权限校验
-    if re.match(r"^explain|^show\s+create", sql_content, re.I):
-        return result
-    # 其他尝试使用inception解析
-    try:
-        # 尝试使用Inception校验表权限
-        table_ref = _table_ref(f"{sql_content.rstrip(';')};", instance, db_name)
-        # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
-        for table in table_ref:
-            # 既无库权限也无表权限
-            if not _db_priv(user, instance, table['db']) and not _tb_priv(user, instance, db_name, table['table']):
-                result['status'] = 1
-                result['msg'] = f"你无{db_name}.{table['table']}表的查询权限！请先到查询权限管理进行申请"
+
+    # 仅MySQL做表权限校验
+    if instance.db_type == 'mysql':
+        try:
+            # explain和show create跳过权限校验
+            if re.match(r"^explain|^show\s+create", sql_content, re.I):
                 return result
-        # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
-        # 循环获取，可能存在性能问题，但一次查询涉及的库表数量有限，可忽略
-        for table in table_ref:
-            priv_limit = _priv_limit(user, instance, db_name=table['db'], tb_name=table['table'])
-            limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
-        result['data']['limit_num'] = limit_num
-    except SyntaxError as msg:
-        result['status'] = 1
-        result['msg'] = f"SQL语法错误，{msg}"
-        return result
-    except Exception as msg:
-        # 表权限校验失败再次校验库权限
-        # 先获取查询语句涉及的库
+            # 其他权限校验
+            table_ref = _table_ref(sql_content, instance, db_name)
+            # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限
+            for table in table_ref:
+                # 既无库权限也无表权限则鉴权失败
+                if not _db_priv(user, instance, table['schema']) and \
+                        not _tb_priv(user, instance, db_name, table['name']):
+                    result['status'] = 1
+                    result['msg'] = f"你无{table['schema']}.{table['name']}表的查询权限！请先到查询权限管理进行申请"
+                    return result
+            # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
+            for table in table_ref:
+                priv_limit = _priv_limit(user, instance, db_name=table['schema'], tb_name=table['name'])
+                limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
+            result['data']['limit_num'] = limit_num
+        except Exception as msg:
+            logger.error(f"无法校验查询语句权限，{instance.instance_name}，{sql_content}，{traceback.format_exc()}")
+            result['status'] = 1
+            result['msg'] = f"无法校验查询语句权限，请联系管理员，错误信息：{msg}"
+    # 其他类型实例仅校验库权限
+    else:
+        # 先获取查询语句涉及的库，redis、mssql特殊处理，仅校验当前选择的库
         if instance.db_type in ['redis', 'mssql']:
             dbs = [db_name]
         else:
@@ -105,18 +107,6 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             priv_limit = _priv_limit(user, instance, db_name=db_name)
             limit_num = min(priv_limit, limit_num) if limit_num else priv_limit
         result['data']['limit_num'] = limit_num
-
-        # 实例为mysql的，需要判断query_check状态
-        if instance.db_type == 'mysql':
-            # 开启query_check，则禁止执行
-            if SysConfig().get('query_check'):
-                result['status'] = 1
-                result['msg'] = f"无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：{msg}"
-                return result
-            # 关闭query_check，标记权限校验为跳过，可继续执行
-            else:
-                result['data']['priv_check'] = False
-
     return result
 
 
@@ -269,7 +259,7 @@ def query_priv_apply(request):
         # 消息通知
         audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
                                                workflow_type=WorkflowDict.workflow_type['query']).audit_id
-        async_task(notify_for_audit, audit_id=audit_id, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, timeout=60, task_name=f'query-priv-apply-{apply_id}')
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -399,7 +389,8 @@ def query_priv_audit(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                   task_name=f'query-priv-audit-{apply_id}')
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 
@@ -412,19 +403,9 @@ def _table_ref(sql_content, instance, db_name):
     :param db_name:
     :return:
     """
-    if instance.db_type != 'mysql':
-        raise RuntimeError('Inception Error: 仅支持MySQL实例')
-    inception_engine = InceptionEngine()
-    query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql_content)
-    table_ref = query_tree.get('table_ref', [])
-    db_list = [table_info['db'] for table_info in table_ref]
-    table_list = [table_info['table'] for table_info in table_ref]
-    # 异常解析的情形
-    if '' in db_list or '*' in table_list:
-        raise RuntimeError('Inception Error: 存在空数据库表信息')
-    if not (db_list or table_list):
-        raise RuntimeError('Inception Error: 未解析到任何库表信息')
-    return table_ref
+    engine = GoInceptionEngine()
+    query_tree = engine.query_print(instance=instance, db_name=db_name, sql=sql_content).get('query_tree')
+    return engine.get_table_ref(json.loads(query_tree), db_name=db_name)
 
 
 def _db_priv(user, instance, db_name):

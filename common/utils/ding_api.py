@@ -20,7 +20,7 @@ def get_access_token():
     try:
         access_token = rs.execute_command(f"get ding_access_token")
     except Exception as e:
-        logger.error(f"获取access_token缓存出错:{e}")
+        logger.error(f"获取钉钉access_token缓存出错:{e}")
         access_token = None
     if access_token:
         return access_token
@@ -31,10 +31,12 @@ def get_access_token():
     url = f"https://oapi.dingtalk.com/gettoken?appkey={app_key}&appsecret={app_secret}"
     resp = requests.get(url, timeout=3).json()
     if resp.get('errcode') == 0:
-        rs.execute_command(f"SETEX access_token 7000 {access_token}")
-        return resp.get('access_token')
+        access_token = resp.get('access_token')
+        expires_in = resp.get('expires_in')
+        rs.execute_command(f"SETEX ding_access_token {expires_in-60} {access_token}")
+        return access_token
     else:
-        logger.error(f"获取access_token出错:{resp}")
+        logger.error(f"获取钉钉access_token出错:{resp}")
         return None
 
 

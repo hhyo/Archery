@@ -32,7 +32,7 @@ class GoInceptionEngine(EngineBase):
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--check=1;*/
+        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
@@ -65,7 +65,7 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
-        sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};*/
+        sql_execute = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
@@ -111,11 +111,25 @@ class GoInceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
+            logger.warning(f'goInception语句执行报错，错误信息{traceback.format_exc()}')
             result_set.error = str(e)
         if close_conn:
             self.close()
         return result_set
+
+    def query_print(self, instance, db_name=None, sql=''):
+        """
+        打印语法树。
+        """
+        sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--enable-query-print;*/
+                          inception_magic_start;\
+                          use `{db_name}`;
+                          {sql.rstrip(';')};
+                          inception_magic_commit;"""
+        print_info = self.query(db_name=db_name, sql=sql).to_dict()[1]
+        if print_info.get('errmsg'):
+            raise RuntimeError(print_info.get('errmsg'))
+        return print_info
 
     def get_variables(self, variables=None):
         """获取实例参数"""
@@ -140,7 +154,61 @@ class GoInceptionEngine(EngineBase):
             sql = f"inception {command} osc '{sqlsha1}';"
         return self.query(sql=sql)
 
+    @staticmethod
+    def get_table_ref(query_tree, db_name=None):
+        __author__ = 'xxlrr'
+        """
+        * 从goInception解析后的语法树里解析出兼容Inception格式的引用表信息。
+        * 目前的逻辑是在SQL语法树中通过递归查找选中最小的 TableRefs 子树（可能有多个），
+        然后在最小的 TableRefs 子树选中Source节点来获取表引用信息。
+        * 查找最小TableRefs子树的方案竟然是通过逐步查找最大子树（直到找不到）来获得的，
+        具体为什么这样实现，我不记得了，只记得当时是通过猜测goInception的语法树生成规
+        则来写代码，结果猜一次错一次错一次猜一次，最终代码逐渐演变于此。或许直接查找最
+        小子树才是效率较高的算法，但是就这样吧，反正它能运行 :)
+        """
+        table_ref = []
+
+        find_queue = [query_tree]
+        for tree in find_queue:
+            tree = DictTree(tree)
+
+            # nodes = tree.find_max_tree("TableRefs") or tree.find_max_tree("Left", "Right")
+            nodes = tree.find_max_tree("TableRefs")
+            if nodes:
+                # assert isinstance(v, dict) is true
+                find_queue.extend([v for node in nodes for v in node.values() if v])
+            else:
+                snodes = tree.find_max_tree("Source")
+                if snodes:
+                    table_ref.extend([
+                        {
+                            "schema": snode['Source']['Schema']['O'] or db_name,
+                            "name": snode['Source']['Name']['O']
+                        } for snode in snodes
+                    ])
+                # assert: source node must exists if table_refs node exists.
+                # else:
+                #     raise Exception("GoInception Error: not found source node")
+        return table_ref
+
     def close(self):
         if self.conn:
             self.conn.close()
             self.conn = None
+
+
+class DictTree(dict):
+    def find_max_tree(self, *keys):
+        __author__ = 'xxlrr'
+        """通过广度优先搜索算法查找满足条件的最大子树(不找叶子节点)"""
+        fit = []
+        find_queue = [self]
+        for tree in find_queue:
+            for k, v in tree.items():
+                if k in keys:
+                    fit.append({k: v})
+                elif isinstance(v, dict):
+                    find_queue.append(v)
+                elif isinstance(v, list):
+                    find_queue.extend([n for n in v if isinstance(n, dict)])
+        return fit

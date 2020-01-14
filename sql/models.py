@@ -176,6 +176,7 @@ class SqlWorkflow(models.Model):
     存放各个SQL上线工单的基础内容
     """
     workflow_name = models.CharField('工单内容', max_length=50)
+    demand_url = models.CharField('需求链接', max_length=500)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
@@ -586,6 +587,7 @@ class Permission(models.Model):
             ('menu_sqloptimize', '菜单 SQL优化'),
             ('menu_sqladvisor', '菜单 优化工具'),
             ('menu_slowquery', '菜单 慢查日志'),
+            ('menu_sqlstats', '菜单 SQL统计'),
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),
@@ -593,7 +595,7 @@ class Permission(models.Model):
             ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
-            ('menu_menu_tools', '菜单 工具插件'),
+            ('menu_tools', '菜单 工具插件'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
@@ -615,6 +617,7 @@ class Permission(models.Model):
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
+            ('trx_view', '查看事务信息'),
             ('trxandlocks_view', '查看锁信息'),
             ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),

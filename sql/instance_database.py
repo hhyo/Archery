@@ -8,6 +8,7 @@
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, HttpResponse
+from django_redis import get_redis_connection
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
@@ -109,6 +110,10 @@ def create(request):
     else:
         InstanceDatabase.objects.create(
             instance=instance, db_name=db_name, owner=owner, owner_display=owner_display, remark=remark)
+        # 清空实例资源缓存
+        r = get_redis_connection("default")
+        for key in r.scan_iter(match='*insRes*', count=2000):
+            r.delete(key)
     return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
 

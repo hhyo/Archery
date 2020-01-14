@@ -27,9 +27,9 @@ class Binlog2Sql(Plugin):
         :return:
         """
         conn_options = ['conn_options']
-        parse_mode_options = ['stop-never', 'no-primary-key', 'flashback', 'back-interval']
-        range_options = ['start-file', 'start-position', 'stop-file', 'stop-position', 'start-datetime',
-                         'stop-datetime']
+        parse_mode_options = ['stop-never', 'no-primary-key', 'flashback']
+        range_options = ['back-interval', 'start-file', 'start-position', 'stop-file', 'stop-position',
+                         'start-datetime', 'stop-datetime']
         filter_options = ['databases', 'tables', 'only-dml', 'sql-type']
         if shell:
             cmd_args = f'python {self.path}' if self.path else ''

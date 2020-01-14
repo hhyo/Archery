@@ -1,3 +1,4 @@
+import MySQLdb
 import json
 from datetime import timedelta, datetime
 from unittest.mock import patch, Mock, ANY
@@ -475,9 +476,9 @@ class TestMysql(TestCase):
         execute_result = new_engine.execute(self.wf)
         self.assertIsInstance(execute_result, ResultSet)
 
-    @patch.object(MysqlEngine, 'query')
-    def test_server_version(self, _query):
-        _query.return_value.rows = (('5.7.20',),)
+    @patch('MySQLdb.connect')
+    def test_server_version(self, _connect):
+        _connect.return_value.get_server_info.return_value = '5.7.20-16log'
         new_engine = MysqlEngine(instance=self.ins1)
         server_version = new_engine.server_version
         self.assertTupleEqual(server_version, (5, 7, 20))
@@ -488,8 +489,10 @@ class TestMysql(TestCase):
         new_engine.get_variables()
         _query.assert_called_once()
 
+    @patch('MySQLdb.connect')
     @patch.object(MysqlEngine, 'query')
-    def test_get_variables_filter(self, _query):
+    def test_get_variables_filter(self, _query, _connect):
+        _connect.return_value.get_server_info.return_value = '5.7.20-16log'
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.get_variables(variables=['binlog_format'])
         _query.assert_called()
@@ -528,7 +531,8 @@ class TestMysql(TestCase):
     def test_seconds_behind_master(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.seconds_behind_master
-        _query.assert_called_once_with(sql="show slave status", close_conn=False)
+        _query.assert_called_once_with(sql="show slave status", close_conn=False,
+                                       cursorclass=MySQLdb.cursors.DictCursor)
 
 
 class TestRedis(TestCase):

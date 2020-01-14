@@ -30,7 +30,7 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
         instances = Instance.objects.all()
     else:
         # 先获取用户关联的资源组
-        resource_groups = ResourceGroup.objects.filter(users=user)
+        resource_groups = ResourceGroup.objects.filter(users=user, is_deleted=0)
         # 再获取资源组和实例的关联关系
         resource_group2instance = ResourceGroup2Instance.objects.filter(resource_group__in=resource_groups)
         # 再获取实例

@@ -134,3 +134,39 @@ def can_cancel(user, workflow_id):
     if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
         result = True if can_execute(user, workflow_id) else False
     return result
+
+
+def can_view(user, workflow_id):
+    """
+    判断用户当前是否可以查看工单信息，和列表过滤逻辑保存一致
+    :param user:
+    :param workflow_id:
+    :return:
+    """
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = False
+    # 管理员，可查看所有工单
+    if user.is_superuser:
+        result = True
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        if workflow_detail.group_id in group_ids:
+            result = True
+    # 其他人只能查看自己提交的工单
+    else:
+        if workflow_detail.engineer == user.username:
+            result = True
+    return result
+
+
+def can_rollback(user, workflow_id):
+    """
+    判断用户当前是否可以查看回滚信息，和工单详情保持一致
+    :param user:
+    :param workflow_id:
+    :return:
+    """
+    return can_view(user, workflow_id)

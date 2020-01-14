@@ -4,7 +4,6 @@ import traceback
 import MySQLdb
 import re
 import sqlparse
-from MySQLdb.connections import numeric_part
 from MySQLdb.constants import FIELD_TYPE
 
 from sql.engines.goinception import GoInceptionEngine
@@ -55,12 +54,22 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status', close_conn=False)
-        return slave_status.rows[0][32] if slave_status.rows else None
+        slave_status = self.query(sql='show slave status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
+        return slave_status.rows[0].get('Seconds_Behind_Master') if slave_status.rows else None
 
     @property
     def server_version(self):
-        version = self.query(sql="select @@version").rows[0][0]
+        def numeric_part(s):
+            """Returns the leading numeric part of a string.
+            """
+            re_numeric_part = re.compile(r"^(\d+)")
+            m = re_numeric_part.match(s)
+            if m:
+                return int(m.group(1))
+            return None
+
+        self.get_connection()
+        version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
 
     def kill_connection(self, thread_id):
@@ -107,7 +116,7 @@ class MysqlEngine(EngineBase):
 
     def describe_table(self, db_name, tb_name):
         """return ResultSet 类似查询"""
-        sql = f"show create table {tb_name};"
+        sql = f"show create table `{tb_name}`;"
         result = self.query(db_name=db_name, sql=sql)
         return result
 
@@ -153,6 +162,12 @@ class MysqlEngine(EngineBase):
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
+        # select语句先使用Explain判断语法是否正确
+        if re.match(r"^select", sql, re.I):
+            explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
+            if explain_result.error:
+                result['bad_query'] = True
+                result['msg'] = explain_result.error
         return result
 
     def filter_sql(self, sql='', limit_num=0):
@@ -260,8 +275,8 @@ class MysqlEngine(EngineBase):
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
-        read_only = self.query(sql='select @@read_only;').rows[0][0]
-        if read_only:
+        read_only = self.query(sql='SELECT @@global.read_only;').rows[0][0]
+        if read_only in (1, 'ON'):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
                 rows=[ReviewResult(id=1, errlevel=2,

@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 
+from django.db import close_old_connections, connection
+from django_redis import get_redis_connection
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
@@ -33,6 +35,9 @@ def execute_callback(task):
     使用django-q的hook, 传入参数为整个task
     task.result 是真正的结果
     """
+    # https://stackoverflow.com/questions/7835272/django-operationalerror-2006-mysql-server-has-gone-away
+    if connection.connection and not connection.is_usable():
+        close_old_connections()
     workflow_id = task.args[0]
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     workflow.finish_time = task.stopped
@@ -68,6 +73,12 @@ def execute_callback(task):
                   operator='',
                   operator_display='系统'
                   )
+
+    # DDL工单结束后清空实例资源缓存
+    if workflow.syntax_type == 1:
+        r = get_redis_connection("default")
+        for key in r.scan_iter(match='*insRes*', count=2000):
+            r.delete(key)
 
     # 发送消息
     notify_for_execute(workflow)
