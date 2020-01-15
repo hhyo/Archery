@@ -26,7 +26,7 @@ def get_wx_access_token():
     if resp.get('errcode') == 0:
         access_token = resp.get('access_token')
         expires_in = resp.get('expires_in')
-        cache.set('wx_access_token', access_token, timeout={expires_in - 60})
+        cache.set('wx_access_token', access_token, timeout=expires_in - 60)
         return access_token
     else:
         logger.error(f"获取企业微信access_token出错:{resp}")
