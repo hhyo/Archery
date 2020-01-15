@@ -149,6 +149,11 @@
                     $.each(row, function (key, value) {
                         if (key === 'sql') {
                             var sql = window.sqlFormatter.format(value);
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");

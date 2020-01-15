@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h4 style="display: inline;"><a target="_blank" href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a></h4>
+    <h4 style="display: inline;"><a target="_blank"
+                                    href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a></h4>
     &nbsp;&nbsp;&nbsp;
     <!--只允许发起人提交其他实例-->
     {% if user.username == workflow_detail.engineer %}
@@ -125,6 +126,10 @@
     <div id="tab-content" class="tab-content">
         <!-- 工单详情-->
         <div id="detail" role="tabpanel" class="tab-pane fade in active table-responsive">
+            <!-- 自定义操作按钮-->
+            <div id="detail-toolbar" class="btn-group right">
+                <button id="expandAllRows" class="btn btn-default navbar-btn" type="button">展开全部</button>
+            </div>
             <table id="tb-detail" data-toggle="table" class="table table-condensed"
                    style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
             <!--最后操作信息-->
@@ -352,6 +357,8 @@
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.zh-CN.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <!--初始化时间控件 -->
     <script>
         var date = new Date();
@@ -398,6 +405,20 @@
 
     <!--按钮控制 -->
     <script>
+        // 表格展开折叠全部行
+        $("#expandAllRows").click(function () {
+            $(this).trigger("blur");
+            if ($(this).text() === '展开全部') {
+                $('#tb-detail').bootstrapTable('hideColumn', 'sql');
+                $('#tb-detail').bootstrapTable('expandAllRows');
+                $(this).text('折叠全部')
+            } else if ($(this).text() === '折叠全部') {
+                $('#tb-detail').bootstrapTable('showColumn', 'sql');
+                $('#tb-detail').bootstrapTable('collapseAllRows');
+                $(this).text('展开全部')
+            }
+        });
+
         var editWorkflowNname = "{{ workflow_detail.workflow_name }}";
         var editDemandUrl = "{{ workflow_detail.demand_url }}";
         var editSqlContent = $("#editSqlContent").val();
@@ -512,7 +533,10 @@
         //获取工单详情
         function get_detail() {
             $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
-                escape: false,
+                escape: true,
+                method: 'get',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/sqlworkflow/detail_content/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -524,11 +548,18 @@
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
                 showColumns: true,                  //是否显示所有的列（选择显示的列）
-                showRefresh: false,                  //是否显示刷新按钮
+                showRefresh: true,                  //是否显示刷新按钮
                 minimumCountColumns: 1,             //最少允许的列数
                 clickToSelect: false,                //是否启用点击选中行
                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                 showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
+                toolbar: "#detail-toolbar",         //指明自定义的toolbar
+                showExport: true,
+                exportDataType: "all",
+                exportOptions: {
+                    ignoreColumn: [0],  //忽略第一列
+                    fileName: 'detail_content'  //文件名称设置
+                },
                 cardView: false,                    //是否显示详细视图
                 detailView: true,                  //是否显示父子表
                 //格式化详情
@@ -536,7 +567,13 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sql') {
-                            var sql = value;
+                            //let sql = window.sqlFormatter.format(value);
+                            let sql = value;
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
@@ -547,12 +584,23 @@
                     });
                     return html.join('');
                 },
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            workflow_id: "{{ workflow_detail.id }}",
+                        }
+                    },
                 locale: 'zh-CN',                    //本地化
-                data:{{ rows|safe }},
                 columns: [{
                     title: 'ID',
                     field: 'id',
                     sortable: true
+                }, {
+                    title: '完整SQL内容',
+                    field: 'sql',
+                    visible: false // 默认不显示
                 }, {
                     title: 'SQL内容',
                     field: 'sql',

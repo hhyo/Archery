@@ -16,11 +16,12 @@ from django.utils import timezone
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines.models import ReviewResult, ReviewSet
 from sql.notify import notify_for_audit
-from sql.models import ResourceGroup, Users
+from sql.models import ResourceGroup
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period, can_view, can_rollback
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -227,6 +228,68 @@ def submit(request):
                        task_name=f'sqlreview-submit-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
+
+
+def detail_content(request):
+    """获取工单内容"""
+    workflow_id = request.GET.get('workflow_id')
+    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    if not can_view(request.user, workflow_id):
+        raise PermissionDenied
+    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
+        rows = workflow_detail.sqlworkflowcontent.execute_result
+    else:
+        rows = workflow_detail.sqlworkflowcontent.review_content
+
+    review_result = ReviewSet()
+    if rows:
+        try:
+            # 检验rows能不能正常解析
+            loaded_rows = json.loads(rows)
+            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+            if isinstance(loaded_rows[-1], list):
+                for r in loaded_rows:
+                    review_result.rows += [ReviewResult(inception_result=r)]
+                rows = review_result.json()
+        except IndexError:
+            review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
+        except json.decoder.JSONDecodeError:
+            review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
+                # 迫于无法单元测试这里加上英文报错信息
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
+    else:
+        rows = workflow_detail.sqlworkflowcontent.review_content
+
+    result = {"rows": json.loads(rows)}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+def backup_sql(request):
+    """获取回滚语句"""
+    workflow_id = request.GET.get('workflow_id')
+    if not can_rollback(request.user, workflow_id):
+        raise PermissionDenied
+    workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
+
+    try:
+        query_engine = get_engine(instance=workflow.instance)
+        list_backup_sql = query_engine.get_rollback(workflow=workflow)
+    except Exception as msg:
+        return JsonResponse({'status': 1, 'msg': f'{msg}', 'rows': []})
+
+    result = {'status': 0, 'msg': '', 'rows': list_backup_sql}
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 @permission_required('sql.sql_review', raise_exception=True)

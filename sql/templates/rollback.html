@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div>
-        <div style="width: 80%; float: left">
-            {% csrf_token %}
-            <input type="hidden" id="editSqlContent" value="{% for sql in list_backup_sql %}{{ sql.1 }}
-{% endfor %}">
-        </div>
-    </div>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="btn-group right">
         <a type='button' id="btnSubmitRollback" class="btn btn-warning" href="/editsql/">提交回滚请求</a>
@@ -23,9 +16,12 @@
     <script>
         $('#tb-rollback').bootstrapTable('destroy').bootstrapTable({
             escape: true,
+            method: 'get',
+            contentType: "application/x-www-form-urlencoded",
+            url: "/sqlworkflow/backup_sql/",
             striped: true,                      //是否显示行间隔色
             cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
-            pagination: false,                   //是否显示分页（*）
+            pagination: true,                   //是否显示分页（*）
             sortable: true,                     //是否启用排序
             sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
             pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
@@ -35,11 +31,11 @@
             exportOptions: {
                 ignoreColumn: [0],  //忽略某些列的索引数组
             },
-            search: false,                       //是否显示表格搜索
+            search: true,                       //是否显示表格搜索
             strictSearch: false,                //是否全匹配搜索
             showColumns: true,                  //是否显示所有的列（选择显示的列）
-            showRefresh: false,                  //是否显示刷新按钮
-            minimumCountColumns: 2,             //最少允许的列数
+            showRefresh: true,                  //是否显示刷新按钮
+            minimumCountColumns: 1,             //最少允许的列数
             clickToSelect: false,                //是否启用点击选中行
             uniqueId: "id",                     //每一行的唯一标识，一般为主键列
             showToggle: false,                   //是否显示详细视图和列表视图的切换按钮
@@ -51,7 +47,13 @@
                 var html = [];
                 $.each(row, function (index, key) {
                         if (index === 1) {
-                            var sql = key;
+                            //let sql = window.sqlFormatter.format(key);
+                            let sql = key;
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
@@ -63,8 +65,15 @@
                 );
                 return html.join('');
             },
+            queryParamsType: 'limit',
+            //请求服务数据时所传参数
+            queryParams:
+                function (params) {
+                    return {
+                        workflow_id: "{{ workflow_detail.id }}",
+                    }
+                },
             locale: 'zh-CN',                    //本地化
-            data:{{ list_backup_sql|safe }},
             columns: [{
                 title: '执行语句',
                 field: 0,
@@ -94,7 +103,17 @@
                 field: 1,
                 visible: false // 默认不显示
             }],
-            onLoadSuccess: function () {
+            onLoadSuccess: function (data) {
+                // 设置回滚语句，供快速提交
+                if (data.status !== 0) {
+                    alert("数据加载失败！" + data.msg);
+                } else {
+                    let backup_sql = '';
+                    for (let sql of data.rows) {
+                        backup_sql += sql[1] + '\n'
+                    }
+                    sessionStorage.setItem('editSqlContent', backup_sql);
+                }
             },
             onLoadError: function () {
                 alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -109,14 +128,12 @@
                         $(this).dequeue();
                     });
                     var editWorkflowNname = "{{ rollback_workflow_name }}";
-                    var editSqlContent = $("#editSqlContent").val();
                     var editGroup = "{{ workflow_detail.group_name }}";
                     var editClustername = "{{ workflow_detail.instance.instance_name }}";
                     var editDbname = "{{ workflow_detail.db_name }}";
                     var editIsbackup = "{{ workflow_detail.is_backup }}";
                     sessionStorage.removeItem('editWorkflowDetailId');
                     sessionStorage.setItem('editWorkflowNname', editWorkflowNname);
-                    sessionStorage.setItem('editSqlContent', editSqlContent);
                     sessionStorage.setItem('editGroup', editGroup);
                     sessionStorage.setItem('editClustername', editClustername);
                     sessionStorage.setItem('editDbname', editDbname);

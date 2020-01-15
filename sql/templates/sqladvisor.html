@@ -440,7 +440,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
-                                escape: false,
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -464,7 +464,7 @@
                             });
                             //初始化查询结果
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
-                                escape: false,
+                                escape: true,
                                 data: result['rows'],
                                 columns: columns,
                                 showColumns: true,
@@ -578,7 +578,7 @@
                         if (result['Error']) {
                             alertStyle = "alert-danger";
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
-                                escape: false,
+                                escape: true,
                                 columns: [{
                                     field: 'error',
                                     title: 'Error'
@@ -606,7 +606,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_sys_parameter').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['sys_parameter']['rows'],
                                     columns: columns
                                 });
@@ -625,7 +625,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_optimizer_switch').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['optimizer_switch']['rows'],
                                     columns: columns,
                                 });
@@ -647,7 +647,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_plan').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['plan']['rows'],
                                     columns: columns
                                 });
@@ -673,7 +673,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_optimizer_rewrite_sql').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['optimizer_rewrite_sql']['rows'],
                                     columns: columns,
                                     detailView: true,   //是否显示父子表
@@ -732,7 +732,7 @@
                                         });
                                         //初始化查询结果
                                         $("#" + tb_table_structure_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: false,
+                                            escape: true,
                                             data: result['structure']['rows'],
                                             columns: columns,
                                             detailView: true,   //是否显示父子表
@@ -764,7 +764,7 @@
                                         });
                                         //初始化查询结果
                                         $("#" + tb_table_info_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: false,
+                                            escape: true,
                                             data: result['table_info']['rows'],
                                             columns: columns
                                         });
@@ -779,7 +779,7 @@
                                         });
                                         //初始化查询结果
                                         $("#" + tb_index_info_id).bootstrapTable('destroy').bootstrapTable({
-                                            escape: false,
+                                            escape: true,
                                             data: result['index_info']['rows'],
                                             columns: columns
                                         });
@@ -805,7 +805,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_session_status').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['session_status']['SESSION_STATUS(DIFFERENT)']['rows'],
                                     columns: columns
                                 });
@@ -836,7 +836,7 @@
                                 });
                                 //初始化查询结果
                                 $('#tb_sql_profiling_summary').bootstrapTable('destroy').bootstrapTable({
-                                    escape: false,
+                                    escape: true,
                                     data: result['session_status']['PROFILING_SUMMARY']['rows'],
                                     columns: columns
                                 });
