@@ -317,12 +317,17 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            var sql = value;
+                            let sql = value;
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
                             //替换所有的空格
-                            sql = sql.replace(/\s/g, " ");
+                            sql = sql.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + sql + '</span>');
                         }
                     });
@@ -702,17 +707,22 @@
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                                escape: true,
                                 data: result['rows'],
                                 columns: [{
                                     title: 'Create Table',
                                     field: 1,
                                     formatter: function (value, row, index) {
-                                        var sql = window.sqlFormatter.format(value);
+                                        let sql = window.sqlFormatter.format(value);
+                                        //替换标签
+                                        sql = sql.replace(/&/g, "&amp;");
+                                        sql = sql.replace(/</g, "&lt;");
+                                        sql = sql.replace(/>/g, "&gt;");
+                                        sql = sql.replace(/"/g, "&quot;");
                                         //替换所有的换行符
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
                                         //替换所有的空格
-                                        sql = sql.replace(/\s/g, " ");
                                         return sql;
                                     },
                                 }
@@ -764,7 +774,7 @@
                     n = sessionStorage.getItem('tab_num');
                 }
                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                    escape: false,
+                    escape: true,
                     columns: [{
                         field: 'error',
                         title: 'Error'

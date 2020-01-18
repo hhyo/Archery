@@ -1071,7 +1071,6 @@ class TestWorkflowView(TransactionTestCase):
         r = c.get('/detail/{}/'.format(self.wf1.id))
         self.assertContains(r, expected_status_display)
         self.assertContains(r, exepcted_status)
-        self.assertContains(r, 'Json decode failed.')
 
         # 执行详情为空
         self.wfc1.review_content = [
@@ -1081,7 +1080,6 @@ class TestWorkflowView(TransactionTestCase):
         self.wfc1.execute_result = ''
         self.wfc1.save()
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
         """测试工单列表"""

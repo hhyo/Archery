@@ -57,6 +57,8 @@ urlpatterns = [
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('sqlworkflow/detail_content/', sql_workflow.detail_content),
+    path('sqlworkflow/backup_sql/', sql_workflow.backup_sql),
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
