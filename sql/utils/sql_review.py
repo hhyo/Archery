@@ -165,8 +165,14 @@ def can_view(user, workflow_id):
 def can_rollback(user, workflow_id):
     """
     判断用户当前是否可以查看回滚信息，和工单详情保持一致
+    执行结束并且开启备份的工单可以查看回滚信息
     :param user:
     :param workflow_id:
     :return:
     """
-    return can_view(user, workflow_id)
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = False
+    # 执行结束并且开启备份的工单可以查看回滚信息
+    if workflow_detail.is_backup and workflow_detail.status in ('workflow_finish', 'workflow_exception'):
+        return can_view(user, workflow_id)
+    return result
