@@ -707,7 +707,7 @@
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
+                                escape: false,
                                 data: result['rows'],
                                 columns: [{
                                     title: 'Create Table',
