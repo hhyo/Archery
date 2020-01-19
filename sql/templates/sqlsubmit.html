@@ -208,6 +208,8 @@
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
             $(this).val('请选择可执行时间范围');
+            $("#run_date_start").val('');
+            $("#run_date_end").val('');
         });
     </script>
     <!--upload -->
