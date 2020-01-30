@@ -20,11 +20,11 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
-from sql.utils.resource_group import user_groups
+from sql.utils.resource_group import user_groups, user_instances
 
 import logging
 
@@ -324,6 +324,40 @@ def schemasync(request):
     return render(request, 'schemasync.html')
 
 
+@permission_required('sql.menu_archiver', raise_exception=True)
+def archive(request):
+    """归档列表页面"""
+    # 获取资源组
+    group_list = user_groups(request.user)
+    ins_list = user_instances(request.user, db_type=['mysql'])
+    return render(request, 'archive.html', {'group_list': group_list, 'ins_list': ins_list})
+
+
+def archive_detail(request, id):
+    """归档详情页面"""
+    archive_config = ArchiveConfig.objects.get(pk=id)
+    # 获取当前审批和审批流程
+    audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
+
+    # 是否可审核
+    is_can_review = Audit.can_review(request.user, id, 3)
+    # 获取审核日志
+    if archive_config.status == 2:
+        try:
+            audit_id = Audit.detail_by_workflow_id(workflow_id=id, workflow_type=3).audit_id
+            last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        except Exception as e:
+            logger.debug(f'无审核日志记录，错误信息{e}')
+            last_operation_info = ''
+    else:
+        last_operation_info = ''
+
+    context = {'archive_config': archive_config, 'audit_auth_group': audit_auth_group,
+               'last_operation_info': last_operation_info, 'current_audit_auth_group': current_audit_auth_group,
+               'is_can_review': is_can_review}
+    return render(request, 'archivedetail.html', context)
+
+
 @superuser_required
 def config(request):
     """配置管理页面"""
@@ -369,6 +403,8 @@ def workflowsdetail(request, audit_id):
         return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
     elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:
         return HttpResponseRedirect(reverse('sql:detail', args=(audit_detail.workflow_id,)))
+    elif audit_detail.workflow_type == WorkflowDict.workflow_type['archive']:
+        return HttpResponseRedirect(reverse('sql:archive_detail', args=(audit_detail.workflow_id,)))
 
 
 @permission_required('sql.menu_document', raise_exception=True)

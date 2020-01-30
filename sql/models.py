@@ -536,6 +536,65 @@ class ParamHistory(models.Model):
         verbose_name_plural = u'实例参数修改历史'
 
 
+class ArchiveConfig(models.Model):
+    """
+    归档配置表
+    """
+    title = models.CharField('归档配置说明', max_length=50)
+    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
+    src_instance = models.ForeignKey(Instance, related_name='src_instance', on_delete=models.CASCADE)
+    src_db_name = models.CharField('源数据库', max_length=64)
+    src_table_name = models.CharField('源表', max_length=64)
+    dest_instance = models.ForeignKey(Instance, related_name='dest_instance', on_delete=models.CASCADE, null=True)
+    dest_db_name = models.CharField('目标数据库', max_length=64, blank=True, null=True)
+    dest_table_name = models.CharField('目标表', max_length=64, blank=True, null=True)
+    condition = models.CharField('归档条件，where条件', max_length=1000)
+    mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
+    no_delete = models.BooleanField('是否保留源数据')
+    sleep = models.IntegerField('归档limit行记录后的休眠秒数', default=0)
+    status = models.IntegerField('审核状态', choices=workflow_status_choices)
+    state = models.BooleanField('是否启用归档')
+    user_name = models.CharField('申请人', max_length=30)
+    user_display = models.CharField('申请人中文名', max_length=50, default='')
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    last_archive_time = models.DateTimeField('最近归档时间', null=True)
+    sys_time = models.DateTimeField('系统时间修改', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'archive_config'
+        verbose_name = u'归档配置表'
+        verbose_name_plural = u'归档配置表'
+
+
+class ArchiveLog(models.Model):
+    """
+    归档日志表
+    """
+    archive = models.ForeignKey(ArchiveConfig, on_delete=models.CASCADE)
+    cmd = models.CharField('归档命令', max_length=2000)
+    condition = models.CharField('归档条件，where条件', max_length=1000)
+    mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
+    no_delete = models.BooleanField('是否保留源数据')
+    sleep = models.IntegerField('归档limit行记录后的休眠秒数', default=0)
+    select_cnt = models.IntegerField('查询数量')
+    insert_cnt = models.IntegerField('插入数量')
+    delete_cnt = models.IntegerField('删除数量')
+    statistics = models.TextField('归档统计日志')
+    success = models.BooleanField('是否归档成功')
+    error_info = models.TextField('错误信息')
+    start_time = models.DateTimeField('开始时间', auto_now_add=True)
+    end_time = models.DateTimeField('结束时间')
+    sys_time = models.DateTimeField('系统时间修改', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'archive_log'
+        verbose_name = u'归档日志表'
+        verbose_name_plural = u'归档日志表'
+
+
 class Config(models.Model):
     """
     配置信息表
@@ -595,6 +654,7 @@ class Permission(models.Model):
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
             ('menu_tools', '菜单 工具插件'),
+            ('menu_archive', '菜单 数据归档'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
@@ -621,7 +681,9 @@ class Permission(models.Model):
             ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),
             ('param_edit', '修改实例参数'),
-            ('data_dictionary_export', '导出数据字典')
+            ('data_dictionary_export', '导出数据字典'),
+            ('archive_apply', '提交归档申请'),
+            ('archive_review', '审核归档申请'),
         )
 
 

@@ -125,9 +125,14 @@ def instances(request):
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
     tag_code = request.POST.get('tag_code')
+    db_type = request.POST.get('db_type')
 
     # 先获取资源组关联所有实例列表
     instances = ResourceGroup.objects.get(group_id=group_id).instances
+
+    # 过滤db_type
+    if db_type:
+        instances = instances.filter(db_type=db_type)
 
     # 过滤tag
     if tag_code:

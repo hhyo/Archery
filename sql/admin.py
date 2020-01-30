@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
-    QueryPrivileges, InstanceAccount, InstanceDatabase, \
+    QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
 
 
@@ -214,6 +214,18 @@ class ParamHistoryAdmin(admin.ModelAdmin):
     list_display = ('variable_name', 'instance', 'old_var', 'new_var', 'user_display', 'create_time')
     search_fields = ('variable_name',)
     list_filter = ('instance', 'user_display')
+
+
+# 归档配置
+@admin.register(ArchiveConfig)
+class ArchiveConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'title', 'src_instance', 'src_db_name', 'src_table_name',
+        'dest_instance', 'dest_db_name', 'dest_table_name',
+        'mode', 'no_delete', 'status', 'state', 'user_display', 'create_time', 'resource_group')
+    search_fields = ('title', 'src_table_name')
+    list_display_links = ('id', 'title')
+    list_filter = ('src_instance', 'src_db_name', 'mode', 'no_delete', 'state')
 
 
 # 阿里云实例配置信息
