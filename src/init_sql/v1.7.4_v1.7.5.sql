@@ -32,9 +32,9 @@ CREATE TABLE `archive_config` (
   KEY `idx_dest_instance_id` (`dest_instance_id`),
   KEY `idx_resource_group_id` (`resource_group_id`),
   KEY `idx_src_instance_id` (`src_instance_id`),
-  CONSTRAINT `fk_archive_instance_id` FOREIGN KEY (`dest_instance_id`) REFERENCES `sql_instance` (`id`),
+  CONSTRAINT `fk_archive_dest_instance_id` FOREIGN KEY (`dest_instance_id`) REFERENCES `sql_instance` (`id`),
   CONSTRAINT `fk_archive_resource_id` FOREIGN KEY (`resource_group_id`) REFERENCES `resource_group` (`group_id`),
-  CONSTRAINT `fk_archive_instance_id` FOREIGN KEY (`src_instance_id`) REFERENCES `sql_instance` (`id`)
+  CONSTRAINT `fk_archive_src_instance_id` FOREIGN KEY (`src_instance_id`) REFERENCES `sql_instance` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '归档配置表';
 
 -- 归档日志表
