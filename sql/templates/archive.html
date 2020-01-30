@@ -87,7 +87,7 @@
                                 title="请选择归档模式:"
                                 data-placeholder="请选择归档模式:" required>
                             <option value='file'>归档到文件</option>
-                            <option value='dest'>归档其他实例</option>
+                            <option value='dest'>归档到其他实例</option>
                             <option value='purge'>直接删除</option>
                         </select>
                     </div>
@@ -543,6 +543,7 @@
                     dest_table_name: $("#dest_table_name").val(),
                     condition: $("#condition").val(),
                     no_delete: $("#no_delete").val(),
+                    sleep: $("#sleep").val(),
                 },
                 complete: function () {
                     $('button[type=button]').removeClass('disabled');
