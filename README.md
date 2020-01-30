@@ -22,11 +22,21 @@
 
 介绍
 ============
-Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，旨在提升DBA的工作效率，支持主流数据库的SQL上线和查询，同时支持丰富的MySQL运维功能，所有功能都兼容手机端操作，查看[功能和支持列表](https://github.com/hhyo/Archery/wiki/功能列表)
+Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，旨在提升DBA的工作效率，支持主流数据库的SQL上线和查询，同时支持丰富的MySQL运维功能，所有功能都兼容手机端操作
 
-开发计划
+[功能和支持列表](https://github.com/hhyo/Archery/wiki/功能列表)
 ==============
-https://github.com/hhyo/archery/projects   
+
+|  | 查询 | 审核 | 执行 | 备份 | 数据字典 | 慢日志 | 会话管理 | 账号管理 | 参数管理 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MySQL | √ | √ | √ | √ | √ | √ | √ | √ | √ |
+| MsSQL | √ | × | √ | × | × | × | × | × | × |
+| Redis | √ | × | √ | × | × | × | × | × | × |
+| PgSQL | √ | × | √ | × | × | × | × | × | × |
+| Oracle | √ | × | √ | × | × | × | × | × | × |
+| MongoDB | √ | × | × | × | × | × | × | × | × |
+
+  
 
 快速开始
 ===============
