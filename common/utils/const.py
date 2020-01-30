@@ -5,6 +5,7 @@ class Const(object):
     workflowJobprefix = {
         'query': 'query',
         'sqlreview': 'sqlreview',
+        'archive': 'archive'
     }
 
 
@@ -15,6 +16,8 @@ class WorkflowDict:
         'query_display': '查询权限申请',
         'sqlreview': 2,
         'sqlreview_display': 'SQL上线申请',
+        'archive': 3,
+        'archive_display': '数据归档申请',
     }
 
     # 工作流状态，0.待审核 1.审核通过 2.审核不通过 3.审核取消

@@ -14,6 +14,7 @@ from sql.plugins.binglog2sql import Binlog2Sql
 from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
+from sql.plugins.pt_archiver import PtArchiver
 
 from common.config import SysConfig
 
@@ -196,6 +197,28 @@ class TestPlugin(TestCase):
         cmd_args = binlog2sql.generate_args2cmd(args, False)
         self.assertIsInstance(cmd_args, list)
         cmd_args = binlog2sql.generate_args2cmd(args, True)
+        self.assertIsInstance(cmd_args, str)
+
+    def test_pt_archiver_generate_args2cmd(self):
+        """
+        测试pt_archiver参数转换
+        :return:
+        """
+        args = {
+            "no-version-check": True,
+            "source": '',
+            "where": '',
+            "progress": 5000,
+            "statistics": True,
+            "charset": 'UTF8',
+            "limit": 10000,
+            "txn-size": 1000,
+            "sleep": 1
+        }
+        pt_archiver = PtArchiver()
+        cmd_args = pt_archiver.generate_args2cmd(args, False)
+        self.assertIsInstance(cmd_args, list)
+        cmd_args = pt_archiver.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
     @patch('sql.plugins.plugin.subprocess')

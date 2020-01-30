@@ -6,7 +6,7 @@ from sql.utils.resource_group import user_groups, auth_group_users
 from sql.utils.sql_review import is_auto_review
 from common.utils.const import WorkflowDict
 from sql.models import WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, WorkflowLog, ResourceGroup, \
-    SqlWorkflow, QueryPrivilegesApply, Users
+    SqlWorkflow, QueryPrivilegesApply, Users, ArchiveConfig
 from common.config import SysConfig
 
 
@@ -40,6 +40,15 @@ class Audit(object):
             group_name = workflow_detail.group_name
             create_user = workflow_detail.engineer
             create_user_display = workflow_detail.engineer_display
+            audit_auth_groups = workflow_detail.audit_auth_groups
+            workflow_remark = ''
+        elif workflow_type == WorkflowDict.workflow_type['archive']:
+            workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
+            workflow_title = workflow_detail.title
+            group_id = workflow_detail.resource_group.group_id
+            group_name = workflow_detail.resource_group.group_name
+            create_user = workflow_detail.user_name
+            create_user_display = workflow_detail.user_display
             audit_auth_groups = workflow_detail.audit_auth_groups
             workflow_remark = ''
         else:
@@ -329,6 +338,9 @@ class Audit(object):
                         result = True
                 elif workflow_type == 2:
                     if user.has_perm('sql.sql_review'):
+                        result = True
+                elif workflow_type == 3:
+                    if user.has_perm('sql.archive_review'):
                         result = True
         return result
 

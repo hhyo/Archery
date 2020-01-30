@@ -20,7 +20,7 @@ from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroup2User, \
     ResourceGroup2Instance, WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
-    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns, InstanceTag, InstanceTagRelations
+    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns, InstanceTag, InstanceTagRelations, ArchiveConfig
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel, on_correct_time_period
 from sql.utils.sql_utils import *
@@ -632,6 +632,7 @@ class TestAudit(TestCase):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -661,6 +662,25 @@ class TestAudit(TestCase):
             status=0,
             audit_auth_groups='some_audit_group'
         )
+        self.archive_apply_1 = ArchiveConfig.objects.create(
+            title='title',
+            resource_group=self.res_group,
+            audit_auth_groups='some_audit_group',
+            src_instance=self.ins,
+            src_db_name='src_db_name',
+            src_table_name='src_table_name',
+            dest_instance=self.ins,
+            dest_db_name='src_db_name',
+            dest_table_name='src_table_name',
+            condition='1=1',
+            mode='file',
+            no_delete=True,
+            sleep=1,
+            status=WorkflowDict.workflow_status['audit_wait'],
+            state=False,
+            user_name='some_user',
+            user_display='display',
+        )
         self.audit = WorkflowAudit.objects.create(
             group_id=1,
             group_name='some_group',
@@ -683,8 +703,10 @@ class TestAudit(TestCase):
         WorkflowAudit.objects.all().delete()
         WorkflowAuditDetail.objects.all().delete()
         WorkflowAuditSetting.objects.all().delete()
+        QueryPrivilegesApply.objects.all().delete()
         WorkflowLog.objects.all().delete()
         ResourceGroup.objects.all().delete()
+        ArchiveConfig.objects.all().delete()
 
     def test_audit_add_query(self):
         """ 测试添加查询审核工单"""
@@ -720,10 +742,27 @@ class TestAudit(TestCase):
         self.assertEqual(log_info.operation_type_desc, '提交')
         self.assertIn('等待审批，审批流程：', log_info.operation_info)
 
+    def test_audit_add_archive_review(self):
+        """ 测试添加数据归档工单"""
+        result = Audit.add(3, self.archive_apply_1.id)
+        audit_id = result['data']['audit_id']
+        workflow_status = result['data']['workflow_status']
+        self.assertEqual(workflow_status, WorkflowDict.workflow_status['audit_wait'])
+        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
+        # 当前审批
+        self.assertEqual(audit_detail.current_audit, 'some_audit_group')
+        # 无下级审批
+        self.assertEqual(audit_detail.next_audit, '-1')
+        # 验证日志
+        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
+        self.assertEqual(log_info.operation_type, 0)
+        self.assertEqual(log_info.operation_type_desc, '提交')
+        self.assertIn('等待审批，审批流程：', log_info.operation_info)
+
     def test_audit_add_wrong_type(self):
         """ 测试添加不存在的类型"""
         with self.assertRaisesMessage(Exception, '工单类型不存在'):
-            Audit.add(3, 1)
+            Audit.add(4, 1)
 
     def test_audit_add_settings_not_exists(self):
         """ 测试审批流程未配置"""
@@ -927,7 +966,6 @@ class TestAudit(TestCase):
 
     def test_change_settings_add(self):
         """添加配置信息"""
-        ResourceGroup.objects.create(group_id=1)
         Audit.change_settings(workflow_type=1, group_id=1, audit_auth_groups='1,2')
         ws = WorkflowAuditSetting.objects.get(workflow_type=1, group_id=1)
         self.assertEqual(ws.audit_auth_groups, '1,2')

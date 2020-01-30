@@ -188,6 +188,11 @@
                         <li>
                             <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_archive %}
+                                    <li>
+                                        <a href="/archive/">PTArchiver</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
                                         <a href="/binlog2sql/">Binlog2SQL</a>
