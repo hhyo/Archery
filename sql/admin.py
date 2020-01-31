@@ -226,6 +226,10 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
     search_fields = ('title', 'src_table_name')
     list_display_links = ('id', 'title')
     list_filter = ('src_instance', 'src_db_name', 'mode', 'no_delete', 'state')
+    # 编辑页显示内容
+    fields = ('title', 'resource_group', 'src_instance', 'src_db_name', 'src_table_name',
+              'dest_instance', 'dest_db_name', 'dest_table_name',
+              'mode', 'condition', 'sleep', 'no_delete', 'state', 'user_name', 'user_display')
 
 
 # 阿里云实例配置信息

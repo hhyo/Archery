@@ -336,11 +336,14 @@ def archive(request):
 def archive_detail(request, id):
     """归档详情页面"""
     archive_config = ArchiveConfig.objects.get(pk=id)
-    # 获取当前审批和审批流程
-    audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
-
-    # 是否可审核
-    is_can_review = Audit.can_review(request.user, id, 3)
+    # 获取当前审批和审批流程、是否可审核
+    try:
+        audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
+        is_can_review = Audit.can_review(request.user, id, 3)
+    except Exception as e:
+        logger.debug(f'无审核信息，错误信息{e}')
+        audit_auth_group, current_audit_auth_group = None, None
+        is_can_review = False
     # 获取审核日志
     if archive_config.status == 2:
         try:

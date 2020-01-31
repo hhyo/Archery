@@ -1870,7 +1870,7 @@ class TestArchiver(TestCase):
             archive(self.archive_apply.id)
 
     @patch('sql.archiver.async_task')
-    def test_add_archive(self, _async_task):
+    def test_archive_log(self, _async_task):
         """
         测试获取归档日志
         :return:

@@ -542,23 +542,24 @@ class ArchiveConfig(models.Model):
     """
     title = models.CharField('归档配置说明', max_length=50)
     resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    audit_auth_groups = models.CharField('审批权限组列表', max_length=255)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255, blank=True)
     src_instance = models.ForeignKey(Instance, related_name='src_instance', on_delete=models.CASCADE)
     src_db_name = models.CharField('源数据库', max_length=64)
     src_table_name = models.CharField('源表', max_length=64)
-    dest_instance = models.ForeignKey(Instance, related_name='dest_instance', on_delete=models.CASCADE, null=True)
+    dest_instance = models.ForeignKey(Instance, related_name='dest_instance', on_delete=models.CASCADE,
+                                      blank=True, null=True)
     dest_db_name = models.CharField('目标数据库', max_length=64, blank=True, null=True)
     dest_table_name = models.CharField('目标表', max_length=64, blank=True, null=True)
     condition = models.CharField('归档条件，where条件', max_length=1000)
     mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
     no_delete = models.BooleanField('是否保留源数据')
-    sleep = models.IntegerField('归档limit行记录后的休眠秒数', default=0)
-    status = models.IntegerField('审核状态', choices=workflow_status_choices)
-    state = models.BooleanField('是否启用归档')
-    user_name = models.CharField('申请人', max_length=30)
-    user_display = models.CharField('申请人中文名', max_length=50, default='')
+    sleep = models.IntegerField('归档limit行后的休眠秒数', default=1)
+    status = models.IntegerField('审核状态', choices=workflow_status_choices, blank=True, default=1)
+    state = models.BooleanField('是否启用归档', default=True)
+    user_name = models.CharField('申请人', max_length=30, blank=True, default='')
+    user_display = models.CharField('申请人中文名', max_length=50, blank=True, default='')
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    last_archive_time = models.DateTimeField('最近归档时间', null=True)
+    last_archive_time = models.DateTimeField('最近归档时间', blank=True, null=True)
     sys_time = models.DateTimeField('系统时间修改', auto_now=True)
 
     class Meta:
@@ -684,6 +685,7 @@ class Permission(models.Model):
             ('data_dictionary_export', '导出数据字典'),
             ('archive_apply', '提交归档申请'),
             ('archive_review', '审核归档申请'),
+            ('archive_mgt', '管理归档申请'),
         )
 
 

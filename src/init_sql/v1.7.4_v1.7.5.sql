@@ -3,7 +3,8 @@ set @content_type_id=(select id from django_content_type where app_label='sql' a
 insert IGNORE INTO auth_permission (name, content_type_id, codename) VALUES
 ('菜单 数据归档', @content_type_id, 'menu_archive'),
 ('提交归档申请', @content_type_id, 'archive_apply'),
-('审核归档申请', @content_type_id, 'archive_audit');
+('审核归档申请', @content_type_id, 'archive_audit'),
+('管理归档申请', @content_type_id, 'archive_mgt');
 
 -- 归档配置表
 CREATE TABLE `archive_config` (

@@ -300,8 +300,8 @@ def archive(archive_id):
     insert_cnt = 0
     delete_cnt = 0
     with FuncTimer() as t:
-        p = pt_archiver.execute_cmd(cmd_args, shell=True)
         stdout = ''
+        p = pt_archiver.execute_cmd(cmd_args, shell=True)
         for line in iter(p.stdout.readline, ''):
             if re.match(r'^SELECT\s(\d+)$', line, re.I):
                 select_cnt = re.findall(r'^SELECT\s(\d+)$', line)
@@ -356,7 +356,7 @@ def archive(archive_id):
         no_delete=no_delete,
         sleep=sleep,
         select_cnt=select_cnt,
-        insert_cnt=select_cnt,
+        insert_cnt=insert_cnt,
         delete_cnt=delete_cnt,
         statistics=statistics,
         success=success,
@@ -368,6 +368,7 @@ def archive(archive_id):
         raise Exception(f'{error_info}\n{statistics}')
 
 
+@permission_required('sql.menu_archive', raise_exception=True)
 def archive_log(request):
     """获取归档日志列表"""
     limit = int(request.GET.get('limit', 0))
@@ -388,3 +389,16 @@ def archive_log(request):
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+@permission_required('sql.archive_mgt', raise_exception=True)
+def archive_switch(request):
+    """开启关闭归档任务"""
+    archive_id = request.POST.get('archive_id')
+    state = True if request.POST.get('state') == 'true' else False
+    # 更新启用状态
+    try:
+        ArchiveConfig(id=archive_id, state=state).save(update_fields=['state'])
+        return JsonResponse({'status': 0, 'msg': 'ok', 'data': {}})
+    except Exception as msg:
+        return JsonResponse({'status': 1, 'msg': f'{msg}', 'data': {}})

@@ -26,6 +26,15 @@
                 <span aria-hidden="true"></span>申请归档
             </button>
         </div>
+        {% if perms.sql.archive_mgt %}
+            <div class="form-group">
+                <button id="btn_add_config" type="button" class="btn btn-info"
+                        onclick="window.open('/admin/sql/archiveconfig/add/')">
+                    <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>添加配置
+                </button>
+            </div>
+        {% endif %}
     </div>
     <!-- 申请列表的表格-->
     <div class="table-responsive">
@@ -45,7 +54,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <input type="text" autocomplete="off" class="form-control" id="title"
-                               placeholder="对归档进行简单描述，审核通过后会按计划进行归档">
+                               placeholder="对归档进行简单描述">
                     </div>
                     <div class="form-group">
                         <select id="group_name" name="group_name"
