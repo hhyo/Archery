@@ -341,7 +341,7 @@ def archive_detail(request, id):
         audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
         is_can_review = Audit.can_review(request.user, id, 3)
     except Exception as e:
-        logger.debug(f'无审核信息，错误信息{e}')
+        logger.debug(f'归档配置{id}无审核信息，{e}')
         audit_auth_group, current_audit_auth_group = None, None
         is_can_review = False
     # 获取审核日志
@@ -350,7 +350,7 @@ def archive_detail(request, id):
             audit_id = Audit.detail_by_workflow_id(workflow_id=id, workflow_type=3).audit_id
             last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
         except Exception as e:
-            logger.debug(f'无审核日志记录，错误信息{e}')
+            logger.debug(f'归档配置{id}无审核日志记录，错误信息{e}')
             last_operation_info = ''
     else:
         last_operation_info = ''

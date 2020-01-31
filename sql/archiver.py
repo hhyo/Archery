@@ -5,6 +5,7 @@
 @file: archive.py
 @time: 2020/01/10
 """
+import datetime
 import logging
 import os
 import re
@@ -24,7 +25,6 @@ from django_q.tasks import async_task
 
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from common.utils.timer import FuncTimer
 from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
@@ -299,22 +299,23 @@ def archive(archive_id):
     select_cnt = 0
     insert_cnt = 0
     delete_cnt = 0
-    with FuncTimer() as t:
-        stdout = ''
-        p = pt_archiver.execute_cmd(cmd_args, shell=True)
-        for line in iter(p.stdout.readline, ''):
-            if re.match(r'^SELECT\s(\d+)$', line, re.I):
-                select_cnt = re.findall(r'^SELECT\s(\d+)$', line)
-            elif re.match(r'^INSERT\s(\d+)$', line, re.I):
-                insert_cnt = re.findall(r'^INSERT\s(\d+)$', line)
-            elif re.match(r'^DELETE\s(\d+)$', line, re.I):
-                delete_cnt = re.findall(r'^DELETE\s(\d+)$', line)
-            stdout += f'{line}\n'
-        statistics = stdout
-        # 获取异常信息
-        stderr = p.stderr.read()
-        if stderr:
-            statistics = stdout + stderr
+    start_time = datetime.datetime.now()
+    p = pt_archiver.execute_cmd(cmd_args, shell=True)
+    stdout = ''
+    for line in iter(p.stdout.readline, ''):
+        if re.match(r'^SELECT\s(\d+)$', line, re.I):
+            select_cnt = re.findall(r'^SELECT\s(\d+)$', line)
+        elif re.match(r'^INSERT\s(\d+)$', line, re.I):
+            insert_cnt = re.findall(r'^INSERT\s(\d+)$', line)
+        elif re.match(r'^DELETE\s(\d+)$', line, re.I):
+            delete_cnt = re.findall(r'^DELETE\s(\d+)$', line)
+        stdout += f'{line}\n'
+    statistics = stdout
+    # 获取异常信息
+    stderr = p.stderr.read()
+    if stderr:
+        statistics = stdout + stderr
+    end_time = datetime.datetime.now()
 
     # 判断归档结果
     select_cnt = int(select_cnt[0]) if select_cnt else 0
@@ -361,8 +362,8 @@ def archive(archive_id):
         statistics=statistics,
         success=success,
         error_info=error_info,
-        start_time=t.start,
-        end_time=t.end
+        start_time=start_time,
+        end_time=end_time
     )
     if not success:
         raise Exception(f'{error_info}\n{statistics}')
