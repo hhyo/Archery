@@ -346,7 +346,7 @@ def archive(archive_id):
     if connection.connection and not connection.is_usable():
         close_old_connections()
     # 更新最后归档时间
-    ArchiveConfig(id=archive_id, last_archive_time=t.end).save(update_fields=['last_archive_time'])
+    ArchiveConfig(id=archive_id, last_archive_time=end_time).save(update_fields=['last_archive_time'])
     # 替换密码信息后保存
     ArchiveLog.objects.create(
         archive=archive_info,
