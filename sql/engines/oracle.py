@@ -86,7 +86,7 @@ class OracleEngine(EngineBase):
         result.rows = schema_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL
         """
@@ -95,14 +95,14 @@ class OracleEngine(EngineBase):
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
@@ -157,7 +157,7 @@ class OracleEngine(EngineBase):
                     return f"{sql.rstrip(';')} AND ROWNUM <= {limit_num}"
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:

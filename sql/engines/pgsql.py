@@ -43,12 +43,12 @@ class PgSQLEngine(EngineBase):
         获取数据库列表
         :return:
         """
-        result = self._query(sql=f"SELECT datname FROM pg_database;")
+        result = self.query(sql=f"SELECT datname FROM pg_database;")
         db_list = [row[0] for row in result.rows if row[0] not in ['postgres', 'template0', 'template1']]
         result.rows = db_list
         return result
 
-    def get_all_schemas(self, db_name):
+    def get_all_schemas(self, db_name, **kwargs):
         """
         获取模式列表
         :return:
@@ -60,13 +60,14 @@ class PgSQLEngine(EngineBase):
         result.rows = schema_list
         return result
 
-    def get_all_tables(self, db_name, schema_name=None):
+    def get_all_tables(self, db_name, **kwargs):
         """
         获取表列表
         :param db_name:
         :param schema_name:
         :return:
         """
+        schema_name = kwargs.get('schema_name')
         sql = f"""SELECT table_name 
         FROM information_schema.tables 
         where table_schema ='{schema_name}';"""
@@ -75,7 +76,7 @@ class PgSQLEngine(EngineBase):
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name, schema_name=None):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """
         获取字段列表
         :param db_name:
@@ -83,6 +84,7 @@ class PgSQLEngine(EngineBase):
         :param schema_name:
         :return:
         """
+        schema_name = kwargs.get('schema_name')
         sql = f"""SELECT column_name
         FROM information_schema.columns 
         where table_name='{tb_name}'
@@ -92,7 +94,7 @@ class PgSQLEngine(EngineBase):
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name, schema_name=None):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """
         获取表结构信息
         :param db_name:
@@ -100,6 +102,7 @@ class PgSQLEngine(EngineBase):
         :param schema_name:
         :return:
         """
+        schema_name = kwargs.get('schema_name')
         sql = f"""select
         col.column_name,
         col.data_type,
@@ -115,7 +118,7 @@ class PgSQLEngine(EngineBase):
         and col.ordinal_position = des.objsubid
         where table_name = '{tb_name}'
         order by ordinal_position;"""
-        result = self.query(db_name=db_name, schema_name=schema_name,sql=sql)
+        result = self.query(db_name=db_name, schema_name=schema_name, sql=sql)
         return result
 
     def query_check(self, db_name=None, sql=''):
@@ -137,8 +140,9 @@ class PgSQLEngine(EngineBase):
             result['msg'] = 'SQL语句中含有 * '
         return result
 
-    def _query(self, db_name=None, sql='', limit_num=0, schema_name=None, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
+        schema_name = kwargs.get('schema_name')
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=db_name)
@@ -163,11 +167,6 @@ class PgSQLEngine(EngineBase):
             if close_conn:
                 self.close()
         return result_set
-
-    def query(self, db_name=None, sql='', limit_num=0, schema_name=None, close_conn=True):
-        if not db_name:
-            raise ValueError('db_name未填写,请检查参数')
-        return self._query(db_name=db_name, sql=sql, limit_num=limit_num, schema_name=schema_name, close_conn=close_conn)
 
     def filter_sql(self, sql='', limit_num=0):
         # 对查询sql增加limit限制，# TODO limit改写待优化
@@ -287,7 +286,6 @@ class PgSQLEngine(EngineBase):
             if close_conn:
                 self.close()
         return execute_result
-
 
     def close(self):
         if self.conn:

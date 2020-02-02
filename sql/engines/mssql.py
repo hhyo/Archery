@@ -31,7 +31,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         result.rows = db_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
@@ -41,14 +41,14 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet"""
         sql = r"""select
         c.name ColumnName,
@@ -119,7 +119,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
                 return sql_lower.replace('select', 'select top {}'.format(limit_num))
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
