@@ -5,7 +5,6 @@
 @file: archive.py
 @time: 2020/01/10
 """
-import datetime
 import logging
 import os
 import re
@@ -25,6 +24,7 @@ from django_q.tasks import async_task
 
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.timer import FuncTimer
 from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
@@ -299,23 +299,22 @@ def archive(archive_id):
     select_cnt = 0
     insert_cnt = 0
     delete_cnt = 0
-    start_time = datetime.datetime.now()
-    p = pt_archiver.execute_cmd(cmd_args, shell=True)
-    stdout = ''
-    for line in iter(p.stdout.readline, ''):
-        if re.match(r'^SELECT\s(\d+)$', line, re.I):
-            select_cnt = re.findall(r'^SELECT\s(\d+)$', line)
-        elif re.match(r'^INSERT\s(\d+)$', line, re.I):
-            insert_cnt = re.findall(r'^INSERT\s(\d+)$', line)
-        elif re.match(r'^DELETE\s(\d+)$', line, re.I):
-            delete_cnt = re.findall(r'^DELETE\s(\d+)$', line)
-        stdout += f'{line}\n'
+    with FuncTimer() as t:
+        p = pt_archiver.execute_cmd(cmd_args, shell=True)
+        stdout = ''
+        for line in iter(p.stdout.readline, ''):
+            if re.match(r'^SELECT\s(\d+)$', line, re.I):
+                select_cnt = re.findall(r'^SELECT\s(\d+)$', line)
+            elif re.match(r'^INSERT\s(\d+)$', line, re.I):
+                insert_cnt = re.findall(r'^INSERT\s(\d+)$', line)
+            elif re.match(r'^DELETE\s(\d+)$', line, re.I):
+                delete_cnt = re.findall(r'^DELETE\s(\d+)$', line)
+            stdout += f'{line}\n'
     statistics = stdout
     # 获取异常信息
     stderr = p.stderr.read()
     if stderr:
         statistics = stdout + stderr
-    end_time = datetime.datetime.now()
 
     # 判断归档结果
     select_cnt = int(select_cnt[0]) if select_cnt else 0
@@ -346,7 +345,7 @@ def archive(archive_id):
     if connection.connection and not connection.is_usable():
         close_old_connections()
     # 更新最后归档时间
-    ArchiveConfig(id=archive_id, last_archive_time=end_time).save(update_fields=['last_archive_time'])
+    ArchiveConfig(id=archive_id, last_archive_time=t.end).save(update_fields=['last_archive_time'])
     # 替换密码信息后保存
     ArchiveLog.objects.create(
         archive=archive_info,
@@ -362,8 +361,8 @@ def archive(archive_id):
         statistics=statistics,
         success=success,
         error_info=error_info,
-        start_time=start_time,
-        end_time=end_time
+        start_time=t.start,
+        end_time=t.end
     )
     if not success:
         raise Exception(f'{error_info}\n{statistics}')
