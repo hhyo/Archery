@@ -324,7 +324,7 @@ def schemasync(request):
     return render(request, 'schemasync.html')
 
 
-@permission_required('sql.menu_archiver', raise_exception=True)
+@permission_required('sql.menu_archive', raise_exception=True)
 def archive(request):
     """归档列表页面"""
     # 获取资源组

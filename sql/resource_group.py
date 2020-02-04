@@ -128,20 +128,19 @@ def instances(request):
     db_type = request.POST.get('db_type')
 
     # 先获取资源组关联所有实例列表
-    instances = ResourceGroup.objects.get(group_id=group_id).instances
+    ins = ResourceGroup.objects.get(group_id=group_id).instances
 
-    # 过滤db_type
+    # 过滤项
+    filter_dict = dict()
+    # db_type
     if db_type:
-        instances = instances.filter(db_type=db_type)
-
-    # 过滤tag
+        filter_dict['db_type'] = db_type
     if tag_code:
-        instances = instances.filter(instancetag__tag_code=tag_code,
-                                     instancetag__active=True,
-                                     instancetagrelations__active=True
-                                     ).values('id', 'type', 'db_type', 'instance_name')
-
-    rows = [row for row in instances]
+        filter_dict['instancetag__tag_code'] = tag_code
+        filter_dict['instancetag__active'] = True
+        filter_dict['instancetagrelations__active'] = True
+    ins = ins.filter(**filter_dict).values('id', 'type', 'db_type', 'instance_name')
+    rows = [row for row in ins]
     result = {'status': 0, 'msg': 'ok', "data": rows}
     return HttpResponse(json.dumps(result), content_type='application/json')
 
