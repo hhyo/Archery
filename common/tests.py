@@ -491,7 +491,7 @@ class AuthTest(TestCase):
     def test_init_user(self):
         """用户初始化测试测试"""
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
         # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
