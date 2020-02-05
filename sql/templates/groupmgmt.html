@@ -149,28 +149,7 @@
                 }, {
                     title: '资源组',
                     field: 'group_name'
-                }, {
-                    title: '关联时间',
-                    field: 'create_time'
                 }
-                    , {
-                        title: '操作',
-                        field: '',
-                        formatter: function (value, row, index) {
-                            switch (row.object_type) {
-                                case 0:
-                                    return "<button class=\"btn btn-danger btn-xs\" " +
-                                        "onclick=\"window.location.href='/admin/sql/resourcegroup2user/" + row.id + "/delete/'\" >删除</button>\n"
-                                    break;
-                                case 1:
-                                    return "<button class=\"btn btn-danger btn-xs\" " +
-                                        "onclick=\"window.location.href='/admin/sql/resourcegroup2instance/" + row.id + "/delete/'\" >删除</button>\n"
-                                    break;
-                                default:
-                                    return "未知"
-                            }
-                        }
-                    }
                 ],
                 onLoadSuccess: function () {
                 },

@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
-from sql.models import Users, ResourceGroup,ResourceGroup2User
+from sql.models import Users, ResourceGroup
 
 logger = logging.getLogger('default')
 
@@ -35,9 +35,7 @@ def init_user(user):
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
         try:
-            ResourceGroup2User.objects.get_or_create(
-                user_id=user.id,
-                resource_group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id)
+            user.resource_group.add(ResourceGroup.objects.get(group_name=default_resource_group))
         except ResourceGroup.DoesNotExist:
             logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
 

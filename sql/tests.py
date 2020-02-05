@@ -3,7 +3,6 @@ import re
 from datetime import timedelta, datetime, date
 from unittest.mock import MagicMock, patch, ANY
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase, TransactionTestCase
@@ -17,11 +16,11 @@ from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql
 from sql.utils.execute_sql import execute_callback
 from sql.query import kill_query_conn
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
-    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit, QueryLog, WorkflowLog, WorkflowAuditSetting, \
+from sql.models import Users, Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
+    ResourceGroup, ParamTemplate, WorkflowAudit, QueryLog, WorkflowLog, WorkflowAuditSetting, \
     ArchiveConfig
 
-User = get_user_model()
+User = Users
 
 
 class TestView(TestCase):
@@ -750,7 +749,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_review = Permission.objects.get(codename='query_review')
         self.user.user_permissions.add(query_review)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -771,8 +770,7 @@ class TestQueryPrivilegesApply(TestCase):
 
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
-        # ResourceGroup.objects.get(group_id=self.group.group_id).users.add(self.user)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -823,7 +821,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
         self.user.user_permissions.add(query_mgtpriv)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -851,7 +849,7 @@ class TestQueryPrivilegesApply(TestCase):
                                        priv_type=2)
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
