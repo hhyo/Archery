@@ -52,7 +52,7 @@ def associated_objects(request):
 
     # 获取关联数据
     resource_group = ResourceGroup.objects.get(group_id=group_id)
-    rows_users = resource_group.users_set.all().filter()
+    rows_users = resource_group.users_set.all()
     rows_instances = resource_group.instance_set.all()
     # 过滤搜索
     if search:

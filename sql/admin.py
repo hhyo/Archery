@@ -22,6 +22,7 @@ class UsersAdmin(UserAdmin):
         ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('资源组', {'fields': ('resource_group',)}),
+        ('其他信息', {'fields': ('date_joined',)}),
     )
     # 添加页显示内容
     add_fieldsets = (
