@@ -135,7 +135,7 @@ class SqlWorkflow(models.Model):
     demand_url = models.CharField('需求链接', max_length=500)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
-    instance = models.ForeignKey(Instance, on_delete=models.DO_NOTHING)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField('数据库', max_length=64)
     syntax_type = models.IntegerField('工单类型 0、未知，1、DDL，2、DML', choices=((0, '其他'), (1, 'DDL'), (2, 'DML')), default=0)
     is_backup = models.BooleanField('是否备份', choices=((False, '否'), (True, '是'),), default=True)
@@ -164,7 +164,7 @@ class SqlWorkflowContent(models.Model):
     存放各个SQL上线工单的SQL|审核|执行内容
     可定期归档或清理历史数据，也可通过``alter table sql_workflow_content row_format=compressed; ``来进行压缩
     """
-    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.DO_NOTHING)
+    workflow = models.OneToOneField(SqlWorkflow, on_delete=models.CASCADE)
     sql_content = models.TextField('具体sql内容')
     review_content = models.TextField('自动审核内容的JSON格式')
     execute_result = models.TextField('执行结果的JSON格式', blank=True)
@@ -293,7 +293,7 @@ class QueryPrivilegesApply(models.Model):
     # TODO user_name display 改为外键
     user_name = models.CharField('申请人', max_length=30)
     user_display = models.CharField('申请人中文名', max_length=50, default='')
-    instance = models.ForeignKey(Instance, on_delete=models.DO_NOTHING)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_list = models.TextField('数据库', default='')  # 逗号分隔的数据库列表
     table_list = models.TextField('表', default='')  # 逗号分隔的表列表
     valid_date = models.DateField('有效时间')
@@ -475,7 +475,7 @@ class ParamHistory(models.Model):
     """
     可在线修改的动态参数配置
     """
-    instance = models.ForeignKey(Instance, on_delete=models.DO_NOTHING)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     variable_name = models.CharField('参数名', max_length=64)
     old_var = models.CharField('修改前参数值', max_length=1024)
     new_var = models.CharField('修改后参数值', max_length=1024)
@@ -497,7 +497,7 @@ class ArchiveConfig(models.Model):
     归档配置表
     """
     title = models.CharField('归档配置说明', max_length=50)
-    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.DO_NOTHING)
+    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
     audit_auth_groups = models.CharField('审批权限组列表', max_length=255, blank=True)
     src_instance = models.ForeignKey(Instance, related_name='src_instance', on_delete=models.CASCADE)
     src_db_name = models.CharField('源数据库', max_length=64)
@@ -529,7 +529,7 @@ class ArchiveLog(models.Model):
     """
     归档日志表
     """
-    archive = models.ForeignKey(ArchiveConfig, on_delete=models.DO_NOTHING)
+    archive = models.ForeignKey(ArchiveConfig, on_delete=models.CASCADE)
     cmd = models.CharField('归档命令', max_length=2000)
     condition = models.CharField('归档条件，where条件', max_length=1000)
     mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
