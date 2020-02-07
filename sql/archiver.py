@@ -29,6 +29,7 @@ from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
+from sql.utils.sql_utils import schema_object
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
@@ -251,6 +252,13 @@ def archive(archive_id):
     sleep = archive_info.sleep
     mode = archive_info.mode
 
+    # 获取归档表的字符集信息
+    db = schema_object(s_ins, src_db_name)
+    tb = db.tables[src_table_name]
+    charset = tb.options['charset'].value
+    if charset is None:
+        charset = db.options['charset'].value
+
     pt_archiver = PtArchiver()
     # 准备参数
     source = fr"h={s_ins.host},u={s_ins.user},p={s_ins.password},P={s_ins.port},D={src_db_name},t={src_table_name}"
@@ -260,7 +268,7 @@ def archive(archive_id):
         "where": condition,
         "progress": 5000,
         "statistics": True,
-        "charset": 'UTF8',
+        "charset": charset,
         "limit": 10000,
         "txn-size": 1000,
         "sleep": sleep

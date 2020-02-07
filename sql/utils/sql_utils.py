@@ -8,7 +8,10 @@
 import re
 import xml
 import mybatis_mapper2sql
+import schemaobject
 import sqlparse
+from schemaobject.connection import build_database_url
+
 from sql.utils.extract_tables import extract_tables as extract_tables_by_sql_parse
 
 __author__ = 'hhyo'
@@ -123,3 +126,10 @@ def generate_sql(text):
             row = {"sql_id": num, "sql": statement}
             rows.append(row)
     return rows
+
+
+def schema_object(ins, db_name):
+    """获取Schame Object信息"""
+    url = build_database_url(host=ins.host, username=ins.user, password=ins.password, port=ins.port, database=db_name)
+    db = schemaobject.SchemaObject(url, charset=f'{ins.charset}')
+    return db.selected
