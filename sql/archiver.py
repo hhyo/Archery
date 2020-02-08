@@ -25,11 +25,11 @@ from django_q.tasks import async_task
 from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.timer import FuncTimer
+from sql.engines import get_engine
 from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
-from sql.utils.sql_utils import schema_object
 from sql.utils.workflow_audit import Audit
 
 logger = logging.getLogger('default')
@@ -253,7 +253,8 @@ def archive(archive_id):
     mode = archive_info.mode
 
     # 获取归档表的字符集信息
-    db = schema_object(s_ins, src_db_name)
+    s_engine = get_engine(s_ins)
+    db = s_engine.schema_object.databases[src_db_name]
     tb = db.tables[src_table_name]
     charset = tb.options['charset'].value
     if charset is None:

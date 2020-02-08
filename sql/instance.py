@@ -185,13 +185,6 @@ def schemasync(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     target_instance_info = Instance.objects.get(instance_name=target_instance_name)
 
-    # 检查SchemaSync程序路径
-    path = SysConfig().get('schemasync')
-    if path is None:
-        result['status'] = 1
-        result['msg'] = '请配置SchemaSync路径！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
     # 提交给SchemaSync获取对比结果
     schema_sync = SchemaSync()
     # 准备参数

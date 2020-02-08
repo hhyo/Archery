@@ -19,4 +19,4 @@ supervisor==4.1.0
 gevent==1.4.0
 phoenixdb==0.7
 django-mirage-field==0.0.5
-schema-object==0.5.10
+schema-sync==0.9.7

@@ -14,7 +14,7 @@ from sql.plugins.plugin import Plugin
 class SchemaSync(Plugin):
 
     def __init__(self):
-        self.path = SysConfig().get('schemasync')
+        self.path = 'schemasync'
         self.required_args = []
         self.disable_args = []
         super(Plugin, self).__init__()

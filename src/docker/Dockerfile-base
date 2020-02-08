@@ -52,12 +52,6 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && make \
     && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
     && rm -rf /opt/SQLAdvisor/ \
-#schemasync
-    && cd /opt \
-    && virtualenv venv4schemasync  --python=python2 \
-    && source venv4schemasync/bin/activate \
-    && yum install -y python-devel \
-    && pip install schema-sync mysql-python
 #soar
 RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \

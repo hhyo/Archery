@@ -3,8 +3,11 @@ import logging
 import traceback
 import MySQLdb
 import re
+
+import schemaobject
 import sqlparse
 from MySQLdb.constants import FIELD_TYPE
+from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
@@ -71,6 +74,15 @@ class MysqlEngine(EngineBase):
         self.get_connection()
         version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
+
+    @property
+    def schema_object(self):
+        """获取实例对象信息"""
+        url = build_database_url(host=self.host,
+                                 username=self.user,
+                                 password=self.password,
+                                 port=self.port)
+        return schemaobject.SchemaObject(url, charset=self.instance.charset or 'utf8mb4')
 
     def kill_connection(self, thread_id):
         """终止数据库连接"""
