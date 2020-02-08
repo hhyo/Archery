@@ -1643,16 +1643,11 @@ class TestSchemaSync(TestCase):
         :return:
         """
         data = {"instance_name": "test_instance",
-                "db_name": "*",
+                "db_name": "test",
                 "target_instance_name": "test_instance",
-                "target_db_name": "*",
+                "target_db_name": "test",
                 "sync_auto_inc": True,
                 "sync_comments": False}
-        r = self.client.post(path='/instance/schemasync/', data=data)
-        self.assertEqual(json.loads(r.content)['status'], 1)
-        self.assertEqual(json.loads(r.content)['msg'], '请配置SchemaSync路径！')
-        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
-        self.sys_config.get_all_config()
         r = self.client.post(path='/instance/schemasync/', data=data)
         self.assertEqual(json.loads(r.content)['status'], 0)
 
