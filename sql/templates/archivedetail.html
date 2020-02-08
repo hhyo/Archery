@@ -111,20 +111,22 @@
     <div id="tab-content" class="tab-content">
         <!-- 归档配置信息-->
         <div id="detail" role="tabpanel" class="panel-body tab-pane fade in active form-group">
-            <h4><b>是否启用</b></h4>
-            <hr/>
-            <div class="form-group">
-                <div class="left">
-                    <div class="switch switch-small">
-                        <label>
-                            <input id="state"
-                                   key="state"
-                                   value="{{ archive_config.state }}"
-                                   type="checkbox">
-                        </label>
+            {% if archive_config.status == 1 %}
+                <h4><b>是否启用</b></h4>
+                <hr/>
+                <div class="form-group">
+                    <div class="left">
+                        <div class="switch switch-small">
+                            <label>
+                                <input id="state"
+                                       key="state"
+                                       value="{{ archive_config.state }}"
+                                       type="checkbox">
+                            </label>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endif %}
             <h4><b>归档信息</b></h4>
             <hr/>
             <div class="form-horizontal">
