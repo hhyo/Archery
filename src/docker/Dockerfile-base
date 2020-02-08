@@ -51,7 +51,7 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && cmake -DCMAKE_BUILD_TYPE=debug ./ \
     && make \
     && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
-    && rm -rf /opt/SQLAdvisor/ \
+    && rm -rf /opt/SQLAdvisor/
 #soar
 RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \
