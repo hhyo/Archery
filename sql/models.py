@@ -98,6 +98,7 @@ class Instance(models.Model):
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
     password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True)
+    db_name = models.CharField('数据库', max_length=64, default='', blank=True)
     charset = models.CharField('字符集', max_length=20, default='', blank=True)
     service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)

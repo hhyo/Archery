@@ -34,7 +34,7 @@ class RedisEngine(EngineBase):
     def info(self):
         return 'Redis engine'
 
-    def get_all_databases(self):
+    def get_all_databases(self, **kwargs):
         """
         获取数据库列表
         :return:
@@ -61,7 +61,7 @@ class RedisEngine(EngineBase):
             result['msg'] = "禁止执行该命令！"
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:

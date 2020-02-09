@@ -97,7 +97,7 @@ class MysqlEngine(EngineBase):
         result.rows = db_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
@@ -105,7 +105,7 @@ class MysqlEngine(EngineBase):
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         sql = f"""SELECT 
             COLUMN_NAME,
@@ -126,7 +126,7 @@ class MysqlEngine(EngineBase):
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
         sql = f"show create table `{tb_name}`;"
         result = self.query(db_name=db_name, sql=sql)
