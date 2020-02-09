@@ -8,6 +8,7 @@ import json
 from . import EngineBase
 from .models import ResultSet
 from bson import json_util
+from pymongo.errors import OperationFailure
 
 __author__ = 'jackie'
 
@@ -33,10 +34,10 @@ class MongoEngine(EngineBase):
     def get_all_databases(self):
         result = ResultSet()
         conn = self.get_connection()
-        if self.db_name:
-            result.rows = [self.db_name]
-        else:
+        try:
             result.rows = conn.list_database_names()
+        except OperationFailure:
+            result.rows = [self.db_name]
         return result
 
     def get_all_tables(self, db_name, **kwargs):
