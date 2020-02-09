@@ -625,6 +625,63 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="feishu_webhook"
+                                       class="col-sm-4 control-label">飞书Webhook</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu_webhook" key="feishu_webhook"
+                                                   value="{{ config.feishu_webhook }}"
+                                                   type="checkbox"> 是否开启飞书Webhook通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feishu"
+                                       class="col-sm-4 control-label">飞书</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu" key="feishu"
+                                                   value="{{ config.feishu }}"
+                                                   type="checkbox"> 是否开启飞书通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                                <div id="div-feishu-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建飞书应用参考：<a target="_blank"
+                                                  href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_appid"
+                                           class="col-sm-4 control-label">飞书应用AppID</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_appid"
+                                               key="feishu_appid"
+                                               value="{{ config.feishu_appid }}"
+                                               placeholder="飞书应用AppID">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_app_secret"
+                                           class="col-sm-4 control-label">飞书AppSecret</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_app_secret"
+                                               key="feishu_app_secret"
+                                               value="{{ config.feishu_app_secret }}"
+                                               placeholder="飞书AppSecret">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
@@ -819,6 +876,8 @@
                     $("#div-auto-review-config").show();
                 } else if ($(this).attr("id") === 'wx') {
                     $("#div-wx-config").show();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").show();
                 }
             } else {
                 $(this).val(false);
@@ -831,6 +890,8 @@
                     $("#div-auto-review-config").hide();
                 } else if ($(this).attr("id") === 'wx') {
                     $("#div-wx-config").hide();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").hide();
                 }
             }
         });
