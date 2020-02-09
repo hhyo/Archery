@@ -27,19 +27,27 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     sys_config = SysConfig()
     msg_sender = MsgSender()
     msg_cc = msg_cc if msg_cc else []
-    webhook_url = kwargs.get('webhook_url')
+    dingding_webhook = kwargs.get('dingding_webhook')
+    feishu_webhook = kwargs.get('feishu_webhook')
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [user.ding_user_id for user in chain(msg_to, msg_cc) if user.ding_user_id]
     msg_to_wx_user = [user.wx_user_id if user.wx_user_id else user.username for user in chain(msg_to, msg_cc)]
+    logger.info(f'{msg_to_email}{msg_cc_email}{msg_to_wx_user}{chain(msg_to, msg_cc)}')
     if sys_config.get('mail'):
         msg_sender.send_email(msg_title, msg_content, msg_to_email, list_cc_addr=msg_cc_email)
-    if sys_config.get('ding') and webhook_url:
-        msg_sender.send_ding(webhook_url, msg_title + '\n' + msg_content)
+    if sys_config.get('ding') and dingding_webhook:
+        msg_sender.send_ding(dingding_webhook, msg_title + '\n' + msg_content)
     if sys_config.get('ding_to_person'):
         msg_sender.send_ding2user(msg_to_ding_user, msg_title + '\n' + msg_content)
     if sys_config.get('wx'):
         msg_sender.send_wx2user(msg_title + '\n' + msg_content, msg_to_wx_user)
+    if sys_config.get("feishu_webhook") and feishu_webhook:
+        msg_sender.send_feishu_webhook(feishu_webhook, msg_title, msg_content)
+    if sys_config.get("feishu"):
+        open_id = [user.feishu_open_id for user in chain(msg_to, msg_cc) if user.feishu_open_id]
+        user_mail = [user.email for user in chain(msg_to, msg_cc) if not user.feishu_open_id]
+        msg_sender.send_feishu_user(msg_title, msg_content,open_id,user_mail)
 
 
 def notify_for_audit(audit_id, **kwargs):
@@ -52,7 +60,11 @@ def notify_for_audit(audit_id, **kwargs):
     # 判断是否开启消息通知，未开启直接返回
     sys_config = SysConfig()
     wx_status = sys_config.get('wx')
-    if not sys_config.get('mail') and not sys_config.get('ding') and not wx_status:
+    feishu_webhook_status = sys_config.get("feishu_webhook")
+    feishu_status = sys_config.get("feishu")
+
+    if not sys_config.get('mail') and not sys_config.get(
+            'ding') and not wx_status and not feishu_status and not feishu_webhook_status:
         logger.info('未开启消息通知，可在系统设置中开启')
         return None
 
@@ -68,8 +80,8 @@ def notify_for_audit(audit_id, **kwargs):
     workflow_title = audit_detail.workflow_title
     workflow_from = audit_detail.create_user_display
     group_name = audit_detail.group_name
-    webhook_url = ResourceGroup.objects.get(group_id=audit_detail.group_id).ding_webhook
-
+    dingding_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).ding_webhook
+    feishu_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).feishu_webhook
     # 获取当前审批和审批流程
     workflow_auditors, current_workflow_auditors = Audit.review_info(audit_detail.workflow_id,
                                                                      audit_detail.workflow_type)
@@ -180,9 +192,9 @@ def notify_for_audit(audit_id, **kwargs):
             workflow_audit_remark)
     else:
         raise Exception('工单状态不正确')
-
+    logger.info(f"通知Debug{msg_to}{msg_cc}")
     # 发送通知
-    __send(msg_title, msg_content, msg_to, msg_cc, webhook_url=webhook_url)
+    __send(msg_title, msg_content, msg_to, msg_cc, feishu_webhook=feishu_webhook, dingding_webhook=dingding_webhook)
 
 
 def notify_for_execute(workflow):
@@ -195,8 +207,11 @@ def notify_for_execute(workflow):
     sys_config = SysConfig()
     wx_status = sys_config.get('wx')
 
-    if not sys_config.get('mail') and not sys_config.get('ding') and not sys_config.get('ding_to_person') \
-            and not wx_status:
+    feishu_webhook_status = sys_config.get("feishu_webhook")
+    feishu_status = sys_config.get("feishu")
+
+    if not sys_config.get('mail') and not sys_config.get(
+            'ding') and not wx_status and not feishu_status and not feishu_webhook_status:
         logger.info('未开启消息通知，可在系统设置中开启')
         return None
     # 获取当前审批和审批流程
@@ -218,9 +233,10 @@ def notify_for_execute(workflow):
     msg_cc = auth_group_users(auth_group_names=['DBA'], group_id=workflow.group_id)
 
     # 处理接收人
-    webhook_url = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
+    dingding_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
+    feishu_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).feishu_webhook
     # 发送通知
-    __send(msg_title, msg_content, msg_to, msg_cc, webhook_url=webhook_url)
+    __send(msg_title, msg_content, msg_to, msg_cc, dingding_webhook=dingding_webhook, feishu_webhook=feishu_webhook)
 
     # DDL通知
     if sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':

@@ -9,6 +9,7 @@ from common.config import SysConfig
 from common.utils.permission import superuser_required
 from sql.models import Users
 from sql.utils.tasks import add_sync_ding_user_schedule
+from common.utils.feishu_api import get_feishu_open_id
 
 logger = logging.getLogger('default')
 rs = get_redis_connection('dingding')
