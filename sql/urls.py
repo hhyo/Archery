@@ -144,6 +144,7 @@ urlpatterns = [
     path('archive/apply/', archiver.archive_apply),
     path('archive/audit/', archiver.archive_audit),
     path('archive/switch/', archiver.archive_switch),
+    path('archive/once/', archiver.archive_once),
     path('archive/log/', archiver.archive_log),
 
     path('4admin/sync_ding_user/', ding_api.sync_ding_user)

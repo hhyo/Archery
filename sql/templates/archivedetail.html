@@ -1,14 +1,23 @@
 {% extends "base.html" %}
 {% load format_tags %}
 {% block content %}
-    <h4 style="display: inline;">工单名称：<span>{{ archive_config.title }}</span></h4>
-    &nbsp;&nbsp;&nbsp;
-
-    <!--审核通过后有管理权限的用户可以直接编辑-->
-    {% if perms.sql.archive_mgt %}
-        <a type='button' id="btnEditArchiveConfig" class='btn btn-info'
-           href="/admin/sql/archiveconfig/{{ archive_config.id }}/change/">修改归档配置</a>
-    {% endif %}
+    <!--有管理权限的用户可以直接编辑-->
+    <div class="form-inline">
+        <h4 style="display: inline;">工单名称：<span>{{ archive_config.title }}</span></h4>&nbsp;&nbsp;&nbsp;
+        {% if perms.sql.archive_mgt %}
+            <a type='button' id="btnEditArchiveConfig" class='btn btn-info'
+               href="/admin/sql/archiveconfig/{{ archive_config.id }}/change/">修改归档配置</a>
+        {% endif %}
+        <!--单次调用-->
+        {% if archive_config.status == 1 and perms.sql.archive_mgt %}
+            <div class="form-group">
+                <button id="btn_archive_once" type="button" class="btn btn-warning">
+                    <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>立即归档
+                </button>
+            </div>
+        {% endif %}
+    </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ archive_config.sql_content }}"/>
     <hr>
@@ -111,7 +120,7 @@
     <div id="tab-content" class="tab-content">
         <!-- 归档配置信息-->
         <div id="detail" role="tabpanel" class="panel-body tab-pane fade in active form-group">
-            {% if archive_config.status == 1 %}
+            {% if archive_config.status == 1 and perms.sql.archive_mgt %}
                 <h4><b>是否启用</b></h4>
                 <hr/>
                 <div class="form-group">
@@ -298,6 +307,34 @@
 
         });
 
+        // 单次归档
+        $("#btn_archive_once").click(function () {
+            let isContinue = confirm("请确认是否立即进行归档？");
+            if (isContinue) {
+                $.ajax({
+                    type: "get",
+                    url: "/archive/once/",
+                    dataType: "json",
+                    data: {
+                        archive_id: "{{ archive_config.id }}"
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            alert('归档任务提交成功！请稍后查看归档日志获取结果');
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+        });
+
+
         // 获取日志日志
         function get_logs() {
             //初始化table
@@ -316,9 +353,9 @@
                 pageSize: 14,                     //每页的记录行数（*）
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 search: true,                      //是否显示表格搜索
-                strictSearch: false,                //是否全匹配搜索
-                showColumns: false,                  //是否显示所有的列（选择显示的列）
-                showRefresh: false,                  //是否显示刷新按钮
+                strictSearch: true,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
                 minimumCountColumns: 2,             //最少允许的列数
                 clickToSelect: false,                //是否启用点击选中行
                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列

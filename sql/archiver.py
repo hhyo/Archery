@@ -411,3 +411,11 @@ def archive_switch(request):
         return JsonResponse({'status': 0, 'msg': 'ok', 'data': {}})
     except Exception as msg:
         return JsonResponse({'status': 1, 'msg': f'{msg}', 'data': {}})
+
+
+@permission_required('sql.archive_mgt', raise_exception=True)
+def archive_once(request):
+    """单次立即调用归档任务"""
+    archive_id = request.GET.get('archive_id')
+    async_task('sql.archiver.archive', archive_id, timeout=-1, task_name=f'archive-{archive_id}')
+    return JsonResponse({'status': 0, 'msg': 'ok', 'data': {}})
