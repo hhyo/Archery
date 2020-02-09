@@ -66,7 +66,7 @@ python3 manage.py makemigrations sql
 python3 manage.py migrate
 
 #数据初始化
-python3 manage.py loaddata initial_data.json
+python manage.py dbshell<sql/fixtures/auth_group.sql
 
 #创建管理用户
 python3 manage.py createsuperuser
