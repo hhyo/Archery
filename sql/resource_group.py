@@ -127,7 +127,7 @@ def instances(request):
     db_type = request.POST.get('db_type')
 
     # 先获取资源组关联所有实例列表
-    ins = ResourceGroup.objects.get(group_id=group_id).instances
+    ins = ResourceGroup.objects.get(group_id=group_id).instance_set.all()
 
     # 过滤项
     filter_dict = dict()
