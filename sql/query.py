@@ -95,8 +95,10 @@ def query(request):
         with FuncTimer() as t:
             # 获取主从延迟信息
             seconds_behind_master = query_engine.seconds_behind_master
-            query_result = query_engine.query(
-                db_name, sql_content, limit_num, schema_name=schema_name, tb_name=tb_name)
+            query_result = query_engine.query(db_name, sql_content, limit_num,
+                                              schema_name=schema_name,
+                                              tb_name=tb_name,
+                                              max_execution_time=max_execution_time * 1000)
         query_result.query_time = t.cost
         # 返回查询结果后删除schedule
         if thread_id:

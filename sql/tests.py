@@ -915,7 +915,7 @@ class TestQuery(TransactionTestCase):
                                     'db_name': some_db,
                                     'limit_num': some_limit})
         _get_engine.return_value.query.assert_called_once_with(
-            some_db, some_sql, some_limit, schema_name=None, tb_name=None)
+            some_db, some_sql, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         print(r_json)
         self.assertEqual(r_json['data']['rows'], ['value'])
@@ -945,7 +945,7 @@ class TestQuery(TransactionTestCase):
                                     'db_name': some_db,
                                     'limit_num': some_limit})
         _get_engine.return_value.query.assert_called_once_with(
-            some_db, sql_with_limit, some_limit, schema_name=None, tb_name=None)
+            some_db, sql_with_limit, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -960,7 +960,7 @@ class TestQuery(TransactionTestCase):
                                 'db_name': some_db,
                                 'limit_num': some_limit})
         _get_engine.return_value.query.assert_called_once_with(
-            some_db, filtered_sql_with_star, some_limit, schema_name=None, tb_name=None)
+            some_db, filtered_sql_with_star, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
 
     @patch('sql.query.query_priv_check')
     def testStarOptionOn(self, _priv_check):

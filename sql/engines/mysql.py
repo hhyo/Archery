@@ -135,10 +135,14 @@ class MysqlEngine(EngineBase):
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
+        max_execution_time = kwargs.get('max_execution_time', 0)
         cursorclass = kwargs.get('cursorclass') or MySQLdb.cursors.Cursor
         try:
             conn = self.get_connection(db_name=db_name)
+            conn.autocommit(True)
             cursor = conn.cursor(cursorclass)
+            if self.server_version >= (5, 7, 8) and max_execution_time:
+                cursor.execute(f"set session max_execution_time={max_execution_time};")
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
