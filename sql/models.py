@@ -224,7 +224,7 @@ class WorkflowAuditDetail(models.Model):
     audit_user = models.CharField('审核人', max_length=30)
     audit_time = models.DateTimeField('审核时间')
     audit_status = models.IntegerField('审核状态', choices=workflow_status_choices)
-    remark = models.CharField('审核备注', default='', max_length=140)
+    remark = models.CharField('审核备注', default='', max_length=1000)
     sys_time = models.DateTimeField('系统时间', auto_now=True)
 
     def __int__(self):
@@ -268,7 +268,7 @@ class WorkflowLog(models.Model):
     audit_id = models.IntegerField('工单审批id', db_index=True)
     operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
     operation_type_desc = models.CharField('操作类型描述', max_length=10)
-    operation_info = models.CharField('操作信息', max_length=200)
+    operation_info = models.CharField('操作信息', max_length=1000)
     operator = models.CharField('操作人', max_length=30)
     operator_display = models.CharField('操作人中文名', max_length=50, default='')
     operation_time = models.DateTimeField(auto_now_add=True)
