@@ -160,7 +160,7 @@ def notify_for_audit(audit_id, **kwargs):
             db_name,
             workflow_title,
             workflow_url,
-            workflow_audit_remark)
+            re.sub('[\r\n\f]{2,}', '\n', workflow_audit_remark))
     elif status == WorkflowDict.workflow_status['audit_abort']:  # 审核取消，通知所有审核人
         msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
         # 接收人，发送给该资源组内对应权限组所有的用户
@@ -177,7 +177,7 @@ def notify_for_audit(audit_id, **kwargs):
             db_name,
             workflow_title,
             workflow_url,
-            workflow_audit_remark)
+            re.sub('[\r\n\f]{2,}', '\n', workflow_audit_remark))
     else:
         raise Exception('工单状态不正确')
 
