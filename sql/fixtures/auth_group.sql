@@ -38,7 +38,7 @@ from auth_permission
 where codename in ('menu_dashboard','menu_sqlcheck','menu_sqlworkflow','menu_query','menu_sqlquery','menu_queryapplylist','menu_data_dictionary','menu_document','sql_submit','sql_execute','query_applypriv','query_submit');
 
 -- sql_users
-INSERT INTO sql_users('password', 'is_superuser', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'date_joined', 'display', 'failed_login_count', 'last_login_failed_at')
+INSERT INTO sql_users(password, is_superuser, username, first_name, last_name, email, is_staff, is_active, date_joined, display, failed_login_count, last_login_failed_at)
 VALUES ('pbkdf2_sha256$150000$zmwxvtzfZH5T$3B/WR5mirdaSHxDyPt9Fad6S90Qu1L47DRvzKNkQh00=', 1, 'admin', '', '', 'admin@archery.com', 1, 1, '2020-02-21 13:43:54.696649', '', 1, '2020-02-25 15:59:06.453822');
 
 SET FOREIGN_KEY_CHECKS=1;
