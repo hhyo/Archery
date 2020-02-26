@@ -89,7 +89,7 @@ DATE_FORMAT = 'Y-m-d'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'common/static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static')]
 STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 

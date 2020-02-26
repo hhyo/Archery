@@ -10,7 +10,8 @@ function init() {
     echo "----------------"
     echo "安装/更新可能缺少的依赖: mysql-community-devel gcc gcc-c++ python-devel"
     sudo yum install epel-release
-    sudo yum install -y mysql-devel gcc gcc-c++ python-devel MySQL-python python36 python36-pip
+    sudo yum install -y mysql-devel gcc gcc-c++ python-devel MySQL-python
+    sudo yum install -y python36 python36-pip openldap-devel unixODBC-devel gettext
 
     python3 -m pip install virtualenv
     if [ ! -d "venv" ]; then
