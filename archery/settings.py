@@ -8,8 +8,8 @@ import yaml
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if os.path.exists(os.path.join(BASE_DIR, 'common/properties')):
-        with open('common/properties/application.yaml', 'r', encoding='utf-8') as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
+        with open('common/properties/application.yaml', 'r', encoding='utf-8') as file:
+            config = yaml.safe_load(file)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
@@ -161,7 +161,7 @@ Q_CLUSTER = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/8".format(config['REDIS']['address'], config['REDIS']['port']),
+        "LOCATION": "redis://{}:{}/0".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": "{}".format(config['REDIS']['passwd'])
@@ -169,7 +169,7 @@ CACHES = {
     },
     "dingding": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/9".format(config['REDIS']['address'], config['REDIS']['port']),
+        "LOCATION": "redis://{}:{}/1".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": "{}".format(config['REDIS']['passwd'])

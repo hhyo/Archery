@@ -2,11 +2,11 @@ version: 1.0
 DATABASE:
   address: 127.0.0.1
   port: 3306
-  username: archery
-  password: archery
+  username: root
+  password:
   db: archery
 
 REDIS:
   address: 127.0.0.1
   port: 6379
-  passwd: archery
+  passwd:
