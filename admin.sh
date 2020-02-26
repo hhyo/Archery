@@ -9,11 +9,11 @@ function init() {
     echo "Initing archery"
     echo "----------------"
     echo "安装/更新可能缺少的依赖: mysql-community-devel gcc gcc-c++ python-devel"
-    sudo yum install epel-release
+    sudo yum install -y epel-release
     sudo yum install -y mysql-devel gcc gcc-c++ python-devel MySQL-python
-    sudo yum install -y python36 python36-pip openldap-devel unixODBC-devel gettext
+    sudo yum install -y python36 python3-devel python36-pip openldap-devel unixODBC-devel gettext
 
-    python3 -m pip install virtualenv
+    python3 -m pip install virtualenv -i https://mirrors.aliyun.com/pypi/simple/
     if [ ! -d "venv" ]; then
         virtualenv --system-site-packages -p python3 venv
     fi
@@ -37,8 +37,8 @@ function start() {
 function stop() {
     echo "Stoping archery"
     echo "----------------"
-    PID=$(ps -ef | grep "supervisord" | grep -v grep | awk '{print $2}')
-    kill -9 ${PID}
+    kill -9 $(ps -ef | grep "supervisord" | grep -v grep | awk '{print $2}')
+    kill -9 $(ps -ef | grep "python" | grep -v grep | awk '{print $2}')
     echo -e "Stop archery:                  [\033[32m ok \033[0m]"
 }
 
