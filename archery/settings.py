@@ -1,10 +1,15 @@
-# -*- coding: UTF-8 -*-
-
-
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
 import os
+import yaml
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if os.path.exists(os.path.join(BASE_DIR, 'common/properties')):
+        with open('common/properties/application.yaml', 'r', encoding='utf-8') as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
@@ -84,8 +89,8 @@ DATE_FORMAT = 'Y-m-d'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'common/static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static')]
 STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
@@ -121,11 +126,11 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'archery',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'HOST': config['DATABASE']['address'],
+        'PORT': config['DATABASE']['port'],
+        'USER': config['DATABASE']['username'],
+        'PASSWORD': config['DATABASE']['password'],
+        'NAME': config['DATABASE']['db'],
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4'
@@ -156,18 +161,18 @@ Q_CLUSTER = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
+        "LOCATION": "redis://{}:{}/8".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": ""
+            "PASSWORD": "{}".format(config['REDIS']['passwd'])
         }
     },
     "dingding": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": "redis://{}:{}/9".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": ""
+            "PASSWORD": "{}".format(config['REDIS']['passwd'])
         }
     }
 }
