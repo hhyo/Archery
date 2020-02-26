@@ -90,7 +90,7 @@ DATE_FORMAT = 'Y-m-d'
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
 STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
@@ -126,11 +126,11 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': config['DATABASE']['address'],
-        'PORT': config['DATABASE']['port'],
+        'NAME': config['DATABASE']['db'],
         'USER': config['DATABASE']['username'],
         'PASSWORD': config['DATABASE']['password'],
-        'NAME': config['DATABASE']['db'],
+        'HOST': config['DATABASE']['address'],
+        'PORT': config['DATABASE']['port'],
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4'
@@ -164,7 +164,7 @@ CACHES = {
         "LOCATION": "redis://{}:{}/0".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": "{}".format(config['REDIS']['passwd'])
+            "PASSWORD": "{}".format(config['REDIS']['password'])
         }
     },
     "dingding": {
@@ -172,7 +172,7 @@ CACHES = {
         "LOCATION": "redis://{}:{}/1".format(config['REDIS']['address'], config['REDIS']['port']),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": "{}".format(config['REDIS']['passwd'])
+            "PASSWORD": "{}".format(config['REDIS']['password'])
         }
     }
 }
