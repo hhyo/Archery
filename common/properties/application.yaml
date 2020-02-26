@@ -3,10 +3,10 @@ DATABASE:
   address: 127.0.0.1
   port: 3306
   username: root
-  password: root
+  password: ""
   db: archery
 
 REDIS:
   address: 127.0.0.1
   port: 6379
-  password: null
+  password: ""
