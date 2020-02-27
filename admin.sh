@@ -17,7 +17,6 @@ function init() {
     if [ ! -d "venv" ]; then
         virtualenv --system-site-packages -p python3 venv
     fi
-
     source ./venv/bin/activate
     ./venv/bin/python3 -m pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
     echo "************************************************"
@@ -37,8 +36,9 @@ function start() {
 function stop() {
     echo "Stoping archery"
     echo "----------------"
-    kill -9 $(ps -ef | grep "supervisord" | grep -v grep | awk '{print $2}')
-    kill -9 $(ps -ef | grep "python" | grep -v grep | awk '{print $2}')
+    source ./venv/bin/activate
+    supervisorctl -c supervisord.conf stop all
+    kill -9 $(ps -ef | grep "Archery" | grep -v grep | awk '{print $2}')
     echo -e "Stop archery:                  [\033[32m ok \033[0m]"
 }
 
@@ -48,13 +48,11 @@ function restart() {
     start
 }
 
-function upgrade() {
-    echo "Upgrading archery"
-    echo "----------------"
-    cd $(dirname $0)
-    echo -e "建议先暂存本地修改\033[33m git stash\033[0m，更新后再弹出\033[33m git stash pop\033[0m，处理冲突。"
+function adduser() {
+    echo "Add Admin Users "
     source ./venv/bin/activate
-    git pull
+    python3 manage.py createsuperuser
+    echo -e "Add Users:                 [\033[32m ok \033[0m]"
 }
 
 function migration() {
@@ -84,17 +82,15 @@ case "$1" in
     restart )
         restart
         ;;
-    upgrade )
-        upgrade
-        migration
-        echo -e "\033[32m archery 更新成功. \033[0m \033[33m 建议重启服务 sh admin.sh restart\033[0m"
+    adduser )
+        adduser
         ;;
     migration )
         migration
         ;;
     * )
         echo "************************************************"
-        echo "Usage: sh admin {init|start|stop|restart|upgrade|migration}"
+        echo "Usage: sh admin {init|start|stop|restart|adduser|migration}"
         echo "************************************************"
         ;;
 esac

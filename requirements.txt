@@ -21,3 +21,4 @@ phoenixdb==0.7
 django-mirage-field==1.0.1
 schema-sync==0.9.7
 pyyaml==5.3
+supervisor==4.1.0
