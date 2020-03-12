@@ -34,7 +34,7 @@ def get_access_token():
         access_token = resp.get('access_token')
         expires_in = resp.get('expires_in')
         rs.execute_command(f"SETEX ding_access_token {expires_in-60} {access_token}")
-        return access_token
+        return access_token.decode()
     else:
         logger.error(f"获取钉钉access_token出错:{resp}")
         return None
