@@ -1,4 +1,4 @@
-Django==2.2.8
+Django==2.2.10
 mysqlclient==1.4.6
 requests==2.22.0
 simplejson==3.17.0
@@ -18,4 +18,5 @@ cx-Oracle==7.3.0
 supervisor==4.1.0
 gevent==1.4.0
 phoenixdb==0.7
-django-mirage-field==0.0.5
+django-mirage-field==1.0.1
+schema-sync==0.9.7

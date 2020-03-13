@@ -1,6 +1,6 @@
 <div align="center">
 
-# <a href="http://139.199.0.191/" target="_blank" rel="noopener noreferrer">Archery</a> 
+# <a href="https://archerydms.com/" target="_blank" rel="noopener noreferrer">Archery</a>
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/94e8587e507f4565a1ea5ea21fd94c32)](https://app.codacy.com/app/hhyo/Archery?utm_source=github.com&utm_medium=referral&utm_content=hhyo/Archery&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/hhyo/Archery.svg?branch=master)](https://travis-ci.org/hhyo/Archery)
@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 
-[文档](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
+[文档](https://archerydms.com/) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
 
 ![](https://images.gitee.com/uploads/images/2019/1110/202317_32bd4a1c_1038040.png)
 
@@ -22,16 +22,26 @@
 
 介绍
 ============
-Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，旨在提升DBA的工作效率，支持主流数据库的SQL上线和查询，同时支持丰富的MySQL运维功能，所有功能都兼容手机端操作，查看[功能和支持列表](https://github.com/hhyo/Archery/wiki/功能列表)
+Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，旨在提升DBA的工作效率，支持主流数据库的SQL上线和查询，同时支持丰富的MySQL运维功能，所有功能都兼容手机端操作
 
-开发计划
-==============
-https://github.com/hhyo/archery/projects   
+功能清单
+====
+
+|  | 查询 | 审核 | 执行 | 备份 | 数据字典 | 慢日志 | 会话管理 | 账号管理 | 参数管理 | 数据归档 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MySQL | √ | √ | √ | √ | √ | √ | √ | √ | √ | √ |
+| MsSQL | √ | × | √ | × | × | × | × | × | × | × |
+| Redis | √ | × | √ | × | × | × | × | × | × | × |
+| PgSQL | √ | × | √ | × | × | × | × | × | × | × |
+| Oracle | √ | × | √ | × | × | × | × | × | × | × |
+| MongoDB | √ | × | × | × | × | × | × | × | × | × |
+
+  
 
 快速开始
 ===============
 ### 系统体验
-[在线体验](http://139.199.0.191/) 
+[在线体验](https://demo.archerydms.com)
   
 | 账号 | 密码 |
 | --- | --- |
@@ -56,7 +66,7 @@ python3 manage.py makemigrations sql
 python3 manage.py migrate
 
 #数据初始化
-python3 manage.py loaddata initial_data.json
+python manage.py dbshell<sql/fixtures/auth_group.sql
 
 #创建管理用户
 python3 manage.py createsuperuser
@@ -74,7 +84,7 @@ http://127.0.0.1:9123/
 
 手动安装
 ===============
-[部署说明](https://github.com/hhyo/archery/wiki/部署#手动部署)
+[部署说明](https://github.com/hhyo/archery/wiki/manual)
 
 运行测试
 ===============

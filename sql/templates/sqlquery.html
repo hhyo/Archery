@@ -167,10 +167,6 @@
                                 </div>
 
                                 <div id="keyHelp" class="alert alert-info" style="display: block">
-                                    <button class="close" data-dismiss="alert">
-                                        <i class="ace-icon fa fa-times"></i>
-                                    </button>
-                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
                                     <i> 1、exists key　检查key是否存在，若key存在返回1，否则返回0</i></br>
                                     <i> 2、keys pattern 查找所有符合给定模式的key，通常用于查找key</i></br>
                                     <i> 3、expire key seconds 为key设置超时时间（单位：秒），当key过期时，会被系统自动删除</i></br>
@@ -183,10 +179,6 @@
                                 </div>
 
                                 <div id="stringHelp" class="alert alert-info" style="display: none">
-                                    <button class="close" data-dismiss="alert">
-                                        <i class="ace-icon fa fa-times"></i>
-                                    </button>
-                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
                                     <i> 1、get key 返回key的值，若key不存在则返回nil，若key存储的值不是字符串则返回错误</i></br>
                                     <i> 2、mget key [key...] 依次返回一个或多个key的值，若key不存在返回nil，若key存在但不是字符串返回nil</i></br>
                                     <i> 3、strlen key 返回key所存储的字符串的长度，当key不存在时返回0，当key存在但不是字符串时返回错误</i></br>
@@ -201,10 +193,6 @@
                                 </div>
 
                                 <div id="hashHelp" class="alert alert-info" style="display: none">
-                                    <button class="close" data-dismiss="alert">
-                                        <i class="ace-icon fa fa-times"></i>
-                                    </button>
-                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
                                     <i> 1、hgetall key 获取hash表中所有field的值</i></br>
                                     <i> 2、hexists key field 判断hash表中指定field是否存在，返回1；若key或field不存在则返回0</i></br>
                                     <i> 3、hget key field 获取hash表中指定field的值，key或field不存在时返回nil</i></br>
@@ -219,11 +207,7 @@
                                 </div>
 
                                 <div id="setHelp" class="alert alert-info" style="display: none">
-                                    <button class="close" data-dismiss="alert">
-                                        <i class="ace-icon fa fa-times"></i>
-                                    </button>
-                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
-                                    <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                                    ` <i> 1、smembers key 列出集合key中的所有成员</i></br>
                                     <i> 2、scard key 返回集合key中元素的个数</i></br>
                                     <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
                                     <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
@@ -260,8 +244,6 @@
     <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
-    <link rel="stylesheet" href="/static/toastr/toastr.min.css" type="text/css">
-    <script type="text/javascript" src="/static/toastr/toastr.min.js"></script>
 
     <!-- 查询历史  -->
     <script>
@@ -317,12 +299,17 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            var sql = value;
+                            let sql = value;
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
                             //替换所有的空格
-                            sql = sql.replace(/\s/g, " ");
+                            sql = sql.replace(/\s/g, "&nbsp;");
                             html.push('<span>' + sql + '</span>');
                         }
                     });
@@ -502,7 +489,7 @@
     <script>
         // 添加redis帮助页
         function redis_help_tab_add() {
-
+            redis_help_tab_remove();
             //增加执行结果tab页
             var li = document.createElement("li"); //创建li
             li.setAttribute("id", "redis_help_tab");
@@ -516,6 +503,13 @@
             li.appendChild(href_a);//将a添加到li
             $("#nav-tabs").prepend(li);//li添加到ul
             $("#nav-tabs a:first").tab('show')
+        }
+
+        // 删除redis帮助页
+        function redis_help_tab_remove() {
+            $("#redis_help_tab").remove();
+            //激活最后一个tab
+            $("#nav-tabs a:last").tab('show');
         }
 
         //添加执行结果页面
@@ -702,17 +696,22 @@
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                                escape: false,
                                 data: result['rows'],
                                 columns: [{
                                     title: 'Create Table',
                                     field: 1,
                                     formatter: function (value, row, index) {
-                                        var sql = window.sqlFormatter.format(value);
+                                        let sql = window.sqlFormatter.format(value);
+                                        //替换标签
+                                        sql = sql.replace(/&/g, "&amp;");
+                                        sql = sql.replace(/</g, "&lt;");
+                                        sql = sql.replace(/>/g, "&gt;");
+                                        sql = sql.replace(/"/g, "&quot;");
                                         //替换所有的换行符
                                         sql = sql.replace(/\r\n/g, "<br>");
                                         sql = sql.replace(/\n/g, "<br>");
                                         //替换所有的空格
-                                        sql = sql.replace(/\s/g, " ");
                                         return sql;
                                     },
                                 }
@@ -764,7 +763,7 @@
                     n = sessionStorage.getItem('tab_num');
                 }
                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                    escape: false,
+                    escape: true,
                     columns: [{
                         field: 'error',
                         title: 'Error'
@@ -809,6 +808,7 @@
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
                     $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
                 },
                 success: function (data) {
                     display_data(data)
@@ -821,49 +821,84 @@
     </script>
     <!-- common -->
     <script>
-        // 实例变更获取数据库
+        //控制按钮和选择器显示
+        function optgroup_control(change) {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            if (optgroup === "MySQL") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', false);
+            } else if (optgroup === "MsSQL") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "Redis") {
+                if (change) {
+                    $("#div-table_name").hide();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_add();
+                }
+                $("#btn-format").attr('disabled', true);
+                $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "PgSQL") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").show();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "Oracle") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "Mongo") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', true);
+                $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "Phoenix") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', true);
+            }
+        }
+
+        //实例变更获取数据库
+        $("#instance_name").change(function () {
+            if (sessionStorage.getItem('re_query')) {
+                get_instance(false)
+            } else {
+                get_instance(true)
+            }
+        });
+
         function get_instance(async) {
+            optgroup_control(true);
             $("#db_name").empty();
             $('#db_name').selectpicker('render');
             $('#db_name').selectpicker('refresh');
-
-            // 控制按钮和选择器显示
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (optgroup === "Redis") {
-                $("#div-table_name").hide();
-                $("#btn-format").attr('disabled', true);
-                $("#btn-explain").attr('disabled', true);
-                $("#redis_help_tab").remove();
-                redis_help_tab_add()
-            } else if (optgroup === "MySQL") {
-                $("#div-table_name").show();
-                $("#redis_help_tab").remove();
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
-                $("#nav-tabs a:last").tab('show');
-            } else if (optgroup === "Phoenix") {
-                $("#div-table_name").show();
-                $("#div-schema_name").remove();
-                $("#redis_help_tab").remove();
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").remove();
-                $("#nav-tabs a:last").tab('show');
-            } else {
-                $("#div-table_name").show();
-                $("#redis_help_tab").remove();
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-                $("#nav-tabs a:last").tab('show');
-            }
-            // PgSQL需要选择模式再获取表
-            if (optgroup === "PgSQL") {
-                $("#div-schema_name").show()
-            } else {
-                $("#div-schema_name").hide()
-            }
-
             sessionStorage.setItem('sql_query_instance_name', $("#instance_name").val());
-            //将数据通过ajax提交给获取db_name
+            //获取db_name
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -909,15 +944,6 @@
             });
         }
 
-        $("#instance_name").change(function () {
-            if (sessionStorage.getItem('re_query')) {
-                get_instance(false)
-            } else {
-                get_instance(true)
-            }
-        });
-
-
         //数据库变更获取表/模式名称
         $("#db_name").change(function () {
             $("#table_name").empty();
@@ -948,6 +974,9 @@
                     if (data.status === 0) {
                         var result = data.data;
                         if (resource_type === "table") {
+                            if (optgroup == 'Mongo') {
+                                $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择集合:</option>")
+                            }
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
                                 $("#table_name").append(name);
@@ -1119,15 +1148,6 @@
                         alert(errorThrown);
                     }
                 });
-            });
-
-
-            $("#sql_content_editor").bind("input propertychange", function () {
-                var editor = ace.edit("sql_content_editor");
-                var cmd = editor.getValue();
-                if (cmd.trim().search(/^keys\s+/i) == 0) {
-                    toastr.warning('禁用keys 命令！使用scan 命令代替！')
-                }
             });
         });
 

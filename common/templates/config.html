@@ -30,6 +30,8 @@
                                     {{ WorkflowDict.workflow_type.sqlreview_display }}</option>
                                 <option value="{{ WorkflowDict.workflow_type.query }}">
                                     {{ WorkflowDict.workflow_type.query_display }}</option>
+                                <option value="{{ WorkflowDict.workflow_type.archive }}">
+                                    {{ WorkflowDict.workflow_type.archive_display }}</option>
                             </select>
                         </div>
                         <h5 class="control-label text-bold">组：</h5>
@@ -398,6 +400,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="ddl_notify_auth_group"
+                                       class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="ddl_notify_auth_group"
+                                           key="ddl_notify_auth_group"
+                                           value="{{ config.ddl_notify_auth_group }}"
+                                           placeholder="DDL工单通知权限组名，为空则不通知">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="mail"
                                        class="col-sm-4 control-label">MAIL</label>
                                 <div class="col-sm-8">
@@ -465,17 +478,6 @@
                                                key="mail_smtp_password"
                                                value="{{ config.mail_smtp_password }}"
                                                placeholder="邮箱账号密码">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="ddl_notify_auth_group"
-                                           class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="ddl_notify_auth_group"
-                                               key="ddl_notify_auth_group"
-                                               value="{{ config.ddl_notify_auth_group }}"
-                                               placeholder="DDL工单通知权限组名，为空则不通知">
                                     </div>
                                 </div>
                             </div>
@@ -666,17 +668,6 @@
                                            key="index_path_url"
                                            value="{{ config.index_path_url }}"
                                            placeholder="系统首页路径，默认SQL工单页面：sqlworkflow">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="lock_time_threshold"
-                                       class="col-sm-4 control-label">SCHEMASYNC</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="schemasync"
-                                           key="schemasync"
-                                           value="{{ config.schemasync }}"
-                                           placeholder="schemasync调用路径">
                                 </div>
                             </div>
                             <div class="form-group">

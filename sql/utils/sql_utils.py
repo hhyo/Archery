@@ -9,6 +9,7 @@ import re
 import xml
 import mybatis_mapper2sql
 import sqlparse
+
 from sql.utils.extract_tables import extract_tables as extract_tables_by_sql_parse
 
 __author__ = 'hhyo'

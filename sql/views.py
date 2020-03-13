@@ -20,11 +20,11 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
-from sql.utils.resource_group import user_groups
+from sql.utils.resource_group import user_groups, user_instances
 
 import logging
 
@@ -103,10 +103,6 @@ def detail(request, workflow_id):
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
     if not can_view(request.user, workflow_id):
         raise PermissionDenied
-    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
-        rows = workflow_detail.sqlworkflowcontent.execute_result
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != 'workflow_autoreviewwrong':
         # 获取当前审批和审批流程
@@ -155,37 +151,7 @@ def detail(request, workflow_id):
     # 获取是否开启手工执行确认
     manual = SysConfig().get('manual')
 
-    review_result = ReviewSet()
-    if rows:
-        try:
-            # 检验rows能不能正常解析
-            loaded_rows = json.loads(rows)
-            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-            if isinstance(loaded_rows[-1], list):
-                for r in loaded_rows:
-                    review_result.rows += [ReviewResult(inception_result=r)]
-                rows = review_result.json()
-        except IndexError:
-            review_result.rows += [ReviewResult(
-                id=1,
-                sql=workflow_detail.sqlworkflowcontent.sql_content,
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
-        except json.decoder.JSONDecodeError:
-            review_result.rows += [ReviewResult(
-                id=1,
-                sql=workflow_detail.sqlworkflowcontent.sql_content,
-                # 迫于无法单元测试这里加上英文报错信息
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
-
-    context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
+    context = {'workflow_detail': workflow_detail, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
                'is_can_cancel': is_can_cancel, 'is_can_rollback': is_can_rollback, 'audit_auth_group': audit_auth_group,
                'manual': manual, 'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
@@ -203,34 +169,32 @@ def rollback(request):
         return render(request, 'error.html', context)
     workflow = SqlWorkflow.objects.get(id=int(workflow_id))
 
-    try:
-        query_engine = get_engine(instance=workflow.instance)
-        list_backup_sql = query_engine.get_rollback(workflow=workflow)
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
+    # 直接下载回滚语句
+    if download:
+        try:
+            query_engine = get_engine(instance=workflow.instance)
+            list_backup_sql = query_engine.get_rollback(workflow=workflow)
+        except Exception as msg:
+            logger.error(traceback.format_exc())
+            context = {'errMsg': msg}
+            return render(request, 'error.html', context)
 
-    # 获取数据，存入目录
-    path = os.path.join(settings.BASE_DIR, 'downloads/rollback')
-    os.makedirs(path, exist_ok=True)
-    file_name = f'{path}/rollback_{workflow_id}.sql'
-    with open(file_name, 'w') as f:
-        for sql in list_backup_sql:
-            f.write(f'/*{sql[0]}*/\n{sql[1]}\n')
-
-    # 回滚语句大于4M强制转换为下载，此时前端无法自动填充
-    if os.path.getsize(file_name) > 4194304 or download:
+        # 获取数据，存入目录
+        path = os.path.join(settings.BASE_DIR, 'downloads/rollback')
+        os.makedirs(path, exist_ok=True)
+        file_name = f'{path}/rollback_{workflow_id}.sql'
+        with open(file_name, 'w') as f:
+            for sql in list_backup_sql:
+                f.write(f'/*{sql[0]}*/\n{sql[1]}\n')
+        # 返回
         response = FileResponse(open(file_name, 'rb'))
         response['Content-Type'] = 'application/octet-stream'
         response['Content-Disposition'] = f'attachment;filename="rollback_{workflow_id}.sql"'
         return response
-    # 小于4M的删除文件
+    # 异步获取，并在页面展示，如果数据量大加载会缓慢
     else:
-        os.remove(file_name)
         rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
-        context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow,
-                   'rollback_workflow_name': rollback_workflow_name}
+        context = {'workflow_detail': workflow, 'rollback_workflow_name': rollback_workflow_name}
         return render(request, 'rollback.html', context)
 
 
@@ -307,12 +271,6 @@ def slowquery(request):
     return render(request, 'slowquery.html')
 
 
-@permission_required('sql.menu_sqlstats', raise_exception=True)
-def sqlstats(request):
-    """SQL统计页面"""
-    return render(request, 'sqlstats.html')
-
-
 @permission_required('sql.menu_instance', raise_exception=True)
 def instance(request):
     """实例管理页面"""
@@ -366,6 +324,43 @@ def schemasync(request):
     return render(request, 'schemasync.html')
 
 
+@permission_required('sql.menu_archive', raise_exception=True)
+def archive(request):
+    """归档列表页面"""
+    # 获取资源组
+    group_list = user_groups(request.user)
+    ins_list = user_instances(request.user, db_type=['mysql'])
+    return render(request, 'archive.html', {'group_list': group_list, 'ins_list': ins_list})
+
+
+def archive_detail(request, id):
+    """归档详情页面"""
+    archive_config = ArchiveConfig.objects.get(pk=id)
+    # 获取当前审批和审批流程、是否可审核
+    try:
+        audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
+        is_can_review = Audit.can_review(request.user, id, 3)
+    except Exception as e:
+        logger.debug(f'归档配置{id}无审核信息，{e}')
+        audit_auth_group, current_audit_auth_group = None, None
+        is_can_review = False
+    # 获取审核日志
+    if archive_config.status == 2:
+        try:
+            audit_id = Audit.detail_by_workflow_id(workflow_id=id, workflow_type=3).audit_id
+            last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        except Exception as e:
+            logger.debug(f'归档配置{id}无审核日志记录，错误信息{e}')
+            last_operation_info = ''
+    else:
+        last_operation_info = ''
+
+    context = {'archive_config': archive_config, 'audit_auth_group': audit_auth_group,
+               'last_operation_info': last_operation_info, 'current_audit_auth_group': current_audit_auth_group,
+               'is_can_review': is_can_review}
+    return render(request, 'archivedetail.html', context)
+
+
 @superuser_required
 def config(request):
     """配置管理页面"""
@@ -411,6 +406,8 @@ def workflowsdetail(request, audit_id):
         return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
     elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:
         return HttpResponseRedirect(reverse('sql:detail', args=(audit_detail.workflow_id,)))
+    elif audit_detail.workflow_type == WorkflowDict.workflow_type['archive']:
+        return HttpResponseRedirect(reverse('sql:archive_detail', args=(audit_detail.workflow_id,)))
 
 
 @permission_required('sql.menu_document', raise_exception=True)

@@ -2,21 +2,24 @@
 """ 
 @author: hhyo
 @license: Apache Licence
-@file: schemasync.py
-@time: 2019/03/05
+@file: pt_archiver.py
+@time: 2020/01/10
 """
-__author__ = 'hhyo'
-
 from common.config import SysConfig
 from sql.plugins.plugin import Plugin
 
+__author__ = 'hhyo'
 
-class SchemaSync(Plugin):
+
+class PtArchiver(Plugin):
+    """
+    pt-archiver归档数据
+    """
 
     def __init__(self):
-        self.path = 'schemasync'
+        self.path = 'pt-archiver'
         self.required_args = []
-        self.disable_args = []
+        self.disable_args = ['analyze']
         super(Plugin, self).__init__()
 
     def generate_args2cmd(self, args, shell):
@@ -26,18 +29,18 @@ class SchemaSync(Plugin):
         :param shell:
         :return:
         """
-        k_options = ['sync-auto-inc', 'sync-comments']
-        kv_options = ['tag', 'output-directory', 'log-directory']
-        v_options = ['source', 'target']
+        k_options = ['no-version-check', 'statistics', 'bulk-insert', 'bulk-delete', 'purge', 'no-delete']
+        kv_options = ['source', 'dest', 'file', 'where', 'progress', 'charset', 'limit', 'txn-size', 'sleep']
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
                 if name in k_options and value:
                     cmd_args += f' --{name}'
                 elif name in kv_options:
-                    cmd_args += f' --{name}={value}'
-                elif name in v_options:
-                    cmd_args += f' {value}'
+                    if name == 'where':
+                        cmd_args += f' --{name} "{value}"'
+                    else:
+                        cmd_args += f' --{name} {value}'
         else:
             cmd_args = [self.path]
             for name, value in args.items():
@@ -45,7 +48,5 @@ class SchemaSync(Plugin):
                     cmd_args.append(f'--{name}')
                 elif name in kv_options:
                     cmd_args.append(f'--{name}')
-                    cmd_args.append(f'{value}')
-                elif name in ['source', 'target']:
                     cmd_args.append(f'{value}')
         return cmd_args

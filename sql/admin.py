@@ -4,9 +4,9 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunRdsConfig, ResourceGroup, ResourceGroup2User, ResourceGroup2Instance, QueryPrivilegesApply, \
-    QueryPrivileges, InstanceAccount, InstanceDatabase, \
-    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, InstanceTagRelations
+    AliyunRdsConfig, ResourceGroup, QueryPrivilegesApply, \
+    QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
+    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag
 
 
 # 用户管理
@@ -21,20 +21,18 @@ class UsersAdmin(UserAdmin):
         ('认证信息', {'fields': ('username', 'password')}),
         ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+        ('资源组', {'fields': ('resource_group',)}),
         ('其他信息', {'fields': ('date_joined',)}),
     )
     # 添加页显示内容
     add_fieldsets = (
         ('认证信息', {'fields': ('username', 'password1', 'password2')}),
         ('个人信息', {'fields': ('display', 'email')}),
-        ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups',)}),
+        ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
+        ('资源组', {'fields': ('resource_group',)}),
     )
-
-    # 用户资源组关联配置
-    class ResourceGroup2UserInline(admin.TabularInline):
-        model = ResourceGroup2User
-
-    inlines = [ResourceGroup2UserInline]
+    filter_horizontal = ('groups', 'user_permissions', 'resource_group')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'resource_group')
 
 
 # 资源组管理
@@ -42,18 +40,6 @@ class UsersAdmin(UserAdmin):
 class ResourceGroupAdmin(admin.ModelAdmin):
     list_display = ('group_id', 'group_name', 'ding_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
-
-
-# 资源组关联用户关系管理
-@admin.register(ResourceGroup2User)
-class ResourceGroup2UserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'resource_group', 'user', 'create_time')
-
-
-# 资源组关联实例关系管理
-@admin.register(ResourceGroup2Instance)
-class ResourceGroup2InstanceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'resource_group', 'instance', 'create_time')
 
 
 # 实例标签配置
@@ -68,33 +54,21 @@ class InstanceTagAdmin(admin.ModelAdmin):
         return ('tag_code',) if obj else ()
 
 
-# 实例标签关系配置
-@admin.register(InstanceTagRelations)
-class InstanceTagRelationsAdmin(admin.ModelAdmin):
-    list_display = ('instance', 'instance_tag', 'active', 'create_time')
-    list_filter = ('instance', 'instance_tag', 'active')
-
-
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
-    list_filter = ('db_type', 'type')
+    list_filter = ('db_type', 'type', 'instance_tag')
 
     # 阿里云实例关系配置
     class AliRdsConfigInline(admin.TabularInline):
         model = AliyunRdsConfig
 
-    # 实例标签关系配置
-    class InstanceTagRelationsInline(admin.TabularInline):
-        model = InstanceTagRelations
-
     # 实例资源组关联配置
-    class ResourceGroup2InstanceInline(admin.TabularInline):
-        model = ResourceGroup2Instance
+    filter_horizontal = ('resource_group', 'instance_tag',)
 
-    inlines = [InstanceTagRelationsInline, ResourceGroup2InstanceInline, AliRdsConfigInline]
+    inlines = [AliRdsConfigInline]
 
 
 # SQL工单内容
@@ -214,6 +188,22 @@ class ParamHistoryAdmin(admin.ModelAdmin):
     list_display = ('variable_name', 'instance', 'old_var', 'new_var', 'user_display', 'create_time')
     search_fields = ('variable_name',)
     list_filter = ('instance', 'user_display')
+
+
+# 归档配置
+@admin.register(ArchiveConfig)
+class ArchiveConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'title', 'src_instance', 'src_db_name', 'src_table_name',
+        'dest_instance', 'dest_db_name', 'dest_table_name',
+        'mode', 'no_delete', 'status', 'state', 'user_display', 'create_time', 'resource_group')
+    search_fields = ('title', 'src_table_name')
+    list_display_links = ('id', 'title')
+    list_filter = ('src_instance', 'src_db_name', 'mode', 'no_delete', 'state')
+    # 编辑页显示内容
+    fields = ('title', 'resource_group', 'src_instance', 'src_db_name', 'src_table_name',
+              'dest_instance', 'dest_db_name', 'dest_table_name',
+              'mode', 'condition', 'sleep', 'no_delete', 'state', 'user_name', 'user_display')
 
 
 # 阿里云实例配置信息

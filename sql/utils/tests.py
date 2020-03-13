@@ -10,7 +10,6 @@ import json
 from unittest.mock import patch, MagicMock
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission, Group
 from django.test import TestCase, Client
 from django_q.models import Schedule
@@ -18,9 +17,9 @@ from django_q.models import Schedule
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.models import SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, ResourceGroup2User, \
-    ResourceGroup2Instance, WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
-    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns, InstanceTag, InstanceTagRelations
+from sql.models import Users, SqlWorkflow, SqlWorkflowContent, Instance, ResourceGroup, \
+    WorkflowLog, WorkflowAudit, WorkflowAuditDetail, WorkflowAuditSetting, \
+    QueryPrivilegesApply, DataMaskingRules, DataMaskingColumns, InstanceTag, ArchiveConfig
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import is_auto_review, can_execute, can_timingtask, can_cancel, on_correct_time_period
 from sql.utils.sql_utils import *
@@ -29,7 +28,7 @@ from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.workflow_audit import Audit
 from sql.utils.data_masking import data_masking, brute_mask
 
-User = get_user_model()
+User = Users
 __author__ = 'hhyo'
 
 
@@ -227,9 +226,8 @@ class TestSQLReview(TestCase):
         self.wfc1.sql_content = "update table users set email='';"
         self.wfc1.save(update_fields=('sql_content',))
         # 修改工单实例标签
-        tag = InstanceTag.objects.get_or_create(tag_code='GA', defaults={'tag_name': '生产环境', 'active': True})
-        InstanceTagRelations.objects.get_or_create(instance=self.wf1.instance,
-                                                   defaults={'instance_tag': tag[0], 'active': True})
+        tag, is_created = InstanceTag.objects.get_or_create(tag_code='GA', defaults={'tag_name': '生产环境', 'active': True})
+        self.wf1.instance.instance_tag.add(tag)
         # mock返回值，update影响行数=3
         _execute_check.return_value.to_dict.return_value = [
             {"id": 1, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",
@@ -252,7 +250,7 @@ class TestSQLReview(TestCase):
         self.wf1.save(update_fields=('status',))
         sql_execute_for_resource_group = Permission.objects.get(codename='sql_execute_for_resource_group')
         self.user.user_permissions.add(sql_execute_for_resource_group)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         r = can_execute(user=self.user, workflow_id=self.wfc1.workflow_id)
         self.assertTrue(r)
 
@@ -632,6 +630,7 @@ class TestAudit(TestCase):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -661,6 +660,25 @@ class TestAudit(TestCase):
             status=0,
             audit_auth_groups='some_audit_group'
         )
+        self.archive_apply_1 = ArchiveConfig.objects.create(
+            title='title',
+            resource_group=self.res_group,
+            audit_auth_groups='some_audit_group',
+            src_instance=self.ins,
+            src_db_name='src_db_name',
+            src_table_name='src_table_name',
+            dest_instance=self.ins,
+            dest_db_name='src_db_name',
+            dest_table_name='src_table_name',
+            condition='1=1',
+            mode='file',
+            no_delete=True,
+            sleep=1,
+            status=WorkflowDict.workflow_status['audit_wait'],
+            state=False,
+            user_name='some_user',
+            user_display='display',
+        )
         self.audit = WorkflowAudit.objects.create(
             group_id=1,
             group_name='some_group',
@@ -683,8 +701,10 @@ class TestAudit(TestCase):
         WorkflowAudit.objects.all().delete()
         WorkflowAuditDetail.objects.all().delete()
         WorkflowAuditSetting.objects.all().delete()
+        QueryPrivilegesApply.objects.all().delete()
         WorkflowLog.objects.all().delete()
         ResourceGroup.objects.all().delete()
+        ArchiveConfig.objects.all().delete()
 
     def test_audit_add_query(self):
         """ 测试添加查询审核工单"""
@@ -720,10 +740,27 @@ class TestAudit(TestCase):
         self.assertEqual(log_info.operation_type_desc, '提交')
         self.assertIn('等待审批，审批流程：', log_info.operation_info)
 
+    def test_audit_add_archive_review(self):
+        """ 测试添加数据归档工单"""
+        result = Audit.add(3, self.archive_apply_1.id)
+        audit_id = result['data']['audit_id']
+        workflow_status = result['data']['workflow_status']
+        self.assertEqual(workflow_status, WorkflowDict.workflow_status['audit_wait'])
+        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
+        # 当前审批
+        self.assertEqual(audit_detail.current_audit, 'some_audit_group')
+        # 无下级审批
+        self.assertEqual(audit_detail.next_audit, '-1')
+        # 验证日志
+        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
+        self.assertEqual(log_info.operation_type, 0)
+        self.assertEqual(log_info.operation_type_desc, '提交')
+        self.assertIn('等待审批，审批流程：', log_info.operation_info)
+
     def test_audit_add_wrong_type(self):
         """ 测试添加不存在的类型"""
         with self.assertRaisesMessage(Exception, '工单类型不存在'):
-            Audit.add(3, 1)
+            Audit.add(4, 1)
 
     def test_audit_add_settings_not_exists(self):
         """ 测试审批流程未配置"""
@@ -927,7 +964,6 @@ class TestAudit(TestCase):
 
     def test_change_settings_add(self):
         """添加配置信息"""
-        ResourceGroup.objects.create(group_id=1)
         Audit.change_settings(workflow_type=1, group_id=1, audit_auth_groups='1,2')
         ws = WorkflowAuditSetting.objects.get(workflow_type=1, group_id=1)
         self.assertEqual(ws.audit_auth_groups, '1,2')
@@ -1004,7 +1040,7 @@ class TestAudit(TestCase):
 
     @patch('sql.utils.workflow_audit.auth_group_users')
     @patch('sql.utils.workflow_audit.Audit.detail_by_workflow_id')
-    def test_can_review_no_prem(self, _detail_by_workflow_id, _auth_group_users):
+    def test_can_review_no_prem_exception(self, _detail_by_workflow_id, _auth_group_users):
         """测试判断用户当前是否是可审核，权限组不存在"""
         Group.objects.create(name='auth_group')
         _detail_by_workflow_id.side_effect = RuntimeError()
@@ -1295,14 +1331,14 @@ class TestResourceGroup(TestCase):
 
     def test_user_groups(self):
         """获取用户关联资源组列表，普通用户"""
-        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
+        self.user.resource_group.add(self.rgp1)
         groups = user_groups(self.user)
         self.assertEqual(groups.__len__(), 1)
         self.assertIn(self.rgp1, groups)
 
     def test_user_instances_super(self):
         """获取用户实例列表，超级管理员"""
-        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        self.ins1.resource_group.add(self.rgp1)
         ins = user_instances(self.su)
         self.assertEqual(ins.__len__(), 2)
         self.assertIn(self.ins1, ins)
@@ -1310,15 +1346,15 @@ class TestResourceGroup(TestCase):
 
     def test_user_instances_associated_group(self):
         """获取用户实例列表，普通用户关联资源组"""
-        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
-        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        self.user.resource_group.add(self.rgp1)
+        self.ins1.resource_group.add(self.rgp1)
         ins = user_instances(self.user)
         self.assertEqual(ins.__len__(), 1)
         self.assertIn(self.ins1, ins)
 
     def test_user_instances_unassociated_group(self):
         """获取用户实例列表，普通用户未关联资源组"""
-        ResourceGroup2Instance.objects.create(resource_group=self.rgp1, instance=self.ins1)
+        self.ins1.resource_group.add(self.rgp1)
         ins = user_instances(self.user)
         self.assertEqual(ins.__len__(), 0)
 
@@ -1327,7 +1363,7 @@ class TestResourceGroup(TestCase):
         # 用户关联权限组
         self.user.groups.add(self.agp)
         # 用户关联资源组
-        ResourceGroup2User.objects.create(resource_group=self.rgp1, user=self.user)
+        self.user.resource_group.add(self.rgp1)
         # 获取资源组内关联指定权限组的用户
         users = auth_group_users(auth_group_names=[self.agp.name], group_id=self.rgp1.group_id)
         self.assertIn(self.user, users)

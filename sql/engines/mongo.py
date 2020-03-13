@@ -8,6 +8,7 @@ import json
 from . import EngineBase
 from .models import ResultSet
 from bson import json_util
+from pymongo.errors import OperationFailure
 
 __author__ = 'jackie'
 
@@ -16,9 +17,10 @@ logger = logging.getLogger('default')
 
 class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
-        conn = pymongo.MongoClient(self.host, self.port, connect=True, connectTimeoutMS=10000)
+        self.db_name = self.db_name or 'admin'
+        conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True, connectTimeoutMS=10000)
         if self.user and self.password:
-            conn.admin.authenticate(self.user, self.password)
+            conn[self.db_name].authenticate(self.user, self.password, self.db_name)
         return conn
 
     @property
@@ -30,9 +32,19 @@ class MongoEngine(EngineBase):
         return 'Mongo engine'
 
     def get_all_databases(self):
-        result = ResultSet(full_sql='get databases')
+        result = ResultSet()
         conn = self.get_connection()
-        result.rows = conn.list_database_names()
+        try:
+            result.rows = conn.list_database_names()
+        except OperationFailure:
+            result.rows = [self.db_name]
+        return result
+
+    def get_all_tables(self, db_name, **kwargs):
+        result = ResultSet()
+        conn = self.get_connection()
+        db = conn[db_name]
+        result.rows = db.list_collection_names()
         return result
 
     def query_check(self, db_name=None, sql=''):
@@ -49,14 +61,7 @@ class MongoEngine(EngineBase):
                             """如 : 'test.find({"id":{"$gt":1.0}})'"""
         return result
 
-    def get_all_tables(self, db_name):
-        result = ResultSet(full_sql='get tables')
-        conn = self.get_connection()
-        db = conn[db_name]
-        result.rows = db.list_collection_names()
-        return result
-
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()

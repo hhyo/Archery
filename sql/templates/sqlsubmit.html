@@ -88,10 +88,14 @@
                             <div class='form-group'>
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
-                                <input type="text" id="run_date_range" readonly
-                                       value="请选择可执行时间范围"
-                                       style="background-color: #fff;color: #999 "
-                                       class="form-control "/>
+                                <div class='input-group date'>
+                                    <input type="text" id="run_date_range" readonly
+                                           value="请选择可执行时间范围"
+                                           style="background-color: #fff;color: #999 "
+                                           class="form-control "/>
+                                    <span class="input-group-addon"><span
+                                            class="glyphicon glyphicon-time"></span></span>
+                                </div>
                             </div>
                             <!--增加通知人-->
                             <!--TODO 通知人落库，允许查看工单详细-->
@@ -204,6 +208,8 @@
         }).on('cancel.daterangepicker', function (ev, picker) {
             $(this).css("color", "#999");
             $(this).val('请选择可执行时间范围');
+            $("#run_date_start").val('');
+            $("#run_date_end").val('');
         });
     </script>
     <!--upload -->
@@ -273,10 +279,10 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
-                         if ($("#db_name").val()){
-                             $("#db_name").selectpicker().trigger("change");
-                         }
+                        $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                        if ($("#db_name").val()) {
+                            $("#db_name").selectpicker().trigger("change");
+                        }
                     }
                 },
                 success: function (data) {
@@ -528,13 +534,20 @@
                                     var html = [];
                                     $.each(row, function (key, value) {
                                         if (key === 'sql') {
-                                            var sql = value;
+                                            //let sql = window.sqlFormatter.format(key);
+                                            let sql = value;
+                                            //替换标签
+                                            sql = sql.replace(/&/g, "&amp;");
+                                            sql = sql.replace(/</g, "&lt;");
+                                            sql = sql.replace(/>/g, "&gt;");
+                                            sql = sql.replace(/"/g, "&quot;");
                                             //替换所有的换行符
                                             sql = sql.replace(/\r\n/g, "<br>");
                                             sql = sql.replace(/\n/g, "<br>");
                                             //替换所有的空格
                                             sql = sql.replace(/\s/g, "&nbsp;");
                                             html.push('<span>' + sql + '</span>');
+
                                         }
                                     });
                                     return html.join('');
@@ -603,7 +616,7 @@
                                 $("#optgroup-oracle").append(instance);
                             } else if (result[i]['db_type'] === 'mongo') {
                                 $("#optgroup-mongo").append(instance);
-                            }  else if (result[i]['db_type'] === 'phoenix') {
+                            } else if (result[i]['db_type'] === 'phoenix') {
                                 $("#optgroup-phoenix").append(instance);
                             }
                         }

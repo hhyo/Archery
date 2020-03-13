@@ -42,9 +42,7 @@ def lists(request):
     # 过滤标签，返回同时包含全部标签的实例，TODO 循环会生成多表JOIN，如果数据量大会存在效率问题
     if tags:
         for tag in tags:
-            instances = instances.filter(instancetagrelations__instance_tag=tag,
-                                         instancetag__active=True,
-                                         instancetagrelations__active=True)
+            instances = instances.filter(instance_tag=tag, instance_tag__active=True)
 
     count = instances.count()
     instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
@@ -187,13 +185,6 @@ def schemasync(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     target_instance_info = Instance.objects.get(instance_name=target_instance_name)
 
-    # 检查SchemaSync程序路径
-    path = SysConfig().get('schemasync')
-    if path is None:
-        result['status'] = 1
-        result['msg'] = '请配置SchemaSync路径！'
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
     # 提交给SchemaSync获取对比结果
     schema_sync = SchemaSync()
     # 准备参数
@@ -282,15 +273,9 @@ def instance_resource(request):
         elif resource_type == 'schema' and db_name:
             resource = query_engine.get_all_schemas(db_name=db_name)
         elif resource_type == 'table' and db_name:
-            if schema_name:
-                resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
-            else:
-                resource = query_engine.get_all_tables(db_name=db_name)
+            resource = query_engine.get_all_tables(db_name=db_name, schema_name=schema_name)
         elif resource_type == 'column' and db_name and tb_name:
-            if schema_name:
-                resource = query_engine.get_all_columns_by_tb(db_name=db_name, schema_name=schema_name, tb_name=tb_name)
-            else:
-                resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
+            resource = query_engine.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name, schema_name=schema_name)
         else:
             raise TypeError('不支持的资源类型或者参数不完整！')
     except Exception as msg:
@@ -320,10 +305,7 @@ def describe(request):
 
     try:
         query_engine = get_engine(instance=instance)
-        if schema_name:
-            query_result = query_engine.describe_table(db_name, tb_name, schema_name)
-        else:
-            query_result = query_engine.describe_table(db_name, tb_name)
+        query_result = query_engine.describe_table(db_name, tb_name, schema_name=schema_name)
         result['data'] = query_result.__dict__
     except Exception as msg:
         result['status'] = 1

@@ -146,11 +146,6 @@
                                         <a href="/slowquery/">慢查日志</a>
                                     </li>
                                 {% endif %}
-                                {% if perms.sql.menu_sqlstats %}
-                                    <li>
-                                        <a href="/sqlstats/">SQL统计</a>
-                                    </li>
-                                {% endif %}
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
@@ -193,6 +188,11 @@
                         <li>
                             <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_archive %}
+                                    <li>
+                                        <a href="/archive/">PTArchiver</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
                                         <a href="/binlog2sql/">Binlog2SQL</a>

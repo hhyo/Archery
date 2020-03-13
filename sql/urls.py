@@ -8,7 +8,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
-    resource_group, binlog, data_dictionary, sql_stats
+    resource_group, binlog, data_dictionary, archiver
 from sql.utils import tasks
 from common.utils import ding_api
 
@@ -34,7 +34,6 @@ urlpatterns = [
     path('sqlanalyze/', views.sqlanalyze),
     path('sqlquery/', views.sqlquery),
     path('slowquery/', views.slowquery),
-    path('sqlstats/', views.sqlstats),
     path('sqladvisor/', views.sqladvisor),
     path('slowquery_advisor/', views.sqladvisor),
     path('queryapplylist/', views.queryapplylist),
@@ -53,10 +52,14 @@ urlpatterns = [
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
+    path('archive/', views.archive),
+    path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
     path('config/', views.config),
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('sqlworkflow/detail_content/', sql_workflow.detail_content),
+    path('sqlworkflow/backup_sql/', sql_workflow.backup_sql),
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
@@ -130,15 +133,19 @@ urlpatterns = [
     path('slowquery/optimize_soar/', sql.sql_optimize.optimize_soar),
     path('slowquery/report/', slowlog.report),
 
-    path('sqlstats/top/', sql_stats.top_sql),
-    path('sqlstats/topslow/', sql_stats.top_slow_sql),
-
     path('db_diagnostic/process/', db_diagnostic.process),
     path('db_diagnostic/create_kill_session/', db_diagnostic.create_kill_session),
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
     path('db_diagnostic/innodb_trx/', db_diagnostic.innodb_trx),
+
+    path('archive/list/', archiver.archive_list),
+    path('archive/apply/', archiver.archive_apply),
+    path('archive/audit/', archiver.archive_audit),
+    path('archive/switch/', archiver.archive_switch),
+    path('archive/once/', archiver.archive_once),
+    path('archive/log/', archiver.archive_log),
 
     path('4admin/sync_ding_user/', ding_api.sync_ding_user)
 ]
