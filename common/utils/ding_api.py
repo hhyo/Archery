@@ -23,7 +23,7 @@ def get_access_token():
         logger.error(f"获取钉钉access_token缓存出错:{e}")
         access_token = None
     if access_token:
-        return access_token
+        return access_token.decode()
     # 请求钉钉接口获取
     sys_config = SysConfig()
     app_key = sys_config.get('ding_app_key')
