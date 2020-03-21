@@ -225,9 +225,12 @@ def notify_for_execute(workflow):
     url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_id)
     msg_title = "[{}]工单{}#{}".format(WorkflowDict.workflow_type['sqlreview_display'],
                                      workflow.get_status_display(), audit_id)
-    msg_content = '''发起人：{}\n组：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+    msg_content = '''发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n'''.format(
+        workflow.create_time.strftime('%Y-%m-%d %H:%M:%S'),
         workflow.engineer_display,
         workflow.group_name,
+        workflow.instance.instance_name,
+        workflow.db_name,
         audit_auth_group,
         workflow.workflow_name,
         url,
@@ -268,10 +271,15 @@ def notify_for_binlog2sql(task):
     :param task:
     :return:
     """
-
+    # 判断是否开启消息通知，未开启直接返回
+    if not __notify_cnf_status():
+        return None
     if task.success:
-        msg_title = '[Archery 通知]Binlog2SQL 执行结束'
+        msg_title = '[Archery 通知]Binlog2SQL执行结束'
         msg_content = f'解析的SQL文件为{task.result[1]}，请到指定目录查看'
-        msg_to = [task.result[0]]
-        # 发送
-        __send(msg_title, msg_content, msg_to)
+    else:
+        msg_title = '[Archery 通知]Binlog2SQL执行失败'
+        msg_content = f'{task.result}'
+    # 发送
+    msg_to = [task.kwargs['user']]
+    __send(msg_title, msg_content, msg_to)
