@@ -112,7 +112,7 @@ class OracleEngine(EngineBase):
         nullable,
         data_default
         FROM all_tab_cols
-        WHERE table_name = '{tb_name}'
+        WHERE table_name = '{tb_name}' and owner = '{db_name}'
         """
         result = self.query(sql=sql)
         return result
