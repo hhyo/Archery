@@ -12,6 +12,7 @@ from email.utils import formataddr
 from common.config import SysConfig
 from common.utils.ding_api import get_access_token
 from common.utils.wx_api import get_wx_access_token
+from common.utils.feishu_api import *
 
 logger = logging.getLogger('default')
 
@@ -37,6 +38,9 @@ class MsgSender(object):
             self.ding_agent_id = sys_config.get('ding_agent_id')
             # 企业微信信息
             self.wx_agent_id = sys_config.get('wx_agent_id')
+            # 飞书信息
+            self.feishu_appid = sys_config.get('feishu_appid')
+            self.feishu_app_secret = sys_config.get('feishu_app_secret')
 
         if self.MAIL_REVIEW_SMTP_PORT:
             self.MAIL_REVIEW_SMTP_PORT = int(self.MAIL_REVIEW_SMTP_PORT)
@@ -180,3 +184,36 @@ class MsgSender(object):
             logger.debug(f'企业微信推送成功\n通知对象：{to_user}')
         else:
             logger.error(f'企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
+
+    @staticmethod
+    def send_feishu_webhook(url, title, content):
+        data = {
+            "title": title,
+            "text": content
+        }
+        r = requests.post(url=url, json=data)
+        r_json = r.json()
+        if r_json['ok']:
+            logger.debug(f'飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
+        else:
+            logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
+
+    @staticmethod
+    def send_feishu_user(title, content, open_id, user_mail):
+        if user_mail:
+            open_id = open_id + get_feishu_open_id(user_mail)
+        if not open_id:
+            return
+        url = "https://open.feishu.cn/open-apis/message/v4/batch_send/"
+        data = {
+            "open_ids": open_id,
+            "msg_type": "text",
+            "content": {
+                "text": f'{title}\n{content}'
+            }
+        }
+        r = requests.post(url=url, json=data, headers={'Authorization': "Bearer " + get_feishu_access_token()}).json()
+        if r['code'] == 0:
+            logger.debug(f'飞书单推推送成功\n通知对象：{url}\n消息内容：{content}')
+        else:
+            logger.error(f"飞书单推推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r}")

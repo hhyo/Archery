@@ -19,7 +19,7 @@ class UsersAdmin(UserAdmin):
     # 编辑页显示内容
     fieldsets = (
         ('认证信息', {'fields': ('username', 'password')}),
-        ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id')}),
+        ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id', 'feishu_open_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('资源组', {'fields': ('resource_group',)}),
         ('其他信息', {'fields': ('date_joined',)}),
@@ -27,7 +27,7 @@ class UsersAdmin(UserAdmin):
     # 添加页显示内容
     add_fieldsets = (
         ('认证信息', {'fields': ('username', 'password1', 'password2')}),
-        ('个人信息', {'fields': ('display', 'email')}),
+        ('个人信息', {'fields': ('display', 'email', 'ding_user_id', 'wx_user_id', 'feishu_open_id')}),
         ('权限信息', {'fields': ('is_superuser', 'is_active', 'is_staff', 'groups', 'user_permissions')}),
         ('资源组', {'fields': ('resource_group',)}),
     )
@@ -38,7 +38,7 @@ class UsersAdmin(UserAdmin):
 # 资源组管理
 @admin.register(ResourceGroup)
 class ResourceGroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'ding_webhook', 'is_deleted')
+    list_display = ('group_id', 'group_name', 'ding_webhook', 'feishu_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
