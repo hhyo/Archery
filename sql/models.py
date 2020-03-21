@@ -36,9 +36,9 @@ class Users(AbstractUser):
     用户信息扩展
     """
     display = models.CharField('显示的中文名', max_length=50, default='')
-    ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True, null=True)
-    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True, null=True)
-    feishu_open_id = models.CharField('飞书OpenID', max_length=64, blank=True, null=True)
+    ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True)
+    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True)
+    feishu_open_id = models.CharField('飞书OpenID', max_length=64, blank=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
     resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)

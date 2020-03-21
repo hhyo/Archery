@@ -16,6 +16,22 @@ import logging
 logger = logging.getLogger('default')
 
 
+def __notify_cnf_status():
+    """返回消息通知开关"""
+    sys_config = SysConfig()
+    mail_status = sys_config.get('mail')
+    ding_status = sys_config.get('ding_to_person')
+    ding_webhook_status = sys_config.get('ding')
+    wx_status = sys_config.get('wx')
+    feishu_webhook_status = sys_config.get("feishu_webhook")
+    feishu_status = sys_config.get("feishu")
+    if not any([mail_status, ding_status, ding_webhook_status, wx_status, feishu_status, feishu_webhook_status]):
+        logger.info('未开启任何消息通知，可在系统设置中开启')
+        return False
+    else:
+        return True
+
+
 def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     """
     按照通知配置发送通知消息
@@ -47,7 +63,7 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     if sys_config.get("feishu"):
         open_id = [user.feishu_open_id for user in chain(msg_to, msg_cc) if user.feishu_open_id]
         user_mail = [user.email for user in chain(msg_to, msg_cc) if not user.feishu_open_id]
-        msg_sender.send_feishu_user(msg_title, msg_content,open_id,user_mail)
+        msg_sender.send_feishu_user(msg_title, msg_content, open_id, user_mail)
 
 
 def notify_for_audit(audit_id, **kwargs):
@@ -58,15 +74,9 @@ def notify_for_audit(audit_id, **kwargs):
     :return:
     """
     # 判断是否开启消息通知，未开启直接返回
-    sys_config = SysConfig()
-    wx_status = sys_config.get('wx')
-    feishu_webhook_status = sys_config.get("feishu_webhook")
-    feishu_status = sys_config.get("feishu")
-
-    if not sys_config.get('mail') and not sys_config.get(
-            'ding') and not wx_status and not feishu_status and not feishu_webhook_status:
-        logger.info('未开启消息通知，可在系统设置中开启')
+    if not __notify_cnf_status():
         return None
+    sys_config = SysConfig()
 
     # 获取审核信息
     audit_detail = Audit.detail(audit_id=audit_id)
@@ -204,16 +214,10 @@ def notify_for_execute(workflow):
     :return:
     """
     # 判断是否开启消息通知，未开启直接返回
-    sys_config = SysConfig()
-    wx_status = sys_config.get('wx')
-
-    feishu_webhook_status = sys_config.get("feishu_webhook")
-    feishu_status = sys_config.get("feishu")
-
-    if not sys_config.get('mail') and not sys_config.get(
-            'ding') and not wx_status and not feishu_status and not feishu_webhook_status:
-        logger.info('未开启消息通知，可在系统设置中开启')
+    if not __notify_cnf_status():
         return None
+    sys_config = SysConfig()
+
     # 获取当前审批和审批流程
     base_url = sys_config.get('archery_base_url', 'http://127.0.0.1:8000').rstrip('/')
     audit_auth_group, current_audit_auth_group = Audit.review_info(workflow.id, 2)

@@ -38,6 +38,7 @@ class MsgSender(object):
             self.ding_agent_id = sys_config.get('ding_agent_id')
             # 企业微信信息
             self.wx_agent_id = sys_config.get('wx_agent_id')
+            # 飞书信息
             self.feishu_appid = sys_config.get('feishu_appid')
             self.feishu_app_secret = sys_config.get('feishu_app_secret')
 
@@ -184,7 +185,8 @@ class MsgSender(object):
         else:
             logger.error(f'企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
-    def send_feishu_webhook(self, url, title, content):
+    @staticmethod
+    def send_feishu_webhook(url, title, content):
         data = {
             "title": title,
             "text": content
@@ -196,12 +198,8 @@ class MsgSender(object):
         else:
             logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
 
-    def send_feishu_user(self, title, content, open_id, user_mail):
-        # open_id = [user.feishu_open_id for user in push_user if user.feishu_open_id]
-        # user_mail = [user.email for user in push_user if not user.feishu_open_id]
-        # email = [user.email for user in push_user]
-        # logger.debug(f'title{title}content：{content},{push_user}')
-
+    @staticmethod
+    def send_feishu_user(title, content, open_id, user_mail):
         if user_mail:
             open_id = open_id + get_feishu_open_id(user_mail)
         if not open_id:
@@ -211,7 +209,7 @@ class MsgSender(object):
             "open_ids": open_id,
             "msg_type": "text",
             "content": {
-                "text": title + "\n" + content
+                "text": f'{title}\n{content}'
             }
         }
         r = requests.post(url=url, json=data, headers={'Authorization': "Bearer " + get_feishu_access_token()}).json()
