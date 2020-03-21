@@ -218,7 +218,6 @@ def archive_audit(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-
         # 消息通知
         async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
                    task_name=f'archive-audit-{archive_id}')
@@ -226,11 +225,25 @@ def archive_audit(request):
     return HttpResponseRedirect(reverse('sql:archive_detail', args=(archive_id,)))
 
 
-def add_archive_task():
-    """添加数据归档异步任务"""
-    # 全部有效归档任务
-    for archive_info in ArchiveConfig.objects.filter(
-            state=True, status=WorkflowDict.workflow_status['audit_success']):
+def add_archive_task(archive_ids=None):
+    """
+    添加数据归档异步任务，仅处理有效归档任务
+    :param archive_ids: 归档任务id列表
+    :return:
+    """
+    archive_ids = archive_ids or []
+    if not isinstance(archive_ids, list):
+        archive_ids = list(archive_ids)
+    # 没有传archive_id代表全部归档任务统一调度
+    if archive_ids:
+        archive_cnf_list = ArchiveConfig.objects.filter(
+            id__in=archive_ids, state=True, status=WorkflowDict.workflow_status['audit_success'])
+    else:
+        archive_cnf_list = ArchiveConfig.objects.filter(
+            state=True, status=WorkflowDict.workflow_status['audit_success'])
+
+    # 添加task任务
+    for archive_info in archive_cnf_list:
         archive_id = archive_info.id
         async_task('sql.archiver.archive',
                    archive_id,
