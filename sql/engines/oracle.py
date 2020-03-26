@@ -4,10 +4,11 @@ import logging
 import traceback
 import re
 import sqlparse
+import simplejson as json
 
 from common.config import SysConfig
 from common.utils.timer import FuncTimer
-from sql.utils.sql_utils import get_syntax_type
+from sql.utils.sql_utils import get_syntax_type, get_full_sqlitem_list, get_exec_sqlitem_list
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -149,7 +150,10 @@ class OracleEngine(EngineBase):
     def filter_sql(self, sql='', limit_num=0):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
-        if re.match(r"^select", sql_lower):
+        if re.match(r"^\s*select", sql_lower):
+            # 针对select count(*) from之类的SQL,不做limit限制
+            if re.match(r"^\s*select\s+count\s*\(\s*[\*|\d]\s*\)\s+from", sql_lower, re.I):
+                return sql.rstrip(';')
             if sql_lower.find(' rownum ') == -1:
                 if sql_lower.find('where') == -1:
                     return f"{sql.rstrip(';')} WHERE ROWNUM <= {limit_num}"
@@ -208,33 +212,41 @@ class OracleEngine(EngineBase):
         critical_ddl_regex = config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
-        for statement in sqlparse.split(sql):
-            statement = sqlparse.format(statement, strip_comments=True)
+
+        # 把所有SQL转换成SqlItem List。 如有多行(内部有多个;)执行块，约定以delimiter $$作为开始, 以$$结束
+        # 需要在函数里实现单条SQL做sqlparse.format(sql, strip_comments=True)
+        sqlitemList = get_full_sqlitem_list(sql, db_name)
+
+        for sqlitem in sqlitemList:
             # 禁用语句
-            if re.match(r"^select", statement.lower()):
+            if re.match(r"^\s*select", sqlitem.statement.lower(), re.I):
                 check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
-                                      sql=statement)
+                                      sql=sqlitem.statement)
             # 高危语句
-            elif critical_ddl_regex and p.match(statement.strip().lower()):
+            elif critical_ddl_regex and p.match(sqlitem.statement.strip().lower()):
                 check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回高危SQL',
                                       errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                                      sql=statement)
+                                      sql=sqlitem.statement)
 
             # 正常语句
             else:
                 result = ReviewResult(id=line, errlevel=0,
                                       stagestatus='Audit completed',
                                       errormessage='None',
-                                      sql=statement,
+                                      sql=sqlitem.statement,
+                                      stmt_type=sqlitem.stmt_type,
+                                      object_owner=sqlitem.object_owner,
+                                      object_type=sqlitem.object_type,
+                                      object_name=sqlitem.object_name,
                                       affected_rows=0,
                                       execute_time=0, )
             # 判断工单类型
-            if get_syntax_type(statement) == 'DDL':
+            if get_syntax_type(sqlitem.statement) == 'DDL':
                 check_result.syntax_type = 1
             check_result.rows += [result]
 
@@ -246,30 +258,58 @@ class OracleEngine(EngineBase):
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):
-        """执行上线单，返回Review set"""
+        """执行上线单，返回Review set
+           原来的逻辑是根据 sql_content简单来分割SQL，进而再执行这些SQL
+           新的逻辑变更为根据审核结果中记录的sql来执行，
+           如果是PLSQL存储过程等对象定义操作，还需检查确认新建对象是否编译通过!
+        """
+        review_content = workflow.sqlworkflowcontent.review_content
+        review_result = json.loads(review_content)
+        sqlitemList = get_exec_sqlitem_list(review_result, workflow.db_name)
+
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
-        # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
-        sql = sqlparse.format(sql, strip_comments=True)
-        split_sql = [f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name};"] + sqlparse.split(sql)
+
         line = 1
         statement = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             # 逐条执行切分语句，追加到执行结果中
-            for statement in split_sql:
-                statement = statement.rstrip(';')
+            for sqlitem in sqlitemList:
+                statement = sqlitem.statement
+                if sqlitem.stmt_type == "SQL":
+                    statement = statement.rstrip(';')
                 with FuncTimer() as t:
                     cursor.execute(statement)
                     conn.commit()
+
+                rowcount = cursor.rowcount
+                stagestatus = "Execute Successfully"
+                if sqlitem.stmt_type == "PLSQL" and sqlitem.object_name and sqlitem.object_name != 'ANONYMOUS' and sqlitem.object_name != '':
+                    query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS 
+                         WHERE OWNER = '{sqlitem.object_owner}' 
+                         AND OBJECT_NAME = '{sqlitem.object_name}' 
+                        """
+                    cursor.execute(query_obj_sql)
+                    row = cursor.fetchone()
+                    if row:
+                        status = row[1]
+                        if status and status == "INVALID":
+                            stagestatus = "Compile Failed. Object " + sqlitem.object_owner + "." + sqlitem.object_name + " is invalid."
+                    else:
+                        stagestatus = "Compile Failed. Object " + sqlitem.object_owner + "." + sqlitem.object_name + " doesn't exist."
+
+                    if stagestatus != "Execute Successfully":
+                        raise Exception(stagestatus)
+
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
-                    stagestatus='Execute Successfully',
+                    stagestatus=stagestatus,
                     errormessage='None',
                     sql=statement,
-                    affected_rows=cursor.rowcount,
+                    affected_rows=rowcount,
                     execute_time=t.cost,
                 ))
                 line += 1
@@ -288,13 +328,13 @@ class OracleEngine(EngineBase):
             ))
             line += 1
             # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for statement in split_sql[line - 1:]:
+            for sqlitem in sqlitemList[line - 1:]:
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
                     stagestatus='Audit completed',
                     errormessage=f'前序语句失败, 未执行',
-                    sql=statement,
+                    sql=sqlitem.statement,
                     affected_rows=0,
                     execute_time=0,
                 ))
