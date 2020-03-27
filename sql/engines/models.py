@@ -61,10 +61,10 @@ class ReviewResult:
             self.backup_time = kwargs.get('backup_time', '')
             self.actual_affected_rows = kwargs.get('actual_affected_rows', '')
 
-        self.stmt_type = kwargs.get('stmt_type', 'SQL')
-        self.object_owner = kwargs.get('object_owner', '')
-        self.object_type = kwargs.get('object_type', '')
-        self.object_name = kwargs.get('object_name', '')
+        # 自定义属性
+        for key, value in kwargs.items():
+            if not hasattr(self, key):
+                setattr(self, key, value)
 
 
 class ReviewSet:
