@@ -111,7 +111,7 @@ def archive_apply(request):
     dest_table_name = request.POST.get('dest_table_name')
     condition = request.POST.get('condition')
     no_delete = True if request.POST.get('no_delete') == 'true' else False
-    sleep = request.POST.get('sleep', 0)
+    sleep = request.POST.get('sleep') or 0
     result = {'status': 0, 'msg': 'ok', 'data': {}}
 
     # 参数校验
