@@ -1503,7 +1503,7 @@ class TestOracle(TestCase):
             db_name='some_db',
             syntax_type=1
         )
-        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql, review_content=ReviewSet(rows=[row]).json())
         new_engine = OracleEngine(instance=self.ins)
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
@@ -1534,7 +1534,7 @@ class TestOracle(TestCase):
             db_name='some_db',
             syntax_type=1
         )
-        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql, review_content=ReviewSet(rows=[row]).json())
         with self.assertRaises(AttributeError):
             new_engine = OracleEngine(instance=self.ins)
             execute_result = new_engine.execute_workflow(workflow=wf)
