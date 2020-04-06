@@ -621,8 +621,7 @@ class TestRedis(TestCase):
                            errormessage='None',
                            sql=sql,
                            affected_rows=0,
-                           execute_time=0,
-                           full_sql=sql)
+                           execute_time=0)
         new_engine = RedisEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name=0, sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
@@ -637,8 +636,7 @@ class TestRedis(TestCase):
                            errormessage='None',
                            sql=sql,
                            affected_rows=0,
-                           execute_time=0,
-                           full_sql=sql)
+                           execute_time=0)
         wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -782,7 +780,7 @@ class TestPgSQL(TestCase):
                            stagestatus='驳回不支持语句',
                            errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                            sql=sql)
-        new_engine = OracleEngine(instance=self.ins)
+        new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
@@ -795,7 +793,7 @@ class TestPgSQL(TestCase):
                            stagestatus='驳回高危SQL',
                            errormessage='禁止提交匹配' + '^|update' + '条件的语句！',
                            sql=sql)
-        new_engine = OracleEngine(instance=self.ins)
+        new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
@@ -810,7 +808,7 @@ class TestPgSQL(TestCase):
                            sql=sql,
                            affected_rows=0,
                            execute_time=0, )
-        new_engine = OracleEngine(instance=self.ins)
+        new_engine = PgSQLEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
@@ -826,8 +824,7 @@ class TestPgSQL(TestCase):
                            errormessage='None',
                            sql=sql,
                            affected_rows=0,
-                           execute_time=0,
-                           full_sql=sql)
+                           execute_time=0)
         wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -1471,7 +1468,12 @@ class TestOracle(TestCase):
                            errormessage='None',
                            sql=sql,
                            affected_rows=0,
-                           execute_time=0, )
+                           execute_time=0,
+                           stmt_type='SQL',
+                           object_owner='',
+                           object_type='',
+                           object_name='',
+                           )
         new_engine = OracleEngine(instance=self.ins)
         check_result = new_engine.execute_check(db_name='archery', sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
@@ -1482,14 +1484,24 @@ class TestOracle(TestCase):
     @patch('cx_Oracle.connect')
     def test_execute_workflow_success(self, _conn, _cursor, _execute):
         sql = 'update user set id=1'
-        row = ReviewResult(id=1,
-                           errlevel=0,
-                           stagestatus='Execute Successfully',
-                           errormessage='None',
-                           sql=sql,
-                           affected_rows=0,
-                           execute_time=0,
-                           full_sql=sql)
+        review_row = ReviewResult(id=1,
+                                  errlevel=0,
+                                  stagestatus='Execute Successfully',
+                                  errormessage='None',
+                                  sql=sql,
+                                  affected_rows=0,
+                                  execute_time=0,
+                                  stmt_type='SQL',
+                                  object_owner='',
+                                  object_type='',
+                                  object_name='', )
+        execute_row = ReviewResult(id=1,
+                                   errlevel=0,
+                                   stagestatus='Execute Successfully',
+                                   errormessage='None',
+                                   sql=sql,
+                                   affected_rows=0,
+                                   execute_time=0)
         wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -1503,11 +1515,12 @@ class TestOracle(TestCase):
             db_name='some_db',
             syntax_type=1
         )
-        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql,
+                                          review_content=ReviewSet(rows=[review_row]).json())
         new_engine = OracleEngine(instance=self.ins)
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
-        self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+        self.assertEqual(execute_result.rows[0].__dict__.keys(), execute_row.__dict__.keys())
 
     @patch('cx_Oracle.connect.cursor.execute')
     @patch('cx_Oracle.connect.cursor')
@@ -1520,7 +1533,12 @@ class TestOracle(TestCase):
                            errormessage=f'异常信息：{f"Oracle命令执行报错，语句：{sql}"}',
                            sql=sql,
                            affected_rows=0,
-                           execute_time=0, )
+                           execute_time=0,
+                           stmt_type='SQL',
+                           object_owner='',
+                           object_type='',
+                           object_name='',
+                           )
         wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -1534,7 +1552,7 @@ class TestOracle(TestCase):
             db_name='some_db',
             syntax_type=1
         )
-        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql, review_content=ReviewSet(rows=[row]).json())
         with self.assertRaises(AttributeError):
             new_engine = OracleEngine(instance=self.ins)
             execute_result = new_engine.execute_workflow(workflow=wf)

@@ -551,10 +551,11 @@ def cancel(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 仅未审核通过又取消的工单需要发送消息，审核通过的不发送
+        # 发送取消、驳回通知
         audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
-        if audit_detail.current_status == WorkflowDict.workflow_status['audit_abort']:
+        if audit_detail.current_status in (
+                WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
             async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
                        task_name=f'sqlreview-cancel-{workflow_id}')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))

@@ -149,7 +149,7 @@ def instance(request):
     instance = Instance.objects.get(id=instance_id)
     try:
         engine = get_engine(instance=instance)
-        engine.get_all_databases()
+        engine.get_connection()
     except Exception as e:
         result['status'] = 1
         result['msg'] = '无法连接实例,\n{}'.format(str(e))

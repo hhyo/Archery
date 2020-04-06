@@ -16,6 +16,7 @@ class ResourceGroup(models.Model):
     group_sort = models.IntegerField('排序', default=1)
     group_level = models.IntegerField('层级', default=1)
     ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
+    feishu_webhook = models.CharField('飞书webhook地址', max_length=255, blank=True)
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -35,8 +36,9 @@ class Users(AbstractUser):
     用户信息扩展
     """
     display = models.CharField('显示的中文名', max_length=50, default='')
-    ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True, null=True)
-    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True, null=True)
+    ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True)
+    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True)
+    feishu_open_id = models.CharField('飞书OpenID', max_length=64, blank=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
     resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
@@ -224,7 +226,7 @@ class WorkflowAuditDetail(models.Model):
     audit_user = models.CharField('审核人', max_length=30)
     audit_time = models.DateTimeField('审核时间')
     audit_status = models.IntegerField('审核状态', choices=workflow_status_choices)
-    remark = models.CharField('审核备注', default='', max_length=140)
+    remark = models.CharField('审核备注', default='', max_length=1000)
     sys_time = models.DateTimeField('系统时间', auto_now=True)
 
     def __int__(self):
@@ -268,7 +270,7 @@ class WorkflowLog(models.Model):
     audit_id = models.IntegerField('工单审批id', db_index=True)
     operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
     operation_type_desc = models.CharField('操作类型描述', max_length=10)
-    operation_info = models.CharField('操作信息', max_length=200)
+    operation_info = models.CharField('操作信息', max_length=1000)
     operator = models.CharField('操作人', max_length=30)
     operator_display = models.CharField('操作人中文名', max_length=50, default='')
     operation_time = models.DateTimeField(auto_now_add=True)

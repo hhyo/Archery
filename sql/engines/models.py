@@ -3,6 +3,25 @@
 import json
 
 
+class SqlItem:
+
+    def __init__(self, id=0, statement='', stmt_type='SQL', object_owner='', object_type='', object_name=''):
+        '''
+        :param id:  SQL序号,从0开始
+        :param statement:  SQL Statement
+        :param stmt_type:  SQL类型(SQL, PLSQL), 默认为SQL
+        :param object_owner: PLSQL Object Owner
+        :param object_type: PLSQL Object Type
+        :param object_name: PLSQL Object Name
+        '''
+        self.id = id
+        self.statement = statement
+        self.stmt_type = stmt_type
+        self.object_owner = object_owner
+        self.object_type = object_type
+        self.object_name = object_name
+
+
 class ReviewResult:
     """审核的单条结果"""
 
@@ -41,6 +60,11 @@ class ReviewResult:
             self.sqlsha1 = kwargs.get('sqlsha1', '')
             self.backup_time = kwargs.get('backup_time', '')
             self.actual_affected_rows = kwargs.get('actual_affected_rows', '')
+
+        # 自定义属性
+        for key, value in kwargs.items():
+            if not hasattr(self, key):
+                setattr(self, key, value)
 
 
 class ReviewSet:

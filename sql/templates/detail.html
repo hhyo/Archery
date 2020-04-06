@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load format_tags %}
 
 {% block content %}
     <h4 style="display: inline;"><a target="_blank"
@@ -146,7 +147,7 @@
                     <tbody>
                     <tr>
                         <td>
-                            {{ last_operation_info }}
+                            {% format_str last_operation_info %}
                         </td>
                     </tr>
                     </tbody>
