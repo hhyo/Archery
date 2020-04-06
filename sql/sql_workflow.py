@@ -541,8 +541,8 @@ def cancel(request):
 
             # 删除定时执行task
             if workflow_detail.status == 'workflow_timingtask':
-                task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
-                del_schedule(task_name)
+                schedule_name = f"sqlreview-timing-{workflow_id}"
+                del_schedule(schedule_name)
             # 将流程状态修改为人工终止流程
             workflow_detail.status = 'workflow_abort'
             workflow_detail.save()

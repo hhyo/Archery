@@ -267,22 +267,23 @@ def archive(archive_id):
 
     # 获取归档表的字符集信息
     s_engine = get_engine(s_ins)
-    db = s_engine.schema_object.databases[src_db_name]
-    tb = db.tables[src_table_name]
-    charset = tb.options['charset'].value
-    if charset is None:
-        charset = db.options['charset'].value
+    s_db = s_engine.schema_object.databases[src_db_name]
+    s_tb = s_db.tables[src_table_name]
+    s_charset = s_tb.options['charset'].value
+    if s_charset is None:
+        s_charset = s_db.options['charset'].value
 
     pt_archiver = PtArchiver()
     # 准备参数
-    source = fr"h={s_ins.host},u={s_ins.user},p={s_ins.password},P={s_ins.port},D={src_db_name},t={src_table_name}"
+    source = fr"h={s_ins.host},u={s_ins.user},p={s_ins.password}," \
+        fr"P={s_ins.port},D={src_db_name},t={src_table_name},A={s_charset}"
     args = {
         "no-version-check": True,
         "source": source,
         "where": condition,
         "progress": 5000,
         "statistics": True,
-        "charset": charset,
+        "charset": 'utf8',
         "limit": 10000,
         "txn-size": 1000,
         "sleep": sleep
@@ -293,7 +294,16 @@ def archive(archive_id):
         d_ins = archive_info.dest_instance
         dest_db_name = archive_info.dest_db_name
         dest_table_name = archive_info.dest_table_name
-        dest = fr"h={d_ins.host},u={d_ins.user},p={d_ins.password},P={d_ins.port},D={dest_db_name},t={dest_table_name}"
+        # 目标表的字符集信息
+        d_engine = get_engine(d_ins)
+        d_db = d_engine.schema_object.databases[dest_db_name]
+        d_tb = d_db.tables[dest_table_name]
+        d_charset = d_tb.options['charset'].value
+        if d_charset is None:
+            d_charset = d_db.options['charset'].value
+        # dest
+        dest = fr"h={d_ins.host},u={d_ins.user},p={d_ins.password},P={d_ins.port}," \
+            fr"D={dest_db_name},t={dest_table_name},A={d_charset}"
         args['dest'] = dest
         args['bulk-insert'] = True
         if no_delete:
