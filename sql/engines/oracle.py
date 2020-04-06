@@ -173,7 +173,7 @@ class OracleEngine(EngineBase):
         # 对查询sql增加limit限制
         if re.match(r"^select|^with", sql_lower):
            if re.match(r"^select|^with", sql_lower):
-           return f"select a.* from ({sql.rstrip(';')}) a WHERE ROWNUM <= {limit_num}"
+              sql=f"select a.* from ({sql.rstrip(';')}) a WHERE ROWNUM <= {limit_num}"
         return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
