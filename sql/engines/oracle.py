@@ -4,6 +4,7 @@ import logging
 import traceback
 import re
 import sqlparse
+import MySQLdb
 import simplejson as json
 
 from common.config import SysConfig
@@ -46,6 +47,25 @@ class OracleEngine(EngineBase):
         return 'Oracle engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @staticmethod
+    def get_backup_connection():
+        archer_config = SysConfig()
+        backup_host = archer_config.get('inception_remote_backup_host')
+        backup_port = int(archer_config.get('inception_remote_backup_port', 3306))
+        backup_user = archer_config.get('inception_remote_backup_user')
+        backup_password = archer_config.get('inception_remote_backup_password')
+        return MySQLdb.connect(host=backup_host,
+                               port=backup_port,
+                               user=backup_user,
+                               passwd=backup_password,
+                               charset='utf8mb4',
+                               autocommit=True
+                               )
+    @property
     def server_version(self):
         conn = self.get_connection()
         version = conn.version
@@ -82,14 +102,14 @@ class OracleEngine(EngineBase):
             'DIP USERS', 'EXFSYS', 'FLOWS_FILES', 'HR USERS', 'IX USERS', 'MDDATA', 'MDSYS', 'MGMT_VIEW', 'OE USERS',
             'OLAPSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDSYS', 'OUTLN', 'OWBSYS', 'OWBSYS_AUDIT', 'PM USERS',
             'SCOTT', 'SH USERS', 'SI_INFORMTN_SCHEMA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'SYS',
-            'SYSMAN', 'SYSTEM', 'WMSYS', 'XDB', 'XS$NULL')
+            'SYSMAN', 'SYSTEM', 'WMSYS', 'XDB', 'XS$NULL', 'DIP', 'OJVMSYS', 'LBACSYS')
         schema_list = [row[0] for row in result.rows if row[0] not in sysschema]
         result.rows = schema_list
         return result
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
-        sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL
+        sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL  order by table_name
         """
         result = self.query(sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
@@ -113,7 +133,7 @@ class OracleEngine(EngineBase):
         nullable,
         data_default
         FROM all_tab_cols
-        WHERE table_name = '{tb_name}' and owner = '{db_name}'
+        WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
         """
         result = self.query(sql=sql)
         return result
@@ -133,7 +153,7 @@ class OracleEngine(EngineBase):
             result['bad_query'] = True
             result['msg'] = '没有有效的SQL语句'
             return result
-        if re.match(r"^select", sql_lower) is None:
+        if re.match(r"^select|^with|^explain", sql_lower) is None:
             result['bad_query'] = True
             result['msg'] = '仅支持^select语法!'
             return result
@@ -150,15 +170,8 @@ class OracleEngine(EngineBase):
     def filter_sql(self, sql='', limit_num=0):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
-        if re.match(r"^\s*select", sql_lower):
-            # 针对select count(*) from之类的SQL,不做limit限制
-            if re.match(r"^\s*select\s+count\s*\(\s*[\*|\d]\s*\)\s+from", sql_lower, re.I):
-                return sql.rstrip(';')
-            if sql_lower.find(' rownum ') == -1:
-                if sql_lower.find('where') == -1:
-                    return f"{sql.rstrip(';')} WHERE ROWNUM <= {limit_num}"
-                else:
-                    return f"{sql.rstrip(';')} AND ROWNUM <= {limit_num}"
+        if re.match(r"^select|^with", sql_lower):
+           sql = f"select a.* from ({sql.rstrip(';')}) a WHERE ROWNUM <= {limit_num}"
         return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
@@ -169,6 +182,12 @@ class OracleEngine(EngineBase):
             cursor = conn.cursor()
             if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+            sql = sql.rstrip(';')
+            # 支持oralce查询SQL执行计划语句
+            if re.match(r"^explain", sql, re.I):
+                cursor.execute(sql)
+                # 重置SQL文本，获取SQL执行计划
+                sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
             cursor.execute(sql)
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
@@ -275,6 +294,11 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
+            cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
+            cursor.execute(f"select sysdate from dual")
+            rows = cursor.fetchone()
+            begin_time = rows[0]
             # 逐条执行切分语句，追加到执行结果中
             for sqlitem in sqlitemList:
                 statement = sqlitem.statement
@@ -340,9 +364,98 @@ class OracleEngine(EngineBase):
                 ))
                 line += 1
         finally:
+            cursor.execute(f"select sysdate from dual")
+            rows = cursor.fetchone()
+            end_time = rows[0]
+            self.backup(workflow_id=workflow.id, cursor=cursor, begin_time=begin_time, end_time=end_time)
             if close_conn:
                 self.close()
         return execute_result
+
+    def backup(self,workflow_id,cursor,begin_time,end_time):
+        # 回滚SQL入库
+        # 生成回滚SQL,执行用户需要有grant select any transaction to 权限，需要有grant execute on dbms_logmnr to权限
+        # 数据库需开启最小化附加日志alter database add supplemental log data;
+        # 需为归档模式;开启附件日志会增加redo日志量,一般不会有多大影响，需评估归档磁盘空间，redo磁盘IO性能
+        # 创建备份库连接
+        try:
+            conn = self.get_backup_connection()
+            cur = conn.cursor()
+            cur.execute(f"""create database if not exists ora_backup;""")
+            cur.execute(f"use ora_backup;")
+            cur.execute(f"""CREATE TABLE if not exists `sql_rollback` (
+                            `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                            `redo_sql` mediumtext,
+                            `undo_sql` mediumtext,
+                            `workflow_id` bigint(20) NOT NULL,
+                            PRIMARY KEY (`id`),
+                            key `idx_sql_rollback_01` (`workflow_id`)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
+            logmnr_start_sql = f'''begin
+                                        dbms_logmnr.start_logmnr(
+                                        starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
+                                        endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
+                                        options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
+                                    end;'''
+            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents 
+                                  where  SEG_OWNER not in ('SYS','SYSTEM')
+                                         and session# = (select sid from v$mystat where rownum = 1)
+                                         and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
+            logmnr_end_sql = f'''begin
+                                    dbms_logmnr.end_logmnr;
+                                 end;'''
+            cursor.execute(logmnr_start_sql)
+            cursor.execute(undo_sql)
+            rows = cursor.fetchall()
+            cursor.execute(logmnr_end_sql)
+            if len(rows) > 0:
+               for row in rows:
+                   redo_sql=f"{row[0]}"
+                   redo_sql=redo_sql.replace("'","\\'")
+                   if row[1] is None:
+                       undo_sql = f' '
+                   else:
+                       undo_sql=f"{row[1]}"
+                   undo_sql=undo_sql.replace("'","\\'")
+                   sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
+                   cur.execute(sql)
+        except Exception as e:
+            logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
+            return False
+        finally:
+               # 关闭连接
+            if conn:
+               conn.close()
+        return True
+
+    def get_rollback(self, workflow):
+        """
+        获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
+        """
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        # 回滚语句倒序展示
+        list_execute_result.reverse()
+        list_backup_sql = []
+        try:
+            # 创建连接
+            conn = self.get_backup_connection()
+            cur = conn.cursor()
+            sql = f"""select redo_sql,undo_sql from sql_rollback where workflow_id = {workflow.id} order by id;"""
+            cur.execute(f"use ora_backup;")
+            cur.execute(sql)
+            list_tables = cur.fetchall()
+            for row in list_tables:
+                redo_sql = row[0]
+                undo_sql = row[1]
+                # 拼接成回滚语句列表,['源语句'，'回滚语句']
+                list_backup_sql.append([redo_sql,undo_sql])
+        except Exception as e:
+            logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
+            raise Exception(e)
+        # 关闭连接
+        if conn:
+            conn.close()
+        return list_backup_sql
 
     def close(self):
         if self.conn:
