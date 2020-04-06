@@ -4,6 +4,7 @@ import logging
 import traceback
 import re
 import sqlparse
+import MySQLdb
 import simplejson as json
 
 from common.config import SysConfig
@@ -44,6 +45,26 @@ class OracleEngine(EngineBase):
     @property
     def info(self):
         return 'Oracle engine'
+    
+    @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @staticmethod
+    def get_backup_connection():
+        archer_config = SysConfig()
+        backup_host = archer_config.get('inception_remote_backup_host')
+        backup_port = int(archer_config.get('inception_remote_backup_port', 3306))
+        backup_user = archer_config.get('inception_remote_backup_user')
+        backup_password = archer_config.get('inception_remote_backup_password')
+        return MySQLdb.connect(host=backup_host,
+                               port=backup_port,
+                               user=backup_user,
+                               passwd=backup_password,
+                               charset='utf8mb4',
+                               autocommit=True
+                               )
 
     @property
     def server_version(self):
@@ -274,6 +295,11 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            #获取执行工单时间，用于备份SQL的日志挖掘起始时间
+            cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
+            cursor.execute(f"select sysdate from dual")
+            rows = cursor.fetchone()
+            begin_time = rows[0]
             # 逐条执行切分语句，追加到执行结果中
             for sqlitem in sqlitemList:
                 statement = sqlitem.statement
@@ -339,10 +365,101 @@ class OracleEngine(EngineBase):
                 ))
                 line += 1
         finally:
+            # 生成回滚SQL,执行用户需要有grant select any transaction to 权限，需要有grant execute on dbms_logmnr to权限
+            # 数据库需开启最小化附加日志alter database add supplemental log data;
+            # 需为归档模式;开启附件日志会增加redo日志量,一般不会有多大影响，需评估归档磁盘空间，redo磁盘IO性能
+            cursor.execute(f"select sysdate from dual")
+            rows = cursor.fetchone()
+            end_time = rows[0]
+            logmnr_start_sql = f'''begin
+                                       dbms_logmnr.start_logmnr(
+                                       starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
+                                       endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
+                                       options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
+                                       end;'''
+            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents where
+                                   SEG_OWNER not in ('SYS','SYSTEM')
+                                   and session# = (select s.sid from v$session s where s.sid = (select sid from v$mystat where rownum = 1 ))
+                                   and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
+            logmnr_end_sql = f'''begin
+                                            dbms_logmnr.end_logmnr;
+                                            end;'''
+            workflow_id = f"{workflow.sqlworkflowcontent.workflow_id}"
+            cursor.execute(logmnr_start_sql)
+            cursor.execute(undo_sql)
+            rows = cursor.fetchall()
+            cursor.execute(logmnr_end_sql)
+            self.ora_backup_insert(rows=rows, id=workflow_id)
             if close_conn:
                 self.close()
         return execute_result
+    
+    def ora_backup_insert(self, rows = [], id = 0):
+        # 回滚SQL入库
+        # 创建连接
+        try:
+            conn = self.get_backup_connection()
+            cur = conn.cursor()
+            cur.execute(f"""create database if not exists ora_backup;""")
+            cur.execute(f"use ora_backup;")
+            cur.execute(f"""CREATE TABLE if not exists `sql_rollback` (
+                            `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                            `redo_sql` mediumtext,
+                            `undo_sql` mediumtext,
+                            `workflow_id` bigint(20) NOT NULL,
+                            PRIMARY KEY (`id`),
+                            key `idx_sql_rollback_01` (`workflow_id`)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
+            if len(rows) > 0:
+               for row in rows:
+                   redo_sql=f"{row[0]}"
+                   redo_sql=redo_sql.replace("'","\\'")
+                   undo_sql=f"{row[1]}"
+                   undo_sql=undo_sql.replace("'","\\'")
+                   sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{id});"""
+                   cur.execute(sql)
+        except Exception as e:
+            logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
+            return False
+        finally:
+               # 关闭连接
+            if conn:
+               conn.close()
+        return True
 
+    def get_rollback(self, workflow):
+        """
+        获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
+        """
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        workflow_id = workflow.sqlworkflowcontent.workflow_id
+        # 回滚语句倒序展示
+        list_execute_result.reverse()
+        list_backup_sql = []
+        try:
+            # 创建连接
+            conn = self.get_backup_connection()
+            cur = conn.cursor()
+            sql = f"""select redo_sql,undo_sql from sql_rollback where workflow_id = {workflow_id} order by id;"""
+            cur.execute(f"use ora_backup;")
+            cur.execute(sql)
+            list_tables = cur.fetchall()
+            for row in list_tables:
+                redo_sql = row[0]
+                if row[1] is None:
+                    undo_sql = ' '
+                else:
+                    undo_sql = row[1]
+                # 拼接成回滚语句列表,['源语句'，'回滚语句']
+                list_backup_sql.append([redo_sql,undo_sql])
+        except Exception as e:
+            logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
+            raise Exception(e)
+        # 关闭连接
+        if conn:
+            conn.close()
+        return list_backup_sql
+    
     def close(self):
         if self.conn:
             self.conn.close()
