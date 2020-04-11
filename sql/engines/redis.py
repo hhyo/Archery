@@ -42,7 +42,7 @@ class RedisEngine(EngineBase):
         result = ResultSet(full_sql='CONFIG GET databases')
         conn = self.get_connection()
         try:
-            rows = conn.config_get('databses')['databases']
+            rows = conn.config_get('databases')['databases']
         except Exception as e:
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
             rows = 16
