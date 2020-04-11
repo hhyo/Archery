@@ -13,6 +13,9 @@ from sql.engines import get_engine
 def execute(workflow_id):
     """为延时或异步任务准备的execute, 传入工单ID即可"""
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    # 只有执行中和定时执行的数据才可以继续执行
+    if workflow_detail.status not in ['workflow_executing', 'workflow_timingtask']:
+        raise Exception('工单状态不正确，禁止执行！')
     # 给定时执行的工单增加执行日志
     if workflow_detail.status == 'workflow_timingtask':
         # 将工单状态修改为执行中
