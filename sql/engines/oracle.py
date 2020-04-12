@@ -4,6 +4,7 @@ import logging
 import traceback
 import re
 import sqlparse
+import MySQLdb
 import simplejson as json
 
 from common.config import SysConfig
