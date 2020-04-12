@@ -22,7 +22,7 @@ logger = logging.getLogger('default')
 
 class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
-        db_name = db_name or 0
+        db_name = db_name or self.db_name
         return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
                            encoding_errors='ignore', decode_responses=True)
 
@@ -41,7 +41,12 @@ class RedisEngine(EngineBase):
         """
         result = ResultSet(full_sql='CONFIG GET databases')
         conn = self.get_connection()
-        rows = conn.config_get('databases')['databases']
+        try:
+            rows = conn.config_get('databases')['databases']
+        except Exception as e:
+            logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
+            rows = 16
+
         db_list = [str(x) for x in range(int(rows))]
         result.rows = db_list
         return result

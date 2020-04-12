@@ -2,16 +2,19 @@
 {% load format_tags %}
 
 {% block content %}
-    <h4 style="display: inline;"><a target="_blank"
-                                    href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a></h4>
-    &nbsp;&nbsp;&nbsp;
-    <!--只允许发起人提交其他实例-->
-    {% if user.username == workflow_detail.engineer %}
-        <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
-    {% endif %}
-    {% if is_can_review or user.is_superuser %}
-        <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
-    {% endif %}
+    <div class="form-inline">
+        <h4 style="display: inline;">
+            <a target="_blank"
+               href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
+        </h4>
+        <!--只允许发起人提交其他实例-->
+        {% if user.username == workflow_detail.engineer %}
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+        {% endif %}
+        {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
+            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+        {% endif %}
+    </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>

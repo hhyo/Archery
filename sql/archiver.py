@@ -305,19 +305,14 @@ def archive(archive_id):
         dest = fr"h={d_ins.host},u={d_ins.user},p={d_ins.password},P={d_ins.port}," \
             fr"D={dest_db_name},t={dest_table_name},A={d_charset}"
         args['dest'] = dest
-        args['bulk-insert'] = True
         if no_delete:
             args['no-delete'] = True
-        else:
-            args['bulk-delete'] = True
     elif mode == 'file':
         output_directory = os.path.join(settings.BASE_DIR, 'downloads/archiver')
         os.makedirs(output_directory, exist_ok=True)
         args['file'] = f'{output_directory}/{s_ins.instance_name}-{src_db_name}-{src_table_name}.txt'
         if no_delete:
             args['no-delete'] = True
-        else:
-            args['bulk-delete'] = True
     elif mode == 'purge':
         args['purge'] = True
 
