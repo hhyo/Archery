@@ -4,7 +4,6 @@ import logging
 import traceback
 import re
 import sqlparse
-import MySQLdb
 import simplejson as json
 
 from common.config import SysConfig
@@ -45,7 +44,7 @@ class OracleEngine(EngineBase):
     @property
     def info(self):
         return 'Oracle engine'
-    
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -65,7 +64,6 @@ class OracleEngine(EngineBase):
                                charset='utf8mb4',
                                autocommit=True
                                )
-
     @property
     def server_version(self):
         conn = self.get_connection()
@@ -110,7 +108,7 @@ class OracleEngine(EngineBase):
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
-        sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL
+        sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL  order by table_name
         """
         result = self.query(sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
@@ -134,7 +132,7 @@ class OracleEngine(EngineBase):
         nullable,
         data_default
         FROM all_tab_cols
-        WHERE table_name = '{tb_name}' and owner = '{db_name}'
+        WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
         """
         result = self.query(sql=sql)
         return result
@@ -156,7 +154,7 @@ class OracleEngine(EngineBase):
             return result
         if re.match(r"^select|^with|^explain", sql_lower) is None:
             result['bad_query'] = True
-            result['msg'] = '仅支持^select|^with|^explain查询语法!'
+            result['msg'] = '仅支持^select语法!'
             return result
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
@@ -172,8 +170,7 @@ class OracleEngine(EngineBase):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select|^with", sql_lower):
-           if re.match(r"^select|^with", sql_lower):
-              sql=f"select a.* from ({sql.rstrip(';')}) a WHERE ROWNUM <= {limit_num}"
+           sql = f"select a.* from ({sql.rstrip(';')}) a WHERE ROWNUM <= {limit_num}"
         return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
@@ -184,11 +181,12 @@ class OracleEngine(EngineBase):
             cursor = conn.cursor()
             if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+            sql = sql.rstrip(';')
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
-               cursor.execute(sql)
-               # 重置SQL文本，获取SQL执行计划
-               sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
+                cursor.execute(sql)
+                # 重置SQL文本，获取SQL执行计划
+                sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
             cursor.execute(sql)
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
@@ -278,43 +276,69 @@ class OracleEngine(EngineBase):
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):
-        """执行上线单，返回Review set"""
+        """执行上线单，返回Review set
+           原来的逻辑是根据 sql_content简单来分割SQL，进而再执行这些SQL
+           新的逻辑变更为根据审核结果中记录的sql来执行，
+           如果是PLSQL存储过程等对象定义操作，还需检查确认新建对象是否编译通过!
+        """
+        review_content = workflow.sqlworkflowcontent.review_content
+        review_result = json.loads(review_content)
+        sqlitemList = get_exec_sqlitem_list(review_result, workflow.db_name)
+
         sql = workflow.sqlworkflowcontent.sql_content
         execute_result = ReviewSet(full_sql=sql)
-        # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
-        sql = sqlparse.format(sql, strip_comments=True)
-        split_sql = [f"ALTER SESSION SET CURRENT_SCHEMA = {workflow.db_name};"] + sqlparse.split(sql)
+
         line = 1
         statement = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            #获取执行工单时间，用于备份SQL的日志挖掘起始时间
+            # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
             cursor.execute(f"select sysdate from dual")
             rows = cursor.fetchone()
             begin_time = rows[0]
             # 逐条执行切分语句，追加到执行结果中
-            for statement in split_sql:
-                statement = statement.rstrip(';')
+            for sqlitem in sqlitemList:
+                statement = sqlitem.statement
+                if sqlitem.stmt_type == "SQL":
+                    statement = statement.rstrip(';')
                 with FuncTimer() as t:
-                    if statement !='':
-                       cursor.execute(statement)
-                       conn.commit()
+                    cursor.execute(statement)
+                    conn.commit()
+
+                rowcount = cursor.rowcount
+                stagestatus = "Execute Successfully"
+                if sqlitem.stmt_type == "PLSQL" and sqlitem.object_name and sqlitem.object_name != 'ANONYMOUS' and sqlitem.object_name != '':
+                    query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS 
+                         WHERE OWNER = '{sqlitem.object_owner}' 
+                         AND OBJECT_NAME = '{sqlitem.object_name}' 
+                        """
+                    cursor.execute(query_obj_sql)
+                    row = cursor.fetchone()
+                    if row:
+                        status = row[1]
+                        if status and status == "INVALID":
+                            stagestatus = "Compile Failed. Object " + sqlitem.object_owner + "." + sqlitem.object_name + " is invalid."
+                    else:
+                        stagestatus = "Compile Failed. Object " + sqlitem.object_owner + "." + sqlitem.object_name + " doesn't exist."
+
+                    if stagestatus != "Execute Successfully":
+                        raise Exception(stagestatus)
+
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
-                    stagestatus='Execute Successfully',
+                    stagestatus=stagestatus,
                     errormessage='None',
                     sql=statement,
-                    affected_rows=cursor.rowcount,
+                    affected_rows=rowcount,
                     execute_time=t.cost,
                 ))
                 line += 1
         except Exception as e:
             logger.warning(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            #conn.rollback()
             # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(
                 id=line,
@@ -327,13 +351,13 @@ class OracleEngine(EngineBase):
             ))
             line += 1
             # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for statement in split_sql[line - 1:]:
+            for sqlitem in sqlitemList[line - 1:]:
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
                     stagestatus='Audit completed',
                     errormessage=f'前序语句失败, 未执行',
-                    sql=statement,
+                    sql=sqlitem.statement,
                     affected_rows=0,
                     execute_time=0,
                 ))
@@ -342,12 +366,12 @@ class OracleEngine(EngineBase):
             cursor.execute(f"select sysdate from dual")
             rows = cursor.fetchone()
             end_time = rows[0]
-            self.backup(id=workflow.id,cursor=cursor,begin_time=begin_time,end_time=end_time)
+            self.backup(workflow_id=workflow.id, cursor=cursor, begin_time=begin_time, end_time=end_time)
             if close_conn:
                 self.close()
         return execute_result
 
-    def backup(self,id,cursor,begin_time,end_time):
+    def backup(self,workflow_id,cursor,begin_time,end_time):
         # 回滚SQL入库
         # 生成回滚SQL,执行用户需要有grant select any transaction to 权限，需要有grant execute on dbms_logmnr to权限
         # 数据库需开启最小化附加日志alter database add supplemental log data;
@@ -367,18 +391,18 @@ class OracleEngine(EngineBase):
                             key `idx_sql_rollback_01` (`workflow_id`)
                             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
             logmnr_start_sql = f'''begin
-                                                   dbms_logmnr.start_logmnr(
-                                                   starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
-                                                   endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
-                                                   options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
-                                                   end;'''
-            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents where
-                                               SEG_OWNER not in ('SYS','SYSTEM')
-                                               and session# = (select s.sid from v$session s where s.sid = (select sid from v$mystat where rownum = 1 ))
-                                               and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
+                                        dbms_logmnr.start_logmnr(
+                                        starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
+                                        endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
+                                        options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
+                                    end;'''
+            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents 
+                                  where  SEG_OWNER not in ('SYS','SYSTEM')
+                                         and session# = (select sid from v$mystat where rownum = 1)
+                                         and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
             logmnr_end_sql = f'''begin
-                                                        dbms_logmnr.end_logmnr;
-                                                        end;'''
+                                    dbms_logmnr.end_logmnr;
+                                 end;'''
             cursor.execute(logmnr_start_sql)
             cursor.execute(undo_sql)
             rows = cursor.fetchall()
@@ -392,7 +416,7 @@ class OracleEngine(EngineBase):
                    else:
                        undo_sql=f"{row[1]}"
                    undo_sql=undo_sql.replace("'","\\'")
-                   sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{id});"""
+                   sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
                    cur.execute(sql)
         except Exception as e:
             logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
@@ -408,7 +432,6 @@ class OracleEngine(EngineBase):
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
         list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
-        workflow_id = workflow.id
         # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []
@@ -416,7 +439,7 @@ class OracleEngine(EngineBase):
             # 创建连接
             conn = self.get_backup_connection()
             cur = conn.cursor()
-            sql = f"""select redo_sql,undo_sql from sql_rollback where workflow_id = {workflow_id} order by id;"""
+            sql = f"""select redo_sql,undo_sql from sql_rollback where workflow_id = {workflow.id} order by id;"""
             cur.execute(f"use ora_backup;")
             cur.execute(sql)
             list_tables = cur.fetchall()
@@ -432,7 +455,7 @@ class OracleEngine(EngineBase):
         if conn:
             conn.close()
         return list_backup_sql
-    
+
     def close(self):
         if self.conn:
             self.conn.close()
