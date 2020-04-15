@@ -32,12 +32,10 @@ spec:
               port: goinception
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-         {{- with .Values.volumeMounts }}
           volumeMounts:
-            - name: goinception-config-volume
+            - name: {{ (index .Values.volumes 0).name }}
               subPath: config.toml
               mountPath: /etc/config.toml
-       {{- end }}
        {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
