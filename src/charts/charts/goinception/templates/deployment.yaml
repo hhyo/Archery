@@ -33,13 +33,13 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: {{ (index .Values.volumes 0).name }}
+            - name: goinception-config-volume
               subPath: config.toml
               mountPath: /etc/config.toml
-       {{- with .Values.volumes }}
       volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}  
+        - name: goinception-config-volume
+          configMap:
+            name: goinception-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
