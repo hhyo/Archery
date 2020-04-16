@@ -75,8 +75,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-volumes:
-  - name: inception-config-volume
-    configMap:
-      name: inception-config

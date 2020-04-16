@@ -155,7 +155,3 @@ tolerations: []
 
 affinity: {}
 
-volumes:
-  - name: goinception-config-volume
-    configMap:
-      name: goinception-config
