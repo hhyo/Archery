@@ -31,11 +31,11 @@ def add_sync_ding_user_schedule():
 
 
 def del_schedule(name):
-    """删除task"""
+    """删除schedule"""
     try:
         sql_schedule = Schedule.objects.get(name=name)
         Schedule.delete(sql_schedule)
-        # logger.debug(f'删除task：{name}')
+        logger.debug(f'删除schedule：{name}')
     except Schedule.DoesNotExist:
         pass
 
