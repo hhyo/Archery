@@ -13,6 +13,14 @@ logger = logging.getLogger('default')
 
 
 class GoInceptionEngine(EngineBase):
+    @property
+    def name(self):
+        return 'GoInception'
+
+    @property
+    def info(self):
+        return 'GoInception engine'
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -94,7 +102,7 @@ class GoInceptionEngine(EngineBase):
                 break
         return execute_result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()

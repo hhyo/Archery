@@ -390,36 +390,30 @@ def execute(request):
         return render(request, 'error.html', context)
     # 根据执行模式进行对应修改
     mode = request.POST.get('mode')
+    # 交由系统执行
     if mode == "auto":
-        status = "workflow_executing"
-        operation_type = 5
-        operation_type_desc = '执行工单'
-        operation_info = "自动操作执行"
-        finish_time = None
-    else:
-        status = "workflow_finish"
-        operation_type = 6
-        operation_type_desc = '手工工单'
-        operation_info = "确认手工执行结束"
-        finish_time = datetime.datetime.now()
-    # 将流程状态修改为对应状态
-    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
-
-    # 增加工单日志
-    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                           workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Audit.add_log(audit_id=audit_id,
-                  operation_type=operation_type,
-                  operation_type_desc=operation_type_desc,
-                  operation_info=operation_info,
-                  operator=request.user.username,
-                  operator_display=request.user.display
-                  )
-    if mode == "auto":
+        # 删除定时执行任务
+        schedule_name = f"sqlreview-timing-{workflow_id}"
+        del_schedule(schedule_name)
         # 加入执行队列
-        async_task('sql.utils.execute_sql.execute', workflow_id, hook='sql.utils.execute_sql.execute_callback',
+        async_task('sql.utils.execute_sql.execute', workflow_id, request.user,
+                   hook='sql.utils.execute_sql.execute_callback',
                    timeout=-1, task_name=f'sqlreview-execute-{workflow_id}')
 
+    # 线下手工执行
+    elif mode == "manual":
+        # 将流程状态修改为执行结束
+        SqlWorkflow(id=workflow_id, status="workflow_finish", finish_time=datetime.datetime.now()
+                    ).save(update_fields=['status', 'finish_time'])
+        # 增加工单日志
+        audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                               workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+        Audit.add_log(audit_id=audit_id,
+                      operation_type=6,
+                      operation_type_desc='手工工单',
+                      operation_info='确认手工执行结束',
+                      operator=request.user.username,
+                      operator_display=request.user.display)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
