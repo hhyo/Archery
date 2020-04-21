@@ -15,6 +15,14 @@ logger = logging.getLogger('default')
 
 
 class InceptionEngine(EngineBase):
+    @property
+    def name(self):
+        return 'Inception'
+
+    @property
+    def info(self):
+        return 'Inception engine'
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -47,27 +55,6 @@ class InceptionEngine(EngineBase):
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
         check_result = ReviewSet(full_sql=sql)
-        # 检查 inception 不支持的函数
-        check_result.rows = []
-        line = 1
-        for statement in sqlparse.split(sql):
-            # 删除注释语句
-            statement = sqlparse.format(statement, strip_comments=True)
-            if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
-                        statement.lower() + ";"):
-                result = ReviewResult(id=line,
-                                      errlevel=2,
-                                      stagestatus='SQL语法错误',
-                                      errormessage='ALTER TABLE 必须带有选项',
-                                      sql=statement)
-                check_result.is_critical = True
-            else:
-                result = ReviewResult(id=line, errlevel=0, sql=statement)
-            check_result.rows += [result]
-            line += 1
-        if check_result.is_critical:
-            return check_result
-
         # inception 校验
         check_result.rows = []
         inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
@@ -143,7 +130,7 @@ class InceptionEngine(EngineBase):
                 break
         return execute_result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()

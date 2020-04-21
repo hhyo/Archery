@@ -22,6 +22,11 @@ logger = logging.getLogger('default')
 
 class MysqlEngine(EngineBase):
 
+    def __init__(self, instance=None):
+        super().__init__(instance=instance)
+        self.config = SysConfig()
+        self.inc_engine = InceptionEngine() if self.config.get('inception') else GoInceptionEngine()
+
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
         conversions = MySQLdb.converters.conversions
@@ -220,31 +225,22 @@ class MysqlEngine(EngineBase):
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
-        config = SysConfig()
         # 进行Inception检查，获取检测结果
-        if not config.get('inception'):
-            try:
-                inception_engine = GoInceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
-            except Exception as e:
-                logger.debug(f"goInception检测语句报错：错误信息{traceback.format_exc()}")
-                raise RuntimeError(f"goInception检测语句报错，请注意检查系统配置中goInception配置，错误信息：\n{e}")
-        else:
-            try:
-                inception_engine = InceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
-            except Exception as e:
-                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
-                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
+        try:
+            inc_check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+        except Exception as e:
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}")
+
         # 判断Inception检测结果
         if inc_check_result.error:
-            logger.debug(f"Inception检测语句报错：错误信息{inc_check_result.error}")
-            raise RuntimeError(f"Inception检测语句报错，错误信息：\n{inc_check_result.error}")
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{inc_check_result.error}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{inc_check_result.error}")
 
         # 禁用/高危语句检查
         check_critical_result = ReviewSet(full_sql=sql)
         line = 1
-        critical_ddl_regex = config.get('critical_ddl_regex', '')
+        critical_ddl_regex = self.config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
         check_critical_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
 
@@ -301,16 +297,11 @@ class MysqlEngine(EngineBase):
                                    sql=workflow.sqlworkflowcontent.sql_content)])
             result.error = '实例read_only=1，禁止执行变更语句!',
             return result
-        # 原生执行
-        if workflow.is_manual == 1:
-            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+        # TODO 原生执行
+        # if workflow.is_manual == 1:
+        #     return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
         # inception执行
-        elif not SysConfig().get('inception'):
-            inception_engine = GoInceptionEngine()
-            return inception_engine.execute(workflow)
-        else:
-            inception_engine = InceptionEngine()
-            return inception_engine.execute(workflow)
+        return self.inc_engine.execute(workflow)
 
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""
@@ -353,12 +344,7 @@ class MysqlEngine(EngineBase):
         """控制osc执行，获取进度、终止、暂停、恢复等
             get、kill、pause、resume
         """
-        if not SysConfig().get('inception'):
-            go_inception_engine = GoInceptionEngine()
-            return go_inception_engine.osc_control(**kwargs)
-        else:
-            inception_engine = InceptionEngine()
-            return inception_engine.osc_control(**kwargs)
+        return self.inc_engine.osc_control(**kwargs)
 
     def close(self):
         if self.conn:

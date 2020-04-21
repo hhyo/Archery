@@ -1,6 +1,7 @@
 import datetime
 import re
 import sqlparse
+from django.db import transaction
 
 from sql.models import SqlWorkflow
 from common.config import SysConfig
@@ -60,17 +61,20 @@ def can_execute(user, workflow_id):
     :param workflow_id:
     :return:
     """
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
-    # 只有审核通过和定时执行的数据才可以立即执行
-    if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
-        # 当前登录用户有资源组粒度执行权限，并且为组内用户
-        group_ids = [group.group_id for group in user_groups(user)]
-        if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute_for_resource_group'):
-            result = True
-        # 当前登录用户为提交人，并且有执行权限
-        if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
-            result = True
+    # 保证工单当前是可执行状态
+    with transaction.atomic():
+        workflow_detail = SqlWorkflow.objects.select_for_update().get(id=workflow_id)
+        # 只有审核通过和定时执行的数据才可以立即执行
+        if workflow_detail.status not in ['workflow_review_pass', 'workflow_timingtask']:
+            return False
+    # 当前登录用户有资源组粒度执行权限，并且为组内用户
+    group_ids = [group.group_id for group in user_groups(user)]
+    if workflow_detail.group_id in group_ids and user.has_perm('sql.sql_execute_for_resource_group'):
+        result = True
+    # 当前登录用户为提交人，并且有执行权限
+    if workflow_detail.engineer == user.username and user.has_perm('sql.sql_execute'):
+        result = True
     return result
 
 

@@ -940,16 +940,6 @@ class TestInception(TestCase):
         new_engine.get_backup_connection()
         _connect.assert_called_once()
 
-    def test_execute_check_critical_sql(self):
-        sql = 'alter table user'
-        row = ReviewResult(id=1, errlevel=2, stagestatus='SQL语法错误',
-                           errormessage='ALTER TABLE 必须带有选项',
-                           sql=sql)
-        new_engine = InceptionEngine()
-        check_result = new_engine.execute_check(db_name=0, sql=sql)
-        self.assertIsInstance(check_result, ReviewSet)
-        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
-
     @patch('sql.engines.inception.InceptionEngine.query')
     def test_execute_check_normal_sql(self, _query):
         sql = 'update user set id=100'
