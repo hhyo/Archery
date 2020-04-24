@@ -20,8 +20,7 @@ class SqlItem:
         self.object_owner = object_owner
         self.object_type = object_type
         self.object_name = object_name
-
-
+        
 class ReviewResult:
     """审核的单条结果"""
 
@@ -60,11 +59,12 @@ class ReviewResult:
             self.sqlsha1 = kwargs.get('sqlsha1', '')
             self.backup_time = kwargs.get('backup_time', '')
             self.actual_affected_rows = kwargs.get('actual_affected_rows', '')
-
+            
         # 自定义属性
         for key, value in kwargs.items():
             if not hasattr(self, key):
                 setattr(self, key, value)
+
 
 
 class ReviewSet:
