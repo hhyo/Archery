@@ -39,6 +39,9 @@ def get_syntax_type(sql, parser=True, db_type='mysql'):
         if db_type == 'mysql':
             ddl_re = r"^alter|^create|^drop|^rename|^truncate"
             dml_re = r"^call|^delete|^do|^handler|^insert|^load\s+data|^load\s+xml|^replace|^select|^update"
+        elif db_type == 'oracle':
+            ddl_re = r"^alter|^create|^drop|^rename|^truncate"
+            dml_re = r"^delete|^exec|^insert|^select|^update|^with|^merge"
         else:
             # TODO 其他数据库的解析正则
             return None
@@ -125,8 +128,7 @@ def generate_sql(text):
             row = {"sql_id": num, "sql": statement}
             rows.append(row)
     return rows
-
-
+    
 def get_base_sqlitem_list(full_sql):
     ''' 把参数 full_sql 转变为 SqlItem列表
     :param full_sql: 完整sql字符串, 每个SQL以分号;间隔, 不包含plsql执行块和plsql对象定义块
@@ -134,7 +136,7 @@ def get_base_sqlitem_list(full_sql):
     '''
     list = []
     for statement in sqlparse.split(full_sql):
-        statement = sqlparse.format(statement, strip_comments=True)
+        statement = sqlparse.format(statement, strip_comments=True, reindent=True, keyword_case='lower')
         if len(statement) <= 0:
             continue
         item = SqlItem(statement=statement)
