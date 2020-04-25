@@ -38,6 +38,9 @@ msgstr "审核通过"
 msgid "workflow_timingtask"
 msgstr "定时执行"
 
+msgid "workflow_queuing"
+msgstr "排队中"
+
 #: .\sql\models.py:116
 msgid "workflow_executing"
 msgstr "执行中"
