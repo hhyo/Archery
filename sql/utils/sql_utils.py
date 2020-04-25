@@ -129,6 +129,7 @@ def generate_sql(text):
             rows.append(row)
     return rows
 
+
 def get_base_sqlitem_list(full_sql):
     ''' 把参数 full_sql 转变为 SqlItem列表
     :param full_sql: 完整sql字符串, 每个SQL以分号;间隔, 不包含plsql执行块和plsql对象定义块

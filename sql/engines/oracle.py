@@ -18,6 +18,7 @@ from sql.utils.data_masking import brute_mask
 
 logger = logging.getLogger('default')
 
+
 class OracleEngine(EngineBase):
 
     def __init__(self, instance=None):
@@ -156,50 +157,51 @@ class OracleEngine(EngineBase):
             sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{schema_name}') and  OBJECT_NAME =  upper('{object_name}')"""
         else:
             sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{db_name}') and  OBJECT_NAME = upper('{object_name}')"""
-        result = self.query(db_name=db_name, sql=sql,close_conn=False)
+        result = self.query(db_name=db_name, sql=sql, close_conn=False)
         if result.affected_rows > 0:
             return True
         else:
             return False
 
-    def get_sql_first_object_name(self, sql=''):
+    @staticmethod
+    def get_sql_first_object_name(sql=''):
         """获取sql文本中的object_name"""
         object_name = ''
         if re.match(r"^create\s+table\s", sql):
-           object_name = re.match(r"^create\s+table\s(.+?)(\s|\()",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+table\s(.+?)(\s|\()", sql, re.M).group(1)
         elif re.match(r"^create\s+index\s", sql):
-           object_name = re.match(r"^create\s+index\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+index\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+unique\s+index\s", sql):
-           object_name = re.match(r"^create\s+unique\s+index\s(.+?)\s", sql, re.M).group(1)
+            object_name = re.match(r"^create\s+unique\s+index\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+sequence\s", sql):
-           object_name = re.match(r"^create\s+sequence\s(.+?)(\s|$)",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+sequence\s(.+?)(\s|$)", sql, re.M).group(1)
         elif re.match(r"^alter\s+table\s", sql):
-           object_name = re.match(r"^alter\s+table\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^alter\s+table\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+function\s", sql):
-           object_name = re.match(r"^create\s+function\s(.+?)(\s|\()",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+function\s(.+?)(\s|\()", sql, re.M).group(1)
         elif re.match(r"^create\s+view\s", sql):
-           object_name = re.match(r"^create\s+view\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+view\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+procedure\s", sql):
-           object_name = re.match(r"^create\s+procedure\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+procedure\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+package\s+body", sql):
-           object_name = re.match(r"^create\s+package\s+body\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+package\s+body\s(.+?)\s", sql, re.M).group(1)
         elif re.match(r"^create\s+package\s", sql):
-           object_name = re.match(r"^create\s+package\s(.+?)\s",sql,re.M).group(1)
+            object_name = re.match(r"^create\s+package\s(.+?)\s", sql, re.M).group(1)
         else:
             return object_name.strip()
         return object_name.strip()
 
-    def check_create_index_table(self,sql='',object_name_list=set(),db_name=''):
-        result = {'msg': '', 'bad_query': False}
-        table_name = ''
-        if re.match(r"^create\s+index\s",sql):
-            table_name =  re.match(r"^create\s+index\s+.+\s+on\s(.+?)(\(|\s\()",sql,re.M).group(1)
+    @staticmethod
+    def check_create_index_table(sql='', object_name_list=None, db_name=''):
+        object_name_list = object_name_list or set()
+        if re.match(r"^create\s+index\s", sql):
+            table_name = re.match(r"^create\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M).group(1)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
-                return  False
+                return False
         elif re.match(r"^create\s+unique\s+index\s", sql):
             table_name = re.match(r"^create\s+unique\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M).group(1)
             if '.' not in table_name:
@@ -211,15 +213,17 @@ class OracleEngine(EngineBase):
         else:
             return False
 
-    def get_dml_table(self,sql='',object_name_list=set(),db_name=''):
-        if re.match(r"^update",sql):
-            table_name =  re.match(r"^update\s(.+?)\s",sql,re.M).group(1)
+    @staticmethod
+    def get_dml_table(sql='', object_name_list=None, db_name=''):
+        object_name_list = object_name_list or set()
+        if re.match(r"^update", sql):
+            table_name = re.match(r"^update\s(.+?)\s", sql, re.M).group(1)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
-                return  False
+                return False
         elif re.match(r"^delete", sql):
             table_name = re.match(r"^delete\s+from\s(.+?)\s", sql, re.M).group(1)
             if '.' not in table_name:
@@ -239,9 +243,10 @@ class OracleEngine(EngineBase):
         else:
             return False
 
-    def where_check(self,sql=''):
-        if re.match(r"^update((?!where).)*$|^delete((?!where).)*$",sql):
-           return True
+    @staticmethod
+    def where_check(sql=''):
+        if re.match(r"^update((?!where).)*$|^delete((?!where).)*$", sql):
+            return True
         else:
             parsed = sqlparse.parse(sql)[0]
             flattened = list(parsed.flatten())
@@ -254,7 +259,7 @@ class OracleEngine(EngineBase):
             return False
 
     def explain_check(self, db_name=None, sql='', close_conn=False):
-        #使用explain进行支持的SQL语法审核，连接需不中断，防止数据库不断fork进程的大批量消耗
+        # 使用explain进行支持的SQL语法审核，连接需不中断，防止数据库不断fork进程的大批量消耗
         result = {'msg': '', 'rows': 0}
         try:
             conn = self.get_connection()
@@ -262,7 +267,7 @@ class OracleEngine(EngineBase):
             if db_name:
                 cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
             if re.match(r"^explain", sql, re.I):
-               sql = sql
+                sql = sql
             else:
                 sql = f"explain plan for {sql}"
             sql = sql.rstrip(';')
@@ -310,7 +315,7 @@ class OracleEngine(EngineBase):
             result['bad_query'] = True
         if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
-        #select语句先使用Explain判断语法是否正确
+        # select语句先使用Explain判断语法是否正确
         if re.match(r"^select|^with", sql, re.I):
             explain_result = self.explain_check(db_name=db_name, sql=f"explain plan for {sql}")
             if explain_result['msg']:
@@ -321,8 +326,9 @@ class OracleEngine(EngineBase):
     def filter_sql(self, sql='', limit_num=0):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
-        if re.match(r"^select|^with", sql_lower) and not (re.match(r"^select\s+sql_audit.", sql_lower) and sql_lower.find(" sql_audit where rownum <= ") != -1) :
-           sql = f"select sql_audit.* from ({sql.rstrip(';')}) sql_audit where rownum <= {limit_num}"
+        if re.match(r"^select|^with", sql_lower) and not (
+                re.match(r"^select\s+sql_audit.", sql_lower) and sql_lower.find(" sql_audit where rownum <= ") != -1):
+            sql = f"select sql_audit.* from ({sql.rstrip(';')}) sql_audit where rownum <= {limit_num}"
         return sql.strip()
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
@@ -336,9 +342,9 @@ class OracleEngine(EngineBase):
             sql = sql.rstrip(';')
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
-               cursor.execute(sql)
-               # 重置SQL文本，获取SQL执行计划
-               sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
+                cursor.execute(sql)
+                # 重置SQL文本，获取SQL执行计划
+                sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
             cursor.execute(sql)
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
@@ -380,147 +386,148 @@ class OracleEngine(EngineBase):
         """
         config = SysConfig()
         check_result = ReviewSet(full_sql=sql)
-        #explain支持的语法
+        # explain支持的语法
         explain_re = r"^merge|^update|^delete|^insert|^create\s+table|^create\s+index|^create\s+unique\s+index"
         # 禁用/高危语句检查
         line = 1
-        #保存SQL中的新建对象
+        # 保存SQL中的新建对象
         object_name_list = set()
         critical_ddl_regex = config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
         try:
-           sqlitemList = get_full_sqlitem_list(sql, db_name)
-           for sqlitem in sqlitemList:
-               sql_lower = sqlitem.statement.lower().rstrip(';')
-               # 禁用语句
-               if re.match(r"^select|^with|^explain", sql_lower):
-                  check_result.is_critical = True
-                  result = ReviewResult(id=line, errlevel=2,
-                                        stagestatus='驳回不支持语句',
-                                        errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
-                                        sql=sqlitem.statement)
-               # 高危语句
-               elif critical_ddl_regex and p.match(sql_lower.strip()):
+            sqlitemList = get_full_sqlitem_list(sql, db_name)
+            for sqlitem in sqlitemList:
+                sql_lower = sqlitem.statement.lower().rstrip(';')
+                # 禁用语句
+                if re.match(r"^select|^with|^explain", sql_lower):
+                    check_result.is_critical = True
+                    result = ReviewResult(id=line, errlevel=2,
+                                          stagestatus='驳回不支持语句',
+                                          errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
+                                          sql=sqlitem.statement)
+                # 高危语句
+                elif critical_ddl_regex and p.match(sql_lower.strip()):
                     check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回高危SQL',
                                           errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                                           sql=sqlitem.statement)
-               # 驳回未带where数据修改语句，如确实需做全部删除或更新，显示的带上where 1=1
-               elif re.match(r"^update((?!where).)*$|^delete((?!where).)*$",sql_lower):
+                # 驳回未带where数据修改语句，如确实需做全部删除或更新，显示的带上where 1=1
+                elif re.match(r"^update((?!where).)*$|^delete((?!where).)*$", sql_lower):
                     check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回未带where数据修改',
                                           errormessage='数据修改需带where条件！',
                                           sql=sqlitem.statement)
-               # 驳回事务控制，会话控制SQL
-               elif re.match(r"^set|^rollback|^exit", sql_lower):
+                # 驳回事务控制，会话控制SQL
+                elif re.match(r"^set|^rollback|^exit", sql_lower):
                     check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='SQL中不能包含^set|^rollback|^exit',
                                           errormessage='SQL中不能包含^set|^rollback|^exit',
                                           sql=sqlitem.statement)
 
-               #通过explain对SQL做语法语义检查
-               elif re.match(explain_re, sql_lower) and sqlitem.stmt_type == 'SQL':
-                   if self.check_create_index_table(db_name=db_name,sql=sql_lower,object_name_list=object_name_list):
-                       object_name = self.get_sql_first_object_name(sql=sql_lower)
-                       if '.' in object_name:
-                           object_name = object_name
-                       else:
-                           object_name = f"""{db_name}.{object_name}"""
-                       object_name_list.add(object_name)
-                       result = ReviewResult(id=line, errlevel=1,
-                                             stagestatus='WARNING:新建表的新建索引语句暂无法检测！',
-                                             errormessage='WARNING:新建表的新建索引语句暂无法检测！',
-                                             stmt_type=sqlitem.stmt_type,
-                                             object_owner=sqlitem.object_owner,
-                                             object_type=sqlitem.object_type,
-                                             object_name=sqlitem.object_name,
-                                             sql=sqlitem.statement)
-                   elif len(object_name_list) > 0 and self.get_dml_table(db_name=db_name,sql=sql_lower,object_name_list=object_name_list):
-                       result = ReviewResult(id=line, errlevel=1,
-                                             stagestatus='WARNING:新建表的数据修改暂无法检测！',
-                                             errormessage='WARNING:新建表的数据修改暂无法检测！',
-                                             stmt_type=sqlitem.stmt_type,
-                                             object_owner=sqlitem.object_owner,
-                                             object_type=sqlitem.object_type,
-                                             object_name=sqlitem.object_name,
-                                             sql=sqlitem.statement)
-                   else:
-                       result_set = self.explain_check(db_name=db_name, sql=sqlitem.statement, close_conn=False)
-                       if result_set['msg']:
-                           check_result.is_critical = True
-                           result = ReviewResult(id=line, errlevel=2,
-                                                 stagestatus='explain语法检查未通过！',
-                                                 errormessage=result_set['msg'],
-                                                 sql=sqlitem.statement)
-                       else:
-                           # 对create table\create index\create unique index语法做对象存在性检测
-                           if re.match(r"^create\s+table|^create\s+index|^create\s+unique\s+index", sql_lower):
-                               object_name = self.get_sql_first_object_name(sql=sql_lower)
-                               # 保存create对象对后续SQL做存在性判断
-                               if '.' in object_name:
-                                   object_name = object_name
-                               else:
-                                   object_name = f"""{db_name}.{object_name}"""
-                               if self.object_name_check(db_name=db_name,
-                                                         object_name=object_name) or object_name in object_name_list:
-                                   check_result.is_critical = True
-                                   result = ReviewResult(id=line, errlevel=2,
-                                                         stagestatus=f"""{object_name}对象已经存在！""",
-                                                         errormessage=f"""{object_name}对象已经存在！""",
-                                                         sql=sqlitem.statement)
-                               else:
-                                   object_name_list.add(object_name)
-                                   if result_set['rows'] > 1000:
-                                       result = ReviewResult(id=line, errlevel=1,
-                                                             stagestatus='影响行数大于1000，请关注',
-                                                             errormessage='影响行数大于1000，请关注',
-                                                             sql=sqlitem.statement,
-                                                             stmt_type=sqlitem.stmt_type,
-                                                             object_owner=sqlitem.object_owner,
-                                                             object_type=sqlitem.object_type,
-                                                             object_name=sqlitem.object_name,
-                                                             affected_rows=result_set['rows'],
-                                                             execute_time=0, )
-                                   else:
-                                       result = ReviewResult(id=line, errlevel=0,
-                                                             stagestatus='Audit completed',
-                                                             errormessage='None',
-                                                             sql=sqlitem.statement,
-                                                             stmt_type=sqlitem.stmt_type,
-                                                             object_owner=sqlitem.object_owner,
-                                                             object_type=sqlitem.object_type,
-                                                             object_name=sqlitem.object_name,
-                                                             affected_rows=result_set['rows'],
-                                                             execute_time=0, )
-                           else:
-                               if result_set['rows'] > 1000:
-                                   result = ReviewResult(id=line, errlevel=1,
-                                                         stagestatus='影响行数大于1000，请关注',
-                                                         errormessage='影响行数大于1000，请关注',
-                                                         sql=sqlitem.statement,
-                                                         stmt_type=sqlitem.stmt_type,
-                                                         object_owner=sqlitem.object_owner,
-                                                         object_type=sqlitem.object_type,
-                                                         object_name=sqlitem.object_name,
-                                                         affected_rows=result_set['rows'],
-                                                         execute_time=0, )
-                               else:
-                                   result = ReviewResult(id=line, errlevel=0,
-                                                         stagestatus='Audit completed',
-                                                         errormessage='None',
-                                                         sql=sqlitem.statement,
-                                                         stmt_type=sqlitem.stmt_type,
-                                                         object_owner=sqlitem.object_owner,
-                                                         object_type=sqlitem.object_type,
-                                                         object_name=sqlitem.object_name,
-                                                         affected_rows=result_set['rows'],
-                                                         execute_time=0, )
-               # 其它无法用explain判断的语句
-               else:
+                # 通过explain对SQL做语法语义检查
+                elif re.match(explain_re, sql_lower) and sqlitem.stmt_type == 'SQL':
+                    if self.check_create_index_table(db_name=db_name, sql=sql_lower, object_name_list=object_name_list):
+                        object_name = self.get_sql_first_object_name(sql=sql_lower)
+                        if '.' in object_name:
+                            object_name = object_name
+                        else:
+                            object_name = f"""{db_name}.{object_name}"""
+                        object_name_list.add(object_name)
+                        result = ReviewResult(id=line, errlevel=1,
+                                              stagestatus='WARNING:新建表的新建索引语句暂无法检测！',
+                                              errormessage='WARNING:新建表的新建索引语句暂无法检测！',
+                                              stmt_type=sqlitem.stmt_type,
+                                              object_owner=sqlitem.object_owner,
+                                              object_type=sqlitem.object_type,
+                                              object_name=sqlitem.object_name,
+                                              sql=sqlitem.statement)
+                    elif len(object_name_list) > 0 and self.get_dml_table(db_name=db_name, sql=sql_lower,
+                                                                          object_name_list=object_name_list):
+                        result = ReviewResult(id=line, errlevel=1,
+                                              stagestatus='WARNING:新建表的数据修改暂无法检测！',
+                                              errormessage='WARNING:新建表的数据修改暂无法检测！',
+                                              stmt_type=sqlitem.stmt_type,
+                                              object_owner=sqlitem.object_owner,
+                                              object_type=sqlitem.object_type,
+                                              object_name=sqlitem.object_name,
+                                              sql=sqlitem.statement)
+                    else:
+                        result_set = self.explain_check(db_name=db_name, sql=sqlitem.statement, close_conn=False)
+                        if result_set['msg']:
+                            check_result.is_critical = True
+                            result = ReviewResult(id=line, errlevel=2,
+                                                  stagestatus='explain语法检查未通过！',
+                                                  errormessage=result_set['msg'],
+                                                  sql=sqlitem.statement)
+                        else:
+                            # 对create table\create index\create unique index语法做对象存在性检测
+                            if re.match(r"^create\s+table|^create\s+index|^create\s+unique\s+index", sql_lower):
+                                object_name = self.get_sql_first_object_name(sql=sql_lower)
+                                # 保存create对象对后续SQL做存在性判断
+                                if '.' in object_name:
+                                    object_name = object_name
+                                else:
+                                    object_name = f"""{db_name}.{object_name}"""
+                                if self.object_name_check(db_name=db_name,
+                                                          object_name=object_name) or object_name in object_name_list:
+                                    check_result.is_critical = True
+                                    result = ReviewResult(id=line, errlevel=2,
+                                                          stagestatus=f"""{object_name}对象已经存在！""",
+                                                          errormessage=f"""{object_name}对象已经存在！""",
+                                                          sql=sqlitem.statement)
+                                else:
+                                    object_name_list.add(object_name)
+                                    if result_set['rows'] > 1000:
+                                        result = ReviewResult(id=line, errlevel=1,
+                                                              stagestatus='影响行数大于1000，请关注',
+                                                              errormessage='影响行数大于1000，请关注',
+                                                              sql=sqlitem.statement,
+                                                              stmt_type=sqlitem.stmt_type,
+                                                              object_owner=sqlitem.object_owner,
+                                                              object_type=sqlitem.object_type,
+                                                              object_name=sqlitem.object_name,
+                                                              affected_rows=result_set['rows'],
+                                                              execute_time=0, )
+                                    else:
+                                        result = ReviewResult(id=line, errlevel=0,
+                                                              stagestatus='Audit completed',
+                                                              errormessage='None',
+                                                              sql=sqlitem.statement,
+                                                              stmt_type=sqlitem.stmt_type,
+                                                              object_owner=sqlitem.object_owner,
+                                                              object_type=sqlitem.object_type,
+                                                              object_name=sqlitem.object_name,
+                                                              affected_rows=result_set['rows'],
+                                                              execute_time=0, )
+                            else:
+                                if result_set['rows'] > 1000:
+                                    result = ReviewResult(id=line, errlevel=1,
+                                                          stagestatus='影响行数大于1000，请关注',
+                                                          errormessage='影响行数大于1000，请关注',
+                                                          sql=sqlitem.statement,
+                                                          stmt_type=sqlitem.stmt_type,
+                                                          object_owner=sqlitem.object_owner,
+                                                          object_type=sqlitem.object_type,
+                                                          object_name=sqlitem.object_name,
+                                                          affected_rows=result_set['rows'],
+                                                          execute_time=0, )
+                                else:
+                                    result = ReviewResult(id=line, errlevel=0,
+                                                          stagestatus='Audit completed',
+                                                          errormessage='None',
+                                                          sql=sqlitem.statement,
+                                                          stmt_type=sqlitem.stmt_type,
+                                                          object_owner=sqlitem.object_owner,
+                                                          object_type=sqlitem.object_type,
+                                                          object_name=sqlitem.object_name,
+                                                          affected_rows=result_set['rows'],
+                                                          execute_time=0, )
+                # 其它无法用explain判断的语句
+                else:
                     # 对alter table做对象存在性检查
                     if re.match(r"^alter\s+table\s", sql_lower):
                         object_name = self.get_sql_first_object_name(sql=sql_lower)
@@ -528,7 +535,8 @@ class OracleEngine(EngineBase):
                             object_name = object_name
                         else:
                             object_name = f"""{db_name}.{object_name}"""
-                        if not self.object_name_check(db_name=db_name, object_name=object_name) and object_name not in object_name_list:
+                        if not self.object_name_check(db_name=db_name,
+                                                      object_name=object_name) and object_name not in object_name_list:
                             check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus=f"""{object_name}对象不存在！""",
@@ -553,7 +561,7 @@ class OracleEngine(EngineBase):
                         else:
                             object_name = f"""{db_name}.{object_name}"""
                         if self.object_name_check(db_name=db_name,
-                                                      object_name=object_name) or object_name in object_name_list:
+                                                  object_name=object_name) or object_name in object_name_list:
                             check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus=f"""{object_name}对象已经存在！""",
@@ -582,15 +590,15 @@ class OracleEngine(EngineBase):
                                               object_name=sqlitem.object_name,
                                               affected_rows=0,
                                               execute_time=0, )
-               # 判断工单类型
-               if get_syntax_type(sql=sqlitem.statement, db_type='oracle') == 'DDL':
-                   check_result.syntax_type = 1
-               check_result.rows += [result]
-               # 遇到禁用和高危语句直接返回，提高效率
-               if check_result.is_critical:
-                   check_result.error_count += 1
-                   return check_result
-               line += 1
+                # 判断工单类型
+                if get_syntax_type(sql=sqlitem.statement, db_type='oracle') == 'DDL':
+                    check_result.syntax_type = 1
+                check_result.rows += [result]
+                # 遇到禁用和高危语句直接返回，提高效率
+                if check_result.is_critical:
+                    check_result.error_count += 1
+                    return check_result
+                line += 1
         except Exception as e:
             logger.warning(f"Oracle 语句执行报错，第{line}个SQL：{sqlitem.statement}，错误信息{traceback.format_exc()}")
             check_result.error = str(e)
@@ -617,7 +625,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            #获取执行工单时间，用于备份SQL的日志挖掘起始时间
+            # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
             cursor.execute(f"select sysdate from dual")
             rows = cursor.fetchone()
@@ -628,9 +636,9 @@ class OracleEngine(EngineBase):
                 if sqlitem.stmt_type == "SQL":
                     statement = statement.rstrip(';')
                 with FuncTimer() as t:
-                    if statement !='':
-                       cursor.execute(statement)
-                       conn.commit()
+                    if statement != '':
+                        cursor.execute(statement)
+                        conn.commit()
 
                 rowcount = cursor.rowcount
                 stagestatus = "Execute Successfully"
@@ -662,9 +670,9 @@ class OracleEngine(EngineBase):
                 ))
                 line += 1
         except Exception as e:
-            logger.warning(f"Oracle命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(f"Oracle命令执行报错，工单id：{workflow.id}，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
             execute_result.error = str(e)
-            #conn.rollback()
+            # conn.rollback()
             # 追加当前报错语句信息到执行结果中
             execute_result.rows.append(ReviewResult(
                 id=line,
@@ -677,7 +685,7 @@ class OracleEngine(EngineBase):
             ))
             line += 1
             # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for sqlitem  in sqlitemList[line - 1:]:
+            for sqlitem in sqlitemList[line - 1:]:
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,
@@ -689,17 +697,22 @@ class OracleEngine(EngineBase):
                 ))
                 line += 1
         finally:
-            cursor.execute(f"select sysdate from dual")
-            rows = cursor.fetchone()
-            end_time = rows[0]
-            self.backup(workflow_id=workflow.id,cursor=cursor,begin_time=begin_time,end_time=end_time)
+            # 备份
+            try:
+                cursor.execute(f"select sysdate from dual")
+                rows = cursor.fetchone()
+                end_time = rows[0]
+                self.backup(workflow, cursor=cursor, begin_time=begin_time, end_time=end_time)
+            except Exception as e:
+                logger.error(f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}")
+
             if close_conn:
                 self.close()
         return execute_result
 
-    def backup(self,workflow_id,cursor,begin_time,end_time):
+    def backup(self, workflow, cursor, begin_time, end_time):
         """
-        :param workflow_id: 工单流程ID，作为备份记录与工单的关联列
+        :param workflow: 工单对象，作为备份记录与工单的关联列
         :param cursor: 执行SQL的当前会话游标
         :param begin_time: 执行SQL开始时间
         :param end_time: 执行SQL结束时间
@@ -710,7 +723,8 @@ class OracleEngine(EngineBase):
         # 数据库需开启最小化附加日志alter database add supplemental log data;
         # 需为归档模式;开启附件日志会增加redo日志量,一般不会有多大影响，需评估归档磁盘空间，redo磁盘IO性能
         try:
-            #备份存放数据库和MySQL备份库统一，需新建备份用database和table，table存放备份SQL，记录使用workflow.id关联上线工单
+            # 备份存放数据库和MySQL备份库统一，需新建备份用database和table，table存放备份SQL，记录使用workflow.id关联上线工单
+            workflow_id = workflow.id
             conn = self.get_backup_connection()
             backup_cursor = conn.cursor()
             backup_cursor.execute(f"""create database if not exists ora_backup;""")
@@ -723,7 +737,7 @@ class OracleEngine(EngineBase):
                                         PRIMARY KEY (`id`),
                                         key `idx_sql_rollback_01` (`workflow_id`)
                                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
-            #使用logminer抓取回滚SQL
+            # 使用logminer抓取回滚SQL
             logmnr_start_sql = f'''begin
                                         dbms_logmnr.start_logmnr(
                                         starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
@@ -742,24 +756,24 @@ class OracleEngine(EngineBase):
             rows = cursor.fetchall()
             cursor.execute(logmnr_end_sql)
             if len(rows) > 0:
-               for row in rows:
-                   redo_sql=f"{row[0]}"
-                   redo_sql=redo_sql.replace("'","\\'")
-                   if row[1] is None:
-                       undo_sql = f' '
-                   else:
-                       undo_sql=f"{row[1]}"
-                   undo_sql=undo_sql.replace("'","\\'")
-                   #回滚SQL入库
-                   sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
-                   backup_cursor.execute(sql)
+                for row in rows:
+                    redo_sql = f"{row[0]}"
+                    redo_sql = redo_sql.replace("'", "\\'")
+                    if row[1] is None:
+                        undo_sql = f' '
+                    else:
+                        undo_sql = f"{row[1]}"
+                    undo_sql = undo_sql.replace("'", "\\'")
+                    # 回滚SQL入库
+                    sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
+                    backup_cursor.execute(sql)
         except Exception as e:
             logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
             return False
         finally:
-               # 关闭连接
+            # 关闭连接
             if conn:
-               conn.close()
+                conn.close()
         return True
 
     def get_rollback(self, workflow):
@@ -783,15 +797,15 @@ class OracleEngine(EngineBase):
                 redo_sql = row[0]
                 undo_sql = row[1]
                 # 拼接成回滚语句列表,['源语句'，'回滚语句']
-                list_backup_sql.append([redo_sql,undo_sql])
+                list_backup_sql.append([redo_sql, undo_sql])
         except Exception as e:
             logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
             raise Exception(e)
         # 关闭连接
         if conn:
             conn.close()
-        return list_backup_sql        
-        
+        return list_backup_sql
+
     def sqltuningadvisor(self, db_name=None, sql='', close_conn=True, **kwargs):
         """
         add by Jan.song 20200421
@@ -800,11 +814,11 @@ class OracleEngine(EngineBase):
         返回 ResultSet
         """
         result_set = ResultSet(full_sql=sql)
-        task_name = 'sqlaudit'+f'''{threading.currentThread().ident}'''
+        task_name = 'sqlaudit' + f'''{threading.currentThread().ident}'''
         task_begin = 0
         try:
             conn = self.get_connection()
-            cursor = conn.cursor()            
+            cursor = conn.cursor()
             sql = sql.rstrip(';')
             # 创建分析任务
             create_task_sql = f'''DECLARE
@@ -821,7 +835,7 @@ class OracleEngine(EngineBase):
                                   description => 'tuning');
                                   DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => '{task_name}');
                                   END;'''
-            task_begin = 1   
+            task_begin = 1
             cursor.execute(create_task_sql)
             # 获取分析报告
             get_task_sql = f'''select DBMS_SQLTUNE.REPORT_TUNING_TASK( '{task_name}') from dual'''
@@ -838,13 +852,13 @@ class OracleEngine(EngineBase):
             logger.warning(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
-            #结束分析任务
+            # 结束分析任务
             if task_begin == 1:
-               end_sql = f'''DECLARE 
+                end_sql = f'''DECLARE 
                              begin 
                              dbms_sqltune.drop_tuning_task('{task_name}');
                              end;'''
-               cursor.execute(end_sql)
+                cursor.execute(end_sql)
             if close_conn:
                 self.close()
         return result_set
