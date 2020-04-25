@@ -513,7 +513,7 @@ class TestExecuteSql(TestCase):
             audit_id=1,
             operation_type=5,
             operation_type_desc='执行工单',
-            operation_info='系统定时执行',
+            operation_info='系统定时执行工单',
             operator='',
             operator_display='系统',
         )
@@ -531,6 +531,9 @@ class TestExecuteSql(TestCase):
         self.task_result.result.error = ''
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
+        # 先处理为执行中
+        self.wf.status = 'workflow_executing'
+        self.wf.save(update_fields=['status'])
         execute_callback(self.task_result)
         _audit.detail_by_workflow_id.assert_called_with(workflow_id=self.wf.id, workflow_type=2)
         _audit.add_log.assert_called_with(
@@ -554,6 +557,9 @@ class TestExecuteSql(TestCase):
         self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
+        # 处理状态为执行中
+        self.wf.status = 'workflow_executing'
+        self.wf.save(update_fields=['status'])
         execute_callback(self.task_result)
         _audit.detail_by_workflow_id.assert_called_with(workflow_id=self.wf.id, workflow_type=2)
         _audit.add_log.assert_called_with(
@@ -577,9 +583,11 @@ class TestExecuteSql(TestCase):
         self.task_result.result = '执行异常'
         _audit.detail_by_workflow_id.return_value.audit_id = 123
         _audit.add_log.return_value = 'any thing'
-        # 删除execute_result
+        # 删除execute_result、处理为执行中
         self.wf.sqlworkflowcontent.execute_result = ''
         self.wf.sqlworkflowcontent.save()
+        self.wf.status = 'workflow_executing'
+        self.wf.save(update_fields=['status'])
         execute_callback(self.task_result)
         _audit.detail_by_workflow_id.assert_called_with(workflow_id=self.wf.id, workflow_type=2)
         _audit.add_log.assert_called_with(

@@ -37,6 +37,9 @@ function sqlworkflowStatus_formatter(value) {
     else if (value === "workflow_timingtask") {
         return "<span class=\"label label-warning\">" + gettext(value) + "</span>"
     }
+    else if (value === "workflow_queuing") {
+        return "<span class=\"label label-info \">" + gettext(value) + "</span>"
+    }
     else if (value === "workflow_executing") {
         return "<span class=\"label label-primary\">" + gettext(value) + "</span>"
     }

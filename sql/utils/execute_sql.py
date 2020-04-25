@@ -15,8 +15,8 @@ def execute(workflow_id, user=None):
     # 使用当前读防止重复执行
     with transaction.atomic():
         workflow_detail = SqlWorkflow.objects.select_for_update().get(id=workflow_id)
-        # 只有审核通过和定时执行的数据才可以继续执行
-        if workflow_detail.status not in ['workflow_review_pass', 'workflow_timingtask']:
+        # 只有排队中和定时执行的数据才可以继续执行，否则直接抛错
+        if workflow_detail.status not in ['workflow_queuing', 'workflow_timingtask']:
             raise Exception('工单状态不正确，禁止执行！')
         # 将工单状态修改为执行中
         else:
@@ -27,7 +27,7 @@ def execute(workflow_id, user=None):
     Audit.add_log(audit_id=audit_id,
                   operation_type=5,
                   operation_type_desc='执行工单',
-                  operation_info='人工操作执行' if user else '系统定时执行',
+                  operation_info='工单开始执行' if user else '系统定时执行工单',
                   operator=user.username if user else '',
                   operator_display=user.display if user else '系统'
                   )
@@ -44,7 +44,12 @@ def execute_callback(task):
     if connection.connection and not connection.is_usable():
         close_old_connections()
     workflow_id = task.args[0]
-    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    # 判断工单状态，如果不是执行中的，不允许更新信息，直接抛错记录日志
+    with transaction.atomic():
+        workflow = SqlWorkflow.objects.get(id=workflow_id)
+        if workflow.status != 'workflow_executing':
+            raise Exception(f'工单{workflow.id}状态不正确，禁止重复更新执行结果！')
+
     workflow.finish_time = task.stopped
 
     if not task.success:
