@@ -428,7 +428,7 @@
                     if (data.status === 0) {
                         var result = data.data;
                         if (result['Error']) {
-						    result = result['Error']
+			    result = result['Error']
                             alertStyle = "alert-danger";
                             finalHtml = '';
                             finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
@@ -438,9 +438,14 @@
                                 "</tr> </tbody></table> </div>";
 						    $("#sqltuningadvisor_result_col").html(finalHtml);
                         } else if (result['column_list']) {
-							result = result['rows'];
-							var result_str = JSON.stringify(result);
-							result_str = result_str.replace(/\\n/g, '<br>');
+			    result = result['rows'];
+			    var result_str = JSON.stringify(result);
+			    //替换所有的\n换行符
+                            result_str = result_str.replace(/\\n/g, "<br>");
+                            //替换所有的空格
+                            result_str = result_str.replace(/\s/g,"&nbsp;");
+                            //去掉双引号强制转换符
+                            result_str = result_str.replace(/\\"/g,"\"");
                             alertStyle = "alert-success";
                             finalHtml = '';
                             finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
@@ -524,27 +529,21 @@
         function explain() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
-			var optgroup = $('#instance_name :selected').parent().attr('label');
+	    var optgroup = $('#instance_name :selected').parent().attr('label');
             var columns = [];
-			sqlContent = editor.getValue()
-			if (optgroup === "Oracle") {
-			    //查看执行计划
-                if (sql === 'explain') {
-                    sqlContent = 'explain plan for ' + sqlContent
-                }
-                
+	    let prefix = '';
+	    if (optgroup === "Oracle") {
+		//查看执行计划
+                prefix = 'explain plan for ' 
             } else if (optgroup === "MySQL") {
-			    //查看执行计划
-                if (sql === 'explain') {
-                sqlContent = 'explain ' + sqlContent
-                }
+                prefix = 'explain '
             } 
             $.ajax({
                 type: "post",
                 url: "/query/explain/",
                 dataType: "json",
                 data: {
-                    sql_content: sqlContent,
+                    sql_content: prefix + editor.getValue(),
                     instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val()
                 },
