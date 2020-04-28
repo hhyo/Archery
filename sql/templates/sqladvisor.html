@@ -18,7 +18,7 @@
                                 <dd>[MySQL]SQLAdvisor：<a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a></dd>
                                 <dd>[MySQL]SOAR：<a href="https://github.com/XiaoMi/soar">查看介绍</a></dd>
                                 <dd>[MySQL]MySQLTuning：<a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a></dd>
-								<dd>[ORACLE]SQL Tuning Advisor：<a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">查看介绍</a></dd>
+				<dd>[ORACLE]SQL Tuning Advisor：<a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">查看介绍</a></dd>
                             </dl>
                         </div>
                         <div class="col-md-3 column">
@@ -28,7 +28,7 @@
                                         data-live-search="true"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
-									<optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+				    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
@@ -50,7 +50,7 @@
                                     <option value="1" selected="selected">SQLAdvisor</option>
                                     <option value="3">SOAR</option>
                                     <option value="2">SQLTuning</option>
-									<option value="4">SQLTuningAdvisor</option>
+				    <option value="4">SQLTuningAdvisor</option>
                                 </select>
                             </div>
                             <div id="div_verbose" class="form-group">
@@ -260,7 +260,7 @@
                 $("#div_tuning").hide();
                 $("#div_verbose").hide();
             }
-			 //SQLTuningAdvisor
+	    //SQLTuningAdvisor
             else if ($("#tools").val() === '4') {
                 $("#div_tuning").hide();
                 $("#div_verbose").hide();
@@ -335,21 +335,21 @@
         //实例变动获取数据库
         $("#instance_name").change(function () {
             get_instance(true)
-			var optgroup = $('#instance_name :selected').parent().attr('label');
-			$("#tools").empty();
+	    var optgroup = $('#instance_name :selected').parent().attr('label');
+	    $("#tools").empty();
             $('#tools').selectpicker('render');
             $('#tools').selectpicker('refresh');
-			var obj = document.getElementById("tools");
-			if (optgroup === "Oracle") {
-			   //oracle优化工具
-			   obj.options.add(new Option("SQLTuningAdvisor","4"));						
+	    var obj = document.getElementById("tools");
+	    if (optgroup === "Oracle") {
+		//oracle优化工具
+		obj.options.add(new Option("SQLTuningAdvisor","4"));						
             } else if (optgroup === "MySQL") {
-			    //mysql优化工具
-			    obj.options.add(new Option("SQLAdvisor","1"));
-				obj.options.add(new Option("SQLTuning","2"));
-				obj.options.add(new Option("SOAR","3"));
+		//mysql优化工具
+		obj.options.add(new Option("SQLAdvisor","1"));
+		obj.options.add(new Option("SQLTuning","2"));
+		obj.options.add(new Option("SOAR","3"));
             }
-			$('#tools').selectpicker('render');
+	    $('#tools').selectpicker('render');
             $('#tools').selectpicker('refresh');
         });
 
