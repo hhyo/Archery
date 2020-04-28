@@ -416,6 +416,7 @@
         function SQLTuningAdvisor() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
+            var columns = [];
             $.ajax({
                 type: "post",
                 url: "/slowquery/optimize_sqltuningadvisor/",
@@ -430,12 +431,50 @@
                     $('input[type=button]').prop('disabled', false);
                 },
                 success: function (data) {
-                    display_data(data)
+                    if (data.status === 0) {
+                        var result = data.data;
+                        if (result['Error']) {
+                            result = result['Error']
+                            alertStyle = "alert-danger";
+                            finalHtml = '';
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + result + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            $("#sqltuningadvisor_result_col").html(finalHtml);
+                        } else if (result['column_list']) {
+                            result = result['rows'];
+                            var result_str = JSON.stringify(result);
+                            //替换所有的\n换行符
+                            result_str = result_str.replace(/\\n/g, "<br>");
+                            //替换所有的空格
+                            result_str = result_str.replace(/\s/g, "&nbsp;");
+                            //去掉双引号强制转换符
+                            result_str = result_str.replace(/\\"/g, "\"");
+                            alertStyle = "alert-success";
+                            finalHtml = '';
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + result_str + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            $("#sqltuningadvisor_result_col").html(finalHtml);
+                        }
+                        $("#sqltuningadvisor_result").show();
+                        $("#sqladvisor-result").hide();
+                        $("#tuning_result").hide();
+                        $("#soar-result").hide();
+
+                    } else {
+                        alert(data.msg);
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
-            });
+            })
+            ;
         }
 
         //获取查询建议
