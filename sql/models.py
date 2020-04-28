@@ -125,6 +125,7 @@ SQL_WORKFLOW_CHOICES = (
     ('workflow_manreviewing', _('workflow_manreviewing')),
     ('workflow_review_pass', _('workflow_review_pass')),
     ('workflow_timingtask', _('workflow_timingtask')),
+    ('workflow_queuing', _('workflow_queuing')),
     ('workflow_executing', _('workflow_executing')),
     ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
     ('workflow_exception', _('workflow_exception')))
@@ -266,9 +267,19 @@ class WorkflowLog(models.Model):
     """
     工作流日志表
     """
+    operation_type_choices = (
+        (0, '提交/待审核'),
+        (1, '审核通过'),
+        (2, '审核不通过'),
+        (3, '审核取消'),
+        (4, '定时执行'),
+        (5, '执行工单'),
+        (6, '执行结束'),
+    )
+
     id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField('工单审批id', db_index=True)
-    operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
+    operation_type = models.SmallIntegerField('操作类型', choices=operation_type_choices)
     operation_type_desc = models.CharField('操作类型描述', max_length=10)
     operation_info = models.CharField('操作信息', max_length=1000)
     operator = models.CharField('操作人', max_length=30)

@@ -32,16 +32,14 @@ spec:
               port: inception
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-         {{- with .Values.volumeMounts }}
           volumeMounts:
             - name: inception-config-volume
               subPath: inc.cnf
               mountPath: /etc/inc.cnf
-       {{- end }}
-       {{- with .Values.volumes }}
       volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}      
+        - name: inception-config-volume
+          configMap:
+            name: inception-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
