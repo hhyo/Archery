@@ -223,6 +223,7 @@ def explain(request):
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
+
 def optimize_sqltuningadvisor(request):
     """
     sqltuningadvisor工具获取优化报告
@@ -263,7 +264,7 @@ def optimize_sqltuningadvisor(request):
             result['msg'] = 'SQLTuningAdvisor仅支持oracle数据库的检查'
             return HttpResponse(json.dumps(result), content_type='application/json')
 
-    # 执行获取执行计划语句
+    # 执行获取优化报告
     query_engine = get_engine(instance=instance)
     sql_result = query_engine.sqltuningadvisor(str(db_name), sql_content).to_sep_dict()
     result['data'] = sql_result
