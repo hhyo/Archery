@@ -24,7 +24,7 @@ from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
-from sql.utils.resource_group import user_groups, user_instances
+from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 
 import logging
 
@@ -110,7 +110,7 @@ def detail(request, workflow_id):
 
         # 是否可审核
         is_can_review = Audit.can_review(request.user, workflow_id, 2)
-        # 是否可执行
+        # 是否可执行 TODO 这几个判断方法入参都修改为workflow对象，可减少多次数据库交互
         is_can_execute = can_execute(request.user, workflow_id)
         # 是否可定时执行
         is_can_timingtask = can_timingtask(request.user, workflow_id)
@@ -121,9 +121,16 @@ def detail(request, workflow_id):
 
         # 获取审核日志
         try:
-            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview'])
+            audit_id = audit_detail.audit_id
             last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+            # 等待审批的展示当前全部审批人
+            if workflow_detail.status == 'workflow_manreviewing':
+                auth_group_name = Group.objects.get(id=audit_detail.current_audit).name
+                current_audit_users = auth_group_users([auth_group_name], audit_detail.group_id)
+                current_audit_users_display = [user.display for user in current_audit_users]
+                last_operation_info += '，当前审批人：' + ','.join(current_audit_users_display)
         except Exception as e:
             logger.debug(f'无审核日志记录，错误信息{e}')
             last_operation_info = ''
