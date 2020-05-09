@@ -144,7 +144,11 @@ def optimize_sqltuning(request):
     db_name = request.POST.get('db_name')
     sqltext = request.POST.get('sql_content')
     option = request.POST.getlist('option[]')
-
+    sqltext = sqlparse.format(sqltext, strip_comments=True)
+    sqltext = sqlparse.split(sqltext)[0]
+    if re.match(r"^select|^show|^explain", sqltext, re.I) is None:
+        result = {'status': 1, 'msg': '只支持查询SQL！', 'data': []}
+        return HttpResponse(json.dumps(result),content_type='application/json')
     try:
         user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
