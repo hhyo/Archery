@@ -315,12 +315,6 @@ class OracleEngine(EngineBase):
             result['bad_query'] = True
         if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
-        # select语句先使用Explain判断语法是否正确
-        if re.match(r"^select|^with", sql, re.I):
-            explain_result = self.explain_check(db_name=db_name, sql=f"explain plan for {sql}")
-            if explain_result['msg']:
-                result['bad_query'] = True
-                result['msg'] = explain_result['msg']
         return result
 
     def filter_sql(self, sql='', limit_num=0):
