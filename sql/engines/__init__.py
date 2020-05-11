@@ -84,19 +84,19 @@ class EngineBase:
     def query_check(self, db_name=None, sql=""):
         """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
 
-    def filter_sql(self, sql="", limit_num=0):
+    def filter_sql(self, sql='', limit_num=0):
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """实际查询 返回一个ResultSet"""
 
-    def query_masking(self, db_name=None, sql="", resultset=None):
+    def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         return resultset
 
-    def execute_check(self, db_name=None, sql=""):
+    def execute_check(self, db_name=None, sql=''):
         """执行语句的检查 返回一个ReviewSet"""
 
     def execute(self):
