@@ -27,10 +27,6 @@ class MysqlEngine(EngineBase):
         self.config = SysConfig()
         self.inc_engine = InceptionEngine() if self.config.get('inception') else GoInceptionEngine()
 
-
-    def __del__(self):
-        super().__del__
-
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
         conversions = MySQLdb.converters.conversions
