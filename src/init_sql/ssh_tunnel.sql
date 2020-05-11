@@ -1,0 +1,1 @@
+insert into ssh_tunnel (tunnel_name, host, port, user, password, create_time, update_time) values ('None', '127.0.0.1', 22, 'user', 'password', now(), now()) ;

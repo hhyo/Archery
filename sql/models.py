@@ -5,7 +5,6 @@ from mirage import fields
 
 from django.utils.translation import gettext as _
 
-
 class ResourceGroup(models.Model):
     """
     资源组
@@ -89,6 +88,28 @@ DB_TYPE_CHOICES = (
     ('goinception', 'goInception'))
 
 
+class Tunnel(models.Model):
+    """
+    SSH隧道配置
+    """
+    tunnel_name = models.CharField('隧道名称', max_length=50, unique=True)
+    host = models.CharField('隧道连接', max_length=200)
+    port = models.IntegerField('端口', default=0)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.tunnel_name
+
+    class Meta:
+        managed = True
+        db_table = 'ssh_tunnel'
+        verbose_name = u'隧道配置'
+        verbose_name_plural = u'隧道配置'
+
+
 class Instance(models.Model):
     """
     各个线上实例配置
@@ -106,6 +127,7 @@ class Instance(models.Model):
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
     instance_tag = models.ManyToManyField(InstanceTag, verbose_name='实例标签', blank=True)
+    tunnel = models.ForeignKey(Tunnel, on_delete=models.CASCADE)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
