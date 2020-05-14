@@ -232,8 +232,16 @@ class OracleEngine(EngineBase):
                 return True
             else:
                 return False
-        elif re.match(r"^insert", sql):
+        elif re.match(r"^insert\s+into\s", sql):
             table_name = re.match(r"^insert\s+into\s(.+?)(\(|\s)", sql, re.M).group(1)
+            if '.' not in table_name:
+                table_name = f"{db_name}.{table_name}"
+            if table_name in object_name_list:
+                return True
+            else:
+                return False
+        elif re.match(r"^insert\s+all\s", sql):
+            table_name = re.match(r"^insert\s+all\s+into\s(.+?)(\(|\s)", sql, re.M).group(1)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
