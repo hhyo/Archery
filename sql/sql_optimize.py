@@ -60,7 +60,7 @@ def optimize_sqladvisor(request):
             "p": instance_info.password,
             "d": db_name,
             "v": verbose,
-            "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "q": sql_content.strip()
             }
 
     # 参数检查
@@ -120,7 +120,7 @@ def optimize_soar(request):
             "test-dsn": soar_test_dsn,
             "allow-online-as-test": "false",
             "report-type": "markdown",
-            "query": sql.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "query": sql.strip()
             }
     # 参数检查
     args_check_result = soar.check_args(args)
