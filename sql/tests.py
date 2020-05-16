@@ -1589,10 +1589,13 @@ class TestOptimize(TestCase):
                 "instance_name": "test_instance",
                 "db_name": settings.DATABASES['default']['TEST']['NAME']
                 }
-        r = self.client.post(path='/slowquery/optimize_sqltuning/')
+        data['instance_name'] = 'test_instancex'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
 
+
         # 获取sys_parm
+        data['instance_name'] = 'test_instance'
         data['option[]'] = 'sys_parm'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertListEqual(list(json.loads(r.content)['data'].keys()),
