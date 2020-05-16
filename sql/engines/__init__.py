@@ -105,6 +105,9 @@ def get_engine(instance=None):  # pragma: no cover
     if instance.db_type == 'mysql':
         from .mysql import MysqlEngine
         return MysqlEngine(instance=instance)
+    elif instance.db_type == 'mariadb':
+        from .mariadb import MariaDBEngine
+        return MariaDBEngine(instance=instance)
     elif instance.db_type == 'mssql':
         from .mssql import MssqlEngine
         return MssqlEngine(instance=instance)

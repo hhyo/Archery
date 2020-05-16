@@ -37,6 +37,7 @@
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mariadb" label="MariaDB"></optgroup>
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
@@ -346,7 +347,7 @@
             if (optgroup === "Oracle") {
                 //oracle优化工具
                 obj.options.add(new Option("SQLTuningAdvisor", "4", true, true));
-            } else if (optgroup === "MySQL") {
+            } else if (optgroup === "MySQL" || optgroup === "MariaDB") {
                 //mysql优化工具
                 obj.options.add(new Option("SQLAdvisor", "1", true, true));
                 obj.options.add(new Option("SQLTuning", "2"));
@@ -1026,11 +1027,14 @@
                         if (data.status === 0) {
                             let result = data['data'];
                             $("#optgroup-mysql").empty();
+                            $("#optgroup-mariadb").empty();
                             $("#optgroup-oracle").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
                                     $("#optgroup-mysql").append(instance);
+                                } else if (result[i]['db_type'] === 'mariadb') {
+                                    $("#optgroup-mariadb").append(instance);
                                 } else if (result[i]['db_type'] === 'oracle') {
                                     $("#optgroup-oracle").append(instance);
                                 }

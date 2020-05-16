@@ -48,6 +48,7 @@
                                 data-live-search="true" required>
                             // TODO 使用models中的choices 渲染
                             <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                            <optgroup id="optgroup-mariadb" label="MariaDB"></optgroup>
                             <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                             <optgroup id="optgroup-redis" label="Redis"></optgroup>
                             <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
@@ -157,6 +158,7 @@
                     if (data.status === 0) {
                         var result = data['data'];
                         $("#optgroup-mysql").empty();
+                        $("#optgroup-mariadb").empty();
                         $("#optgroup-mssql").empty();
                         $("#optgroup-redis").empty();
                         $("#optgroup-pgsql").empty();
@@ -167,6 +169,8 @@
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
                                 $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mariadb') {
+                                $("#optgroup-mariadb").append(instance);
                             } else if (result[i]['db_type'] === 'mssql') {
                                 $("#optgroup-mssql").append(instance);
                             } else if (result[i]['db_type'] === 'redis') {
@@ -393,7 +397,7 @@
                     // 仅MySQL支持限制到表级权限
                     var optgroup = $('#instance_name :selected').parent().attr('label');
                     $("#priv_type").empty();
-                    if (optgroup === "MySQL") {
+                    if (optgroup === "MySQL" || optgroup === "MariaDB") {
                         $('#priv_type').append("<option value=\"1\">DATABASE</option>");
                         $('#priv_type').append("<option value=\"2\" selected=\"selected\">TABLE</option>");
                     } else {

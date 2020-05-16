@@ -32,7 +32,8 @@
                                        required>
                             </div>
                             <div class="form-group">
-                                <input id="demand_url" type="text" autocomplete="off" name="demand_url" class="form-control"
+                                <input id="demand_url" type="text" autocomplete="off" name="demand_url"
+                                       class="form-control"
                                        data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
                                        placeholder="请输入需求链接">
                             </div>
@@ -54,6 +55,7 @@
                                         title="请选择实例"
                                         data-live-search="true" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-mariadb" label="MariaDB"></optgroup>
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
                                     <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
@@ -598,6 +600,7 @@
                     if (data.status === 0) {
                         var result = data['data'];
                         $("#optgroup-mysql").empty();
+                        $("#optgroup-mariadb").empty();
                         $("#optgroup-oracle").empty();
                         $("#optgroup-mssql").empty();
                         $("#optgroup-redis").empty();
@@ -607,6 +610,8 @@
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
                                 $("#optgroup-mysql").append(instance);
+                            } else if (result[i]['db_type'] === 'mariadb') {
+                                $("#optgroup-mariadb").append(instance);
                             } else if (result[i]['db_type'] === 'mssql') {
                                 $("#optgroup-mssql").append(instance);
                             } else if (result[i]['db_type'] === 'redis') {
