@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from mirage import fields
 
 from django.utils.translation import gettext as _
+from mirage.crypto import Crypto
 
 
 class ResourceGroup(models.Model):
@@ -581,12 +582,51 @@ class Config(models.Model):
         verbose_name_plural = u'系统配置'
 
 
+# 云服务认证信息配置
+class CloudAccessKey(models.Model):
+    cloud_type_choices = (('aliyun', 'aliyun'),)
+
+    type = models.CharField(max_length=20, default='', choices=cloud_type_choices)
+    key_id = models.CharField(max_length=200)
+    key_secret = models.CharField(max_length=200)
+    remark = models.CharField(max_length=50, default='', blank=True)
+
+    def __init__(self, *args, **kwargs):
+        self.c = Crypto()
+        super().__init__(*args, **kwargs)
+
+    @property
+    def raw_key_id(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_id)
+
+    @property
+    def raw_key_secret(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_secret)
+
+    def save(self, *args, **kwargs):
+        self.key_id = self.c.encrypt(self.key_id)
+        self.key_secret = self.c.encrypt(self.key_secret)
+        super(CloudAccessKey, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.type}({self.remark})'
+
+    class Meta:
+        managed = True
+        db_table = 'cloud_access_key'
+        verbose_name = u'云服务认证信息配置'
+        verbose_name_plural = u'云服务认证信息配置'
+
+
 class AliyunRdsConfig(models.Model):
     """
     阿里云rds配置信息
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
+    ak = models.ForeignKey(CloudAccessKey, on_delete=models.CASCADE)
     is_enable = models.BooleanField('是否启用', default=False)
 
     def __int__(self):
