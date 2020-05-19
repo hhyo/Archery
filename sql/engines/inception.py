@@ -43,7 +43,7 @@ class InceptionEngine(EngineBase):
         backup_host = archer_config.get('inception_remote_backup_host')
         backup_port = int(archer_config.get('inception_remote_backup_port', 3306))
         backup_user = archer_config.get('inception_remote_backup_user')
-        backup_password = archer_config.get('inception_remote_backup_password')
+        backup_password = archer_config.get('inception_remote_backup_password', '')
         return MySQLdb.connect(host=backup_host,
                                port=backup_port,
                                user=backup_user,
