@@ -127,7 +127,7 @@ class Instance(models.Model):
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
     instance_tag = models.ManyToManyField(InstanceTag, verbose_name='实例标签', blank=True)
-    tunnel = models.ForeignKey(Tunnel, on_delete=models.CASCADE)
+    tunnel = models.ForeignKey(Tunnel, blank=True, null=True, on_delete=models.CASCADE, default=None)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
