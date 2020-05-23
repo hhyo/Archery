@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunRdsConfig, ResourceGroup, QueryPrivilegesApply, \
+    AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag
 
@@ -206,8 +206,7 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
               'mode', 'condition', 'sleep', 'no_delete', 'state', 'user_name', 'user_display')
 
 
-# 阿里云实例配置信息
-@admin.register(AliyunRdsConfig)
-class AliRdsConfigAdmin(admin.ModelAdmin):
-    list_display = ('instance', 'rds_dbinstanceid', 'is_enable')
-    search_fields = ['instance__instance_name', 'rds_dbinstanceid']
+# 云服务认证信息配置
+@admin.register(CloudAccessKey)
+class CloudAccessKeyAdmin(admin.ModelAdmin):
+    list_display = ('type', 'key_id', 'key_secret', 'remark')
