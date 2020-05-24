@@ -47,6 +47,38 @@ class MongoEngine(EngineBase):
         result.rows = db.list_collection_names()
         return result
 
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
+        """获取所有字段, 返回一个ResultSet"""
+        # https://github.com/getredash/redash/blob/master/redash/query_runner/mongodb.py
+        result = ResultSet()
+        db = self.get_connection()[db_name]
+        collection_name = tb_name
+        documents_sample = []
+        if "viewOn" in db[collection_name].options():
+            for d in db[collection_name].find().limit(2):
+                documents_sample.append(d)
+        else:
+            for d in db[collection_name].find().sort([("$natural", 1)]).limit(1):
+                documents_sample.append(d)
+
+            for d in db[collection_name].find().sort([("$natural", -1)]).limit(1):
+                documents_sample.append(d)
+        columns = []
+        # _merge_property_names
+        for document in documents_sample:
+            for prop in document:
+                if prop not in columns:
+                    columns.append(prop)
+        result.column_list = ['COLUMN_NAME']
+        result.rows = columns
+        return result
+
+    def describe_table(self, db_name, tb_name, **kwargs):
+        """return ResultSet 类似查询"""
+        result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
+        result.rows = [[[r], ] for r in result.rows]
+        return result
+
     def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
