@@ -95,8 +95,10 @@ class Tunnel(models.Model):
     tunnel_name = models.CharField('隧道名称', max_length=50, unique=True)
     host = models.CharField('隧道连接', max_length=200)
     port = models.IntegerField('端口', default=0)
-    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
-    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
+    pkey_address = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
