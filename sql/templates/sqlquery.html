@@ -777,6 +777,7 @@
 
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
                 sqlContent = select_sqlContent
@@ -784,13 +785,24 @@
                 var sqlContent = editor.getValue();
 
             }
-            //查看执行计划
-            if (sql === 'explain') {
+            if (optgroup === "Oracle") {
+			    //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain plan for ' + sqlContent
+                }
+                //查看表结构
+                else if (sql === 'show create table') {
+                        sqlContent = "desc " + $("#table_name").val() + ";"
+                }
+            } else if (optgroup === "MySQL") {
+			    //查看执行计划
+                if (sql === 'explain') {
                 sqlContent = 'explain ' + sqlContent
-            }
-            //查看表结构
-            else if (sql === 'show create table') {
-                sqlContent = "show create table " + $("#table_name").val() + ";"
+                }
+			    //查看表结构
+                else if (sql === 'show create table') {
+                        sqlContent = "show create table " + $("#table_name").val() + ";"
+                }
             }
             //提交请求
             $.ajax({
@@ -863,7 +875,7 @@
                     redis_help_tab_remove();
                 }
                 $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
+                $("#btn-explain").attr('disabled', false);
             } else if (optgroup === "Mongo") {
                 if (change) {
                     $("#div-table_name").show();

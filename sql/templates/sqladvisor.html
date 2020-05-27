@@ -5,7 +5,7 @@
         <div class="col-md-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    优化工具
+                    SQL优化工具
                 </div>
                 <div class="panel-body">
                     <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
@@ -15,9 +15,18 @@
                         </div>
                         <div class="text-warning">
                             <dl>
-                                <dd>SQLAdvisor：<a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a></dd>
-                                <dd>SOAR：<a href="https://github.com/XiaoMi/soar">查看介绍</a></dd>
-                                <dd>MySQLTuning：<a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a></dd>
+                                <dd>[MySQL]SQLAdvisor：
+                                    <a href="https://tech.meituan.com/sqladvisor_pr.html">查看介绍</a>
+                                </dd>
+                                <dd>[MySQL]SOAR：
+                                    <a href="https://github.com/XiaoMi/soar">查看介绍</a>
+                                </dd>
+                                <dd>[MySQL]MySQLTuning：
+                                    <a href="http://dbaplus.cn/blog-77-736-1.html">查看介绍</a>
+                                </dd>
+                                <dd>[ORACLE]SQL Tuning Advisor：
+                                    <a href="https://docs.oracle.com/database/121/TGSQL/tgsql_sqltune.htm#TGSQL540">查看介绍</a>
+                                </dd>
                             </dl>
                         </div>
                         <div class="col-md-3 column">
@@ -27,7 +36,8 @@
                                         data-live-search="true"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
-                                    <option value="is-empty" disabled="" selected="selected">请选择实例:</option>
+                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -45,9 +55,6 @@
                                         title="请选择优化方式:"
                                         data-placeholder="请选择优化方式:" required>
                                     <option value="is-empty" disabled="">请选择优化方式:</option>
-                                    <option value="1" selected="selected">SQLAdvisor</option>
-                                    <option value="3">SOAR</option>
-                                    <option value="2">SQLTuning</option>
                                 </select>
                             </div>
                             <div id="div_verbose" class="form-group">
@@ -111,6 +118,11 @@
                     <div id="explain_result" style="display:none;" class="form-group table-responsive">
                         <table id="tb_explain" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+                    </div>
+                    <!-- SQLTuningAdvisor报告 -->
+                    <div id="sqltuningadvisor_result" style="display:none;" class="form-group table-responsive">
+                        <div id="sqltuningadvisor_result_col" class="col-md-12">
+                        </div>
                     </div>
                     <!-- soar报告 -->
                     <div id="soar-result" style="display:none;" class="form-group">
@@ -252,6 +264,11 @@
                 $("#div_tuning").hide();
                 $("#div_verbose").hide();
             }
+            //SQLTuningAdvisor
+            else if ($("#tools").val() === '4') {
+                $("#div_tuning").hide();
+                $("#div_verbose").hide();
+            }
         });
 
         // 表单校验
@@ -286,6 +303,8 @@
                         tunning();
                     } else if (($("#tools").val() === '3')) {
                         soar();
+                    } else if (($("#tools").val() === '4')) {
+                        SQLTuningAdvisor();
                     }
                 }
             }
@@ -319,12 +338,32 @@
 
         //实例变动获取数据库
         $("#instance_name").change(function () {
-            get_db_list()
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            $("#tools").empty();
+            $('#tools').selectpicker('render');
+            $('#tools').selectpicker('refresh');
+            var obj = document.getElementById("tools");
+            if (optgroup === "Oracle") {
+                //oracle优化工具
+                obj.options.add(new Option("SQLTuningAdvisor", "4", true, true));
+            } else if (optgroup === "MySQL") {
+                //mysql优化工具
+                obj.options.add(new Option("SQLAdvisor", "1", true, true));
+                obj.options.add(new Option("SQLTuning", "2"));
+                obj.options.add(new Option("SOAR", "3"));
+            }
+            $('#tools').selectpicker('render');
+            $('#tools').selectpicker('refresh');
+            get_db_list();
         });
 
         //获取实例数据库
         function get_db_list() {
             //将数据通过ajax提交给获取db_name
+            $("#db_name").empty();
+            $('#db_name').selectpicker('render');
+            $('#db_name').selectpicker('refresh');
+            sessionStorage.setItem('sql_tuning_instance_name', $("#instance_name").val());
             $.ajax({
                 type: "get",
                 url: "/instance/instance_resource/",
@@ -338,13 +377,22 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        $("#db_name").empty();
+                        var dbs = [];
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             $("#db_name").append(name);
+                            dbs.push({
+                                name: result[i],
+                                value: result[i],
+                                caption: result[i],
+                                meta: 'databases',
+                                score: '100'
+                            })
                         }
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
+                        //自动补全提示
+                        setCompleteData(dbs);
 
                         //适配从慢查询过来的优化请求
                         var pathname = window.location.pathname;
@@ -357,10 +405,77 @@
                         alert(data.msg);
                     }
                 },
+
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
             });
+        }
+
+        // SQLTuningAdvisor展示数据
+        function SQLTuningAdvisor() {
+            $('input[type=button]').addClass('disabled');
+            $('input[type=button]').prop('disabled', true);
+            var columns = [];
+            $.ajax({
+                type: "post",
+                url: "/slowquery/optimize_sqltuningadvisor/",
+                dataType: 'json',
+                data: {
+                    sql_content: editor.getValue(),
+                    instance_name: $("#instance_name").val(),
+                    schema_name: $("#db_name").val()
+                },
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        if (result['Error']) {
+                            result = result['Error']
+                            alertStyle = "alert-danger";
+                            finalHtml = '';
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + result + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            $("#sqltuningadvisor_result_col").html(finalHtml);
+                        } else if (result['column_list']) {
+                            result = result['rows'];
+                            var result_str = JSON.stringify(result);
+                            //替换所有的\n换行符
+                            result_str = result_str.replace(/\\n/g, "<br>");
+                            //替换所有的空格
+                            result_str = result_str.replace(/\s/g, "&nbsp;");
+                            //去掉双引号强制转换符
+                            result_str = result_str.replace(/\\"/g, "\"");
+                            alertStyle = "alert-success";
+                            finalHtml = '';
+                            finalHtml += "<div class='alert alert-dismissable " + alertStyle + "'> " +
+                                "<table class='' width='100%' style='table-layout:fixed;'> " +
+                                "<tbody><tr>" +
+                                "<td>" + result_str + "</td>" +
+                                "</tr> </tbody></table> </div>";
+                            $("#sqltuningadvisor_result_col").html(finalHtml);
+                        }
+                        $("#sqltuningadvisor_result").show();
+                        $("#explain_result").hide();
+                        $("#sqladvisor-result").hide();
+                        $("#tuning_result").hide();
+                        $("#soar-result").hide();
+
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            })
+            ;
         }
 
         //获取查询建议
@@ -406,6 +521,7 @@
                         $("#explain_result").hide();
                         $("#tuning_result").hide();
                         $("#soar-result").hide();
+                        $("#sqltuningadvisor_result").hide();
                     } else {
                         alert(data.msg);
                     }
@@ -420,13 +536,19 @@
         function explain() {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
-            var columns = [];
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            let prefix = '';
+            if (optgroup === "Oracle") {
+                prefix = 'explain plan for '
+            } else if (optgroup === "MySQL") {
+                prefix = 'explain '
+            }
             $.ajax({
                 type: "post",
                 url: "/query/explain/",
                 dataType: "json",
                 data: {
-                    sql_content: 'explain ' + editor.getValue(),
+                    sql_content: prefix + editor.getValue(),
                     instance_name: $("#instance_name").val(),
                     db_name: $("#db_name").val()
                 },
@@ -435,61 +557,66 @@
                     $('input[type=button]').prop('disabled', false);
                 },
                 success: function (data) {
-                    if (data.status === 0) {
-                        var result = data.data;
-                        if (result['Error']) {
-                            alertStyle = "alert-danger";
-                            $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
-                                columns: [{
-                                    field: 'error',
-                                    title: 'Error'
-                                }],
-                                data: [{
-                                    error: result['Error']
-                                }]
-                            })
-                        } else if (result['column_list']) {
-                            //异步获取要动态生成的列
-                            $.each(result['column_list'], function (i, column) {
-                                columns.push({
-                                    "field": i,
-                                    "title": column,
-                                    "sortable": true,
-                                    "formatter": function (value, row, index) {
-                                        //return value;
-                                        return $('<div/>').text(value).html();
-                                    }
-                                });
-                            });
-                            //初始化查询结果
-                            $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
-                                escape: true,
-                                data: result['rows'],
-                                columns: columns,
-                                showColumns: true,
-                                showToggle: true,
-                                striped: true,
-                                pagination: true,
-                                pageSize: 100,
-                                pageList: [100, 500],
-                                locale: 'zh-CN'
-                            });
-                        }
-                        $("#explain_result").show();
-                        $("#sqladvisor-result").hide();
-                        $("#tuning_result").hide();
-                        $("#soar-result").hide();
-
-                    } else {
-                        alert(data.msg);
-                    }
+                    display_data(data)
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
             })
             ;
+        }
+
+        // 展示执行计划
+        function display_data(data) {
+            var columns = [];
+            if (data.status === 0) {
+                var result = data.data;
+                if (result['Error']) {
+                    $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                        escape: true,
+                        columns: [{
+                            field: 'error',
+                            title: 'Error'
+                        }],
+                        data: [{
+                            error: result['Error']
+                        }]
+                    })
+                } else if (result['column_list']) {
+                    //异步获取要动态生成的列
+                    $.each(result['column_list'], function (i, column) {
+                        columns.push({
+                            "field": i,
+                            "title": column,
+                            "sortable": true,
+                            "formatter": function (value, row, index) {
+                                //return value;
+                                return $('<div/>').text(value).html();
+                            }
+                        });
+                    });
+                    //初始化查询结果
+                    $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
+                        escape: true,
+                        data: result['rows'],
+                        columns: columns,
+                        showColumns: true,
+                        showToggle: true,
+                        striped: true,
+                        pagination: true,
+                        pageSize: 100,
+                        pageList: [100, 500],
+                        locale: 'zh-CN'
+                    });
+                }
+                $("#explain_result").show();
+                $("#sqladvisor-result").hide();
+                $("#tuning_result").hide();
+                $("#soar-result").hide();
+                $("#sqltuningadvisor_result").hide();
+            } else {
+                alert(data.msg);
+            }
         }
 
         //获取soar报告
@@ -539,6 +666,7 @@
                         $("#sqladvisor-result").hide();
                         $("#explain_result").hide();
                         $("#tuning_result").hide();
+                        $("#sqltuningadvisor_result").hide();
                     } else {
                         alert(data.msg);
                     }
@@ -576,7 +704,6 @@
                     if (data.status === 0) {
                         var result = data.data;
                         if (result['Error']) {
-                            alertStyle = "alert-danger";
                             $('#tb_explain').bootstrapTable('destroy').bootstrapTable({
                                 escape: true,
                                 columns: [{
@@ -851,6 +978,7 @@
                         $("#sqladvisor-result").hide();
                         $("#explain_result").hide();
                         $("#soar-result").hide();
+                        $("#sqltuningadvisor_result").hide();
 
                     } else {
                         alert(data.msg);
@@ -870,7 +998,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: ['mysql', 'oracle']
                     },
                     complete: function () {
                         //适配从慢查询过来的优化请求
@@ -888,17 +1016,30 @@
                                 }
                             }
                         }
+                        //填充实例名
+                        $("#instance_name").selectpicker('val', sessionStorage.getItem('sql_tuning_instance_name'));
+                        if ($("#instance_name").val()) {
+                            $("#instance_name").selectpicker().trigger("change");
+                        }
                     },
                     success: function (data) {
                         if (data.status === 0) {
                             let result = data['data'];
-                            $("#instance_name").empty();
+                            $("#optgroup-mysql").empty();
+                            $("#optgroup-oracle").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                $("#instance_name").append(instance);
+                                if (result[i]['db_type'] === 'mysql') {
+                                    $("#optgroup-mysql").append(instance);
+                                } else if (result[i]['db_type'] === 'oracle') {
+                                    $("#optgroup-oracle").append(instance);
+                                }
                             }
                             $('#instance_name').selectpicker('render');
                             $('#instance_name').selectpicker('refresh');
+                            $("#db_name").empty();
+                            $('#db_name').selectpicker('render');
+                            $('#db_name').selectpicker('refresh');
                         } else {
                             alert(data.msg);
                         }

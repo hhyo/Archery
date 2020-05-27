@@ -56,8 +56,6 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_goincption' class='btn-sm btn-info'>测试goInception连接</button>&nbsp;
-                        <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
                         <h6 style="color:red">注：默认使用goInception进行MySQL的审核执行，Inception作为脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
@@ -88,6 +86,7 @@
                                                value="{{ config.go_inception_host }}"
                                                placeholder="goInception地址">
                                     </div>
+                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
                                 </div>
                                 <div class="form-group">
                                     <label for="go_inception_port"
@@ -112,6 +111,7 @@
                                                value="{{ config.inception_host }}"
                                                placeholder="Inception地址">
                                     </div>
+                                    <button id='check_incption' class='btn-sm btn-info'>测试连接</button>
                                 </div>
                                 <div class="form-group">
                                     <label for="inception_port"
@@ -383,7 +383,6 @@
                         </div>
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
                         <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
                         <h6 style="color:red">注2：企业微信开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
                         <hr/>
@@ -419,6 +418,7 @@
                                             <input id="mail" key="mail" value="{{ config.mail }}"
                                                    type="checkbox"> 是否开启邮件通知
                                         </label>
+                                        <button id='check_email' class='btn-sm btn-info'>测试连接</button>
                                     </div>
                                 </div>
                             </div>
@@ -651,11 +651,11 @@
                                     </div>
                                 </div>
                             </div>
-                                <div id="div-feishu-config" style="display: none">
+                            <div id="div-feishu-config" style="display: none">
                                 <div class="form-group">
                                     <i class="ace-icon fa fa-hand-o-right"></i>
                                     创建飞书应用参考：<a target="_blank"
-                                                  href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
+                                                href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
                                     {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
                                     </button>
                                 </div>
@@ -685,35 +685,6 @@
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
-                        <hr/>
-                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
-                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
-                        <hr/>
-                        <div class="form-horizontal">
-                            <div class="form-group">
-                                <label for="aliyun_ak"
-                                       class="col-sm-4 control-label">AccessKeyID</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_ak"
-                                           key="aliyun_ak"
-                                           value="{{ config.aliyun_ak }}"
-                                           placeholder="AccessKeyID">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="aliyun_secret"
-                                       class="col-sm-4 control-label">AccessKeySecret</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_secret"
-                                           key="aliyun_secret"
-                                           value="{{ config.aliyun_secret }}"
-                                           placeholder="AccessKeySecret">
-                                </div>
-                            </div>
-                        </div>
-                        <h5 style="color: darkgrey"><b>其他</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
