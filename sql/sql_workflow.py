@@ -16,11 +16,12 @@ from django.utils import timezone
 from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines.models import ReviewResult, ReviewSet
 from sql.notify import notify_for_audit
-from sql.models import ResourceGroup, Users
+from sql.models import ResourceGroup
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
-from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period
+from sql.utils.sql_review import can_timingtask, can_cancel, can_execute, on_correct_time_period, can_view, can_rollback
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow, SqlWorkflowContent, Instance
 from django_q.tasks import async_task
@@ -134,7 +135,7 @@ def submit(request):
     """正式提交SQL, 此处生成工单"""
     sql_content = request.POST.get('sql_content').strip()
     workflow_title = request.POST.get('workflow_name')
-    demand_url = request.POST.get('demand_url')
+    demand_url = request.POST.get('demand_url', '')
     # 检查用户是否有权限涉及到资源组等， 比较复杂， 可以把检查权限改成一个独立的方法
     group_name = request.POST.get('group_name')
     group_id = ResourceGroup.objects.get(group_name=group_name).group_id
@@ -223,9 +224,72 @@ def submit(request):
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60)
+            async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60,
+                       task_name=f'sqlreview-submit-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
+
+
+def detail_content(request):
+    """获取工单内容"""
+    workflow_id = request.GET.get('workflow_id')
+    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    if not can_view(request.user, workflow_id):
+        raise PermissionDenied
+    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
+        rows = workflow_detail.sqlworkflowcontent.execute_result
+    else:
+        rows = workflow_detail.sqlworkflowcontent.review_content
+
+    review_result = ReviewSet()
+    if rows:
+        try:
+            # 检验rows能不能正常解析
+            loaded_rows = json.loads(rows)
+            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
+            if isinstance(loaded_rows[-1], list):
+                for r in loaded_rows:
+                    review_result.rows += [ReviewResult(inception_result=r)]
+                rows = review_result.json()
+        except IndexError:
+            review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
+        except json.decoder.JSONDecodeError:
+            review_result.rows += [ReviewResult(
+                id=1,
+                sql=workflow_detail.sqlworkflowcontent.sql_content,
+                # 迫于无法单元测试这里加上英文报错信息
+                errormessage="Json decode failed."
+                             "执行结果Json解析失败, 请联系管理员"
+            )]
+            rows = review_result.json()
+    else:
+        rows = workflow_detail.sqlworkflowcontent.review_content
+
+    result = {"rows": json.loads(rows)}
+    return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+def backup_sql(request):
+    """获取回滚语句"""
+    workflow_id = request.GET.get('workflow_id')
+    if not can_rollback(request.user, workflow_id):
+        raise PermissionDenied
+    workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
+
+    try:
+        query_engine = get_engine(instance=workflow.instance)
+        list_backup_sql = query_engine.get_rollback(workflow=workflow)
+    except Exception as msg:
+        return JsonResponse({'status': 1, 'msg': f'{msg}', 'rows': []})
+
+    result = {'status': 0, 'msg': '', 'rows': list_backup_sql}
+    return HttpResponse(json.dumps(result), content_type='application/json')
 
 
 @permission_required('sql.sql_review', raise_exception=True)
@@ -297,7 +361,8 @@ def passed(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                   task_name=f'sqlreview-pass-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -323,38 +388,42 @@ def execute(request):
     if on_correct_time_period(workflow_id) is False:
         context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
         return render(request, 'error.html', context)
-    # 根据执行模式进行对应修改
-    mode = request.POST.get('mode')
-    if mode == "auto":
-        status = "workflow_executing"
-        operation_type = 5
-        operation_type_desc = '执行工单'
-        operation_info = "自动操作执行"
-        finish_time = None
-    else:
-        status = "workflow_finish"
-        operation_type = 6
-        operation_type_desc = '手工工单'
-        operation_info = "确认手工执行结束"
-        finish_time = datetime.datetime.now()
-    # 将流程状态修改为对应状态
-    SqlWorkflow(id=workflow_id, status=status, finish_time=finish_time).save(update_fields=['status', 'finish_time'])
-
-    # 增加工单日志
+    # 获取审核信息
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
-    Audit.add_log(audit_id=audit_id,
-                  operation_type=operation_type,
-                  operation_type_desc=operation_type_desc,
-                  operation_info=operation_info,
-                  operator=request.user.username,
-                  operator_display=request.user.display
-                  )
+    # 根据执行模式进行对应修改
+    mode = request.POST.get('mode')
+    # 交由系统执行
     if mode == "auto":
+        # 修改工单状态为排队中
+        SqlWorkflow(id=workflow_id, status="workflow_queuing").save(update_fields=['status'])
+        # 删除定时执行任务
+        schedule_name = f"sqlreview-timing-{workflow_id}"
+        del_schedule(schedule_name)
         # 加入执行队列
-        async_task('sql.utils.execute_sql.execute', workflow_id,
-                   hook='sql.utils.execute_sql.execute_callback', timeout=-1)
+        async_task('sql.utils.execute_sql.execute', workflow_id, request.user,
+                   hook='sql.utils.execute_sql.execute_callback',
+                   timeout=-1, task_name=f'sqlreview-execute-{workflow_id}')
+        # 增加工单日志
+        Audit.add_log(audit_id=audit_id,
+                      operation_type=5,
+                      operation_type_desc='执行工单',
+                      operation_info='工单执行排队中',
+                      operator=request.user.username,
+                      operator_display=request.user.display)
 
+    # 线下手工执行
+    elif mode == "manual":
+        # 将流程状态修改为执行结束
+        SqlWorkflow(id=workflow_id, status="workflow_finish", finish_time=datetime.datetime.now()
+                    ).save(update_fields=['status', 'finish_time'])
+        # 增加工单日志
+        Audit.add_log(audit_id=audit_id,
+                      operation_type=6,
+                      operation_type_desc='手工工单',
+                      operation_info='确认手工执行结束',
+                      operator=request.user.username,
+                      operator_display=request.user.display)
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
@@ -382,10 +451,10 @@ def timing_task(request):
         return render(request, 'error.html', context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
+    schedule_name = f"sqlreview-timing-{workflow_id}"
 
     if on_correct_time_period(workflow_id, run_date) is False:
-        context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
+        context = {'errMsg': '不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!'}
         return render(request, 'error.html', context)
 
     # 使用事务保持数据一致性
@@ -395,7 +464,7 @@ def timing_task(request):
             workflow_detail.status = 'workflow_timingtask'
             workflow_detail.save()
             # 调用添加定时任务
-            add_sql_schedule(task_name, run_date, workflow_id)
+            add_sql_schedule(schedule_name, run_date, workflow_id)
             # 增加工单日志
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type[
@@ -476,8 +545,8 @@ def cancel(request):
 
             # 删除定时执行task
             if workflow_detail.status == 'workflow_timingtask':
-                task_name = f"{Const.workflowJobprefix['sqlreview']}-{workflow_id}"
-                del_schedule(task_name)
+                schedule_name = f"sqlreview-timing-{workflow_id}"
+                del_schedule(schedule_name)
             # 将流程状态修改为人工终止流程
             workflow_detail.status = 'workflow_abort'
             workflow_detail.save()
@@ -486,11 +555,13 @@ def cancel(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 仅未审核通过又取消的工单需要发送消息，审核通过的不发送
+        # 发送取消、驳回通知
         audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
-        if audit_detail.current_status == WorkflowDict.workflow_status['audit_abort']:
-            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60)
+        if audit_detail.current_status in (
+                WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
+            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
+                       task_name=f'sqlreview-cancel-{workflow_id}')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

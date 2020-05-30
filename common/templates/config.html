@@ -30,6 +30,8 @@
                                     {{ WorkflowDict.workflow_type.sqlreview_display }}</option>
                                 <option value="{{ WorkflowDict.workflow_type.query }}">
                                     {{ WorkflowDict.workflow_type.query_display }}</option>
+                                <option value="{{ WorkflowDict.workflow_type.archive }}">
+                                    {{ WorkflowDict.workflow_type.archive_display }}</option>
                             </select>
                         </div>
                         <h5 class="control-label text-bold">组：</h5>
@@ -54,8 +56,6 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_goincption' class='btn-sm btn-info'>测试goInception连接</button>&nbsp;
-                        <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
                         <h6 style="color:red">注：默认使用goInception进行MySQL的审核执行，Inception作为脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
@@ -86,6 +86,7 @@
                                                value="{{ config.go_inception_host }}"
                                                placeholder="goInception地址">
                                     </div>
+                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
                                 </div>
                                 <div class="form-group">
                                     <label for="go_inception_port"
@@ -110,6 +111,7 @@
                                                value="{{ config.inception_host }}"
                                                placeholder="Inception地址">
                                     </div>
+                                    <button id='check_incption' class='btn-sm btn-info'>测试连接</button>
                                 </div>
                                 <div class="form-group">
                                     <label for="inception_port"
@@ -381,7 +383,6 @@
                         </div>
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
                         <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
                         <h6 style="color:red">注2：企业微信开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
                         <hr/>
@@ -398,6 +399,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="ddl_notify_auth_group"
+                                       class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="ddl_notify_auth_group"
+                                           key="ddl_notify_auth_group"
+                                           value="{{ config.ddl_notify_auth_group }}"
+                                           placeholder="DDL工单通知权限组名，为空则不通知">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="mail"
                                        class="col-sm-4 control-label">MAIL</label>
                                 <div class="col-sm-8">
@@ -406,6 +418,7 @@
                                             <input id="mail" key="mail" value="{{ config.mail }}"
                                                    type="checkbox"> 是否开启邮件通知
                                         </label>
+                                        <button id='check_email' class='btn-sm btn-info'>测试连接</button>
                                     </div>
                                 </div>
                             </div>
@@ -465,17 +478,6 @@
                                                key="mail_smtp_password"
                                                value="{{ config.mail_smtp_password }}"
                                                placeholder="邮箱账号密码">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="ddl_notify_auth_group"
-                                           class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="ddl_notify_auth_group"
-                                               key="ddl_notify_auth_group"
-                                               value="{{ config.ddl_notify_auth_group }}"
-                                               placeholder="DDL工单通知权限组名，为空则不通知">
                                     </div>
                                 </div>
                             </div>
@@ -623,38 +625,66 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="feishu_webhook"
+                                       class="col-sm-4 control-label">飞书Webhook</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu_webhook" key="feishu_webhook"
+                                                   value="{{ config.feishu_webhook }}"
+                                                   type="checkbox"> 是否开启飞书Webhook通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feishu"
+                                       class="col-sm-4 control-label">飞书</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu" key="feishu"
+                                                   value="{{ config.feishu }}"
+                                                   type="checkbox"> 是否开启飞书通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-feishu-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建飞书应用参考：<a target="_blank"
+                                                href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_appid"
+                                           class="col-sm-4 control-label">飞书应用AppID</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_appid"
+                                               key="feishu_appid"
+                                               value="{{ config.feishu_appid }}"
+                                               placeholder="飞书应用AppID">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_app_secret"
+                                           class="col-sm-4 control-label">飞书AppSecret</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_app_secret"
+                                               key="feishu_app_secret"
+                                               value="{{ config.feishu_app_secret }}"
+                                               placeholder="飞书AppSecret">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
-                        <hr/>
-                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
-                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
-                        <hr/>
-                        <div class="form-horizontal">
-                            <div class="form-group">
-                                <label for="aliyun_ak"
-                                       class="col-sm-4 control-label">AccessKeyID</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_ak"
-                                           key="aliyun_ak"
-                                           value="{{ config.aliyun_ak }}"
-                                           placeholder="AccessKeyID">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="aliyun_secret"
-                                       class="col-sm-4 control-label">AccessKeySecret</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_secret"
-                                           key="aliyun_secret"
-                                           value="{{ config.aliyun_secret }}"
-                                           placeholder="AccessKeySecret">
-                                </div>
-                            </div>
-                        </div>
-                        <h5 style="color: darkgrey"><b>其他</b></h5>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -666,17 +696,6 @@
                                            key="index_path_url"
                                            value="{{ config.index_path_url }}"
                                            placeholder="系统首页路径，默认SQL工单页面：sqlworkflow">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="lock_time_threshold"
-                                       class="col-sm-4 control-label">SCHEMASYNC</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="schemasync"
-                                           key="schemasync"
-                                           value="{{ config.schemasync }}"
-                                           placeholder="schemasync调用路径">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -767,11 +786,10 @@
                                        disabled="disabled" style="width: 283px">
                             </div>
                             <div class="form-group">
-                                <select id="group_auditors" name="group"
+                                <select id="group_auditors" name="group" title="请选择审批权限组"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="审批人" data-placeholder="审批人:" data-live-search="true"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">添加审批权限组</option>
                                     {% for auth_group in auth_group_list %}
                                         <option value="{{ auth_group.name }}">{{ auth_group.name }}
                                     {% endfor %}
@@ -790,7 +808,7 @@
 {% endblock content %}
 
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
@@ -828,6 +846,8 @@
                     $("#div-auto-review-config").show();
                 } else if ($(this).attr("id") === 'wx') {
                     $("#div-wx-config").show();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").show();
                 }
             } else {
                 $(this).val(false);
@@ -840,6 +860,8 @@
                     $("#div-auto-review-config").hide();
                 } else if ($(this).attr("id") === 'wx') {
                     $("#div-wx-config").hide();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").hide();
                 }
             }
         });
@@ -911,15 +933,23 @@
             $('#group_auditors').selectpicker('refresh');
         });
 
+        // 重置权限组选择框状态
+        $("#group_auditors").on("reset", function () {
+            $('#group_auditors').selectpicker('val', []);
+            $(this).children().removeAttr("disabled");
+            $(this).selectpicker("refresh");
+        })
+
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
-            window.location.reload()
         });
 
         // 切换工单类型获取对应组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
             if ($("#group").val()) {
                 $.ajax({

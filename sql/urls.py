@@ -8,8 +8,9 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
-    resource_group, binlog, data_dictionary
-from sql.utils import tasks, ding_api
+    resource_group, binlog, data_dictionary, archiver
+from sql.utils import tasks
+from common.utils import ding_api
 
 urlpatterns = [
     path('', views.index),
@@ -51,10 +52,14 @@ urlpatterns = [
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
+    path('archive/', views.archive),
+    path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
     path('config/', views.config),
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('sqlworkflow/detail_content/', sql_workflow.detail_content),
+    path('sqlworkflow/backup_sql/', sql_workflow.backup_sql),
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
@@ -126,6 +131,7 @@ urlpatterns = [
     path('slowquery/optimize_sqladvisor/', sql.sql_optimize.optimize_sqladvisor),
     path('slowquery/optimize_sqltuning/', sql.sql_optimize.optimize_sqltuning),
     path('slowquery/optimize_soar/', sql.sql_optimize.optimize_soar),
+    path('slowquery/optimize_sqltuningadvisor/', sql.sql_optimize.optimize_sqltuningadvisor),
     path('slowquery/report/', slowlog.report),
 
     path('db_diagnostic/process/', db_diagnostic.process),
@@ -133,6 +139,14 @@ urlpatterns = [
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
+    path('db_diagnostic/innodb_trx/', db_diagnostic.innodb_trx),
+
+    path('archive/list/', archiver.archive_list),
+    path('archive/apply/', archiver.archive_apply),
+    path('archive/audit/', archiver.archive_audit),
+    path('archive/switch/', archiver.archive_switch),
+    path('archive/once/', archiver.archive_once),
+    path('archive/log/', archiver.archive_log),
 
     path('4admin/sync_ding_user/', ding_api.sync_ding_user)
 ]

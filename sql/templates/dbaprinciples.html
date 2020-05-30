@@ -8,7 +8,7 @@
 {% endblock content %}
 
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <script src="{% static 'dist/js/marked.min.js' %}"></script>
     <script>
         let rendererMD = new marked.Renderer();

@@ -7,7 +7,7 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.db import connection, OperationalError
+from django.db import connection, close_old_connections
 from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
@@ -32,6 +32,7 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
+    tb_name = request.POST.get('tb_name')
     limit_num = int(request.POST.get('limit_num', 0))
     schema_name = request.POST.get('schema_name', None)
     user = request.user
@@ -94,10 +95,10 @@ def query(request):
         with FuncTimer() as t:
             # 获取主从延迟信息
             seconds_behind_master = query_engine.seconds_behind_master
-            if instance.db_type == 'pgsql':  # TODO 此处判断待优化，请在 修改传参方式后去除
-                query_result = query_engine.query(db_name, sql_content, limit_num, schema_name=schema_name)
-            else:
-                query_result = query_engine.query(db_name, sql_content, limit_num)
+            query_result = query_engine.query(db_name, sql_content, limit_num,
+                                              schema_name=schema_name,
+                                              tb_name=tb_name,
+                                              max_execution_time=max_execution_time * 1000)
         query_result.query_time = t.cost
         # 返回查询结果后删除schedule
         if thread_id:
@@ -161,11 +162,9 @@ def query(request):
                 masking=query_result.is_masked
             )
             # 防止查询超时
-            try:
-                query_log.save()
-            except OperationalError:
-                connection.close()
-                query_log.save()
+            if connection.connection and not connection.is_usable():
+                close_old_connections()
+            query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1

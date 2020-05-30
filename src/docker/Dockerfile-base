@@ -41,6 +41,7 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && yum -y install cmake bison gcc-c++ git mysql-devel libaio-devel  glib2 glib2-devel \
     && yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm \
     && yum -y install Percona-Server-devel-56 Percona-Server-shared-56  Percona-Server-client-56 \
+    && yum -y install percona-toolkit \
     && cd /opt \
     && git clone https://github.com/hhyo/SQLAdvisor.git --depth 3 \
     && cd /opt/SQLAdvisor/ \
@@ -50,13 +51,7 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && cmake -DCMAKE_BUILD_TYPE=debug ./ \
     && make \
     && mv /opt/SQLAdvisor/sqladvisor/sqladvisor /opt \
-    && rm -rf /opt/SQLAdvisor/ \
-#schemasync
-    && cd /opt \
-    && virtualenv venv4schemasync  --python=python2 \
-    && source venv4schemasync/bin/activate \
-    && yum install -y python-devel \
-    && pip install schema-sync mysql-python
+    && rm -rf /opt/SQLAdvisor/
 #soar
 RUN cd /opt \
     && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \

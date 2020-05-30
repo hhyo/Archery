@@ -256,15 +256,16 @@ def regex(masking_rules, rule_type, value):
         return value
 
 
-def brute_mask(sql_result):
+def brute_mask(instance, sql_result):
     """输入的是一个resultset 
     sql_result.full_sql
     sql_result.rows 查询结果列表 List , list内的item为tuple
 
     返回同样结构的sql_result , error 中写入脱敏时产生的错误.
     """
-    # 读取所有的脱敏表达
-    masking_rules = DataMaskingRules.objects.all()
+    # 读取所有关联实例的脱敏规则，去重后应用到结果集，不会按照具体配置的字段匹配
+    rule_types = DataMaskingColumns.objects.filter(instance=instance).values_list('rule_type', flat=True).distinct()
+    masking_rules = DataMaskingRules.objects.filter(rule_type__in=rule_types)
     for reg in masking_rules:
         compiled_r = re.compile(reg.rule_regex, re.I)
         replace_pattern = r""

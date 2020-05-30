@@ -6,18 +6,17 @@ from aliyunsdkcore.client import AcsClient
 from aliyunsdkrds.request.v20140815 import DescribeSlowLogsRequest, DescribeSlowLogRecordsRequest, \
     RequestServiceOfCloudDBARequest
 import simplejson as json
-from common.config import SysConfig
 import logging
 
 logger = logging.getLogger('default')
 
 
 class Aliyun(object):
-    def __init__(self):
+    def __init__(self, rds):
         try:
-            sys_config = SysConfig()
-            ak = sys_config.get('aliyun_ak')
-            secret = sys_config.get('aliyun_secret')
+            self.DBInstanceId = rds.rds_dbinstanceid
+            ak = rds.ak.raw_key_id
+            secret = rds.ak.raw_key_secret
             self.clt = AcsClient(ak=ak, secret=secret)
         except Exception as m:
             raise Exception(f'阿里云认证失败：{m}{traceback.format_exc()}')
@@ -40,25 +39,26 @@ class Aliyun(object):
         localtime = utc_time + (local_tm - utc_tm)
         return localtime
 
-    def DescribeSlowLogs(self, DBInstanceId, StartTime, EndTime, **kwargs):
+    def DescribeSlowLogs(self, StartTime, EndTime, **kwargs):
         """获取实例慢日志列表DBName,SortKey、PageSize、PageNumber"""
         request = DescribeSlowLogsRequest.DescribeSlowLogsRequest()
-        values = {"action_name": "DescribeSlowLogs", "DBInstanceId": DBInstanceId,
+        values = {"action_name": "DescribeSlowLogs", "DBInstanceId": self.DBInstanceId,
                   "StartTime": StartTime, "EndTime": EndTime, "SortKey": "TotalExecutionCounts"}
         values = dict(values, **kwargs)
         result = self.request_api(request, values)
         return result
 
-    def DescribeSlowLogRecords(self, DBInstanceId, StartTime, EndTime, **kwargs):
+    def DescribeSlowLogRecords(self, StartTime, EndTime, **kwargs):
         """查看慢日志明细SQLId,DBName、PageSize、PageNumber"""
         request = DescribeSlowLogRecordsRequest.DescribeSlowLogRecordsRequest()
-        values = {"action_name": "DescribeSlowLogRecords", "DBInstanceId": DBInstanceId,
+        values = {"action_name": "DescribeSlowLogRecords", "DBInstanceId": self.DBInstanceId,
                   "StartTime": StartTime, "EndTime": EndTime}
         values = dict(values, **kwargs)
         result = self.request_api(request, values)
         return result
 
-    def RequestServiceOfCloudDBA(self, DBInstanceId, ServiceRequestType, ServiceRequestParam, **kwargs):
+    def RequestServiceOfCloudDBA(self, ServiceRequestType, ServiceRequestParam,
+                                 **kwargs):
         """
         获取统计信息：'GetTimedMonData',{"Language":"zh","KeyGroup":"mem_cpu_usage","KeyName":"","StartTime":"2018-01-15T04:03:26Z","EndTime":"2018-01-15T05:03:26Z"}
             mem_cpu_usage、iops_usage、detailed_disk_space
@@ -68,7 +68,7 @@ class Aliyun(object):
         获取资源利用信息：'GetResourceUsage',{"Language":"zh"}
         """
         request = RequestServiceOfCloudDBARequest.RequestServiceOfCloudDBARequest()
-        values = {"action_name": "RequestServiceOfCloudDBA", "DBInstanceId": DBInstanceId,
+        values = {"action_name": "RequestServiceOfCloudDBA", "DBInstanceId": self.DBInstanceId,
                   "ServiceRequestType": ServiceRequestType, "ServiceRequestParam": ServiceRequestParam}
         values = dict(values, **kwargs)
         result = self.request_api(request, values)

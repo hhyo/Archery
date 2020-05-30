@@ -3,23 +3,243 @@ import re
 from datetime import timedelta, datetime, date
 from unittest.mock import MagicMock, patch, ANY
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
+from sql.archiver import add_archive_task, archive
 from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql
 from sql.utils.execute_sql import execute_callback
 from sql.query import kill_query_conn
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
-    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit, QueryLog
+from sql.models import Users, Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
+    ResourceGroup, ParamTemplate, WorkflowAudit, QueryLog, WorkflowLog, WorkflowAuditSetting, \
+    ArchiveConfig
 
-User = get_user_model()
+User = Users
+
+
+class TestView(TestCase):
+    """测试view视图"""
+
+    def setUp(self):
+        """
+        准备用户和配置
+        """
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.client.force_login(self.superuser)
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+                                           host='some_host',
+                                           port=3306, user='ins_user', password='some_str')
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_audit_group',
+            status='workflow_finish',
+            is_backup=True,
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf,
+                                          sql_content='some_sql',
+                                          execute_result='')
+        self.query_apply = QueryPrivilegesApply.objects.create(
+            group_id=1,
+            group_name='some_name',
+            title='some_title1',
+            user_name='some_user',
+            instance=self.ins,
+            db_list='some_db,some_db2',
+            limit_num=100,
+            valid_date='2020-01-1',
+            priv_type=1,
+            status=0,
+            audit_auth_groups='some_audit_group'
+        )
+        self.audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name='some_group',
+            workflow_id=1,
+            workflow_type=1,
+            workflow_title='申请标题',
+            workflow_remark='申请备注',
+            audit_auth_groups='1,2,3',
+            current_audit='1',
+            next_audit='2',
+            current_status=0)
+        self.wl = WorkflowLog.objects.create(audit_id=self.audit.audit_id,
+                                             operation_type=1)
+
+    def tearDown(self):
+        self.sys_config.purge()
+        User.objects.all().delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+        WorkflowAudit.objects.all().delete()
+        WorkflowLog.objects.all().delete()
+        QueryPrivilegesApply.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+
+    def test_index(self):
+        """测试index页面"""
+        data = {}
+        r = self.client.get('/index/', data=data)
+        self.assertRedirects(r, f'/sqlworkflow/', fetch_redirect_response=False)
+
+    def test_dashboard(self):
+        """测试dashboard页面"""
+        data = {}
+        r = self.client.get('/dashboard/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'SQL上线工单')
+
+    def test_sqlworkflow(self):
+        """测试sqlworkflow页面"""
+        data = {}
+        r = self.client.get('/sqlworkflow/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_submitsql(self):
+        """测试submitsql页面"""
+        data = {}
+        r = self.client.get('/submitsql/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_rollback(self):
+        """测试rollback页面"""
+        data = {"workflow_id": self.wf.id}
+        r = self.client.get('/rollback/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqlanalyze(self):
+        """测试sqlanalyze页面"""
+        data = {}
+        r = self.client.get('/sqlanalyze/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqlquery(self):
+        """测试sqlquery页面"""
+        data = {}
+        r = self.client.get('/sqlquery/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_queryapplylist(self):
+        """测试queryapplylist页面"""
+        data = {}
+        r = self.client.get('/queryapplylist/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_queryuserprivileges(self):
+        """测试queryuserprivileges页面"""
+        data = {}
+        r = self.client.get(f'/queryuserprivileges/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqladvisor(self):
+        """测试sqladvisor页面"""
+        data = {}
+        r = self.client.get(f'/sqladvisor/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_slowquery(self):
+        """测试slowquery页面"""
+        data = {}
+        r = self.client.get(f'/slowquery/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instance(self):
+        """测试instance页面"""
+        data = {}
+        r = self.client.get(f'/instance/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instanceaccount(self):
+        """测试instanceaccount页面"""
+        data = {}
+        r = self.client.get(f'/instanceaccount/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_database(self):
+        """测试database页面"""
+        data = {}
+        r = self.client.get(f'/database/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_dbdiagnostic(self):
+        """测试dbdiagnostic页面"""
+        data = {}
+        r = self.client.get(f'/dbdiagnostic/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instanceparam(self):
+        """测试instance_param页面"""
+        data = {}
+        r = self.client.get(f'/instanceparam/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_binlog2sql(self):
+        """测试binlog2sql页面"""
+        data = {}
+        r = self.client.get(f'/binlog2sql/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_schemasync(self):
+        """测试schemasync页面"""
+        data = {}
+        r = self.client.get(f'/schemasync/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_archive(self):
+        """测试archive页面"""
+        data = {}
+        r = self.client.get(f'/archive/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_config(self):
+        """测试config页面"""
+        data = {}
+        r = self.client.get(f'/config/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_group(self):
+        """测试group页面"""
+        data = {}
+        r = self.client.get(f'/group/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_groupmgmt(self):
+        """测试groupmgmt页面"""
+        data = {}
+        r = self.client.get(f'/grouprelations/{self.res_group.group_id}/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_workflows(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/workflow/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_workflowsdetail(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/workflow/{self.audit.audit_id}/', data=data)
+        self.assertRedirects(r, f'/queryapplydetail/1/', fetch_redirect_response=False)
+
+    def test_dbaprinciples(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/dbaprinciples/', data=data)
+        self.assertEqual(r.status_code, 200)
 
 
 class TestSignUp(TestCase):
@@ -529,7 +749,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_review = Permission.objects.get(codename='query_review')
         self.user.user_permissions.add(query_review)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -550,8 +770,7 @@ class TestQueryPrivilegesApply(TestCase):
 
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
-        # ResourceGroup.objects.get(group_id=self.group.group_id).users.add(self.user)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -602,7 +821,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
         self.user.user_permissions.add(query_mgtpriv)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -630,13 +849,13 @@ class TestQueryPrivilegesApply(TestCase):
                                        priv_type=2)
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
-class TestQuery(TestCase):
+class TestQuery(TransactionTestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
@@ -695,7 +914,8 @@ class TestQuery(TestCase):
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, some_sql, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, some_sql, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         print(r_json)
         self.assertEqual(r_json['data']['rows'], ['value'])
@@ -724,7 +944,8 @@ class TestQuery(TestCase):
                                     'sql_content': sql_without_limit,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, sql_with_limit, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, sql_with_limit, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -738,7 +959,8 @@ class TestQuery(TestCase):
                                 'sql_content': sql_with_star,
                                 'db_name': some_db,
                                 'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, filtered_sql_with_star, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, filtered_sql_with_star, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
 
     @patch('sql.query.query_priv_check')
     def testStarOptionOn(self, _priv_check):
@@ -799,7 +1021,7 @@ class TestQuery(TestCase):
         self.assertEqual(query_log.alias, '')
 
 
-class TestWorkflowView(TestCase):
+class TestWorkflowView(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -1071,7 +1293,6 @@ class TestWorkflowView(TestCase):
         r = c.get('/detail/{}/'.format(self.wf1.id))
         self.assertContains(r, expected_status_display)
         self.assertContains(r, exepcted_status)
-        self.assertContains(r, 'Json decode failed.')
 
         # 执行详情为空
         self.wfc1.review_content = [
@@ -1081,7 +1302,6 @@ class TestWorkflowView(TestCase):
         self.wfc1.execute_result = ''
         self.wfc1.save()
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
         """测试工单列表"""
@@ -1369,10 +1589,13 @@ class TestOptimize(TestCase):
                 "instance_name": "test_instance",
                 "db_name": settings.DATABASES['default']['TEST']['NAME']
                 }
-        r = self.client.post(path='/slowquery/optimize_sqltuning/')
+        data['instance_name'] = 'test_instancex'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
 
+
         # 获取sys_parm
+        data['instance_name'] = 'test_instance'
         data['option[]'] = 'sys_parm'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertListEqual(list(json.loads(r.content)['data'].keys()),
@@ -1426,18 +1649,237 @@ class TestSchemaSync(TestCase):
         :return:
         """
         data = {"instance_name": "test_instance",
-                "db_name": "*",
+                "db_name": "test",
                 "target_instance_name": "test_instance",
-                "target_db_name": "*",
+                "target_db_name": "test",
                 "sync_auto_inc": True,
                 "sync_comments": False}
         r = self.client.post(path='/instance/schemasync/', data=data)
-        self.assertEqual(json.loads(r.content)['status'], 1)
-        self.assertEqual(json.loads(r.content)['msg'], '请配置SchemaSync路径！')
-        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
-        self.sys_config.get_all_config()
-        r = self.client.post(path='/instance/schemasync/', data=data)
         self.assertEqual(json.loads(r.content)['status'], 0)
+
+
+class TestArchiver(TestCase):
+    """
+    测试Archive
+    """
+
+    def setUp(self):
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.u1 = User.objects.create(username='u1', is_superuser=False)
+        self.u2 = User.objects.create(username='u2', is_superuser=False)
+        menu_archive = Permission.objects.get(codename='menu_archive')
+        archive_review = Permission.objects.get(codename='archive_review')
+        self.u1.user_permissions.add(menu_archive)
+        self.u2.user_permissions.add(menu_archive)
+        self.u2.user_permissions.add(archive_review)
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.ins = Instance.objects.create(instance_name='test_instance', type='master', db_type='mysql',
+                                           host=settings.DATABASES['default']['HOST'],
+                                           port=settings.DATABASES['default']['PORT'],
+                                           user=settings.DATABASES['default']['USER'],
+                                           password=settings.DATABASES['default']['PASSWORD'])
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
+        self.archive_apply = ArchiveConfig.objects.create(
+            title='title',
+            resource_group=self.res_group,
+            audit_auth_groups='some_audit_group',
+            src_instance=self.ins,
+            src_db_name='src_db_name',
+            src_table_name='src_table_name',
+            dest_instance=self.ins,
+            dest_db_name='src_db_name',
+            dest_table_name='src_table_name',
+            condition='1=1',
+            mode='file',
+            no_delete=True,
+            sleep=1,
+            status=WorkflowDict.workflow_status['audit_wait'],
+            state=False,
+            user_name='some_user',
+            user_display='display',
+        )
+        self.sys_config = SysConfig()
+        self.client = Client()
+
+    def tearDown(self):
+        User.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+        ArchiveConfig.objects.all().delete()
+        WorkflowAuditSetting.objects.all().delete()
+        self.ins.delete()
+        self.sys_config.purge()
+
+    def test_archive_list_super(self):
+        """
+        测试管理员获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.superuser)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_list_own(self):
+        """
+        测试非管理员和审核人获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.u1)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_list_review(self):
+        """
+        测试审核人获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.u2)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_apply_not_param(self):
+        """
+        测试申请归档实例数据，参数不完整
+        :return:
+        """
+        data = {
+            "group_name": self.res_group.group_name,
+            "src_instance_name": self.ins.instance_name,
+            "src_db_name": 'src_db_name',
+            "src_table_name": 'src_table_name',
+            "mode": 'dest',
+            "dest_instance_name": self.ins.instance_name,
+            "dest_db_name": 'dest_db_name',
+            "dest_table_name": 'dest_table_name',
+            "condition": '1=1',
+            "no_delete": 'true',
+            "sleep": 10
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'status': 1, 'msg': '请填写完整！', 'data': {}})
+
+    def test_archive_apply_not_dest_param(self):
+        """
+        测试申请归档实例数据，目标实例不完整
+        :return:
+        """
+        data = {
+            "title": 'title',
+            "group_name": self.res_group.group_name,
+            "src_instance_name": self.ins.instance_name,
+            "src_db_name": 'src_db_name',
+            "src_table_name": 'src_table_name',
+            "mode": 'dest',
+            "condition": '1=1',
+            "no_delete": 'true',
+            "sleep": 10
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'status': 1, 'msg': '归档到实例时目标实例信息必选！', 'data': {}})
+
+    def test_archive_apply_not_exist_review(self):
+        """
+        测试申请归档实例数据，未配置审批流程
+        :return:
+        """
+        data = {"title": 'title',
+                "group_name": self.res_group.group_name,
+                "src_instance_name": self.ins.instance_name,
+                "src_db_name": 'src_db_name',
+                "src_table_name": 'src_table_name',
+                "mode": 'dest',
+                "dest_instance_name": self.ins.instance_name,
+                "dest_db_name": 'dest_db_name',
+                "dest_table_name": 'dest_table_name',
+                "condition": '1=1',
+                "no_delete": 'true',
+                "sleep": 10
+                }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'data': {}, 'msg': '审批流程不能为空，请先配置审批流程', 'status': 1})
+
+    @patch('sql.archiver.async_task')
+    def test_archive_apply(self, _async_task):
+        """
+        测试申请归档实例数据
+        :return:
+        """
+        WorkflowAuditSetting.objects.create(workflow_type=3, group_id=1, audit_auth_groups='1')
+        data = {"title": 'title',
+                "group_name": self.res_group.group_name,
+                "src_instance_name": self.ins.instance_name,
+                "src_db_name": 'src_db_name',
+                "src_table_name": 'src_table_name',
+                "mode": 'dest',
+                "dest_instance_name": self.ins.instance_name,
+                "dest_db_name": 'dest_db_name',
+                "dest_table_name": 'dest_table_name',
+                "condition": '1=1',
+                "no_delete": 'true',
+                "sleep": 10
+                }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertEqual(json.loads(r.content)['status'], 0)
+
+    @patch('sql.archiver.Audit')
+    @patch('sql.archiver.async_task')
+    def test_archive_audit(self, _async_task, _audit):
+        """
+        测试审核归档实例数据
+        :return:
+        """
+        _audit.detail_by_workflow_id.return_value.audit_id = 1
+        _audit.audit.return_value = {'status': 0, 'msg': 'ok', 'data': {'workflow_status': 1}}
+        data = {
+            "archive_id": self.archive_apply.id,
+            "audit_status": WorkflowDict.workflow_status['audit_success'],
+            "audit_remark": 'xxxx'
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/audit/', data=data)
+        self.assertRedirects(r, f'/archive/{self.archive_apply.id}/', fetch_redirect_response=False)
+
+    @patch('sql.archiver.async_task')
+    def test_add_archive_task(self, _async_task):
+        """
+        测试添加异步归档任务
+        :return:
+        """
+        add_archive_task()
+
+    @patch('sql.archiver.async_task')
+    def test_add_archive(self, _async_task):
+        """
+        测试执行归档任务
+        :return:
+        """
+        with self.assertRaises(Exception):
+            archive(self.archive_apply.id)
+
+    @patch('sql.archiver.async_task')
+    def test_archive_log(self, _async_task):
+        """
+        测试获取归档日志
+        :return:
+        """
+        data = {
+            "archive_id": self.archive_apply.id,
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/log/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
 class TestAsync(TestCase):
@@ -2154,7 +2596,7 @@ class TestNotify(TestCase):
         self.wf.save()
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
-        _msg_sender.assert_called_once()
+        _msg_sender.assert_called()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_binlog2sql_disable(self, _msg_sender):

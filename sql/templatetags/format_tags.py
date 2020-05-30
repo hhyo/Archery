@@ -9,4 +9,4 @@ register = template.Library()
 @register.simple_tag
 def format_str(str):
     # 换行
-    return mark_safe(str.replace(',', '<br/>'))
+    return mark_safe(str.replace(',', '<br/>').replace('\n', '<br/>'))

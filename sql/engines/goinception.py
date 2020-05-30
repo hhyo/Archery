@@ -13,6 +13,14 @@ logger = logging.getLogger('default')
 
 
 class GoInceptionEngine(EngineBase):
+    @property
+    def name(self):
+        return 'GoInception'
+
+    @property
+    def info(self):
+        return 'GoInception engine'
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -32,7 +40,7 @@ class GoInceptionEngine(EngineBase):
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};--port={instance.port};--check=1;*/
+        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
@@ -94,7 +102,7 @@ class GoInceptionEngine(EngineBase):
                 break
         return execute_result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()
@@ -111,7 +119,7 @@ class GoInceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f'goInception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}')
+            logger.warning(f'goInception语句执行报错，错误信息{traceback.format_exc()}')
             result_set.error = str(e)
         if close_conn:
             self.close()
@@ -156,6 +164,7 @@ class GoInceptionEngine(EngineBase):
 
     @staticmethod
     def get_table_ref(query_tree, db_name=None):
+        __author__ = 'xxlrr'
         """
         * 从goInception解析后的语法树里解析出兼容Inception格式的引用表信息。
         * 目前的逻辑是在SQL语法树中通过递归查找选中最小的 TableRefs 子树（可能有多个），
@@ -198,6 +207,7 @@ class GoInceptionEngine(EngineBase):
 
 class DictTree(dict):
     def find_max_tree(self, *keys):
+        __author__ = 'xxlrr'
         """通过广度优先搜索算法查找满足条件的最大子树(不找叶子节点)"""
         fit = []
         find_queue = [self]

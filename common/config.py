@@ -82,7 +82,8 @@ class SysConfig(object):
             self.purge()
             with transaction.atomic():
                 Config.objects.bulk_create(
-                    [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
+                    [Config(item=items['key'].strip(),
+                            value=str(items['value']).strip()) for items in json.loads(configs)])
         except Exception as e:
             logger.error(traceback.format_exc())
             result['status'] = 1

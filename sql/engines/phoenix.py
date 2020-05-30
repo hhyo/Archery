@@ -27,21 +27,21 @@ class PhoenixEngine(EngineBase):
         result.rows = [row[0] for row in result.rows if row[0] is not None]
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = f"SELECT DISTINCT TABLE_NAME FROM SYSTEM.CATALOG WHERE TABLE_SCHEM = '{db_name}'"
         result = self.query(db_name=db_name, sql=sql)
         result.rows = [row[0] for row in result.rows if row[0] is not None]
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
 
         sql = f""" SELECT DISTINCT COLUMN_NAME FROM SYSTEM.CATALOG
  WHERE TABLE_SCHEM = '{db_name}' AND table_name = '{tb_name}' AND column_name is not null"""
         return self.query(sql=sql)
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet"""
         sql = f"""SELECT COLUMN_NAME,SqlTypeName(DATA_TYPE) FROM SYSTEM.CATALOG
  WHERE TABLE_SCHEM = '{db_name}' and table_name = '{tb_name}' and column_name is not null"""
@@ -83,7 +83,7 @@ class PhoenixEngine(EngineBase):
             sql = f'{sql};'
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:

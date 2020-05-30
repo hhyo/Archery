@@ -31,7 +31,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         result.rows = db_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
@@ -41,14 +41,14 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         result = self.describe_table(db_name, tb_name)
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet"""
         sql = r"""select
         c.name ColumnName,
@@ -78,7 +78,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
                            "reverse", "right", "soundex", "space", "str", "string_agg",
                            "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
         keyword_warning = ''
-        star_patter = r"(^|,| )\*( |\(|$)"
+        star_patter = r"(^|,|\s)\*(\s|\(|$)"
         sql_whitelist = ['select', 'sp_helptext']
         # 根据白名单list拼接pattern语句
         whitelist_pattern = "^" + "|^".join(sql_whitelist)
@@ -107,7 +107,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             if re.search(pattern, sql_lower) is not None:
                 keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
                 result['bad_query'] = True
-        if result.get('bad_query'):
+        if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result
 
@@ -119,7 +119,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
                 return sql_lower.replace('select', 'select top {}'.format(limit_num))
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         try:
@@ -150,7 +150,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            filtered_result = brute_mask(resultset)
+            filtered_result = brute_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
             filtered_result = resultset

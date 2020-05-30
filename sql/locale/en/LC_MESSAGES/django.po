@@ -38,6 +38,9 @@ msgstr "Review passed"
 msgid "workflow_timingtask"
 msgstr "Scheduled"
 
+msgid "workflow_queuing"
+msgstr "Queuing"
+
 #: .\sql\models.py:116
 msgid "workflow_executing"
 msgstr "Executing"

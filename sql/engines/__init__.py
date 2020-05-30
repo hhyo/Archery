@@ -15,6 +15,7 @@ class EngineBase:
             self.port = int(instance.port)
             self.user = instance.user
             self.password = instance.password
+            self.db_name = instance.db_name
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
@@ -51,15 +52,15 @@ class EngineBase:
         """获取数据库列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """获取表结构, 返回一个 ResultSet，rows=list"""
         return ResultSet()
 
@@ -70,7 +71,7 @@ class EngineBase:
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """实际查询 返回一个ResultSet"""
 
     def query_masking(self, db_name=None, sql='', resultset=None):

@@ -76,7 +76,7 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = '无法连接Inception\n{}'.format(str(e))
+        result['msg'] = '无法连接goInception\n{}'.format(str(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
     else:
         cur.close()
@@ -93,7 +93,7 @@ def go_inception(request):
     except Exception as e:
         logger.error(traceback.format_exc())
         result['status'] = 1
-        result['msg'] = '无法连接Inception备份库\n{}'.format(str(e))
+        result['msg'] = '无法连接goInception备份库\n{}'.format(str(e))
     else:
         cur.close()
         conn.close()

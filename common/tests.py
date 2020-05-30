@@ -7,7 +7,7 @@ from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
-from sql.engines import EngineBase
+from sql.engines import EngineBase, ResultSet
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, ResourceGroup
 from common.utils.chart_dao import ChartDao
 from common.auth import init_user
@@ -312,9 +312,11 @@ class CheckTest(TestCase):
         self.assertEqual(r_json['msg'], 'ok')
 
     @patch('MySQLdb.connect')
-    @patch('common.check.get_engine', return_value=EngineBase)
+    @patch('common.check.get_engine')
     def testInstanceCheck(self, _get_engine, _conn):
         _get_engine.return_value.get_connection = _conn
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
@@ -491,7 +493,7 @@ class AuthTest(TestCase):
     def test_init_user(self):
         """用户初始化测试测试"""
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
         # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))

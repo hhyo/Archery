@@ -232,3 +232,45 @@ def trxandlocks(request):
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+# 问题诊断--长事务
+@permission_required('sql.trx_view', raise_exception=True)
+def innodb_trx(request):
+    instance_name = request.POST.get('instance_name')
+
+    try:
+        instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        result = {'status': 1, 'msg': '你所在组未关联该实例', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
+
+    query_engine = get_engine(instance=instance)
+    sql = '''select trx.trx_started,
+       trx.trx_state,
+       trx.trx_operation_state,
+       trx.trx_mysql_thread_id,
+       trx.trx_tables_locked,
+       trx.trx_rows_locked,
+       trx.trx_rows_modified,
+       trx.trx_is_read_only,
+       trx.trx_isolation_level,
+       p.user,
+       p.host,
+       p.db,
+       to_seconds(now()) - to_seconds(trx.trx_started) trx_idle_time,
+       p.time                                          thread_time,
+       ifnull(p.info, '')                              info
+from information_schema.INNODB_TRX trx
+       join information_schema.processlist p on trx.trx_mysql_thread_id = p.id;'''
+
+    query_result = query_engine.query('information_schema', sql)
+    if not query_result.error:
+        trx = query_result.to_dict()
+        result = {'status': 0, 'msg': 'ok', 'rows': trx}
+    else:
+        result = {'status': 1, 'msg': query_result.error}
+
+    # 返回查询结果
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')

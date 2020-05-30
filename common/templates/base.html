@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    {% load staticfiles %}
+    {% load static %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
     <title>Archery-SQL审核查询平台</title>
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
 
     <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -60,7 +61,12 @@
                 </a>
                 <ul class="dropdown-menu dropdown-user">
                     {% if user.is_superuser %}
-                        <li><a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> 系统信息</a></li>
+                        <li>
+                            <a target="_blank" href="/api/debug"><i class="fa fa-info fa-fw"></i> 系统信息</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> 管理后台</a>
+                        </li>
                     {% endif %}
                     <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
                     <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
@@ -182,6 +188,11 @@
                         <li>
                             <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
+                                {% if perms.sql.menu_archive %}
+                                    <li>
+                                        <a href="/archive/">PTArchiver</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_binlog2sql %}
                                     <li>
                                         <a href="/binlog2sql/">Binlog2SQL</a>

@@ -58,13 +58,14 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             priv_limit = int(SysConfig().get('admin_query_limit', 5000))
             result['data']['limit_num'] = min(priv_limit, limit_num) if limit_num else priv_limit
             return result
-    # explain和show create跳过权限校验
-    if re.match(r"^explain|^show\s+create", sql_content, re.I):
-        return result
 
     # 仅MySQL做表权限校验
     if instance.db_type == 'mysql':
         try:
+            # explain和show create跳过权限校验
+            if re.match(r"^explain|^show\s+create", sql_content, re.I):
+                return result
+            # 其他权限校验
             table_ref = _table_ref(sql_content, instance, db_name)
             # 循环验证权限，可能存在性能问题，但一次查询涉及的库表数量有限
             for table in table_ref:
@@ -258,7 +259,7 @@ def query_priv_apply(request):
         # 消息通知
         audit_id = Audit.detail_by_workflow_id(workflow_id=apply_id,
                                                workflow_type=WorkflowDict.workflow_type['query']).audit_id
-        async_task(notify_for_audit, audit_id=audit_id, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, timeout=60, task_name=f'query-priv-apply-{apply_id}')
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
@@ -388,7 +389,8 @@ def query_priv_audit(request):
         return render(request, 'error.html', context)
     else:
         # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60)
+        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                   task_name=f'query-priv-audit-{apply_id}')
 
     return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(apply_id,)))
 

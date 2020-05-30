@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-from sql.models import Users, Instance, ResourceGroup, ResourceGroup2Instance
+from sql.models import Users, Instance, ResourceGroup
 
 
 def user_groups(user):
@@ -12,7 +12,7 @@ def user_groups(user):
     if user.is_superuser:
         group_list = [group for group in ResourceGroup.objects.filter(is_deleted=0)]
     else:
-        group_list = [group for group in Users.objects.get(id=user.id).resourcegroup_set.filter(is_deleted=0)]
+        group_list = [group for group in Users.objects.get(id=user.id).resource_group.filter(is_deleted=0)]
     return group_list
 
 
@@ -31,10 +31,8 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
     else:
         # 先获取用户关联的资源组
         resource_groups = ResourceGroup.objects.filter(users=user, is_deleted=0)
-        # 再获取资源组和实例的关联关系
-        resource_group2instance = ResourceGroup2Instance.objects.filter(resource_group__in=resource_groups)
         # 再获取实例
-        instances = Instance.objects.filter(resourcegroup2instance__in=resource_group2instance)
+        instances = Instance.objects.filter(resource_group__in=resource_groups)
     # 过滤type
     if type:
         instances = instances.filter(type=type)
@@ -46,10 +44,7 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
     # 过滤tag
     if tag_codes:
         for tag_code in tag_codes:
-            instances = instances.filter(instancetag__tag_code=tag_code,
-                                         instancetag__active=True,
-                                         instancetagrelations__active=True)
-
+            instances = instances.filter(instance_tag__tag_code=tag_code, instance_tag__active=True)
     return instances.distinct()
 
 
@@ -61,7 +56,7 @@ def auth_group_users(auth_group_names, group_id):
     :return:
     """
     # 获取资源组关联的用户
-    users = ResourceGroup.objects.get(group_id=group_id).users.all()
+    users = ResourceGroup.objects.get(group_id=group_id).users_set.all()
     # 过滤在该权限组中的用户
     users = users.filter(groups__name__in=auth_group_names)
     return users
