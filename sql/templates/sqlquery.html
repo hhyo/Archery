@@ -628,13 +628,22 @@
         //先做表单验证，验证成功再成功提交格式化sql
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                var optgroup = $('#instance_name :selected').parent().attr('label');
+                let sqlContent = '';
                 if (select_sqlContent) {
-                    var sqlContent = select_sqlContent
+                    sqlContent = select_sqlContent
                 } else {
-                    var sqlContent = editor.getValue();
-
+                    sqlContent = editor.getValue();
                 }
-                var sqlContent = window.sqlFormatter.format(sqlContent);
+                if (optgroup === "Mongo") {
+                    try {
+                        sqlContent = JSON.stringify(JSON.parse(sqlContent), " ", 4);
+                    } catch (err) {
+                        sqlContent = String(err)
+                    }
+                } else {
+                    sqlContent = window.sqlFormatter.format(sqlContent);
+                }
                 editor.setValue(sqlContent);
                 editor.clearSelection();
             }
@@ -763,7 +772,7 @@
                     n = sessionStorage.getItem('tab_num');
                 }
                 $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                    escape: true,
+                    escape: false,
                     columns: [{
                         field: 'error',
                         title: 'Error'
@@ -786,22 +795,22 @@
 
             }
             if (optgroup === "Oracle") {
-			    //查看执行计划
+                //查看执行计划
                 if (sql === 'explain') {
                     sqlContent = 'explain plan for ' + sqlContent
                 }
                 //查看表结构
                 else if (sql === 'show create table') {
-                        sqlContent = "desc " + $("#table_name").val() + ";"
+                    sqlContent = "desc " + $("#table_name").val() + ";"
                 }
             } else if (optgroup === "MySQL") {
-			    //查看执行计划
+                //查看执行计划
                 if (sql === 'explain') {
-                sqlContent = 'explain ' + sqlContent
+                    sqlContent = 'explain ' + sqlContent
                 }
-			    //查看表结构
+                //查看表结构
                 else if (sql === 'show create table') {
-                        sqlContent = "show create table " + $("#table_name").val() + ";"
+                    sqlContent = "show create table " + $("#table_name").val() + ";"
                 }
             }
             //提交请求
@@ -882,7 +891,7 @@
                     $("#div-schema_name").hide();
                     redis_help_tab_remove();
                 }
-                $("#btn-format").attr('disabled', true);
+                $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', true);
             } else if (optgroup === "Phoenix") {
                 if (change) {
@@ -987,7 +996,7 @@
                         var result = data.data;
                         if (resource_type === "table") {
                             if (optgroup == 'Mongo') {
-                                $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">请选择集合:</option>")
+                                $("#table_name").prepend("<option value=\"is-empty\" disabled=\"\" selected=\"selected\">查看集合字段:</option>")
                             }
                             for (var i = 0; i < result.length; i++) {
                                 var name = "<option>" + result[i] + "</option>";
