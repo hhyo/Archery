@@ -30,6 +30,9 @@ editor.setOptions({
     enableLiveAutocompletion: true
 });
 
+//启用搜索扩展
+ace.require("ace/ext/language_tools");
+
 //绑定查询快捷键
 editor.commands.addCommand({
     name: "alter",
