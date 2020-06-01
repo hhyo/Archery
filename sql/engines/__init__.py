@@ -19,7 +19,7 @@ class EngineBase:
             self.db_name = instance.db_name
 
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
-            if self.instance.tunnel != None:
+            if self.instance.tunnel:
                 self.ssh = SSHConnection(
                     self.host,
                     self.port,
@@ -27,7 +27,7 @@ class EngineBase:
                     instance.tunnel.port,
                     instance.tunnel.user,
                     instance.tunnel.password,
-                    instance.tunnel.pkey_address,
+                    instance.tunnel.pkey_path,
                     instance.tunnel.pkey_password,
                 )
                 self.host,self.port = self.ssh.get_ssh()
