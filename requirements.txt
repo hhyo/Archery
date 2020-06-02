@@ -21,4 +21,7 @@ phoenixdb==0.7
 django-mirage-field==1.0.1
 schema-sync==0.9.7
 parsedatetime==2.4
+<<<<<<< HEAD
 sshtunnel==0.1.5
+=======
+>>>>>>> master

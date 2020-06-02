@@ -686,35 +686,6 @@
                         <br>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>
-                        <h5 style="color: darkgrey"><b>阿里云认证信息</b></h5>
-                        <h6 style="color:red">注：实例关联RDS实例ID后，会调用RDS接口获取慢日志、进程、表空间，其中进程和表空间需要管理权限的key</h6>
-                        <hr/>
-                        <div class="form-horizontal">
-                            <div class="form-group">
-                                <label for="aliyun_ak"
-                                       class="col-sm-4 control-label">AccessKeyID</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_ak"
-                                           key="aliyun_ak"
-                                           value="{{ config.aliyun_ak }}"
-                                           placeholder="AccessKeyID">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="aliyun_secret"
-                                       class="col-sm-4 control-label">AccessKeySecret</label>
-                                <div class="col-sm-5">
-                                    <input type="password" class="form-control"
-                                           id="aliyun_secret"
-                                           key="aliyun_secret"
-                                           value="{{ config.aliyun_secret }}"
-                                           placeholder="AccessKeySecret">
-                                </div>
-                            </div>
-                        </div>
-                        <h5 style="color: darkgrey"><b>其他</b></h5>
-                        <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
                                 <label for="index_path_url"
@@ -815,11 +786,10 @@
                                        disabled="disabled" style="width: 283px">
                             </div>
                             <div class="form-group">
-                                <select id="group_auditors" name="group"
+                                <select id="group_auditors" name="group" title="请选择审批权限组"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="审批人" data-placeholder="审批人:" data-live-search="true"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">添加审批权限组</option>
                                     {% for auth_group in auth_group_list %}
                                         <option value="{{ auth_group.name }}">{{ auth_group.name }}
                                     {% endfor %}
@@ -963,15 +933,23 @@
             $('#group_auditors').selectpicker('refresh');
         });
 
+        // 重置权限组选择框状态
+        $("#group_auditors").on("reset", function () {
+            $('#group_auditors').selectpicker('val', []);
+            $(this).children().removeAttr("disabled");
+            $(this).selectpicker("refresh");
+        })
+
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
-            window.location.reload()
         });
 
         // 切换工单类型获取对应组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
             if ($("#group").val()) {
                 $.ajax({

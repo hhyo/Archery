@@ -7,6 +7,8 @@
 """
 
 import re
+import shlex
+
 import redis
 import logging
 import traceback
@@ -71,7 +73,7 @@ class RedisEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=db_name)
-            rows = conn.execute_command(sql)
+            rows = conn.execute_command(*shlex.split(sql))
             result_set.column_list = ['Result']
             if isinstance(rows, list):
                 if re.match(fr'^scan', sql.strip(), re.I):
@@ -127,7 +129,7 @@ class RedisEngine(EngineBase):
             conn = self.get_connection(db_name=workflow.db_name)
             for cmd in split_sql:
                 with FuncTimer() as t:
-                    conn.execute_command(cmd)
+                    conn.execute_command(*shlex.split(cmd))
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,

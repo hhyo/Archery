@@ -232,8 +232,8 @@ class OracleEngine(EngineBase):
                 return True
             else:
                 return False
-        elif re.match(r"^insert", sql):
-            table_name = re.match(r"^insert\s+into\s(.+?)(\(|\s)", sql, re.M).group(1)
+        elif re.match(r"^insert\s", sql):
+            table_name = re.match(r"^insert\s+((into)|(all\s+into))\s(.+?)(\(|\s)", sql, re.M).group(4)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
@@ -692,14 +692,14 @@ class OracleEngine(EngineBase):
                 line += 1
         finally:
             # 备份
-            try:
-                cursor.execute(f"select sysdate from dual")
-                rows = cursor.fetchone()
-                end_time = rows[0]
-                self.backup(workflow, cursor=cursor, begin_time=begin_time, end_time=end_time)
-            except Exception as e:
-                logger.error(f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}")
-
+            if workflow.is_backup:
+                try:
+                    cursor.execute(f"select sysdate from dual")
+                    rows = cursor.fetchone()
+                    end_time = rows[0]
+                    self.backup(workflow, cursor=cursor, begin_time=begin_time, end_time=end_time)
+                except Exception as e:
+                    logger.error(f"Oracle工单备份异常，工单id：{workflow.id}， 错误信息：{traceback.format_exc()}")
             if close_conn:
                 self.close()
         return execute_result

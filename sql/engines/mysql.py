@@ -146,8 +146,10 @@ class MysqlEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             conn.autocommit(True)
             cursor = conn.cursor(cursorclass)
-            if self.server_version >= (5, 7, 8) and max_execution_time:
+            try:
                 cursor.execute(f"set session max_execution_time={max_execution_time};")
+            except MySQLdb.OperationalError:
+                pass
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))

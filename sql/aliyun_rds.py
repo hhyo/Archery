@@ -30,7 +30,7 @@ def slowquery_review(request):
     # 通过实例名称获取关联的rds实例id
     instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取SQL慢日志统计
-    slowsql = Aliyun().DescribeSlowLogs(instance_info.rds_dbinstanceid, start_time, end_time, **values)
+    slowsql = Aliyun(rds=instance_info).DescribeSlowLogs(start_time, end_time, **values)
 
     # 解决table数据丢失精度、格式化时间
     sql_slow_log = json.loads(slowsql)['Items']['SQLSlowLog']
@@ -71,7 +71,7 @@ def slowquery_review_history(request):
     # 通过实例名称获取关联的rds实例id
     instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取SQL慢日志统计
-    slowsql = Aliyun().DescribeSlowLogRecords(instance_info.rds_dbinstanceid, start_time, end_time, **values)
+    slowsql = Aliyun(rds=instance_info).DescribeSlowLogRecords(start_time, end_time, **values)
 
     # 格式化时间\过滤HostAddress
     sql_slow_record = json.loads(slowsql)['Items']['SQLSlowRecord']
@@ -98,8 +98,8 @@ def process_status(request):
     # 通过实例名称获取关联的rds实例id
     instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
-    process_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'ShowProcessList',
-                                                     {"Language": "zh", "Command": command_type})
+    process_info = Aliyun(rds=instance_info).RequestServiceOfCloudDBA(
+        'ShowProcessList', {"Language": "zh", "Command": command_type})
 
     # 提取进程列表
     process_list = json.loads(process_info)['AttrData']
@@ -120,8 +120,8 @@ def create_kill_session(request):
     # 通过实例名称获取关联的rds实例id
     instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
-    request_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'CreateKillSessionRequest',
-                                                     {"Language": "zh", "ThreadIDs": json.loads(thread_ids)})
+    request_info = Aliyun(rds=instance_info).RequestServiceOfCloudDBA(
+        'CreateKillSessionRequest', {"Language": "zh", "ThreadIDs": json.loads(thread_ids)})
 
     # 提取进程列表
     request_list = json.loads(request_info)['AttrData']
@@ -143,8 +143,7 @@ def kill_session(request):
     # 调用aliyun接口获取终止进程
     request_params = json.loads(request_params)
     service_request_param = dict({"Language": "zh"}, **request_params)
-    kill_result = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'ConfirmKillSessionRequest',
-                                                    service_request_param)
+    kill_result = Aliyun(rds=instance_info).RequestServiceOfCloudDBA('ConfirmKillSessionRequest', service_request_param)
 
     # 获取处理结果
     kill_result = json.loads(kill_result)['AttrData']
@@ -162,8 +161,8 @@ def sapce_status(request):
     # 通过实例名称获取关联的rds实例id
     instance_info = AliyunRdsConfig.objects.get(instance__instance_name=instance_name)
     # 调用aliyun接口获取进程数据
-    space_info = Aliyun().RequestServiceOfCloudDBA(instance_info.rds_dbinstanceid, 'GetSpaceStatForTables',
-                                                   {"Language": "zh", "OrderType": "Data"})
+    space_info = Aliyun(rds=instance_info).RequestServiceOfCloudDBA(
+        'GetSpaceStatForTables', {"Language": "zh", "OrderType": "Data"})
 
     # 提取进程列表
     space_list = json.loads(space_info)['ListData']
