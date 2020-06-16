@@ -17,6 +17,11 @@
     <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    <style type="text/css">
+    table{
+        max-width: none !important;      /*解决 ios 横向滚动失效*/
+    }
+    </style>
     <!-- django i18n -->
     <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
 </head>
