@@ -34,3 +34,6 @@ CREATE TABLE `sql_instance` (
   KEY `sql_instance_tunnel_id_99377638_fk_ssh_tunnel_id` (`tunnel_id`),
   CONSTRAINT `sql_instance_tunnel_id_99377638_fk_ssh_tunnel_id` FOREIGN KEY (`tunnel_id`) REFERENCES `ssh_tunnel` (`id`)
 ) ;
+
+-- 增加企业微信信息
+alter table resource_group add qywx_webhook varchar(255) not null default '' comment '企业微信webhook地址';

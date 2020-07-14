@@ -384,7 +384,8 @@
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
-                        <h6 style="color:red">注2：企业微信开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
+                        <h6 style="color:red">注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
+                        <h6 style="color:red">注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -572,13 +573,13 @@
 
                             <div class="form-group">
                                 <label for="wx"
-                                       class="col-sm-4 control-label">企业微信</label>
+                                       class="col-sm-4 control-label">企业微信自建应用</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="wx" key="wx"
                                                    value="{{ config.wx }}"
-                                                   type="checkbox"> 是否开启企业微信通知
+                                                   type="checkbox"> 是否开启企业微信自建应用通知
                                         </label>
                                     </div>
                                 </div>
@@ -622,6 +623,19 @@
                                                key="wx_app_secret"
                                                value="{{ config.wx_app_secret }}"
                                                placeholder="应用的Secret">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="qywx_webhook"
+                                       class="col-sm-4 control-label">企业微信群机器人</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="qywx_webhook" key="qywx_webhook"
+                                                   value="{{ config.qywx_webhook }}"
+                                                   type="checkbox"> 是否开启企业微信群机器人通知
+                                        </label>
                                     </div>
                                 </div>
                             </div>
