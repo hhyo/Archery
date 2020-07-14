@@ -17,6 +17,7 @@ class ResourceGroup(models.Model):
     group_level = models.IntegerField('层级', default=1)
     ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
     feishu_webhook = models.CharField('飞书webhook地址', max_length=255, blank=True)
+    qywx_webhook = models.CharField('企业微信webhook地址', max_length=255, blank=True)
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)

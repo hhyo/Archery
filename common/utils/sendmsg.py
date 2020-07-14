@@ -185,6 +185,22 @@ class MsgSender(object):
         else:
             logger.error(f'企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
+    def send_qywx_webhook(self,qywx_webhook, msg):
+
+        send_url = qywx_webhook
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": msg
+            },
+        }
+        res = requests.post(url=send_url, json=data, timeout=5)
+        r_json = res.json()
+        if r_json['errcode'] == 0:
+            logger.debug(f'企业微信机器人推送成功\n通知对象：机器人')
+        else:
+            logger.error(f'企业微信机器人推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
+
     @staticmethod
     def send_feishu_webhook(url, title, content):
         data = {
