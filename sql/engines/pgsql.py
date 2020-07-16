@@ -43,7 +43,7 @@ class PgSQLEngine(EngineBase):
         获取数据库列表
         :return:
         """
-        result = self.query(sql=f"SELECT datname FROM pg_database;")
+        result = self.query(sql=f"SELECT datname FROM pg_database;", db_name=self.db_name)
         db_list = [row[0] for row in result.rows if row[0] not in ['postgres', 'template0', 'template1']]
         result.rows = db_list
         return result
