@@ -23,13 +23,13 @@ class TestCompleter(TestCase):
         :return:
         """
         # 使用 travis.ci 时实例和测试service保持一致
-        cls.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+        cls.main = Instance(instance_name='test_instance', type='main', db_type='mysql',
                               host=settings.DATABASES['default']['HOST'],
                               port=settings.DATABASES['default']['PORT'],
                               user=settings.DATABASES['default']['USER'],
                               password=settings.DATABASES['default']['PASSWORD'])
-        cls.master.save()
-        cls.comp_engine = get_comp_engine(instance=cls.master, db_name=settings.DATABASES['default']['TEST']['NAME'])
+        cls.main.save()
+        cls.comp_engine = get_comp_engine(instance=cls.main, db_name=settings.DATABASES['default']['TEST']['NAME'])
         # 等待completion_refresher刷新完成
         while cls.comp_engine.completion_refresher.is_refreshing():
             import time
@@ -40,7 +40,7 @@ class TestCompleter(TestCase):
         """
         :return:
         """
-        cls.master.delete()
+        cls.main.delete()
         cls.comp_engine.refresh_completions(reset=True)
 
     def test_table_names_after_from(self):

@@ -128,12 +128,12 @@ class TestSQLReview(TestCase):
         self.superuser = User.objects.create(username='super', is_superuser=True)
         self.user = User.objects.create(username='user')
         # 使用 travis.ci 时实例和测试service保持一致
-        self.master = Instance(instance_name='test_instance', type='master', db_type='mysql',
+        self.main = Instance(instance_name='test_instance', type='main', db_type='mysql',
                                host=settings.DATABASES['default']['HOST'],
                                port=settings.DATABASES['default']['PORT'],
                                user=settings.DATABASES['default']['USER'],
                                password=settings.DATABASES['default']['PASSWORD'])
-        self.master.save()
+        self.main.save()
         self.sys_config = SysConfig()
         self.client = Client()
         self.group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
@@ -147,7 +147,7 @@ class TestSQLReview(TestCase):
             create_time=datetime.datetime.now(),
             status='workflow_review_pass',
             is_backup=True,
-            instance=self.master,
+            instance=self.main,
             db_name='db_name',
             syntax_type=1,
         )
@@ -162,7 +162,7 @@ class TestSQLReview(TestCase):
         self.group.delete()
         self.superuser.delete()
         self.user.delete()
-        self.master.delete()
+        self.main.delete()
         self.sys_config.replace(json.dumps({}))
 
     @patch('sql.engines.get_engine')
@@ -464,7 +464,7 @@ class TestSQLReview(TestCase):
 
 class TestExecuteSql(TestCase):
     def setUp(self):
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
@@ -635,7 +635,7 @@ class TestAudit(TestCase):
         self.user = User.objects.create(username='test_user', display='中文显示', is_active=True)
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
         tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
         self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
@@ -1092,7 +1092,7 @@ class TestDataMasking(TestCase):
     def setUp(self):
         self.superuser = User.objects.create(username='super', is_superuser=True)
         self.user = User.objects.create(username='user')
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
         self.sys_config = SysConfig()
@@ -1313,10 +1313,10 @@ class TestResourceGroup(TestCase):
         self.sys_config = SysConfig()
         self.user = User.objects.create(username='test_user', display='中文显示', is_active=True)
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
-        self.ins1 = Instance.objects.create(instance_name='some_ins1', type='slave', db_type='mysql',
+        self.ins1 = Instance.objects.create(instance_name='some_ins1', type='subordinate', db_type='mysql',
                                             host='some_host',
                                             port=3306, user='ins_user', password='some_str')
-        self.ins2 = Instance.objects.create(instance_name='some_ins2', type='slave', db_type='mysql',
+        self.ins2 = Instance.objects.create(instance_name='some_ins2', type='subordinate', db_type='mysql',
                                             host='some_host',
                                             port=3306, user='ins_user', password='some_str')
         self.rgp1 = ResourceGroup.objects.create(group_name='group1')

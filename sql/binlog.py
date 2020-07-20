@@ -64,7 +64,7 @@ def del_binlog(request):
 
     if binlog:
         query_engine = get_engine(instance=instance)
-        query_result = query_engine.query(sql=fr"purge master logs to '{binlog}';")
+        query_result = query_engine.query(sql=fr"purge main logs to '{binlog}';")
         if query_result.error is None:
             result = {'status': 0, 'msg': '清理成功', 'data': ''}
         else:

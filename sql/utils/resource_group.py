@@ -20,7 +20,7 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
     """
     获取用户实例列表（通过资源组间接关联）
     :param user:
-    :param type: 实例类型 all：全部，master主库，salve从库
+    :param type: 实例类型 all：全部，main主库，salve从库
     :param db_type: 数据库类型, ['mysql','mssql']
     :param tag_codes: 标签code列表, ['can_write', 'can_read']
     :return:

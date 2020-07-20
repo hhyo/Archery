@@ -119,7 +119,7 @@ class Instance(models.Model):
     各个线上实例配置
     """
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
-    type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
+    type = models.CharField('实例类型', max_length=6, choices=(('main', '主库'), ('subordinate', '从库')))
     db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=0)

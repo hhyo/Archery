@@ -61,9 +61,9 @@ class MysqlEngine(EngineBase):
         return True
 
     @property
-    def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
-        return slave_status.rows[0].get('Seconds_Behind_Master') if slave_status.rows else None
+    def seconds_behind_main(self):
+        subordinate_status = self.query(sql='show subordinate status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
+        return subordinate_status.rows[0].get('Seconds_Behind_Main') if subordinate_status.rows else None
 
     @property
     def server_version(self):

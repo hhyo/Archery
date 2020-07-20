@@ -35,7 +35,7 @@ class TestEngineBase(TestCase):
     def setUpClass(cls):
         cls.u1 = User(username='some_user', display='用户1')
         cls.u1.save()
-        cls.ins1 = Instance(instance_name='some_ins', type='master', db_type='mssql', host='some_host',
+        cls.ins1 = Instance(instance_name='some_ins', type='main', db_type='mssql', host='some_host',
                             port=1366, user='ins_user', password='some_str')
         cls.ins1.save()
         cls.wf1 = SqlWorkflow.objects.create(
@@ -77,7 +77,7 @@ class TestMssql(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.ins1 = Instance(instance_name='some_ins', type='slave', db_type='mssql', host='some_host',
+        cls.ins1 = Instance(instance_name='some_ins', type='subordinate', db_type='mssql', host='some_host',
                             port=1366, user='ins_user', password='some_str')
         cls.ins1.save()
         cls.engine = MssqlEngine(instance=cls.ins1)
@@ -221,7 +221,7 @@ class TestMssql(TestCase):
 class TestMysql(TestCase):
 
     def setUp(self):
-        self.ins1 = Instance(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
+        self.ins1 = Instance(instance_name='some_ins', type='subordinate', db_type='mysql', host='some_host',
                              port=1366, user='ins_user', password='some_str')
         self.ins1.save()
         self.sys_config = SysConfig()
@@ -529,17 +529,17 @@ class TestMysql(TestCase):
         _query.assert_called_once_with(sql="kill 100")
 
     @patch.object(MysqlEngine, 'query')
-    def test_seconds_behind_master(self, _query):
+    def test_seconds_behind_main(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
-        new_engine.seconds_behind_master
-        _query.assert_called_once_with(sql="show slave status", close_conn=False,
+        new_engine.seconds_behind_main
+        _query.assert_called_once_with(sql="show subordinate status", close_conn=False,
                                        cursorclass=MySQLdb.cursors.DictCursor)
 
 
 class TestRedis(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', host='some_host',
+        cls.ins = Instance(instance_name='some_ins', type='subordinate', db_type='redis', host='some_host',
                            port=1366, user='ins_user', password='some_str')
         cls.ins.save()
 
@@ -661,7 +661,7 @@ class TestRedis(TestCase):
 class TestPgSQL(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='pgsql', host='some_host',
+        cls.ins = Instance(instance_name='some_ins', type='subordinate', db_type='pgsql', host='some_host',
                            port=1366, user='ins_user', password='some_str')
         cls.ins.save()
         cls.sys_config = SysConfig()
@@ -904,9 +904,9 @@ class TestModel(TestCase):
 
 class TestInception(TestCase):
     def setUp(self):
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mysql', host='some_host',
                                            port=3306, user='ins_user', password='some_str')
-        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='inception',
+        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='subordinate', db_type='inception',
                                                host='some_host', port=6669)
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
@@ -1090,10 +1090,10 @@ class TestInception(TestCase):
 
 class TestGoInception(TestCase):
     def setUp(self):
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mysql',
                                            host='some_host',
                                            port=3306, user='ins_user', password='some_str')
-        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='goinception',
+        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='subordinate', db_type='goinception',
                                                host='some_host', port=4000)
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
@@ -1236,7 +1236,7 @@ class TestOracle(TestCase):
     """Oracle 测试"""
 
     def setUp(self):
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='oracle',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='oracle',
                                            host='some_host', port=3306, user='ins_user', password='some_str',
                                            sid='some_id')
         self.wf = SqlWorkflow.objects.create(
@@ -1560,7 +1560,7 @@ class TestOracle(TestCase):
 
 class MongoTest(TestCase):
     def setUp(self) -> None:
-        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mongo',
+        self.ins = Instance.objects.create(instance_name='some_ins', type='subordinate', db_type='mongo',
                                            host='some_host', port=3306, user='ins_user')
         self.engine = MongoEngine(instance=self.ins)
 

@@ -94,7 +94,7 @@ def query(request):
             add_kill_conn_schedule(schedule_name, run_date, instance.id, thread_id)
         with FuncTimer() as t:
             # 获取主从延迟信息
-            seconds_behind_master = query_engine.seconds_behind_master
+            seconds_behind_main = query_engine.seconds_behind_main
             query_result = query_engine.query(db_name, sql_content, limit_num,
                                               schema_name=schema_name,
                                               tb_name=tb_name,
@@ -144,7 +144,7 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
-            result['data']['seconds_behind_master'] = seconds_behind_master
+            result['data']['seconds_behind_main'] = seconds_behind_main
             if int(limit_num) == 0:
                 limit_num = int(query_result.affected_rows)
             else:

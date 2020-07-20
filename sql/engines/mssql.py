@@ -24,10 +24,10 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
-        sql = "SELECT name FROM master.sys.databases"
+        sql = "SELECT name FROM main.sys.databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
-                   if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
+                   if row[0] not in ('main', 'msdb', 'tempdb', 'model')]
         result.rows = db_list
         return result
 

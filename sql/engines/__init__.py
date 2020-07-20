@@ -55,7 +55,7 @@ class EngineBase:
         return False
 
     @property
-    def seconds_behind_master(self):
+    def seconds_behind_main(self):
         """实例同步延迟情况"""
         return None
 

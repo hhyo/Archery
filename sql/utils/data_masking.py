@@ -103,7 +103,7 @@ def analyze_query_tree(query_tree, instance):
                 if len(select_item['args']) != 1:
                     raise Exception('不支持该查询语句脱敏！请联系管理员')
 
-        # 处理select_list，为统一的{'type': 'FIELD_ITEM', 'db': 'archery_master', 'table': 'sql_users', 'field': 'email'}格式
+        # 处理select_list，为统一的{'type': 'FIELD_ITEM', 'db': 'archery_main', 'table': 'sql_users', 'field': 'email'}格式
         # 获取select信息的规则，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*]
         select_index = []
         select_list = []
