@@ -3,6 +3,7 @@
 *.lock
 *.log
 .idea/
+.vscode/
 .DS_Store
 archery/settings.py.github
 archery/settings.py.dev
