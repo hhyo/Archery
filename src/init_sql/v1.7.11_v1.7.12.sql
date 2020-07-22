@@ -6,7 +6,7 @@ CREATE TABLE `ssh_tunnel` (
   `port` int(11) NOT NULL,
   `user` varchar(200) DEFAULT NULL,
   `password` varchar(300) DEFAULT NULL,
-  `pkey_address` varchar(300) DEFAULT NULL,
+  `pkey_path` varchar(300) DEFAULT NULL,
   `pkey_password` varchar(300) DEFAULT NULL,
   `create_time` datetime(6) NOT NULL,
   `update_time` datetime(6) NOT NULL,
