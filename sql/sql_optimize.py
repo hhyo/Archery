@@ -60,7 +60,7 @@ def optimize_sqladvisor(request):
             "p": instance_info.password,
             "d": db_name,
             "v": verbose,
-            "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "q": sql_content.strip().replace('\n', ' ')
             }
 
     # 参数检查
@@ -120,7 +120,7 @@ def optimize_soar(request):
             "test-dsn": soar_test_dsn,
             "allow-online-as-test": "false",
             "report-type": "markdown",
-            "query": sql.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "query": sql.strip().replace('\n', ' ')
             }
     # 参数检查
     args_check_result = soar.check_args(args)
@@ -254,7 +254,7 @@ def optimize_sqltuningadvisor(request):
     # 不删除注释语句，已获取加hints的SQL优化建议，进行语法判断，执行第一条有效sql
     sql_content = sqlparse.format(sql_content.strip(), strip_comments=False)
     # 对单引号加转义符,支持plsql语法
-    sql_content = sql_content.replace("'", "''");
+    sql_content = sql_content.replace("'", "''")
     try:
         sql_content = sqlparse.split(sql_content)[0]
     except IndexError:

@@ -28,7 +28,7 @@ class SQLAdvisor(Plugin):
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
-                cmd_args += f' -{name} "{value}"'
+                cmd_args += f' -{name} \'{value}\''
         else:
             cmd_args = [self.path]
             for name, value in args.items():
