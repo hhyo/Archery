@@ -30,8 +30,7 @@ class Soar(Plugin):
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
-                    cmd_args += f" -{name}='{value}'"
-            cmd_args = shlex.quote(cmd_args)
+                cmd_args += f" -{name}={shlex.quote(str(value))}"
         else:
             cmd_args = [self.path]
             for name, value in args.items():
