@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SQL审核平台</title>
-    {% load staticfiles %}
+    <title>Archery</title>
+    {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
@@ -13,6 +13,7 @@
          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
          <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
       <![endif]-->
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" />
 </head>
 <body style="background-color:#edeff1;">
 <div class="row lsb-login">
@@ -32,9 +33,11 @@
             <div class="form-group">
                 <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>登录</button>
             </div>
-            <div class="form-group">
-                <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
-            </div>
+            {% if sign_up_enabled %}
+                <div class="form-group">
+                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
+                </div>
+            {% endif %}
         </form>
     </div>
 </div>
@@ -106,8 +109,8 @@
 </div>
 
 <!--底部部分 -->
-<div class="row clearfix user-bottom-div">
-    <p><strong>SQL审核平台</strong>&nbsp;(v1.6.6)</p>
+<div class="user-bottom-div">
+    <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
 </div>
 <!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
 <script src="{% static 'jquery/jquery.min.js' %}"></script>

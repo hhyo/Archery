@@ -30,6 +30,8 @@
                                     {{ WorkflowDict.workflow_type.sqlreview_display }}</option>
                                 <option value="{{ WorkflowDict.workflow_type.query }}">
                                     {{ WorkflowDict.workflow_type.query_display }}</option>
+                                <option value="{{ WorkflowDict.workflow_type.archive }}">
+                                    {{ WorkflowDict.workflow_type.archive_display }}</option>
                             </select>
                         </div>
                         <h5 class="control-label text-bold">组：</h5>
@@ -54,23 +56,47 @@
                 <div class="panel-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>Inception配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_incption' class='btn-sm btn-info'>测试Inception连接</button>
-                        <button id='check_goincption' class='btn-sm btn-info' style="display: none">测试goInception连接
-                        </button>
+                        <h6 style="color:red">注：默认使用goInception进行MySQL的审核执行，Inception作为脱敏解析工具使用</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="go_inception"
-                                       class="col-sm-4 control-label">GO_INCEPTION</label>
+                                <label for="inception"
+                                       class="col-sm-4 control-label">INCEPTION</label>
                                 <div class="col-sm-8">
                                     <div class="switch switch-small">
                                         <label>
-                                            <input id="go_inception"
-                                                   key="go_inception"
-                                                   value="{{ config.go_inception }}"
+                                            <input id="inception"
+                                                   key="inception"
+                                                   value="{{ config.inception }}"
                                                    type="checkbox">
-                                            是否启用goInception
+                                            是否切换为Inception审核
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="div-go-inception-config">
+                                <div class="form-group">
+                                    <label for="go_inception_host"
+                                           class="col-sm-4 control-label">GO_INCEPTION_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="go_inception_host"
+                                               key="go_inception_host"
+                                               value="{{ config.go_inception_host }}"
+                                               placeholder="goInception地址">
+                                    </div>
+                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
+                                </div>
+                                <div class="form-group">
+                                    <label for="go_inception_port"
+                                           class="col-sm-4 control-label">GO_INCEPTION_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                               id="go_inception_port"
+                                               key="go_inception_port"
+                                               value="{{ config.go_inception_port }}"
+                                               placeholder="goInception端口">
                                     </div>
                                 </div>
                             </div>
@@ -85,6 +111,7 @@
                                                value="{{ config.inception_host }}"
                                                placeholder="Inception地址">
                                     </div>
+                                    <button id='check_incption' class='btn-sm btn-info'>测试连接</button>
                                 </div>
                                 <div class="form-group">
                                     <label for="inception_port"
@@ -105,7 +132,7 @@
                                                id="inception_remote_backup_host"
                                                key="inception_remote_backup_host"
                                                value="{{ config.inception_remote_backup_host }}"
-                                               placeholder="Inception备份库地址">
+                                               placeholder="备份库地址(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -116,7 +143,7 @@
                                                id="inception_remote_backup_port"
                                                key="inception_remote_backup_port"
                                                value="{{ config.inception_remote_backup_port }}"
-                                               placeholder="Inception备份库端口">
+                                               placeholder="备份库端口(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -127,7 +154,7 @@
                                                id="inception_remote_backup_user"
                                                key="inception_remote_backup_user"
                                                value="{{ config.inception_remote_backup_user }}"
-                                               placeholder="Inception备份库用户">
+                                               placeholder="备份库用户(Inception/goInception复用)">
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -138,37 +165,10 @@
                                                id="inception_remote_backup_password"
                                                key="inception_remote_backup_password"
                                                value="{{ config.inception_remote_backup_password }}"
-                                               placeholder="Inception备份库用户密码">
+                                               placeholder="备份库用户密码(Inception/goInception复用)">
                                     </div>
                                 </div>
                             </div>
-
-                            <div id="div-go-inception-config" style="display: none">
-                                <hr/>
-                                <div class="form-group">
-                                    <label for="go_inception_host"
-                                           class="col-sm-4 control-label">GO_INCEPTION_HOST</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="go_inception_host"
-                                               key="go_inception_host"
-                                               value="{{ config.go_inception_host }}"
-                                               placeholder="goInception地址">
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="go_inception_port"
-                                           class="col-sm-4 control-label">GO_INCEPTION_PORT</label>
-                                    <div class="col-sm-5">
-                                        <input type="number" class="form-control"
-                                               id="go_inception_port"
-                                               key="go_inception_port"
-                                               value="{{ config.go_inception_port }}"
-                                               placeholder="goInception端口">
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                         <br>
                         <h4 style="color: darkgrey"><b>功能模块配置</b></h4>
@@ -208,7 +208,7 @@
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
                                                    type="checkbox">
-                                            开启备份选项(建议不开启, 强制要求备份)
+                                            是否开启备份选项(默认关闭, 强制要求备份)
                                         </label>
                                     </div>
                                 </div>
@@ -229,6 +229,17 @@
                                 </div>
                             </div>
                             <div id="div-auto-review-config" style="display: none">
+                                <div class="form-group">
+                                    <label for="auto_review_tag"
+                                           class="col-sm-4 control-label">AUTO_REVIEW_TAG</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="auto_review_tag"
+                                               key="auto_review_tag"
+                                               value="{{ config.auto_review_tag }}"
+                                               placeholder="自动审批的实例标签CODE，多个使用逗号分隔">
+                                    </div>
+                                </div>
                                 <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
@@ -269,8 +280,23 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="data_masking"
+                                       class="col-sm-4 control-label">DATA_MASKING</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="data_masking"
+                                                   key="data_masking"
+                                                   value="{{ config.data_masking }}" type="checkbox">
+                                            是否开启动态脱敏
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="query_check"
                                        class="col-sm-4 control-label">QUERY_CHECK</label>
@@ -280,7 +306,7 @@
                                             <input id="query_check"
                                                    key="query_check"
                                                    value="{{ config.query_check }}" type="checkbox">
-                                            是否开启Inception检测(表权限和脱敏校验)
+                                            是否开启脱敏校验(无法脱敏的语句会抛错)
                                         </label>
                                     </div>
                                 </div>
@@ -295,20 +321,6 @@
                                                    key="disable_star"
                                                    value="{{ config.disable_star }}" type="checkbox">
                                             禁止在查询时使用 *
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="data_masking"
-                                       class="col-sm-4 control-label">DATA_MASKING</label>
-                                <div class="col-sm-8">
-                                    <div class="switch switch-small">
-                                        <label>
-                                            <input id="data_masking"
-                                                   key="data_masking"
-                                                   value="{{ config.data_masking }}" type="checkbox">
-                                            是否开启动态脱敏
                                         </label>
                                     </div>
                                 </div>
@@ -371,7 +383,9 @@
                         </div>
                         <br>
                         <h4 style="color: darkgrey;display: inline"><b>通知配置</b></h4>&nbsp;&nbsp;&nbsp;
-                        <button id='check_email' class='btn-sm btn-info'>测试EMAIL连接</button>
+                        <h6 style="color:red">注1：钉钉Webhook需要配置资源组Webhook地址，Webhook无法通知到指定用户</h6>
+                        <h6 style="color:red">注2：企业微信自建应用开启后，若未配置企业微信UserID，则默认取用户的username作为UserId</h6>
+                        <h6 style="color:red">注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -386,6 +400,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="ddl_notify_auth_group"
+                                       class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="ddl_notify_auth_group"
+                                           key="ddl_notify_auth_group"
+                                           value="{{ config.ddl_notify_auth_group }}"
+                                           placeholder="DDL工单通知权限组名，为空则不通知">
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="mail"
                                        class="col-sm-4 control-label">MAIL</label>
                                 <div class="col-sm-8">
@@ -394,6 +419,7 @@
                                             <input id="mail" key="mail" value="{{ config.mail }}"
                                                    type="checkbox"> 是否开启邮件通知
                                         </label>
+                                        <button id='check_email' class='btn-sm btn-info'>测试连接</button>
                                     </div>
                                 </div>
                             </div>
@@ -455,17 +481,6 @@
                                                placeholder="邮箱账号密码">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="ddl_notify_auth_group"
-                                           class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="ddl_notify_auth_group"
-                                               key="ddl_notify_auth_group"
-                                               value="{{ config.ddl_notify_auth_group }}"
-                                               placeholder="DDL工单通知权限组名，为空则不通知">
-                                    </div>
-                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="ding"
@@ -474,8 +489,210 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="ding" key="ding" value="{{ config.ding }}"
-                                                   type="checkbox"> 是否开启钉钉通知
+                                                   type="checkbox"> 是否开启钉钉Webhook通知
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ding_to_person"
+                                       class="col-sm-4 control-label">DING_TO_PERSON</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="ding_to_person" key="ding_to_person"
+                                                   value="{{ config.ding_to_person }}"
+                                                   type="checkbox"> 是否开启钉钉个人消息通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-ding-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建钉钉Archery微应用参考：<a target="_blank"
+                                                        href="https://ding-doc.dingtalk.com/doc#/bgb96b/aw3h75  ">钉钉企业接入开发文档</a>
+                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户
+                                </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ding_agent_id"
+                                           class="col-sm-4 control-label">AgentId</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="ding_agent_id"
+                                               key="ding_agent_id"
+                                               value="{{ config.ding_agent_id }}"
+                                               placeholder="微应用Archery的AgentId">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ding_app_key"
+                                           class="col-sm-4 control-label">AppKey</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="ding_app_key"
+                                               key="ding_app_key"
+                                               value="{{ config.ding_app_key }}"
+                                               placeholder="微应用Archery的AppKey">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ding_app_secret"
+                                           class="col-sm-4 control-label">AppSecret</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="ding_app_secret"
+                                               key="ding_app_secret"
+                                               value="{{ config.ding_app_secret }}"
+                                               placeholder="微应用Archery的AppSecret">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ding_archery_username"
+                                           class="col-sm-4 control-label">Archery2Ding</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="ding_archery_username"
+                                               key="ding_archery_username"
+                                               value="{{ config.ding_archery_username }}"
+                                               placeholder="Archery.username对应钉钉里的字段">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ding_dept_ids"
+                                           class="col-sm-4 control-label">DingDeptIDs</label>
+                                    <div class="col-sm-5">
+                                        <textarea class="form-control"
+                                                  id="ding_dept_ids"
+                                                  key="ding_dept_ids"
+                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="wx"
+                                       class="col-sm-4 control-label">企业微信自建应用</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="wx" key="wx"
+                                                   value="{{ config.wx }}"
+                                                   type="checkbox"> 是否开启企业微信自建应用通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-wx-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建企业微信应用参考：<a target="_blank"
+                                                  href="https://work.weixin.qq.com/api/doc#90000/90135/90226">企业微信接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_corpid"
+                                           class="col-sm-4 control-label">CorpId</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="wx_corpid"
+                                               key="wx_corpid"
+                                               value="{{ config.wx_corpid }}"
+                                               placeholder="企业微信的企业ID">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_agent_id"
+                                           class="col-sm-4 control-label">AgentId</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="wx_agent_id"
+                                               key="wx_agent_id"
+                                               value="{{ config.wx_agent_id }}"
+                                               placeholder="应用的AgentId">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wx_app_secret"
+                                           class="col-sm-4 control-label">Secret</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="wx_app_secret"
+                                               key="wx_app_secret"
+                                               value="{{ config.wx_app_secret }}"
+                                               placeholder="应用的Secret">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="qywx_webhook"
+                                       class="col-sm-4 control-label">企业微信群机器人</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="qywx_webhook" key="qywx_webhook"
+                                                   value="{{ config.qywx_webhook }}"
+                                                   type="checkbox"> 是否开启企业微信群机器人通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feishu_webhook"
+                                       class="col-sm-4 control-label">飞书Webhook</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu_webhook" key="feishu_webhook"
+                                                   value="{{ config.feishu_webhook }}"
+                                                   type="checkbox"> 是否开启飞书Webhook通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="feishu"
+                                       class="col-sm-4 control-label">飞书</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="feishu" key="feishu"
+                                                   value="{{ config.feishu }}"
+                                                   type="checkbox"> 是否开启飞书通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-feishu-config" style="display: none">
+                                <div class="form-group">
+                                    <i class="ace-icon fa fa-hand-o-right"></i>
+                                    创建飞书应用参考：<a target="_blank"
+                                                href="https://open.feishu.cn/document/uQjL04CN/ukzM04SOzQjL5MDN">飞书接入开发文档</a>
+                                    {#                                    &nbsp;&nbsp;&nbsp;<button id='sync_ding_user' class='btn-xs btn-warning'>同步用户#}
+                                    </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_appid"
+                                           class="col-sm-4 control-label">飞书应用AppID</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_appid"
+                                               key="feishu_appid"
+                                               value="{{ config.feishu_appid }}"
+                                               placeholder="飞书应用AppID">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feishu_app_secret"
+                                           class="col-sm-4 control-label">飞书AppSecret</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="feishu_app_secret"
+                                               key="feishu_app_secret"
+                                               value="{{ config.feishu_app_secret }}"
+                                               placeholder="飞书AppSecret">
                                     </div>
                                 </div>
                             </div>
@@ -493,17 +710,6 @@
                                            key="index_path_url"
                                            value="{{ config.index_path_url }}"
                                            placeholder="系统首页路径，默认SQL工单页面：sqlworkflow">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="lock_time_threshold"
-                                       class="col-sm-4 control-label">SCHEMASYNC</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="schemasync"
-                                           key="schemasync"
-                                           value="{{ config.schemasync }}"
-                                           placeholder="schemasync调用路径">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -594,11 +800,10 @@
                                        disabled="disabled" style="width: 283px">
                             </div>
                             <div class="form-group">
-                                <select id="group_auditors" name="group"
+                                <select id="group_auditors" name="group" title="请选择审批权限组"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="审批人" data-placeholder="审批人:" data-live-search="true"
                                         required>
-                                    <option value="is-empty" disabled="" selected="selected">添加审批权限组</option>
                                     {% for auth_group in auth_group_list %}
                                         <option value="{{ auth_group.name }}">{{ auth_group.name }}
                                     {% endfor %}
@@ -617,7 +822,7 @@
 {% endblock content %}
 
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
@@ -649,28 +854,46 @@
                 $(this).val(true);
                 if ($(this).attr("id") === 'mail') {
                     $("#div-mail-config").show();
+                } else if ($(this).attr("id") === 'ding_to_person') {
+                    $("#div-ding-config").show();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").show();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").show();
-                    $("#check_goincption").show()
+                } else if ($(this).attr("id") === 'wx') {
+                    $("#div-wx-config").show();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").show();
                 }
             } else {
                 $(this).val(false);
                 if ($(this).attr("id") === 'mail') {
                     $("#mail_ssl").val(false);
                     $("#div-mail-config").hide();
+                } else if ($(this).attr("id") === 'ding_to_person') {
+                    $("#div-ding-config").hide();
                 } else if ($(this).attr("id") === 'auto_review') {
                     $("#div-auto-review-config").hide();
-                } else if ($(this).attr("id") === 'go_inception') {
-                    $("#div-go-inception-config").hide();
-                    $("#check_goincption").hide()
+                } else if ($(this).attr("id") === 'wx') {
+                    $("#div-wx-config").hide();
+                } else if ($(this).attr("id") === 'feishu') {
+                    $("#div-feishu-config").hide();
                 }
             }
         });
 
         // 修改系统设置
         $("#saveconfig").click(function () {
+            // 当开启钉钉通知到个人时，企业id和secret等必须填写
+            if ($("#ding_to_person").val() == 'true') {
+                var v1 = $("#ding_agent_id").val();
+                var v2 = $("#ding_app_key").val();
+                var v3 = $("#ding_app_secret").val();
+                var v4 = $("#ding_dept_ids").val();
+                var v5 = $("#ding_archery_username").val();
+                if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
+                    alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
+                    return;
+                }
+            }
             var sys_config = $("#div-system-config");
             var configs = [];
             sys_config.find('[key]').each(
@@ -724,15 +947,23 @@
             $('#group_auditors').selectpicker('refresh');
         });
 
+        // 重置权限组选择框状态
+        $("#group_auditors").on("reset", function () {
+            $('#group_auditors').selectpicker('val', []);
+            $(this).children().removeAttr("disabled");
+            $(this).selectpicker("refresh");
+        })
+
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
-            window.location.reload()
         });
 
         // 切换工单类型获取对应组负责人
         $("#workflow_type").change(function () {
             $("#div-workflow-config").show();
+            $('#group_auditors').trigger("reset");
             $("#workflow_auditors_text").val('');
             if ($("#group").val()) {
                 $.ajax({
@@ -820,7 +1051,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('inception和备份库测试连接成功，请点击保存生效！')
+                        alert('Inception和备份库测试连接成功，请点击保存生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -853,7 +1084,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('inception和备份库测试连接成功，请点击保存生效！')
+                        alert('goInception和备份库测试连接成功，请点击保存生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -887,6 +1118,43 @@
                 success: function (data) {
                     if (data.status === 0) {
                         alert('测试邮件已成功发送给当前用户，注意查收，请点击保存生效！')
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+
+        // 同步钉钉用户信息
+        $("#sync_ding_user").click(function () {
+            // 先检查配置信息
+            var v1 = $("#ding_agent_id").val();
+            var v2 = $("#ding_app_key").val();
+            var v3 = $("#ding_app_secret").val();
+            var v4 = $("#ding_dept_ids").val();
+            var v5 = $("#ding_archery_username").val();
+            if (v1 == "" || v2 == "" || v3 == "" || v4 == "" | v5 == "") {
+                alert("请先保存相关配置信息！");
+                return;
+            }
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
+            $.ajax({
+                type: "post",
+                url: "/4admin/sync_ding_user/",
+                dataType: "json",
+                data: {},
+                complete: function () {
+                    $("#sync_ding_user").removeClass('disabled');
+                    $("#sync_ding_user").prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        alert('已添加定时同步任务并且触发同步，点击确认查看任务状态');
+                        window.open('/admin/django_q/schedule/?q=sync_ding_user_id')
                     } else {
                         alert(data.msg);
                     }

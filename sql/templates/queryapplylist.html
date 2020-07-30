@@ -4,9 +4,11 @@
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="btn-group">
         <a type="button" class="btn btn-default" href="/queryuserprivileges/">
+            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
             <span aria-hidden="true"></span>权限管理</a>
         <button id="btn_add" type="button" class="btn btn-default"
                 data-toggle="modal" data-target="#apply">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
             <span aria-hidden="true"></span>权限申请
         </button>
     </div>
@@ -51,7 +53,7 @@
                             <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                             <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                             <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
-
+                            <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
                         </select>
                     </div>
                     <div class="form-group">
@@ -91,13 +93,14 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select id="limit_num" name="limit_num"
-                                title="请选择查询限制行数:"
-                                class="form-control selectpicker show-tick bs-select-hidden ">
+                        <input id="limit_num" list="limits" type="number"
+                               class="form-control "
+                               placeholder="请选择查询限制行数:">
+                        <datalist id="limits">
                             <option value=100>100</option>
                             <option value=500>500</option>
                             <option value=1000>1000</option>
-                        </select>
+                        </datalist>
                     </div>
                     <!--审批流程-->
                     <div id="div-workflow_auditors" class="form-group" style="display: none">
@@ -158,6 +161,8 @@
                         $("#optgroup-redis").empty();
                         $("#optgroup-pgsql").empty();
                         $("#optgroup-oracle").empty();
+                        $("#optgroup-mongo").empty();
+                        $("#optgroup-phoenix").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
@@ -170,6 +175,10 @@
                                 $("#optgroup-pgsql").append(instance);
                             } else if (result[i]['db_type'] === 'oracle') {
                                 $("#optgroup-oracle").append(instance);
+                            } else if (result[i]['db_type'] === 'mongo') {
+                                $("#optgroup-mongo").append(instance);
+                            } else if (result[i]['db_type'] === 'phoenix') {
+                                $("#optgroup-phoenix").append(instance);
                             }
                         }
                         $('#instance_name').selectpicker('render');
@@ -373,7 +382,7 @@
         //实例变更获取数据库列表/权限类型
         $("#instance_name").change(function () {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -422,7 +431,7 @@
         //数据库变更获取表名称
         $("#db_name").change(function () {
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

@@ -1,10 +1,11 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
+@author: hhyo
+@license: Apache Licence
 @file: storage.py
 @time: 2019/06/01
 """
+
 __author__ = 'hhyo'
 
 from django.contrib.staticfiles.storage import ManifestStaticFilesStorage

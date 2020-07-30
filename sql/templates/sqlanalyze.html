@@ -64,7 +64,7 @@
     </div>
 {% endblock content %}
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
     <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
@@ -149,6 +149,11 @@
                     $.each(row, function (key, value) {
                         if (key === 'sql') {
                             var sql = window.sqlFormatter.format(value);
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
                             //替换所有的换行符
                             sql = sql.replace(/\r\n/g, "<br>");
                             sql = sql.replace(/\n/g, "<br>");
@@ -209,7 +214,7 @@
         $("#instance_name").change(function () {
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {

@@ -1,13 +1,13 @@
 import json
 import smtplib
-from unittest.mock import patch, Mock, MagicMock, ANY
+from unittest.mock import patch, ANY
 import datetime
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from common.config import SysConfig
 from common.utils.sendmsg import MsgSender
-from sql.engines import EngineBase
+from sql.engines import EngineBase, ResultSet
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, ResourceGroup
 from common.utils.chart_dao import ChartDao
 from common.auth import init_user
@@ -21,7 +21,7 @@ class ConfigOpsTests(TestCase):
 
     def test_purge(self):
         archer_config = SysConfig()
-        archer_config.set('some_key','some_value')
+        archer_config.set('some_key', 'some_value')
         archer_config.purge()
         self.assertEqual({}, archer_config.sys_config)
         archer_config2 = SysConfig()
@@ -72,7 +72,7 @@ class SendMessageTest(TestCase):
         archer_config = SysConfig()
         self.smtp_server = 'test_smtp_server'
         self.smtp_user = 'test_smtp_user'
-        self.smtp_password = 'some_password'
+        self.smtp_password = 'some_str'
         self.smtp_port = 1234
         self.smtp_ssl = True
         archer_config.set('mail_smtp_server', self.smtp_server)
@@ -170,7 +170,7 @@ class DingTest(TestCase):
                     'content': self.content
                 }
             })
-            self.assertIn('钉钉推送成功', lg.output[0])
+            self.assertIn('钉钉Webhook推送成功', lg.output[0])
         post.return_value.json.return_value = {'errcode': 1, 'errmsg': 'test_error'}
         with self.assertLogs('default', level='ERROR') as lg:
             sender.send_ding(self.url, self.content)
@@ -215,7 +215,7 @@ class CheckTest(TestCase):
                                email='XXX@xxx.com')
         self.superuser1.save()
         self.slave1 = Instance(instance_name='some_name', host='some_host', type='slave', db_type='mysql',
-                               user='some_user', port=1234, password='some_password')
+                               user='some_user', port=1234, password='some_str')
         self.slave1.save()
 
     def tearDown(self):
@@ -230,7 +230,7 @@ class CheckTest(TestCase):
         smtp_server = 'some_server'
         smtp_port = '1234'
         smtp_user = 'some_user'
-        smtp_pass = 'some_pass'
+        smtp_pass = 'some_str'
         # 略过superuser校验
         # 未开启mail开关
         mail_switch = 'false'
@@ -312,9 +312,11 @@ class CheckTest(TestCase):
         self.assertEqual(r_json['msg'], 'ok')
 
     @patch('MySQLdb.connect')
-    @patch('common.check.get_engine', return_value=EngineBase)
+    @patch('common.check.get_engine')
     def testInstanceCheck(self, _get_engine, _conn):
         _get_engine.return_value.get_connection = _conn
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
@@ -476,7 +478,7 @@ class AuthTest(TestCase):
 
     def setUp(self):
         self.username = 'some_user'
-        self.password = 'some_pass'
+        self.password = 'some_str'
         self.u1 = User(username=self.username, password=self.password, display='用户1')
         self.u1.save()
         self.resource_group1 = ResourceGroup.objects.create(group_name='some_group')
@@ -491,7 +493,7 @@ class AuthTest(TestCase):
     def test_init_user(self):
         """用户初始化测试测试"""
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
         # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
         init_user(self.u1)
-        self.assertEqual(self.u1, self.resource_group1.users.get(pk=self.u1.pk))
+        self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))

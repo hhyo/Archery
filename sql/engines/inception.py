@@ -15,6 +15,14 @@ logger = logging.getLogger('default')
 
 
 class InceptionEngine(EngineBase):
+    @property
+    def name(self):
+        return 'Inception'
+
+    @property
+    def info(self):
+        return 'Inception engine'
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -40,35 +48,16 @@ class InceptionEngine(EngineBase):
                                port=backup_port,
                                user=backup_user,
                                passwd=backup_password,
-                               charset='utf8mb4')
+                               charset='utf8mb4',
+                               autocommit=True
+                               )
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
         check_result = ReviewSet(full_sql=sql)
-        # 检查 inception 不支持的函数
-        check_result.rows = []
-        line = 1
-        for statement in sqlparse.split(sql):
-            # 删除注释语句
-            statement = sqlparse.format(statement, strip_comments=True)
-            if re.match(r"(\s*)alter(\s+)table(\s+)(\S+)(\s*);|(\s*)alter(\s+)table(\s+)(\S+)\.(\S+)(\s*);",
-                        statement.lower() + ";"):
-                result = ReviewResult(id=line,
-                                      errlevel=2,
-                                      stagestatus='SQL语法错误',
-                                      errormessage='ALTER TABLE 必须带有选项',
-                                      sql=statement)
-                check_result.is_critical = True
-            else:
-                result = ReviewResult(id=line, errlevel=0, sql=statement)
-            check_result.rows += [result]
-            line += 1
-        if check_result.is_critical:
-            return check_result
-
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                             --port={instance.port};--enable-check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
@@ -101,7 +90,7 @@ class InceptionEngine(EngineBase):
         else:
             str_backup = "--disable-remote-backup"
         # 根据inception的要求，执行之前最好先split一下
-        sql_split = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host}; 
+        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={instance.host}; 
                          --port={instance.port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
                          use `{workflow.db_name}`;
@@ -112,12 +101,24 @@ class InceptionEngine(EngineBase):
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
             sql_tmp = splitRow[1]
-            sql_execute = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+            sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                                 --port={instance.port};--enable-execute;--enable-ignore-warnings;{str_backup};*/
                                 inception_magic_start;
                                 {sql_tmp}
                                 inception_magic_commit;"""
             one_line_execute_result = self.query(sql=sql_execute, close_conn=False)
+
+            # 执行报错，inception crash或者执行中连接异常的场景
+            if one_line_execute_result.error and not one_line_execute_result.rows:
+                execute_result.error = one_line_execute_result.error
+                execute_result.rows = [ReviewResult(
+                    stage='Execute failed',
+                    errlevel=2,
+                    stagestatus='异常终止',
+                    errormessage=f'Inception Error: {one_line_execute_result.error}',
+                    sql=sql_tmp)]
+                return execute_result
+
             # 把结果转换为ReviewSet
             for r in one_line_execute_result.rows:
                 execute_result.rows += [ReviewResult(inception_result=r)]
@@ -129,7 +130,7 @@ class InceptionEngine(EngineBase):
                 break
         return execute_result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()
@@ -146,7 +147,7 @@ class InceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.error(f"Inception语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(f"Inception语句执行报错，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         if close_conn:
             self.close()
@@ -156,7 +157,7 @@ class InceptionEngine(EngineBase):
         """
         将sql交给inception打印语法树。
         """
-        sql = f"""/*--user={instance.user};--password={instance.raw_password};--host={instance.host};
+        sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
                           --port={instance.port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
@@ -219,6 +220,9 @@ class InceptionEngine(EngineBase):
             except Exception as e:
                 logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
+        # 关闭连接
+        if conn:
+            conn.close()
         return list_backup_sql
 
     def get_variables(self, variables=None):

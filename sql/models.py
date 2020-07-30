@@ -1,8 +1,35 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from common.utils.aes_decryptor import Prpcrypt
+from mirage import fields
+
 from django.utils.translation import gettext as _
+from mirage.crypto import Crypto
+
+class ResourceGroup(models.Model):
+    """
+    资源组
+    """
+    group_id = models.AutoField('组ID', primary_key=True)
+    group_name = models.CharField('组名称', max_length=100, unique=True)
+    group_parent_id = models.BigIntegerField('父级id', default=0)
+    group_sort = models.IntegerField('排序', default=1)
+    group_level = models.IntegerField('层级', default=1)
+    ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
+    feishu_webhook = models.CharField('飞书webhook地址', max_length=255, blank=True)
+    qywx_webhook = models.CharField('企业微信webhook地址', max_length=255, blank=True)
+    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.group_name
+
+    class Meta:
+        managed = True
+        db_table = 'resource_group'
+        verbose_name = u'资源组管理'
+        verbose_name_plural = u'资源组管理'
 
 
 class Users(AbstractUser):
@@ -10,8 +37,17 @@ class Users(AbstractUser):
     用户信息扩展
     """
     display = models.CharField('显示的中文名', max_length=50, default='')
+    ding_user_id = models.CharField('钉钉UserID', max_length=64, blank=True)
+    wx_user_id = models.CharField('企业微信UserID', max_length=64, blank=True)
+    feishu_open_id = models.CharField('飞书OpenID', max_length=64, blank=True)
     failed_login_count = models.IntegerField('失败计数', default=0)
     last_login_failed_at = models.DateTimeField('上次失败登录时间', blank=True, null=True)
+    resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
+
+    def save(self, *args, **kwargs):
+        self.failed_login_count = min(127, self.failed_login_count)
+        self.failed_login_count = max(0, self.failed_login_count)
+        super(Users, self).save(*args, **kwargs)
 
     def __str__(self):
         if self.display:
@@ -25,123 +61,12 @@ class Users(AbstractUser):
         verbose_name_plural = u'用户管理'
 
 
-DB_TYPE_CHOICES = (
-    ('mysql', 'MySQL'),
-    ('mssql', 'MsSQL'),
-    ('redis', 'Redis'),
-    ('pgsql', 'PgSQL'),
-    ('oracle', 'Oracle'),
-    ('mongo', 'Mongo'),
-    ('inception', 'Inception'),
-    ('goinception', 'goInception'))
-
-
-class Instance(models.Model):
-    """
-    各个线上实例配置
-    """
-    instance_name = models.CharField('实例名称', max_length=50, unique=True)
-    type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
-    db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
-    host = models.CharField('实例连接', max_length=200)
-    port = models.IntegerField('端口', default=0)
-    user = models.CharField('用户名', max_length=100, default='', blank=True)
-    password = models.CharField('密码', max_length=300, default='', blank=True)
-    charset = models.CharField('字符集', max_length=20, default='', blank=True)
-    service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
-    sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
-    create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    update_time = models.DateTimeField('更新时间', auto_now=True)
-
-    @property
-    def raw_password(self):
-        """ 返回明文密码 str """
-        pc = Prpcrypt()  # 初始化
-        return pc.decrypt(self.password)
-
-    def __str__(self):
-        return self.instance_name
-
-    class Meta:
-        managed = True
-        db_table = 'sql_instance'
-        verbose_name = u'实例配置'
-        verbose_name_plural = u'实例配置'
-
-    def save(self, *args, **kwargs):
-        pc = Prpcrypt()  # 初始化
-        if self.password:
-            if self.id:
-                old_password = Instance.objects.get(id=self.id).password
-            else:
-                old_password = ''
-            # 密码有变动才再次加密保存
-            self.password = pc.encrypt(self.password) if old_password != self.password else self.password
-        super(Instance, self).save(*args, **kwargs)
-
-
-class ResourceGroup(models.Model):
-    """
-    资源组
-    """
-    group_id = models.AutoField('组ID', primary_key=True)
-    group_name = models.CharField('组名称', max_length=100, unique=True)
-    group_parent_id = models.BigIntegerField('父级id', default=0)
-    group_sort = models.IntegerField('排序', default=1)
-    group_level = models.IntegerField('层级', default=1)
-    ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
-    is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
-    create_time = models.DateTimeField(auto_now_add=True)
-    sys_time = models.DateTimeField(auto_now=True)
-    users = models.ManyToManyField(Users, through='ResourceGroup2User')
-    instances = models.ManyToManyField(Instance, through='ResourceGroup2Instance')
-
-    def __str__(self):
-        return self.group_name
-
-    class Meta:
-        managed = True
-        db_table = 'resource_group'
-        verbose_name = u'资源组管理'
-        verbose_name_plural = u'资源组管理'
-
-
-class ResourceGroup2User(models.Model):
-    """资源组和用户关联表"""
-    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
-    create_time = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'resource_group_user'
-        unique_together = ('resource_group', 'user')
-        verbose_name = u'资源组关联用户'
-        verbose_name_plural = u'资源组关联用户'
-
-
-class ResourceGroup2Instance(models.Model):
-    """资源组和实例关联表"""
-    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
-    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    create_time = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        managed = True
-        db_table = 'resource_group_instance'
-        unique_together = ('resource_group', 'instance')
-        verbose_name = u'资源组关联实例'
-        verbose_name_plural = u'资源组关联实例'
-
-
 class InstanceTag(models.Model):
     """实例标签配置"""
     tag_code = models.CharField('标签代码', max_length=20, unique=True)
     tag_name = models.CharField('标签名称', max_length=20, unique=True)
     active = models.BooleanField('激活状态', default=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    instances = models.ManyToManyField(Instance, through='InstanceTagRelations',
-                                       through_fields=('instance_tag', 'instance'))
 
     def __str__(self):
         return self.tag_name
@@ -153,19 +78,71 @@ class InstanceTag(models.Model):
         verbose_name_plural = u'实例标签'
 
 
-class InstanceTagRelations(models.Model):
-    """实例标签关系"""
-    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    instance_tag = models.ForeignKey(InstanceTag, on_delete=models.CASCADE)
-    active = models.BooleanField('激活状态', default=True)
+DB_TYPE_CHOICES = (
+    ('mysql', 'MySQL'),
+    ('mssql', 'MsSQL'),
+    ('redis', 'Redis'),
+    ('pgsql', 'PgSQL'),
+    ('oracle', 'Oracle'),
+    ('mongo', 'Mongo'),
+    ('phoenix', 'Phoenix'),
+    ('inception', 'Inception'),
+    ('goinception', 'goInception'))
+
+
+class Tunnel(models.Model):
+    """
+    SSH隧道配置
+    """
+    tunnel_name = models.CharField('隧道名称', max_length=50, unique=True)
+    host = models.CharField('隧道连接', max_length=200)
+    port = models.IntegerField('端口', default=0)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
+    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.tunnel_name
 
     class Meta:
         managed = True
-        db_table = 'sql_instance_tag_relations'
-        unique_together = ('instance', 'instance_tag')
-        verbose_name = u'实例标签关系'
-        verbose_name_plural = u'实例标签关系'
+        db_table = 'ssh_tunnel'
+        verbose_name = u'隧道配置'
+        verbose_name_plural = u'隧道配置'
+
+
+class Instance(models.Model):
+    """
+    各个线上实例配置
+    """
+    instance_name = models.CharField('实例名称', max_length=50, unique=True)
+    type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
+    db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
+    host = models.CharField('实例连接', max_length=200)
+    port = models.IntegerField('端口', default=0)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True)
+    db_name = models.CharField('数据库', max_length=64, default='', blank=True)
+    charset = models.CharField('字符集', max_length=20, default='', blank=True)
+    service_name = models.CharField('Oracle service name', max_length=50, null=True, blank=True)
+    sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
+    resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
+    instance_tag = models.ManyToManyField(InstanceTag, verbose_name='实例标签', blank=True)
+    tunnel = models.ForeignKey(Tunnel, blank=True, null=True, on_delete=models.CASCADE, default=None)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.instance_name
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance'
+        verbose_name = u'实例配置'
+        verbose_name_plural = u'实例配置'
 
 
 SQL_WORKFLOW_CHOICES = (
@@ -174,6 +151,7 @@ SQL_WORKFLOW_CHOICES = (
     ('workflow_manreviewing', _('workflow_manreviewing')),
     ('workflow_review_pass', _('workflow_review_pass')),
     ('workflow_timingtask', _('workflow_timingtask')),
+    ('workflow_queuing', _('workflow_queuing')),
     ('workflow_executing', _('workflow_executing')),
     ('workflow_autoreviewwrong', _('workflow_autoreviewwrong')),
     ('workflow_exception', _('workflow_exception')))
@@ -184,6 +162,7 @@ class SqlWorkflow(models.Model):
     存放各个SQL上线工单的基础内容
     """
     workflow_name = models.CharField('工单内容', max_length=50)
+    demand_url = models.CharField('需求链接', max_length=500)
     group_id = models.IntegerField('组ID')
     group_name = models.CharField('组名称', max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
@@ -274,7 +253,7 @@ class WorkflowAuditDetail(models.Model):
     audit_user = models.CharField('审核人', max_length=30)
     audit_time = models.DateTimeField('审核时间')
     audit_status = models.IntegerField('审核状态', choices=workflow_status_choices)
-    remark = models.CharField('审核备注', default='', max_length=140)
+    remark = models.CharField('审核备注', default='', max_length=1000)
     sys_time = models.DateTimeField('系统时间', auto_now=True)
 
     def __int__(self):
@@ -314,11 +293,21 @@ class WorkflowLog(models.Model):
     """
     工作流日志表
     """
+    operation_type_choices = (
+        (0, '提交/待审核'),
+        (1, '审核通过'),
+        (2, '审核不通过'),
+        (3, '审核取消'),
+        (4, '定时执行'),
+        (5, '执行工单'),
+        (6, '执行结束'),
+    )
+
     id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField('工单审批id', db_index=True)
-    operation_type = models.SmallIntegerField('操作类型，0提交/待审核、1审核通过、2审核不通过、3审核取消、4定时、5执行、6执行结束')
+    operation_type = models.SmallIntegerField('操作类型', choices=operation_type_choices)
     operation_type_desc = models.CharField('操作类型描述', max_length=10)
-    operation_info = models.CharField('操作信息', max_length=200)
+    operation_info = models.CharField('操作信息', max_length=1000)
     operator = models.CharField('操作人', max_length=30)
     operator_display = models.CharField('操作人中文名', max_length=50, default='')
     operation_time = models.DateTimeField(auto_now_add=True)
@@ -400,7 +389,7 @@ class QueryLog(models.Model):
     # TODO 改为实例外键
     instance_name = models.CharField('实例名称', max_length=50)
     db_name = models.CharField('数据库名称', max_length=64)
-    sqllog = models.TextField('执行的sql查询')
+    sqllog = models.TextField('执行的查询语句')
     effect_row = models.BigIntegerField('返回行数')
     cost_time = models.CharField('执行耗时', max_length=10, default='')
     # TODO 改为user 外键
@@ -409,6 +398,8 @@ class QueryLog(models.Model):
     priv_check = models.BooleanField('查询权限是否正常校验', choices=((False, '跳过'), (True, '正常'),), default=False)
     hit_rule = models.BooleanField('查询是否命中脱敏规则', choices=((False, '未命中/未知'), (True, '命中')), default=False)
     masking = models.BooleanField('查询结果是否正常脱敏', choices=((False, '否'), (True, '是'),), default=False)
+    favorite = models.BooleanField('是否收藏', choices=((False, '否'), (True, '是'),), default=False)
+    alias = models.CharField('语句标识', max_length=64, default='', blank=True)
     create_time = models.DateTimeField('操作时间', auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -461,6 +452,44 @@ class DataMaskingRules(models.Model):
         verbose_name_plural = u'脱敏规则配置'
 
 
+class InstanceAccount(models.Model):
+    """
+    实例账号列表
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    user = fields.EncryptedCharField(verbose_name='账号', max_length=128)
+    host = models.CharField(verbose_name='主机', max_length=64)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=128, default='', blank=True)
+    remark = models.CharField('备注', max_length=255)
+    sys_time = models.DateTimeField('系统修改时间', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'instance_account'
+        unique_together = ('instance', 'user', 'host')
+        verbose_name = '实例账号列表'
+        verbose_name_plural = '实例账号列表'
+
+
+class InstanceDatabase(models.Model):
+    """
+    实例数据库列表
+    """
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    db_name = models.CharField('数据库名', max_length=128)
+    owner = models.CharField('负责人', max_length=50, default='', blank=True)
+    owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
+    remark = models.CharField('备注', max_length=255, default='', blank=True)
+    sys_time = models.DateTimeField('系统修改时间', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'instance_database'
+        unique_together = ('instance', 'db_name')
+        verbose_name = '实例数据库'
+        verbose_name_plural = '实例数据库列表'
+
+
 class ParamTemplate(models.Model):
     """
     实例参数模板配置
@@ -503,12 +532,72 @@ class ParamHistory(models.Model):
         verbose_name_plural = u'实例参数修改历史'
 
 
+class ArchiveConfig(models.Model):
+    """
+    归档配置表
+    """
+    title = models.CharField('归档配置说明', max_length=50)
+    resource_group = models.ForeignKey(ResourceGroup, on_delete=models.CASCADE)
+    audit_auth_groups = models.CharField('审批权限组列表', max_length=255, blank=True)
+    src_instance = models.ForeignKey(Instance, related_name='src_instance', on_delete=models.CASCADE)
+    src_db_name = models.CharField('源数据库', max_length=64)
+    src_table_name = models.CharField('源表', max_length=64)
+    dest_instance = models.ForeignKey(Instance, related_name='dest_instance', on_delete=models.CASCADE,
+                                      blank=True, null=True)
+    dest_db_name = models.CharField('目标数据库', max_length=64, blank=True, null=True)
+    dest_table_name = models.CharField('目标表', max_length=64, blank=True, null=True)
+    condition = models.CharField('归档条件，where条件', max_length=1000)
+    mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
+    no_delete = models.BooleanField('是否保留源数据')
+    sleep = models.IntegerField('归档limit行后的休眠秒数', default=1)
+    status = models.IntegerField('审核状态', choices=workflow_status_choices, blank=True, default=1)
+    state = models.BooleanField('是否启用归档', default=True)
+    user_name = models.CharField('申请人', max_length=30, blank=True, default='')
+    user_display = models.CharField('申请人中文名', max_length=50, blank=True, default='')
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    last_archive_time = models.DateTimeField('最近归档时间', blank=True, null=True)
+    sys_time = models.DateTimeField('系统时间修改', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'archive_config'
+        verbose_name = u'归档配置表'
+        verbose_name_plural = u'归档配置表'
+
+
+class ArchiveLog(models.Model):
+    """
+    归档日志表
+    """
+    archive = models.ForeignKey(ArchiveConfig, on_delete=models.CASCADE)
+    cmd = models.CharField('归档命令', max_length=2000)
+    condition = models.CharField('归档条件，where条件', max_length=1000)
+    mode = models.CharField('归档模式', max_length=10, choices=(('file', '文件'), ('dest', '其他实例'), ('purge', '直接删除')))
+    no_delete = models.BooleanField('是否保留源数据')
+    sleep = models.IntegerField('归档limit行记录后的休眠秒数', default=0)
+    select_cnt = models.IntegerField('查询数量')
+    insert_cnt = models.IntegerField('插入数量')
+    delete_cnt = models.IntegerField('删除数量')
+    statistics = models.TextField('归档统计日志')
+    success = models.BooleanField('是否归档成功')
+    error_info = models.TextField('错误信息')
+    start_time = models.DateTimeField('开始时间', auto_now_add=True)
+    end_time = models.DateTimeField('结束时间')
+    sys_time = models.DateTimeField('系统时间修改', auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'archive_log'
+        verbose_name = u'归档日志表'
+        verbose_name_plural = u'归档日志表'
+
+
 class Config(models.Model):
     """
     配置信息表
     """
-    item = models.CharField('配置项', max_length=50, primary_key=True)
-    value = models.CharField('配置项值', max_length=200)
+    item = models.CharField('配置项', max_length=200, primary_key=True)
+    value = fields.EncryptedCharField(verbose_name='配置项值', max_length=500)
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:
@@ -518,46 +607,42 @@ class Config(models.Model):
         verbose_name_plural = u'系统配置'
 
 
-class AliyunAccessKey(models.Model):
-    """
-    记录阿里云的认证信息
-    """
-    ak = models.CharField(max_length=50)
-    secret = models.CharField(max_length=100)
-    is_enable = models.BooleanField('是否启用', default=True)
+# 云服务认证信息配置
+class CloudAccessKey(models.Model):
+    cloud_type_choices = (('aliyun', 'aliyun'),)
+
+    type = models.CharField(max_length=20, default='', choices=cloud_type_choices)
+    key_id = models.CharField(max_length=200)
+    key_secret = models.CharField(max_length=200)
     remark = models.CharField(max_length=50, default='', blank=True)
 
-    @property
-    def raw_ak(self):
-        """ 返回明文ak str """
-        pc = Prpcrypt()  # 初始化
-        return pc.decrypt(self.ak)
+    def __init__(self, *args, **kwargs):
+        self.c = Crypto()
+        super().__init__(*args, **kwargs)
 
     @property
-    def raw_secret(self):
-        """ 返回明文secret str """
-        pc = Prpcrypt()  # 初始化
-        return pc.decrypt(self.secret)
+    def raw_key_id(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_id)
+
+    @property
+    def raw_key_secret(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_secret)
+
+    def save(self, *args, **kwargs):
+        self.key_id = self.c.encrypt(self.key_id)
+        self.key_secret = self.c.encrypt(self.key_secret)
+        super(CloudAccessKey, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.type}({self.remark})'
 
     class Meta:
         managed = True
-        db_table = 'aliyun_access_key'
-        verbose_name = u'阿里云认证信息'
-        verbose_name_plural = u'阿里云认证信息'
-
-    def save(self, *args, **kwargs):
-        pc = Prpcrypt()  # 初始化
-        if self.id:
-            old_info = AliyunAccessKey.objects.get(id=self.id)
-            old_ak = old_info.ak
-            old_secret = old_info.secret
-        else:
-            old_ak = ''
-            old_secret = ''
-        # 加密信息有变动才再次加密保存
-        self.ak = pc.encrypt(self.ak) if old_ak != self.ak else self.ak
-        self.secret = pc.encrypt(self.secret) if old_secret != self.secret else self.secret
-        super(AliyunAccessKey, self).save(*args, **kwargs)
+        db_table = 'cloud_access_key'
+        verbose_name = u'云服务认证信息配置'
+        verbose_name_plural = u'云服务认证信息配置'
 
 
 class AliyunRdsConfig(models.Model):
@@ -566,7 +651,8 @@ class AliyunRdsConfig(models.Model):
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
-    is_enable = models.BooleanField('是否启用', default=True)
+    ak = models.ForeignKey(CloudAccessKey, on_delete=models.CASCADE)
+    is_enable = models.BooleanField('是否启用', default=False)
 
     def __int__(self):
         return self.rds_dbinstanceid
@@ -599,13 +685,16 @@ class Permission(models.Model):
             ('menu_instance', '菜单 实例管理'),
             ('menu_instance_list', '菜单 实例列表'),
             ('menu_dbdiagnostic', '菜单 会话管理'),
+            ('menu_database', '菜单 数据库管理'),
+            ('menu_instance_account', '菜单 实例账号管理'),
             ('menu_param', '菜单 参数配置'),
             ('menu_data_dictionary', '菜单 数据字典'),
+            ('menu_tools', '菜单 工具插件'),
+            ('menu_archive', '菜单 数据归档'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
-            ('menu_themis', '菜单 数据库审核'),
             ('sql_submit', '提交SQL上线工单'),
             ('sql_review', '审核SQL上线工单'),
             ('sql_execute_for_resource_group', '执行SQL上线工单(资源组粒度)'),
@@ -619,12 +708,19 @@ class Permission(models.Model):
             ('query_review', '审核查询权限'),
             ('query_submit', '提交SQL查询'),
             ('query_all_instances', '可查询所有实例'),
+            ('query_resource_group_instance', '可查询所在资源组内的所有实例'),
             ('process_view', '查看会话'),
             ('process_kill', '终止会话'),
             ('tablespace_view', '查看表空间'),
+            ('trx_view', '查看事务信息'),
             ('trxandlocks_view', '查看锁信息'),
+            ('instance_account_manage', '管理实例账号'),
             ('param_view', '查看实例参数列表'),
             ('param_edit', '修改实例参数'),
+            ('data_dictionary_export', '导出数据字典'),
+            ('archive_apply', '提交归档申请'),
+            ('archive_review', '审核归档申请'),
+            ('archive_mgt', '管理归档申请'),
         )
 
 

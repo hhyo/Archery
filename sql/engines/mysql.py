@@ -3,8 +3,11 @@ import logging
 import traceback
 import MySQLdb
 import re
+
+import schemaobject
 import sqlparse
-from MySQLdb.connections import numeric_part
+from MySQLdb.constants import FIELD_TYPE
+from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
@@ -18,17 +21,28 @@ logger = logging.getLogger('default')
 
 
 class MysqlEngine(EngineBase):
+
+    def __init__(self, instance=None):
+        super().__init__(instance=instance)
+        self.config = SysConfig()
+        self.inc_engine = InceptionEngine() if self.config.get('inception') else GoInceptionEngine()
+
     def get_connection(self, db_name=None):
+        # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
+        conversions = MySQLdb.converters.conversions
+        conversions[FIELD_TYPE.BIT] = lambda data: data == b'\x01'
         if self.conn:
             self.thread_id = self.conn.thread_id()
             return self.conn
         if db_name:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         db=db_name, charset=self.instance.charset or 'utf8mb4',
+                                        conv=conversions,
                                         connect_timeout=10)
         else:
             self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
                                         charset=self.instance.charset or 'utf8mb4',
+                                        conv=conversions,
                                         connect_timeout=10)
         self.thread_id = self.conn.thread_id()
         return self.conn
@@ -42,14 +56,38 @@ class MysqlEngine(EngineBase):
         return 'MySQL engine'
 
     @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return True
+
+    @property
     def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status')
-        return slave_status.rows[0][32] if slave_status.rows else None
+        slave_status = self.query(sql='show slave status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
+        return slave_status.rows[0].get('Seconds_Behind_Master') if slave_status.rows else None
 
     @property
     def server_version(self):
-        version = self.query(sql="select @@version").rows[0][0]
+        def numeric_part(s):
+            """Returns the leading numeric part of a string.
+            """
+            re_numeric_part = re.compile(r"^(\d+)")
+            m = re_numeric_part.match(s)
+            if m:
+                return int(m.group(1))
+            return None
+
+        self.get_connection()
+        version = self.conn.get_server_info()
         return tuple([numeric_part(n) for n in version.split('.')[:3]])
+
+    @property
+    def schema_object(self):
+        """获取实例对象信息"""
+        url = build_database_url(host=self.host,
+                                 username=self.user,
+                                 password=self.password,
+                                 port=self.port)
+        return schemaobject.SchemaObject(url, charset=self.instance.charset or 'utf8mb4')
 
     def kill_connection(self, thread_id):
         """终止数据库连接"""
@@ -64,7 +102,7 @@ class MysqlEngine(EngineBase):
         result.rows = db_list
         return result
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
@@ -72,15 +110,8 @@ class MysqlEngine(EngineBase):
         result.rows = tb_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
-        result = self.describe_table(db_name, tb_name)
-        column_list = [row[0] for row in result.rows]
-        result.rows = column_list
-        return result
-
-    def describe_table(self, db_name, tb_name):
-        """return ResultSet 类似查询"""
         sql = f"""SELECT 
             COLUMN_NAME,
             COLUMN_TYPE,
@@ -95,15 +126,30 @@ class MysqlEngine(EngineBase):
             TABLE_SCHEMA = '{db_name}'
                 AND TABLE_NAME = '{tb_name}'
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(sql=sql)
+        result = self.query(db_name=db_name, sql=sql)
+        column_list = [row[0] for row in result.rows]
+        result.rows = column_list
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def describe_table(self, db_name, tb_name, **kwargs):
+        """return ResultSet 类似查询"""
+        sql = f"show create table `{tb_name}`;"
+        result = self.query(db_name=db_name, sql=sql)
+        return result
+
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet """
         result_set = ResultSet(full_sql=sql)
+        max_execution_time = kwargs.get('max_execution_time', 0)
+        cursorclass = kwargs.get('cursorclass') or MySQLdb.cursors.Cursor
         try:
             conn = self.get_connection(db_name=db_name)
-            cursor = conn.cursor()
+            conn.autocommit(True)
+            cursor = conn.cursor(cursorclass)
+            try:
+                cursor.execute(f"set session max_execution_time={max_execution_time};")
+            except MySQLdb.OperationalError:
+                pass
             effect_row = cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
@@ -115,7 +161,7 @@ class MysqlEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -139,16 +185,35 @@ class MysqlEngine(EngineBase):
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
+        # select语句先使用Explain判断语法是否正确
+        if re.match(r"^select", sql, re.I):
+            explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
+            if explain_result.error:
+                result['bad_query'] = True
+                result['msg'] = explain_result.error
         return result
 
     def filter_sql(self, sql='', limit_num=0):
-        # 对查询sql增加limit限制，# TODO limit改写待优化
-        sql_lower = sql.lower().rstrip(';').strip()
-        if re.match(r"^select", sql_lower):
-            if re.search(r"limit\s+(\d+)$", sql_lower) is None:
-                if re.search(r"limit\s+\d+\s*,\s*(\d+)$", sql_lower) is None:
-                    return f"{sql.rstrip(';')} limit {limit_num};"
-        return f"{sql.rstrip(';')};"
+        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
+        sql = sql.rstrip(';').strip()
+        if re.match(r"^select", sql, re.I):
+            # LIMIT N
+            limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)
+            # LIMIT N, N 或LIMIT N OFFSET N
+            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
+            if limit_n.search(sql):
+                sql_limit = limit_n.search(sql).group(1)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = limit_n.sub(f'limit {limit_num};', sql)
+            elif limit_offset.search(sql):
+                sql_limit = limit_offset.search(sql).group(3)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = limit_offset.sub(f'limit {limit_num};', sql)
+            else:
+                sql = f'{sql} limit {limit_num};'
+        else:
+            sql = f'{sql};'
+        return sql
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -162,31 +227,22 @@ class MysqlEngine(EngineBase):
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
-        config = SysConfig()
         # 进行Inception检查，获取检测结果
-        if config.get('go_inception'):
-            try:
-                inception_engine = GoInceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
-            except Exception as e:
-                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
-                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
-        else:
-            try:
-                inception_engine = InceptionEngine()
-                inc_check_result = inception_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
-            except Exception as e:
-                logger.debug(f"Inception检测语句报错：错误信息{traceback.format_exc()}")
-                raise RuntimeError(f"Inception检测语句报错，请注意检查系统配置中Inception配置，错误信息：\n{e}")
+        try:
+            inc_check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+        except Exception as e:
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}")
+
         # 判断Inception检测结果
         if inc_check_result.error:
-            logger.debug(f"Inception检测语句报错：错误信息{inc_check_result.error}")
-            raise RuntimeError(f"Inception检测语句报错，错误信息：\n{inc_check_result.error}")
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{inc_check_result.error}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{inc_check_result.error}")
 
         # 禁用/高危语句检查
         check_critical_result = ReviewSet(full_sql=sql)
         line = 1
-        critical_ddl_regex = config.get('critical_ddl_regex', '')
+        critical_ddl_regex = self.config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
         check_critical_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
 
@@ -232,16 +288,22 @@ class MysqlEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
-        # 原生执行
-        if workflow.is_manual == 1:
-            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+        # 判断实例是否只读
+        read_only = self.query(sql='SELECT @@global.read_only;').rows[0][0]
+        if read_only in (1, 'ON'):
+            result = ReviewSet(
+                full_sql=workflow.sqlworkflowcontent.sql_content,
+                rows=[ReviewResult(id=1, errlevel=2,
+                                   stagestatus='Execute Failed',
+                                   errormessage='实例read_only=1，禁止执行变更语句!',
+                                   sql=workflow.sqlworkflowcontent.sql_content)])
+            result.error = '实例read_only=1，禁止执行变更语句!',
+            return result
+        # TODO 原生执行
+        # if workflow.is_manual == 1:
+        #     return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
         # inception执行
-        elif SysConfig().get('go_inception'):
-            inception_engine = GoInceptionEngine()
-            return inception_engine.execute(workflow)
-        else:
-            inception_engine = InceptionEngine()
-            return inception_engine.execute(workflow)
+        return self.inc_engine.execute(workflow)
 
     def execute(self, db_name=None, sql='', close_conn=True):
         """原生执行语句"""
@@ -254,7 +316,7 @@ class MysqlEngine(EngineBase):
             conn.commit()
             cursor.close()
         except Exception as e:
-            logger.error(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
         if close_conn:
             self.close()
@@ -284,12 +346,7 @@ class MysqlEngine(EngineBase):
         """控制osc执行，获取进度、终止、暂停、恢复等
             get、kill、pause、resume
         """
-        if SysConfig().get('go_inception'):
-            go_inception_engine = GoInceptionEngine()
-            return go_inception_engine.osc_control(**kwargs)
-        else:
-            inception_engine = InceptionEngine()
-            return inception_engine.osc_control(**kwargs)
+        return self.inc_engine.osc_control(**kwargs)
 
     def close(self):
         if self.conn:

@@ -11,7 +11,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from common.config import SysConfig
-from sql.models import Users, ResourceGroup,ResourceGroup2User
+from common.utils.ding_api import get_ding_user_id
+from sql.models import Users, ResourceGroup
 
 logger = logging.getLogger('default')
 
@@ -34,9 +35,7 @@ def init_user(user):
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
         try:
-            ResourceGroup2User.objects.get_or_create(
-                user_id=user.id,
-                resource_group_id=ResourceGroup.objects.get(group_name=default_resource_group).group_id)
+            user.resource_group.add(ResourceGroup.objects.get(group_name=default_resource_group))
         except ResourceGroup.DoesNotExist:
             logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
 
@@ -108,6 +107,10 @@ def authenticate_entry(request):
     new_auth = ArcheryAuth(request)
     result = new_auth.authenticate()
     if result['status'] == 0:
+        # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
+        if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
+            get_ding_user_id(request.POST.get('username'))
+
         result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')

@@ -48,10 +48,14 @@
 {% endblock content %}
 
 {% block js %}
-    {% load staticfiles %}
+    {% load static %}
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/FileSaver/FileSaver.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
@@ -115,7 +119,7 @@
         function get_db_list() {
             //将数据通过ajax提交给获取db_name
             $.ajax({
-                type: "post",
+                type: "get",
                 url: "/instance/instance_resource/",
                 dataType: "json",
                 data: {
@@ -279,13 +283,17 @@
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
-                    search: false,                      //是否显示表格搜索
+                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: false,
-                    exportDataType: "all",
+                    showExport: true,                   //是否显示导出按钮
+                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                    exportOptions: {
+                        ignoreColumn: [0],  //忽略某些列的索引数组
+                        fileName: 'slowquery_review'  //文件名称设置
+                    },
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列
@@ -305,21 +313,42 @@
                             StartTime: StartTime,
                             EndTime: EndTime,
                             limit: params.limit,
-                            offset: params.offset
+                            offset: params.offset,
+                            search: params.search
                         }
                     },
                     //格式化详情
                     detailFormatter: function (index, row) {
-                        var html = [];
+                        let html = [];
                         $.each(row, function (key, value) {
                             if (key === 'SQLText') {
-                                var sql = window.sqlFormatter.format(value);
+                                let sql = window.sqlFormatter.format(value);
                                 //替换所有的换行符
                                 sql = sql.replace(/\r\n/g, "<br>");
                                 sql = sql.replace(/\n/g, "<br>");
                                 //替换所有的空格
                                 sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<span>' + sql + '</span>');
+                                html.push('<div class="col-lg-4">' + sql + '</div>');
+                            }
+                        });
+                        $.ajax({
+                            type: "get",
+                            url: "/slowquery/report/",
+                            async: false,
+                            dataType: "json",
+                            data: {
+                                checksum: row.SQLId,
+                            },
+                            complete: function () {
+                            },
+                            success: function (data) {
+                                if (data.status === 0) {
+                                    let chart = data.data;
+                                    html.push('<div class="col-lg-8">' + chart + '</div>')
+                                }
+                            },
+                            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                alert(errorThrown);
                             }
                         });
                         return html.join('');
@@ -352,11 +381,18 @@
                             }
                         }
                     }, {
+                        title: '完整SQL语句',
+                        field: 'SQLText',
+                        visible: false // 默认不显示
+                    }, {
                         title: '执行总次数',
                         field: 'MySQLTotalExecutionCounts'
                     }, {
-                        title: '执行总时长',
+                        title: '执行总时长(秒)',
                         field: 'MySQLTotalExecutionTimes'
+                    }, {
+                        title: '平均执行时长(秒)',
+                        field: 'QueryTimeAvg'
                     }, {
                         title: '扫描总行数',
                         field: 'ParseTotalRowCounts'
@@ -367,6 +403,10 @@
                     locale: 'zh-CN',
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
@@ -395,13 +435,17 @@
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
-                    pageList: [30, 50, 100],       //可供选择的每页的行数（*）
-                    search: false,                      //是否显示表格搜索
+                    pageList: [30, 50, 100, 1000],       //可供选择的每页的行数（*）
+                    search: true,                      //是否显示表格搜索
                     strictSearch: false,                //是否全匹配搜索
                     showColumns: true,                  //是否显示所有的列（选择显示的列）
                     showRefresh: true,                  //是否显示刷新按钮
-                    showExport: false,
-                    exportDataType: "all",
+                    showExport: true,                   //是否显示导出按钮
+                    exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                    exportOptions: {
+                        ignoreColumn: [0],  //忽略某些列的索引数组
+                        fileName: 'slowquery_review_history'  //文件名称设置
+                    },
                     minimumCountColumns: 2,             //最少允许的列数
                     clickToSelect: true,                //是否启用点击选中行
                     uniqueId: "id",                     //每一行的唯一标识，一般为主键列
@@ -423,7 +467,8 @@
                             StartTime: StartTime,
                             EndTime: EndTime,
                             limit: params.limit,
-                            offset: params.offset
+                            offset: params.offset,
+                            search: params.search
                         }
                     },
                     //格式化详情
@@ -467,6 +512,10 @@
                             }
                         }
                     }, {
+                        title: '完整SQL语句',
+                        field: 'SQLText',
+                        visible: false // 默认不显示
+                    }, {
                         title: '执行总次数',
                         field: 'TotalExecutionCounts'
                     }, {
@@ -490,6 +539,10 @@
                     locale: 'zh-CN',
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源

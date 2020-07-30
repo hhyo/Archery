@@ -4,7 +4,7 @@ general_log_file=inception.log
 port=6669
 socket=/tmp/inc.socket
 character-set-client-handshake=0
-character-set-server=utf8mb4
+character-set-server=utf8
 inception_language_code=zh-CN
 inception_remote_system_password=123456
 inception_remote_system_user=root
@@ -21,3 +21,8 @@ inception_osc_min_table_size=10
 inception_osc_chunk_time=0.1
 inception_enable_blob_type=1
 inception_check_column_default_value=1
+
+inception_enable_select_star=ON
+inception_enable_identifer_keyword=ON
+inception_enable_autoincrement_unsigned=ON
+inception_check_identifier=OFF

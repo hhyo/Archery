@@ -1,9 +1,12 @@
 //初始化ace编辑器对象
-editor = ace.edit("sql_content_editor");
+var editor = ace.edit("sql_content_editor");
+ace.config.set('basePath', '/static/ace');
+ace.config.set('modePath', '/static/ace');
+ace.config.set('themePath', '/static/ace');
 
 //设置风格和语言（更多风格和语言，请到github上相应目录查看）
-theme = "textmate";
-language = "mysql"; // TODO 可以按照实例类型自动变更
+var theme = "textmate";
+var language = "text";
 editor.setTheme("ace/theme/" + theme);
 editor.session.setMode("ace/mode/" + language);
 editor.$blockScrolling = Infinity;
@@ -27,12 +30,18 @@ editor.setOptions({
     enableLiveAutocompletion: true
 });
 
-//绑定快捷键
+//启用搜索扩展
+ace.require("ace/ext/language_tools");
+
+//绑定查询快捷键
 editor.commands.addCommand({
     name: "alter",
     bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
     exec: function (editor) {
-        sqlquery();
+        let pathname = window.location.pathname;
+        if (pathname === "/sqlquery/") {
+            sqlquery();
+        }
     }
 });
 
@@ -120,7 +129,7 @@ function setColumnsCompleteData(result) {
         setCompleteData(columns);
     } else {
         $.ajax({
-            type: "post",
+            type: "get",
             url: "/instance/instance_resource/",
             dataType: "json",
             data: {
@@ -153,3 +162,49 @@ function setColumnsCompleteData(result) {
         });
     }
 }
+
+// 实例变更时修改language
+$("#instance_name").change(function () {
+    let optgroup = $('#instance_name :selected').parent().attr('label');
+    if (optgroup === "MySQL") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mysql");
+        // 提示信息
+        let pathname = window.location.pathname;
+        if (pathname === "/submitsql/" && !editor.getValue()) {
+            editor.setValue("-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n");
+            editor.clearSelection();
+            editor.focus();  //获取焦点
+        }
+    } else if (optgroup === "MsSQL") {
+        editor.setTheme("ace/theme/" + "sqlserver");
+        editor.session.setMode("ace/mode/" + "sqlserver");
+    } else if (optgroup === "Redis") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "text");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+        // 提示信息
+        let pathname = window.location.pathname;
+        if (pathname === "/submitsql/" && !editor.getValue()) {
+            editor.setValue("请在此输入命令，多个命令请换行填写，在提交时请删除此行说明");
+            editor.focus();  //获取焦点
+        }
+    } else if (optgroup === "PgSQL") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "pgsql");
+    } else if (optgroup === "Oracle") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "sql");
+    } else if (optgroup === "Mongo") {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mongodb");
+        editor.setOptions({
+            enableSnippets: false,
+        });
+    } else {
+        editor.setTheme("ace/theme/" + "textmate");
+        editor.session.setMode("ace/mode/" + "mysql");
+    }
+});

@@ -1,29 +1,29 @@
 # -*- coding: UTF-8 -*-
 
-import MySQLdb
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.db import connection
 
 
 class ChartDao(object):
-    # 直接在archery数据库查询数据，用于报表
-    def __query(self, sql):
+    # 直接在Archery数据库查询数据，用于报表
+    @staticmethod
+    def __query(sql):
         cursor = connection.cursor()
-        effect_row = cursor.execute(sql)
+        cursor.execute(sql)
         rows = cursor.fetchall()
         fields = cursor.description
         column_list = []
         if fields:
             for i in fields:
                 column_list.append(i[0])
-        result = {}
-        result['column_list'] = column_list
-        result['rows'] = rows
-        result['effect_row'] = effect_row
-        return result
+        return {
+            'column_list': column_list,
+            'rows': rows
+        }
 
     # 获取连续时间
-    def get_date_list(self, begin_date, end_date):
+    @staticmethod
+    def get_date_list(begin_date, end_date):
         dates = []
         this_day = begin_date
         while this_day <= end_date:
@@ -39,6 +39,7 @@ class ChartDao(object):
             then 'DDL'
           when syntax_type = 2
             then 'DML'
+          else '其他'
           end as syntax_type,
           count(*)
         from sql_workflow
@@ -81,7 +82,6 @@ class ChartDao(object):
         group by engineer_display
         order by count(*) desc;'''.format(cycle)
         return self.__query(sql)
-
 
     # SQL查询统计(每日检索行数)
     def querylog_effect_row_by_date(self, cycle):
@@ -131,4 +131,20 @@ class ChartDao(object):
         group by db_name
         order by sum(effect_row) desc
         limit 10;'''.format(cycle)
+        return self.__query(sql)
+
+    # 慢日志历史趋势图(按次数)
+    def slow_query_review_history_by_cnt(self, checksum):
+        sql = f"""select sum(ts_cnt),date(date_add(ts_min, interval 8 HOUR))
+from mysql_slow_query_review_history
+where checksum = '{checksum}'
+group by date(date_add(ts_min, interval 8 HOUR));"""
+        return self.__query(sql)
+
+    # 慢日志历史趋势图(按时长)
+    def slow_query_review_history_by_pct_95_time(self, checksum):
+        sql = f"""select truncate(Query_time_pct_95,6),date(date_add(ts_min, interval 8 HOUR))
+from mysql_slow_query_review_history
+where checksum = '{checksum}'
+group by date(date_add(ts_min, interval 8 HOUR));"""
         return self.__query(sql)

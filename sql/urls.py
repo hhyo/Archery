@@ -1,14 +1,16 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 from django.urls import path
 from django.views.i18n import JavaScriptCatalog
 
+import sql.instance_database
 import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
-from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, db_diagnostic, resource_group, binlog, \
-    data_dictionary
+from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
+    resource_group, binlog, data_dictionary, archiver
 from sql.utils import tasks
+from common.utils import ding_api
 
 urlpatterns = [
     path('', views.index),
@@ -45,14 +47,19 @@ urlpatterns = [
     path('group/', views.group),
     path('grouprelations/<int:group_id>/', views.groupmgmt),
     path('instance/', views.instance),
-    path('instanceuser/<int:instance_id>/', views.instanceuser),
+    path('instanceaccount/', views.instanceaccount),
+    path('database/', views.database),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
     path('schemasync/', views.schemasync),
+    path('archive/', views.archive),
+    path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
     path('config/', views.config),
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('sqlworkflow/detail_content/', sql_workflow.detail_content),
+    path('sqlworkflow/backup_sql/', sql_workflow.backup_sql),
     path('simplecheck/', sql_workflow.check),
     path('getWorkflowStatus/', sql_workflow.get_workflow_status),
     path('del_sqlcronjob/', tasks.del_schedule),
@@ -80,7 +87,18 @@ urlpatterns = [
     path('group/user_all_instances/', resource_group.user_all_instances),
 
     path('instance/list/', instance.lists),
-    path('instance/users/', instance.users),
+
+    path('instance/user/list', instance_account.users),
+    path('instance/user/create/', instance_account.create),
+    path('instance/user/edit/', instance_account.edit),
+    path('instance/user/grant/', instance_account.grant),
+    path('instance/user/reset_pwd/', instance_account.reset_pwd),
+    path('instance/user/delete/', instance_account.delete),
+
+    path('instance/database/list/', sql.instance_database.databases),
+    path('instance/database/create/', sql.instance_database.create),
+    path('instance/database/edit/', sql.instance_database.edit),
+
     path('instance/schemasync/', instance.schemasync),
     path('instance/instance_resource/', instance.instance_resource),
     path('instance/describetable/', instance.describe),
@@ -88,6 +106,7 @@ urlpatterns = [
     path('data_dictionary/', views.data_dictionary),
     path('data_dictionary/table_list/', data_dictionary.table_list),
     path('data_dictionary/table_info/', data_dictionary.table_info),
+    path('data_dictionary/export/', data_dictionary.export),
 
     path('param/list/', instance.param_list),
     path('param/history/', instance.param_history),
@@ -95,6 +114,7 @@ urlpatterns = [
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
+    path('query/favorite/', query.favorite),
     path('query/explain/', sql.sql_optimize.explain),
     path('query/applylist/', sql.query_privileges.query_priv_apply_list),
     path('query/userprivileges/', sql.query_privileges.user_query_priv),
@@ -111,10 +131,22 @@ urlpatterns = [
     path('slowquery/optimize_sqladvisor/', sql.sql_optimize.optimize_sqladvisor),
     path('slowquery/optimize_sqltuning/', sql.sql_optimize.optimize_sqltuning),
     path('slowquery/optimize_soar/', sql.sql_optimize.optimize_soar),
+    path('slowquery/optimize_sqltuningadvisor/', sql.sql_optimize.optimize_sqltuningadvisor),
+    path('slowquery/report/', slowlog.report),
 
     path('db_diagnostic/process/', db_diagnostic.process),
     path('db_diagnostic/create_kill_session/', db_diagnostic.create_kill_session),
     path('db_diagnostic/kill_session/', db_diagnostic.kill_session),
     path('db_diagnostic/tablesapce/', db_diagnostic.tablesapce),
     path('db_diagnostic/trxandlocks/', db_diagnostic.trxandlocks),
+    path('db_diagnostic/innodb_trx/', db_diagnostic.innodb_trx),
+
+    path('archive/list/', archiver.archive_list),
+    path('archive/apply/', archiver.archive_apply),
+    path('archive/audit/', archiver.archive_audit),
+    path('archive/switch/', archiver.archive_switch),
+    path('archive/once/', archiver.archive_once),
+    path('archive/log/', archiver.archive_log),
+
+    path('4admin/sync_ding_user/', ding_api.sync_ding_user)
 ]

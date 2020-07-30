@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: sql_analyze.py 
+@author: hhyo
+@license: Apache Licence
+@file: sql_analyze.py
 @time: 2019/03/14
 """
 import simplejson as json
@@ -10,8 +10,9 @@ from django.contrib.auth.decorators import permission_required
 
 from common.config import SysConfig
 from sql.plugins.soar import Soar
+from sql.utils.resource_group import user_instances
 from sql.utils.sql_utils import generate_sql
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance
 
@@ -50,11 +51,14 @@ def analyze(request):
     else:
         soar = Soar()
         if instance_name != '' and db_name != '':
+            try:
+                instance_info = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
+            except Instance.DoesNotExist:
+                return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
             soar_test_dsn = SysConfig().get('soar_test_dsn')
             # 获取实例连接信息
-            instance_info = Instance.objects.get(instance_name=instance_name)
             online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
-                                                                  pwd=instance_info.raw_password,
+                                                                  pwd=instance_info.password,
                                                                   host=instance_info.host,
                                                                   port=instance_info.port,
                                                                   db=db_name)
@@ -68,7 +72,7 @@ def analyze(request):
                 "allow-online-as-test": "false"}
         rows = generate_sql(text)
         for row in rows:
-            args['query'] = row['sql'].replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            args['query'] = row['sql']
             cmd_args = soar.generate_args2cmd(args=args, shell=True)
             stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
             row['report'] = stdout if stdout else stderr

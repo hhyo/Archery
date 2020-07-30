@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: schemasync.py 
+@author: hhyo
+@license: Apache Licence
+@file: schemasync.py
 @time: 2019/03/05
 """
 __author__ = 'hhyo'
@@ -14,7 +14,7 @@ from sql.plugins.plugin import Plugin
 class SchemaSync(Plugin):
 
     def __init__(self):
-        self.path = SysConfig().get('schemasync')
+        self.path = 'schemasync'
         self.required_args = []
         self.disable_args = []
         super(Plugin, self).__init__()

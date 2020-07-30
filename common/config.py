@@ -14,7 +14,7 @@ logger = logging.getLogger('default')
 
 
 class SysConfig(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.sys_config = {}
         self.get_all_config()
 
@@ -22,11 +22,11 @@ class SysConfig(object):
         # 优先获取缓存数据
         try:
             sys_config = cache.get('sys_config')
-        except Exception:
+        except Exception as m:
             sys_config = None
-            logger.error(traceback.format_exc())
+            logger.error(f"读取缓存失败:{m}{traceback.format_exc()}")
 
-        # 缓存获取失败从数据库获取并且更新缓存
+        # 缓存获取失败从数据库获取并且尝试更新缓存
         if sys_config:
             self.sys_config = sys_config
         else:
@@ -41,13 +41,15 @@ class SysConfig(object):
                         items['value'] = False
                     sys_config[items['item']] = items['value']
                 self.sys_config = sys_config
-                # 增加缓存
-                try:
-                    cache.add('sys_config', self.sys_config, timeout=None)
-                except Exception:
-                    logger.error(traceback.format_exc())
-            except Exception:
+            except Exception as m:
+                logger.error(f"获取系统配置信息失败:{m}{traceback.format_exc()}")
                 self.sys_config = {}
+            else:
+                try:
+                    # 更新缓存
+                    cache.set('sys_config', self.sys_config, timeout=None)
+                except Exception as m:
+                    logger.error(f"更新缓存失败:{m}{traceback.format_exc()}")
 
     def get(self, key, default_value=None):
         value = self.sys_config.get(key, default_value)
@@ -67,8 +69,8 @@ class SysConfig(object):
         # 删除并更新缓存
         try:
             cache.delete('sys_config')
-        except Exception:
-            logger.error(traceback.format_exc())
+        except Exception as m:
+            logger.error(f"删除缓存失败:{m}{traceback.format_exc()}")
         finally:
             self.get_all_config()
 
@@ -80,7 +82,8 @@ class SysConfig(object):
             self.purge()
             with transaction.atomic():
                 Config.objects.bulk_create(
-                    [Config(item=items['key'], value=items['value']) for items in json.loads(configs)])
+                    [Config(item=items['key'].strip(),
+                            value=str(items['value']).strip()) for items in json.loads(configs)])
         except Exception as e:
             logger.error(traceback.format_exc())
             result['status'] = 1
@@ -94,9 +97,8 @@ class SysConfig(object):
         try:
             self.sys_config = {}
             cache.delete('sys_config')
-        except Exception:
-            # 缓存清理失败可接受
-            logger.error(traceback.format_exc())
+        except Exception as m:
+            logger.error(f"删除缓存失败:{m}{traceback.format_exc()}")
         with transaction.atomic():
             Config.objects.all().delete()
 

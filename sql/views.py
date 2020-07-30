@@ -7,10 +7,12 @@ from django.conf import settings
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, FileResponse
 from django.urls import reverse
 
+from archery import settings
 from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
@@ -18,11 +20,11 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig
 from sql.utils.workflow_audit import Audit
-from sql.utils.sql_review import can_execute, can_timingtask, can_cancel
+from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
-from sql.utils.resource_group import user_groups
+from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 
 import logging
 
@@ -38,7 +40,8 @@ def login(request):
     """登录页面"""
     if request.user and request.user.is_authenticated:
         return HttpResponseRedirect('/')
-    return render(request, 'login.html')
+
+    return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)
@@ -98,10 +101,8 @@ def submit_sql(request):
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    if workflow_detail.status in ['workflow_finish', 'workflow_exception']:
-        rows = workflow_detail.sqlworkflowcontent.execute_result
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
+    if not can_view(request.user, workflow_id):
+        raise PermissionDenied
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != 'workflow_autoreviewwrong':
         # 获取当前审批和审批流程
@@ -109,18 +110,27 @@ def detail(request, workflow_id):
 
         # 是否可审核
         is_can_review = Audit.can_review(request.user, workflow_id, 2)
-        # 是否可执行
+        # 是否可执行 TODO 这几个判断方法入参都修改为workflow对象，可减少多次数据库交互
         is_can_execute = can_execute(request.user, workflow_id)
         # 是否可定时执行
         is_can_timingtask = can_timingtask(request.user, workflow_id)
         # 是否可取消
         is_can_cancel = can_cancel(request.user, workflow_id)
+        # 是否可查看回滚信息
+        is_can_rollback = can_rollback(request.user, workflow_id)
 
         # 获取审核日志
         try:
-            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
-                                                   workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                       workflow_type=WorkflowDict.workflow_type['sqlreview'])
+            audit_id = audit_detail.audit_id
             last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+            # 等待审批的展示当前全部审批人
+            if workflow_detail.status == 'workflow_manreviewing':
+                auth_group_name = Group.objects.get(id=audit_detail.current_audit).name
+                current_audit_users = auth_group_users([auth_group_name], audit_detail.group_id)
+                current_audit_users_display = [user.display for user in current_audit_users]
+                last_operation_info += '，当前审批人：' + ','.join(current_audit_users_display)
         except Exception as e:
             logger.debug(f'无审核日志记录，错误信息{e}')
             last_operation_info = ''
@@ -131,6 +141,7 @@ def detail(request, workflow_id):
         is_can_execute = False
         is_can_timingtask = False
         is_can_cancel = False
+        is_can_rollback = False
         last_operation_info = None
 
     # 获取定时执行任务信息
@@ -147,61 +158,51 @@ def detail(request, workflow_id):
     # 获取是否开启手工执行确认
     manual = SysConfig().get('manual')
 
-    review_result = ReviewSet()
-    if rows:
-        try:
-            # 检验rows能不能正常解析
-            loaded_rows = json.loads(rows)
-            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-            if isinstance(loaded_rows[-1], list):
-                for r in loaded_rows:
-                    review_result.rows += [ReviewResult(inception_result=r)]
-                rows = review_result.json()
-        except IndexError:
-            review_result.rows += [ReviewResult(
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
-        except json.decoder.JSONDecodeError:
-            review_result.rows += [ReviewResult(
-                # 迫于无法单元测试这里加上英文报错信息
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
-            )]
-            rows = review_result.json()
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
-
-    context = {'workflow_detail': workflow_detail, 'rows': rows, 'last_operation_info': last_operation_info,
+    context = {'workflow_detail': workflow_detail, 'last_operation_info': last_operation_info,
                'is_can_review': is_can_review, 'is_can_execute': is_can_execute, 'is_can_timingtask': is_can_timingtask,
-               'is_can_cancel': is_can_cancel, 'audit_auth_group': audit_auth_group, 'manual': manual,
-               'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
+               'is_can_cancel': is_can_cancel, 'is_can_rollback': is_can_rollback, 'audit_auth_group': audit_auth_group,
+               'manual': manual, 'current_audit_auth_group': current_audit_auth_group, 'run_date': run_date}
     return render(request, 'detail.html', context)
 
 
 def rollback(request):
     """展示回滚的SQL页面"""
-    workflow_id = request.GET['workflow_id']
+    workflow_id = request.GET.get('workflow_id')
+    if not can_rollback(request.user, workflow_id):
+        raise PermissionDenied
+    download = request.GET.get('download')
     if workflow_id == '' or workflow_id is None:
         context = {'errMsg': 'workflow_id参数为空.'}
         return render(request, 'error.html', context)
-    workflow_id = int(workflow_id)
-    workflow = SqlWorkflow.objects.get(id=workflow_id)
+    workflow = SqlWorkflow.objects.get(id=int(workflow_id))
 
-    try:
-        query_engine = get_engine(instance=workflow.instance)
-        list_backup_sql = query_engine.get_rollback(workflow=workflow)
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        context = {'errMsg': msg}
-        return render(request, 'error.html', context)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-    workflow_title = workflow_detail.workflow_name
-    rollback_workflow_name = "【回滚工单】原工单Id:%s ,%s" % (workflow_id, workflow_title)
-    context = {'list_backup_sql': list_backup_sql, 'workflow_detail': workflow_detail,
-               'rollback_workflow_name': rollback_workflow_name}
-    return render(request, 'rollback.html', context)
+    # 直接下载回滚语句
+    if download:
+        try:
+            query_engine = get_engine(instance=workflow.instance)
+            list_backup_sql = query_engine.get_rollback(workflow=workflow)
+        except Exception as msg:
+            logger.error(traceback.format_exc())
+            context = {'errMsg': msg}
+            return render(request, 'error.html', context)
+
+        # 获取数据，存入目录
+        path = os.path.join(settings.BASE_DIR, 'downloads/rollback')
+        os.makedirs(path, exist_ok=True)
+        file_name = f'{path}/rollback_{workflow_id}.sql'
+        with open(file_name, 'w') as f:
+            for sql in list_backup_sql:
+                f.write(f'/*{sql[0]}*/\n{sql[1]}\n')
+        # 返回
+        response = FileResponse(open(file_name, 'rb'))
+        response['Content-Type'] = 'application/octet-stream'
+        response['Content-Disposition'] = f'attachment;filename="rollback_{workflow_id}.sql"'
+        return response
+    # 异步获取，并在页面展示，如果数据量大加载会缓慢
+    else:
+        rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
+        context = {'workflow_detail': workflow, 'rollback_workflow_name': rollback_workflow_name}
+        return render(request, 'rollback.html', context)
 
 
 @permission_required('sql.menu_sqlanalyze', raise_exception=True)
@@ -215,7 +216,10 @@ def sqlquery(request):
     """SQL在线查询页面"""
     # 主动创建标签
     InstanceTag.objects.get_or_create(tag_code='can_read', defaults={'tag_name': '支持查询', 'active': True})
-    return render(request, 'sqlquery.html')
+    # 收藏语句
+    user = request.user
+    favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
+    return render(request, 'sqlquery.html', {'favorites': favorites})
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -282,10 +286,19 @@ def instance(request):
     return render(request, 'instance.html', {'tags': tags})
 
 
-@permission_required('sql.menu_instance', raise_exception=True)
-def instanceuser(request, instance_id):
-    """实例用户管理页面"""
-    return render(request, 'instanceuser.html', {'instance_id': instance_id})
+@permission_required('sql.menu_instance_account', raise_exception=True)
+def instanceaccount(request):
+    """实例账号管理页面"""
+    return render(request, 'instanceaccount.html')
+
+
+@permission_required('sql.menu_database', raise_exception=True)
+def database(request):
+    """实例数据库管理页面"""
+    # 获取所有有效用户，通知对象
+    active_user = Users.objects.filter(is_active=1)
+
+    return render(request, 'database.html', {"active_user": active_user})
 
 
 @permission_required('sql.menu_dbdiagnostic', raise_exception=True)
@@ -316,6 +329,43 @@ def binlog2sql(request):
 def schemasync(request):
     """数据库差异对比页面"""
     return render(request, 'schemasync.html')
+
+
+@permission_required('sql.menu_archive', raise_exception=True)
+def archive(request):
+    """归档列表页面"""
+    # 获取资源组
+    group_list = user_groups(request.user)
+    ins_list = user_instances(request.user, db_type=['mysql'])
+    return render(request, 'archive.html', {'group_list': group_list, 'ins_list': ins_list})
+
+
+def archive_detail(request, id):
+    """归档详情页面"""
+    archive_config = ArchiveConfig.objects.get(pk=id)
+    # 获取当前审批和审批流程、是否可审核
+    try:
+        audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
+        is_can_review = Audit.can_review(request.user, id, 3)
+    except Exception as e:
+        logger.debug(f'归档配置{id}无审核信息，{e}')
+        audit_auth_group, current_audit_auth_group = None, None
+        is_can_review = False
+    # 获取审核日志
+    if archive_config.status == 2:
+        try:
+            audit_id = Audit.detail_by_workflow_id(workflow_id=id, workflow_type=3).audit_id
+            last_operation_info = Audit.logs(audit_id=audit_id).latest('id').operation_info
+        except Exception as e:
+            logger.debug(f'归档配置{id}无审核日志记录，错误信息{e}')
+            last_operation_info = ''
+    else:
+        last_operation_info = ''
+
+    context = {'archive_config': archive_config, 'audit_auth_group': audit_auth_group,
+               'last_operation_info': last_operation_info, 'current_audit_auth_group': current_audit_auth_group,
+               'is_can_review': is_can_review}
+    return render(request, 'archivedetail.html', context)
 
 
 @superuser_required
@@ -363,13 +413,15 @@ def workflowsdetail(request, audit_id):
         return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
     elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:
         return HttpResponseRedirect(reverse('sql:detail', args=(audit_detail.workflow_id,)))
+    elif audit_detail.workflow_type == WorkflowDict.workflow_type['archive']:
+        return HttpResponseRedirect(reverse('sql:archive_detail', args=(audit_detail.workflow_id,)))
 
 
 @permission_required('sql.menu_document', raise_exception=True)
 def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件
-    file = os.path.join(settings.BASE_DIR, 'docs/mysql_db_design_guide.md')
+    file = os.path.join(settings.BASE_DIR, 'docs/docs.md')
     with open(file, 'r') as f:
         md = f.read().replace('\n', '\\n')
     return render(request, 'dbaprinciples.html', {'md': md})

@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 """ 
-@author: hhyo 
-@license: Apache Licence 
-@file: mysql.py 
+@author: hhyo
+@license: Apache Licence
+@file: mysql.py
 @time: 2019/03/09
 """
 import threading
@@ -31,7 +31,7 @@ class MysqlComEngine(Completer):
         初始化数据库执行连接
         :return:
         """
-        return SQLExecute(self.db_name, self.instance.user, self.instance.raw_password, self.instance.host,
+        return SQLExecute(self.db_name, self.instance.user, self.instance.password, self.instance.host,
                           int(self.instance.port),
                           socket='', charset=self.instance.charset or 'utf8mb4',
                           local_infile='', ssl='', ssh_user='', ssh_host='', ssh_port='',

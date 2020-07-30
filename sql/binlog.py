@@ -34,16 +34,18 @@ def binlog_list(request):
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
     query_engine = get_engine(instance=instance)
-    binlog = query_engine.query('information_schema', 'show binary logs;')
-    column_list = binlog.column_list
-    rows = []
-    for row in binlog.rows:
-        row_info = {}
-        for row_index, row_item in enumerate(row):
-            row_info[column_list[row_index]] = row_item
-        rows.append(row_info)
-
-    result = {'status': 0, 'msg': 'ok', 'data': rows}
+    query_result = query_engine.query('information_schema', 'show binary logs;')
+    if not query_result.error:
+        column_list = query_result.column_list
+        rows = []
+        for row in query_result.rows:
+            row_info = {}
+            for row_index, row_item in enumerate(row):
+                row_info[column_list[row_index]] = row_item
+            rows.append(row_info)
+        result = {'status': 0, 'msg': 'ok', 'data': rows}
+    else:
+        result = {'status': 1, 'msg': query_result.error}
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -106,7 +108,7 @@ def binlog2sql(request):
     # 提交给binlog2sql进行解析
     binlog2sql = Binlog2Sql()
     # 准备参数
-    args = {"conn_options": fr"-h{instance.host} -u{instance.user} -p'{instance.raw_password}' -P{instance.port} ",
+    args = {"conn_options": fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port} ",
             "stop_never": False,
             "no-primary-key": no_pk,
             "flashback": flashback,
@@ -164,9 +166,11 @@ def binlog2sql(request):
         result['status'] = 1
         result['msg'] = str(e)
 
-    # 异步保存到文件，去除conn_options避免展示密码信息
+    # 异步保存到文件
     if save_sql:
-        async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql)
+        args.pop('conn_options')
+        async_task(binlog2sql_file, args=args, user=request.user, hook=notify_for_binlog2sql, timeout=-1,
+                   task_name=f'binlog2sql-{time.time()}')
 
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
@@ -182,8 +186,11 @@ def binlog2sql_file(args, user):
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
+    conn_options = fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port}"
+    args['conn_options'] = conn_options
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
+    os.makedirs(path, exist_ok=True)
     if args.get('flashback'):
         filename = os.path.join(path, f"flashback_{instance.host}_{instance.port}_{timestamp}.sql")
     else:

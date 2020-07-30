@@ -3,23 +3,243 @@ import re
 from datetime import timedelta, datetime, date
 from unittest.mock import MagicMock, patch, ANY
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
-from django.test import Client, TestCase
+from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
+from sql.archiver import add_archive_task, archive
 from sql.binlog import binlog2sql_file
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql
 from sql.utils.execute_sql import execute_callback
 from sql.query import kill_query_conn
-from sql.models import Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
-    ResourceGroup, ResourceGroup2User, ParamTemplate, WorkflowAudit
+from sql.models import Users, Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
+    ResourceGroup, ParamTemplate, WorkflowAudit, QueryLog, WorkflowLog, WorkflowAuditSetting, \
+    ArchiveConfig
 
-User = get_user_model()
+User = Users
+
+
+class TestView(TestCase):
+    """测试view视图"""
+
+    def setUp(self):
+        """
+        准备用户和配置
+        """
+        self.sys_config = SysConfig()
+        self.client = Client()
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.client.force_login(self.superuser)
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
+                                           host='some_host',
+                                           port=3306, user='ins_user', password='some_str')
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_audit_group',
+            status='workflow_finish',
+            is_backup=True,
+            instance=self.ins,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf,
+                                          sql_content='some_sql',
+                                          execute_result='')
+        self.query_apply = QueryPrivilegesApply.objects.create(
+            group_id=1,
+            group_name='some_name',
+            title='some_title1',
+            user_name='some_user',
+            instance=self.ins,
+            db_list='some_db,some_db2',
+            limit_num=100,
+            valid_date='2020-01-1',
+            priv_type=1,
+            status=0,
+            audit_auth_groups='some_audit_group'
+        )
+        self.audit = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name='some_group',
+            workflow_id=1,
+            workflow_type=1,
+            workflow_title='申请标题',
+            workflow_remark='申请备注',
+            audit_auth_groups='1,2,3',
+            current_audit='1',
+            next_audit='2',
+            current_status=0)
+        self.wl = WorkflowLog.objects.create(audit_id=self.audit.audit_id,
+                                             operation_type=1)
+
+    def tearDown(self):
+        self.sys_config.purge()
+        User.objects.all().delete()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+        WorkflowAudit.objects.all().delete()
+        WorkflowLog.objects.all().delete()
+        QueryPrivilegesApply.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+
+    def test_index(self):
+        """测试index页面"""
+        data = {}
+        r = self.client.get('/index/', data=data)
+        self.assertRedirects(r, f'/sqlworkflow/', fetch_redirect_response=False)
+
+    def test_dashboard(self):
+        """测试dashboard页面"""
+        data = {}
+        r = self.client.get('/dashboard/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'SQL上线工单')
+
+    def test_sqlworkflow(self):
+        """测试sqlworkflow页面"""
+        data = {}
+        r = self.client.get('/sqlworkflow/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_submitsql(self):
+        """测试submitsql页面"""
+        data = {}
+        r = self.client.get('/submitsql/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_rollback(self):
+        """测试rollback页面"""
+        data = {"workflow_id": self.wf.id}
+        r = self.client.get('/rollback/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqlanalyze(self):
+        """测试sqlanalyze页面"""
+        data = {}
+        r = self.client.get('/sqlanalyze/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqlquery(self):
+        """测试sqlquery页面"""
+        data = {}
+        r = self.client.get('/sqlquery/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_queryapplylist(self):
+        """测试queryapplylist页面"""
+        data = {}
+        r = self.client.get('/queryapplylist/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_queryuserprivileges(self):
+        """测试queryuserprivileges页面"""
+        data = {}
+        r = self.client.get(f'/queryuserprivileges/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_sqladvisor(self):
+        """测试sqladvisor页面"""
+        data = {}
+        r = self.client.get(f'/sqladvisor/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_slowquery(self):
+        """测试slowquery页面"""
+        data = {}
+        r = self.client.get(f'/slowquery/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instance(self):
+        """测试instance页面"""
+        data = {}
+        r = self.client.get(f'/instance/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instanceaccount(self):
+        """测试instanceaccount页面"""
+        data = {}
+        r = self.client.get(f'/instanceaccount/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_database(self):
+        """测试database页面"""
+        data = {}
+        r = self.client.get(f'/database/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_dbdiagnostic(self):
+        """测试dbdiagnostic页面"""
+        data = {}
+        r = self.client.get(f'/dbdiagnostic/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_instanceparam(self):
+        """测试instance_param页面"""
+        data = {}
+        r = self.client.get(f'/instanceparam/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_binlog2sql(self):
+        """测试binlog2sql页面"""
+        data = {}
+        r = self.client.get(f'/binlog2sql/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_schemasync(self):
+        """测试schemasync页面"""
+        data = {}
+        r = self.client.get(f'/schemasync/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_archive(self):
+        """测试archive页面"""
+        data = {}
+        r = self.client.get(f'/archive/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_config(self):
+        """测试config页面"""
+        data = {}
+        r = self.client.get(f'/config/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_group(self):
+        """测试group页面"""
+        data = {}
+        r = self.client.get(f'/group/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_groupmgmt(self):
+        """测试groupmgmt页面"""
+        data = {}
+        r = self.client.get(f'/grouprelations/{self.res_group.group_id}/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_workflows(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/workflow/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_workflowsdetail(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/workflow/{self.audit.audit_id}/', data=data)
+        self.assertRedirects(r, f'/queryapplydetail/1/', fetch_redirect_response=False)
+
+    def test_dbaprinciples(self):
+        """测试workflows页面"""
+        data = {}
+        r = self.client.get(f'/dbaprinciples/', data=data)
+        self.assertEqual(r.status_code, 200)
 
 
 class TestSignUp(TestCase):
@@ -141,6 +361,23 @@ class TestUser(TestCase):
         # init 只调用一次
         mock_init.assert_called_once()
 
+    def test_out_ranged_failed_login_count(self):
+        # 正常保存
+        self.u1.failed_login_count = 64
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(64, self.u1.failed_login_count)
+        # 超过127视为127
+        self.u1.failed_login_count = 256
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(127, self.u1.failed_login_count)
+        # 小于0视为0
+        self.u1.failed_login_count = -1
+        self.u1.save()
+        self.u1.refresh_from_db()
+        self.assertEqual(0, self.u1.failed_login_count)
+
 
 class TestQueryPrivilegesCheck(TestCase):
     """测试权限校验"""
@@ -258,28 +495,25 @@ class TestQueryPrivilegesCheck(TestCase):
         r = sql.query_privileges._priv_limit(user=self.user, instance=self.slave, db_name=self.db_name, tb_name='test')
         self.assertEqual(r, 1)
 
-    @patch('sql.engines.inception.InceptionEngine.query_print')
+    @patch('sql.engines.goinception.GoInceptionEngine.query_print')
     def test_table_ref(self, _query_print):
         """
-        测试通过inception获取查询语句的table_ref
+        测试通过goInception获取查询语句的table_ref
         :return:
         """
-        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
-                                     'table_ref': [{'db': 'archery', 'table': 'sql_users'}],
-                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+        _query_print.return_value = {'id': 2, 'statement': 'select * from sql_users limit 100', 'errlevel': 0,
+                                     'query_tree': '{"text":"select * from sql_users limit 100","resultFields":null,"SQLCache":true,"CalcFoundRows":false,"StraightJoin":false,"Priority":0,"Distinct":false,"From":{"text":"","TableRefs":{"text":"","resultFields":null,"Left":{"text":"","Source":{"text":"","resultFields":null,"Schema":{"O":"","L":""},"Name":{"O":"sql_users","L":"sql_users"},"DBInfo":null,"TableInfo":null,"IndexHints":null},"AsName":{"O":"","L":""}},"Right":null,"Tp":0,"On":null,"Using":null,"NaturalJoin":false,"StraightJoin":false}},"Where":null,"Fields":{"text":"","Fields":[{"text":"","Offset":33,"WildCard":{"text":"","Table":{"O":"","L":""},"Schema":{"O":"","L":""}},"Expr":null,"AsName":{"O":"","L":""},"Auxiliary":false}]},"GroupBy":null,"Having":null,"OrderBy":null,"Limit":{"text":"","Count":{"text":"","k":2,"collation":0,"decimal":0,"length":0,"i":100,"b":null,"x":null,"Type":{"Tp":8,"Flag":160,"Flen":3,"Decimal":0,"Charset":"binary","Collate":"binary","Elems":null},"flag":0,"projectionOffset":-1},"Offset":null},"LockTp":0,"TableHints":null,"IsAfterUnionDistinct":false,"IsInBraces":false}',
+                                     'errmsg': None}
+        r = sql.query_privileges._table_ref('select * from sql_users limit 100;', self.slave, self.db_name)
+        self.assertListEqual(r, [{'schema': 'test_archery', 'name': 'sql_users'}])
 
-        r = sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
-        self.assertListEqual(r, [{'db': 'archery', 'table': 'sql_users'}])
-
-    @patch('sql.engines.inception.InceptionEngine.query_print')
+    @patch('sql.engines.goinception.GoInceptionEngine.query_print')
     def test_table_ref_wrong(self, _query_print):
         """
-        测试通过inception获取查询语句的table_ref
+        测试通过goInception获取查询语句的table_ref
         :return:
         """
-        _query_print.return_value = {'command': 'select', 'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
-                                     'table_ref': [{'db': '', 'table': '*'}],
-                                     'limit': {'limit': [{'type': 'INT_ITEM', 'value': '10'}]}}
+        _query_print.side_effect = RuntimeError('语法错误')
         with self.assertRaises(RuntimeError):
             sql.query_privileges._table_ref('select * from archery.sql_users;', self.slave, self.db_name)
 
@@ -307,7 +541,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertTrue(r)
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_no_priv(self, __db_priv, __tb_priv, __table_ref):
@@ -319,10 +553,10 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'status': 1, 'msg': '你无test_archery.sql_users表的查询权限！请先到查询权限管理进行申请',
+        self.assertDictEqual(r, {'status': 1, 'msg': '你无archery.sql_users表的查询权限！请先到查询权限管理进行申请',
                                  'data': {'priv_check': True, 'limit_num': 0}})
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_db_priv_exist(self, __db_priv, __tb_priv, __table_ref):
@@ -336,7 +570,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
-    @patch('sql.query_privileges._table_ref', return_value=[{'db': 'archery', 'table': 'sql_users'}])
+    @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
     @patch('sql.query_privileges._tb_priv', return_value=10)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_tb_priv_exist(self, __db_priv, __tb_priv, __table_ref):
@@ -350,75 +584,23 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 10, 'priv_check': True}, 'msg': 'ok', 'status': 0})
 
-    @patch('sql.query_privileges._table_ref', return_value=SyntaxError())
-    def test_query_priv_check_table_ref_SyntaxError(self, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
-        :return:
-        """
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'status': 1,
-                                 'msg': "你无archery数据库的查询权限！请先到查询权限管理进行申请",
-                                 'data': {'priv_check': True, 'limit_num': 0}})
-
     @patch('sql.query_privileges._table_ref')
     @patch('sql.query_privileges._tb_priv', return_value=False)
     @patch('sql.query_privileges._db_priv', return_value=False)
     def test_query_priv_check_table_ref_Exception_and_no_db_priv(self, __db_priv, __tb_priv, __table_ref):
         """
-        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常，query_check开启，无库权限
+        测试用户权限校验，mysql实例、普通用户 ，inception语法树抛出异常
         :return:
         """
-        __table_ref.side_effect = SyntaxError('语法错误')
-        self.sys_config.set('query_check', 'true')
+        __table_ref.side_effect = RuntimeError('语法错误')
         self.sys_config.get_all_config()
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
         self.assertDictEqual(r, {'status': 1,
-                                 'msg': "SQL语法错误，语法错误",
+                                 'msg': "无法校验查询语句权限，请联系管理员，错误信息：语法错误",
                                  'data': {'priv_check': True, 'limit_num': 0}})
-
-    @patch('sql.query_privileges._table_ref')
-    @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=1000)
-    def test_query_priv_check_table_ref_Exception_and_open_query_check(self, __db_priv, __tb_priv, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check开启，有库权限
-        :return:
-        """
-        __table_ref.side_effect = RuntimeError('RuntimeError')
-        self.sys_config.set('query_check', 'true')
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'status': 1,
-                                 'msg': "无法校验查询语句权限，请检查语法是否正确或联系管理员，错误信息：RuntimeError",
-                                 'data': {'priv_check': True, 'limit_num': 100}})
-
-    @patch('sql.query_privileges._table_ref')
-    @patch('sql.query_privileges._tb_priv', return_value=False)
-    @patch('sql.query_privileges._db_priv', return_value=1000)
-    def test_query_priv_check_table_ref_Exception_and_close_query_check(self, __db_priv, __tb_priv, __table_ref):
-        """
-        测试用户权限校验，mysql实例、普通用户 ，有表权限，inception语法树抛出异常，query_check关闭，有库权限
-        :return:
-        """
-        __table_ref.side_effect = RuntimeError()
-        self.sys_config.set('query_check', 'false')
-        self.sys_config.get_all_config()
-        r = sql.query_privileges.query_priv_check(user=self.user,
-                                                  instance=self.slave, db_name=self.db_name,
-                                                  sql_content="select * from archery.sql_users;",
-                                                  limit_num=100)
-        self.assertDictEqual(r, {'data': {'limit_num': 100, 'priv_check': False}, 'msg': 'ok', 'status': 0})
 
     @patch('sql.query_privileges._db_priv', return_value=1000)
     def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
@@ -427,7 +609,7 @@ class TestQueryPrivilegesCheck(TestCase):
         :return:
         """
         mssql_instance = Instance(instance_name='mssql', type='slave', db_type='mssql',
-                                  host='some_host', port=3306, user='some_user', password='some_password')
+                                  host='some_host', port=3306, user='some_user', password='some_str')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
@@ -441,7 +623,7 @@ class TestQueryPrivilegesCheck(TestCase):
         :return:
         """
         mssql_instance = Instance(instance_name='mssql', type='slave', db_type='oracle',
-                                  host='some_host', port=3306, user='some_user', password='some_password')
+                                  host='some_host', port=3306, user='some_user', password='some_str')
         r = sql.query_privileges.query_priv_check(user=self.user,
                                                   instance=mssql_instance, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
@@ -567,7 +749,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_review = Permission.objects.get(codename='query_review')
         self.user.user_permissions.add(query_review)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -588,8 +770,7 @@ class TestQueryPrivilegesApply(TestCase):
 
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
-        # ResourceGroup.objects.get(group_id=self.group.group_id).users.add(self.user)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/applylist/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
@@ -640,7 +821,7 @@ class TestQueryPrivilegesApply(TestCase):
         self.user.user_permissions.add(menu_queryapplylist)
         query_mgtpriv = Permission.objects.get(codename='query_mgtpriv')
         self.user.user_permissions.add(query_mgtpriv)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content)['total'], 1)
@@ -668,28 +849,35 @@ class TestQueryPrivilegesApply(TestCase):
                                        priv_type=2)
         menu_queryapplylist = Permission.objects.get(codename='menu_queryapplylist')
         self.user.user_permissions.add(menu_queryapplylist)
-        ResourceGroup2User.objects.create(user=self.user, resource_group=self.group)
+        self.user.resource_group.add(self.group)
         self.client.force_login(self.user)
         r = self.client.post(path='/query/userprivileges/', data=data)
         self.assertEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
-class TestQuery(TestCase):
+class TestQuery(TransactionTestCase):
     def setUp(self):
         self.slave1 = Instance(instance_name='test_slave_instance', type='slave', db_type='mysql',
                                host='testhost', port=3306, user='mysql_user', password='mysql_password')
         self.slave2 = Instance(instance_name='test_instance_non_mysql', type='slave', db_type='mssql',
-                               host='some_host2', port=3306, user='some_user', password='some_password')
+                               host='some_host2', port=3306, user='some_user', password='some_str')
         self.slave1.save()
         self.slave2.save()
         self.superuser1 = User.objects.create(username='super1', is_superuser=True)
         self.u1 = User.objects.create(username='test_user', display='中文显示', is_active=True)
         self.u2 = User.objects.create(username='test_user2', display='中文显示', is_active=True)
+        self.query_log = QueryLog.objects.create(instance_name=self.slave1.instance_name,
+                                                 db_name='some_db',
+                                                 sqllog='select 1;',
+                                                 effect_row=10,
+                                                 cost_time=1,
+                                                 username=self.superuser1.username)
         sql_query_perm = Permission.objects.get(codename='query_submit')
         self.u2.user_permissions.add(sql_query_perm)
 
     def tearDown(self):
         QueryPrivileges.objects.all().delete()
+        QueryLog.objects.all().delete()
         self.u1.delete()
         self.u2.delete()
         self.superuser1.delete()
@@ -698,9 +886,10 @@ class TestQuery(TestCase):
         archer_config = SysConfig()
         archer_config.set('disable_star', False)
 
+    @patch('sql.query.user_instances')
     @patch('sql.query.get_engine')
     @patch('sql.query.query_priv_check')
-    def testCorrectSQL(self, _priv_check, _get_engine):
+    def testCorrectSQL(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_sql = 'select some from some_table limit 100;'
         some_db = 'some_db'
@@ -720,20 +909,23 @@ class TestQuery(TestCase):
         _get_engine.return_value.query.return_value = q_result
         _get_engine.return_value.seconds_behind_master = 100
         _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
+        _user_instances.return_value.get.return_value = self.slave1
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': some_sql,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, some_sql, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, some_sql, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         print(r_json)
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
         self.assertEqual(r_json['data']['seconds_behind_master'], 100)
 
+    @patch('sql.query.user_instances')
     @patch('sql.query.get_engine')
     @patch('sql.query.query_priv_check')
-    def testSQLWithoutLimit(self, _priv_check, _get_engine):
+    def testSQLWithoutLimit(self, _priv_check, _get_engine, _user_instances):
         c = Client()
         some_limit = 100
         sql_without_limit = 'select some from some_table'
@@ -747,11 +939,13 @@ class TestQuery(TestCase):
         _get_engine.return_value.filter_sql.return_value = sql_with_limit
         _get_engine.return_value.query.return_value = q_result
         _priv_check.return_value = {'status': 0, 'data': {'limit_num': 100, 'priv_check': True}}
+        _user_instances.return_value.get.return_value = self.slave1
         r = c.post('/query/', data={'instance_name': self.slave1.instance_name,
                                     'sql_content': sql_without_limit,
                                     'db_name': some_db,
                                     'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, sql_with_limit, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, sql_with_limit, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
@@ -765,7 +959,8 @@ class TestQuery(TestCase):
                                 'sql_content': sql_with_star,
                                 'db_name': some_db,
                                 'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(some_db, filtered_sql_with_star, some_limit)
+        _get_engine.return_value.query.assert_called_once_with(
+            some_db, filtered_sql_with_star, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
 
     @patch('sql.query.query_priv_check')
     def testStarOptionOn(self, _priv_check):
@@ -790,8 +985,43 @@ class TestQuery(TestCase):
         kill_query_conn(self.slave1.id, 10)
         _get_engine.return_value.kill_connection.return_value = ResultSet()
 
+    def test_query_log(self):
+        """测试获取查询历史"""
+        c = Client()
+        c.force_login(self.superuser1)
+        QueryLog(id=self.query_log.id, favorite=True, alias='test_a').save(update_fields=['favorite', 'alias'])
+        data = {"star": "true",
+                "query_log_id": self.query_log.id,
+                "limit": 14,
+                "offset": 0, }
+        r = c.get('/query/querylog/', data=data)
+        self.assertEqual(r.json()['total'], 1)
 
-class TestWorkflowView(TestCase):
+    def test_star(self):
+        """测试查询语句收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post('/query/favorite/', data={'query_log_id': self.query_log.id,
+                                             'star': 'true',
+                                             'alias': 'test_alias'})
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertTrue(query_log.favorite)
+        self.assertEqual(query_log.alias, 'test_alias')
+
+    def test_un_star(self):
+        """测试查询语句取消收藏"""
+        c = Client()
+        c.force_login(self.superuser1)
+        r = c.post('/query/favorite/', data={'query_log_id': self.query_log.id,
+                                             'star': 'false',
+                                             'alias': ''})
+        r_json = r.json()
+        query_log = QueryLog.objects.get(id=self.query_log.id)
+        self.assertFalse(query_log.favorite)
+        self.assertEqual(query_log.alias, '')
+
+
+class TestWorkflowView(TransactionTestCase):
 
     def setUp(self):
         self.now = datetime.now()
@@ -971,6 +1201,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -998,6 +1229,7 @@ class TestWorkflowView(TestCase):
                 "group_name": self.resource_group1.group_name,
                 "instance_name": self.master1.instance_name,
                 "db_name": "archery",
+                "demand_url": 'test_url',
                 "run_date_start": "",
                 "run_date_end": "",
                 "workflow_auditors": "11"}
@@ -1061,7 +1293,6 @@ class TestWorkflowView(TestCase):
         r = c.get('/detail/{}/'.format(self.wf1.id))
         self.assertContains(r, expected_status_display)
         self.assertContains(r, exepcted_status)
-        self.assertContains(r, 'Json decode failed.')
 
         # 执行详情为空
         self.wfc1.review_content = [
@@ -1071,7 +1302,6 @@ class TestWorkflowView(TestCase):
         self.wfc1.execute_result = ''
         self.wfc1.save()
         r = c.get('/detail/{}/'.format(self.wf1.id))
-        self.assertContains(r, 'use archery')
 
     def testWorkflowListView(self):
         """测试工单列表"""
@@ -1208,6 +1438,7 @@ class TestWorkflowView(TestCase):
             'group_name': self.resource_group1.group_name,
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
+            "demand_url": 'test_url',
             'db_name': 'some_db',
             'is_backup': True,
             'notify_users': ''
@@ -1242,6 +1473,7 @@ class TestWorkflowView(TestCase):
             'group_id': self.resource_group1.group_id,
             'instance_name': self.master1.instance_name,
             'db_name': 'some_db',
+            "demand_url": 'test_url',
             'is_backup': False,
             'notify_users': ''
         }
@@ -1357,10 +1589,13 @@ class TestOptimize(TestCase):
                 "instance_name": "test_instance",
                 "db_name": settings.DATABASES['default']['TEST']['NAME']
                 }
-        r = self.client.post(path='/slowquery/optimize_sqltuning/')
-        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '实例不存在', 'data': []})
+        data['instance_name'] = 'test_instancex'
+        r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
+        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
+
 
         # 获取sys_parm
+        data['instance_name'] = 'test_instance'
         data['option[]'] = 'sys_parm'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertListEqual(list(json.loads(r.content)['data'].keys()),
@@ -1414,18 +1649,237 @@ class TestSchemaSync(TestCase):
         :return:
         """
         data = {"instance_name": "test_instance",
-                "db_name": "*",
+                "db_name": "test",
                 "target_instance_name": "test_instance",
-                "target_db_name": "*",
+                "target_db_name": "test",
                 "sync_auto_inc": True,
                 "sync_comments": False}
         r = self.client.post(path='/instance/schemasync/', data=data)
-        self.assertEqual(json.loads(r.content)['status'], 1)
-        self.assertEqual(json.loads(r.content)['msg'], '请配置SchemaSync路径！')
-        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
-        self.sys_config.get_all_config()
-        r = self.client.post(path='/instance/schemasync/', data=data)
         self.assertEqual(json.loads(r.content)['status'], 0)
+
+
+class TestArchiver(TestCase):
+    """
+    测试Archive
+    """
+
+    def setUp(self):
+        self.superuser = User.objects.create(username='super', is_superuser=True)
+        self.u1 = User.objects.create(username='u1', is_superuser=False)
+        self.u2 = User.objects.create(username='u2', is_superuser=False)
+        menu_archive = Permission.objects.get(codename='menu_archive')
+        archive_review = Permission.objects.get(codename='archive_review')
+        self.u1.user_permissions.add(menu_archive)
+        self.u2.user_permissions.add(menu_archive)
+        self.u2.user_permissions.add(archive_review)
+        # 使用 travis.ci 时实例和测试service保持一致
+        self.ins = Instance.objects.create(instance_name='test_instance', type='master', db_type='mysql',
+                                           host=settings.DATABASES['default']['HOST'],
+                                           port=settings.DATABASES['default']['PORT'],
+                                           user=settings.DATABASES['default']['USER'],
+                                           password=settings.DATABASES['default']['PASSWORD'])
+        self.res_group = ResourceGroup.objects.create(group_id=1, group_name='group_name')
+        self.archive_apply = ArchiveConfig.objects.create(
+            title='title',
+            resource_group=self.res_group,
+            audit_auth_groups='some_audit_group',
+            src_instance=self.ins,
+            src_db_name='src_db_name',
+            src_table_name='src_table_name',
+            dest_instance=self.ins,
+            dest_db_name='src_db_name',
+            dest_table_name='src_table_name',
+            condition='1=1',
+            mode='file',
+            no_delete=True,
+            sleep=1,
+            status=WorkflowDict.workflow_status['audit_wait'],
+            state=False,
+            user_name='some_user',
+            user_display='display',
+        )
+        self.sys_config = SysConfig()
+        self.client = Client()
+
+    def tearDown(self):
+        User.objects.all().delete()
+        ResourceGroup.objects.all().delete()
+        ArchiveConfig.objects.all().delete()
+        WorkflowAuditSetting.objects.all().delete()
+        self.ins.delete()
+        self.sys_config.purge()
+
+    def test_archive_list_super(self):
+        """
+        测试管理员获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.superuser)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_list_own(self):
+        """
+        测试非管理员和审核人获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.u1)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_list_review(self):
+        """
+        测试审核人获取归档申请列表
+        :return:
+        """
+        data = {"filter_instance_id": self.ins.id,
+                "state": 'false',
+                "search": "text"}
+        self.client.force_login(self.u2)
+        r = self.client.get(path='/archive/list/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+    def test_archive_apply_not_param(self):
+        """
+        测试申请归档实例数据，参数不完整
+        :return:
+        """
+        data = {
+            "group_name": self.res_group.group_name,
+            "src_instance_name": self.ins.instance_name,
+            "src_db_name": 'src_db_name',
+            "src_table_name": 'src_table_name',
+            "mode": 'dest',
+            "dest_instance_name": self.ins.instance_name,
+            "dest_db_name": 'dest_db_name',
+            "dest_table_name": 'dest_table_name',
+            "condition": '1=1',
+            "no_delete": 'true',
+            "sleep": 10
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'status': 1, 'msg': '请填写完整！', 'data': {}})
+
+    def test_archive_apply_not_dest_param(self):
+        """
+        测试申请归档实例数据，目标实例不完整
+        :return:
+        """
+        data = {
+            "title": 'title',
+            "group_name": self.res_group.group_name,
+            "src_instance_name": self.ins.instance_name,
+            "src_db_name": 'src_db_name',
+            "src_table_name": 'src_table_name',
+            "mode": 'dest',
+            "condition": '1=1',
+            "no_delete": 'true',
+            "sleep": 10
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'status': 1, 'msg': '归档到实例时目标实例信息必选！', 'data': {}})
+
+    def test_archive_apply_not_exist_review(self):
+        """
+        测试申请归档实例数据，未配置审批流程
+        :return:
+        """
+        data = {"title": 'title',
+                "group_name": self.res_group.group_name,
+                "src_instance_name": self.ins.instance_name,
+                "src_db_name": 'src_db_name',
+                "src_table_name": 'src_table_name',
+                "mode": 'dest',
+                "dest_instance_name": self.ins.instance_name,
+                "dest_db_name": 'dest_db_name',
+                "dest_table_name": 'dest_table_name',
+                "condition": '1=1',
+                "no_delete": 'true',
+                "sleep": 10
+                }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'data': {}, 'msg': '审批流程不能为空，请先配置审批流程', 'status': 1})
+
+    @patch('sql.archiver.async_task')
+    def test_archive_apply(self, _async_task):
+        """
+        测试申请归档实例数据
+        :return:
+        """
+        WorkflowAuditSetting.objects.create(workflow_type=3, group_id=1, audit_auth_groups='1')
+        data = {"title": 'title',
+                "group_name": self.res_group.group_name,
+                "src_instance_name": self.ins.instance_name,
+                "src_db_name": 'src_db_name',
+                "src_table_name": 'src_table_name',
+                "mode": 'dest',
+                "dest_instance_name": self.ins.instance_name,
+                "dest_db_name": 'dest_db_name',
+                "dest_table_name": 'dest_table_name',
+                "condition": '1=1',
+                "no_delete": 'true',
+                "sleep": 10
+                }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/apply/', data=data)
+        self.assertEqual(json.loads(r.content)['status'], 0)
+
+    @patch('sql.archiver.Audit')
+    @patch('sql.archiver.async_task')
+    def test_archive_audit(self, _async_task, _audit):
+        """
+        测试审核归档实例数据
+        :return:
+        """
+        _audit.detail_by_workflow_id.return_value.audit_id = 1
+        _audit.audit.return_value = {'status': 0, 'msg': 'ok', 'data': {'workflow_status': 1}}
+        data = {
+            "archive_id": self.archive_apply.id,
+            "audit_status": WorkflowDict.workflow_status['audit_success'],
+            "audit_remark": 'xxxx'
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/audit/', data=data)
+        self.assertRedirects(r, f'/archive/{self.archive_apply.id}/', fetch_redirect_response=False)
+
+    @patch('sql.archiver.async_task')
+    def test_add_archive_task(self, _async_task):
+        """
+        测试添加异步归档任务
+        :return:
+        """
+        add_archive_task()
+
+    @patch('sql.archiver.async_task')
+    def test_add_archive(self, _async_task):
+        """
+        测试执行归档任务
+        :return:
+        """
+        with self.assertRaises(Exception):
+            archive(self.archive_apply.id)
+
+    @patch('sql.archiver.async_task')
+    def test_archive_log(self, _async_task):
+        """
+        测试获取归档日志
+        :return:
+        """
+        data = {
+            "archive_id": self.archive_apply.id,
+        }
+        self.client.force_login(self.superuser)
+        r = self.client.post(path='/archive/log/', data=data)
+        self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
 
 
 class TestAsync(TestCase):
@@ -1600,7 +2054,8 @@ class TestBinLog(TestCase):
             "instance_name": 'test_instance'
         }
         r = self.client.post(path='/binlog/list/', data=data)
-        self.assertEqual(json.loads(r.content).get('status'), 0)
+        print(json.loads(r.content))
+        # self.assertEqual(json.loads(r.content).get('status'), 1)
 
     def test_binlog2sql_path_not_exist(self):
         """
@@ -1890,7 +2345,7 @@ class TestNotify(TestCase):
         tomorrow = datetime.today() + timedelta(days=1)
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql',
                                            host='some_host',
-                                           port=3306, user='ins_user', password='some_pass')
+                                           port=3306, user='ins_user', password='some_str')
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
             group_id=1,
@@ -2141,7 +2596,7 @@ class TestNotify(TestCase):
         self.wf.save()
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
-        _msg_sender.assert_called_once()
+        _msg_sender.assert_called()
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_binlog2sql_disable(self, _msg_sender):
@@ -2179,6 +2634,7 @@ class TestDataDictionary(TestCase):
     def setUp(self):
         self.sys_config = SysConfig()
         self.su = User.objects.create(username='s_user', display='中文显示', is_active=True, is_superuser=True)
+        self.u1 = User.objects.create(username='user1', display='中文显示', is_active=True)
         self.client = Client()
         self.client.force_login(self.su)
         # 使用 travis.ci 时实例和测试service保持一致
@@ -2315,3 +2771,89 @@ class TestDataDictionary(TestCase):
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content), {'msg': 'test error', 'status': 1})
+
+    def test_export_instance_does_not_exist(self):
+        """
+        测试导出实例不存在
+        :return:
+        """
+        data = {
+            'instance_name': 'not_exist',
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertDictEqual(json.loads(r.content), {'data': [], 'msg': '你所在组未关联该实例！', 'status': 1})
+
+    @patch('sql.data_dictionary.user_instances')
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_ins_no_perm(self, _get_engine, _user_instances):
+        """
+        测试导出实例无权限
+        :return:
+        """
+        self.client.force_login(self.u1)
+        data_dictionary_export = Permission.objects.get(codename='data_dictionary_export')
+        self.u1.user_permissions.add(data_dictionary_export)
+        _user_instances.return_value.get.return_value = self.ins
+        data = {
+            'instance_name': self.ins.instance_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertDictEqual(json.loads(r.content),
+                             {'status': 1, 'msg': f'仅管理员可以导出整个实例的字典信息！', 'data': []})
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_db(self, _get_engine):
+        """
+        测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'aliyun_rds_config',
+             'TABLE_TYPE': 'BASE TABLE', 'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 0,
+             'AVG_ROW_LENGTH': 0, 'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 32768, 'DATA_FREE': 0,
+             'AUTO_INCREMENT': 1, 'CREATE_TIME': datetime(2019, 5, 28, 9, 25, 41), 'UPDATE_TIME': None,
+             'CHECK_TIME': None, 'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '',
+             'TABLE_COMMENT': ''},
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'auth_group', 'TABLE_TYPE': 'BASE TABLE',
+             'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 8, 'AVG_ROW_LENGTH': 2048,
+             'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 16384, 'DATA_FREE': 0, 'AUTO_INCREMENT': 9,
+             'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
+             'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.streaming)
+
+    @patch('sql.data_dictionary.get_engine')
+    def test_export_instance(self, _get_engine):
+        """
+        测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'aliyun_rds_config',
+             'TABLE_TYPE': 'BASE TABLE', 'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 0,
+             'AVG_ROW_LENGTH': 0, 'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 32768, 'DATA_FREE': 0,
+             'AUTO_INCREMENT': 1, 'CREATE_TIME': datetime(2019, 5, 28, 9, 25, 41), 'UPDATE_TIME': None,
+             'CHECK_TIME': None, 'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '',
+             'TABLE_COMMENT': ''},
+            {'TABLE_CATALOG': 'def', 'TABLE_SCHEMA': 'archer', 'TABLE_NAME': 'auth_group', 'TABLE_TYPE': 'BASE TABLE',
+             'ENGINE': 'InnoDB', 'VERSION': 10, 'ROW_FORMAT': 'Dynamic', 'TABLE_ROWS': 8, 'AVG_ROW_LENGTH': 2048,
+             'DATA_LENGTH': 16384, 'MAX_DATA_LENGTH': 0, 'INDEX_LENGTH': 16384, 'DATA_FREE': 0, 'AUTO_INCREMENT': 9,
+             'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
+             'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
+        data = {
+            'instance_name': self.ins.instance_name
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content),
+                             {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})

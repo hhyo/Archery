@@ -7,14 +7,14 @@ import traceback
 
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
-from django.core import serializers
-from django.db import connection, OperationalError
+from django.db import connection, close_old_connections
 from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
-from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
+from sql.utils.resource_group import user_instances
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 from .models import QueryLog, Instance
 from sql.engines import get_engine
@@ -32,16 +32,18 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
+    tb_name = request.POST.get('tb_name')
     limit_num = int(request.POST.get('limit_num', 0))
+    schema_name = request.POST.get('schema_name', None)
     user = request.user
 
     result = {'status': 0, 'msg': 'ok', 'data': {}}
     try:
-        instance = Instance.objects.get(instance_name=instance_name)
+        instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result['status'] = 1
-        result['msg'] = '实例不存在'
-        return result
+        result['msg'] = '你所在组未关联该实例'
+        return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, limit_num]:
@@ -91,7 +93,12 @@ def query(request):
             run_date = (datetime.datetime.now() + datetime.timedelta(seconds=max_execution_time))
             add_kill_conn_schedule(schedule_name, run_date, instance.id, thread_id)
         with FuncTimer() as t:
-            query_result = query_engine.query(db_name, sql_content, limit_num)
+            # 获取主从延迟信息
+            seconds_behind_master = query_engine.seconds_behind_master
+            query_result = query_engine.query(db_name, sql_content, limit_num,
+                                              schema_name=schema_name,
+                                              tb_name=tb_name,
+                                              max_execution_time=max_execution_time * 1000)
         query_result.query_time = t.cost
         # 返回查询结果后删除schedule
         if thread_id:
@@ -115,23 +122,21 @@ def query(request):
                         result['msg'] = f'数据脱敏异常：{masking_result.error}'
                     # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                     else:
+                        logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{masking_result.error}')
                         query_result.error = None
-                        priv_check = False
                         result['data'] = query_result.__dict__
-                    logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{masking_result.error}')
                 # 正常脱敏
                 else:
                     result['data'] = masking_result.__dict__
             except Exception as msg:
-                logger.error(f'数据脱敏异常，查询语句：{sql_content}\n，错误信息：{msg}')
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if config.get('query_check'):
                     result['status'] = 1
                     result['msg'] = f'数据脱敏异常，请联系管理员，错误信息：{msg}'
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
+                    logger.warning(f'数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}')
                     query_result.error = None
-                    priv_check = False
                     result['data'] = query_result.__dict__
         # 无需脱敏的语句
         else:
@@ -139,8 +144,7 @@ def query(request):
 
         # 仅将成功的查询语句记录存入数据库
         if not query_result.error:
-            if hasattr(query_engine, 'seconds_behind_master'):
-                result['data']['seconds_behind_master'] = query_engine.seconds_behind_master
+            result['data']['seconds_behind_master'] = seconds_behind_master
             if int(limit_num) == 0:
                 limit_num = int(query_result.affected_rows)
             else:
@@ -158,11 +162,9 @@ def query(request):
                 masking=query_result.is_masked
             )
             # 防止查询超时
-            try:
-                query_log.save()
-            except OperationalError:
-                connection.close()
-                query_log.save()
+            if connection.connection and not connection.is_usable():
+                close_old_connections()
+            query_log.save()
     except Exception as e:
         logger.error(f'查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}')
         result['status'] = 1
@@ -170,7 +172,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 返回查询结果
     try:
-        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
                             content_type='application/json')
     # 虽然能正常返回，但是依然会乱码
     except UnicodeDecodeError:
@@ -188,32 +190,59 @@ def querylog(request):
     # 获取用户信息
     user = request.user
 
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.GET.get('limit'))
+    offset = int(request.GET.get('offset'))
     limit = offset + limit
-    search = request.POST.get('search', '')
+    star = True if request.GET.get('star') == 'true' else False
+    query_log_id = request.GET.get('query_log_id')
+    search = request.GET.get('search', '')
 
-    sql_log = QueryLog.objects.all()
+    # 组合筛选项
+    filter_dict = dict()
+    # 是否收藏
+    if star:
+        filter_dict['favorite'] = star
+    # 语句别名
+    if query_log_id:
+        filter_dict['id'] = query_log_id
+    # 管理员查看全部数据,普通用户查看自己的数据
+    if not user.is_superuser:
+        filter_dict['username'] = user.username
+
+    # 过滤组合筛选项
+    sql_log = QueryLog.objects.filter(**filter_dict)
+
     # 过滤搜索信息
-    sql_log = sql_log.filter(Q(sqllog__icontains=search) | Q(user_display__icontains=search))
-    # 管理员查看全部数据
-    if user.is_superuser:
-        sql_log = sql_log
-    # 普通用户查看自己的数据
-    else:
-        sql_log = sql_log.filter(username=user.username)
+    sql_log = sql_log.filter(Q(sqllog__icontains=search) |
+                             Q(user_display__icontains=search) |
+                             Q(alias__icontains=search))
 
     sql_log_count = sql_log.count()
-    sql_log_list = sql_log.order_by('-id')[offset:limit]
+    sql_log_list = sql_log.order_by('-id')[offset:limit].values(
+        "id", "instance_name", "db_name", "sqllog",
+        "effect_row", "cost_time", "user_display", "favorite", "alias",
+        "create_time")
     # QuerySet 序列化
-    sql_log_list = serializers.serialize("json", sql_log_list)
-    sql_log_list = json.loads(sql_log_list)
-    sql_log = [log_info['fields'] for log_info in sql_log_list]
-
-    result = {"total": sql_log_count, "rows": sql_log}
+    rows = [row for row in sql_log_list]
+    result = {"total": sql_log_count, "rows": rows}
     # 返回查询结果
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+@permission_required('sql.menu_sqlquery', raise_exception=True)
+def favorite(request):
+    """
+    收藏查询记录，并且设置别名
+    :param request:
+    :return:
+    """
+    query_log_id = request.POST.get('query_log_id')
+    star = True if request.POST.get('star') == 'true' else False
+    alias = request.POST.get('alias')
+    QueryLog(id=query_log_id, favorite=star, alias=alias).save(update_fields=['favorite', 'alias'])
+    # 返回查询结果
+    return HttpResponse(json.dumps({'status': 0, 'msg': 'ok'}), content_type='application/json')
 
 
 def kill_query_conn(instance_id, thread_id):

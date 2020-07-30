@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*- 
+# -*- coding: UTF-8 -*-
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -30,7 +30,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_q',
     'sql',
-    'themis',
+    'sql_api',
     'common',
 )
 
@@ -85,6 +85,7 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'common/static'), ]
+STATICFILES_STORAGE = 'common.storage.ForgivingManifestStaticFilesStorage'
 
 # 扩展django admin里users字段用到，指定了sql/models.py里的class users
 AUTH_USER_MODEL = "sql.users"
@@ -135,17 +136,6 @@ DATABASES = {
     }
 }
 
-# themis审核所需mongodb数据库，账号角色必须有"anyAction" to "anyResource"权限
-MONGODB_DATABASES = {
-    "default": {
-        "NAME": 'themis',
-        "USER": 'root',
-        "PASSWORD": '123456',
-        "HOST": 'mongo',
-        "PORT": 27017,
-    },
-}
-
 # Django-Q
 Q_CLUSTER = {
     'name': 'archery',
@@ -168,6 +158,15 @@ CACHES = {
         "LOCATION": "redis://redis:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "123456"
+        }
+    },
+    "dingding": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": "123456"
         }
     }
 }
@@ -205,7 +204,7 @@ LOGGING = {
         'default': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': 'downloads/log/archery.log',
+            'filename': 'logs/archery.log',
             'maxBytes': 1024 * 1024 * 100,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
@@ -219,16 +218,16 @@ LOGGING = {
     'loggers': {
         'default': {  # default日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG'
+            'level': 'WARNING'
         },
         'django-q': {  # django_q模块相关日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False
         },
         'django_auth_ldap': {  # django_auth_ldap模块相关日志
             'handlers': ['console', 'default'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False
         },
         # 'django.db': {  # 打印SQL语句，方便开发
@@ -236,10 +235,10 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'propagate': False
         # },
-        'django.request': {  # 打印请求错误堆栈信息，方便开发
-            'handlers': ['console', 'default'],
-            'level': 'DEBUG',
-            'propagate': False
-        },
+        # 'django.request': {  # 打印请求错误堆栈信息，方便开发
+        #     'handlers': ['console', 'default'],
+        #     'level': 'DEBUG',
+        #     'propagate': False
+        # },
     }
 }

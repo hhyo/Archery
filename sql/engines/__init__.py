@@ -1,5 +1,6 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
 from sql.engines.models import ResultSet
+from sql.utils.ssh_tunnel import SSHConnection
 
 
 class EngineBase:
@@ -14,7 +15,26 @@ class EngineBase:
             self.host = instance.host
             self.port = int(instance.port)
             self.user = instance.user
-            self.password = instance.raw_password
+            self.password = instance.password
+            self.db_name = instance.db_name
+
+            # 判断如果配置了隧道则连接隧道，只测试了MySQL
+            if self.instance.tunnel:
+                self.ssh = SSHConnection(
+                    self.host,
+                    self.port,
+                    instance.tunnel.host,
+                    instance.tunnel.port,
+                    instance.tunnel.user,
+                    instance.tunnel.password,
+                    instance.tunnel.pkey_path,
+                    instance.tunnel.pkey_password,
+                )
+                self.host,self.port = self.ssh.get_ssh()
+
+    def __del__(self):
+        if hasattr(self, 'ssh'):
+            del self.ssh
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
@@ -22,12 +42,22 @@ class EngineBase:
     @property
     def name(self):
         """返回engine名称"""
-        return 'base'
+        return "base"
 
     @property
     def info(self):
         """返回引擎简介"""
-        return 'Base engine'
+        return "Base engine"
+
+    @property
+    def auto_backup(self):
+        """是否支持备份"""
+        return False
+
+    @property
+    def seconds_behind_master(self):
+        """实例同步延迟情况"""
+        return None
 
     @property
     def server_version(self):
@@ -41,26 +71,26 @@ class EngineBase:
         """获取数据库列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def get_all_tables(self, db_name):
+    def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def get_all_columns_by_tb(self, db_name, tb_name):
+    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
-    def describe_table(self, db_name, tb_name):
+    def describe_table(self, db_name, tb_name, **kwargs):
         """获取表结构, 返回一个 ResultSet，rows=list"""
         return ResultSet()
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name=None, sql=""):
         """查询语句的检查、注释去除、切分, 返回一个字典 {'bad_query': bool, 'filtered_sql': str}"""
 
     def filter_sql(self, sql='', limit_num=0):
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True):
+    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """实际查询 返回一个ResultSet"""
 
     def query_masking(self, db_name=None, sql='', resultset=None):
@@ -91,27 +121,39 @@ class EngineBase:
 
 def get_engine(instance=None):  # pragma: no cover
     """获取数据库操作engine"""
-    if instance.db_type == 'mysql':
+    if instance.db_type == "mysql":
         from .mysql import MysqlEngine
+
         return MysqlEngine(instance=instance)
-    elif instance.db_type == 'mssql':
+    elif instance.db_type == "mssql":
         from .mssql import MssqlEngine
+
         return MssqlEngine(instance=instance)
-    elif instance.db_type == 'redis':
+    elif instance.db_type == "redis":
         from .redis import RedisEngine
+
         return RedisEngine(instance=instance)
-    elif instance.db_type == 'pgsql':
+    elif instance.db_type == "pgsql":
         from .pgsql import PgSQLEngine
+
         return PgSQLEngine(instance=instance)
-    elif instance.db_type == 'oracle':
+    elif instance.db_type == "oracle":
         from .oracle import OracleEngine
+
         return OracleEngine(instance=instance)
-    elif instance.db_type == 'mongo':
+    elif instance.db_type == "mongo":
         from .mongo import MongoEngine
+
         return MongoEngine(instance=instance)
-    elif instance.db_type == 'inception':
+    elif instance.db_type == "inception":
         from .inception import InceptionEngine
+
         return InceptionEngine(instance=instance)
-    elif instance.db_type == 'goinception':
+    elif instance.db_type == "goinception":
         from .goinception import GoInceptionEngine
+
         return GoInceptionEngine(instance=instance)
+    elif instance.db_type == "phoenix":
+        from .phoenix import PhoenixEngine
+
+        return PhoenixEngine(instance=instance)
