@@ -100,6 +100,17 @@
             <div class="col-lg-8">
                 <div class="panel panel-default">
                     <div class="panel-heading">
+                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db维度统计
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        {{ chart.bar3|safe }}
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
                         <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询统计
                     </div>
                     <!-- /.panel-heading -->
@@ -135,6 +146,17 @@
             </div>
             <!-- /.col-lg-8 -->
             <div class="col-lg-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db/user维度统计
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        {{ chart.pie3|safe }}
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线统计
