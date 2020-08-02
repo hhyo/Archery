@@ -7,14 +7,16 @@ services:
   - mysql
   - redis-server
 install:
-  - pip install codecov coverage flake8 mycli==1.19.0 -r requirements.txt
+  - pip install codecov coverage flake8 -r requirements.txt
 before_script:
   - flake8 . --count --exclude=./.* --select=E9,F63,F7,F82 --show-source --statistics
-  - mysql -e "CREATE DATABASE archery CHARSET UTF8;"
+  - mysql -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+  - mysql -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+  - mysql test_archery<src/init_sql/mysql_slow_query_review.sql
   - python manage.py makemigrations
   - python manage.py makemigrations sql
 script:
-  - coverage run manage.py test -v 3
+  - coverage run manage.py test -v 3 --keepdb
 
 after_success:
   - codecov
