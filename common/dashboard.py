@@ -109,13 +109,35 @@ def pyecharts(request):
     pie5.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}", position="left"))
     pie5.add("", [list(z) for z in zip(attr, value)])
 
+    # 慢查询db/user维度统计(最近1天)
+    data = chart_dao.slow_query_count_by_db_by_user(1)
+    attr = [row[0] for row in data['rows']]
+    value = [int(row[1]) for row in data['rows']]
+    pie3 = Pie(init_opts=opts.InitOpts(width='600',height='380px'))
+    pie3.set_global_opts(title_opts=opts.TitleOpts(title=''),
+                         legend_opts=opts.LegendOpts(
+                             orient="vertical", pos_top="15%", pos_left="2%", is_show=False
+                         ))
+    pie3.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}", position="left"))
+    pie3.add("", [list(z) for z in zip(attr, value)])
+
+    # 慢查询db维度统计(最近1天)
+    data = chart_dao.slow_query_count_by_db(1)
+    attr = [row[0] for row in data['rows']]
+    value = [row[1] for row in data['rows']]
+    bar3 = Bar(init_opts=opts.InitOpts(width='600', height='380px'))
+    bar3.add_xaxis(attr)
+    bar3.add_yaxis("", value)
+
     # 可视化展示页面
     chart = {
         "bar1": bar1.render_embed(),
         "pie1": pie1.render_embed(),
         "bar2": bar2.render_embed(),
+        "bar3": bar3.render_embed(),
         "pie2": pie2.render_embed(),
         "line1": line1.render_embed(),
+        "pie3": pie3.render_embed(),
         "pie4": pie4.render_embed(),
         "pie5": pie5.render_embed(),
     }
