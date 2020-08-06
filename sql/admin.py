@@ -6,7 +6,8 @@ from django.contrib.auth.admin import UserAdmin
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
-    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag
+    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
+    Tunnel
 
 
 # 用户管理
@@ -70,6 +71,23 @@ class InstanceAdmin(admin.ModelAdmin):
 
     inlines = [AliRdsConfigInline]
 
+# SSH隧道
+@admin.register(Tunnel)
+class TunnelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tunnel_name', 'host', 'port', 'create_time')
+    list_display_links = ('id', 'tunnel_name',)
+    search_fields = ('id', 'tunnel_name')
+    fieldsets = (None, {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password',), }),
+    ordering = ('id',)
+    # 添加页显示内容
+    add_fieldsets = (
+        ('隧道信息', {'fields': ('tunnel_name', 'host', 'port')}),
+        ('连接信息', {'fields': ('user', 'password', 'pkey_path', 'pkey_password')}),
+    )
+
+    # 不支持修改标签代码
+    def get_readonly_fields(self, request, obj=None):
+        return ('id',) if obj else ()
 
 # SQL工单内容
 class SqlWorkflowContentInline(admin.TabularInline):
