@@ -58,7 +58,8 @@ class RedisEngine(EngineBase):
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
         safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
                     "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
-                    "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex"]
+                    "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex",
+                    "zrange","zrangebyscore","zscore","zcard","zcount","zrank"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
             if re.match(fr'^{cmd}', sql.strip(), re.I):
