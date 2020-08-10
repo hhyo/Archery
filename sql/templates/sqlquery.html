@@ -164,6 +164,9 @@
                                                    onclick="show(this)"> <i> Hash </i></label>
                                     <label> <input type="radio" value="set" name="operate"
                                                    onclick="show(this)"> <i> Set </i></label>
+                                    <label> <input type="radio" value="zset" name="operate"
+                                                   onclick="show(this)"> <i> Zset </i></label>
+
                                 </div>
 
                                 <div id="keyHelp" class="alert alert-info" style="display: block">
@@ -217,6 +220,19 @@
                                     <i> 8、smove source destination member
                                         将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作</i></br>
                                     <i> 9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略</i>
+                                </div>
+
+                                <div id="zsetHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、zrange key start stop [WITHSCORES] 通过索引区间返回有序集合指定区间内的成员</i></br>
+                                    <i> 2、zrangebyscore key min max [WITHSCORES] [LIMIT] 通过分数返回有序集合指定区间内的成员</i></br>
+                                    <i> 3、zscore key member 返回有序集中，成员的分数值</i></br>
+                                    <i> 4、zcard key 获取有序集合的成员数</i></br>
+                                    <i> 5、zcount key min max 计算在有序集合中指定区间分数的成员数</i></br>
+                                    <i> 6、zrank key member 返回有序集合中指定成员的索引</i></br>
                                 </div>
                             </div>
                         </div>
@@ -1178,22 +1194,31 @@
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "string") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "block";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "hash") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "block";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "set") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "block";
-            }
+                document.getElementById("zsetHelp").style.display = "none";
+            }  else if (o.value == "zset") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "block";
         }
     </script>
 {% endblock %}
