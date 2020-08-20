@@ -191,7 +191,7 @@ class MsgSender(object):
         data = {
             "msgtype": "markdown",
             "markdown": {
-                "content": msg
+                "content": msg.replace('工单地址：', '工单地址：[请点击链接](').replace('\n工单详情预览：', ')\n工单详情预览：')
             },
         }
         res = requests.post(url=send_url, json=data, timeout=5)
