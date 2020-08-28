@@ -8,7 +8,6 @@ from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from sql.utils.ssh_tunnel import SSHConnection
 
 logger = logging.getLogger('default')
 
@@ -39,31 +38,16 @@ class GoInceptionEngine(EngineBase):
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
-        host = instance.host
-        port = instance.port
-        if instance.tunnel:
-            ssh = SSHConnection(
-                instance.host,
-                instance.port,
-                instance.tunnel.host,
-                instance.tunnel.port,
-                instance.tunnel.user,
-                instance.tunnel.password,
-                instance.tunnel.pkey_path,
-                instance.tunnel.pkey_password,
-            )
-            host,port = ssh.get_ssh()
+        host, port, user, password = self.remote_instance_conn(instance)
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{host}';--port={port};--check=1;*/
+        inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
-        if instance.tunnel:
-            del ssh
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
@@ -85,20 +69,7 @@ class GoInceptionEngine(EngineBase):
         """执行上线单"""
         instance = workflow.instance
         # 判断如果配置了隧道则连接隧道
-        host = instance.host
-        port = instance.port
-        if instance.tunnel:
-            ssh = SSHConnection(
-                instance.host,
-                instance.port,
-                instance.tunnel.host,
-                instance.tunnel.port,
-                instance.tunnel.user,
-                instance.tunnel.password,
-                instance.tunnel.pkey_path,
-                instance.tunnel.pkey_password,
-            )
-            host,port = ssh.get_ssh()
+        host, port, user, password = self.remote_instance_conn(instance)
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--backup=1"
@@ -106,15 +77,12 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
-        sql_execute = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{host}';--port={port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
+        sql_execute = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
-        if instance.tunnel:
-            del ssh
-
         # 执行报错，inception crash或者执行中连接异常的场景
         if inception_result.error and not execute_result.rows:
             execute_result.error = inception_result.error
@@ -165,28 +133,13 @@ class GoInceptionEngine(EngineBase):
         打印语法树。
         """
         # 判断如果配置了隧道则连接隧道
-        host = instance.host
-        port = instance.port
-        if instance.tunnel:
-            ssh = SSHConnection(
-                instance.host,
-                instance.port,
-                instance.tunnel.host,
-                instance.tunnel.port,
-                instance.tunnel.user,
-                instance.tunnel.password,
-                instance.tunnel.pkey_path,
-                instance.tunnel.pkey_password,
-            )
-            host,port = ssh.get_ssh()
-        sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{host}';--port={port};--enable-query-print;*/
+        host, port, user, password = self.remote_instance_conn(instance)
+        sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
                           {sql.rstrip(';')};
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[1]
-        if instance.tunnel:
-            del ssh
         if print_info.get('errmsg'):
             raise RuntimeError(print_info.get('errmsg'))
         return print_info

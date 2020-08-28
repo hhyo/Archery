@@ -35,6 +35,31 @@ class EngineBase:
     def __del__(self):
         if hasattr(self, 'ssh'):
             del self.ssh
+        if hasattr(self, 'remotessh'):
+            del self.remotessh
+
+    def remote_instance_conn(self, instance=None):
+        # 判断如果配置了隧道则连接隧道
+        if not hasattr(self, 'remotessh') and instance.tunnel:
+            self.remotessh = SSHConnection(
+                instance.host,
+                instance.port,
+                instance.tunnel.host,
+                instance.tunnel.port,
+                instance.tunnel.user,
+                instance.tunnel.password,
+                instance.tunnel.pkey_path,
+                instance.tunnel.pkey_password,
+            )
+            self.remote_host, self.remote_port = self.remotessh.get_ssh()
+            self.remote_user = instance.user
+            self.remote_password = instance.password
+        elif not instance.tunnel:
+            self.remote_host = instance.host
+            self.remote_port = instance.port
+            self.remote_user = instance.user
+            self.remote_password = instance.password
+        return self.remote_host, self.remote_port, self.remote_user, self.remote_password
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
