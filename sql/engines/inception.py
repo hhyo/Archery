@@ -10,6 +10,7 @@ from common.config import SysConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from sql.utils.ssh_tunnel import SSHConnection
 
 logger = logging.getLogger('default')
 
@@ -54,16 +55,33 @@ class InceptionEngine(EngineBase):
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
+        # 判断如果配置了隧道则连接隧道
+        host = instance.host
+        port = instance.port
+        if instance.tunnel:
+            ssh = SSHConnection(
+                instance.host,
+                instance.port,
+                instance.tunnel.host,
+                instance.tunnel.port,
+                instance.tunnel.user,
+                instance.tunnel.password,
+                instance.tunnel.pkey_path,
+                instance.tunnel.pkey_password,
+            )
+            host,port = ssh.get_ssh()
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
-                            --port={instance.port};--enable-check=1;*/
+        inception_sql = f"""/*--user={instance.user};--password={instance.password};--host={host};
+                            --port={port};--enable-check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql}
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
+        if instance.tunnel:
+            del ssh
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
@@ -84,14 +102,29 @@ class InceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        # 判断如果配置了隧道则连接隧道
+        host = instance.host
+        port = instance.port
+        if instance.tunnel:
+            ssh = SSHConnection(
+                instance.host,
+                instance.port,
+                instance.tunnel.host,
+                instance.tunnel.port,
+                instance.tunnel.user,
+                instance.tunnel.password,
+                instance.tunnel.pkey_path,
+                instance.tunnel.pkey_password,
+            )
+            host,port = ssh.get_ssh()
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--enable-remote-backup"
         else:
             str_backup = "--disable-remote-backup"
         # 根据inception的要求，执行之前最好先split一下
-        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={instance.host}; 
-                         --port={instance.port};--enable-ignore-warnings;--enable-split;*/
+        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={host}; 
+                         --port={port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
                          use `{workflow.db_name}`;
                          {workflow.sqlworkflowcontent.sql_content}
@@ -101,8 +134,8 @@ class InceptionEngine(EngineBase):
         # 对于split好的结果，再次交给inception执行，保持长连接里执行.
         for splitRow in split_result.rows:
             sql_tmp = splitRow[1]
-            sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
-                                --port={instance.port};--enable-execute;--enable-ignore-warnings;{str_backup};*/
+            sql_execute = f"""/*--user={instance.user};--password={instance.password};--host={host};
+                                --port={port};--enable-execute;--enable-ignore-warnings;{str_backup};*/
                                 inception_magic_start;
                                 {sql_tmp}
                                 inception_magic_commit;"""
@@ -122,6 +155,9 @@ class InceptionEngine(EngineBase):
             # 把结果转换为ReviewSet
             for r in one_line_execute_result.rows:
                 execute_result.rows += [ReviewResult(inception_result=r)]
+
+        if instance.tunnel:
+            del ssh
 
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         for r in execute_result.rows:
@@ -157,13 +193,30 @@ class InceptionEngine(EngineBase):
         """
         将sql交给inception打印语法树。
         """
-        sql = f"""/*--user={instance.user};--password={instance.password};--host={instance.host};
-                          --port={instance.port};--enable-query-print;*/
+        # 判断如果配置了隧道则连接隧道
+        host = instance.host
+        port = instance.port
+        if instance.tunnel:
+            ssh = SSHConnection(
+                instance.host,
+                instance.port,
+                instance.tunnel.host,
+                instance.tunnel.port,
+                instance.tunnel.user,
+                instance.tunnel.password,
+                instance.tunnel.pkey_path,
+                instance.tunnel.pkey_password,
+            )
+            host,port = ssh.get_ssh()
+        sql = f"""/*--user={instance.user};--password={instance.password};--host={host};
+                          --port={port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
                           {sql}
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        if instance.tunnel:
+            del ssh
         # 兼容语法错误时errlevel=0的场景
         if print_info['errlevel'] == 0 and print_info['errmsg'] == 'None':
             return json.loads(_repair_json_str(print_info['query_tree']))
