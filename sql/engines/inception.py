@@ -123,7 +123,7 @@ class InceptionEngine(EngineBase):
         else:
             str_backup = "--disable-remote-backup"
         # 根据inception的要求，执行之前最好先split一下
-        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={host}; 
+        sql_split = f"""/*--user={instance.user};--password={instance.password};--host={host};
                          --port={port};--enable-ignore-warnings;--enable-split;*/
                          inception_magic_start;
                          use `{workflow.db_name}`;

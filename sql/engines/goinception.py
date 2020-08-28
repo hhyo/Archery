@@ -38,15 +38,32 @@ class GoInceptionEngine(EngineBase):
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
+        # 判断如果配置了隧道则连接隧道
+        host = instance.host
+        port = instance.port
+        if instance.tunnel:
+            ssh = SSHConnection(
+                instance.host,
+                instance.port,
+                instance.tunnel.host,
+                instance.tunnel.port,
+                instance.tunnel.user,
+                instance.tunnel.password,
+                instance.tunnel.pkey_path,
+                instance.tunnel.pkey_password,
+            )
+            host,port = ssh.get_ssh()
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--check=1;*/
+        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{host}';--port={port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
+        if instance.tunnel:
+            del ssh
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
@@ -161,7 +178,7 @@ class GoInceptionEngine(EngineBase):
                 instance.tunnel.pkey_path,
                 instance.tunnel.pkey_password,
             )
-            host,port = ssh.get_ssh()   
+            host,port = ssh.get_ssh()
         sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{host}';--port={port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
