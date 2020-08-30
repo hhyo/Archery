@@ -1,8 +1,12 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
+from django import forms
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
+from django.db import models
+from django.forms import PasswordInput
+
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
     AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
@@ -56,11 +60,17 @@ class InstanceTagAdmin(admin.ModelAdmin):
 
 
 # 实例管理
+
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type', 'instance_tag')
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name == 'password':
+            kwargs['widget'] = PasswordInput(render_value=True)
+        return super(InstanceAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
     # 阿里云实例关系配置
     class AliRdsConfigInline(admin.TabularInline):
