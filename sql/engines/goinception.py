@@ -37,10 +37,12 @@ class GoInceptionEngine(EngineBase):
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--check=1;*/
+        inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;*/
                             inception_magic_start;
                             use `{db_name}`;
                             {sql.rstrip(';')};
@@ -66,6 +68,8 @@ class GoInceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--backup=1"
@@ -73,13 +77,12 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
-        sql_execute = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
+        sql_execute = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
-
         # 执行报错，inception crash或者执行中连接异常的场景
         if inception_result.error and not execute_result.rows:
             execute_result.error = inception_result.error
@@ -129,7 +132,9 @@ class GoInceptionEngine(EngineBase):
         """
         打印语法树。
         """
-        sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--enable-query-print;*/
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
+        sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
                           {sql.rstrip(';')};
