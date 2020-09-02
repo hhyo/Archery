@@ -71,7 +71,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             for table in table_ref:
                 # 既无库权限也无表权限则鉴权失败
                 if not _db_priv(user, instance, table['schema']) and \
-                        not _tb_priv(user, instance, db_name, table['name']):
+                        not _tb_priv(user, instance, table['schema'], table['name']):
                     result['status'] = 1
                     result['msg'] = f"你无{table['schema']}.{table['name']}表的查询权限！请先到查询权限管理进行申请"
                     return result
