@@ -297,9 +297,11 @@ class MysqlEngine(EngineBase):
                                    sql=workflow.sqlworkflowcontent.sql_content)])
             result.error = '实例read_only=1，禁止执行变更语句!',
             return result
-        # TODO 原生执行
-        # if workflow.is_manual == 1:
-        #     return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+        
+        # 原生执行
+        if workflow.is_manual == 1:
+            return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+           
         # inception执行
         return self.inc_engine.execute(workflow)
 

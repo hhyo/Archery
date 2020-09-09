@@ -146,6 +146,8 @@ def submit(request):
     cc_users = request.POST.getlist('cc_users')
     run_date_start = request.POST.get('run_date_start')
     run_date_end = request.POST.get('run_date_end')
+    #是否强行提交
+    force_commit = True if request.POST.get('force_commit') == 'True' else False
 
     # 服务器端参数验证
     if None in [sql_content, db_name, instance_name, db_name, is_backup, demand_url]:
@@ -159,26 +161,29 @@ def submit(request):
         context = {'errMsg': '你所在组未关联该实例！'}
         return render(request, 'error.html', context)
 
-    # 再次交给engine进行检测，防止绕过
-    try:
-        check_engine = get_engine(instance=instance)
-        check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
-    except Exception as e:
-        context = {'errMsg': str(e)}
-        return render(request, 'error.html', context)
+    if force_commit:
+        workflow_status='workflow_manreviewing'
+    else:
+        # 再次交给engine进行检测，防止绕过
+        try:
+            check_engine = get_engine(instance=instance)
+            check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
+        except Exception as e:
+            context = {'errMsg': str(e)}
+            return render(request, 'error.html', context)
 
-    # 未开启备份选项，并且engine支持备份，强制设置备份
-    sys_config = SysConfig()
-    if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
-        is_backup = True
+        # 未开启备份选项，并且engine支持备份，强制设置备份
+        sys_config = SysConfig()
+        if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
+            is_backup = True
 
-    # 按照系统配置确定是自动驳回还是放行
-    auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
-    workflow_status = 'workflow_manreviewing'
-    if check_result.warning_count > 0 and auto_review_wrong == '1':
-        workflow_status = 'workflow_autoreviewwrong'
-    elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
-        workflow_status = 'workflow_autoreviewwrong'
+        # 按照系统配置确定是自动驳回还是放行
+        auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+        workflow_status = 'workflow_manreviewing'
+        if check_result.warning_count > 0 and auto_review_wrong == '1':
+            workflow_status = 'workflow_autoreviewwrong'
+        elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
+            workflow_status = 'workflow_autoreviewwrong'
 
     # 调用工作流生成工单
     # 使用事务保持数据一致性
@@ -194,18 +199,18 @@ def submit(request):
                 engineer_display=request.user.display,
                 audit_auth_groups=Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview']),
                 status=workflow_status,
-                is_backup=is_backup,
+                is_backup=False if force_commit else is_backup,
                 instance=instance,
                 db_name=db_name,
-                is_manual=0,
-                syntax_type=check_result.syntax_type,
+                is_manual=1 if force_commit else 0,
+                syntax_type=0 if force_commit else check_result.syntax_type,
                 create_time=timezone.now(),
                 run_date_start=run_date_start or None,
                 run_date_end=run_date_end or None
             )
             SqlWorkflowContent.objects.create(workflow=sql_workflow,
                                               sql_content=sql_content,
-                                              review_content=check_result.json(),
+                                              review_content=[] if force_commit else check_result.json(),
                                               execute_result=''
                                               )
             workflow_id = sql_workflow.id
@@ -252,11 +257,14 @@ def detail_content(request):
                     review_result.rows += [ReviewResult(inception_result=r)]
                 rows = review_result.json()
         except IndexError:
+            if SqlWorkflow.objects.filter(id=workflow_id,is_manual=1).values('is_manual'):
+                errormessage="直接由后端数据库运行，需要由超级管理员审批"
+            else:
+                errormessage="Json decode failed.执行结果Json解析失败, 请联系管理员"
             review_result.rows += [ReviewResult(
                 id=1,
                 sql=workflow_detail.sqlworkflowcontent.sql_content,
-                errormessage="Json decode failed."
-                             "执行结果Json解析失败, 请联系管理员"
+                errormessage=errormessage
             )]
             rows = review_result.json()
         except json.decoder.JSONDecodeError:

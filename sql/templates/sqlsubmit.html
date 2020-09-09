@@ -21,6 +21,9 @@
                                       required></textarea>
                         </div>
                         <div class="col-md-3 column">
+                            <div class="form-group" style="display: none">
+                                <textarea id="force_commit" type="text" name="force_commit" class="form-control" rows=1></textarea>
+                            </div>
                             <div class="form-group">
                                 <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
                             </div>
@@ -123,6 +126,7 @@
                                 <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                                 <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
                                 <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
+                                <input id="btn-submitsqlforce" type="button" class="btn btn-danger" value="SQL直接提交"/>
                             </div>
                         </div>
                     </form>
@@ -160,6 +164,26 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
                     <button id="submitsqlcomfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- sql语句审核不通过，提交给超级用户判断是否直接执行 -->
+    <div class="modal fade" id="submitComfirmforce" tabindex="-1" role="dialog" aria-labelledby="myModalLabelforce">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">提交信息确认</h4>
+                </div>
+                <div class="modal-body">
+                    <p><font color="red" size="5">提交给超级用户判断是否直接执行</font><brforce>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button id="submitsqlcomfirmforce" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
                     </button>
                 </div>
             </div>
@@ -402,6 +426,21 @@
             formSubmit.submit();
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
+        });
+
+        //SQL直接提交
+        $("#btn-submitsqlforce").click(function () {
+            $('#submitComfirmforce').modal('show');
+        });
+
+        //直接提交二次确认
+        $("#submitsqlcomfirmforce").click(function () {
+            //获取form对象，判断输入，通过则提交
+            var formSubmit = $("#form-submitsql");
+            var sqlContent = editor.getValue();
+            $("#sql_content").val(sqlContent);
+            $("#force_commit").val("True");
+            formSubmit.submit();
         });
 
         //审批流程控制
@@ -668,6 +707,9 @@
             // 禁用提交按钮，点击检测后才激活
             $("#btn-submitsql").addClass('disabled');
             $("#btn-submitsql").prop('disabled', true);
+            $("#btn-submitsqlforce").addClass('disabled');
+            $("#btn-submitsqlforce").prop('disabled', true);
+            $("#force_commit").val("False");
             // 清空id, 只允许新增不允许修改
             sessionStorage.removeItem('editWorkflowDetailId');
             var pathname = window.location.pathname;
