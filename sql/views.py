@@ -157,10 +157,7 @@ def detail(request, workflow_id):
 
     # sql_workflow 的is_manual=1时 只有超级用户有审批权限 sql_users is_superuser=1
     if SqlWorkflow.objects.filter(id=workflow_id,is_manual=1).values('is_manual'):
-        if Users.objects.filter(username=request.user,is_superuser=1):
-            #is_can_review=True
-            is_can_review=Audit.can_review(request.user, workflow_id, 2)
-        else:
+        if not Users.objects.filter(username=request.user.username,is_superuser=1):
             is_can_review=False
 
     # 获取是否开启手工执行确认

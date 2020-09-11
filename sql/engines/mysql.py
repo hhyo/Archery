@@ -317,7 +317,10 @@ class MysqlEngine(EngineBase):
             cursor.close()
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
-            result.error = str(e)
+            _error=str(e.args).replace("\n","")
+            line_num = sql[0:sql.index(statement)].count("\n")+1    
+            #行数可能存在偏差，因为之前的操作的sql已经被清除行首的空行
+            result.error = str(f"第{line_num}行SQL语句执行报错，语句：\n{statement}\n之后的语句不再执行，MySQL错误信息：\n{_error}")
         if close_conn:
             self.close()
         return result

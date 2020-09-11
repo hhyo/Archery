@@ -76,10 +76,20 @@ def execute_callback(task):
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+    
+    operation_info=""
+    try:
+        operation_info=task.result.error
+    except:
+        pass
+    
+    if not operation_info:
+        operation_info='执行结果：{}'.format(workflow.get_status_display())
+
     Audit.add_log(audit_id=audit_id,
                   operation_type=6,
                   operation_type_desc='执行结束',
-                  operation_info='执行结果：{}'.format(workflow.get_status_display()),
+                  operation_info=operation_info,
                   operator='',
                   operator_display='系统'
                   )
