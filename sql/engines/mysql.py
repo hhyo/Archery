@@ -311,8 +311,15 @@ class MysqlEngine(EngineBase):
         conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
-            for statement in sqlparse.split(sql):
-                cursor.execute(statement)
+
+            for sub in sql.split(";;"):
+                #存储过程只支持 delimiter ;;
+                for statement in sqlparse.split(sub):
+                    if re.match(r'^DELIMITER.*',statement.upper()):
+                        pass
+                    elif statement:
+                        cursor.execute(statement)
+
             conn.commit()
             cursor.close()
         except Exception as e:
