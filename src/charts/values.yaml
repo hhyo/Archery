@@ -38,7 +38,7 @@ redis:
   usePassword: "123456"
   persistence:
     enabled: false
-# subchrats mysql
+# subcharts mysql
 mysql:
   mysqlRootPassword: archery
   mysqlDatabase: archery
