@@ -32,16 +32,11 @@
                                        required>
                             </div>
                             <div class="form-group">
-                                <input id="demand_url" type="text" autocomplete="off" name="demand_url" class="form-control"
-                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
-                                       placeholder="请输入需求链接">
-                            </div>
-                            <div class="form-group">
                                 <select id="group_name" name="group_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
                                         title="请选择组"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                     {% endfor %}
@@ -52,7 +47,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
@@ -66,7 +61,7 @@
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true"
+                                        data-live-search="true"  data-live-search-placeholder="搜索要提交的数据库"
                                         title="请选择数据库"
                                         required>
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
@@ -86,19 +81,16 @@
                             {% endif %}
                             <!--可执行范围时间-->
                             <div class='form-group'>
+                                <span class="label label-default" data-toggle="collapse" data-target="#demo">指定执行时间</span>
+                                <div id="demo" class="collapse">
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
-                                <div class='input-group date'>
-                                    <input type="text" id="run_date_range" readonly
-                                           value="请选择可执行时间范围"
-                                           style="background-color: #fff;color: #999 "
-                                           class="form-control "/>
-                                    <span class="input-group-addon"><span
-                                            class="glyphicon glyphicon-time"></span></span>
-                                </div>
-                            </div>
+                                <input type="text" id="run_date_range" readonly
+                                       value="请选择可执行时间范围"
+                                       style="background-color: #fff;color: #999 "
+                                       class="form-control "/>
+                            </div></div>
                             <!--增加通知人-->
-                            <!--TODO 通知人落库，允许查看工单详细-->
                             <div class="form-group" style="display: none">
                                 <select id="cc_users" name="cc_users"
                                         class="selectpicker show-tick form-control bs-select-hidden "
@@ -124,6 +116,10 @@
                                 <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
                                 <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                             </div>
+                        </div>
+                       <div class="text-info">
+                            <li>提交的语句请以分号结束</li>
+                            <li>[指定执行时间]用于定时任务，不是必选项</li>
                         </div>
                     </form>
                 </div>
@@ -167,7 +163,7 @@
     </div>
 {% endblock content %}
 {% block js %}
-    {% load static %}
+    {% load staticfiles %}
     <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
     <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'ace/ace.js' %}"></script>
@@ -266,6 +262,7 @@
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
+            if (optgroup != "MySQL") {$("#div-backup").hide(); $("#is_backup").val("False");}
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
@@ -279,10 +276,10 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                        $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
-                        if ($("#db_name").val()) {
-                            $("#db_name").selectpicker().trigger("change");
-                        }
+                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                         if ($("#db_name").val()){
+                             $("#db_name").selectpicker().trigger("change");
+                         }
                     }
                 },
                 success: function (data) {
@@ -508,7 +505,6 @@
                                     }
                                     return {classes: style}
                                 },
-                                escape: true,                       // 转义HTML字符串，替换 &, <, >, ", \`, 和 ' 字符。
                                 striped: true,                      //是否显示行间隔色
                                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                                 sortable: true,                     //是否启用排序
@@ -548,7 +544,6 @@
                                             //替换所有的空格
                                             sql = sql.replace(/\s/g, "&nbsp;");
                                             html.push('<span>' + sql + '</span>');
-
                                         }
                                     });
                                     return html.join('');
@@ -617,7 +612,7 @@
                                 $("#optgroup-oracle").append(instance);
                             } else if (result[i]['db_type'] === 'mongo') {
                                 $("#optgroup-mongo").append(instance);
-                            } else if (result[i]['db_type'] === 'phoenix') {
+                            }  else if (result[i]['db_type'] === 'phoenix') {
                                 $("#optgroup-phoenix").append(instance);
                             }
                         }
@@ -673,15 +668,12 @@
             var pathname = window.location.pathname;
             if (pathname == "/editsql/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
             } else if (pathname === "/submitotherinstance/") {
                 $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
-                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
                 $("#group_name").val(sessionStorage.getItem('editGroup'));
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
