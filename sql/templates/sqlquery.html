@@ -164,6 +164,8 @@
                                                    onclick="show(this)"> <i> Hash </i></label>
                                     <label> <input type="radio" value="set" name="operate"
                                                    onclick="show(this)"> <i> Set </i></label>
+                                    <label> <input type="radio" value="zset" name="operate"
+                                                   onclick="show(this)"> <i> Zset </i></label>
                                 </div>
 
                                 <div id="keyHelp" class="alert alert-info" style="display: block">
@@ -217,6 +219,19 @@
                                     <i> 8、smove source destination member
                                         将元素member从source移动到destination；若member在destination中已存在只会删除source中的数据，若source或member不存在会返回0，若destination不存在则会创建后再进行操作</i></br>
                                     <i> 9、srem key member[member]　移除key中的一个或多个member元素，不存在的member会被忽略</i>
+                                </div>
+
+                                <div id="zsetHelp" class="alert alert-info" style="display: none">
+                                    <button class="close" data-dismiss="alert">
+                                        <i class="ace-icon fa fa-times"></i>
+                                    </button>
+                                    <i class="ace-icon fa fa-hand-o-right"> 帮助文档：</i></br>
+                                    <i> 1、zrange key start stop [WITHSCORES] 通过索引区间返回有序集合指定区间内的成员</i></br>
+                                    <i> 2、zrangebyscore key min max [WITHSCORES] [LIMIT] 通过分数返回有序集合指定区间内的成员</i></br>
+                                    <i> 3、zscore key member 返回有序集中，成员的分数值</i></br>
+                                    <i> 4、zcard key 获取有序集合的成员数</i></br>
+                                    <i> 5、zcount key min max 计算在有序集合中指定区间分数的成员数</i></br>
+                                    <i> 6、zrank key member 返回有序集合中指定成员的索引</i></br>
                                 </div>
                             </div>
                         </div>
@@ -587,7 +602,6 @@
             var result = true;
             var instance_name = $("#instance_name").val();
             var db_name = $("#db_name").val();
-            var tb_name = $("#table_name").val();
             var sqlContent = editor.getValue();
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
@@ -629,13 +643,22 @@
         //先做表单验证，验证成功再成功提交格式化sql
         $("#btn-format").click(function () {
                 var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                var optgroup = $('#instance_name :selected').parent().attr('label');
+                let sqlContent = '';
                 if (select_sqlContent) {
-                    var sqlContent = select_sqlContent
+                    sqlContent = select_sqlContent
                 } else {
-                    var sqlContent = editor.getValue();
-
+                    sqlContent = editor.getValue();
                 }
-                var sqlContent = window.sqlFormatter.format(sqlContent);
+                if (optgroup === "Mongo") {
+                    try {
+                        sqlContent = JSON.stringify(JSON.parse(sqlContent), " ", 4);
+                    } catch (err) {
+                        sqlContent = String(err)
+                    }
+                } else {
+                    sqlContent = window.sqlFormatter.format(sqlContent);
+                }
                 editor.setValue(sqlContent);
                 editor.clearSelection();
             }
@@ -666,14 +689,13 @@
                 return '<span class="' + cls + '">' + match + '</span>';
             });
         }
-
         // 展示数据
         function display_data(data) {
             var result = data.data;
-            console.log(result['rows']);
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
             var active_li_title = sessionStorage.getItem('active_li_title');
+
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
                 if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
@@ -757,8 +779,6 @@
                                isdetail = true
                             }
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
-                            fixedColumns: true, //固定表头
-                            fixedNumber: 1, //固定列数
                             escape: true,
                             data: result['rows'],
                             columns: columns,
@@ -1232,25 +1252,33 @@
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "string") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "block";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "hash") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "block";
                 document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "none";
             } else if (o.value == "set") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "block";
+                document.getElementById("zsetHelp").style.display = "none";
+            }  else if (o.value == "zset") {
+                document.getElementById("keyHelp").style.display = "none";
+                document.getElementById("stringHelp").style.display = "none";
+                document.getElementById("hashHelp").style.display = "none";
+                document.getElementById("setHelp").style.display = "none";
+                document.getElementById("zsetHelp").style.display = "block";
             }
         }
-
     </script>
 {% endblock %}
-
 

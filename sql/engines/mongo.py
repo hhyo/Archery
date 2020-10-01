@@ -778,7 +778,7 @@ class MongoEngine(EngineBase):
                 result_set.rows = rows
             result_set.column_list = columns
             result_set.affected_rows = len(rows)
-            if type(rows) == list:
+            if isinstance(rows, list):
                 logger.debug(rows)
                 result_set.rows = tuple([json.dumps(x, ensure_ascii=False, indent=2, separators=(",", ":"))] for x in rows)
 
@@ -808,7 +808,7 @@ class MongoEngine(EngineBase):
             for key in columns[1:]:
                 if key in ro:
                     value = ro[key]
-                    if type(value) == list:
+                    if isinstance(value,list):
                         value = "(array) %d Elements" % len(value)
                     row.append(str(value))
                 else:
