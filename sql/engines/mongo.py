@@ -553,13 +553,6 @@ class MongoEngine(EngineBase):
         result.rows = columns
         return result
 
-    def describe_table(self, db_name, tb_name, **kwargs):
-        """return ResultSet 类似查询"""
-        result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
-        result.rows = [[[r], ] for r in result.rows]
-        return result
-
-
     def dispose_str(self, parse_sql, start_flag, index):
         """解析处理字符串"""
 
@@ -571,7 +564,7 @@ class MongoEngine(EngineBase):
             stop_flag = start_flag
         raise Exception('near column %s,\' or \" has no close' % index)
 
-    def dispose_pair(self, parse_sql, index, bigen, end):
+    def dispose_pair(self, parse_sql, index, begin, end):
         """解析处理需要配对的字符{}[]() 检索一个左括号计数器加1，右括号计数器减1"""
 
         start_pos = -1
@@ -579,7 +572,7 @@ class MongoEngine(EngineBase):
         count = 0
         while index < len(parse_sql):
             char = parse_sql[index]
-            if char == bigen:
+            if char == begin:
                 count += 1
                 if start_pos == -1:
                     start_pos = index
@@ -592,7 +585,7 @@ class MongoEngine(EngineBase):
                 index = self.dispose_str(parse_sql, char, index)
             index += 1
         if count > 0:
-            raise Exception("near column %s, The symbol %s has no closed" % (index, left))
+            raise Exception("near column %s, The symbol %s has no closed" % (index, begin))
 
         re_char = parse_sql[start_pos:stop_pos]  # 截取
         return index, re_char
@@ -815,7 +808,7 @@ class MongoEngine(EngineBase):
         else:
             result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
             columns = result.rows
-        columns.insert(0, "woshilihengfang") #隐藏JSON结果列
+        columns.insert(0, "mongodballdata") #隐藏JSON结果列
         for ro in cursor:
             json_col = json.dumps(ro, ensure_ascii=False, indent=2, separators=(",", ":"))
             row.insert(0, json_col)
