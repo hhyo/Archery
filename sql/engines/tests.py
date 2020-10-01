@@ -1575,11 +1575,12 @@ class MongoTest(TestCase):
     @patch('sql.engines.mongo.MongoEngine.get_connection')
     def test_query(self, mock_get_connection):
         # TODO 正常查询还没做
-        test_sql = """{"collection": "job","count": true}"""
+        test_sql = """db.job.find().count()"""
         self.assertIsInstance(self.engine.query('archery', test_sql), ResultSet)
 
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
     def test_query_check(self):
-        test_sql = """{"collection": "job","count": true}"""
+        test_sql = """db.job.find().count()"""
         check_result = self.engine.query_check(sql=test_sql)
         self.assertEqual(False, check_result.get('bad_query'))
 
