@@ -32,7 +32,6 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
-    tb_name = request.POST.get('tb_name')
     limit_num = int(request.POST.get('limit_num', 0))
     schema_name = request.POST.get('schema_name', None)
     user = request.user

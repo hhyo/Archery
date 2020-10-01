@@ -8,7 +8,6 @@ import simplejson as json
 import datetime
 from bson.son import SON
 from bson import json_util
-from bson.json_util import object_hook as bson_object_hook
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
