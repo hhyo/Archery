@@ -5,25 +5,21 @@ import logging
 import traceback
 import json
 import simplejson as json
+import datetime
 from bson.son import SON
+from bson import json_util
 from bson.json_util import object_hook as bson_object_hook
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
-import datetime
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
-from bson import json_util
-
-__author__ = 'fancy_lee'
 
 logger = logging.getLogger('default')
-date_regex = re.compile(r'ISODate\("(.*)"\)', re.IGNORECASE)
 
 #mongo客户端安装在本机的位置
 mongo = 'mongo'
-
 
 #自定义异常
 class mongo_error(Exception):
@@ -203,7 +199,10 @@ class JsonDecoder:
             elif data_type == "ObjectId":
                 ojStr = re.findall(r"ObjectId\(.*?\)", outstr)  # 单独处理ObjectId
                 if len(ojStr) > 0:
-                    return eval(ojStr[0])
+                    #return eval(ojStr[0])
+                    id_str = re.findall(r"\(.*?\)", ojStr[0])
+                    oid = id_str[0].replace(" ", "")[2:-2]
+                    return ObjectId(oid)
             elif data_type.replace(" ", "") in ("newDate", "ISODate", "newISODate"):  # 处理时间格式
                 tmp_type = "%s()" % data_type
                 if outstr.replace(" ", "") == tmp_type.replace(" ", ""):
@@ -303,7 +302,7 @@ class MongoEngine(EngineBase):
             count = int(self.exec_cmd(count_sql, db_name, slave_ok='rs.slaveOk();'))
             return count
         except Exception as e:
-            logger.debug("get_table_conut:", e)
+            logger.debug("get_table_conut:"+ str(e))
             return 0
 
     def execute_workflow(self, workflow):
@@ -349,7 +348,7 @@ class MongoEngine(EngineBase):
                             stagestatus='执行结束',
                             errormessage=r,
                             execute_time=round(end - start, 6),
-                            actual_affected_rows=0,  # 这个值需要优化
+                            actual_affected_rows=0,  # todo============这个值需要优化
                             sql=exec_sql)
                     execute_result.rows += [result]
                 except Exception as e:
@@ -553,7 +552,14 @@ class MongoEngine(EngineBase):
         result.rows = columns
         return result
 
-    def dispose_str(self, parse_sql, start_flag, index):
+    def describe_table(self, db_name, tb_name, **kwargs):
+        """return ResultSet 类似查询"""
+        result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
+        result.rows = [[[r], ] for r in result.rows]
+        return result
+
+    @staticmethod
+    def dispose_str(parse_sql, start_flag, index):
         """解析处理字符串"""
 
         stop_flag = ""
@@ -649,20 +655,8 @@ class MongoEngine(EngineBase):
         if query_dict:
             return query_dict
 
-    def describe_table(self, db_name, tb_name, **kwargs):
-        """return ResultSet 类似查询"""
-
-        result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
-        result.rows = [[[r], ] for r in result.rows]
-        return result
-
-    def filter_sql(self, sql='', limit_num=0, db_name=None, tb_name=None):
+    def filter_sql(self, sql='', limit_num=0):
         """给查询语句改写语句, 返回修改后的语句"""
-
-        if sql == '' and not sql and not db_name and not tb_name:
-            raise Exception("提交的语句不能为空")
-        if sql == '' and db_name and tb_name:
-            sql = "db." + tb_name + ".find({}).sort({'_id':-1});"
         sql = sql.split(";")[0].strip()
         #执行计划
         if sql.startswith("explain"):

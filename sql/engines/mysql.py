@@ -196,9 +196,6 @@ class MysqlEngine(EngineBase):
     def filter_sql(self, sql='', limit_num=0):
         # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
         sql = sql.rstrip(';').strip()
-	# 如果查询语句为空，自动生成一条sql
-        if sql == "":
-            sql = "select * from " + db_name + "." + tb_name + " order by 1 desc"
         if re.match(r"^select", sql, re.I):
             # LIMIT N
             limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)

@@ -66,8 +66,8 @@ def query(request):
         # explain的limit_num设置为0
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
 
-        # 对查询sql增加limit限制或者改写语句，加入了mongodb，并增加了两个参数，对其它engine会有影响，请检查修改
-        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num, db_name=db_name, tb_name=tb_name)
+        # 对查询sql增加limit限制或者改写语句，加入了mongodb对expain的改写
+        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
         # 查询前的检查，禁用语句检查，语句切分
 
         query_check_info = query_engine.query_check(db_name=db_name, sql=sql_content)
