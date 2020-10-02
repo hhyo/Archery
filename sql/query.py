@@ -32,6 +32,7 @@ def query(request):
     instance_name = request.POST.get('instance_name')
     sql_content = request.POST.get('sql_content')
     db_name = request.POST.get('db_name')
+    tb_name = request.POST.get('tb_name')
     limit_num = int(request.POST.get('limit_num', 0))
     schema_name = request.POST.get('schema_name', None)
     user = request.user
@@ -52,23 +53,8 @@ def query(request):
 
     try:
         config = SysConfig()
-        query_engine = get_engine(instance=instance)
-        # 查询权限校验，并且获取limit_num
-        priv_check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
-        if priv_check_info['status'] == 0:
-            limit_num = priv_check_info['data']['limit_num']
-            priv_check = priv_check_info['data']['priv_check']
-        else:
-            result['status'] = 1
-            result['msg'] = priv_check_info['msg']
-            return HttpResponse(json.dumps(result), content_type='application/json')
-        # explain的limit_num设置为0
-        limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
-
-        # 对查询sql增加limit限制或者改写语句，加入了mongodb对expain的改写
-        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
         # 查询前的检查，禁用语句检查，语句切分
-
+        query_engine = get_engine(instance=instance)
         query_check_info = query_engine.query_check(db_name=db_name, sql=sql_content)
         if query_check_info.get('bad_query'):
             # 引擎内部判断为 bad_query
@@ -82,6 +68,21 @@ def query(request):
             return HttpResponse(json.dumps(result), content_type='application/json')
         sql_content = query_check_info['filtered_sql']
 
+        # 查询权限校验，并且获取limit_num
+        priv_check_info = query_priv_check(user, instance, db_name, sql_content, limit_num)
+        if priv_check_info['status'] == 0:
+            limit_num = priv_check_info['data']['limit_num']
+            priv_check = priv_check_info['data']['priv_check']
+        else:
+            result['status'] = 1
+            result['msg'] = priv_check_info['msg']
+            return HttpResponse(json.dumps(result), content_type='application/json')
+        # explain的limit_num设置为0
+        limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
+
+        # 对查询sql增加limit限制或者改写语句
+        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
+
         # 先获取查询连接，用于后面查询复用连接以及终止会话
         query_engine.get_connection(db_name=db_name)
         thread_id = query_engine.thread_id
@@ -94,10 +95,10 @@ def query(request):
         with FuncTimer() as t:
             # 获取主从延迟信息
             seconds_behind_master = query_engine.seconds_behind_master
-            if instance.db_type == 'pgsql':  # TODO 此处判断待优化，请在 修改传参方式后去除
-                query_result = query_engine.query(db_name, sql_content, limit_num, schema_name=schema_name)
-            else:
-                query_result = query_engine.query(db_name, sql_content, limit_num)
+            query_result = query_engine.query(db_name, sql_content, limit_num,
+                                              schema_name=schema_name,
+                                              tb_name=tb_name,
+                                              max_execution_time=max_execution_time * 1000)
         query_result.query_time = t.cost
         # 返回查询结果后删除schedule
         if thread_id:
@@ -249,3 +250,4 @@ def kill_query_conn(instance_id, thread_id):
     instance = Instance.objects.get(pk=instance_id)
     query_engine = get_engine(instance)
     query_engine.kill_connection(thread_id)
+
