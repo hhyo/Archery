@@ -1578,10 +1578,12 @@ class MongoTest(TestCase):
         test_sql = """db.job.find().count()"""
         self.assertIsInstance(self.engine.query('some_db', test_sql), ResultSet)
 
-    @patch('sql.engines.mongo.MongoEngine.get_connection')
-    def test_query_check(self, mock_get_connection):
+    @patch('sql.engines.mongo.MongoEngine.get_all_tables')
+    def test_query_check(self, mock_get_all_tables):
         test_sql = """db.job.find().count()"""
+        mock_get_all_tables.return_value = ("job")
         check_result = self.engine.query_check('some_db',sql=test_sql)
+        mock_get_all_tables.assert_called_once()
         self.assertEqual(False, check_result.get('bad_query'))
 
     @patch('sql.engines.mongo.MongoEngine.get_connection')
