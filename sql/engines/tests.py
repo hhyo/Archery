@@ -1601,3 +1601,56 @@ class MongoTest(TestCase):
         table_list = self.engine.get_all_tables('some_db')
         mock_db.list_collection_names.assert_called_once()
         self.assertEqual(table_list.rows, ['u', 'v', 'w'])
+
+
+    def test_filter_sql(self):
+        sql = """explain db.job.find().count()"""
+        check_result = self.engine.filter_sql(sql, 0)
+        self.assertEqual(check_result, 'db.job.find().count().explain()')
+
+    @patch('sql.engines.mongo.MongoEngine.exec_cmd')
+    def test_get_slave(self, mock_exec_cmd):
+        mock_exec_cmd.return_value = "172.30.2.123:27017"
+        flag = self.engine.get_slave()
+        self.assertEqual(True, flag)
+
+    @patch('sql.engines.mongo.MongoEngine.get_all_columns_by_tb')
+    def test_parse_tuple(self, mock_get_all_columns_by_tb):
+        cols = ("_id", "title", "tags", "likes")
+        mock_get_all_columns_by_tb.return_value.rows = cols
+        cursor = {'_id': {'$oid': '5f10162029684728e70045ab'}, 'title': 'MongoDB', 'tags': 'mongodb', 'likes': 100}
+        rows, columns = self.engine.parse_tuple(cursor, 'some_db', 'job')
+        rerows=("ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0')
+        self.assertEqual(columns, cols)
+        self.assertEqual(rows, rerows)
+
+    @patch('sql.engines.mongo.MongoEngine.get_table_conut')
+    @patch('sql.engines.mongo.MongoEngine.get_all_tables')
+    def test_execute_check(self, mock_get_all_tables, mock_get_table_conut):
+        sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
+        mock_get_all_tables.return_value.rows = ("job")
+        mock_get_table_conut.return_value = 1000
+        row = ReviewResult(id=1, errlevel=0,
+                              stagestatus='Audit completed',
+                              errormessage='检测通过',
+                              affected_rows=1000,
+                              sql=sql,
+                              execute_time=0)
+        check_result = self.execute_check('some_db', sql)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch('sql.engines.mongo.MongoEngine.exec_cmd')
+    def test_execute(self, mock_exec_cmd):
+        sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
+        mock_exec_cmd.return_value = "ok:1"
+        row = ReviewResult(
+            id=line, errlevel=0,
+            stagestatus='执行结束',
+            errormessage=mock_exec_cmd.return_value,
+            execute_time=0,
+            actual_affected_rows=0,
+            sql=sql)
+        check_result = self.engine.execute("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+

@@ -11,6 +11,7 @@ from bson import json_util
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
+from datetime import datetime
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -258,14 +259,13 @@ class MongoEngine(EngineBase):
                     cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
                         mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql)
                 logger.debug(cmd)
-                re_str = os.popen(cmd, 'r').read()
-                a = re_str.split("\n")
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     universal_newlines=True)
                 re_msg = []
-                for b in a:
-                    if (not b.startswith('MongoDB shell version') and not b.startswith('connecting to:')
-                            and b != '' and b != 'bye' and not b.startswith('Implicit session:')
-                            and not b.startswith('MongoDB server version:') and not b.startswith('WARNING:')):
-                        re_msg.append(b)
+                for line in iter(p.stdout.read, ''):
+                    re_msg.append(line)
                 msg = '\n'.join(re_msg)
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
@@ -276,7 +276,8 @@ class MongoEngine(EngineBase):
 
         sql = "rs.isMaster().primary"
         master = self.exec_cmd(sql)
-        if master != 'undefined' and not master.startswith("TypeError"):
+        if master != 'undefined' and master.find("TypeError") >= 0:
+
             sp_host = master.replace("\"", "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
@@ -288,17 +289,22 @@ class MongoEngine(EngineBase):
         sql = '''var host=""; rs.status().members.forEach(function(item) {i=1; if (item.stateStr =="SECONDARY") \
         {host=item.name } }); print(host);'''
         slave_msg = self.exec_cmd(sql)
-        return slave_msg
+        if slave_msg.lower().find('undefined') < 0:
+            sp_host = slave.replace("\"", "").split(":")
+            self.host = sp_host[0]
+            self.port = int(sp_host[1])
+            return True
+        else:
+            return False
 
     def get_table_conut(self, table_name, db_name):
         try:
             count_sql = f"db.{table_name}.count()"
-            slave = self.get_slave()  # 查询总数据要求在slave节点执行
-            if slave.lower().find('undefined') < 0:
-                sp_host = slave.replace("\"", "").split(":")
-                self.host = sp_host[0]
-                self.port = int(sp_host[1])
-            count = int(self.exec_cmd(count_sql, db_name, slave_ok='rs.slaveOk();'))
+            status = self.get_slave()  # 查询总数据要求在slave节点执行
+            if self.host and self.port and status:
+                count = int(self.exec_cmd(count_sql, db_name, slave_ok='rs.slaveOk();'))
+            else:
+                count = int(self.exec_cmd(count_sql, db_name))
             return count
         except Exception as e:
             logger.debug("get_table_conut:"+ str(e))
@@ -329,7 +335,7 @@ class MongoEngine(EngineBase):
                     rz = r.replace(' ', '').replace('"', '').lower()
                     tr = 1
                     if r.lower().find("syntaxerror") >= 0 or rz.find('ok:0') >= 0 or rz.find("error:invalid") >= 0 or rz.find("ReferenceError") >= 0 \
-                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0:
+                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0 or rz.fine("Error: field") >= 0:
                         tr = 0
                     if (rz.find("errmsg") >= 0 or tr == 0) and (r.lower().find("already exist") < 0):
                         execute_result.error = r
@@ -453,10 +459,10 @@ class MongoEngine(EngineBase):
                                     count = self.get_table_conut(table_name, db_name)  # 获得表的总条数
                                 result = ReviewResult(id=line, errlevel=0,
                                                       stagestatus='Audit completed',
-                                                      errormessage='检测通过'+alert,
+                                                      errormessage='检测通过',
                                                       affected_rows=count,
                                                       sql=check_sql,
-                                                      execute_time=0, )
+                                                      execute_time=0)
                         else:
                             check_result.error_count += 1
                             result = ReviewResult(id=line, errlevel=2,
@@ -666,6 +672,8 @@ class MongoEngine(EngineBase):
         """提交查询前的检查"""
         if sql == '':
             raise Exception("提交的语句不能为空")
+        if sql.startswith("explain"):
+            sql = sql.replace("explain", "")+".explain()"
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
         m = pattern.match(sql)
@@ -810,6 +818,18 @@ class MongoEngine(EngineBase):
                     value = ro[key]
                     if isinstance(value,list):
                         value = "(array) %d Elements" % len(value)
+                    re_oid = re.compile(r"{\'\$oid\': \'[0-9a-f]{24}\'}")
+                    re_date = re.compile(r"{\'\$date\': [0-9]{13}}")
+                    #转换$oid
+                    ff = re.findall(re_oid, str(value))
+                    for ii in ff:
+                        value = str(value).replace(ii, "ObjectId(" + ii.split(":")[1].strip()[:-1] + ")")
+                    #转换时间戳$date
+                    dd = re.findall(re_date, str(value))
+                    for d in dd:
+                        t = int(d.split(":")[1].strip()[:-1])
+                        e = datetime.fromtimestamp(t / 1000)
+                        value = str(value).replace(d, e.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
                     row.append(str(value))
                 else:
                     row.append("(N/A)")
