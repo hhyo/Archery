@@ -1660,7 +1660,7 @@ class MongoTest(TestCase):
             sql=sql)
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
-        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+        self.assertEqual(check_result.rows[0].__dict__, None)
 
 
 
