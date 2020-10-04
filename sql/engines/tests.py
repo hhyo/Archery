@@ -1627,7 +1627,7 @@ class MongoTest(TestCase):
     @patch('sql.engines.mongo.MongoEngine.get_table_conut')
     @patch('sql.engines.mongo.MongoEngine.get_all_tables')
     def test_execute_check(self, mock_get_all_tables, mock_get_table_conut):
-        sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
+        sql = '''db.job.find().createIndex({"skuId":1},{background:true});''''
         mock_get_all_tables.return_value.rows = ("job")
         mock_get_table_conut.return_value = 1000
         row = ReviewResult(id=1, errlevel=0,
