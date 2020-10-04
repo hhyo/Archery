@@ -288,7 +288,7 @@ class MongoEngine(EngineBase):
         {host=item.name } }); print(host);'''
         slave_msg = self.exec_cmd(sql)
         if slave_msg.lower().find('undefined') < 0:
-            sp_host = slave.replace("\"", "").split(":")
+            sp_host = slave_msg.replace("\"", "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
             return True
