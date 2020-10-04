@@ -1638,11 +1638,14 @@ class MongoTest(TestCase):
                               sql=sql,
                               execute_time=0)
         check_result = self.engine.execute_check('some_db', sql)
-        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+        self.assertEqual(check_result.rows[0].__dict__["errormessage"], row.__dict__["errormessage"])
+
 
     @patch('sql.engines.mongo.MongoEngine.exec_cmd')
-    def test_execute(self, mock_exec_cmd):
-        sql = '''db.job.createIndex({"skuId":1},{background:true});'''
+    @patch('sql.engines.mongo.MongoEngine.get_master')
+    def test_execute(self,mock_get_master, mock_exec_cmd):
+        mock_get_master.assert_called_once()
+        sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
         mock_exec_cmd.return_value = "ok:1"
         row = ReviewResult(
             id=1, errlevel=0,
@@ -1652,7 +1655,18 @@ class MongoTest(TestCase):
             actual_affected_rows=0,
             sql=sql)
         check_result = self.engine.execute("some_db", sql)
-        print(check_result)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
