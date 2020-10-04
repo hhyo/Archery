@@ -1623,7 +1623,7 @@ class MongoTest(TestCase):
         alldata = json.dumps(cursor[0], ensure_ascii=False, indent=2, separators=(",", ":"))
         rerows = (alldata, "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100')
         self.assertEqual(columns, ['mongodballdata', '_id', 'title', 'tags', 'likes'])
-        self.assertEqual(rows, rerows)
+        self.assertEqual(rows[0], rerows)
 
     @patch('sql.engines.mongo.MongoEngine.get_table_conut')
     @patch('sql.engines.mongo.MongoEngine.get_all_tables')
