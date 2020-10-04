@@ -1636,7 +1636,7 @@ class MongoTest(TestCase):
                               affected_rows=1000,
                               sql=sql,
                               execute_time=0)
-        check_result = self.execute_check('some_db', sql)
+        check_result = self.engine.execute_check('some_db', sql)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
     @patch('sql.engines.mongo.MongoEngine.exec_cmd')
