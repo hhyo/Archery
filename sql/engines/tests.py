@@ -1644,7 +1644,7 @@ class MongoTest(TestCase):
         sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
         mock_exec_cmd.return_value = "ok:1"
         row = ReviewResult(
-            id=line, errlevel=0,
+            id=1, errlevel=0,
             stagestatus='执行结束',
             errormessage=mock_exec_cmd.return_value,
             execute_time=0,
