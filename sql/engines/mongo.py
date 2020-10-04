@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-import re, os, time
+import re, time
 import pymongo
 import logging
 import traceback
