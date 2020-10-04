@@ -4,6 +4,7 @@ import pymongo
 import logging
 import traceback
 import json
+import subprocess
 import simplejson as json
 import datetime
 from bson.son import SON
@@ -259,10 +260,7 @@ class MongoEngine(EngineBase):
                     cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
                         mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql)
                 logger.debug(cmd)
-                p = subprocess.Popen(cmd, shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     universal_newlines=True)
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
                 re_msg = []
                 for line in iter(p.stdout.read, ''):
                     re_msg.append(line)
