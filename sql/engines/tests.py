@@ -1623,7 +1623,7 @@ class MongoTest(TestCase):
         alldata = json.dumps(cursor[0], ensure_ascii=False, indent=2, separators=(",", ":"))
         rerows = (alldata, "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0')
         self.assertEqual(columns, ['mongodballdata', '_id', 'title', 'tags', 'likes'])
-        self.assertEqual(rows, rerows)
+        self.assertEqual(rows[1], rerows[1])
 
     @patch('sql.engines.mongo.MongoEngine.get_table_conut')
     @patch('sql.engines.mongo.MongoEngine.get_all_tables')
@@ -1644,7 +1644,6 @@ class MongoTest(TestCase):
     @patch('sql.engines.mongo.MongoEngine.exec_cmd')
     @patch('sql.engines.mongo.MongoEngine.get_master')
     def test_execute(self,mock_get_master, mock_exec_cmd):
-        mock_get_master.assert_called_once()
         sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
         mock_exec_cmd.return_value = "ok:1"
         row = ReviewResult(
@@ -1655,6 +1654,7 @@ class MongoTest(TestCase):
             actual_affected_rows=0,
             sql=sql)
         check_result = self.engine.execute("some_db", sql)
+        mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
 
