@@ -1621,7 +1621,7 @@ class MongoTest(TestCase):
         cursor = [{'_id': {'$oid': '5f10162029684728e70045ab'}, 'title': 'MongoDB', 'tags': 'mongodb', 'likes': 100}]
         rows, columns = self.engine.parse_tuple(cursor, 'some_db', 'job')
         alldata = json.dumps(cursor[0], ensure_ascii=False, indent=2, separators=(",", ":"))
-        rerows = (alldata, "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0')
+        rerows = ((alldata, "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0'))
         self.assertEqual(columns, ['mongodballdata', '_id', 'title', 'tags', 'likes'])
         self.assertEqual(rows[1], rerows[1])
 
