@@ -1659,6 +1659,8 @@ class MongoTest(TestCase):
             actual_affected_rows=0,
             sql=sql)
         check_result = self.engine.execute("some_db", sql)
+        self.assertEqual(check_result.error, None)
+        self.assertEqual(check_result.rows, None)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__, None)
 
