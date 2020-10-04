@@ -1645,7 +1645,12 @@ class MongoTest(TestCase):
     @patch('sql.engines.mongo.MongoEngine.get_master')
     def test_execute(self,mock_get_master, mock_exec_cmd):
         sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
-        mock_exec_cmd.return_value = "ok:1"
+        mock_exec_cmd.return_value = '''{
+                                        "createdCollectionAutomatically" : false,
+                                        "numIndexesBefore" : 2,
+                                        "numIndexesAfter" : 3,
+                                        "ok" : 1
+                                      }'''
         row = ReviewResult(
             id=1, errlevel=0,
             stagestatus='执行结束',
