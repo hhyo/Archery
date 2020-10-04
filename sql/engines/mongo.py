@@ -333,7 +333,7 @@ class MongoEngine(EngineBase):
                     rz = r.replace(' ', '').replace('"', '').lower()
                     tr = 1
                     if r.lower().find("syntaxerror") >= 0 or rz.find('ok:0') >= 0 or rz.find("error:invalid") >= 0 or rz.find("ReferenceError") >= 0 \
-                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0 or rz.fine("Error: field") >= 0:
+                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0 or rz.find("Error: field") >= 0:
                         tr = 0
                     if (rz.find("errmsg") >= 0 or tr == 0) and (r.lower().find("already exist") < 0):
                         execute_result.error = r
