@@ -1616,12 +1616,12 @@ class MongoTest(TestCase):
 
     @patch('sql.engines.mongo.MongoEngine.get_all_columns_by_tb')
     def test_parse_tuple(self, mock_get_all_columns_by_tb):
-        cols = ("_id", "title", "tags", "likes")
+        cols = ["_id", "title", "tags", "likes"]
         mock_get_all_columns_by_tb.return_value.rows = cols
         cursor = {'_id': {'$oid': '5f10162029684728e70045ab'}, 'title': 'MongoDB', 'tags': 'mongodb', 'likes': 100}
         rows, columns = self.engine.parse_tuple(cursor, 'some_db', 'job')
-        rerows=("ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0')
-        self.assertEqual(columns, cols)
+        rerows = (str(cursor), "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100.0')
+        self.assertEqual(columns, cols.insert(0, "mongodballdata"))
         self.assertEqual(rows, rerows)
 
     @patch('sql.engines.mongo.MongoEngine.get_table_conut')
@@ -1651,6 +1651,7 @@ class MongoTest(TestCase):
             actual_affected_rows=0,
             sql=sql)
         check_result = self.engine.execute("some_db", sql)
+        print(check_result)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
 
