@@ -276,10 +276,10 @@
                     var pathname = window.location.pathname;
                     if (pathname === "/editsql/") {
                         //填充库名
-                         $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
-                         if ($("#db_name").val()){
-                             $("#db_name").selectpicker().trigger("change");
-                         }
+                        $("#db_name").selectpicker('val', sessionStorage.getItem('editDbname'));
+                        if ($("#db_name").val()){
+                            $("#db_name").selectpicker().trigger("change");
+                        }
                     }
                 },
                 success: function (data) {
