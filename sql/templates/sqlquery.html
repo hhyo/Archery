@@ -800,18 +800,18 @@
                             pageList: [30, 50, 100, 500, 1000],
                             search: true,                      //是否显示表格搜索
                             strictSearch: false,                //是否全匹配搜索
-                            locale: 'zh-CN',
                             //格式化详情
-                detailFormatter: function (index, row) {
-                    var html = [];
-                    $.each(row, function (key, value) {
-                        if (key === 0) {//mongodb这里要修改
-                            let rs = value;
-                            html.push('<pre>'+ highLight(rs) + '</pre>');
-                        }
-                    });
-                    return html.join('');
-                },
+                            detailFormatter: function (index, row) {
+                                var html = [];
+                                $.each(row, function (key, value) {
+                                if (key === 0) {//mongodb这里要修改
+                                    let rs = value;
+                                    html.push('<pre>'+ highLight(rs) + '</pre>');
+                                    }
+                                });
+                                return html.join('');
+                            },
+                            locale: 'zh-CN'
                         });
                     }
                     //执行时间和脱敏时间赋值
