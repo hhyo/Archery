@@ -668,8 +668,7 @@ class MongoEngine(EngineBase):
 
     def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
-        if sql == '':
-            raise Exception("提交的语句不能为空")
+
         if sql.startswith("explain"):
             sql = sql.replace("explain", "")+".explain()"
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
@@ -696,9 +695,6 @@ class MongoEngine(EngineBase):
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """执行查询"""
-
-        if sql == '':
-            raise Exception("提交的语句不能为空")
 
         result_set = ResultSet(full_sql=sql)
         find_cmd = ""
