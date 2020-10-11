@@ -68,4 +68,9 @@ RUN cd /opt \
     && yum -y install unixODBC-devel \
 #oracle instantclient
     && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm
+#mongo instantclient
+    && wget -c https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-3.6.20.tgz
+    && tar -xvf mongodb-linux-x86_64-rhel70-3.6.20.tgz
+    && cp mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/mongo
+    && rm -rf mongodb-linux-x86_64-*
 
