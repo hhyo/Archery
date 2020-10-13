@@ -41,7 +41,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
                                         title="请选择组"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                     {% endfor %}
@@ -52,7 +52,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
@@ -66,7 +66,7 @@
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true"
+                                        data-live-search="true"  data-live-search-placeholder="搜索要提交的数据库"
                                         title="请选择数据库"
                                         required>
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
@@ -86,6 +86,8 @@
                             {% endif %}
                             <!--可执行范围时间-->
                             <div class='form-group'>
+                                <span class="label label-default" data-toggle="collapse" data-target="#demo">指定执行时间</span>
+                                <div id="demo" class="collapse">
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
@@ -124,6 +126,10 @@
                                 <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
                                 <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                             </div>
+                        </div>
+                       <div class="text-info">
+                            <li>提交的语句请以分号结束</li>
+                            <li>[指定执行时间]用于定时任务，不是必选项</li>
                         </div>
                     </form>
                 </div>
@@ -266,6 +272,7 @@
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
+            if (optgroup != "MySQL") {$("#div-backup").hide(); $("#is_backup").val("False");}
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",

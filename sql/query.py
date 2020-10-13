@@ -250,3 +250,4 @@ def kill_query_conn(instance_id, thread_id):
     instance = Instance.objects.get(pk=instance_id)
     query_engine = get_engine(instance)
     query_engine.kill_connection(thread_id)
+
