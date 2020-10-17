@@ -69,11 +69,16 @@ backup_user = "root"
 backup_password = "123456"
 
 
+# 设置执行SQL时，会话变量
+# 0 表示不做操作，基于远端数据库【默认值】
+# > 0 值表示，会话在执行SQL 时获取锁超时的时间
+lock_wait_timeout = 10
+
 # 安全更新是否开启.
 # -1 表示不做操作,基于远端数据库 [默认值]
 # 0  表示关闭安全更新
 # 1  表示开启安全更新
-sql_safe_updates = 0
+sql_safe_updates = -1
 
 # lang = "en-US"
 lang = "zh-CN"
