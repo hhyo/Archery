@@ -86,8 +86,6 @@
                             {% endif %}
                             <!--可执行范围时间-->
                             <div class='form-group'>
-                                <span class="label label-default" data-toggle="collapse" data-target="#demo">指定执行时间</span>
-                                <div id="demo" class="collapse">
                                 <input type="hidden" id="run_date_start" name="run_date_start">
                                 <input type="hidden" id="run_date_end" name="run_date_end">
                                 <div class='input-group date'>
@@ -126,10 +124,6 @@
                                 <input type="button" id="btn-autoreview" class="btn btn-danger" value="SQL检测"/>
                                 <input id="btn-submitsql" type="button" class="btn btn-success" value="SQL提交"/>
                             </div>
-                        </div>
-                       <div class="text-info">
-                            <li>提交的语句请以分号结束</li>
-                            <li>[指定执行时间]用于定时任务，不是必选项</li>
                         </div>
                     </form>
                 </div>
@@ -272,7 +266,7 @@
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
-            if (optgroup != "MySQL") {$("#div-backup").hide(); $("#is_backup").val("False");}
+            if (optgroup != "MySQL" && optgroup != "Oracle") {$("#div-backup").hide(); $("#is_backup").val("False");}
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
