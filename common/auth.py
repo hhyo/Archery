@@ -150,7 +150,9 @@ def sign_up(request):
                 password=password,
                 display=display,
                 email=email,
-                is_active=1)
+                is_active=1,
+                is_staff=True
+            )
         except ValidationError as msg:
             result['status'] = 1
             result['msg'] = str(msg)
