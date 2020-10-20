@@ -650,27 +650,19 @@
                 } else {
                     sqlContent = editor.getValue();
                 }
-                if (optgroup === "Mongo") {
-                    try {
-                        sqlContent = JSON.stringify(JSON.parse(sqlContent), " ", 4);
-                    } catch (err) {
-                        sqlContent = String(err)
-                    }
-                } else {
-                    sqlContent = window.sqlFormatter.format(sqlContent);
-                }
+                sqlContent = window.sqlFormatter.format(sqlContent);
                 editor.setValue(sqlContent);
                 editor.clearSelection();
             }
         );
 
         //实时保存编辑器的文字，防止刷新丢失
-        editor.session.on('change', function(delta) {
+        editor.session.on('change', function (delta) {
             var sqlContent = editor.getValue();
             window.sessionStorage.setItem('sqlContent', sqlContent);
         });
 
-        function highLight(json){
+        function highLight(json) {
             json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                 var cls = 'text-muted';
@@ -689,6 +681,7 @@
                 return '<span class="' + cls + '">' + match + '</span>';
             });
         }
+
         // 展示数据
         function display_data(data) {
             var result = data.data;
@@ -722,8 +715,10 @@
                     //异步获取要动态生成的列
                     var columns = [];
                     $.each(result['column_list'], function (i, column) {
-                        var iswholeCol= true;
-                        if (column=="mongodballdata"){iswholeCol=false}
+                        var iswholeCol = true;
+                        if (column == "mongodballdata") {
+                            iswholeCol = false
+                        }
                         columns.push({
                             "field": i,
                             "title": column,
@@ -776,8 +771,8 @@
                         var isdetail = false
                         var optgroup = $('#instance_name :selected').parent().attr('label');
                         if (optgroup == 'Mongo') {
-                                isdetail = true
-                            }
+                            isdetail = true
+                        }
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
@@ -804,9 +799,9 @@
                             detailFormatter: function (index, row) {
                                 var html = [];
                                 $.each(row, function (key, value) {
-                                if (key === 0) {//mongodb这里要修改
-                                    let rs = value;
-                                    html.push('<pre>'+ highLight(rs) + '</pre>');
+                                    if (key === 0) {//mongodb这里要修改
+                                        let rs = value;
+                                        html.push('<pre>' + highLight(rs) + '</pre>');
                                     }
                                 });
                                 return html.join('');
@@ -882,10 +877,10 @@
                 }
             } else if (optgroup === "Mongo") {
                 //查看执行计划
-                 if (sql === 'explain') {
-                      sqlContent = 'explain ' + sqlContent
-                 }
-             }
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
+                }
+            }
             //提交请求
             $.ajax({
                 type: "post",
@@ -964,7 +959,7 @@
                     $("#div-schema_name").hide();
                     redis_help_tab_remove();
                 }
-                $("#btn-format").attr('disabled', false);
+                $("#btn-format").attr('disabled', true);
                 $("#btn-explain").attr('disabled', false);
             } else if (optgroup === "Phoenix") {
                 if (change) {
@@ -1185,10 +1180,10 @@
             sessionStorage.setItem('active_li_title', '查询历史');
 
             //读取上次保存的sqlContent
-            let sqlContent = window.sessionStorage.getItem('sqlContent');''
-            if(sqlContent!=null) {
+            let sqlContent = window.sessionStorage.getItem('sqlContent');
+            if (sqlContent != null) {
                 editor.setValue(sqlContent);
-            }else{
+            } else {
                 editor.setValue("");
             }
 
@@ -1279,7 +1274,7 @@
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "block";
                 document.getElementById("zsetHelp").style.display = "none";
-            }  else if (o.value == "zset") {
+            } else if (o.value == "zset") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";

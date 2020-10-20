@@ -19,10 +19,11 @@ from .models import ResultSet, ReviewSet, ReviewResult
 
 logger = logging.getLogger('default')
 
-#mongo客户端安装在本机的位置
+# mongo客户端安装在本机的位置
 mongo = 'mongo'
 
-#自定义异常
+
+# 自定义异常
 class mongo_error(Exception):
     def __init__(self, error_info):
         super().__init__(self)
@@ -34,6 +35,7 @@ class mongo_error(Exception):
 
 class JsonDecoder:
     '''处理传入mongodb语句中的条件，并转换成pymongo可识别的字典格式'''
+
     def __init__(self):
         pass
 
@@ -49,7 +51,7 @@ class JsonDecoder:
             if tk_temp == '}':
                 return {}
             # 限制key的格式
-            if not isinstance(tk_temp, str): #or (not tk_temp.isidentifier() and not tk_temp.startswith("$"))
+            if not isinstance(tk_temp, str):  # or (not tk_temp.isidentifier() and not tk_temp.startswith("$"))
                 raise Exception('invalid key %s' % tk_temp)
             key = tk_temp.strip()
             tokener.next()
@@ -185,7 +187,8 @@ class JsonDecoder:
             while self.__cur_char().isalpha() or self.__cur_char() in ("$", "_", " "):
                 outstr += self.__cur_char()
                 self.__move_i()
-                if outstr.replace(" ", "") in ("ObjectId", "newDate", "ISODate", "newISODate"):  # ======类似的类型比较多还需单独处理，如int()等
+                if outstr.replace(" ", "") in (
+                "ObjectId", "newDate", "ISODate", "newISODate"):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
                         outstr += c
@@ -200,7 +203,7 @@ class JsonDecoder:
             elif data_type == "ObjectId":
                 ojStr = re.findall(r"ObjectId\(.*?\)", outstr)  # 单独处理ObjectId
                 if len(ojStr) > 0:
-                    #return eval(ojStr[0])
+                    # return eval(ojStr[0])
                     id_str = re.findall(r"\(.*?\)", ojStr[0])
                     oid = id_str[0].replace(" ", "")[2:-2]
                     return ObjectId(oid)
@@ -243,6 +246,7 @@ class JsonDecoder:
         def cur_token(self):
             return self.__cur_token
 
+
 class MongoEngine(EngineBase):
     error = None
     warning = None
@@ -253,14 +257,17 @@ class MongoEngine(EngineBase):
 
         if self.user and self.password and self.port and self.host:
             try:
-                if not sql.startswith('var host='): #在master节点执行的情况
+                if not sql.startswith('var host='):  # 在master节点执行的情况
                     cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
-                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, slave_ok=slave_ok)
+                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
+                        db_name=db_name, sql=sql, slave_ok=slave_ok)
                 else:
                     cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql)
+                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
+                        db_name=db_name, sql=sql)
                 logger.debug(cmd)
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                     universal_newlines=True)
                 re_msg = []
                 for line in iter(p.stdout.read, ''):
                     re_msg.append(line)
@@ -275,11 +282,10 @@ class MongoEngine(EngineBase):
         sql = "rs.isMaster().primary"
         master = self.exec_cmd(sql)
         if master != 'undefined' and master.find("TypeError") >= 0:
-
             sp_host = master.replace("\"", "").split(":")
             self.host = sp_host[0]
             self.port = int(sp_host[1])
-        #return master
+        # return master
 
     def get_slave(self):
         """获得从节点的port和host"""
@@ -305,7 +311,7 @@ class MongoEngine(EngineBase):
                 count = int(self.exec_cmd(count_sql, db_name))
             return count
         except Exception as e:
-            logger.debug("get_table_conut:"+ str(e))
+            logger.debug("get_table_conut:" + str(e))
             return 0
 
     def execute_workflow(self, workflow):
@@ -329,11 +335,13 @@ class MongoEngine(EngineBase):
                     end = time.clock()
                     line += 1
                     logger.debug("执行结果：" + r)
-                    #如果执行中有错误
+                    # 如果执行中有错误
                     rz = r.replace(' ', '').replace('"', '').lower()
                     tr = 1
-                    if r.lower().find("syntaxerror") >= 0 or rz.find('ok:0') >= 0 or rz.find("error:invalid") >= 0 or rz.find("ReferenceError") >= 0 \
-                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0 or rz.find("Error: field") >= 0:
+                    if r.lower().find("syntaxerror") >= 0 or rz.find('ok:0') >= 0 or rz.find(
+                            "error:invalid") >= 0 or rz.find("ReferenceError") >= 0 \
+                            or rz.find("getErrorWithCode") >= 0 or rz.find("failedtoconnect") >= 0 or rz.find(
+                        "Error: field") >= 0:
                         tr = 0
                     if (rz.find("errmsg") >= 0 or tr == 0) and (r.lower().find("already exist") < 0):
                         execute_result.error = r
@@ -357,7 +365,7 @@ class MongoEngine(EngineBase):
                 except Exception as e:
                     logger.warning(f"mongo语句执行报错，语句：{exec_sql}，错误信息{traceback.format_exc()}")
                     execute_result.error = str(e)
-            #result_set.column_list = [i[0] for i in fields] if fields else []
+            # result_set.column_list = [i[0] for i in fields] if fields else []
         return execute_result
 
     def execute_check(self, db_name=None, sql=''):
@@ -373,32 +381,38 @@ class MongoEngine(EngineBase):
         sp_sql = sql.split(";")
         # 执行语句
         for check_sql in sp_sql:
-            alert = '' #警告信息
-            if not check_sql == '' and check_sql !='\n':
+            alert = ''  # 警告信息
+            if not check_sql == '' and check_sql != '\n':
                 check_sql = check_sql.strip()
-                #check_sql = f'''{check_sql}'''
-                #check_sql = check_sql.replace('\n', '') #处理成一行
-                #支持的命令列表
-                supportMethodList = ["explain", "bulkWrite", "convertToCapped", "createIndex", "createIndexes", "deleteOne",
-                                     "deleteMany", "drop", "dropIndex", "dropIndexes", "ensureIndex", "insert", "insertOne",
+                # check_sql = f'''{check_sql}'''
+                # check_sql = check_sql.replace('\n', '') #处理成一行
+                # 支持的命令列表
+                supportMethodList = ["explain", "bulkWrite", "convertToCapped", "createIndex", "createIndexes",
+                                     "deleteOne",
+                                     "deleteMany", "drop", "dropIndex", "dropIndexes", "ensureIndex", "insert",
+                                     "insertOne",
                                      "insertMany", "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                      "updateMany", "createCollection", "renameCollection"]
-                #需要有表存在为前提的操作
-                is_exist_premise_method = ["convertToCapped", "deleteOne", "deleteMany", "drop", "dropIndex", "dropIndexes",
-                                           "remove", "replaceOne", "renameCollection", "update", "updateOne","updateMany", "renameCollection"]
-                pattern = re.compile(r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                # 需要有表存在为前提的操作
+                is_exist_premise_method = ["convertToCapped", "deleteOne", "deleteMany", "drop", "dropIndex",
+                                           "dropIndexes",
+                                           "remove", "replaceOne", "renameCollection", "update", "updateOne",
+                                           "updateMany", "renameCollection"]
+                pattern = re.compile(
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
-                if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count('{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
+                if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
+                        '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
                     sql_str = m.group()
-                    table_name = (m.group(1) or m.group(2) or m.group(3)).strip() #通过正则的组拿到表名
+                    table_name = (m.group(1) or m.group(2) or m.group(3)).strip()  # 通过正则的组拿到表名
                     table_name = table_name.replace('"', '').replace("'", "")
                     table_names = self.get_all_tables(db_name).rows
-                    is_in = table_name in table_names #检查表是否存在
+                    is_in = table_name in table_names  # 检查表是否存在
                     if not is_in:
                         alert = f"\n提示:{table_name}文档不存在!"
                     if sql_str:
                         count = 0
-                        if sql_str.find('createCollection') > 0: #如果是db.createCollection()
+                        if sql_str.find('createCollection') > 0:  # 如果是db.createCollection()
                             methodStr = "createCollection"
                             alert = ""
                             if is_in:
@@ -426,7 +440,8 @@ class MongoEngine(EngineBase):
                         if methodStr in supportMethodList:  # 检查方法是否支持
                             if methodStr == "createIndex" or methodStr == "createIndexes" or methodStr == "ensureIndex":  # 判断是否创建索引，如果大于500万，提醒不能在高峰期创建
                                 p_back = re.compile(
-                                    r'''(['"])(?:(?!\1)background)\1(?:\s*):(?:\s*)true|background\s*:\s*true|(['"])(?:(?!\1)background)\1(?:\s*):(?:\s*)(['"])(?:(?!\2)true)\2''', re.M)
+                                    r'''(['"])(?:(?!\1)background)\1(?:\s*):(?:\s*)true|background\s*:\s*true|(['"])(?:(?!\1)background)\1(?:\s*):(?:\s*)(['"])(?:(?!\2)true)\2''',
+                                    re.M)
                                 m_back = re.search(p_back, check_sql)
                                 if m_back is None:
                                     count = 5555555
@@ -434,14 +449,14 @@ class MongoEngine(EngineBase):
                                     check_result.warning_count += 1
                                     result = ReviewResult(id=line, errlevel=2,
                                                           stagestatus='后台创建索引',
-                                                          errormessage='创建索引没有加 background:true'+alert,
+                                                          errormessage='创建索引没有加 background:true' + alert,
                                                           sql=check_sql)
                                 elif not is_in:
                                     count = 0
                                 else:
                                     count = self.get_table_conut(table_name, db_name)  # 获得表的总条数
                                     if count >= 5000000:
-                                        check_result.warning = alert+'大于500万条，请在业务低谷期创建索引'
+                                        check_result.warning = alert + '大于500万条，请在业务低谷期创建索引'
                                         check_result.warning_count += 1
                                         result = ReviewResult(id=line, errlevel=1,
                                                               stagestatus='大表创建索引',
@@ -450,7 +465,8 @@ class MongoEngine(EngineBase):
                                                               sql=check_sql)
                             if count < 5000000:
                                 # 检测通过
-                                affected_all_row_method = ["drop", "dropIndex", "dropIndexes", "createIndex", "createIndexes", "ensureIndex"]
+                                affected_all_row_method = ["drop", "dropIndex", "dropIndexes", "createIndex",
+                                                           "createIndexes", "ensureIndex"]
                                 if methodStr not in affected_all_row_method:
                                     count = 0
                                 else:
@@ -478,15 +494,16 @@ class MongoEngine(EngineBase):
                 check_result.rows += [result]
                 line += 1
                 count = 0
-        check_result.column_list = ['Result'] #审核结果的列名
+        check_result.column_list = ['Result']  # 审核结果的列名
         check_result.checked = True
         check_result.warning = self.warning
         return check_result
 
     def get_connection(self, db_name=None):
-        self.db_name = db_name or 'admin' #=======这里要注意一下
+        self.db_name = db_name or 'admin'  # =======这里要注意一下
         self.db_name = 'admin'
-        self.conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True, connectTimeoutMS=10000)
+        self.conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True,
+                                        connectTimeoutMS=10000)
         if self.user and self.password:
             self.conn[self.db_name].authenticate(self.user, self.password, self.db_name)
         return self.conn
@@ -590,7 +607,7 @@ class MongoEngine(EngineBase):
                 if count == 0:
                     stop_pos = index + 1
                     break
-            if char in ("'", '"'): #避免字符串中带括号的情况，如{key:"{dd"}
+            if char in ("'", '"'):  # 避免字符串中带括号的情况，如{key:"{dd"}
                 index = self.dispose_str(parse_sql, char, index)
             index += 1
         if count > 0:
@@ -614,7 +631,7 @@ class MongoEngine(EngineBase):
                 method = parse_sql[:index].split(".")[-1].strip()
                 index, re_char = self.dispose_pair(parse_sql, index, "(", ")")
                 re_char = re_char.lstrip("(").rstrip(")")
-                #获得表名
+                # 获得表名
                 if method and "collection" not in query_dict:
                     collection = head_sql.replace("." + method, "").replace("db.", "")
                     query_dict["collection"] = collection
@@ -645,7 +662,7 @@ class MongoEngine(EngineBase):
                             pipeline.append(step)
                         query_dict["condition"] = pipeline
                         query_dict["method"] = method
-                elif method.lower() == "getcollection": #获得表名
+                elif method.lower() == "getcollection":  # 获得表名
                     collection = re_char.strip().replace("'", "").replace('"', '')
                     query_dict["collection"] = collection
                 elif method.lower() == "getindexes":
@@ -661,18 +678,19 @@ class MongoEngine(EngineBase):
     def filter_sql(self, sql='', limit_num=0):
         """给查询语句改写语句, 返回修改后的语句"""
         sql = sql.split(";")[0].strip()
-        #执行计划
+        # 执行计划
         if sql.startswith("explain"):
-            sql = sql.replace("explain", "")+".explain()"
+            sql = sql.replace("explain", "") + ".explain()"
         return sql.strip()
 
     def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
 
         if sql.startswith("explain"):
-            sql = sql.replace("explain", "")+".explain()"
+            sql = sql.replace("explain", "") + ".explain()"
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        pattern = re.compile(r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+        pattern = re.compile(
+            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)
@@ -683,13 +701,13 @@ class MongoEngine(EngineBase):
                 return result
             collection_name = query_dict["collection"]
             collection_names = self.get_all_tables(db_name).rows
-            is_in = collection_name in collection_names  #检查表是否存在
+            is_in = collection_name in collection_names  # 检查表是否存在
             if not is_in:
                 result['msg'] += f"\n错误: {collection_name} 文档不存在!"
                 result['bad_query'] = True
                 return result
         else:
-            result['msg'] += '请检查语句的正确性!'
+            result['msg'] += '请检查语句的正确性! 请使用原生查询语句'
             result['bad_query'] = True
         return result
 
@@ -699,9 +717,9 @@ class MongoEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         find_cmd = ""
 
-        #提取命令中()中的内容
+        # 提取命令中()中的内容
         query_dict = self.parse_query_sentence(sql)
-        #创建一个解析对象
+        # 创建一个解析对象
         de = JsonDecoder()
 
         collection_name = query_dict["collection"]
@@ -740,7 +758,7 @@ class MongoEngine(EngineBase):
             db = conn[db_name]
             collection = db[collection_name]
 
-            #执行语句
+            # 执行语句
             logger.debug(find_cmd)
             cursor = eval(find_cmd)
 
@@ -749,17 +767,17 @@ class MongoEngine(EngineBase):
             if "count" in query_dict:
                 columns.append("count")
                 rows.append({"count": cursor})
-            elif "explain" in query_dict: #生成执行计划数据
+            elif "explain" in query_dict:  # 生成执行计划数据
                 columns.append("explain")
-                cursor = json.loads(json_util.dumps(cursor)) #bson转换成json
+                cursor = json.loads(json_util.dumps(cursor))  # bson转换成json
                 for k, v in cursor.items():
-                    if k not in("serverInfo", "ok"):
+                    if k not in ("serverInfo", "ok"):
                         rows.append({k: v})
-            elif method == "index_information": #生成返回索引数据
+            elif method == "index_information":  # 生成返回索引数据
                 columns.append("index_list")
                 for k, v in cursor.items():
                     rows.append({k: v})
-            elif method == "aggregate" and sql.find("$group") >= 0: #生成聚合数据
+            elif method == "aggregate" and sql.find("$group") >= 0:  # 生成聚合数据
                 row = []
                 columns.insert(0, "mongodballdata")
                 for ro in cursor:
@@ -782,7 +800,8 @@ class MongoEngine(EngineBase):
             result_set.affected_rows = len(rows)
             if isinstance(rows, list):
                 logger.debug(rows)
-                result_set.rows = tuple([json.dumps(x, ensure_ascii=False, indent=2, separators=(",", ":"))] for x in rows)
+                result_set.rows = tuple(
+                    [json.dumps(x, ensure_ascii=False, indent=2, separators=(",", ":"))] for x in rows)
 
         except Exception as e:
             logger.warning(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
@@ -803,22 +822,22 @@ class MongoEngine(EngineBase):
         else:
             result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
             columns = result.rows
-        columns.insert(0, "mongodballdata") #隐藏JSON结果列
+        columns.insert(0, "mongodballdata")  # 隐藏JSON结果列
         for ro in cursor:
             json_col = json.dumps(ro, ensure_ascii=False, indent=2, separators=(",", ":"))
             row.insert(0, json_col)
             for key in columns[1:]:
                 if key in ro:
                     value = ro[key]
-                    if isinstance(value,list):
+                    if isinstance(value, list):
                         value = "(array) %d Elements" % len(value)
                     re_oid = re.compile(r"{\'\$oid\': \'[0-9a-f]{24}\'}")
                     re_date = re.compile(r"{\'\$date\': [0-9]{13}}")
-                    #转换$oid
+                    # 转换$oid
                     ff = re.findall(re_oid, str(value))
                     for ii in ff:
                         value = str(value).replace(ii, "ObjectId(" + ii.split(":")[1].strip()[:-1] + ")")
-                    #转换时间戳$date
+                    # 转换时间戳$date
                     dd = re.findall(re_date, str(value))
                     for d in dd:
                         t = int(d.split(":")[1].strip()[:-1])
