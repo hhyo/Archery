@@ -1,10 +1,8 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from django import forms
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
-from django.db import models
 from django.forms import PasswordInput
 
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
@@ -60,7 +58,6 @@ class InstanceTagAdmin(admin.ModelAdmin):
 
 
 # 实例管理
-
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
@@ -81,13 +78,16 @@ class InstanceAdmin(admin.ModelAdmin):
 
     inlines = [AliRdsConfigInline]
 
+
 # SSH隧道
 @admin.register(Tunnel)
 class TunnelAdmin(admin.ModelAdmin):
     list_display = ('id', 'tunnel_name', 'host', 'port', 'create_time')
     list_display_links = ('id', 'tunnel_name',)
     search_fields = ('id', 'tunnel_name')
-    fieldsets = (None, {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password',), }),
+    fieldsets = (
+                    None,
+                    {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password',), }),
     ordering = ('id',)
     # 添加页显示内容
     add_fieldsets = (
@@ -95,9 +95,15 @@ class TunnelAdmin(admin.ModelAdmin):
         ('连接信息', {'fields': ('user', 'password', 'pkey_path', 'pkey_password')}),
     )
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name in ['password', 'pkey_password']:
+            kwargs['widget'] = PasswordInput(render_value=True)
+        return super(TunnelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
     # 不支持修改标签代码
     def get_readonly_fields(self, request, obj=None):
         return ('id',) if obj else ()
+
 
 # SQL工单内容
 class SqlWorkflowContentInline(admin.TabularInline):

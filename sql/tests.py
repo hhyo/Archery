@@ -553,7 +553,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   instance=self.slave, db_name=self.db_name,
                                                   sql_content="select * from archery.sql_users;",
                                                   limit_num=100)
-        self.assertDictEqual(r, {'status': 1, 'msg': '你无archery.sql_users表的查询权限！请先到查询权限管理进行申请',
+        self.assertDictEqual(r, {'status': 2, 'msg': '你无archery.sql_users表的查询权限！请先到查询权限管理进行申请',
                                  'data': {'priv_check': True, 'limit_num': 0}})
 
     @patch('sql.query_privileges._table_ref', return_value=[{'schema': 'archery', 'name': 'sql_users'}])
@@ -630,7 +630,7 @@ class TestQueryPrivilegesCheck(TestCase):
                                                   limit_num=100)
         self.assertDictEqual(r, {'data': {'limit_num': 0, 'priv_check': True},
                                  'msg': '你无archery数据库的查询权限！请先到查询权限管理进行申请',
-                                 'status': 1})
+                                 'status': 2})
 
 
 class TestQueryPrivilegesApply(TestCase):

@@ -24,6 +24,7 @@ logger = logging.getLogger('default')
 
 class PgSQLEngine(EngineBase):
     def get_connection(self, db_name=None):
+        db_name = db_name or self.db_name or 'postgres'
         if self.conn:
             return self.conn
         self.conn = psycopg2.connect(host=self.host, port=self.port, user=self.user,
@@ -43,7 +44,7 @@ class PgSQLEngine(EngineBase):
         获取数据库列表
         :return:
         """
-        result = self.query(sql=f"SELECT datname FROM pg_database;", db_name=self.db_name)
+        result = self.query(sql=f"SELECT datname FROM pg_database;")
         db_list = [row[0] for row in result.rows if row[0] not in ['postgres', 'template0', 'template1']]
         result.rows = db_list
         return result

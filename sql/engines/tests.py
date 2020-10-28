@@ -1575,12 +1575,15 @@ class MongoTest(TestCase):
     @patch('sql.engines.mongo.MongoEngine.get_connection')
     def test_query(self, mock_get_connection):
         # TODO 正常查询还没做
-        test_sql = """{"collection": "job","count": true}"""
-        self.assertIsInstance(self.engine.query('archery', test_sql), ResultSet)
+        test_sql = """db.job.find().count()"""
+        self.assertIsInstance(self.engine.query('some_db', test_sql), ResultSet)
 
-    def test_query_check(self):
-        test_sql = """{"collection": "job","count": true}"""
-        check_result = self.engine.query_check(sql=test_sql)
+    @patch('sql.engines.mongo.MongoEngine.get_all_tables')
+    def test_query_check(self, mock_get_all_tables):
+        test_sql = """db.job.find().count()"""
+        mock_get_all_tables.return_value.rows = ("job")
+        check_result = self.engine.query_check('some_db',sql=test_sql)
+        mock_get_all_tables.assert_called_once()
         self.assertEqual(False, check_result.get('bad_query'))
 
     @patch('sql.engines.mongo.MongoEngine.get_connection')
@@ -1598,3 +1601,71 @@ class MongoTest(TestCase):
         table_list = self.engine.get_all_tables('some_db')
         mock_db.list_collection_names.assert_called_once()
         self.assertEqual(table_list.rows, ['u', 'v', 'w'])
+
+
+    def test_filter_sql(self):
+        sql = """explain db.job.find().count()"""
+        check_result = self.engine.filter_sql(sql, 0)
+        self.assertEqual(check_result, 'db.job.find().count().explain()')
+
+    @patch('sql.engines.mongo.MongoEngine.exec_cmd')
+    def test_get_slave(self, mock_exec_cmd):
+        mock_exec_cmd.return_value = "172.30.2.123:27017"
+        flag = self.engine.get_slave()
+        self.assertEqual(True, flag)
+
+    @patch('sql.engines.mongo.MongoEngine.get_all_columns_by_tb')
+    def test_parse_tuple(self, mock_get_all_columns_by_tb):
+        cols = ["_id", "title", "tags", "likes"]
+        mock_get_all_columns_by_tb.return_value.rows = cols
+        cursor = [{'_id': {'$oid': '5f10162029684728e70045ab'}, 'title': 'MongoDB', 'tags': 'mongodb', 'likes': 100}]
+        rows, columns = self.engine.parse_tuple(cursor, 'some_db', 'job')
+        alldata = json.dumps(cursor[0], ensure_ascii=False, indent=2, separators=(",", ":"))
+        rerows = (alldata, "ObjectId('5f10162029684728e70045ab')", 'MongoDB', 'mongodb', '100')
+        self.assertEqual(columns, ['mongodballdata', '_id', 'title', 'tags', 'likes'])
+        self.assertEqual(rows[0], rerows)
+
+    @patch('sql.engines.mongo.MongoEngine.get_table_conut')
+    @patch('sql.engines.mongo.MongoEngine.get_all_tables')
+    def test_execute_check(self, mock_get_all_tables, mock_get_table_conut):
+        sql = '''db.job.createIndex({"skuId":1},{background:true});'''
+        mock_get_all_tables.return_value.rows = ("job")
+        mock_get_table_conut.return_value = 1000
+        row = ReviewResult(id=1, errlevel=0,
+                              stagestatus='Audit completed',
+                              errormessage='检测通过',
+                              affected_rows=1000,
+                              sql=sql,
+                              execute_time=0)
+        check_result = self.engine.execute_check('some_db', sql)
+        self.assertEqual(check_result.rows[0].__dict__["errormessage"], row.__dict__["errormessage"])
+
+
+    @patch('sql.engines.mongo.MongoEngine.exec_cmd')
+    @patch('sql.engines.mongo.MongoEngine.get_master')
+    def test_execute(self,mock_get_master, mock_exec_cmd):
+        sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
+        mock_exec_cmd.return_value = '''{
+                                        "createdCollectionAutomatically" : false,
+                                        "numIndexesBefore" : 2,
+                                        "numIndexesAfter" : 3,
+                                        "ok" : 1
+                                      }'''
+
+        check_result = self.engine.execute("some_db", sql)
+        mock_get_master.assert_called_once()
+        self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

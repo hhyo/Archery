@@ -255,14 +255,25 @@ def innodb_trx(request):
        trx.trx_rows_modified,
        trx.trx_is_read_only,
        trx.trx_isolation_level,
-       p.user,
-       p.host,
-       p.db,
-       to_seconds(now()) - to_seconds(trx.trx_started) trx_idle_time,
-       p.time                                          thread_time,
-       ifnull(p.info, '')                              info
-from information_schema.INNODB_TRX trx
-       join information_schema.processlist p on trx.trx_mysql_thread_id = p.id;'''
+      p.user,
+      p.host,
+      p.db,
+      TO_SECONDS(NOW()) - TO_SECONDS(trx.trx_started) trx_idle_time,
+      p.time thread_time,
+      IFNULL((SELECT
+       GROUP_CONCAT(t1.sql_text SEPARATOR ';
+      ')
+    FROM performance_schema.events_statements_history t1
+      INNER JOIN performance_schema.threads t2
+        ON t1.thread_id = t2.thread_id
+    WHERE t2.PROCESSLIST_ID = p.id), '') info
+FROM information_schema.INNODB_TRX trx
+  INNER JOIN information_schema.PROCESSLIST p
+    ON trx.trx_mysql_thread_id = p.id
+    WHERE trx.trx_state = 'RUNNING'
+    AND p.COMMAND = 'Sleep'
+    AND P.TIME > 3
+    ORDER BY trx.trx_started ASC;'''
 
     query_result = query_engine.query('information_schema', sql)
     if not query_result.error:

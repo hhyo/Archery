@@ -50,7 +50,7 @@
                     SQL查询
                     <select id="favorites" name="favorites"
                             class="form-control selectpicker"
-                            data-live-search="true"
+                            data-live-search="true" data-live-search-placeholder="搜索"
                             title="常用查询"
                             required>
                         {% for sql in favorites %}
@@ -68,7 +68,7 @@
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
-                                        data-live-search="true"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
@@ -83,7 +83,7 @@
                             <div class="form-group">
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true"
+                                        data-live-search="true" data-live-search-placeholder="搜索您要查询的数据库"
                                         title="请选择数据库:"
                                         data-placeholder="请选择数据库:" required>
                                 </select>
@@ -99,7 +99,7 @@
                             <div id="div-table_name" class="form-group">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
-                                        data-live-search="true"
+                                        data-live-search="true" data-live-search-placeholder="搜索您要查询的表"
                                         data-name="查看表结构"
                                         title="查看表结构:"
                                         data-placeholder="查看表结构:" required>
@@ -650,19 +650,37 @@
                 } else {
                     sqlContent = editor.getValue();
                 }
-                if (optgroup === "Mongo") {
-                    try {
-                        sqlContent = JSON.stringify(JSON.parse(sqlContent), " ", 4);
-                    } catch (err) {
-                        sqlContent = String(err)
-                    }
-                } else {
-                    sqlContent = window.sqlFormatter.format(sqlContent);
-                }
+                sqlContent = window.sqlFormatter.format(sqlContent);
                 editor.setValue(sqlContent);
                 editor.clearSelection();
             }
         );
+
+        //实时保存编辑器的文字，防止刷新丢失
+        editor.session.on('change', function (delta) {
+            var sqlContent = editor.getValue();
+            window.sessionStorage.setItem('sqlContent', sqlContent);
+        });
+
+        function highLight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'text-muted';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'text-success';
+                    } else {
+                        match = match
+                        cls = 'text-primary';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'text-success';
+                } else if (/null/.test(match)) {
+                    cls = 'text-warning';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
 
         // 展示数据
         function display_data(data) {
@@ -697,9 +715,14 @@
                     //异步获取要动态生成的列
                     var columns = [];
                     $.each(result['column_list'], function (i, column) {
+                        var iswholeCol = true;
+                        if (column == "mongodballdata") {
+                            iswholeCol = false
+                        }
                         columns.push({
                             "field": i,
                             "title": column,
+                            "visible": iswholeCol,
                             "sortable": true,
                             cellStyle: function (value, row, index) {
                                 if (!value && typeof (value) !== "undefined" && value !== 0) {
@@ -745,6 +768,11 @@
                         );
                     } else {
                         //初始化查询结果
+                        var isdetail = false
+                        var optgroup = $('#instance_name :selected').parent().attr('label');
+                        if (optgroup == 'Mongo') {
+                            isdetail = true
+                        }
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
@@ -757,6 +785,7 @@
                                 fileName: 'export_result'  //文件名称设置
                             },
                             undefinedText: '(null)',
+                            detailView: isdetail, //开启显示行首"+"
                             showColumns: true,
                             showToggle: true,
                             clickToSelect: true,
@@ -766,6 +795,17 @@
                             pageList: [30, 50, 100, 500, 1000],
                             search: true,                      //是否显示表格搜索
                             strictSearch: false,                //是否全匹配搜索
+                            //格式化详情
+                            detailFormatter: function (index, row) {
+                                var html = [];
+                                $.each(row, function (key, value) {
+                                    if (key === 0) {//mongodb这里要修改
+                                        let rs = value;
+                                        html.push('<pre>' + highLight(rs) + '</pre>');
+                                    }
+                                });
+                                return html.join('');
+                            },
                             locale: 'zh-CN'
                         });
                     }
@@ -790,7 +830,15 @@
                     escape: false,
                     columns: [{
                         field: 'error',
-                        title: 'Error'
+                        title: 'Error',
+                        formatter: function (value, row, index) {
+                            //staus为2的时候，增加申请链接
+                            if (data.status === 2) {
+                                return value + "<a href=\"/queryapplylist/\">" + "（提交申请）" + "</a>"
+                            } else {
+                                return value
+                            }
+                        }
                     }],
                     data: [{
                         error: data.msg
@@ -826,6 +874,11 @@
                 //查看表结构
                 else if (sql === 'show create table') {
                     sqlContent = "show create table " + $("#table_name").val() + ";"
+                }
+            } else if (optgroup === "Mongo") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
                 }
             }
             //提交请求
@@ -906,8 +959,8 @@
                     $("#div-schema_name").hide();
                     redis_help_tab_remove();
                 }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
+                $("#btn-format").attr('disabled', true);
+                $("#btn-explain").attr('disabled', false);
             } else if (optgroup === "Phoenix") {
                 if (change) {
                     $("#div-table_name").show();
@@ -1125,6 +1178,15 @@
             //设置当前激活的标签id
             sessionStorage.setItem('active_li_id', 'sqllog_tab');
             sessionStorage.setItem('active_li_title', '查询历史');
+
+            //读取上次保存的sqlContent
+            let sqlContent = window.sessionStorage.getItem('sqlContent');
+            if (sqlContent != null) {
+                editor.setValue(sqlContent);
+            } else {
+                editor.setValue("");
+            }
+
             //默认获取查询历史
             get_querylog();
 
@@ -1212,7 +1274,7 @@
                 document.getElementById("hashHelp").style.display = "none";
                 document.getElementById("setHelp").style.display = "block";
                 document.getElementById("zsetHelp").style.display = "none";
-            }  else if (o.value == "zset") {
+            } else if (o.value == "zset") {
                 document.getElementById("keyHelp").style.display = "none";
                 document.getElementById("stringHelp").style.display = "none";
                 document.getElementById("hashHelp").style.display = "none";
@@ -1222,3 +1284,4 @@
         }
     </script>
 {% endblock %}
+

@@ -38,7 +38,7 @@ redis:
   usePassword: "123456"
   persistence:
     enabled: false
-# subchats mysql
+# subcharts mysql
 mysql:
   mysqlRootPassword: archery
   mysqlDatabase: archery
@@ -522,6 +522,4 @@ configMap:
       port=${3:-8888}
       
       gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --log-level=debug --error-logfile=/tmp/archery.err -b ${ip}:${port} --preload --timeout 600  archery.wsgi:application
-
-
 

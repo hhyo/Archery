@@ -41,7 +41,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="组" data-placeholder="请选择组！"
                                         title="请选择组"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                     {% endfor %}
@@ -52,7 +52,7 @@
                                         class="selectpicker show-tick form-control bs-select-hidden"
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
-                                        data-live-search="true" required>
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
                                     <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                                     <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
                                     <optgroup id="optgroup-redis" label="Redis"></optgroup>
@@ -66,7 +66,7 @@
                                 <select id="db_name" name="db_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-name="数据库" data-placeholder="请选择数据库！"
-                                        data-live-search="true"
+                                        data-live-search="true"  data-live-search-placeholder="搜索要提交的数据库"
                                         title="请选择数据库"
                                         required>
                                     <option value="is-empty" disabled="" selected="selected">请选择数据库:</option>
@@ -266,6 +266,7 @@
         $("#instance_name").change(function () {
             var optgroup = $('#instance_name :selected').parent().attr('label');
             $("#div-backup").show();
+            if (optgroup != "MySQL" && optgroup != "Oracle") {$("#div-backup").hide(); $("#is_backup").val("False");}
             //将数据通过ajax提交给获取db_name
             $.ajax({
                 type: "get",
@@ -603,6 +604,7 @@
                         $("#optgroup-redis").empty();
                         $("#optgroup-pgsql").empty();
                         $("#optgroup-phoenix").empty();
+                        $("#optgroup-mongo").empty();
                         for (var i = 0; i < result.length; i++) {
                             var instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                             if (result[i]['db_type'] === 'mysql') {
