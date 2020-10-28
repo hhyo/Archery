@@ -172,7 +172,7 @@ MySQL数据库与 Oracle、 SQL Server 等数据库相比，有其内核上的�
 ### 2.2.4 排序和分组
 
 1. 【建议】减少使用`order by`，和业务沟通能不排序就不排序，或将排序放到程序端去做。`order by`、`group by`、`distinct`这些语句较为耗费CPU，数据库的CPU资源是极其宝贵的。
-2. 【建议】`order by`、`group by`、`distinct`这些SQL尽量利用索引直接检索出排序好的数据。如`where a=1 order by`可以利用`key(a,b)`。
+2. 【建议】`order by`、`group by`、`distinct`这些SQL尽量利用索引直接检索出排序好的数据。如`where a=1 order by b`可以利用`key(a,b)`。
 3. 【建议】包含了`order by`、`group by`、`distinct`这些查询的语句，where条件过滤出来的结果集请保持在1000行以内，否则SQL会很慢。
 
 ### 2.2.5 线上禁止使用的SQL语句
