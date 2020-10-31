@@ -714,7 +714,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="lock_time_threshold"
+                                <label for="binlog2sql"
                                        class="col-sm-4 control-label">BINLOG2SQL</label>
                                 <div class="col-sm-5">
                                     <input type="text" class="form-control"
@@ -953,7 +953,7 @@
             $('#group_auditors').selectpicker('val', []);
             $(this).children().removeAttr("disabled");
             $(this).selectpicker("refresh");
-        })
+        });
 
         // 清空审核人信息
         $("#btn-workflow-config-clean").click(function () {
@@ -1052,7 +1052,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('Inception和备份库测试连接成功，请点击保存生效！')
+                        alert('Inception和备份库测试连接成功，请点击页面下方的保存按钮生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -1085,7 +1085,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('goInception和备份库测试连接成功，请点击保存生效！')
+                        alert('goInception和备份库测试连接成功，请点击页面下方的保存按钮生效！')
                     } else {
                         alert(data.msg);
                     }
@@ -1118,7 +1118,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
-                        alert('测试邮件已成功发送给当前用户，注意查收，请点击保存生效！')
+                        alert('测试邮件已成功发送给当前用户，注意查收，请点击页面下方的保存按钮生效！')
                     } else {
                         alert(data.msg);
                     }
