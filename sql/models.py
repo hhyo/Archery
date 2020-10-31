@@ -651,7 +651,7 @@ class AliyunRdsConfig(models.Model):
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
-    ak = models.ForeignKey(CloudAccessKey, on_delete=models.CASCADE)
+    ak = models.ForeignKey(CloudAccessKey, verbose_name='RDS实例对应的AK配置', on_delete=models.CASCADE)
     is_enable = models.BooleanField('是否启用', default=False)
 
     def __int__(self):

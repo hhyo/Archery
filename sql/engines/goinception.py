@@ -5,6 +5,7 @@ import traceback
 import MySQLdb
 
 from common.config import SysConfig
+from sql.models import AliyunRdsConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -42,8 +43,10 @@ class GoInceptionEngine(EngineBase):
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
+        variables, set_session_sql = get_session_variables(instance)
         inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;*/
                             inception_magic_start;
+                            {set_session_sql}
                             use `{db_name}`;
                             {sql.rstrip(';')};
                             inception_magic_commit;"""
@@ -77,8 +80,10 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
+        variables, set_session_sql = get_session_variables(instance)
         sql_execute = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
+                            {set_session_sql}
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
@@ -225,3 +230,20 @@ class DictTree(dict):
                 elif isinstance(v, list):
                     find_queue.extend([n for n in v if isinstance(n, dict)])
         return fit
+
+
+def get_session_variables(instance):
+    """按照目标实例动态设置goInception的会话参数，可用于按照业务组自定义审核规则等场景"""
+    variables = {}
+    set_session_sql = ''
+    if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        variables.update({
+            "ghost_aliyun_rds": "on",
+            "ghost_allow_on_master": "true",
+            "ghost_assume_rbr": "true",
+
+        })
+    # 转换成SQL语句
+    for k, v in variables.items():
+        set_session_sql += f"inception set session {k} = '{v}';\n"
+    return variables, set_session_sql
