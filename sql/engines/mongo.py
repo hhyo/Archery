@@ -188,7 +188,7 @@ class JsonDecoder:
                 outstr += self.__cur_char()
                 self.__move_i()
                 if outstr.replace(" ", "") in (
-                "ObjectId", "newDate", "ISODate", "newISODate"):  # ======类似的类型比较多还需单独处理，如int()等
+                        "ObjectId", "newDate", "ISODate", "newISODate"):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
                         outstr += c
@@ -330,9 +330,10 @@ class MongoEngine(EngineBase):
             if not exec_sql == '':
                 exec_sql = exec_sql.strip()
                 try:
-                    start = time.clock()
+                    # DeprecationWarning: time.clock has been deprecated in Python 3.3 and will be removed from Python 3.8: use time.perf_counter or time.process_time instead
+                    start = time.perf_counter()
                     r = self.exec_cmd(exec_sql, db_name)
-                    end = time.clock()
+                    end = time.perf_counter()
                     line += 1
                     logger.debug("执行结果：" + r)
                     # 如果执行中有错误

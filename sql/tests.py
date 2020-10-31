@@ -950,18 +950,6 @@ class TestQuery(TransactionTestCase):
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
 
-        # 带 * 且不带 limit 的sql
-        sql_with_star = 'select * from some_table'
-        filtered_sql_with_star = 'select * from some_table limit {0};'.format(some_limit)
-        _get_engine.return_value.filter_sql.return_value = filtered_sql_with_star
-        _get_engine.return_value.query.reset_mock()
-        c.post('/query/', data={'instance_name': self.slave1.instance_name,
-                                'sql_content': sql_with_star,
-                                'db_name': some_db,
-                                'limit_num': some_limit})
-        _get_engine.return_value.query.assert_called_once_with(
-            some_db, filtered_sql_with_star, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
-
     @patch('sql.query.query_priv_check')
     def testStarOptionOn(self, _priv_check):
         c = Client()
@@ -1242,7 +1230,7 @@ class TestWorkflowView(TransactionTestCase):
         _audit.add.return_value = None
         _async_task.return_value = None
         r = c.post('/autoreview/', data=data)
-        workflow_id = SqlWorkflow.objects.latest(field_name='id').id
+        workflow_id = SqlWorkflow.objects.order_by('-id').first().id
         self.assertRedirects(r, f'/detail/{workflow_id}/', fetch_redirect_response=False)
 
     @patch('sql.utils.workflow_audit.Audit.can_review')
@@ -1592,7 +1580,6 @@ class TestOptimize(TestCase):
         data['instance_name'] = 'test_instancex'
         r = self.client.post(path='/slowquery/optimize_sqltuning/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []})
-
 
         # 获取sys_parm
         data['instance_name'] = 'test_instance'
@@ -2107,9 +2094,8 @@ class TestBinLog(TestCase):
         r = self.client.post(path='/binlog/binlog2sql/', data=data)
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": [{"sql": {}, "binlog_info": {}}]})
 
-    @patch('builtins.iter')
-    @patch('sql.plugins.plugin.subprocess')
-    def test_binlog2sql_file(self, _subprocess, _iter):
+    @patch('builtins.open')
+    def test_binlog2sql_file(self, _open):
         """
         测试保存文件
         :param _subprocess:
@@ -2131,8 +2117,6 @@ class TestBinLog(TestCase):
                 "only_dml": "true",
                 "sql_type": "",
                 "instance": self.master}
-        _subprocess.Popen.return_value.stdout.return_value.readline.return_value = 'sql'
-        _iter.return_value = ''
         r = binlog2sql_file(args=args, user=self.superuser)
         self.assertEqual(self.superuser, r[0])
 

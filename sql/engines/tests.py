@@ -1582,7 +1582,7 @@ class MongoTest(TestCase):
     def test_query_check(self, mock_get_all_tables):
         test_sql = """db.job.find().count()"""
         mock_get_all_tables.return_value.rows = ("job")
-        check_result = self.engine.query_check('some_db',sql=test_sql)
+        check_result = self.engine.query_check('some_db', sql=test_sql)
         mock_get_all_tables.assert_called_once()
         self.assertEqual(False, check_result.get('bad_query'))
 
@@ -1601,7 +1601,6 @@ class MongoTest(TestCase):
         table_list = self.engine.get_all_tables('some_db')
         mock_db.list_collection_names.assert_called_once()
         self.assertEqual(table_list.rows, ['u', 'v', 'w'])
-
 
     def test_filter_sql(self):
         sql = """explain db.job.find().count()"""
@@ -1632,18 +1631,17 @@ class MongoTest(TestCase):
         mock_get_all_tables.return_value.rows = ("job")
         mock_get_table_conut.return_value = 1000
         row = ReviewResult(id=1, errlevel=0,
-                              stagestatus='Audit completed',
-                              errormessage='检测通过',
-                              affected_rows=1000,
-                              sql=sql,
-                              execute_time=0)
+                           stagestatus='Audit completed',
+                           errormessage='检测通过',
+                           affected_rows=1000,
+                           sql=sql,
+                           execute_time=0)
         check_result = self.engine.execute_check('some_db', sql)
         self.assertEqual(check_result.rows[0].__dict__["errormessage"], row.__dict__["errormessage"])
 
-
     @patch('sql.engines.mongo.MongoEngine.exec_cmd')
     @patch('sql.engines.mongo.MongoEngine.get_master')
-    def test_execute(self,mock_get_master, mock_exec_cmd):
+    def test_execute(self, mock_get_master, mock_exec_cmd):
         sql = '''db.job.find().createIndex({"skuId":1},{background:true})'''
         mock_exec_cmd.return_value = '''{
                                         "createdCollectionAutomatically" : false,
@@ -1655,17 +1653,3 @@ class MongoTest(TestCase):
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
