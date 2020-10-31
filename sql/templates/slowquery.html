@@ -27,7 +27,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <input id="reservation" type="text" readonly class="form-control"/>
+                <div id="reservation" class="form-control"
+                     style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                    <i class="fa fa-calendar"></i>&nbsp;
+                    <span></span> <i class="fa fa-caret-down"></i>
+                </div>
             </div>
         </div>
     </ul>
@@ -59,51 +63,53 @@
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
-        $('#reservation').daterangepicker({
-            startDate: moment().startOf('day'),
-            endDate: moment(),
-            locale: {
-                "format": "YYYY-MM-DD",// 显示格式
-                "separator": " / ",// 两个日期之间的分割线
-                // 中文化
-                "applyLabel": "确定",
-                "cancelLabel": "取消",
-                "fromLabel": "开始",
-                "toLabel": "结束",
-                "customRangeLabel": "自定义",
-                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-                "firstDay": 1
-            },
-            ranges: {
-                "今日": [moment().startOf('day'), moment()],
-                "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                "最近7日": [moment().subtract('days', 6), moment()],
-                "最近30日": [moment().subtract('days', 29), moment()],
-                "本月": [moment().startOf("month"), moment().endOf("month")],
-                "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-            }
-        }, function (start, end, label) {
-            // 设置最小宽度，否则显示不全
-        }).css("min-width", "210px").next("i").click(function () {
-            // 对日期的i标签增加click事件，使其在鼠标点击时可以拉出日期选择
-            $(this).parent().find('input').click();
-        });
+        $(function () {
+            let start = moment().startOf('day');
+            let end = moment();
 
-        //时间变动保存
-        $('#reservation').on('apply.daterangepicker', function (ev, picker) {
-            sessionStorage.removeItem('SQLId');
-            var start_date = picker.startDate.format('YYYY-MM-DD');
-            var end_date = picker.endDate.format('YYYY-MM-DD');
-            sessionStorage.setItem('start_date', start_date);
-            sessionStorage.setItem('end_date', end_date);
-            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-            if (slowsql_active_li_id === 'slowsql_tab') {
-                slowquery_review()
-            } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                slowquery_review_history()
-
+            function cb(start, end) {
+                $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
             }
+
+            $('#reservation').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: {
+                    format: "YYYY-MM-DD",// 显示格式
+                    separator: " / ",// 两个日期之间的分割线
+                    // 中文化
+                    applyLabel: "确定",
+                    cancelLabel: "取消",
+                    fromLabel: "开始",
+                    toLabel: "结束",
+                    customRangeLabel: "自定义",
+                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
+                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    firstDay: 1
+                },
+                ranges: {
+                    "今日": [moment().startOf('day'), moment()],
+                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "最近7日": [moment().subtract('days', 6), moment()],
+                    "最近30日": [moment().subtract('days', 29), moment()],
+                    "本月": [moment().startOf("month"), moment().endOf("month")],
+                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                }
+            }, cb).on('apply.daterangepicker', function (ev, picker) {
+                sessionStorage.removeItem('SQLId');
+                var start_date = picker.startDate.format('YYYY-MM-DD');
+                var end_date = picker.endDate.format('YYYY-MM-DD');
+                sessionStorage.setItem('start_date', start_date);
+                sessionStorage.setItem('end_date', end_date);
+                var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+                if (slowsql_active_li_id === 'slowsql_tab') {
+                    slowquery_review()
+                } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                    slowquery_review_history()
+
+                }
+            });
+            cb(start, end);
         });
 
         //实例变动自动获取数据库
