@@ -209,9 +209,8 @@ class TestSQLReview(TestCase):
         r = is_auto_review(self.wfc1.workflow_id)
         self.assertFalse(r)
 
-    @patch('sql.engines.mysql.MysqlEngine.execute_check')
     @patch('sql.engines.get_engine')
-    def test_auto_review_true(self, _get_engine, _execute_check):
+    def test_auto_review_true(self, _get_engine):
         """
         测试自动审批通过的判定条件，
         :return:
@@ -222,21 +221,20 @@ class TestSQLReview(TestCase):
         self.sys_config.set('auto_review_max_update_rows', '2')  # update影响行数大于2需要审批
         self.sys_config.set('auto_review_tag', 'GA')  # 仅GA开启自动审批
         self.sys_config.get_all_config()
-        # 修改工单为update
+        # 修改工单为update，mock返回值，update影响行数=3
         self.wfc1.sql_content = "update table users set email='';"
-        self.wfc1.save(update_fields=('sql_content',))
-        # 修改工单实例标签
-        tag, is_created = InstanceTag.objects.get_or_create(tag_code='GA', defaults={'tag_name': '生产环境', 'active': True})
-        self.wf1.instance.instance_tag.add(tag)
-        # mock返回值，update影响行数=3
-        _execute_check.return_value.to_dict.return_value = [
+        self.wfc1.review_content = json.dumps([
             {"id": 1, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",
              "sql": "use archer_test", "affected_rows": 0, "sequence": "'0_0_0'", "backup_dbname": "None",
              "execute_time": "0", "sqlsha1": "", "actual_affected_rows": 'null'},
             {"id": 2, "stage": "CHECKED", "errlevel": 0, "stagestatus": "Audit completed", "errormessage": "None",
              "sql": "update table users set email=''", "affected_rows": 1, "sequence": "'0_0_1'",
              "backup_dbname": "mysql_3306_archer_test", "execute_time": "0", "sqlsha1": "",
-             "actual_affected_rows": 'null'}]
+             "actual_affected_rows": 'null'}])
+        self.wfc1.save(update_fields=('sql_content','review_content'))
+        # 修改工单实例标签
+        tag, is_created = InstanceTag.objects.get_or_create(tag_code='GA', defaults={'tag_name': '生产环境', 'active': True})
+        self.wf1.instance.instance_tag.add(tag)
         r = is_auto_review(self.wfc1.workflow_id)
         self.assertTrue(r)
 
