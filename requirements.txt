@@ -23,3 +23,6 @@ django-mirage-field==1.1.6
 schema-sync==0.9.7
 parsedatetime==2.4
 sshtunnel==0.1.5
+uvloop==0.14.0
+httptools==0.1.1
+uvicorn==0.12.2
