@@ -293,14 +293,16 @@ def simple_column_mask(instance, sql_result):
     """
     # 获取当前实例脱敏字段信息，减少循环查询，提升效率
     masking_columns = DataMaskingColumns.objects.filter(instance=instance, active=True)
+    # 转换sql输出字段名为小写, 适配oracle脱敏
+    sql_result_column_list = [ c.lower() for c in sql_result.column_list ]
     if masking_columns:
         try:
             for mc in masking_columns:
                 # 脱敏规则字段名
-                column_name = mc.column_name
+                column_name = mc.column_name.lower()
                 # 脱敏规则字段索引信息
-                if column_name in sql_result.column_list:
-                    masking_column_index = sql_result.column_list.index(column_name)
+                if column_name in sql_result_column_list:
+                    masking_column_index = sql_result_column_list.index(column_name)
                     # 脱敏规则
                     masking_rule = DataMaskingRules.objects.get(rule_type=mc.rule_type)
                     # 脱敏后替换字符串
