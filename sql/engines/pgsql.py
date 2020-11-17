@@ -149,8 +149,10 @@ class PgSQLEngine(EngineBase):
             conn = self.get_connection(db_name=db_name)
             max_execution_time = kwargs.get('max_execution_time', 0)
             cursor = conn.cursor()
-            if max_execution_time:
+            try:
                 cursor.execute(f"SET statement_timeout TO {max_execution_time};")
+            except:
+                pass
             if schema_name:
                 cursor.execute(f"SET search_path TO {schema_name};")
             cursor.execute(sql)
