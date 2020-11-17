@@ -321,7 +321,7 @@ def simple_column_mask(instance, sql_result):
                                 column_data = compiled_r.sub(replace_pattern, str(sql_result.rows[i][j]))
                             temp_value_list += [ column_data ]
                         rows[i] = tuple(temp_value_list)
-                    sql_result.rows = tuple(rows)
+                    sql_result.rows = rows
         except Exception as e:
             sql_result.error = str(e)
 
