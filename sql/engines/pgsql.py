@@ -184,8 +184,13 @@ class PgSQLEngine(EngineBase):
         return f"{sql.rstrip(';')};"
 
     def query_masking(self, db_name=None, sql='', resultset=None):
-        """不做脱敏"""
-        return resultset
+        """简单字段脱敏规则, 仅对select有效"""
+        if re.match(r"^select", sql, re.I):
+            filtered_result = simple_column_mask(self.instance, resultset)
+            filtered_result.is_masked = True
+        else:
+            filtered_result = resultset
+        return filtered_result
 
     def execute_check(self, db_name=None, sql=''):
         """上线单执行前的检查, 返回Review set"""
