@@ -16,6 +16,7 @@ from common.utils.timer import FuncTimer
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from sql.utils.data_masking import simple_column_mask
 
 __author__ = 'hhyo、yyukai'
 
