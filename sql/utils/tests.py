@@ -26,7 +26,7 @@ from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.workflow_audit import Audit
-from sql.utils.data_masking import data_masking, brute_mask
+from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
 
 User = Users
 __author__ = 'hhyo'
@@ -1302,6 +1302,14 @@ class TestDataMasking(TestCase):
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = brute_mask(self.ins, query_result)
+        mask_result_rows = [('188****8888',), ('188****8889',), ('188****8810',)]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    def test_simple_column_mask(self):
+        sql = """select * from users;"""
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
+        r = simple_column_mask(self.ins, query_result)
         mask_result_rows = [('188****8888',), ('188****8889',), ('188****8810',)]
         self.assertEqual(r.rows, mask_result_rows)
 
