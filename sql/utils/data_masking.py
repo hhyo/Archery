@@ -301,8 +301,28 @@ def simple_column_mask(instance, sql_result):
                 # 脱敏规则字段名
                 column_name = mc.column_name.lower()
                 # 脱敏规则字段索引信息
+                _masking_column_index = []
                 if column_name in sql_result_column_list:
-                    masking_column_index = sql_result_column_list.index(column_name)
+                    _masking_column_index.append(sql_result_column_list.index(column_name))
+                # 别名字段脱敏处理
+                try:
+                    for _c in sql_result_column_list:
+                        alias_column_regex = r'"?([^\s"]+)"?\s+(as\s+)?"?({})[",\s+]?'.format(re.escape(_c))
+                        alias_column_r = re.compile(alias_column_regex, re.I)
+                        # 解析原SQL查询别名字段
+                        search_data = re.search(alias_column_r, sql_result.full_sql)
+                        # 字段名
+                        _column_name = search_data.group(1).lower()
+                        s_column_name = re.sub(r'^"?\w+"?\."?|\.|"$','',_column_name)
+                        # 别名
+                        alias_name = search_data.group(3).lower()
+                        # 如果字段名匹配脱敏配置字段,对此字段进行脱敏处理
+                        if s_column_name == column_name:
+                            _masking_column_index.append(sql_result_column_list.index(alias_name))
+                except:
+                    pass
+
+                for masking_column_index in _masking_column_index:
                     # 脱敏规则
                     masking_rule = DataMaskingRules.objects.get(rule_type=mc.rule_type)
                     # 脱敏后替换字符串
@@ -328,3 +348,4 @@ def simple_column_mask(instance, sql_result):
             sql_result.error = str(e)
 
     return sql_result
+
