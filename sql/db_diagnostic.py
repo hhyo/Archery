@@ -272,7 +272,7 @@ FROM information_schema.INNODB_TRX trx
     ON trx.trx_mysql_thread_id = p.id
     WHERE trx.trx_state = 'RUNNING'
     AND p.COMMAND = 'Sleep'
-    AND P.TIME > 3
+    AND P.time > 3
     ORDER BY trx.trx_started ASC;'''
 
     query_result = query_engine.query('information_schema', sql)
