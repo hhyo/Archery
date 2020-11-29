@@ -373,16 +373,17 @@ def config(request):
     """配置管理页面"""
     # 获取所有资源组名称
     group_list = ResourceGroup.objects.all()
-
     # 获取所有权限组
     auth_group_list = Group.objects.all()
+    # 获取所有实例标签
+    instance_tags = InstanceTag.objects.all()
     # 获取所有配置项
     all_config = Config.objects.all().values('item', 'value')
     sys_config = {}
     for items in all_config:
         sys_config[items['item']] = items['value']
 
-    context = {'group_list': group_list, 'auth_group_list': auth_group_list,
+    context = {'group_list': group_list, 'auth_group_list': auth_group_list, 'instance_tags': instance_tags,
                'config': sys_config, 'WorkflowDict': WorkflowDict}
     return render(request, 'config.html', context)
 

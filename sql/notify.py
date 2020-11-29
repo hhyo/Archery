@@ -26,7 +26,8 @@ def __notify_cnf_status():
     qywx_webhook_status = sys_config.get("qywx_webhook")
     feishu_webhook_status = sys_config.get("feishu_webhook")
     feishu_status = sys_config.get("feishu")
-    if not any([mail_status, ding_status, ding_webhook_status, wx_status, feishu_status, feishu_webhook_status ,qywx_webhook_status]):
+    if not any([mail_status, ding_status, ding_webhook_status, wx_status, feishu_status, feishu_webhook_status,
+                qywx_webhook_status]):
         logger.info('未开启任何消息通知，可在系统设置中开启')
         return False
     else:
@@ -209,7 +210,8 @@ def notify_for_audit(audit_id, **kwargs):
         raise Exception('工单状态不正确')
     logger.info(f"通知Debug{msg_to}{msg_cc}")
     # 发送通知
-    __send(msg_title, msg_content, msg_to, msg_cc, feishu_webhook=feishu_webhook, dingding_webhook=dingding_webhook, qywx_webhook=qywx_webhook)
+    __send(msg_title, msg_content, msg_to, msg_cc, feishu_webhook=feishu_webhook, dingding_webhook=dingding_webhook,
+           qywx_webhook=qywx_webhook)
 
 
 def notify_for_execute(workflow):
@@ -249,7 +251,8 @@ def notify_for_execute(workflow):
     feishu_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).feishu_webhook
     qywx_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).qywx_webhook
     # 发送通知
-    __send(msg_title, msg_content, msg_to, msg_cc, dingding_webhook=dingding_webhook, feishu_webhook=feishu_webhook, qywx_webhook=qywx_webhook)
+    __send(msg_title, msg_content, msg_to, msg_cc, dingding_webhook=dingding_webhook, feishu_webhook=feishu_webhook,
+           qywx_webhook=qywx_webhook)
 
     # DDL通知
     if sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
@@ -266,7 +269,8 @@ def notify_for_execute(workflow):
                 url,
                 workflow.sqlworkflowcontent.sql_content[0:500])
             # 获取通知成员ddl_notify_auth_group
-            msg_to = Users.objects.filter(groups__name=sys_config.get('ddl_notify_auth_group'))
+            ddl_notify_auth_group = sys_config.get('ddl_notify_auth_group', '').split(',')
+            msg_to = Users.objects.filter(groups__name__in=ddl_notify_auth_group)
             # 发送通知
             __send(msg_title, msg_content, msg_to, msg_cc)
 

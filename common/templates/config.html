@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load format_tags %}
 
 {% block content %}
     <div class="row clearfix">
@@ -192,11 +193,19 @@
                                     <label for="auto_review_tag"
                                            class="col-sm-4 control-label">AUTO_REVIEW_TAG</label>
                                     <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="auto_review_tag"
-                                               key="auto_review_tag"
-                                               value="{{ config.auto_review_tag }}"
-                                               placeholder="自动审批的实例标签CODE，多个使用逗号分隔">
+                                        <select id="auto_review_tag" key="auto_review_tag"
+                                                class="form-control selectpicker" data-live-search="true"
+                                                multiple data-selected-text-format="count > 5"
+                                                data-none-selected-text="自动审批的实例标签">
+                                            {% for tag in instance_tags %}
+                                                {% if tag.tag_code|is_in:config.auto_review_tag %}
+                                                    <option value="{{ tag.tag_code }}"
+                                                            selected>{{ tag.tag_name }}</option>
+                                                {% else %}
+                                                    <option value="{{ tag.tag_code }}">{{ tag.tag_name }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -387,11 +396,21 @@
                                 <label for="ddl_notify_auth_group"
                                        class="col-sm-4 control-label">DDL_NOTIFY_AUTH_GROUP</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="ddl_notify_auth_group"
-                                           key="ddl_notify_auth_group"
-                                           value="{{ config.ddl_notify_auth_group }}"
-                                           placeholder="DDL工单通知权限组名，为空则不通知">
+                                    <select id="ddl_notify_auth_group" key="ddl_notify_auth_group"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="DDL工单通知权限组"
+                                            multiple data-selected-text-format="count > 3"
+                                            required>
+                                        {% for auth_group in auth_group_list %}
+                                            {% if auth_group.name|is_in:config.ddl_notify_auth_group %}
+                                                <option value="{{ auth_group.name }}"
+                                                        selected>{{ auth_group.name }}</option>
+                                            {% else %}
+                                                <option value="{{ auth_group.name }}">{{ auth_group.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -711,22 +730,42 @@
                                 <label for="default_auth_group"
                                        class="col-sm-4 control-label">DEFAULT_AUTH_GROUP</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="default_auth_group"
-                                           key="default_auth_group"
-                                           value="{{ config.default_auth_group }}"
-                                           placeholder="默认权限组名，新用户首次登录自动关联, 老用户请手动配置">
+                                    <select id="default_auth_group" key="default_auth_group"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="新用户首次登录自动关联权限组"
+                                            multiple data-selected-text-format="count > 3"
+                                            required>
+                                        {% for auth_group in auth_group_list %}
+                                            {% if auth_group.name|is_in:config.default_auth_group %}
+                                                <option value="{{ auth_group.name }}"
+                                                        selected>{{ auth_group.name }}</option>
+                                            {% else %}
+                                                <option value="{{ auth_group.name }}">{{ auth_group.name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="default_resource_group"
                                        class="col-sm-4 control-label">DEFAULT_RESOURCE_GROUP</label>
                                 <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="default_resource_group"
-                                           key="default_resource_group"
-                                           value="{{ config.default_resource_group }}"
-                                           placeholder="默认资源组名，新用户首次登录自动关联, 老用户请手动配置">
+                                    <select id="default_resource_group" key="default_resource_group"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="新用户首次登录自动关联资源组"
+                                            multiple data-selected-text-format="count > 3"
+                                            required>
+                                        {% for resource_group in group_list %}
+                                            {% if resource_group.group_name|is_in:config.default_resource_group %}
+                                                <option value="{{ resource_group.group_name }}"
+                                                        selected>{{ resource_group.group_name }}</option>
+                                            {% else %}
+                                                <option value="{{ resource_group.group_name }}">{{ resource_group.group_name }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -889,6 +928,9 @@
                 function () {
                     var config_item = $(this).attr("key");
                     var config_value = $(this).val();
+                    if (Array.isArray(config_value)) {
+                        config_value = config_value.join(',')
+                    }
                     configs.push({
                         key: config_item,
                         value: config_value
