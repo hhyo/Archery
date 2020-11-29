@@ -17,7 +17,6 @@ pyecharts==1.7.1
 aliyun-python-sdk-rds==2.1.1
 cx-Oracle==7.3.0
 supervisor==4.1.0
-gevent==1.4.0
 phoenixdb==0.7
 django-mirage-field==1.1.6
 schema-sync==0.9.7
