@@ -5,6 +5,7 @@
 @file: sql_optimize.py
 @time: 2019/03/04
 """
+import MySQLdb
 import re
 
 import simplejson as json
@@ -148,12 +149,14 @@ def optimize_sqltuning(request):
     sqltext = sqlparse.split(sqltext)[0]
     if re.match(r"^select|^show|^explain", sqltext, re.I) is None:
         result = {'status': 1, 'msg': '只支持查询SQL！', 'data': []}
-        return HttpResponse(json.dumps(result),content_type='application/json')
+        return HttpResponse(json.dumps(result), content_type='application/json')
     try:
         user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result = {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode('utf-8')
 
     sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
     result = {'status': 0, 'msg': 'ok', 'data': {}}

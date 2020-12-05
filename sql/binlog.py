@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import MySQLdb
 import logging
 import os
 import time
@@ -61,6 +62,9 @@ def del_binlog(request):
     except Instance.DoesNotExist:
         result = {'status': 1, 'msg': '实例不存在', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
+
+    # escape
+    binlog = MySQLdb.escape_string(binlog).decode('utf-8')
 
     if binlog:
         query_engine = get_engine(instance=instance)

@@ -5,6 +5,8 @@
 @file: instance_database.py
 @time: 2019/09/19
 """
+import MySQLdb
+
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse, HttpResponse
@@ -101,6 +103,9 @@ def create(request):
         owner_display = Users.objects.get(username=owner).display
     except Users.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '负责人不存在', 'data': []})
+
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode('utf-8')
 
     engine = get_engine(instance=instance)
     exec_result = engine.execute(db_name='information_schema', sql=f"create database {db_name};")
