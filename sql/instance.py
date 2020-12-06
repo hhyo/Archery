@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import MySQLdb
 import os
 import time
 
@@ -251,9 +252,9 @@ def instance_resource(request):
     """
     instance_id = request.GET.get('instance_id')
     instance_name = request.GET.get('instance_name')
-    db_name = request.GET.get('db_name')
-    schema_name = request.GET.get('schema_name')
-    tb_name = request.GET.get('tb_name')
+    db_name = request.GET.get('db_name', '')
+    schema_name = request.GET.get('schema_name', '')
+    tb_name = request.GET.get('tb_name', '')
 
     resource_type = request.GET.get('resource_type')
     if instance_id:
@@ -267,6 +268,11 @@ def instance_resource(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
 
     try:
+        # escape
+        db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+        schema_name = MySQLdb.escape_string(schema_name).decode('utf-8')
+        tb_name = MySQLdb.escape_string(tb_name).decode('utf-8')
+
         query_engine = get_engine(instance=instance)
         if resource_type == 'database':
             resource = query_engine.get_all_databases()

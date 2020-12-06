@@ -1,3 +1,5 @@
+import MySQLdb
+
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 
@@ -29,6 +31,9 @@ def process(request):
     if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
         result = aliyun_process_status(request)
     else:
+        # escape
+        command_type = MySQLdb.escape_string(command_type).decode('utf-8')
+
         if command_type == 'All':
             sql = base_sql + ";"
         elif command_type == 'Not Sleep':

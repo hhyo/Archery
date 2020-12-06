@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import MySQLdb
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.password_validation import validate_password
@@ -93,6 +94,11 @@ def create(request):
     except ValidationError as msg:
         return JsonResponse({'status': 1, 'msg': f'{msg}', 'data': []})
 
+    # escape
+    user = MySQLdb.escape_string(user).decode('utf-8')
+    host = MySQLdb.escape_string(host).decode('utf-8')
+    password1 = MySQLdb.escape_string(password1).decode('utf-8')
+
     engine = get_engine(instance=instance)
     # 在一个事务内执行
     hosts = host.split("|")
@@ -155,6 +161,10 @@ def grant(request):
     priv_type = int(request.POST.get('priv_type'))
     privs = json.loads(request.POST.get('privs'))
     grant_sql = ''
+
+    # escape
+    user_host = MySQLdb.escape_string(user_host).decode('utf-8')
+
     # 全局权限
     if priv_type == 0:
         global_privs = privs['global_privs']
@@ -235,6 +245,10 @@ def reset_pwd(request):
     except Instance.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
+    # escape
+    user_host = MySQLdb.escape_string(user_host).decode('utf-8')
+    reset_pwd1 = MySQLdb.escape_string(reset_pwd1).decode('utf-8')
+
     # TODO 目前使用系统自带验证，后续实现验证器校验
     try:
         validate_password(reset_pwd1, user=None, password_validators=None)
@@ -269,6 +283,9 @@ def delete(request):
         instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
+
+    # escape
+    user_host = MySQLdb.escape_string(user_host).decode('utf-8')
 
     engine = get_engine(instance=instance)
     exec_result = engine.execute(db_name='information_schema', sql=f"DROP USER {user_host};")

@@ -27,6 +27,9 @@ def table_list(request):
         try:
             instance = Instance.objects.get(instance_name=instance_name, db_type='mysql')
             query_engine = get_engine(instance=instance)
+            # escape
+            db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+
             sql = f"""SELECT
                 TABLE_NAME,
                 TABLE_COMMENT
@@ -62,6 +65,9 @@ def table_info(request):
         try:
             instance = Instance.objects.get(instance_name=instance_name, db_type='mysql')
             query_engine = get_engine(instance=instance)
+            # escape
+            db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+            tb_name = MySQLdb.escape_string(tb_name).decode('utf-8')
 
             sql = f"""SELECT
                 TABLE_NAME as table_name,
@@ -141,6 +147,9 @@ def export(request):
     """导出数据字典"""
     instance_name = request.GET.get('instance_name', '')
     db_name = request.GET.get('db_name', '')
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+
     try:
         instance = user_instances(request.user, db_type=['mysql']).get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
