@@ -85,7 +85,7 @@ def slowquery_review(request):
             )
         slow_sql_count = slowsql_obj.count()
         # 默认“执行总次数”倒序排列
-        slow_sql_list = slowsql_obj.order_by(sortName if 'desc'.__eq__(sortOrder) else '-'+sortName)[offset:limit]
+        slow_sql_list = slowsql_obj.order_by('-'+sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit]
 
         # QuerySet 序列化
         sql_slow_log = []
@@ -189,13 +189,12 @@ def slowquery_review_history(request):
                            )
 
         slow_sql_record_count = slow_sql_record_obj.count()
-        slow_sql_record_list = slow_sql_record_obj[offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
+        slow_sql_record_list = slow_sql_record_obj.order_by('-' + sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
                                                                         'SQLText',
                                                                         'TotalExecutionCounts', 'QueryTimePct95',
                                                                         'QueryTimes', 'LockTimes', 'ParseRowCounts',
                                                                         'ReturnRowCounts'
                                                                         )
-        # slow_sql_record_list = slow_sql_record_obj.order_by(sortName if 'desc'.__eq__(sortOrder) else '-' + sortName)
 
         # QuerySet 序列化
         sql_slow_record = []
