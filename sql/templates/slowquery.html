@@ -286,9 +286,9 @@
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
-                    sortable: true,
-                    sortName: "MySQLTotalExecutionCounts",
-                    sortOrder: "desc",
+                    sortable: true,                     //开启排序
+                    sortName: "MySQLTotalExecutionCounts", //默认排序字段名称
+                    sortOrder: "desc",                   //默认排序方式
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
@@ -455,6 +455,9 @@
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //开启排序
+                    sortName: "MySQLTotalExecutionCounts", //默认排序字段名称
+                    sortOrder: "desc",                   //默认排序方式
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
@@ -482,6 +485,8 @@
                         var SQLId = sessionStorage.getItem('SQLId');
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+                        console.log(params);
+                        console.log('params='+JSON.stringify(params));
 
                         return {
                             instance_name: instance_name,
@@ -491,7 +496,9 @@
                             EndTime: EndTime,
                             limit: params.limit,
                             offset: params.offset,
-                            search: params.search
+                            search: params.search,
+                            sortName: params.sort,
+                            sortOrder: params.order
                         }
                     },
                     //格式化详情
@@ -516,13 +523,16 @@
                         checkbox: true
                     }, {
                         title: '执行开始时间',
-                        field: 'ExecutionStartTime'
+                        field: 'ExecutionStartTime',
+                        sortable:true
                     }, {
                         title: '数据库名',
-                        field: 'DBName'
+                        field: 'DBName',
+                        sortable:true
                     }, {
                         title: '用户名',
-                        field: 'HostAddress'
+                        field: 'HostAddress',
+                        sortable:true
                     }, {
                         title: 'SQL语句',
                         field: 'SQLText',
@@ -540,23 +550,28 @@
                         visible: false // 默认不显示
                     }, {
                         title: '执行总次数',
-                        field: 'TotalExecutionCounts'
+                        field: 'TotalExecutionCounts',
+                        sortable:true
                     }, {
                         title: '执行时长(95%)',
-                        field: 'QueryTimePct95'
+                        field: 'QueryTimePct95',
+                        sortable:true
                     }, {
                         title: '执行总时长(秒)',
-                        field: 'QueryTimes'
+                        field: 'QueryTimes',
+                        sortable:true
                     }, {
                         title: '锁定总时长(秒)',
-                        field: 'LockTimes'
+                        field: 'LockTimes',
+                        sortable:true
                     }, {
                         title: '解析总行数',
                         field: 'ParseRowCounts',
                         sortable:true
                     }, {
                         title: '返回总行数',
-                        field: 'ReturnRowCounts'
+                        field: 'ReturnRowCounts',
+                        sortable:true
                     }],
                     singleSelect: true,
                     toolbar: "#sqladvisor-toolbar",               //指明自定义的toolbar
@@ -567,6 +582,8 @@
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
+                    },onSort: function(sortName,order){
+                        console.info('onSort: name='+sortName+'; order='+order+';');
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源

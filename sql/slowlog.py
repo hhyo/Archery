@@ -124,6 +124,8 @@ def slowquery_review_history(request):
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
         search = request.POST.get('search')
+        sortName = str(request.POST.get('sortName'))
+        sortOrder = str(request.POST.get('sortOrder')).lower()
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -193,6 +195,7 @@ def slowquery_review_history(request):
                                                                         'QueryTimes', 'LockTimes', 'ParseRowCounts',
                                                                         'ReturnRowCounts'
                                                                         )
+        # slow_sql_record_list = slow_sql_record_obj.order_by(sortName if 'desc'.__eq__(sortOrder) else '-' + sortName)
 
         # QuerySet 序列化
         sql_slow_record = []
