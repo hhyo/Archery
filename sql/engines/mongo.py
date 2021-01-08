@@ -745,6 +745,8 @@ class MongoEngine(EngineBase):
             find_cmd += ".sort(sorting)"
         if method == "find" and "limit" not in query_dict and "explain" not in query_dict:
             find_cmd += ".limit(limit_num)"
+        if method == "find" and "explain" not in query_dict:
+            find_cmd += ".max_time_ms(120000)"  # 增加查询超时
         if "limit" in query_dict and query_dict["limit"]:
             query_limit = int(query_dict["limit"])
             limit = min(limit_num, query_limit) if query_limit else limit_num
