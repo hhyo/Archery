@@ -315,8 +315,8 @@
                         var db_name = $("#db_name").val();
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
-                        console.log(params);
-                        console.log('params='+JSON.stringify(params));
+                        //console.info(params);
+                        //console.info('params='+JSON.stringify(params));
 
                         return {
                             instance_name: instance_name,
@@ -426,14 +426,14 @@
                     },
                     onSearch: function(e) {
                         //传搜索参数给服务器
-                        console.info('search='+e);
+                        //console.info('search='+e);
                         //queryParams(e);
                     },
                     responseHandler: function(res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
                     },onSort: function(sortName,order){
-                        console.info('onSort: name='+sortName+'; order='+order+';');
+                        //console.info('onSort: name='+sortName+'; order='+order+';');
                     }
                 });
             } else {
@@ -485,8 +485,8 @@
                         var SQLId = sessionStorage.getItem('SQLId');
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
-                        console.log(params);
-                        console.log('params='+JSON.stringify(params));
+                        //console.info(params);
+                        //console.info('params='+JSON.stringify(params));
 
                         return {
                             instance_name: instance_name,
@@ -583,7 +583,7 @@
                         //传搜索参数给服务器
                         queryParams(e)
                     },onSort: function(sortName,order){
-                        console.info('onSort: name='+sortName+'; order='+order+';');
+                        //console.info('onSort: name='+sortName+'; order='+order+';');
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
