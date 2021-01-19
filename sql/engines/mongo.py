@@ -255,36 +255,26 @@ class MongoEngine(EngineBase):
     def exec_cmd(self, sql, db_name=None, slave_ok=''):
         """审核时执行的语句"""
 
-        if self.user and self.password and self.port and self.host:
+        if self.port and self.host:
             try:
                 if not sql.startswith('var host='):  # 在master节点执行的情况
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
-                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql, slave_ok=slave_ok)
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                            mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql, slave_ok=slave_ok)
+                    else:
+                        cmd = "{mongo} --quiet {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                            mongo=mongo, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql, slave_ok=slave_ok)
                 else:
-                    cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql)
-                logger.debug(cmd)
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                     universal_newlines=True)
-                re_msg = []
-                for line in iter(p.stdout.read, ''):
-                    re_msg.append(line)
-                msg = '\n'.join(re_msg)
-            except Exception as e:
-                logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
-        
-        elif self.port and self.host:
-            try:
-                if not sql.startswith('var host='):  # 在master节点执行的情况
-                    cmd = "{mongo} --quiet {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
-                        mongo=mongo, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql, slave_ok=slave_ok)
-                else:
-                    cmd = "{mongo} --quiet  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql)
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                            mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql)
+                    else:
+                        cmd = "{mongo} --quiet  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                            mongo=mongo, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql)
                 logger.debug(cmd)
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      universal_newlines=True)
