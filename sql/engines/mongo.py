@@ -421,7 +421,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.([\w-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
@@ -712,7 +712,7 @@ class MongoEngine(EngineBase):
             sql = sql.replace("explain", "") + ".explain()"
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(
-            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+            r'''^db\.([\w-]+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)
