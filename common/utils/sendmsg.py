@@ -167,6 +167,9 @@ class MsgSender(object):
             logger.error(f'钉钉推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
     def send_wx2user(self, msg, user_list):
+        if not user_list:
+            logger.error(f'企业微信推送失败,无法获取到推送的用户.')
+            return
         to_user = '|'.join(list(set(user_list)))
         access_token = get_wx_access_token()
         send_url = f'https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={access_token}'
