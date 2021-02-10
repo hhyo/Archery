@@ -703,6 +703,7 @@ class MongoEngine(EngineBase):
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(
             r'''^db\.([\w-]+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+        sql = sql.rstrip(';')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)
