@@ -210,9 +210,25 @@ class MsgSender(object):
             "title": title,
             "text": content
         }
+        if '/v2/' in url:
+            data = {
+                'msg_type': 'post',
+                'content': {
+                    'post': {
+                        'zh_cn': {
+                            'title': title,
+                            'content': [[{
+                                'tag': 'text',
+                                'text': content
+                            }]]
+                        }
+                    }
+                }
+            }
+
         r = requests.post(url=url, json=data)
         r_json = r.json()
-        if r_json['ok']:
+        if 'ok' in r_json or ('StatusCode' in r_json and r_json['StatusCode'] == 0) or ('code' in r_json and r_json['code'] == 0):
             logger.debug(f'飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
         else:
             logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
