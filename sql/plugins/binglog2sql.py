@@ -5,6 +5,7 @@
 @file: binglog2sql.py
 @time: 2019/03/23
 """
+import shlex
 from common.config import SysConfig
 from sql.plugins.plugin import Plugin
 
@@ -39,12 +40,12 @@ class Binlog2Sql(Plugin):
                 elif name in parse_mode_options and value:
                     cmd_args += f' --{name}'
                 elif name in range_options and value:
-                    cmd_args += f" --{name}='{value}'"
+                    cmd_args += f" --{name}='{shlex.quote(str(value))}'"
                 elif name in filter_options and value:
                     if name == 'only-dml':
                         cmd_args += f' --{name}'
                     else:
-                        cmd_args += f' --{name} {value}'
+                        cmd_args += f' --{name} {shlex.quote(str(value))}'
         else:
             cmd_args = [self.path]
             for name, value in args.items():

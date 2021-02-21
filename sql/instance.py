@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import shlex
+
 import MySQLdb
 import os
 import time
@@ -192,6 +194,8 @@ def schemasync(request):
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, 'downloads/schemasync/')
     os.makedirs(output_directory, exist_ok=True)
+    db_name = shlex.quote(db_name)
+    target_db_name = shlex.quote(target_db_name)
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
