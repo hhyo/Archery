@@ -10,7 +10,6 @@
 [![version](https://img.shields.io/pypi/pyversions/django)](https://img.shields.io/pypi/pyversions/django/)
 [![version](https://img.shields.io/badge/django-3.1-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/3.1/)
 [![docker_pulls](https://img.shields.io/docker/pulls/hhyo/archery.svg)](https://hub.docker.com/r/hhyo/archery/)
-[![HitCount](http://hits.dwyl.io/hhyo/hhyo/Archery.svg)](http://hits.dwyl.io/hhyo/hhyo/Archery)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 
@@ -138,9 +137,6 @@ python manage.py test -v 3
 - RDS管理 [aliyun-openapi-python-sdk](https://github.com/aliyun/aliyun-openapi-python-sdk)
 - 数据加密 [django-mirage-field](https://github.com/luojilab/django-mirage-field)
 
-贡献者
-===============
-[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/0)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/0)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/1)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/1)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/2)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/2)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/3)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/3)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/4)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/4)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/5)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/5)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/6)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/6)[![](https://sourcerer.io/fame/hhyo/hhyo/archery/images/7)](https://sourcerer.io/fame/hhyo/hhyo/archery/links/7)
 
 贡献代码
 ===============
@@ -155,3 +151,7 @@ python manage.py test -v 3
 问题反馈
 ===============
 [Issues](https://github.com/hhyo/archery/issues)是本项目唯一的沟通渠道，如果在使用过程中遇到问题，请先查阅文档，如果仍无法解决，请查看相关日志，保存截图信息，给我们提交[Issue](https://github.com/hhyo/archery/issues)，请按照模板提供相关信息，否则会被直接关闭，感谢理解
+
+
+
+
