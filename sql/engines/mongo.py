@@ -255,16 +255,26 @@ class MongoEngine(EngineBase):
     def exec_cmd(self, sql, db_name=None, slave_ok=''):
         """审核时执行的语句"""
 
-        if self.user and self.password and self.port and self.host:
+        if self.port and self.host:
             try:
                 if not sql.startswith('var host='):  # 在master节点执行的情况
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
-                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql, slave_ok=slave_ok)
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                            mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql, slave_ok=slave_ok)
+                    else:
+                        cmd = "{mongo} --quiet {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                            mongo=mongo, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql, slave_ok=slave_ok)
                 else:
-                    cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql)
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                            mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql)
+                    else:
+                        cmd = "{mongo} --quiet  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                            mongo=mongo, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql)
                 logger.debug(cmd)
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      universal_newlines=True)
@@ -274,6 +284,7 @@ class MongoEngine(EngineBase):
                 msg = '\n'.join(re_msg)
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
+                
         return msg
 
     def get_master(self):
@@ -400,7 +411,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.([\w-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
@@ -691,7 +702,8 @@ class MongoEngine(EngineBase):
             sql = sql.replace("explain", "") + ".explain()"
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(
-            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+            r'''^db\.([\w-]+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+        sql = sql.rstrip(';')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)
@@ -745,6 +757,8 @@ class MongoEngine(EngineBase):
             find_cmd += ".sort(sorting)"
         if method == "find" and "limit" not in query_dict and "explain" not in query_dict:
             find_cmd += ".limit(limit_num)"
+        if method == "find" and "explain" not in query_dict:
+            find_cmd += ".max_time_ms(120000)"  # 增加查询超时
         if "limit" in query_dict and query_dict["limit"]:
             query_limit = int(query_dict["limit"])
             limit = min(limit_num, query_limit) if query_limit else limit_num
