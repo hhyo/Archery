@@ -46,6 +46,8 @@ def slowquery_review(request):
         offset = int(request.POST.get('offset'))
         limit = offset + limit
         search = request.POST.get('search')
+        sortName = str(request.POST.get('sortName'))
+        sortOrder = str(request.POST.get('sortOrder')).lower()
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -82,7 +84,8 @@ def slowquery_review(request):
                 ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
             )
         slow_sql_count = slowsql_obj.count()
-        slow_sql_list = slowsql_obj.order_by('-MySQLTotalExecutionCounts')[offset:limit]  # 执行总次数倒序排列
+        # 默认“执行总次数”倒序排列
+        slow_sql_list = slowsql_obj.order_by('-'+sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit]
 
         # QuerySet 序列化
         sql_slow_log = []
@@ -121,6 +124,8 @@ def slowquery_review_history(request):
         limit = int(request.POST.get('limit'))
         offset = int(request.POST.get('offset'))
         search = request.POST.get('search')
+        sortName = str(request.POST.get('sortName'))
+        sortOrder = str(request.POST.get('sortOrder')).lower()
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
@@ -184,7 +189,7 @@ def slowquery_review_history(request):
                            )
 
         slow_sql_record_count = slow_sql_record_obj.count()
-        slow_sql_record_list = slow_sql_record_obj[offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
+        slow_sql_record_list = slow_sql_record_obj.order_by('-' + sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
                                                                         'SQLText',
                                                                         'TotalExecutionCounts', 'QueryTimePct95',
                                                                         'QueryTimes', 'LockTimes', 'ParseRowCounts',

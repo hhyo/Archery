@@ -31,6 +31,11 @@ def _(o):
     return float(o)
 
 
+@convert.register(memoryview)
+def _(o):
+    return str(o)
+
+
 class ExtendJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         try:

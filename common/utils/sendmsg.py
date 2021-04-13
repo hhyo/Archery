@@ -167,6 +167,9 @@ class MsgSender(object):
             logger.error(f'钉钉推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
     def send_wx2user(self, msg, user_list):
+        if not user_list:
+            logger.error(f'企业微信推送失败,无法获取到推送的用户.')
+            return
         to_user = '|'.join(list(set(user_list)))
         access_token = get_wx_access_token()
         send_url = f'https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={access_token}'
@@ -185,15 +188,47 @@ class MsgSender(object):
         else:
             logger.error(f'企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
+    def send_qywx_webhook(self,qywx_webhook, msg):
+
+        send_url = qywx_webhook
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": msg.replace('工单地址：', '工单地址：[请点击链接](').replace('\n工单详情预览：', ')\n工单详情预览：')
+            },
+        }
+        res = requests.post(url=send_url, json=data, timeout=5)
+        r_json = res.json()
+        if r_json['errcode'] == 0:
+            logger.debug(f'企业微信机器人推送成功\n通知对象：机器人')
+        else:
+            logger.error(f'企业微信机器人推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
+
     @staticmethod
     def send_feishu_webhook(url, title, content):
         data = {
             "title": title,
             "text": content
         }
+        if '/v2/' in url:
+            data = {
+                'msg_type': 'post',
+                'content': {
+                    'post': {
+                        'zh_cn': {
+                            'title': title,
+                            'content': [[{
+                                'tag': 'text',
+                                'text': content
+                            }]]
+                        }
+                    }
+                }
+            }
+
         r = requests.post(url=url, json=data)
         r_json = r.json()
-        if r_json['ok']:
+        if 'ok' in r_json or ('StatusCode' in r_json and r_json['StatusCode'] == 0) or ('code' in r_json and r_json['code'] == 0):
             logger.debug(f'飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
         else:
             logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")

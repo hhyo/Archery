@@ -1,6 +1,6 @@
 FROM docker.io/centos:7
 
-ENV PYTHON_VERSION 3.6.5
+ENV PYTHON_VERSION 3.8.6
 ENV DOCKERIZE_VERSION v0.6.1
 ENV SOAR_VERSION 0.11.0
 
@@ -67,5 +67,10 @@ RUN cd /opt \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 \
     && yum -y install unixODBC-devel \
 #oracle instantclient
-    && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm
+    && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
+#mongo instantclient
+    && wget -c https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-3.6.20.tgz \
+    && tar -xvf mongodb-linux-x86_64-rhel70-3.6.20.tgz \
+    && cp mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/mongo \
+    && rm -rf mongodb-linux-x86_64-*
 

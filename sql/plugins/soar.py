@@ -7,6 +7,7 @@
 """
 __author__ = 'hhyo'
 
+import shlex
 from common.config import SysConfig
 from sql.plugins.plugin import Plugin
 
@@ -29,10 +30,7 @@ class Soar(Plugin):
         if shell:
             cmd_args = self.path if self.path else ''
             for name, value in args.items():
-                if name in ['query', 'online-dsn', 'test-dsn']:
-                    cmd_args += f' -{name}="{value}"'
-                else:
-                    cmd_args += f' -{name}={value}'
+                cmd_args += f" -{name}={shlex.quote(str(value))}"
         else:
             cmd_args = [self.path]
             for name, value in args.items():
@@ -47,7 +45,7 @@ class Soar(Plugin):
         :return:
         """
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "report-type": "fingerprint"
         }
         cmd_args = self.generate_args2cmd(args, shell=True)
@@ -60,7 +58,7 @@ class Soar(Plugin):
         :return:
         """
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "report-type": "compress"
         }
         cmd_args = self.generate_args2cmd(args, shell=True)
@@ -73,7 +71,7 @@ class Soar(Plugin):
         :return:
         """
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "max-pretty-sql-length": 100000,  # 超出该长度的SQL会转换成指纹输出 (default 1024)
             "report-type": "pretty"
         }
@@ -87,7 +85,7 @@ class Soar(Plugin):
         :return:
         """
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "report-type": "remove-comment"
         }
         cmd_args = self.generate_args2cmd(args, shell=True)
@@ -108,7 +106,7 @@ class Soar(Plugin):
         if set(rewrite_rules).issubset(set(rewrite_type_list)) is False:
             raise RuntimeError(f'不支持的改写规则，仅支持{rewrite_type_list}')
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "report-type": "rewrite",
             "rewrite-rules": ','.join(rewrite_type_list)
         }
@@ -122,7 +120,7 @@ class Soar(Plugin):
         :return:
         """
         args = {
-            "query": sql.replace('`', ''),
+            "query": sql,
             "report-type": "ast-json"
         }
         cmd_args = self.generate_args2cmd(args, shell=True)

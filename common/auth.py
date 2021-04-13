@@ -26,18 +26,15 @@ def init_user(user):
     # 添加到默认权限组
     default_auth_group = SysConfig().get('default_auth_group', '')
     if default_auth_group:
-        try:
-            group = Group.objects.get(name=default_auth_group)
-            user.groups.add(group)
-        except Group.DoesNotExist:
-            logger.info(f'无name为[{default_auth_group}]的权限组，无法默认关联，请到系统设置进行配置')
+        default_auth_group = default_auth_group.split(',')
+        [user.groups.add(group) for group in Group.objects.filter(name__in=default_auth_group)]
+
     # 添加到默认资源组
     default_resource_group = SysConfig().get('default_resource_group', '')
     if default_resource_group:
-        try:
-            user.resource_group.add(ResourceGroup.objects.get(group_name=default_resource_group))
-        except ResourceGroup.DoesNotExist:
-            logger.info(f'无name为[{default_resource_group}]的资源组，无法默认关联，请到系统设置进行配置')
+        default_resource_group = default_resource_group.split(',')
+        [user.resource_group.add(group) for group in
+         ResourceGroup.objects.filter(group_name__in=default_resource_group)]
 
 
 class ArcheryAuth(object):
@@ -150,7 +147,9 @@ def sign_up(request):
                 password=password,
                 display=display,
                 email=email,
-                is_active=1)
+                is_active=1,
+                is_staff=True
+            )
         except ValidationError as msg:
             result['status'] = 1
             result['msg'] = str(msg)

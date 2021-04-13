@@ -27,7 +27,11 @@
                 </select>
             </div>
             <div class="form-group">
-                <input id="reservation" type="text" readonly class="form-control"/>
+                <div id="reservation" class="form-control"
+                     style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                    <i class="fa fa-calendar"></i>&nbsp;
+                    <span></span> <i class="fa fa-caret-down"></i>
+                </div>
             </div>
         </div>
     </ul>
@@ -59,51 +63,53 @@
     <!-- 选择框和切换控件 -->
     <script>
         // 初始化时间控件
-        $('#reservation').daterangepicker({
-            startDate: moment().startOf('day'),
-            endDate: moment(),
-            locale: {
-                "format": "YYYY-MM-DD",// 显示格式
-                "separator": " / ",// 两个日期之间的分割线
-                // 中文化
-                "applyLabel": "确定",
-                "cancelLabel": "取消",
-                "fromLabel": "开始",
-                "toLabel": "结束",
-                "customRangeLabel": "自定义",
-                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
-                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-                "firstDay": 1
-            },
-            ranges: {
-                "今日": [moment().startOf('day'), moment()],
-                "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
-                "最近7日": [moment().subtract('days', 6), moment()],
-                "最近30日": [moment().subtract('days', 29), moment()],
-                "本月": [moment().startOf("month"), moment().endOf("month")],
-                "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-            }
-        }, function (start, end, label) {
-            // 设置最小宽度，否则显示不全
-        }).css("min-width", "210px").next("i").click(function () {
-            // 对日期的i标签增加click事件，使其在鼠标点击时可以拉出日期选择
-            $(this).parent().find('input').click();
-        });
+        $(function () {
+            let start = moment().startOf('day');
+            let end = moment();
 
-        //时间变动保存
-        $('#reservation').on('apply.daterangepicker', function (ev, picker) {
-            sessionStorage.removeItem('SQLId');
-            var start_date = picker.startDate.format('YYYY-MM-DD');
-            var end_date = picker.endDate.format('YYYY-MM-DD');
-            sessionStorage.setItem('start_date', start_date);
-            sessionStorage.setItem('end_date', end_date);
-            var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
-            if (slowsql_active_li_id === 'slowsql_tab') {
-                slowquery_review()
-            } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
-                slowquery_review_history()
-
+            function cb(start, end) {
+                $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
             }
+
+            $('#reservation').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: {
+                    format: "YYYY-MM-DD",// 显示格式
+                    separator: " / ",// 两个日期之间的分割线
+                    // 中文化
+                    applyLabel: "确定",
+                    cancelLabel: "取消",
+                    fromLabel: "开始",
+                    toLabel: "结束",
+                    customRangeLabel: "自定义",
+                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
+                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    firstDay: 1
+                },
+                ranges: {
+                    "今日": [moment().startOf('day'), moment()],
+                    "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
+                    "最近7日": [moment().subtract('days', 6), moment()],
+                    "最近30日": [moment().subtract('days', 29), moment()],
+                    "本月": [moment().startOf("month"), moment().endOf("month")],
+                    "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
+                }
+            }, cb).on('apply.daterangepicker', function (ev, picker) {
+                sessionStorage.removeItem('SQLId');
+                var start_date = picker.startDate.format('YYYY-MM-DD');
+                var end_date = picker.endDate.format('YYYY-MM-DD');
+                sessionStorage.setItem('start_date', start_date);
+                sessionStorage.setItem('end_date', end_date);
+                var slowsql_active_li_id = sessionStorage.getItem('slowsql_active_li_id');
+                if (slowsql_active_li_id === 'slowsql_tab') {
+                    slowquery_review()
+                } else if (slowsql_active_li_id === 'slowsqlinfo_tab') {
+                    slowquery_review_history()
+
+                }
+            });
+            cb(start, end);
         });
 
         //实例变动自动获取数据库
@@ -280,6 +286,9 @@
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //开启排序
+                    sortName: "MySQLTotalExecutionCounts", //默认排序字段名称
+                    sortOrder: "desc",                   //默认排序方式
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
@@ -306,6 +315,8 @@
                         var db_name = $("#db_name").val();
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+                        //console.info(params);
+                        //console.info('params='+JSON.stringify(params));
 
                         return {
                             instance_name: instance_name,
@@ -314,7 +325,9 @@
                             EndTime: EndTime,
                             limit: params.limit,
                             offset: params.offset,
-                            search: params.search
+                            search: params.search,
+                            sortName: params.sort,
+                            sortOrder: params.order
                         }
                     },
                     //格式化详情
@@ -355,10 +368,12 @@
                     },
                     columns: [{
                         title: '日志统计时间',
-                        field: 'CreateTime'
+                        field: 'CreateTime',
+                        sortable:true
                     }, {
                         title: '数据库名',
-                        field: 'DBName'
+                        field: 'DBName',
+                        sortable:true
                     }, {
                         title: 'SQL语句',
                         field: 'SQLText',
@@ -386,31 +401,39 @@
                         visible: false // 默认不显示
                     }, {
                         title: '执行总次数',
-                        field: 'MySQLTotalExecutionCounts'
+                        field: 'MySQLTotalExecutionCounts',
+                        sortable:true
                     }, {
                         title: '执行总时长(秒)',
-                        field: 'MySQLTotalExecutionTimes'
+                        field: 'MySQLTotalExecutionTimes',
+                        sortable:true
                     }, {
                         title: '平均执行时长(秒)',
-                        field: 'QueryTimeAvg'
+                        field: 'QueryTimeAvg',
+                        sortable:true
                     }, {
                         title: '扫描总行数',
-                        field: 'ParseTotalRowCounts'
+                        field: 'ParseTotalRowCounts',
+                        sortable:true
                     }, {
                         title: '返回总行数',
-                        field: 'ReturnTotalRowCounts'
+                        field: 'ReturnTotalRowCounts',
+                        sortable:true
                     }],
                     locale: 'zh-CN',
-                    onLoadError: function () {
+                    onLoadError: function() {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
                     },
-                    onSearch: function (e) {
+                    onSearch: function(e) {
                         //传搜索参数给服务器
-                        queryParams(e)
+                        //console.info('search='+e);
+                        //queryParams(e);
                     },
-                    responseHandler: function (res) {
+                    responseHandler: function(res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
                         return res;
+                    },onSort: function(sortName,order){
+                        //console.info('onSort: name='+sortName+'; order='+order+';');
                     }
                 });
             } else {
@@ -432,6 +455,9 @@
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //开启排序
+                    sortName: "ParseRowCounts",         //默认排序字段名称
+                    sortOrder: "desc",                   //默认排序方式
                     sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                     pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                     pageSize: 30,                     //每页的记录行数（*）
@@ -459,6 +485,8 @@
                         var SQLId = sessionStorage.getItem('SQLId');
                         var StartTime = $('#reservation').data('daterangepicker').startDate.format('YYYY-MM-DD');
                         var EndTime = $("#reservation").data('daterangepicker').endDate.format('YYYY-MM-DD');
+                        //console.info(params);
+                        //console.info('params='+JSON.stringify(params));
 
                         return {
                             instance_name: instance_name,
@@ -468,7 +496,9 @@
                             EndTime: EndTime,
                             limit: params.limit,
                             offset: params.offset,
-                            search: params.search
+                            search: params.search,
+                            sortName: params.sort,
+                            sortOrder: params.order
                         }
                     },
                     //格式化详情
@@ -493,13 +523,16 @@
                         checkbox: true
                     }, {
                         title: '执行开始时间',
-                        field: 'ExecutionStartTime'
+                        field: 'ExecutionStartTime',
+                        sortable:true
                     }, {
                         title: '数据库名',
-                        field: 'DBName'
+                        field: 'DBName',
+                        sortable:true
                     }, {
                         title: '用户名',
-                        field: 'HostAddress'
+                        field: 'HostAddress',
+                        sortable:true
                     }, {
                         title: 'SQL语句',
                         field: 'SQLText',
@@ -517,25 +550,31 @@
                         visible: false // 默认不显示
                     }, {
                         title: '执行总次数',
-                        field: 'TotalExecutionCounts'
+                        field: 'TotalExecutionCounts',
+                        sortable:true
                     }, {
                         title: '执行时长(95%)',
-                        field: 'QueryTimePct95'
+                        field: 'QueryTimePct95',
+                        sortable:true
                     }, {
                         title: '执行总时长(秒)',
-                        field: 'QueryTimes'
+                        field: 'QueryTimes',
+                        sortable:true
                     }, {
                         title: '锁定总时长(秒)',
-                        field: 'LockTimes'
+                        field: 'LockTimes',
+                        sortable:true
                     }, {
                         title: '解析总行数',
-                        field: 'ParseRowCounts'
+                        field: 'ParseRowCounts',
+                        sortable:true
                     }, {
                         title: '返回总行数',
-                        field: 'ReturnRowCounts'
+                        field: 'ReturnRowCounts',
+                        sortable:true
                     }],
                     singleSelect: true,
-                    toolbar: "#sqladvisor-toolbar",               //指明自定义的toolbar
+                    toolbar: "#sqladvisor-toolbar", //指明自定义的toolbar
                     locale: 'zh-CN',
                     onLoadError: function () {
                         alert("数据加载失败！请检查接口返回信息和错误日志！");
@@ -543,6 +582,8 @@
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
+                    },onSort: function(sortName,order){
+                        //console.info('onSort: name='+sortName+'; order='+order+';');
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源

@@ -5,6 +5,7 @@
 @file: sql_optimize.py
 @time: 2019/03/04
 """
+import MySQLdb
 import re
 
 import simplejson as json
@@ -60,7 +61,7 @@ def optimize_sqladvisor(request):
             "p": instance_info.password,
             "d": db_name,
             "v": verbose,
-            "q": sql_content.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "q": sql_content.strip()
             }
 
     # 参数检查
@@ -120,7 +121,7 @@ def optimize_soar(request):
             "test-dsn": soar_test_dsn,
             "allow-online-as-test": "false",
             "report-type": "markdown",
-            "query": sql.strip().replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            "query": sql.strip()
             }
     # 参数检查
     args_check_result = soar.check_args(args)
@@ -144,12 +145,18 @@ def optimize_sqltuning(request):
     db_name = request.POST.get('db_name')
     sqltext = request.POST.get('sql_content')
     option = request.POST.getlist('option[]')
-
+    sqltext = sqlparse.format(sqltext, strip_comments=True)
+    sqltext = sqlparse.split(sqltext)[0]
+    if re.match(r"^select|^show|^explain", sqltext, re.I) is None:
+        result = {'status': 1, 'msg': '只支持查询SQL！', 'data': []}
+        return HttpResponse(json.dumps(result), content_type='application/json')
     try:
         user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
         result = {'status': 1, 'msg': '你所在组未关联该实例！', 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode('utf-8')
 
     sql_tunning = SqlTuning(instance_name=instance_name, db_name=db_name, sqltext=sqltext)
     result = {'status': 0, 'msg': 'ok', 'data': {}}

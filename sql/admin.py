@@ -3,10 +3,13 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
+from django.forms import PasswordInput
+
 from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, DataMaskingColumns, DataMaskingRules, \
-    AliyunRdsConfig, ResourceGroup, QueryPrivilegesApply, \
+    AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
-    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag
+    WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
+    Tunnel
 
 
 # 用户管理
@@ -38,7 +41,7 @@ class UsersAdmin(UserAdmin):
 # 资源组管理
 @admin.register(ResourceGroup)
 class ResourceGroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'ding_webhook', 'feishu_webhook', 'is_deleted')
+    list_display = ('group_id', 'group_name', 'ding_webhook', 'feishu_webhook', 'qywx_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
@@ -61,6 +64,11 @@ class InstanceAdmin(admin.ModelAdmin):
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type', 'instance_tag')
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name == 'password':
+            kwargs['widget'] = PasswordInput(render_value=True)
+        return super(InstanceAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
     # 阿里云实例关系配置
     class AliRdsConfigInline(admin.TabularInline):
         model = AliyunRdsConfig
@@ -69,6 +77,32 @@ class InstanceAdmin(admin.ModelAdmin):
     filter_horizontal = ('resource_group', 'instance_tag',)
 
     inlines = [AliRdsConfigInline]
+
+
+# SSH隧道
+@admin.register(Tunnel)
+class TunnelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tunnel_name', 'host', 'port', 'create_time')
+    list_display_links = ('id', 'tunnel_name',)
+    search_fields = ('id', 'tunnel_name')
+    fieldsets = (
+                    None,
+                    {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password',), }),
+    ordering = ('id',)
+    # 添加页显示内容
+    add_fieldsets = (
+        ('隧道信息', {'fields': ('tunnel_name', 'host', 'port')}),
+        ('连接信息', {'fields': ('user', 'password', 'pkey_path', 'pkey_password')}),
+    )
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        if db_field.name in ['password', 'pkey_password']:
+            kwargs['widget'] = PasswordInput(render_value=True)
+        return super(TunnelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
+    # 不支持修改标签代码
+    def get_readonly_fields(self, request, obj=None):
+        return ('id',) if obj else ()
 
 
 # SQL工单内容
@@ -206,8 +240,7 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
               'mode', 'condition', 'sleep', 'no_delete', 'state', 'user_name', 'user_display')
 
 
-# 阿里云实例配置信息
-@admin.register(AliyunRdsConfig)
-class AliRdsConfigAdmin(admin.ModelAdmin):
-    list_display = ('instance', 'rds_dbinstanceid', 'is_enable')
-    search_fields = ['instance__instance_name', 'rds_dbinstanceid']
+# 云服务认证信息配置
+@admin.register(CloudAccessKey)
+class CloudAccessKeyAdmin(admin.ModelAdmin):
+    list_display = ('type', 'key_id', 'key_secret', 'remark')

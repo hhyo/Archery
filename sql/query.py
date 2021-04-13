@@ -74,7 +74,7 @@ def query(request):
             limit_num = priv_check_info['data']['limit_num']
             priv_check = priv_check_info['data']['priv_check']
         else:
-            result['status'] = 1
+            result['status'] = priv_check_info['status']
             result['msg'] = priv_check_info['msg']
             return HttpResponse(json.dumps(result), content_type='application/json')
         # explain的limit_num设置为0
@@ -250,3 +250,4 @@ def kill_query_conn(instance_id, thread_id):
     instance = Instance.objects.get(pk=instance_id)
     query_engine = get_engine(instance)
     query_engine.kill_connection(thread_id)
+

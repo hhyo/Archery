@@ -72,7 +72,7 @@ def analyze(request):
                 "allow-online-as-test": "false"}
         rows = generate_sql(text)
         for row in rows:
-            args['query'] = row['sql'].replace('"', '\\"').replace('`', '').replace('\n', ' ')
+            args['query'] = row['sql']
             cmd_args = soar.generate_args2cmd(args=args, shell=True)
             stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
             row['report'] = stdout if stdout else stderr

@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from mirage import fields
 
 from django.utils.translation import gettext as _
-
+from mirage.crypto import Crypto
 
 class ResourceGroup(models.Model):
     """
@@ -17,6 +17,7 @@ class ResourceGroup(models.Model):
     group_level = models.IntegerField('层级', default=1)
     ding_webhook = models.CharField('钉钉webhook地址', max_length=255, blank=True)
     feishu_webhook = models.CharField('飞书webhook地址', max_length=255, blank=True)
+    qywx_webhook = models.CharField('企业微信webhook地址', max_length=255, blank=True)
     is_deleted = models.IntegerField('是否删除', choices=((0, '否'), (1, '是')), default=0)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -89,6 +90,30 @@ DB_TYPE_CHOICES = (
     ('goinception', 'goInception'))
 
 
+class Tunnel(models.Model):
+    """
+    SSH隧道配置
+    """
+    tunnel_name = models.CharField('隧道名称', max_length=50, unique=True)
+    host = models.CharField('隧道连接', max_length=200)
+    port = models.IntegerField('端口', default=0)
+    user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
+    password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
+    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.tunnel_name
+
+    class Meta:
+        managed = True
+        db_table = 'ssh_tunnel'
+        verbose_name = u'隧道配置'
+        verbose_name_plural = u'隧道配置'
+
+
 class Instance(models.Model):
     """
     各个线上实例配置
@@ -106,6 +131,7 @@ class Instance(models.Model):
     sid = models.CharField('Oracle sid', max_length=50, null=True, blank=True)
     resource_group = models.ManyToManyField(ResourceGroup, verbose_name='资源组', blank=True)
     instance_tag = models.ManyToManyField(InstanceTag, verbose_name='实例标签', blank=True)
+    tunnel = models.ForeignKey(Tunnel, verbose_name='连接隧道', blank=True, null=True, on_delete=models.CASCADE, default=None)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
@@ -581,12 +607,51 @@ class Config(models.Model):
         verbose_name_plural = u'系统配置'
 
 
+# 云服务认证信息配置
+class CloudAccessKey(models.Model):
+    cloud_type_choices = (('aliyun', 'aliyun'),)
+
+    type = models.CharField(max_length=20, default='', choices=cloud_type_choices)
+    key_id = models.CharField(max_length=200)
+    key_secret = models.CharField(max_length=200)
+    remark = models.CharField(max_length=50, default='', blank=True)
+
+    def __init__(self, *args, **kwargs):
+        self.c = Crypto()
+        super().__init__(*args, **kwargs)
+
+    @property
+    def raw_key_id(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_id)
+
+    @property
+    def raw_key_secret(self):
+        """ 返回明文信息"""
+        return self.c.decrypt(self.key_secret)
+
+    def save(self, *args, **kwargs):
+        self.key_id = self.c.encrypt(self.key_id)
+        self.key_secret = self.c.encrypt(self.key_secret)
+        super(CloudAccessKey, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.type}({self.remark})'
+
+    class Meta:
+        managed = True
+        db_table = 'cloud_access_key'
+        verbose_name = u'云服务认证信息配置'
+        verbose_name_plural = u'云服务认证信息配置'
+
+
 class AliyunRdsConfig(models.Model):
     """
     阿里云rds配置信息
     """
     instance = models.OneToOneField(Instance, on_delete=models.CASCADE)
     rds_dbinstanceid = models.CharField('对应阿里云RDS实例ID', max_length=100)
+    ak = models.ForeignKey(CloudAccessKey, verbose_name='RDS实例对应的AK配置', on_delete=models.CASCADE)
     is_enable = models.BooleanField('是否启用', default=False)
 
     def __int__(self):

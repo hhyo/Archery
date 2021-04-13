@@ -128,7 +128,7 @@ def extract_table_identifiers(token_stream, allow_functions=True):
         if name and not name_quoted and not name.islower():
             if not alias:
                 alias = name
-            name = name.lower()
+            # name = name.lower()
         return schema_name, name, alias
 
     for item in token_stream:

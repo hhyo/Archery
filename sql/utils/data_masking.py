@@ -283,3 +283,69 @@ def brute_mask(instance, sql_result):
             rows[i] = tuple(temp_value_list)
         sql_result.rows = rows
     return sql_result
+
+def simple_column_mask(instance, sql_result):
+    """输入的是一个resultset
+    sql_result.full_sql
+    sql_result.rows 查询结果列表 List , list内的item为tuple
+    sql_result.column_list 查询结果字段列表 List
+    返回同样结构的sql_result , error 中写入脱敏时产生的错误.
+    """
+    # 获取当前实例脱敏字段信息，减少循环查询，提升效率
+    masking_columns = DataMaskingColumns.objects.filter(instance=instance, active=True)
+    # 转换sql输出字段名为小写, 适配oracle脱敏
+    sql_result_column_list = [ c.lower() for c in sql_result.column_list ]
+    if masking_columns:
+        try:
+            for mc in masking_columns:
+                # 脱敏规则字段名
+                column_name = mc.column_name.lower()
+                # 脱敏规则字段索引信息
+                _masking_column_index = []
+                if column_name in sql_result_column_list:
+                    _masking_column_index.append(sql_result_column_list.index(column_name))
+                # 别名字段脱敏处理
+                try:
+                    for _c in sql_result_column_list:
+                        alias_column_regex = r'"?([^\s"]+)"?\s+(as\s+)?"?({})[",\s+]?'.format(re.escape(_c))
+                        alias_column_r = re.compile(alias_column_regex, re.I)
+                        # 解析原SQL查询别名字段
+                        search_data = re.search(alias_column_r, sql_result.full_sql)
+                        # 字段名
+                        _column_name = search_data.group(1).lower()
+                        s_column_name = re.sub(r'^"?\w+"?\."?|\.|"$','',_column_name)
+                        # 别名
+                        alias_name = search_data.group(3).lower()
+                        # 如果字段名匹配脱敏配置字段,对此字段进行脱敏处理
+                        if s_column_name == column_name:
+                            _masking_column_index.append(sql_result_column_list.index(alias_name))
+                except:
+                    pass
+
+                for masking_column_index in _masking_column_index:
+                    # 脱敏规则
+                    masking_rule = DataMaskingRules.objects.get(rule_type=mc.rule_type)
+                    # 脱敏后替换字符串
+                    compiled_r = re.compile(masking_rule.rule_regex, re.I)
+                    replace_pattern = r""
+                    for i in range(1, compiled_r.groups + 1):
+                        if i == int(masking_rule.hide_group):
+                            replace_pattern += r"****"
+                        else:
+                            replace_pattern += r"\{}".format(i)
+
+                    rows = list(sql_result.rows)
+                    for i in range(len(sql_result.rows)):
+                        temp_value_list = []
+                        for j in range(len(sql_result.rows[i])):
+                            column_data = sql_result.rows[i][j]
+                            if j == masking_column_index:
+                                column_data = compiled_r.sub(replace_pattern, str(sql_result.rows[i][j]))
+                            temp_value_list += [ column_data ]
+                        rows[i] = tuple(temp_value_list)
+                    sql_result.rows = rows
+        except Exception as e:
+            sql_result.error = str(e)
+
+    return sql_result
+

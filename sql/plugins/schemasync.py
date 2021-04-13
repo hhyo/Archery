@@ -7,7 +7,7 @@
 """
 __author__ = 'hhyo'
 
-from common.config import SysConfig
+import shlex
 from sql.plugins.plugin import Plugin
 
 
@@ -35,7 +35,7 @@ class SchemaSync(Plugin):
                 if name in k_options and value:
                     cmd_args += f' --{name}'
                 elif name in kv_options:
-                    cmd_args += f' --{name}={value}'
+                    cmd_args += f' --{name}={shlex.quote(str(value))}'
                 elif name in v_options:
                     cmd_args += f' {value}'
         else:

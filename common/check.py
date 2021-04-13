@@ -20,11 +20,6 @@ def inception(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     inception_host = request.POST.get('inception_host', '')
     inception_port = request.POST.get('inception_port', '')
-    inception_remote_backup_host = request.POST.get('inception_remote_backup_host', '')
-    inception_remote_backup_port = request.POST.get('inception_remote_backup_port', '')
-    inception_remote_backup_user = request.POST.get('inception_remote_backup_user', '')
-    inception_remote_backup_password = request.POST.get('inception_remote_backup_password', '')
-
     try:
         conn = MySQLdb.connect(host=inception_host, port=int(inception_port), charset='utf8mb4',
                                connect_timeout=5)
@@ -34,22 +29,6 @@ def inception(request):
         result['status'] = 1
         result['msg'] = '无法连接Inception\n{}'.format(str(e))
         return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        cur.close()
-        conn.close()
-
-    try:
-        conn = MySQLdb.connect(host=inception_remote_backup_host,
-                               port=int(inception_remote_backup_port),
-                               user=inception_remote_backup_user,
-                               password=inception_remote_backup_password,
-                               charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        result['status'] = 1
-        result['msg'] = '无法连接Inception备份库\n{}'.format(str(e))
     else:
         cur.close()
         conn.close()
@@ -150,6 +129,7 @@ def instance(request):
     try:
         engine = get_engine(instance=instance)
         engine.get_connection()
+        engine.get_all_databases()
     except Exception as e:
         result['status'] = 1
         result['msg'] = '无法连接实例,\n{}'.format(str(e))

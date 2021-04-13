@@ -7,6 +7,8 @@
 """
 
 import re
+import shlex
+
 import redis
 import logging
 import traceback
@@ -56,7 +58,8 @@ class RedisEngine(EngineBase):
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
         safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
                     "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
-                    "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex"]
+                    "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex",
+                    "zrange","zrangebyscore","zscore","zcard","zcount","zrank"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
             if re.match(fr'^{cmd}', sql.strip(), re.I):
@@ -71,12 +74,12 @@ class RedisEngine(EngineBase):
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=db_name)
-            rows = conn.execute_command(sql)
+            rows = conn.execute_command(*shlex.split(sql))
             result_set.column_list = ['Result']
-            if isinstance(rows, list):
+            if isinstance(rows, list) or isinstance(rows, tuple):
                 if re.match(fr'^scan', sql.strip(), re.I):
                     keys = [[row] for row in rows[1]]
-                    keys.insert(0, rows[0])
+                    keys.insert(0, [rows[0]])
                     result_set.rows = tuple(keys)
                     result_set.affected_rows = len(rows[1])
                 else:
@@ -127,7 +130,7 @@ class RedisEngine(EngineBase):
             conn = self.get_connection(db_name=workflow.db_name)
             for cmd in split_sql:
                 with FuncTimer() as t:
-                    conn.execute_command(cmd)
+                    conn.execute_command(*shlex.split(cmd))
                 execute_result.rows.append(ReviewResult(
                     id=line,
                     errlevel=0,

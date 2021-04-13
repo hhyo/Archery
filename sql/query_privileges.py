@@ -71,8 +71,9 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             for table in table_ref:
                 # 既无库权限也无表权限则鉴权失败
                 if not _db_priv(user, instance, table['schema']) and \
-                        not _tb_priv(user, instance, db_name, table['name']):
-                    result['status'] = 1
+                        not _tb_priv(user, instance, table['schema'], table['name']):
+                    # 没有库表查询权限时的staus为2
+                    result['status'] = 2
                     result['msg'] = f"你无{table['schema']}.{table['name']}表的查询权限！请先到查询权限管理进行申请"
                     return result
             # 获取查询涉及库/表权限的最小limit限制，和前端传参作对比，取最小值
@@ -99,7 +100,8 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
         # 校验库权限，无库权限直接返回
         for db_name in dbs:
             if not _db_priv(user, instance, db_name):
-                result['status'] = 1
+                # 没有库表查询权限时的staus为2
+                result['status'] = 2
                 result['msg'] = f"你无{db_name}数据库的查询权限！请先到查询权限管理进行申请"
                 return result
         # 有所有库权限则获取最小limit值

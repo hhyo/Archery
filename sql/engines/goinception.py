@@ -5,6 +5,7 @@ import traceback
 import MySQLdb
 
 from common.config import SysConfig
+from sql.models import AliyunRdsConfig
 from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -37,11 +38,15 @@ class GoInceptionEngine(EngineBase):
 
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
         check_result = ReviewSet(full_sql=sql)
         # inception 校验
         check_result.rows = []
-        inception_sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--check=1;*/
+        variables, set_session_sql = get_session_variables(instance)
+        inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;*/
                             inception_magic_start;
+                            {set_session_sql}
                             use `{db_name}`;
                             {sql.rstrip(';')};
                             inception_magic_commit;"""
@@ -66,6 +71,8 @@ class GoInceptionEngine(EngineBase):
     def execute(self, workflow=None):
         """执行上线单"""
         instance = workflow.instance
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
         execute_result = ReviewSet(full_sql=workflow.sqlworkflowcontent.sql_content)
         if workflow.is_backup:
             str_backup = "--backup=1"
@@ -73,13 +80,14 @@ class GoInceptionEngine(EngineBase):
             str_backup = "--backup=0"
 
         # 提交inception执行
-        sql_execute = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
+        variables, set_session_sql = get_session_variables(instance)
+        sql_execute = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--execute=1;--ignore-warnings=1;{str_backup};--sleep=200;--sleep_rows=100*/
                             inception_magic_start;
+                            {set_session_sql}
                             use `{workflow.db_name}`;
                             {workflow.sqlworkflowcontent.sql_content.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=sql_execute)
-
         # 执行报错，inception crash或者执行中连接异常的场景
         if inception_result.error and not execute_result.rows:
             execute_result.error = inception_result.error
@@ -129,7 +137,9 @@ class GoInceptionEngine(EngineBase):
         """
         打印语法树。
         """
-        sql = f"""/*--user='{instance.user}';--password='{instance.password}';--host='{instance.host}';--port={instance.port};--enable-query-print;*/
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
+        sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--enable-query-print;*/
                           inception_magic_start;\
                           use `{db_name}`;
                           {sql.rstrip(';')};
@@ -181,7 +191,7 @@ class GoInceptionEngine(EngineBase):
             tree = DictTree(tree)
 
             # nodes = tree.find_max_tree("TableRefs") or tree.find_max_tree("Left", "Right")
-            nodes = tree.find_max_tree("TableRefs")
+            nodes = tree.find_max_tree("TableRefs", "Left", "Right")
             if nodes:
                 # assert isinstance(v, dict) is true
                 find_queue.extend([v for node in nodes for v in node.values() if v])
@@ -220,3 +230,20 @@ class DictTree(dict):
                 elif isinstance(v, list):
                     find_queue.extend([n for n in v if isinstance(n, dict)])
         return fit
+
+
+def get_session_variables(instance):
+    """按照目标实例动态设置goInception的会话参数，可用于按照业务组自定义审核规则等场景"""
+    variables = {}
+    set_session_sql = ''
+    if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        variables.update({
+            "ghost_aliyun_rds": "on",
+            "ghost_allow_on_master": "true",
+            "ghost_assume_rbr": "true",
+
+        })
+    # 转换成SQL语句
+    for k, v in variables.items():
+        set_session_sql += f"inception set session {k} = '{v}';\n"
+    return variables, set_session_sql

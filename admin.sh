@@ -14,7 +14,7 @@ function init() {
     sudo yum install -y python36 python3-devel python36-pip openldap-devel unixODBC-devel gettext
 
     python3 -m pip install virtualenv -i https://mirrors.aliyun.com/pypi/simple/
-    if [ ! -d "venv" ]; then
+    if [[ ! -d "venv" ]]; then
         virtualenv --system-site-packages -p python3 venv
     fi
     source ./venv/bin/activate
@@ -62,6 +62,7 @@ function migration() {
     python3 manage.py makemigrations sql
     python3 manage.py migrate
     python3 manage.py dbshell<sql/fixtures/auth_group.sql
+    python3 manage.py dbshell<sql/src/init_sql/mysql_slow_query_review.sql
     if [ $? == "0" ]; then
         echo -e "Migration:                 [\033[32m ok \033[0m]"
     else
