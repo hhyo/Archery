@@ -14,8 +14,8 @@ logger = logging.getLogger('default')
 
 class MssqlEngine(EngineBase):
     def get_connection(self, db_name=None):
-        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
-client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self.port, self.user, self.password,
+        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};DATABASE={2};UID={3};PWD={4};
+client charset = UTF-8;connect timeout=10;CHARSET={5};""".format(self.host, self.port, self.db_name, self.user, self.password,
                                                                  self.instance.charset or 'UTF8')
         if self.conn:
             return self.conn
@@ -24,7 +24,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
-        sql = "SELECT name FROM master.sys.databases"
+        sql = "SELECT name FROM sys.databases"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
                    if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
