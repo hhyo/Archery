@@ -581,7 +581,7 @@ class ArchiveLog(models.Model):
     statistics = models.TextField('归档统计日志')
     success = models.BooleanField('是否归档成功')
     error_info = models.TextField('错误信息')
-    start_time = models.DateTimeField('开始时间', auto_now_add=True)
+    start_time = models.DateTimeField('开始时间')
     end_time = models.DateTimeField('结束时间')
     sys_time = models.DateTimeField('系统时间修改', auto_now=True)
 
