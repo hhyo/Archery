@@ -36,6 +36,11 @@ def _(o):
     return str(o)
 
 
+@convert.register(set)
+def _(o):
+    return list(o)
+
+
 class ExtendJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         try:
