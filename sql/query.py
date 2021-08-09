@@ -199,9 +199,10 @@ def querylog(request):
 
     # 组合筛选项
     filter_dict = dict()
-    # 是否收藏
-    if star:
-        filter_dict['favorite'] = star
+
+    # 确定favorite字段的值,是否收藏
+    filter_dict['favorite'] = star
+
     # 语句别名
     if query_log_id:
         filter_dict['id'] = query_log_id
