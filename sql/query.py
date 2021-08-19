@@ -200,7 +200,7 @@ def querylog(request):
     # 组合筛选项
     filter_dict = dict()
 
-    # 确定favorite字段的值,是否收藏
+    # 确定favorite字段的值
     filter_dict['favorite'] = star
 
     # 语句别名
