@@ -194,13 +194,16 @@ def querylog(request):
     offset = int(request.GET.get('offset'))
     limit = offset + limit
     star = True if request.GET.get('star') == 'true' else False
+    if request.GET.get('star') == "":
+        star = ""
+
     query_log_id = request.GET.get('query_log_id')
     search = request.GET.get('search', '')
 
     # 组合筛选项
     filter_dict = dict()
-    # 是否收藏
-    if star:
+    # 判断收藏是否加入查询条件
+    if star !="":
         filter_dict['favorite'] = star
     # 语句别名
     if query_log_id:
