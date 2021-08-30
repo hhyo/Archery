@@ -256,17 +256,19 @@ class MongoEngine(EngineBase):
         """审核时执行的语句"""
 
         if self.user and self.password and self.port and self.host:
+            msg = ""
+            auth_db = self.instance.db_name or 'admin'
             try:
-                if not sql.startswith('var host='):  # 在master节点执行的情况
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/admin <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
-                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql, slave_ok=slave_ok)
+                if not sql.startswith('var host='): #在master节点执行的情况
+                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db, slave_ok=slave_ok)
                 else:
-                    cmd = "{mongo} --quiet -u {user} -p '{password}'  {host}:{port}/admin <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql)
+                    cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db)
                 logger.debug(cmd)
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                p = subprocess.Popen(cmd, shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
                                      universal_newlines=True)
                 re_msg = []
                 for line in iter(p.stdout.read, ''):
@@ -501,8 +503,7 @@ class MongoEngine(EngineBase):
         return check_result
 
     def get_connection(self, db_name=None):
-        self.db_name = db_name or 'admin'  # =======这里要注意一下
-        self.db_name = 'admin'
+        self.db_name = db_name or self.instance.db_name
         self.conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True,
                                         connectTimeoutMS=10000)
         if self.user and self.password:
