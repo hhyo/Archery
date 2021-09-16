@@ -151,7 +151,7 @@ class QueryPrivilegesApplyAdmin(admin.ModelAdmin):
 @admin.register(DataMaskingColumns)
 class DataMaskingColumnsAdmin(admin.ModelAdmin):
     list_display = (
-        'column_id', 'rule_type', 'active', 'instance', 'table_schema', 'table_name', 'column_name',
+        'column_id', 'rule_type', 'active', 'instance', 'table_schema', 'table_name', 'column_name', 'column_comment',
         'create_time',)
     search_fields = ['table_name', 'column_name']
     list_filter = ('rule_type', 'active', 'instance__instance_name')

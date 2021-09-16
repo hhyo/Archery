@@ -622,11 +622,7 @@
 
         //先做表单验证，验证成功再成功提交查询请求
         $("#btn-sqlquery").click(function () {
-                if (sqlquery_validate()) {
-                    $('input[type=button]').addClass('disabled');
-                    $('input[type=button]').prop('disabled', true);
-                    sqlquery();
-                }
+                dosqlquery();
             }
         );
 
@@ -912,6 +908,14 @@
                     alert(errorThrown);
                 }
             });
+        }
+
+        function dosqlquery() {
+            if (sqlquery_validate()) {
+                $('input[type=button]').addClass('disabled');
+                $('input[type=button]').prop('disabled', true);
+                sqlquery();
+            }
         }
     </script>
     <!-- common -->
