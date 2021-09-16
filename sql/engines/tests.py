@@ -355,19 +355,19 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable limit 10 offset 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'select user from usertable limit 1;')
+        self.assertEqual(check_result, 'select user from usertable limit 1 offset 100;')
 
     def test_filter_sql_with_limit_nn(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable limit 10, 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'select user from usertable limit 1;')
+        self.assertEqual(check_result, 'select user from usertable limit 10,1;')
 
     def test_filter_sql_upper(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'SELECT USER FROM usertable LIMIT 10, 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 1;')
+        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 10,1;')
 
     def test_filter_sql_not_select(self):
         new_engine = MysqlEngine(instance=self.ins1)
