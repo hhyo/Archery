@@ -40,7 +40,7 @@ editor.commands.addCommand({
     exec: function (editor) {
         let pathname = window.location.pathname;
         if (pathname === "/sqlquery/") {
-            sqlquery();
+            dosqlquery()
         }
     }
 });
