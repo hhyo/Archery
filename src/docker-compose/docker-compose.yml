@@ -35,8 +35,8 @@ services:
     image: hanchuanchuan/goinception
     container_name: goinception
     restart: always
-    expose:
-      - "4000"
+    ports:
+      - "4000:4000"
     volumes:
       - "./inception/config.toml:/etc/config.toml"
 
