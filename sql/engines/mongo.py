@@ -825,6 +825,8 @@ class MongoEngine(EngineBase):
             result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
             columns = result.rows
         columns.insert(0, "mongodballdata")  # 隐藏JSON结果列
+        columns = self.fill_query_columns(cursor, columns)
+
         for ro in cursor:
             json_col = json.dumps(ro, ensure_ascii=False, indent=2, separators=(",", ":"))
             row.insert(0, json_col)
@@ -851,3 +853,13 @@ class MongoEngine(EngineBase):
             rows.append(tuple(row))
             row.clear()
         return tuple(rows), columns
+
+    @staticmethod
+    def fill_query_columns(cursor, columns):
+        """补充结果集中`get_all_columns_by_tb`未获取的字段"""
+        cols = columns
+        for ro in cursor:
+            for key in ro.keys():
+                if key not in cols:
+                    cols.append(key)
+        return cols
