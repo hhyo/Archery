@@ -225,7 +225,11 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^delete", sql):
-            table_name = re.match(r"^delete\s+from\s(.+?)\s", sql, re.M).group(1)
+<<<<<<< HEAD
+            table_name = re.match(r"^delete\s+from\s(.+?)", sql, re.M).group(1)
+=======
+            table_name = re.match(r"^delete\s+from\s+([\w-]+)\s*", sql, re.M).group(1)
+>>>>>>> a762449 (修复oracle审核正则匹配问题 #1169)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
@@ -233,7 +237,11 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^insert\s", sql):
-            table_name = re.match(r"^insert\s+((into)|(all\s+into))\s(.+?)(\(|\s)", sql, re.M).group(4)
+<<<<<<< HEAD
+            table_name = re.match(r"^insert\s+((into)|(all\s+into)|(all\s+when\s(.+?)into))\s(.+?)(\(|\s)", sql, re.M).group(6)
+=======
+            table_name = re.match(r"^insert\s+((into)|(all\s+into)|(all\s+when\s(.+?)into))\s+(.+?)(\(|\s)", sql, re.M).group(6)
+>>>>>>> a762449 (修复oracle审核正则匹配问题 #1169)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
