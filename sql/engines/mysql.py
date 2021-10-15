@@ -185,6 +185,10 @@ class MysqlEngine(EngineBase):
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
+        # 严禁select语句使用子查询，防止inception的脱敏功能被子查询击穿
+        if len(re.findall('select', sql.lower())) >= 2:
+            result['bad_query'] = True
+            result['msg'] = '当前版本的Archery禁止使用子查询'
         # select语句先使用Explain判断语法是否正确
         if re.match(r"^select", sql, re.I):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
