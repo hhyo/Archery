@@ -1653,3 +1653,11 @@ class MongoTest(TestCase):
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
+
+    def test_fill_query_columns(self):
+        columns = ["_id", "title", "tags", "likes"]
+        cursor = [{"_id": {"$oid": "5f10162029684728e70045ab"}, "title": "MongoDB", "text": "archery", "likes": 100},
+                  {"_id": {"$oid": "7f10162029684728e70045ab"}, "author": "archery"}]
+        cols = self.engine.fill_query_columns(cursor, columns=columns)
+        print(cols)
+        self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
