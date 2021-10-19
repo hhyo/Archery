@@ -686,31 +686,36 @@ class MongoEngine(EngineBase):
         return sql.strip()
 
     def query_check(self, db_name=None, sql=''):
-        """提交查询前的检查"""
+        sql = sql.strip()
+        # 以;作为语句结束
+        q_sql = sql.split(";")
+        for qq_sql in q_sql:
+          if not qq_sql == '' and qq_sql != '\n':
+            """提交查询前的检查"""
 
-        if sql.startswith("explain"):
-            sql = sql.replace("explain", "") + ".explain()"
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        pattern = re.compile(
-            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
-        m = pattern.match(sql)
-        if m is not None:
-            logger.debug(sql)
-            query_dict = self.parse_query_sentence(sql)
-            if "method" not in query_dict:
-                result['msg'] += "错误：对不起，只支持查询相关方法"
+            if qq_sql.startswith("explain"):
+                qq_sql = qq_sql.replace("explain", "") + ".explain()"
+            result = {'msg': '', 'bad_query': False, 'filtered_sql': qq_sql, 'has_star': False}
+            pattern = re.compile(
+                r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+            m = pattern.match(qq_sql)
+            if m is not None:
+                logger.debug(qq_sql)
+                query_dict = self.parse_query_sentence(qq_sql)
+                if "method" not in query_dict:
+                    result['msg'] += "错误：对不起，只支持查询相关方法"
+                    result['bad_query'] = True
+                    return result
+                collection_name = query_dict["collection"]
+                collection_names = self.get_all_tables(db_name).rows
+                is_in = collection_name in collection_names  # 检查表是否存在
+                if not is_in:
+                    result['msg'] += f"\n错误: {collection_name} 文档不存在!"
+                    result['bad_query'] = True
+                    return result
+            else:
+                result['msg'] += '请检查语句的正确性! 请使用原生查询语句'
                 result['bad_query'] = True
-                return result
-            collection_name = query_dict["collection"]
-            collection_names = self.get_all_tables(db_name).rows
-            is_in = collection_name in collection_names  # 检查表是否存在
-            if not is_in:
-                result['msg'] += f"\n错误: {collection_name} 文档不存在!"
-                result['bad_query'] = True
-                return result
-        else:
-            result['msg'] += '请检查语句的正确性! 请使用原生查询语句'
-            result['bad_query'] = True
         return result
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
