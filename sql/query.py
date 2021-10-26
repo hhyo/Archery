@@ -51,6 +51,16 @@ def query(request):
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
 
+    # 禁止非超级用户查看mysql.user表
+    if not user.is_superuser:
+
+        if re.match('.*\\s(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*',sql_content.lower().replace('\n','')) or\
+           (db_name=="mysql" and  re.match('.*(user|`user`)((\\s)*|;).*',sql_content.lower().replace('\n',''))):
+
+            result['status'] = 1
+            result['msg'] = '您无权查看该表'
+            return HttpResponse(json.dumps(result), content_type='application/json')
+
     try:
         config = SysConfig()
         # 查询前的检查，禁用语句检查，语句切分
