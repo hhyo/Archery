@@ -402,7 +402,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
@@ -825,6 +825,8 @@ class MongoEngine(EngineBase):
             result = self.get_all_columns_by_tb(db_name=db_name, tb_name=tb_name)
             columns = result.rows
         columns.insert(0, "mongodballdata")  # 隐藏JSON结果列
+        columns = self.fill_query_columns(cursor, columns)
+
         for ro in cursor:
             json_col = json.dumps(ro, ensure_ascii=False, indent=2, separators=(",", ":"))
             row.insert(0, json_col)
@@ -851,3 +853,13 @@ class MongoEngine(EngineBase):
             rows.append(tuple(row))
             row.clear()
         return tuple(rows), columns
+
+    @staticmethod
+    def fill_query_columns(cursor, columns):
+        """补充结果集中`get_all_columns_by_tb`未获取的字段"""
+        cols = columns
+        for ro in cursor:
+            for key in ro.keys():
+                if key not in cols:
+                    cols.append(key)
+        return cols
