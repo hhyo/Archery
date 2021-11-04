@@ -145,8 +145,6 @@ class OracleEngine(EngineBase):
         data_default
         FROM all_tab_cols
         WHERE upper(table_name) = upper('{tb_name}') and upper(owner) = upper('{db_name}') order by column_id
-        -- 规避双引号引入的大小写敏感名称 add by peng19832 20211103
-        -- WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
         """
         result = self.query(db_name=db_name, sql=sql)
         return result
@@ -156,15 +154,11 @@ class OracleEngine(EngineBase):
         if '.' in object_name:
             schema_name = object_name.split('.')[0]
             object_name = object_name.split('.')[1]
-            # 去除双引号 -- add by peng19832 20211103
             if ( '"' in schema_name ) or ( '"' in object_name ):
                 schema_name = schema_name.replace( '"', '' )
                 object_name = object_name.replace( '"', '' )
-            # 规避双引号引入的大小写敏感名称 add by peng19832 20211103
-            # sql = f"""SELECT object_name FROM all_objects WHERE OWNER = '{schema_name}' and OBJECT_NAME = '{object_name}'"""
             sql = f"""SELECT object_name FROM all_objects WHERE upper(OWNER) = upper('{schema_name}') and upper(OBJECT_NAME) = upper('{object_name}')"""
         else:
-            # sql = f"""SELECT object_name FROM all_objects WHERE OWNER = '{db_name}' and OBJECT_NAME = '{object_name}'"""
             sql = f"""SELECT object_name FROM all_objects WHERE upper(OWNER) = upper('{db_name}') and upper(OBJECT_NAME) = upper('{object_name}')"""
         result = self.query(db_name=db_name, sql=sql, close_conn=False)
         if result.affected_rows > 0:
@@ -531,7 +525,6 @@ class OracleEngine(EngineBase):
                                                           execute_time=0, )
                 # 其它无法用explain判断的语句
                 else:
-                    # 规避双引号引入的名称大小写敏感问题 -- add by peng19832 20211103
                     sql_lower = sqlitem.statement.rstrip(';')
                     # 对alter table做对象存在性检查
                     if re.match(r"^alter\s+table\s", sql_lower):
@@ -540,7 +533,6 @@ class OracleEngine(EngineBase):
                             object_name = object_name
                         else:
                             object_name = f"""{db_name}.{object_name}"""
-                        # 去除双引号干扰 -- add by peng19832 20211103
                         if ( '"' in object_name ):
                             object_name = object_name.replace( '"', '' )
                         if not self.object_name_check(db_name=db_name,
@@ -551,9 +543,6 @@ class OracleEngine(EngineBase):
                                                   errormessage=f"""{object_name}对象不存在！""",
                                                   sql=sqlitem.statement)
                         else:
-                            # result = ReviewResult(id=line, errlevel=1,
-                            #                      stagestatus='当前平台，此语法不支持审核！',
-                            #                      errormessage='当前平台，此语法不支持审核！',
                             result = ReviewResult(id=line, errlevel=1,
                                                   stagestatus='Audit completed',
                                                   errormessage='None',
@@ -566,14 +555,12 @@ class OracleEngine(EngineBase):
                                                   execute_time=0, )
                     # 对create做对象存在性检查
                     elif re.match(r"^create", sql_lower):
-                        # 规避双引号引入的名称大小写敏感问题 -- add by peng19832 20211103
                         sql_lower = sqlitem.statement.rstrip(';')
                         object_name = self.get_sql_first_object_name(sql=sql_lower)
                         if '.' in object_name:
                             object_name = object_name
                         else:
                             object_name = f"""{db_name}.{object_name}"""
-                        # 去除双引号干扰 -- add by peng19832 20211103
                         if ( '"' in object_name ):
                             object_name = object_name.replace( '"', '' )
                         if self.object_name_check(db_name=db_name,
@@ -585,9 +572,6 @@ class OracleEngine(EngineBase):
                                                   sql=sqlitem.statement)
                         else:
                             object_name_list.add(object_name)
-                            # result = ReviewResult(id=line, errlevel=1,
-                            #                       stagestatus='当前平台，此语法不支持审核！',
-                            #                       errormessage='当前平台，此语法不支持审核！',
                             result = ReviewResult(id=line, errlevel=0,
                                                   stagestatus='Audit completed',
                                                   errormessage='None',
