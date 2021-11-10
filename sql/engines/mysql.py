@@ -191,6 +191,12 @@ class MysqlEngine(EngineBase):
             if explain_result.error:
                 result['bad_query'] = True
                 result['msg'] = explain_result.error
+        # 不应该查看mysql.user表
+        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*',sql.lower().replace('\n','')) or\
+           (db_name=="mysql" and  re.match('.*(\\s)+(user|`user`)((\\s)*|;).*',sql.lower().replace('\n',''))):
+            result['bad_query'] = True
+            result['msg'] = '您无权查看该表'
+
         return result
 
     def filter_sql(self, sql='', limit_num=0):
