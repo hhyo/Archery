@@ -24,10 +24,11 @@ def __notify_cnf_status():
     ding_webhook_status = sys_config.get('ding')
     wx_status = sys_config.get('wx')
     qywx_webhook_status = sys_config.get("qywx_webhook")
+    slack_webhook_status = sys_config.get("slack_webhook")
     feishu_webhook_status = sys_config.get("feishu_webhook")
     feishu_status = sys_config.get("feishu")
     if not any([mail_status, ding_status, ding_webhook_status, wx_status, feishu_status, feishu_webhook_status,
-                qywx_webhook_status]):
+                qywx_webhook_status, slack_webhook_status]):
         logger.info('未开启任何消息通知，可在系统设置中开启')
         return False
     else:
@@ -48,6 +49,7 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     dingding_webhook = kwargs.get('dingding_webhook')
     feishu_webhook = kwargs.get('feishu_webhook')
     qywx_webhook = kwargs.get('qywx_webhook')
+    slack_webhook = kwargs.get('slack_webhook')
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [user.ding_user_id for user in chain(msg_to, msg_cc) if user.ding_user_id]
@@ -69,6 +71,8 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
         msg_sender.send_feishu_user(msg_title, msg_content, open_id, user_mail)
     if sys_config.get('qywx_webhook') and qywx_webhook:
         msg_sender.send_qywx_webhook(qywx_webhook, msg_title + '\n' + msg_content)
+    if sys_config.get('slack_webhook') and slack_webhook:
+        msg_sender.send_slack_webhook(slack_webhook, msg_title + '\n' + msg_content)
 
 
 def notify_for_audit(audit_id, **kwargs):
@@ -98,6 +102,7 @@ def notify_for_audit(audit_id, **kwargs):
     dingding_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).ding_webhook
     feishu_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).feishu_webhook
     qywx_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).qywx_webhook
+    slack_webhook = ResourceGroup.objects.get(group_id=audit_detail.group_id).slack_webhook
     # 获取当前审批和审批流程
     workflow_auditors, current_workflow_auditors = Audit.review_info(audit_detail.workflow_id,
                                                                      audit_detail.workflow_type)
@@ -211,7 +216,7 @@ def notify_for_audit(audit_id, **kwargs):
     logger.info(f"通知Debug{msg_to}{msg_cc}")
     # 发送通知
     __send(msg_title, msg_content, msg_to, msg_cc, feishu_webhook=feishu_webhook, dingding_webhook=dingding_webhook,
-           qywx_webhook=qywx_webhook)
+           qywx_webhook=qywx_webhook, slack_webhook=slack_webhook)
 
 
 def notify_for_execute(workflow):
@@ -250,16 +255,17 @@ def notify_for_execute(workflow):
     dingding_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).ding_webhook
     feishu_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).feishu_webhook
     qywx_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).qywx_webhook
+    slack_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).slack_webhook
     # 发送通知
     __send(msg_title, msg_content, msg_to, msg_cc, dingding_webhook=dingding_webhook, feishu_webhook=feishu_webhook,
-           qywx_webhook=qywx_webhook)
+           qywx_webhook=qywx_webhook, slack_webhook=slack_webhook)
 
     # DDL通知
     if sys_config.get('ddl_notify_auth_group') and workflow.status == 'workflow_finish':
         # 判断上线语句是否存在DDL，存在则通知相关人员
         if workflow.syntax_type == 1:
             # 消息内容通知
-            msg_title = '[Archery]有新的DDL语句执行完成#{}'.format(audit_id)
+            msg_title = '[SQL平台]有新的DDL语句执行完成#{}'.format(audit_id)
             msg_content = '''发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n'''.format(
                 Users.objects.get(username=workflow.engineer).display,
                 workflow.group_name,
@@ -285,10 +291,10 @@ def notify_for_binlog2sql(task):
     if not __notify_cnf_status():
         return None
     if task.success:
-        msg_title = '[Archery 通知]Binlog2SQL执行结束'
+        msg_title = '[SQL通知]Binlog2SQL执行结束'
         msg_content = f'解析的SQL文件为{task.result[1]}，请到指定目录查看'
     else:
-        msg_title = '[Archery 通知]Binlog2SQL执行失败'
+        msg_title = '[SQL通知]Binlog2SQL执行失败'
         msg_content = f'{task.result}'
     # 发送
     msg_to = [task.kwargs['user']]

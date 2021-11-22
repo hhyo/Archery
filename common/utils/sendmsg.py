@@ -201,6 +201,21 @@ class MsgSender(object):
         else:
             logger.error(f'企业微信机器人推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
 
+    def send_slack_webhook(self, slack_webhook, msg):
+
+        send_url = slack_webhook
+        data = {
+            # "msgtype": "text",
+            "text": msg.replace('工单地址：', '工单地址：[请点击链接](').replace('\n工单详情预览：', ')\n工单详情预览：'),
+        }
+        res = requests.post(url=send_url, json=data, timeout=5)
+        r_json = res.json()
+        if r_json['errcode'] == 0:
+            logger.debug(f'Slack推送成功\n通知对象：机器人')
+        else:
+            logger.error(f'Slack推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}')
+
+
     @staticmethod
     def send_feishu_webhook(url, title, content):
         data = {

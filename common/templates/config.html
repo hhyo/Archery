@@ -643,6 +643,19 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="slack_webhook"
+                                       class="col-sm-4 control-label">Slack Webhook</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="slack_webhook" key="slack_webhook"
+                                                   value="{{ config.slack_webhook }}"
+                                                   type="checkbox"> 是否开启Slack Webhook通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="feishu_webhook"
                                        class="col-sm-4 control-label">飞书Webhook</label>
                                 <div class="col-sm-8">

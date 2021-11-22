@@ -41,7 +41,7 @@ class UsersAdmin(UserAdmin):
 # 资源组管理
 @admin.register(ResourceGroup)
 class ResourceGroupAdmin(admin.ModelAdmin):
-    list_display = ('group_id', 'group_name', 'ding_webhook', 'feishu_webhook', 'qywx_webhook', 'is_deleted')
+    list_display = ('group_id', 'group_name', 'ding_webhook', 'feishu_webhook', 'qywx_webhook', 'slack_webhook', 'is_deleted')
     exclude = ('group_parent_id', 'group_sort', 'group_level',)
 
 
