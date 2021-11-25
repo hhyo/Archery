@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 
+import re
 import email
 import smtplib
 import requests
@@ -191,10 +192,18 @@ class MsgSender(object):
     def send_qywx_webhook(self,qywx_webhook, msg):
 
         send_url = qywx_webhook
+
+        # 对链接进行转换
+        _msg = re.findall('https://.+(?=\n)|http://.+(?=\n)', msg)
+        for url in _msg:
+            # 防止如 [xxx](http://www.a.com)\n 的字符串被再次替换
+            if url.strip()[-1] != ")":
+                msg=msg.replace(url,'[请点击链接](%s)' % url)
+
         data = {
             "msgtype": "markdown",
             "markdown": {
-                "content": msg.replace('工单地址：', '工单地址：[请点击链接](').replace('\n工单详情预览：', ')\n工单详情预览：')
+                "content": msg 
             },
         }
         res = requests.post(url=send_url, json=data, timeout=5)
