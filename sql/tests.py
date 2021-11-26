@@ -217,6 +217,12 @@ class TestView(TestCase):
         r = self.client.get(f'/group/', data=data)
         self.assertEqual(r.status_code, 200)
 
+    def test_audit(self):
+        """测试audit页面"""
+        data = {}
+        r = self.client.get(f'/audit/', data=data)
+        self.assertEqual(r.status_code, 200)
+
     def test_groupmgmt(self):
         """测试groupmgmt页面"""
         data = {}
