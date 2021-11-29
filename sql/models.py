@@ -866,7 +866,7 @@ class AuditEntry(models.Model):
     action_time = models.DateTimeField('操作时间', auto_now_add=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'audit_log'
         verbose_name = u'审计日志'
         verbose_name_plural = u'审计日志'
