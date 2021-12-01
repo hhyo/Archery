@@ -688,11 +688,13 @@ class MongoEngine(EngineBase):
     def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
 
+        sql = sql.strip()
         if sql.startswith("explain"):
-            sql = sql.replace("explain", "") + ".explain()"
+            sql = sql[7:]+".explain()"
+            sql = re.sub("[;\s]*.explain\(\)$", ".explain()", sql).strip()
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(
-            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)(\s*;*)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)(\s*;*)$)''')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)
