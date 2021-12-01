@@ -225,7 +225,7 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^delete", sql):
-            table_name = re.match(r"^delete\s+from\s(.+?)\s", sql, re.M).group(1)
+            table_name = re.match(r"^delete\s+from\s+([\w-]+)\s*", sql, re.M).group(1)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
@@ -233,7 +233,7 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^insert\s", sql):
-            table_name = re.match(r"^insert\s+((into)|(all\s+into))\s(.+?)(\(|\s)", sql, re.M).group(4)
+            table_name = re.match(r"^insert\s+((into)|(all\s+into)|(all\s+when\s(.+?)into))\s+(.+?)(\(|\s)", sql, re.M).group(6)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
