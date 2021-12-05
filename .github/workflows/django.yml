@@ -46,18 +46,24 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         
+    - name: Verify MySQL connection from host
+      run: |
+        sudo apt-get install -y mysql-client libmysqlclient-dev
+        mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports[3306] }} -uroot -proot -e "SHOW GRANTS FOR 'root'@'localhost'"
+
+    - name: Init Table
+      run: |
+        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} test_archery<src/init_sql/mysql_slow_query_review.sql
+      
     - name: Install Dependencies
       run: |
         sudo apt-get install libsasl2-dev python3-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Init Table
-      run: |
-        mysql -h127.0.0.1 -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
-        
+
     - name: Run Tests
       run: |
         python run manage.py test -v 3 --keepdb
