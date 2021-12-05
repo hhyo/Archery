@@ -11,14 +11,16 @@ on:
       - 'master'
 
 jobs:
-  build:
-
-
+  runner:
     runs-on: ubuntu-latest
-    
+
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+  
     # https://github.com/actions/example-services/tree/master/.github/workflows
     services:
-      # How to use MySQL
       mysql:
         image: mysql:5.7
         env:
@@ -26,22 +28,30 @@ jobs:
         ports:
         - 3306:3306
         volumes:
-          - "src/docker-compose/mysql/my.cnf:/etc/mysql/my.cnf"
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-      # How to use Redis
+          - "${{ github.workspace }}/src/docker-compose/mysql/my.cnf:/etc/mysql/my.cnf"
+        options: >-
+          --health-cmd="mysqladmin ping" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
       redis:
         image: redis
         ports:
         - 6379:6379
-        
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.7, 3.8, 3.9]
-
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    
+    - name: SET MySQL Cnf
+      run: |
+        docker cp ${{ github.workspace }}/src/docker-compose/mysql/my.cnf mysql:/etc/mysql/conf.d
+        docker restart mysql
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
