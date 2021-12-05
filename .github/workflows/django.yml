@@ -24,13 +24,13 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
         ports:
-        - 3306
+        - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
       # How to use Redis
       redis:
         image: redis
         ports:
-        - 6379/tcp
+        - 6379:6379
         
     strategy:
       max-parallel: 4
@@ -46,16 +46,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         
-    - name: Verify MySQL connection from host
-      run: |
-        sudo apt-get install -y mysql-client libmysqlclient-dev
-        mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports[3306] }} -uroot -proot -e "SHOW GRANTS FOR 'root'@'localhost'"
-
     - name: Init Table
       run: |
-        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} -e "CREATE DATABASE archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' -P ${{ job.services.mysql.ports[3306] }} test_archery<src/init_sql/mysql_slow_query_review.sql
+        mysql -h127.0.0.1 -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
       
     - name: Install Dependencies
       run: |
