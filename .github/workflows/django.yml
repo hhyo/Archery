@@ -28,6 +28,7 @@ jobs:
         ports:
         - 3306:3306
         options: >-
+          --name=mysql 
           --health-cmd="mysqladmin ping" 
           --health-interval=10s 
           --health-timeout=5s 
@@ -48,7 +49,7 @@ jobs:
     
     - name: SET MySQL Cnf
       run: |
-        docker cp ${{ github.workspace }}/src/docker-compose/mysql/my.cnf mysql:/etc/mysql/conf.d
+        docker cp src/docker-compose/mysql/my.cnf ${{ job.services.mysql.name[27017] }}:/etc/mysql/conf.d
         docker restart mysql
     
     - name: Set up Python ${{ matrix.python-version }}
