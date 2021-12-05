@@ -11,33 +11,77 @@ on:
       - 'master'
 
 jobs:
-  build:
-
+  runner:
     runs-on: ubuntu-latest
+
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.7, 3.8, 3.9]
-
+  
+    # https://github.com/actions/example-services/tree/master/.github/workflows
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+        - 3306:3306
+        options: >-
+          --name=mysql 
+          --health-cmd="mysqladmin ping" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+      redis:
+        image: redis
+        ports:
+        - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - name: Startup MySQL
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    
+    - name: SET MySQL Cnf
       run: |
-        sudo service mysql start || true
-    - name: Init Table
-      run: |
-        mysql -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
-        mysql -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
-    - uses: actions/checkout@v2
+        cat << EOF > my.cnf
+        [mysqld]
+        server-id=100
+        log_bin=ON
+        character-set-server = utf8mb4
+        collation-server = utf8mb4_general_ci
+        lower_case_table_names=1
+        default-time_zone = '+8:00'
+        [client]
+        default-character-set=utf8mb4
+        EOF
+        docker cp my.cnf mysql:/etc/mysql/conf.d/
+        docker restart mysql
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+        
     - name: Install Dependencies
       run: |
+        sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        
+    - name: Init Table
+      run: |
+        mysql -h127.0.0.1 -uroot -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot test_archery<src/init_sql/mysql_slow_query_review.sql
+      
     - name: Run Tests
       run: |
-        python run manage.py test -v 3 --keepdb
+        python manage.py makemigrations
+        python manage.py makemigrations sql
+        python manage.py test -v 3 --keepdb
