@@ -49,7 +49,12 @@ jobs:
     
     - name: SET MySQL Cnf
       run: |
-        docker cp src/docker-compose/mysql/my.cnf mysql:/etc/mysql/conf.d/
+        cat << EOF > my.cnf
+        [mysqld]
+        server-id=100
+        log_bin=ON
+        EOF
+        docker cp my.cnf mysql:/etc/mysql/conf.d/
         docker restart mysql
     
     - name: Set up Python ${{ matrix.python-version }}
