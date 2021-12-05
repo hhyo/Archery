@@ -25,6 +25,8 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         ports:
         - 3306:3306
+        volumes:
+          - "src/docker-compose/mysql/my.cnf:/etc/mysql/my.cnf"
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
       # How to use Redis
       redis:
@@ -48,6 +50,7 @@ jobs:
         
     - name: Init Table
       run: |
+        mysql -h127.0.0.1 -uroot -e "SET GLOBAL LOG_BIN=ON;"
         mysql -h127.0.0.1 -uroot -e "CREATE DATABASE archery CHARSET UTF8MB4;"
         mysql -h127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
         mysql -h127.0.0.1 -uroot test_archery<src/init_sql/mysql_slow_query_review.sql
