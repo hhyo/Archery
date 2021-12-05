@@ -21,8 +21,6 @@ jobs:
       # How to use MySQL
       mysql:
         image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: root
         ports:
         - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -48,9 +46,9 @@ jobs:
         
     - name: Init Table
       run: |
-        mysql -h127.0.0.1 -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
+        mysql -h127.0.0.1 -uroot -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+        mysql -h127.0.0.1 -uroot test_archery<src/init_sql/mysql_slow_query_review.sql
       
     - name: Install Dependencies
       run: |
@@ -60,4 +58,6 @@ jobs:
         
     - name: Run Tests
       run: |
+        python manage.py makemigrations
+        python manage.py makemigrations sql
         python manage.py test -v 3 --keepdb
