@@ -21,14 +21,6 @@ jobs:
 
 
     steps:
-    - name: Startup MySQL
-      run: |
-        sudo service mysql start || true
-    - name: Init Table
-      run: |
-        mysql -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
-        mysql -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -38,6 +30,14 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Startup MySQL
+      run: |
+        sudo service mysql start || true
+    - name: Init Table
+      run: |
+        mysql -uroot -p'root' -e "CREATE DATABASE archery CHARSET UTF8MB4;"
+        mysql -uroot -p'root' -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
+        mysql -uroot -p'root' test_archery<src/init_sql/mysql_slow_query_review.sql
     - name: Run Tests
       run: |
         python run manage.py test -v 3 --keepdb
