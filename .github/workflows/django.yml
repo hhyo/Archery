@@ -27,8 +27,6 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         ports:
         - 3306:3306
-        volumes:
-          - "${{ github.workspace }}/src/docker-compose/mysql/my.cnf:/etc/mysql/my.cnf"
         options: >-
           --health-cmd="mysqladmin ping" 
           --health-interval=10s 
