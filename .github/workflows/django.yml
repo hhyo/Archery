@@ -53,6 +53,12 @@ jobs:
         [mysqld]
         server-id=100
         log_bin=ON
+        character-set-server = utf8mb4
+        collation-server = utf8mb4_general_ci
+        lower_case_table_names=1
+        default-time_zone = '+8:00'
+        [client]
+        default-character-set=utf8mb4
         EOF
         docker cp my.cnf mysql:/etc/mysql/conf.d/
         docker restart mysql
