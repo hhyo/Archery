@@ -59,11 +59,10 @@ jobs:
       
     - name: Install Dependencies
       run: |
-        sudo apt-get install libsasl2-dev python3-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
+        sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-
     - name: Run Tests
       run: |
-        python run manage.py test -v 3 --keepdb
+        python manage.py test -v 3 --keepdb
