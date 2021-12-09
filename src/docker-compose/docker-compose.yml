@@ -42,10 +42,14 @@ services:
 
   archery:
 <<<<<<< HEAD
+<<<<<<< HEAD
     image: hhyo/archery:v1.8.2
 =======
     image: hhyo/archery:latest
 >>>>>>> update docker tag to latest in docker-compose
+=======
+    image: hhyo/archery:v1.8.2
+>>>>>>> update version
     container_name: archery
     restart: always
     ports:
