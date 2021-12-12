@@ -1,7 +1,7 @@
 ---
 name: 功能建议
 about: 如果你对Archery有什么功能或者改进建议，请在此反馈，也欢迎直接向我们提交pr
-title: '[ 功能建议 ]'
+title: '[ 功能建议 ]请简要描述'
 labels: ''
 assignees: ''
 

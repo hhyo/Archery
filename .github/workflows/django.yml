@@ -11,13 +11,13 @@ on:
       - 'master'
 
 jobs:
-  runner:
+  django_ci:
+    name: Build and Test a Django Project
     runs-on: ubuntu-latest
-
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9]
   
     # https://github.com/actions/example-services/tree/master/.github/workflows
     services:
@@ -72,7 +72,7 @@ jobs:
       run: |
         sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install codecov coverage flake8 -r requirements.txt
         
     - name: Init Table
       run: |
@@ -84,4 +84,12 @@ jobs:
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
-        python manage.py test -v 3 --keepdb
+        coverage run manage.py test -v 3 --keepdb
+        coverage xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: true
