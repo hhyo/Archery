@@ -12,6 +12,7 @@
 [![docker_pulls](https://img.shields.io/docker/pulls/hhyo/archery.svg)](https://hub.docker.com/r/hhyo/archery/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhhyo%2FArchery.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhhyo%2FArchery?ref=badge_shield)
 
 [文档](https://archerydms.com/) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
 
@@ -155,3 +156,7 @@ python manage.py test -v 3
 
 
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhhyo%2FArchery.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhhyo%2FArchery?ref=badge_large)
