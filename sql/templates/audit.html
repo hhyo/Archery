@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="group-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load static %}
+    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script>
+        //获取列表
+        function grouplist() {
+            //采取异步请求
+            //初始化table
+            $('#group-list').bootstrapTable('destroy').bootstrapTable({
+                escape: true,
+                method: 'post',
+                contentType: "application/x-www-form-urlencoded",
+                url: "/audit/log/",
+                striped: true,                      //是否显示行间隔色
+                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true,                   //是否显示分页（*）
+                sortable: true,                     //是否启用排序
+                sortOrder: "asc",                   //排序方式
+                sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                pageSize: 14,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                showExport: true,                   //是否显示导出按钮
+                exportOptions: {
+                    fileName: 'audit_log'  //文件名称设置
+                },
+                search: true,                      //是否显示表格搜索
+                strictSearch: false,                //是否全匹配搜索
+                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                showRefresh: true,                  //是否显示刷新按钮
+                minimumCountColumns: 2,             //最少允许的列数
+                clickToSelect: true,                //是否启用点击选中行
+                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                cardView: false,                    //是否显示详细视图
+                detailView: false,                  //是否显示父子表
+                locale: 'zh-CN',                    //本地化
+                toolbar: "#toolbar",               //指明自定义的toolbar
+                queryParamsType: 'limit',
+                //请求服务数据时所传参数
+                queryParams:
+                    function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search
+                        }
+                    },
+                columns: [{
+                    title: '用户',
+                    field: 'user_name',
+                    formatter: function (value, row, index) {
+                        return "<a target=\"_blank\" href=\"/admin/sql/users/" + row.user_id + "/change/\">" + value + "</a>"
+                    }
+                },{
+                    title: 'IP',
+                    field: 'ip'
+                },{
+                    title: '动作',
+                    field: 'action'
+                }, {
+                    title: '操作时间',
+                    field: 'action_time'
+                }],
+                onLoadSuccess: function () {
+                },
+                onLoadError: function () {
+                    alert("数据加载失败！请检查接口返回信息和错误日志！");
+                },
+                onSearch: function (e) {
+                    //传搜索参数给服务器
+                    queryParams(e)
+                }
+            });
+
+        }
+
+        //初始化数据
+        $(document).ready(function () {
+            grouplist();
+        });
+    </script>
+{% endblock %}

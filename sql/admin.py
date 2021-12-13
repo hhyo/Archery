@@ -9,7 +9,7 @@ from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, 
     AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
-    Tunnel
+    Tunnel, AuditEntry
 
 
 # 用户管理
@@ -244,3 +244,11 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
 @admin.register(CloudAccessKey)
 class CloudAccessKeyAdmin(admin.ModelAdmin):
     list_display = ('type', 'key_id', 'key_secret', 'remark')
+
+
+# 登录审计日志
+@admin.register(AuditEntry)
+class AuditEntryAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'user_name', 'action', 'ip', 'action_time')
+    list_filter = ('user_id', 'user_name', 'action', 'ip')
+
