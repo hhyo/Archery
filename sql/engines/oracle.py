@@ -14,7 +14,8 @@ from sql.utils.sql_utils import get_syntax_type, get_full_sqlitem_list, get_exec
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
-from sql.utils.data_masking import brute_mask
+#from sql.utils.data_masking import brute_mask
+from sql.utils.data_masking import simple_column_mask
 
 logger = logging.getLogger('default')
 
@@ -366,7 +367,8 @@ class OracleEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select|^with", sql, re.I):
-            filtered_result = brute_mask(self.instance, resultset)
+            #filtered_result = brute_mask(self.instance, resultset)
+            filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
             filtered_result = resultset
