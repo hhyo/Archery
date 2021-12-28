@@ -609,10 +609,11 @@
                     title: 'SQL内容',
                     field: 'sql',
                     formatter: function (value, row, index) {
-                        if (value.length > 80) {
-                            return value.substr(0, 80) + '...';
+                        var sql=row.sql;
+                        if (sql.length > 80) {
+                            return sql.substr(0, 80) + '...';
                         } else {
-                            return value
+                            return sql
                         }
                     },
                     sortable: false

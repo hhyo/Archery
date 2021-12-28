@@ -92,10 +92,11 @@
                 title: '回滚语句',
                 field: 1,
                 formatter: function (value, row, index) {
-                    if (value.length > 80) {
-                        return value.substr(0, 80) + '...';
+                    var sql=row[1];
+                    if (sql.length > 80) {
+                        return sql.substr(0, 80) + '...';
                     } else {
-                        return value
+                        return sql
                     }
                 }
             }, {
