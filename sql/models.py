@@ -99,7 +99,7 @@ class Tunnel(models.Model):
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
     password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
-    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey_path = fields.EncryptedCharField(verbose_name='密钥名称', max_length=300, default='', blank=True, null=True)
     pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
