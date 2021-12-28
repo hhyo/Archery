@@ -1,7 +1,7 @@
 ---
 name: 问题咨询
 about: 如果在使用过程中遇到问题，在查阅文档后仍无法解决，可以在此反馈
-title: '[ 问题咨询 ]'
+title: '[ 问题咨询 ]请简要描述'
 labels: 'question'
 assignees: ''
 
