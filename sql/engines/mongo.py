@@ -503,11 +503,12 @@ class MongoEngine(EngineBase):
         return check_result
 
     def get_connection(self, db_name=None):
-        self.db_name = db_name or self.instance.db_name
-        self.conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True,
+        self.db_name = db_name or self.instance.db_name or 'admin'
+        auth_db = self.instance.db_name or 'admin'
+        self.conn = pymongo.MongoClient(self.host, self.port, authSource=auth_db, connect=True,
                                         connectTimeoutMS=10000)
         if self.user and self.password:
-            self.conn[self.db_name].authenticate(self.user, self.password, self.db_name)
+            self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
         return self.conn
 
     def close(self):
@@ -688,11 +689,13 @@ class MongoEngine(EngineBase):
     def query_check(self, db_name=None, sql=''):
         """提交查询前的检查"""
 
+        sql = sql.strip()
         if sql.startswith("explain"):
-            sql = sql.replace("explain", "") + ".explain()"
+            sql = sql[7:]+".explain()"
+            sql = re.sub("[;\s]*.explain\(\)$", ".explain()", sql).strip()
         result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
         pattern = re.compile(
-            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+            r'''^db\.(\w+\.?)+(?:\([\s\S]*\)(\s*;*)$)|^db\.getCollection\((?:\s*)(?:'|")(\w+\.?)+('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)(\s*;*)$)''')
         m = pattern.match(sql)
         if m is not None:
             logger.debug(sql)

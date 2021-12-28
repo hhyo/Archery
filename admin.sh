@@ -62,7 +62,7 @@ function migration() {
     python3 manage.py makemigrations sql
     python3 manage.py migrate
     python3 manage.py dbshell<sql/fixtures/auth_group.sql
-    python3 manage.py dbshell<sql/src/init_sql/mysql_slow_query_review.sql
+    python3 manage.py dbshell<src/init_sql/mysql_slow_query_review.sql
     if [ $? == "0" ]; then
         echo -e "Migration:                 [\033[32m ok \033[0m]"
     else
