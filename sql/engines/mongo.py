@@ -503,11 +503,12 @@ class MongoEngine(EngineBase):
         return check_result
 
     def get_connection(self, db_name=None):
-        self.db_name = db_name or self.instance.db_name
-        self.conn = pymongo.MongoClient(self.host, self.port, authSource=self.db_name, connect=True,
+        self.db_name = db_name or self.instance.db_name or 'admin'
+        auth_db = self.instance.db_name or 'admin'
+        self.conn = pymongo.MongoClient(self.host, self.port, authSource=auth_db, connect=True,
                                         connectTimeoutMS=10000)
         if self.user and self.password:
-            self.conn[self.db_name].authenticate(self.user, self.password, self.db_name)
+            self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
         return self.conn
 
     def close(self):
