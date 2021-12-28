@@ -31,7 +31,7 @@ def data_masking(instance, db_name, sql, sql_result):
                     return sql_result
         # 通过Inception获取语法树,并进行解析
         inception_engine = InceptionEngine()
-        query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql)
+        query_tree = inception_engine.query_masking(instance=instance, db_name=db_name, sql=sql)
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
 
