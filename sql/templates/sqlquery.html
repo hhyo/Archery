@@ -359,8 +359,9 @@
                     title: '语句',
                     field: 'sqllog',
                     formatter: function (value, row, index) {
-                        if (value.length > 50) {
-                            var sql = value.substr(0, 50) + '...';
+                        var _sql=row.sqllog
+                        if (_sql.length > 50) {
+                            var sql = _sql.substr(0, 50) + '...';
                             return sql;
                         } else {
                             return value
