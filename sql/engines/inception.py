@@ -177,6 +177,28 @@ class InceptionEngine(EngineBase):
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 
+    def query_datamasking(self, instance, db_name=None, sql=''):
+        """
+        将sql交给goInception打印语法树。
+        使用 masking 参数，可参考 https://github.com/hanchuanchuan/goInception/pull/355
+        """
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
+        sql = f"""/*--user={user};--password={password};--host={host};--port={port};--masking=1;*/
+                          inception_magic_start;
+                          use `{db_name}`;
+                          {sql} ;inception_magic_commit;"""
+
+        print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        # 兼容语法错误时errlevel=0的场景
+        if print_info['errlevel'] == 0 and print_info['errmsg'] is None :
+            return json.loads(_repair_json_str(print_info['query_tree']))
+        elif print_info['errlevel'] == 0 and print_info['errmsg'] == 'Global environment':
+            raise SyntaxError(f"Inception Error: {print_info['query_tree']}")
+        else:
+            raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
+
+
     def get_rollback(self, workflow):
         """
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
@@ -206,8 +228,8 @@ class InceptionEngine(EngineBase):
                     sql = row.get('sql')
                 # 获取备份表名
                 opid_time = sequence.replace("'", "")
-                sql_table = f"""select tablename 
-                                from {backup_db_name}.$_$Inception_backup_information$_$ 
+                sql_table = f"""select tablename
+                                from {backup_db_name}.$_$Inception_backup_information$_$
                                 where opid_time='{opid_time}';"""
 
                 cur.execute(sql_table)
@@ -215,8 +237,8 @@ class InceptionEngine(EngineBase):
                 if list_tables:
                     # 获取备份语句
                     table_name = list_tables[0][0]
-                    sql_back = f"""select rollback_statement 
-                                   from {backup_db_name}.{table_name} 
+                    sql_back = f"""select rollback_statement
+                                   from {backup_db_name}.{table_name}
                                    where opid_time='{opid_time}'"""
                     cur.execute(sql_back)
                     list_backup = cur.fetchall()

@@ -15,6 +15,10 @@ logger = logging.getLogger('default')
 
 # TODO 待优化，没想好
 
+#Inception转为goInception，将archery中数据脱敏的IP和端口指向goInception的
+#不修改整体逻辑，主要修改由goInception返回的结果中关键字，比如db修改为schema
+#有些逻辑好像还是有问题，后续优化
+
 def data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
     try:
@@ -27,12 +31,14 @@ def data_masking(instance, db_name, sql, sql_result):
                     sql_result.error = '不支持该查询语句脱敏！请联系管理员'
                     sql_result.status = 1
                     return sql_result
-        # 通过inception获取语法树,并进行解析
+        # 通过Inception获取语法树,并进行解析
         inception_engine = InceptionEngine()
-        query_tree = inception_engine.query_print(instance=instance, db_name=db_name, sql=sql)
+        query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
         # 分析语法树获取命中脱敏规则的列数据
-        table_hit_columns, hit_columns = analyze_query_tree(query_tree, instance)
+        table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
+
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
+
     except Exception as msg:
         logger.warning(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
@@ -42,8 +48,6 @@ def data_masking(instance, db_name, sql, sql_result):
         if table_hit_columns and sql_result.rows:
             column_list = sql_result.column_list
             table_hit_column = dict()
-            for column_info in table_hit_columns:
-                table_hit_column[column_info['column_name']] = column_info['rule_type']
             for index, item in enumerate(column_list):
                 if item in table_hit_column.keys():
                     hit_columns.append({
@@ -62,6 +66,7 @@ def data_masking(instance, db_name, sql, sql_result):
                 for idx, item in enumerate(rows):
                     rows[idx] = list(item)
                     rows[idx][index] = regex(masking_rules, column['rule_type'], rows[idx][index])
+
                 sql_result.rows = rows
             # 脱敏结果
             sql_result.is_masked = True
@@ -70,8 +75,14 @@ def data_masking(instance, db_name, sql, sql_result):
 
 def analyze_query_tree(query_tree, instance):
     """解析query_tree,获取语句信息,并返回命中脱敏规则的列信息"""
-    old_select_list = query_tree.get('select_list', [])
-    table_ref = query_tree.get('table_ref', [])
+    old_select_list = []
+    table_ref = []
+
+
+    for list_i in query_tree:
+
+        old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'],'schema': list_i['schema'], 'table': list_i['table']})
+        table_ref.append({'schema': list_i['schema'], 'table': list_i['table']})
 
     # 获取全部激活的脱敏字段信息，减少循环查询，提升效率
     masking_columns = DataMaskingColumns.objects.filter(active=True)
@@ -79,8 +90,9 @@ def analyze_query_tree(query_tree, instance):
     # 判断语句涉及的表是否存在脱敏字段配置
     hit = False
     for table in table_ref:
-        if masking_columns.filter(instance=instance, table_schema=table['db'], table_name=table['table']).exists():
+        if masking_columns.filter(instance=instance, table_schema=table['schema'], table_name=table['table']).exists():
             hit = True
+
     # 不存在脱敏字段则直接跳过规则解析
     if not hit:
         table_hit_columns = []
@@ -91,36 +103,17 @@ def analyze_query_tree(query_tree, instance):
         hit_columns = []  # 命中列
         table_hit_columns = []  # 涉及表命中的列，仅select *需要
 
-        # 判断是否存在不支持脱敏的语法
-        for select_item in old_select_list:
-            if select_item['type'] not in ('FIELD_ITEM', 'aggregate', 'FUNC_ITEM'):
-                raise Exception('不支持该查询语句脱敏！请联系管理员')
-            elif select_item['type'] == 'aggregate':
-                if select_item['aggregate'].get('type') not in ('FIELD_ITEM', 'INT_ITEM'):
-                    raise Exception('不支持该查询语句脱敏！请联系管理员')
-            # 增加单列函数的脱敏
-            elif select_item['type'] == 'FUNC_ITEM':
-                if len(select_item['args']) != 1:
-                    raise Exception('不支持该查询语句脱敏！请联系管理员')
-
-        # 处理select_list，为统一的{'type': 'FIELD_ITEM', 'db': 'archery_master', 'table': 'sql_users', 'field': 'email'}格式
-        # 获取select信息的规则，如[*],[*,column_a],[column_a,*],[column_a,a.*,column_b],[a.*,column_a,b.*]
         select_index = []
         select_list = []
+
         for select_item in old_select_list:
-            if select_item['type'] == 'FIELD_ITEM':
-                select_index.append(select_item['field'])
-                select_list.append(select_item)
-            elif select_item['type'] == 'aggregate':
-                select_index.append(select_item['aggregate'].get('field'))
-                select_list.append(select_item['aggregate'])
-            elif select_item['type'] == 'FUNC_ITEM':
-                select_index.append(select_item['args'][0].get('field'))
-                select_list.append(select_item['args'][0])
+            select_index.append(select_item['field'])
+            select_list.append(select_item)
 
         if select_index:
             # 如果发现存在field='*',则遍历所有表,找出所有的命中字段
             if '*' in select_index:
+
                 # 涉及表命中的列
                 for table in table_ref:
                     hit_columns_info = hit_table(masking_columns, instance, table['db'], table['table'])
@@ -176,6 +169,10 @@ def analyze_query_tree(query_tree, instance):
 
             # 没有*的查询，直接遍历查询命中字段，query_tree的列index就是查询语句列的index
             else:
+                for table in table_ref:
+                    hit_columns_info = hit_table(masking_columns, instance, table['schema'], table['table'])
+                    table_hit_columns.extend(hit_columns_info)
+
                 for index, item in enumerate(select_list):
                     item['index'] = index
                     if item.get('field') != '*':
@@ -183,17 +180,20 @@ def analyze_query_tree(query_tree, instance):
 
         # 格式化命中的列信息
         for column in columns:
-            hit_info = hit_column(masking_columns, instance, column.get('db'), column.get('table'),
+            hit_info = hit_column(masking_columns, instance, column.get('schema'), column.get('table'),
                                   column.get('field'))
+
             if hit_info['is_hit']:
                 hit_info['index'] = column['index']
                 hit_columns.append(hit_info)
+
 
     return table_hit_columns, hit_columns
 
 
 def hit_column(masking_columns, instance, table_schema, table_name, column_name):
     """判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型"""
+
     column_info = masking_columns.filter(instance=instance, table_schema=table_schema,
                                          table_name=table_name, column_name=column_name)
 
@@ -235,6 +235,7 @@ def hit_table(masking_columns, instance, table_schema, table_name):
 def regex(masking_rules, rule_type, value):
     """利用正则表达式脱敏数据"""
     rules_info = masking_rules.get(rule_type=rule_type)
+
     if rules_info:
         rule_regex = rules_info.rule_regex
         hide_group = rules_info.hide_group
@@ -242,6 +243,7 @@ def regex(masking_rules, rule_type, value):
         try:
             p = re.compile(rule_regex, re.I)
             m = p.search(str(value))
+
             masking_str = ''
             for i in range(m.lastindex):
                 if i == hide_group - 1:
@@ -249,6 +251,7 @@ def regex(masking_rules, rule_type, value):
                 else:
                     group = m.group(i + 1)
                 masking_str = masking_str + group
+
             return masking_str
         except AttributeError:
             return value
@@ -257,7 +260,7 @@ def regex(masking_rules, rule_type, value):
 
 
 def brute_mask(instance, sql_result):
-    """输入的是一个resultset 
+    """输入的是一个resultset
     sql_result.full_sql
     sql_result.rows 查询结果列表 List , list内的item为tuple
 
@@ -284,6 +287,7 @@ def brute_mask(instance, sql_result):
         sql_result.rows = rows
     return sql_result
 
+
 def simple_column_mask(instance, sql_result):
     """输入的是一个resultset
     sql_result.full_sql
@@ -294,7 +298,7 @@ def simple_column_mask(instance, sql_result):
     # 获取当前实例脱敏字段信息，减少循环查询，提升效率
     masking_columns = DataMaskingColumns.objects.filter(instance=instance, active=True)
     # 转换sql输出字段名为小写, 适配oracle脱敏
-    sql_result_column_list = [ c.lower() for c in sql_result.column_list ]
+    sql_result_column_list = [c.lower() for c in sql_result.column_list]
     if masking_columns:
         try:
             for mc in masking_columns:
@@ -313,7 +317,7 @@ def simple_column_mask(instance, sql_result):
                         search_data = re.search(alias_column_r, sql_result.full_sql)
                         # 字段名
                         _column_name = search_data.group(1).lower()
-                        s_column_name = re.sub(r'^"?\w+"?\."?|\.|"$','',_column_name)
+                        s_column_name = re.sub(r'^"?\w+"?\."?|\.|"$', '', _column_name)
                         # 别名
                         alias_name = search_data.group(3).lower()
                         # 如果字段名匹配脱敏配置字段,对此字段进行脱敏处理
@@ -326,7 +330,7 @@ def simple_column_mask(instance, sql_result):
                     # 脱敏规则
                     masking_rule = DataMaskingRules.objects.get(rule_type=mc.rule_type)
                     # 脱敏后替换字符串
-                    compiled_r = re.compile(masking_rule.rule_regex, re.I)
+                    compiled_r = re.compile(masking_rule.rule_regex, re.I | re.S)
                     replace_pattern = r""
                     for i in range(1, compiled_r.groups + 1):
                         if i == int(masking_rule.hide_group):
@@ -341,11 +345,10 @@ def simple_column_mask(instance, sql_result):
                             column_data = sql_result.rows[i][j]
                             if j == masking_column_index:
                                 column_data = compiled_r.sub(replace_pattern, str(sql_result.rows[i][j]))
-                            temp_value_list += [ column_data ]
+                            temp_value_list += [column_data]
                         rows[i] = tuple(temp_value_list)
                     sql_result.rows = rows
         except Exception as e:
             sql_result.error = str(e)
 
     return sql_result
-
