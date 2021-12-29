@@ -1427,8 +1427,7 @@ class TestOracle(TestCase):
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = OracleEngine(instance=self.ins)
-        #masking_result = new_engine.query_masking(schema_name='', sql='select 1', resultset=query_result)
-        masking_result = new_engine.query_masking(schema_name='', sql='select 1 from dual', resultset=query_result)
+        masking_result = new_engine.query_masking(sql='select 1 from dual', resultset=query_result)
         self.assertEqual(masking_result, query_result)
 
     def test_execute_check_select_sql(self):
