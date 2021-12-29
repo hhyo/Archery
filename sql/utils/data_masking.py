@@ -17,8 +17,6 @@ logger = logging.getLogger('default')
 
 #Inception转为goInception，将archery中数据脱敏的IP和端口指向goInception的
 #不修改整体逻辑，主要修改由goInception返回的结果中关键字，比如db修改为schema
-#有些逻辑好像还是有问题，后续优化
-
 def data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
     try:
@@ -45,9 +43,12 @@ def data_masking(instance, db_name, sql, sql_result):
         sql_result.status = 1
     else:
         # 存在select * 的查询,遍历column_list,获取命中列的index,添加到hit_columns
+
         if table_hit_columns and sql_result.rows:
             column_list = sql_result.column_list
             table_hit_column = dict()
+
+
             for index, item in enumerate(column_list):
                 if item in table_hit_column.keys():
                     hit_columns.append({
@@ -78,7 +79,8 @@ def analyze_query_tree(query_tree, instance):
     old_select_list = []
     table_ref = []
 
-
+    #old_select_list=[{ 'field' : query_tree[0].get('field', []), 'alias' : query_tree[0].get('alias', [])}]
+    #table_ref= [{'schema' : query_tree[0].get('schema', []),'table' : query_tree[0].get('table', [])}]
     for list_i in query_tree:
 
         old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'],'schema': list_i['schema'], 'table': list_i['table']})
