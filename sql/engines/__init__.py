@@ -27,7 +27,7 @@ class EngineBase:
                     instance.tunnel.port,
                     instance.tunnel.user,
                     instance.tunnel.password,
-                    instance.tunnel.pkey_path,
+                    instance.tunnel.pkey,
                     instance.tunnel.pkey_password,
                 )
                 self.host,self.port = self.ssh.get_ssh()
@@ -48,7 +48,7 @@ class EngineBase:
                 instance.tunnel.port,
                 instance.tunnel.user,
                 instance.tunnel.password,
-                instance.tunnel.pkey_path,
+                instance.tunnel.pkey,
                 instance.tunnel.pkey_password,
             )
             self.remote_host, self.remote_port = self.remotessh.get_ssh()
