@@ -2,9 +2,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
-
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
+from django.conf import settings
+
+pkey_root = settings.PKEY_ROOT
+
 
 class ResourceGroup(models.Model):
     """
@@ -99,13 +102,20 @@ class Tunnel(models.Model):
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
     password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
-    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey = models.TextField(verbose_name="密钥", blank=True, null=True)
+    pkey_path = models.FileField(verbose_name='密钥路径', blank=True, null=True, upload_to=pkey_root)
     pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     def __str__(self):
         return self.tunnel_name
+
+    def short_pkey(self):
+        if len(str(self.pkey)) > 30:
+            return '{}...'.format(str(self.pkey)[0:29])
+        else:
+            return str(self.pkey)
 
     class Meta:
         managed = True
