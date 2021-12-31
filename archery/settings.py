@@ -258,7 +258,10 @@ LOGGING = {
     }
 }
 
-# 存放用于 ssh tunnel 秘钥的文件夹
-SSH_TUNNEL_KEY_PATH = os.path.join(BASE_DIR, 'keys')
-if not os.path.exists(SSH_TUNNEL_KEY_PATH):
-    os.makedirs(SSH_TUNNEL_KEY_PATH)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if not os.path.exists(MEDIA_ROOT):
+    os.mkdir(MEDIA_ROOT)
+
+PKEY_ROOT = os.path.join(MEDIA_ROOT, 'keys')
+if not os.path.exists(PKEY_ROOT):
+    os.mkdir(PKEY_ROOT)
