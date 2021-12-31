@@ -5,9 +5,6 @@ from mirage import fields
 
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
-from django_q.apps import DjangoQConfig
-from django_q.models import Success, Failure, OrmQ
-
 
 class ResourceGroup(models.Model):
     """
@@ -102,13 +99,20 @@ class Tunnel(models.Model):
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
     password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
-    pkey_path = fields.EncryptedCharField(verbose_name='密钥名称', max_length=300, default='', blank=True, null=True)
+    pkey = models.TextField(verbose_name="密钥", blank=True, null=True)
+    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
     pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     def __str__(self):
         return self.tunnel_name
+
+    def short_pkey(self):
+        if len(str(self.pkey)) > 20:
+            return '{}...'.format(str(self.pkey)[0:19])
+        else:
+            return str(self.pkey)
 
     class Meta:
         managed = True
@@ -856,22 +860,3 @@ class SlowQueryHistory(models.Model):
         index_together = ('hostname_max', 'ts_min')
         verbose_name = u'慢日志明细'
         verbose_name_plural = u'慢日志明细'
-
-
-class MyDjangoQConfig(DjangoQConfig):
-    verbose_name = u"调度器"
-
-
-class MySuccess(Success):
-    verbose_name = u'成功任务'
-    verbose_name_plural = verbose_name
-
-
-class MyFailure(Failure):
-    verbose_name = u'失败任务'
-    verbose_name_plural = verbose_name
-
-
-class MyOrmQ(OrmQ):
-    verbose_name = u'任务队列'
-    verbose_name_plural = verbose_name
