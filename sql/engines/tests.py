@@ -355,19 +355,19 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable limit 10 offset 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'select user from usertable limit 1;')
+        self.assertEqual(check_result, 'select user from usertable limit 1 offset 100;')
 
     def test_filter_sql_with_limit_nn(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable limit 10, 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'select user from usertable limit 1;')
+        self.assertEqual(check_result, 'select user from usertable limit 10,1;')
 
     def test_filter_sql_upper(self):
         new_engine = MysqlEngine(instance=self.ins1)
         sql_without_limit = 'SELECT USER FROM usertable LIMIT 10, 100'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
-        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 1;')
+        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 10,1;')
 
     def test_filter_sql_not_select(self):
         new_engine = MysqlEngine(instance=self.ins1)
@@ -1653,3 +1653,10 @@ class MongoTest(TestCase):
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
+
+    def test_fill_query_columns(self):
+        columns = ["_id", "title", "tags", "likes"]
+        cursor = [{"_id": {"$oid": "5f10162029684728e70045ab"}, "title": "MongoDB", "text": "archery", "likes": 100},
+                  {"_id": {"$oid": "7f10162029684728e70045ab"}, "author": "archery"}]
+        cols = self.engine.fill_query_columns(cursor, columns=columns)
+        self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])

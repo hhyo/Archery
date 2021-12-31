@@ -217,6 +217,12 @@ class TestView(TestCase):
         r = self.client.get(f'/group/', data=data)
         self.assertEqual(r.status_code, 200)
 
+    def test_audit(self):
+        """测试audit页面"""
+        data = {}
+        r = self.client.get(f'/audit/', data=data)
+        self.assertEqual(r.status_code, 200)
+
     def test_groupmgmt(self):
         """测试groupmgmt页面"""
         data = {}
@@ -917,7 +923,6 @@ class TestQuery(TransactionTestCase):
         _get_engine.return_value.query.assert_called_once_with(
             some_db, some_sql, some_limit, schema_name=None, tb_name=None, max_execution_time=60000)
         r_json = r.json()
-        print(r_json)
         self.assertEqual(r_json['data']['rows'], ['value'])
         self.assertEqual(r_json['data']['column_list'], ['some'])
         self.assertEqual(r_json['data']['seconds_behind_master'], 100)
@@ -2041,7 +2046,6 @@ class TestBinLog(TestCase):
             "instance_name": 'test_instance'
         }
         r = self.client.post(path='/binlog/list/', data=data)
-        print(json.loads(r.content))
         # self.assertEqual(json.loads(r.content).get('status'), 1)
 
     def test_binlog2sql_path_not_exist(self):

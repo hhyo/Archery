@@ -17,7 +17,7 @@ from common.config import SysConfig
 from common.utils.const import Const, WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.notify import notify_for_audit
+from sql.notify import notify_for_audit, notify_for_execute
 from sql.models import ResourceGroup
 from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
@@ -424,6 +424,8 @@ def execute(request):
                       operation_info='确认手工执行结束',
                       operator=request.user.username,
                       operator_display=request.user.display)
+        # 发送消息
+        notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

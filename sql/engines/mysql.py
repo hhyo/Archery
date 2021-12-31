@@ -191,6 +191,12 @@ class MysqlEngine(EngineBase):
             if explain_result.error:
                 result['bad_query'] = True
                 result['msg'] = explain_result.error
+        # 不应该查看mysql.user表
+        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*',sql.lower().replace('\n','')) or\
+           (db_name=="mysql" and  re.match('.*(\\s)+(user|`user`)((\\s)*|;).*',sql.lower().replace('\n',''))):
+            result['bad_query'] = True
+            result['msg'] = '您无权查看该表'
+
         return result
 
     def filter_sql(self, sql='', limit_num=0):
@@ -198,17 +204,25 @@ class MysqlEngine(EngineBase):
         sql = sql.rstrip(';').strip()
         if re.match(r"^select", sql, re.I):
             # LIMIT N
-            limit_n = re.compile(r'limit([\s]*\d+[\s]*)$', re.I)
-            # LIMIT N, N 或LIMIT N OFFSET N
-            limit_offset = re.compile(r'limit([\s]*\d+[\s]*)(,|offset)([\s]*\d+[\s]*)$', re.I)
+            limit_n = re.compile(r'limit\s+(\d+)\s*$', re.I)
+            # LIMIT M OFFSET N
+            limit_offset = re.compile(r'limit\s+(\d+)\s+offset\s+(\d+)\s*$', re.I)
+            # LIMIT M,N
+            offset_comma_limit = re.compile(r'limit\s+(\d+)\s*,\s*(\d+)\s*$', re.I)
             if limit_n.search(sql):
                 sql_limit = limit_n.search(sql).group(1)
                 limit_num = min(int(limit_num), int(sql_limit))
                 sql = limit_n.sub(f'limit {limit_num};', sql)
             elif limit_offset.search(sql):
-                sql_limit = limit_offset.search(sql).group(3)
+                sql_limit = limit_offset.search(sql).group(1)
+                sql_offset = limit_offset.search(sql).group(2)
                 limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_offset.sub(f'limit {limit_num};', sql)
+                sql = limit_offset.sub(f'limit {limit_num} offset {sql_offset};', sql)
+            elif offset_comma_limit.search(sql):
+                sql_offset = offset_comma_limit.search(sql).group(1)
+                sql_limit = offset_comma_limit.search(sql).group(2)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = offset_comma_limit.sub(f'limit {sql_offset},{limit_num};', sql)
             else:
                 sql = f'{sql} limit {limit_num};'
         else:

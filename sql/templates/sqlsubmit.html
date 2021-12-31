@@ -378,7 +378,7 @@
             var formSubmit = $("#form-submitsql");
             var sqlContent = editor.getValue();
             $("#sql_content").val(sqlContent);
-            if (validateForm(formSubmit)) {
+            if (validateForm(formSubmit) && checkRunDate()) {
                 //判断是否需要弹出提示
                 var CheckWarningCount = sessionStorage.getItem('CheckWarningCount');
                 var CheckErrorCount = sessionStorage.getItem('CheckErrorCount');
@@ -413,6 +413,22 @@
     </script>
     <!--check-->
     <script>
+        function checkRunDate(gap=60) {
+            // 结束时间与开始时间的间隔不应该太短
+            var start=$("#run_date_start").val();
+            var end=$("#run_date_end").val();
+            if (start && end) {
+                var realGap = ((new Date(end)).getTime() - (new Date(start)).getTime())/(1000*60)
+                if ( realGap >= gap){
+                    return true
+                } else {
+                    alert("可执行时间范围不应该短于"+gap+"分钟");
+                    return false
+                }
+            }
+            return true
+        };
+
         $("#btn-autoreview").click(function () {
             $('input[type=button]').addClass('disabled');
             $('input[type=button]').prop('disabled', true);
@@ -420,7 +436,7 @@
             let formSubmit = $("#form-submitsql");
             var sqlContent = editor.getValue();
             $("#sql_content").val(sqlContent);
-            if (validateForm(formSubmit)) {
+            if (validateForm(formSubmit) && checkRunDate()) {
                 autoreview();
             } else {
                 $("#btn-format").removeClass('disabled');

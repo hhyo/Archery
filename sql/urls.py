@@ -8,7 +8,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
-    resource_group, binlog, data_dictionary, archiver
+    resource_group, binlog, data_dictionary, archiver, audit_log
 from sql.utils import tasks
 from common.utils import ding_api
 
@@ -55,6 +55,7 @@ urlpatterns = [
     path('archive/', views.archive),
     path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
     path('config/', views.config),
+    path('audit/', views.audit),
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
@@ -148,5 +149,7 @@ urlpatterns = [
     path('archive/once/', archiver.archive_once),
     path('archive/log/', archiver.archive_log),
 
-    path('4admin/sync_ding_user/', ding_api.sync_ding_user)
+    path('4admin/sync_ding_user/', ding_api.sync_ding_user),
+
+    path('audit/log/', audit_log.audit_log),
 ]
