@@ -5,8 +5,10 @@
 @file: ssh_tunnel.py
 @time: 2020/05/09
 """
+import os
 from sshtunnel import SSHTunnelForwarder
 from paramiko import RSAKey
+from django.conf import settings
 
 class SSHConnection(object):
     """
@@ -21,6 +23,7 @@ class SSHConnection(object):
         self.tun_password = tun_password
 
         if pkey_path:
+            pkey_path = os.path.join(settings.SSH_TUNNEL_KEY_PATH, pkey_path)
             self.private_key = RSAKey.from_private_key_file(pkey_path, password=pkey_password)
             self.server = SSHTunnelForwarder(
                 ssh_address_or_host=(self.tun_host, self.tun_port),
