@@ -3,6 +3,7 @@ import logging
 import re
 import traceback
 import MySQLdb
+import simplejson as json
 
 from common.config import SysConfig
 from sql.models import AliyunRdsConfig
@@ -149,6 +150,27 @@ class GoInceptionEngine(EngineBase):
             raise RuntimeError(print_info.get('errmsg'))
         return print_info
 
+    def query_datamasking(self, instance, db_name=None, sql=''):
+        """
+        将sql交给goInception打印语法树。
+        使用 masking 参数，可参考 https://github.com/hanchuanchuan/goInception/pull/355
+        """
+        # 判断如果配置了隧道则连接隧道
+        host, port, user, password = self.remote_instance_conn(instance)
+        sql = f"""/*--user={user};--password={password};--host={host};--port={port};--masking=1;*/
+                          inception_magic_start;
+                          use `{db_name}`;
+                          {sql}
+                          inception_magic_commit;"""
+        print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        # 兼容语法错误时errlevel=0的场景
+        if print_info['errlevel'] == 0 and print_info['errmsg'] is None :
+            return json.loads(_repair_json_str(print_info['query_tree']))
+        elif print_info['errlevel'] == 0 and print_info['errmsg'] == 'Global environment':
+            raise SyntaxError(f"Inception Error: {print_info['query_tree']}")
+        else:
+            raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
+
     def get_variables(self, variables=None):
         """获取实例参数"""
         if variables:
@@ -247,3 +269,15 @@ def get_session_variables(instance):
     for k, v in variables.items():
         set_session_sql += f"inception set session {k} = '{v}';\n"
     return variables, set_session_sql
+
+def _repair_json_str(json_str):
+    """
+    处理JSONDecodeError: Expecting property name enclosed in double quotes
+    inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
+    """
+    json_str = re.sub(r"{\s*'(.+)':", r'{"\1":', json_str)
+    json_str = re.sub(r",\s*?]", "]", json_str)
+    json_str = re.sub(r",\s*?}", "}", json_str)
+    json_str = re.sub(r"\[,\s*?{", "[{", json_str)
+    json_str = json_str.replace("'", "\"")
+    return json_str

@@ -15,6 +15,7 @@ from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
+from sql.utils.go_data_masking import go_data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
@@ -112,7 +113,7 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
-        sql = f"""SELECT 
+        sql = f"""SELECT
             COLUMN_NAME,
             COLUMN_TYPE,
             CHARACTER_SET_NAME,
@@ -234,7 +235,13 @@ class MysqlEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            mask_result = data_masking(self.instance, db_name, sql, resultset)
+            ##判断是否设置了inception脱敏，如果未配置inception地址，则使用goinception脱敏
+            if (self.config.get('inception_host') is None):
+                mask_result = go_data_masking(self.instance, db_name, sql, resultset)
+                #print("use goinception")
+            else:
+                mask_result = data_masking(self.instance, db_name, sql, resultset)
+                #print("use inception")
         else:
             mask_result = resultset
         return mask_result
