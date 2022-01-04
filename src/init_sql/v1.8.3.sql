@@ -9,3 +9,7 @@ CREATE TABLE `audit_log` (
   PRIMARY KEY (`id`),
   KEY `idx_username` (`user_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='登录审计日志表';
+
+-- 新增my2sql菜单权限
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 My2SQL', @content_type_id, 'menu_my2sql');
