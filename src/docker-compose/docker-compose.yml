@@ -23,7 +23,7 @@ services:
       MYSQL_ROOT_PASSWORD: 123456
 
   inception:
-    image: hhyo/inception:latest
+    image: hhyo/inception
     container_name: inception
     restart: always
     expose:
@@ -32,7 +32,7 @@ services:
       - "./inception/inc.cnf:/etc/inc.cnf"
 
   goinception:
-    image: hanchuanchuan/goinception
+    image: hanchuanchuan/goinception:latest
     container_name: goinception
     restart: always
     ports:
