@@ -9,7 +9,8 @@ from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, 
     AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
-    Tunnel
+    Tunnel, AuditEntry
+
 from sql.form import TunnelForm
 
 
@@ -153,7 +154,7 @@ class QueryPrivilegesApplyAdmin(admin.ModelAdmin):
 @admin.register(DataMaskingColumns)
 class DataMaskingColumnsAdmin(admin.ModelAdmin):
     list_display = (
-        'column_id', 'rule_type', 'active', 'instance', 'table_schema', 'table_name', 'column_name',
+        'column_id', 'rule_type', 'active', 'instance', 'table_schema', 'table_name', 'column_name', 'column_comment',
         'create_time',)
     search_fields = ['table_name', 'column_name']
     list_filter = ('rule_type', 'active', 'instance__instance_name')
@@ -246,3 +247,11 @@ class ArchiveConfigAdmin(admin.ModelAdmin):
 @admin.register(CloudAccessKey)
 class CloudAccessKeyAdmin(admin.ModelAdmin):
     list_display = ('type', 'key_id', 'key_secret', 'remark')
+
+
+# 登录审计日志
+@admin.register(AuditEntry)
+class AuditEntryAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'user_name', 'action', 'ip', 'action_time')
+    list_filter = ('user_id', 'user_name', 'action', 'ip')
+

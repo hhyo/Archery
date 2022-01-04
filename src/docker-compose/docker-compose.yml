@@ -35,13 +35,13 @@ services:
     image: hanchuanchuan/goinception
     container_name: goinception
     restart: always
-    expose:
-      - "4000"
+    ports:
+      - "4000:4000"
     volumes:
       - "./inception/config.toml:/etc/config.toml"
 
   archery:
-    image: hhyo/archery:1.8.1
+    image: hhyo/archery:v1.8.2
     container_name: archery
     restart: always
     ports:

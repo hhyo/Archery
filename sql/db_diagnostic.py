@@ -69,9 +69,10 @@ def create_kill_session(request):
     if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
         result = aliyun_create_kill_session(request)
     else:
-        thread_ids = thread_ids.replace('[', '').replace(']', '')
+        thread_ids = json.loads(thread_ids)
         query_engine = get_engine(instance=instance)
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(thread_ids)
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});"\
+            .format(','.join(str(tid) for tid in thread_ids))
         all_kill_sql = query_engine.query('information_schema', sql)
         kill_sql = ''
         for row in all_kill_sql.rows:
@@ -99,9 +100,10 @@ def kill_session(request):
     if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
         result = aliyun_kill_session(request)
     else:
-        thread_ids = thread_ids.replace('[', '').replace(']', '')
+        thread_ids = json.loads(thread_ids)
         engine = get_engine(instance=instance)
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(thread_ids)
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});"\
+            .format(','.join(str(tid) for tid in thread_ids))
         all_kill_sql = engine.query('information_schema', sql)
         kill_sql = ''
         for row in all_kill_sql.rows:
@@ -277,7 +279,7 @@ FROM information_schema.INNODB_TRX trx
     ON trx.trx_mysql_thread_id = p.id
     WHERE trx.trx_state = 'RUNNING'
     AND p.COMMAND = 'Sleep'
-    AND P.time > 3
+    AND p.time > 3
     ORDER BY trx.trx_started ASC;'''
 
     query_result = query_engine.query('information_schema', sql)

@@ -172,7 +172,7 @@ def query(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
     # 返回查询结果
     try:
-        return HttpResponse(json.dumps(result, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
+        return HttpResponse(json.dumps(result, use_decimal=False, cls=ExtendJSONEncoderFTime, bigint_as_string=True),
                             content_type='application/json')
     # 虽然能正常返回，但是依然会乱码
     except UnicodeDecodeError:

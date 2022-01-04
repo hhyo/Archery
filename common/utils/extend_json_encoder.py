@@ -28,7 +28,7 @@ def _(o):
 
 @convert.register(Decimal)
 def _(o):
-    return float(o)
+    return str(o)
 
 
 @convert.register(memoryview)
