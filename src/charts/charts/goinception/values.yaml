@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: hanchuanchuan/goinception:latest
+  repository: hanchuanchuan/goinception
   tag: latest
   version: latest
   pullPolicy: Always
