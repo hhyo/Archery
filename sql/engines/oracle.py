@@ -14,7 +14,7 @@ from sql.utils.sql_utils import get_syntax_type, get_full_sqlitem_list, get_exec
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
-from sql.utils.data_masking import brute_mask
+from sql.utils.data_masking import simple_column_mask
 
 logger = logging.getLogger('default')
 
@@ -361,12 +361,11 @@ class OracleEngine(EngineBase):
                 self.close()
         return result_set
 
-    def query_masking(self, schema_name=None, sql='', resultset=None):
-        """传入 sql语句, db名, 结果集,
-        返回一个脱敏后的结果集"""
-        # 仅对select语句脱敏
-        if re.match(r"^select|^with", sql, re.I):
-            filtered_result = brute_mask(self.instance, resultset)
+
+    def query_masking(self, db_name=None, sql='', resultset=None):
+        """简单字段脱敏规则, 仅对select有效"""
+        if re.match(r"^select", sql, re.I):
+            filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
             filtered_result = resultset
@@ -637,9 +636,9 @@ class OracleEngine(EngineBase):
                 rowcount = cursor.rowcount
                 stagestatus = "Execute Successfully"
                 if sqlitem.stmt_type == "PLSQL" and sqlitem.object_name and sqlitem.object_name != 'ANONYMOUS' and sqlitem.object_name != '':
-                    query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS 
-                                         WHERE OWNER = '{sqlitem.object_owner}' 
-                                         AND OBJECT_NAME = '{sqlitem.object_name}' 
+                    query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS
+                                         WHERE OWNER = '{sqlitem.object_owner}'
+                                         AND OBJECT_NAME = '{sqlitem.object_name}'
                                         """
                     cursor.execute(query_obj_sql)
                     row = cursor.fetchone()
@@ -738,7 +737,7 @@ class OracleEngine(EngineBase):
                                         endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
                                         options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
                                     end;'''
-            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents 
+            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents
                                   where  SEG_OWNER not in ('SYS','SYSTEM')
                                          and session# = (select sid from v$mystat where rownum = 1)
                                          and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
@@ -822,7 +821,7 @@ class OracleEngine(EngineBase):
                                   my_sqltext := '{sql}';
                                   my_task_name := DBMS_SQLTUNE.CREATE_TUNING_TASK(
                                   sql_text    => my_sqltext,
-                                  user_name   => '{db_name}', 
+                                  user_name   => '{db_name}',
                                   scope       => 'COMPREHENSIVE',
                                   time_limit  => 30,
                                   task_name   => '{task_name}',
@@ -848,8 +847,8 @@ class OracleEngine(EngineBase):
         finally:
             # 结束分析任务
             if task_begin == 1:
-                end_sql = f'''DECLARE 
-                             begin 
+                end_sql = f'''DECLARE
+                             begin
                              dbms_sqltune.drop_tuning_task('{task_name}');
                              end;'''
                 cursor.execute(end_sql)
