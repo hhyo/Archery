@@ -203,6 +203,11 @@
                                         <a href="/binlog2sql/">Binlog2SQL</a>
                                     </li>
                                 {% endif %}
+                                {% if perms.sql.menu_my2sql %}
+                                    <li>
+                                        <a href="/my2sql/">My2SQL</a>
+                                    </li>
+                                {% endif %}
                                 {% if perms.sql.menu_schemasync %}
                                     <li>
                                         <a href="/schemasync/">SchemaSync</a>
