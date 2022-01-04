@@ -23,7 +23,7 @@ services:
       MYSQL_ROOT_PASSWORD: 123456
 
   inception:
-    image: hhyo/inception
+    image: hhyo/inception:latest
     container_name: inception
     restart: always
     expose:

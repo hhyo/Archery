@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: hanchuanchuan/goinception
+  repository: hanchuanchuan/goinception:latest
   tag: latest
   pullPolicy: IfNotPresent
 
