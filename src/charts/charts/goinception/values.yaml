@@ -7,7 +7,8 @@ replicaCount: 1
 image:
   repository: hanchuanchuan/goinception:latest
   tag: latest
-  pullPolicy: IfNotPresent
+  version: latest
+  pullPolicy: Always
 
 nameOverride: ""
 fullnameOverride: ""
