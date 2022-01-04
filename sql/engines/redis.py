@@ -85,6 +85,10 @@ class RedisEngine(EngineBase):
                 else:
                     result_set.rows = tuple([row] for row in rows)
                     result_set.affected_rows = len(rows)
+            elif isinstance(rows, dict):
+                result_set.column_list = ["field", "value"]
+                result_set.rows = tuple([[k, v] for k, v in rows.items()])
+                result_set.affected_rows = len(result_set.rows)
             else:
                 result_set.rows = tuple([[rows]])
                 result_set.affected_rows = 1 if rows else 0
