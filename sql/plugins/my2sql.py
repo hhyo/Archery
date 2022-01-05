@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from common.config import SysConfig
 from sql.plugins.plugin import Plugin
+import shlex
 
 
 class My2SQL(Plugin):
@@ -25,14 +26,14 @@ class My2SQL(Plugin):
                            'full-columns', 'do-not-add-prifixDb', 'file-per-table']
         datetime_options = ['start-datetime', 'stop-datetime']
         if shell:
-            cmd_args = f'{self.path}' if self.path else ''
+            cmd_args = f'{shlex.quote(str(self.path))}' if self.path else ''
             for name, value in args.items():
                 if name in conn_options:
                     cmd_args += f' {value}'
                 elif name in args_options and value:
-                    cmd_args += f' -{name} {value}'
+                    cmd_args += f' -{name} {shlex.quote(str(value))}'
                 elif name in datetime_options and value:
-                    cmd_args += f" -{name} '{value}'"
+                    cmd_args += f" -{name} '{shlex.quote(str(value))}'"
                 elif name in no_args_options and value:
                     cmd_args += f' -{name}'
         else:

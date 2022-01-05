@@ -61,10 +61,6 @@ RUN cd /opt \
     && git clone https://github.com/danfengcao/binlog2sql.git \
     && mv binlog2sql/binlog2sql/ tmp_binlog2sql \
     && rm -rf binlog2sql \
-#my2sql
-    && cd /opt \
-    && wget https://raw.githubusercontent.com/liuhr/my2sql/master/releases/centOS_release_7.x/my2sql -O my2sql \
-    && chmod a+x my2sql \
 #msodbc
     && cd /opt \
     && curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo \

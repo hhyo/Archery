@@ -14,6 +14,9 @@ RUN cd /opt \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
     && mv /opt/soar /opt/archery/src/plugins/ \
     && mv /opt/tmp_binlog2sql /opt/archery/src/plugins/binlog2sql \
+    #my2sql
+    && wget https://raw.githubusercontent.com/liuhr/my2sql/master/releases/centOS_release_7.x/my2sql -O my2sql \
+    && chmod a+x my2sql \
     && mv /opt/my2sql /opt/archery/src/plugins/
 
 #port
