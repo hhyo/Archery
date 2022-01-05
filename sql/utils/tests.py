@@ -1408,7 +1408,7 @@ class TestDataMasking(TestCase):
                             {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
-        sql = """select *,phone,* from users;"""
+        sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
                 ('18888888889', '18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
