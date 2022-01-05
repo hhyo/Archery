@@ -4,6 +4,7 @@ import logging
 import os
 import time
 import traceback
+import shlex
 
 import simplejson as json
 from django.conf import settings
@@ -112,7 +113,8 @@ def binlog2sql(request):
     # 提交给binlog2sql进行解析
     binlog2sql = Binlog2Sql()
     # 准备参数
-    args = {"conn_options": fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port} ",
+    args = {"conn_options": fr"-h{shlex.quote(str(instance.host))} -u{shlex.quote(str(instance.user))} \
+                -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))} ",
             "stop_never": False,
             "no-primary-key": no_pk,
             "flashback": flashback,
@@ -190,7 +192,8 @@ def binlog2sql_file(args, user):
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
-    conn_options = fr"-h{instance.host} -u{instance.user} -p'{instance.password}' -P{instance.port}"
+    conn_options = fr"-h{shlex.quote(str(instance.host))} -u{shlex.quote(str(instance.user))} \
+                -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))} ",
     args['conn_options'] = conn_options
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
