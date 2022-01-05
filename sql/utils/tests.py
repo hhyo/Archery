@@ -1403,9 +1403,9 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'},
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
                             {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select *,phone,* from users;"""
