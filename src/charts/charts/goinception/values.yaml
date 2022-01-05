@@ -7,8 +7,7 @@ replicaCount: 1
 image:
   repository: hanchuanchuan/goinception
   tag: latest
-  version: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
@@ -155,4 +154,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
