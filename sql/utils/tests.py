@@ -1233,12 +1233,12 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
+            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'},
                             {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
-        sql = """select a.*,phone,a.* from users;"""
+        sql = """select *,phone,* from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
                 ('18888888889', '18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
@@ -1298,28 +1298,30 @@ class TestDataMasking(TestCase):
             self.assertEqual(r.status, 1)
             self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
+
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_not_hit_rules(self, _inception):
         DataMaskingColumns.objects.all().delete()
         DataMaskingRules.objects.all().delete()
         _inception.return_value.query_print.return_value = {'command': 'select',
-                                                            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
-                                                            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+                                                            'select_list': ['schema': 'archer_test', 'table': 'users', 'field': 'phone'],
+                                                            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
                                                             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
-        self.assertEqual(r, query_result)
+        mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
+        self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_not_exists_star(self, _inception):
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'email'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'id_number'}],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'email'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'id_number'}],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
@@ -1333,8 +1335,8 @@ class TestDataMasking(TestCase):
         """[*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select * from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
@@ -1348,9 +1350,9 @@ class TestDataMasking(TestCase):
         """[*,column_a]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select *,phone from users;"""
         rows = (('18888888888', '18888888888',),
@@ -1366,9 +1368,9 @@ class TestDataMasking(TestCase):
         """[column_a, *]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone,* from users;"""
         rows = (('18888888888', '18888888888',),
@@ -1384,10 +1386,10 @@ class TestDataMasking(TestCase):
         """[column_a,a.*,column_b]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone,*,phone from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1403,10 +1405,10 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1422,8 +1424,8 @@ class TestDataMasking(TestCase):
         """不支持的语法"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select concat(phone,1) from users;"""
         rows = []
@@ -1439,10 +1441,10 @@ class TestDataMasking(TestCase):
             'command': 'select', 'select_list': [{
                 'type': 'aggregate', 'agg_type': 'max',
                 'aggregate': {'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': '+',
-                              'args': [{'type': 'FIELD_ITEM', 'db': 'archer_test',
+                              'args': [{ 'schema': 'archer_test',
                                         'table': 'users', 'field': 'phone'},
                                        {'type': 'INT_ITEM', 'value': '1'}]}}],
-            'table_ref': [{'db': 'archer_test', 'table': 'users'}],
+            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select max(phone+1) from users;"""
         rows = []
