@@ -1414,7 +1414,6 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         self.assertEqual(r.rows, rows)
-        self.assertEqual(r.status, 1)
         self.assertEqual(r.error, '不支持select信息为[a.*, column_a, b.*]格式的查询脱敏！')
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
@@ -1432,7 +1431,6 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         self.assertEqual(r.rows, rows)
-        self.assertEqual(r.status, 1)
         self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
@@ -1452,7 +1450,6 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         self.assertEqual(r.rows, rows)
-        self.assertEqual(r.status, 1)
         self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
     def test_go_data_masking_does_not_support_keyword(self, ):
@@ -1465,7 +1462,6 @@ class TestDataMasking(TestCase):
         for sql in sqls:
             query_result = ReviewSet(full_sql=sql)
             r = go_data_masking(self.ins, 'archery', sql, query_result)
-            self.assertEqual(r.status, 1)
             self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
 
