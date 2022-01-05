@@ -1413,8 +1413,9 @@ class TestDataMasking(TestCase):
                 ('18888888889', '18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
-        self.assertEqual(r.rows, rows)
-        self.assertEqual(r.error, '不支持select信息为[a.*, column_a, b.*]格式的查询脱敏！')
+        mask_result_rows = [['188****8888', '188****8888', '188****8888', ],
+                            ['188****8889', '188****8889', '188****8889', ]]
+        self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_aggregate(self, _inception):
