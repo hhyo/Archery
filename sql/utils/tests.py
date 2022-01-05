@@ -1333,7 +1333,7 @@ class TestDataMasking(TestCase):
         """[*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'}],
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select * from users;"""
@@ -1348,7 +1348,7 @@ class TestDataMasking(TestCase):
         """[*,column_a]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{'type': 'FIELD_ITEM', 'field': '*'},
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
                             {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
@@ -1367,7 +1367,7 @@ class TestDataMasking(TestCase):
         _inception.return_value.query_print.return_value = {
             'command': 'select',
             'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'field': '*'}, ],
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select phone,* from users;"""
@@ -1385,7 +1385,7 @@ class TestDataMasking(TestCase):
         _inception.return_value.query_print.return_value = {
             'command': 'select',
             'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            {'type': 'FIELD_ITEM', 'field': '*'},
+                            {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
                             {'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
@@ -1414,17 +1414,15 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         mask_result_rows = [['188****8888', '188****8888', '188****8888', ],
-                            ['188****8889', '188****8889', '188****8889', ]]
+                           ['188****8889', '188****8889', '188****8889', ]]
         self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_aggregate(self, _inception):
         """不支持的语法"""
         _inception.return_value.query_print.return_value = {
-            'command': 'select', 'select_list': [{
-                'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': 'concat',
-                'args': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'},
-                         {'type': 'INT_ITEM', 'value': '1'}]}],
+            'command': 'select',
+            'select_list': [{'type': 'FIELD_ITEM', 'db': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'db': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select concat(phone,1) from users;"""
