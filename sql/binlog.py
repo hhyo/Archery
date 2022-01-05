@@ -115,7 +115,7 @@ def binlog2sql(request):
     binlog2sql = Binlog2Sql()
     # 准备参数
     args = {"conn_options": fr"-h{shlex.quote(str(instance.host))} -u{shlex.quote(str(instance.user))} \
-                -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))} ",,
+                -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))} ",
             "stop_never": False,
             "no-primary-key": no_pk,
             "flashback": flashback,
