@@ -1412,7 +1412,7 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
+            'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
