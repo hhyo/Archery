@@ -51,6 +51,7 @@ urlpatterns = [
     path('database/', views.database),
     path('instanceparam/', views.instance_param),
     path('binlog2sql/', views.binlog2sql),
+    path('my2sql/', views.my2sql),
     path('schemasync/', views.schemasync),
     path('archive/', views.archive),
     path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
@@ -125,6 +126,7 @@ urlpatterns = [
 
     path('binlog/list/', binlog.binlog_list),
     path('binlog/binlog2sql/', binlog.binlog2sql),
+    path('binlog/my2sql/', binlog.my2sql),
     path('binlog/del_log/', binlog.del_binlog),
 
     path('slowquery/review/', slowlog.slowquery_review),

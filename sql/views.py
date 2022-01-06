@@ -325,6 +325,12 @@ def binlog2sql(request):
     return render(request, 'binlog2sql.html')
 
 
+@permission_required('sql.menu_my2sql', raise_exception=True)
+def my2sql(request):
+    """my2sql页面"""
+    return render(request, 'my2sql.html')
+
+
 @permission_required('sql.menu_schemasync', raise_exception=True)
 def schemasync(request):
     """数据库差异对比页面"""
