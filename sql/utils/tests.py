@@ -1302,8 +1302,9 @@ class TestDataMasking(TestCase):
     def test_go_data_masking_not_hit_rules(self, _inception):
         DataMaskingColumns.objects.all().delete()
         DataMaskingRules.objects.all().delete()
-        _inception.return_value.query_datamasking.return_value = [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}]
-
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+        ]
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
@@ -1314,11 +1315,11 @@ class TestDataMasking(TestCase):
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_not_exists_star(self, _inception):
-        _inception.return_value.query_datamasking.return_value = {
-            [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}]
-        }
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}
+        ]
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
@@ -1330,11 +1331,11 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_exists_star(self, _inception):
         """[*]"""
-        _inception.return_value.query_datamasking.return_value = {
-            [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}]
-        }
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}
+        ]
         sql = """select * from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
@@ -1346,11 +1347,11 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_star_and_column(self, _inception):
         """[*,column_a]"""
-        _inception.return_value.query_datamasking.return_value = {
-            [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}]
-        }
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}
+        ]
         sql = """select *,phone from users;"""
         rows = (('18888888888', '18888888888',),
                 ('18888888889', '18888888889',),)
@@ -1364,12 +1365,12 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_column_and_star(self, _inception):
         """[column_a, *]"""
-        _inception.return_value.query_datamasking.return_value = {
-            [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
             {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}]
-        }
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+        ]
         sql = """select phone,* from users;"""
         rows = (('18888888888', '18888888888',),
                 ('18888888889', '18888888889',))
@@ -1383,13 +1384,11 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_column_and_star_and_column(self, _inception):
         """[column_a,a.*,column_b]"""
-        _inception.return_value.query_datamasking.return_value = {
-            'command': 'select',
-            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
-            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+        ]
         sql = """select phone,*,phone from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
                 ('18888888889', '18888888889', '18888888889',))
@@ -1403,13 +1402,11 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_star_and_column_and_star(self, _inception):
         """[a.*, column_a, b.*]"""
-        _inception.return_value.query_datamasking.return_value = {
-            'command': 'select',
-            'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
-                            { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
-            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+        ]
         sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
                 ('18888888889', '18888888889', '18888888889',))
@@ -1423,11 +1420,9 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_aggregate(self, _inception):
         """不支持的语法"""
-        _inception.return_value.query_datamasking.return_value = {
-            'command': 'select',
-            'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
-            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
-            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"concat(phone,1)"}
+        ]
         sql = """select concat(phone,1) from users;"""
         rows = []
         query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
@@ -1439,15 +1434,9 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_fuc(self, _inception):
         """不支持的语法"""
-        _inception.return_value.query_datamasking.return_value = {
-            'command': 'select', 'select_list': [{
-                'type': 'aggregate', 'agg_type': 'max',
-                'aggregate': {'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': '+',
-                              'args': [{ 'schema': 'archer_test',
-                                        'table': 'users', 'field': 'phone'},
-                                       {'type': 'INT_ITEM', 'value': '1'}]}}],
-            'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
-            'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"max(phone+1)"}
+        ]
         sql = """select max(phone+1) from users;"""
         rows = []
         query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
@@ -1468,9 +1457,6 @@ class TestDataMasking(TestCase):
             r = go_data_masking(self.ins, 'archery', sql, query_result)
             print("test_go_data_masking_does_not_support_keyword",r.rows)
             self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
-
-
-
 
 
     def test_brute_mask(self):
