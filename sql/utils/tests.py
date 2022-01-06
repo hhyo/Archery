@@ -1346,7 +1346,8 @@ class TestDataMasking(TestCase):
         """[*,column_a]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"}
+            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
         ]
         sql = """select *,phone from users;"""
         rows = (('18888888888', '18888888888',),
