@@ -1432,7 +1432,7 @@ class TestDataMasking(TestCase):
         """不支持的语法"""
         _inception.return_value.query_print.return_value = {
             'command': 'select',
-            'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
+            'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
             'limit': {'limit': [{'type': 'INT_ITEM', 'value': '100'}]}}
         sql = """select concat(phone,1) from users;"""
