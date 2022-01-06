@@ -1316,9 +1316,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_not_exists_star(self, _inception):
         _inception.return_value.query_datamasking.return_value = [
-            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
@@ -1350,7 +1348,8 @@ class TestDataMasking(TestCase):
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"}
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select *,phone from users;"""
         rows = (('18888888888', '18888888888',),
@@ -1386,8 +1385,10 @@ class TestDataMasking(TestCase):
         """[column_a,a.*,column_b]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select phone,*,phone from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1404,8 +1405,10 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
+            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
