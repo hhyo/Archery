@@ -1303,7 +1303,7 @@ class TestDataMasking(TestCase):
     def test_go_data_masking_not_hit_rules(self, _inception):
         DataMaskingColumns.objects.all().delete()
         DataMaskingRules.objects.all().delete()
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{'schema': 'archer_test', 'table': 'users', 'field': 'phone'}],
             'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
@@ -1318,7 +1318,7 @@ class TestDataMasking(TestCase):
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_not_exists_star(self, _inception):
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'email'},
@@ -1336,7 +1336,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_exists_star(self, _inception):
         """[*]"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}],
             'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
@@ -1352,7 +1352,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_star_and_column(self, _inception):
         """[*,column_a]"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}],
@@ -1371,7 +1371,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_column_and_star(self, _inception):
         """[column_a, *]"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
@@ -1390,7 +1390,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_column_and_star_and_column(self, _inception):
         """[column_a,a.*,column_b]"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
@@ -1410,7 +1410,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_star_and_column_and_star(self, _inception):
         """[a.*, column_a, b.*]"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
                             { 'schema': 'archer_test', 'table': 'users', 'field': 'phone'},
@@ -1430,7 +1430,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_aggregate(self, _inception):
         """不支持的语法"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select',
             'old_select_list': [{ 'schema': 'archer_test', 'table': 'users', 'field': 'phone'}, ],
             'table_ref': [{'schema': 'archer_test', 'table': 'users'}],
@@ -1446,7 +1446,7 @@ class TestDataMasking(TestCase):
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_fuc(self, _inception):
         """不支持的语法"""
-        _inception.return_value.query_print.return_value = {
+        _inception.return_value.query_datamasking.return_value = {
             'command': 'select', 'select_list': [{
                 'type': 'aggregate', 'agg_type': 'max',
                 'aggregate': {'type': 'FUNC_ITEM', 'func': 'OTHERS', 'name': '+',
@@ -1475,6 +1475,8 @@ class TestDataMasking(TestCase):
             r = go_data_masking(self.ins, 'archery', sql, query_result)
             print("test_go_data_masking_does_not_support_keyword",r.rows)
             self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+
+
 
 
     def test_brute_mask(self):
