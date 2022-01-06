@@ -1312,6 +1312,7 @@ class TestDataMasking(TestCase):
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         self.assertEqual(r.rows, mask_result_rows)
 
@@ -1328,6 +1329,7 @@ class TestDataMasking(TestCase):
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         self.assertEqual(r.rows, mask_result_rows)
 
@@ -1343,6 +1345,7 @@ class TestDataMasking(TestCase):
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         self.assertEqual(r.rows, mask_result_rows)
 
@@ -1360,6 +1363,7 @@ class TestDataMasking(TestCase):
                 ('18888888889', '18888888889',),)
         query_result = ReviewSet(column_list=['phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', '188****8888', ],
                             ['188****8889', '188****8889', ]]
         self.assertEqual(r.rows, mask_result_rows)
@@ -1378,6 +1382,7 @@ class TestDataMasking(TestCase):
                 ('18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', '188****8888', ],
                             ['188****8889', '188****8889', ]]
         self.assertEqual(r.rows, mask_result_rows)
@@ -1397,6 +1402,7 @@ class TestDataMasking(TestCase):
                 ('18888888889', '18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', '188****8888', '188****8888', ],
                             ['188****8889', '188****8889', '188****8889', ]]
         self.assertEqual(r.rows, mask_result_rows)
@@ -1416,6 +1422,7 @@ class TestDataMasking(TestCase):
                 ('18888888889', '18888888889', '18888888889',))
         query_result = ReviewSet(column_list=['phone', 'phone', 'phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         mask_result_rows = [['188****8888', '188****8888', '188****8888', ],
                            ['188****8889', '188****8889', '188****8889', ]]
         self.assertEqual(r.rows, mask_result_rows)
@@ -1432,6 +1439,7 @@ class TestDataMasking(TestCase):
         rows = []
         query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         self.assertEqual(r.rows, rows)
         self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
@@ -1451,6 +1459,7 @@ class TestDataMasking(TestCase):
         rows = []
         query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        print(r.rows)
         self.assertEqual(r.rows, rows)
         self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
@@ -1464,6 +1473,7 @@ class TestDataMasking(TestCase):
         for sql in sqls:
             query_result = ReviewSet(full_sql=sql)
             r = go_data_masking(self.ins, 'archery', sql, query_result)
+            print(r.rows)
             self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
 
 
