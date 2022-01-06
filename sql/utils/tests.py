@@ -1302,9 +1302,8 @@ class TestDataMasking(TestCase):
     def test_go_data_masking_not_hit_rules(self, _inception):
         DataMaskingColumns.objects.all().delete()
         DataMaskingRules.objects.all().delete()
-        _inception.return_value.query_datamasking.return_value = {
-            [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}]
-        }
+        _inception.return_value.query_datamasking.return_value = [{"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}]
+
         sql = """select phone from users;"""
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
