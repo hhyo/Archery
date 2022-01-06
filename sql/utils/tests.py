@@ -1310,8 +1310,7 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         print("test_go_data_masking_not_hit_rules:" , r.rows)
-        mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
-        self.assertEqual(r.rows, mask_result_rows)
+        self.assertEqual(r, query_result)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_hit_rules_not_exists_star(self, _inception):
@@ -1347,9 +1346,7 @@ class TestDataMasking(TestCase):
         """[*,column_a]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
-            {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"}
         ]
         sql = """select *,phone from users;"""
         rows = (('18888888888', '18888888888',),
