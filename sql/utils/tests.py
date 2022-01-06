@@ -1387,7 +1387,7 @@ class TestDataMasking(TestCase):
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
             {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select phone,*,phone from users;"""
@@ -1407,7 +1407,7 @@ class TestDataMasking(TestCase):
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"email","type":"varchar(80)","table":"users","schema":"archer_test","alias":"email"},
             {"index":2,"field":"id_number","type":"varchar(80)","table":"users","schema":"archer_test","alias":"id_number"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
             {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select a.*,phone,a.* from users a;"""
