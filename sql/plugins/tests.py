@@ -11,6 +11,7 @@ from unittest.mock import patch, ANY
 from django.contrib.auth import get_user_model
 
 from sql.plugins.binglog2sql import Binlog2Sql
+from sql.plugins.my2sql import My2SQL
 from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
 from sql.plugins.sqladvisor import SQLAdvisor
@@ -197,6 +198,36 @@ class TestPlugin(TestCase):
         cmd_args = binlog2sql.generate_args2cmd(args, False)
         self.assertIsInstance(cmd_args, list)
         cmd_args = binlog2sql.generate_args2cmd(args, True)
+        self.assertIsInstance(cmd_args, str)
+
+    def test_my2sql_generate_args2cmd(self):
+        """
+        测试my2sql参数转换
+        :return:
+        """
+        args = {'conn_options': "-host mysql -user root -password '123456' -port 3306 ",
+                'work-type': '2sql',
+                'start-file': 'mysql-bin.000043',
+                'start-pos': 111,
+                'stop-file': '',
+                'stop-pos': '',
+                'start-datetime': '',
+                'stop-datetime': '',
+                'databases': 'account_center',
+                'tables': 'ac_apps',
+                'sql': 'update',
+                "threads": 1,
+                "add-extraInfo": "false",
+                "ignore-primaryKey-forInsert": "false",
+                "full-columns": "false",
+                "do-not-add-prifixDb": "false",
+                "file-per-table": "false"}
+        self.sys_config.set('my2sql', '/opt/archery/src/plugins/my2sql')
+        self.sys_config.get_all_config()
+        my2sql = My2SQL()
+        cmd_args = my2sql.generate_args2cmd(args, False)
+        self.assertIsInstance(cmd_args, list)
+        cmd_args = my2sql.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
     def test_pt_archiver_generate_args2cmd(self):
