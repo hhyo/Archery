@@ -14,6 +14,7 @@ from sql.utils.sql_utils import get_syntax_type, get_full_sqlitem_list, get_exec
 from . import EngineBase
 import cx_Oracle
 from .models import ResultSet, ReviewSet, ReviewResult
+#from sql.utils.data_masking import brute_mask
 from sql.utils.data_masking import simple_column_mask
 
 logger = logging.getLogger('default')
@@ -138,13 +139,17 @@ class OracleEngine(EngineBase):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
-        column_name,
+        a.column_name,
         data_type,
         data_length,
         nullable,
-        data_default
-        FROM all_tab_cols
-        WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
+        data_default,
+        b.comments
+        FROM all_tab_cols a, all_col_comments b
+        WHERE a.table_name = b.table_name
+        and a.owner = b.OWNER
+        and a.COLUMN_NAME = b.COLUMN_NAME
+        and a.table_name = '{tb_name}' and a.owner = '{db_name}' order by column_id
         """
         result = self.query(db_name=db_name, sql=sql)
         return result
@@ -365,6 +370,7 @@ class OracleEngine(EngineBase):
     def query_masking(self, db_name=None, sql='', resultset=None):
         """简单字段脱敏规则, 仅对select有效"""
         if re.match(r"^select", sql, re.I):
+            #filtered_result = brute_mask(self.instance, resultset)
             filtered_result = simple_column_mask(self.instance, resultset)
             filtered_result.is_masked = True
         else:
