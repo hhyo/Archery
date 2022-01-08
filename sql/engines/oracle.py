@@ -138,13 +138,17 @@ class OracleEngine(EngineBase):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
-        column_name,
+        a.column_name,
         data_type,
         data_length,
         nullable,
-        data_default
-        FROM all_tab_cols
-        WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
+        data_default,
+        b.comments
+        FROM all_tab_cols a, all_col_comments b
+        WHERE a.table_name = b.table_name
+        and a.owner = b.OWNER
+        and a.COLUMN_NAME = b.COLUMN_NAME
+        and a.table_name = '{tb_name}' and a.owner = '{db_name}' order by column_id
         """
         result = self.query(db_name=db_name, sql=sql)
         return result
