@@ -1416,12 +1416,12 @@ class TestDataMasking(TestCase):
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"concat(phone,1)"}
         ]
         sql = """select concat(phone,1) from users;"""
-        rows = []
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
+        mask_result_rows = [['188****88881', ], ['188****88891', ], ['188****88101', ]]
         print("test_go_data_masking_does_not_support_aggregate",r.rows)
-        self.assertEqual(r.rows, rows)
-        self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+        self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_does_not_support_fuc(self, _inception):
@@ -1430,12 +1430,12 @@ class TestDataMasking(TestCase):
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"max(phone+1)"}
         ]
         sql = """select max(phone+1) from users;"""
-        rows = []
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
         query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
+        mask_result_rows = [['188****8889.0', ], ['188****8890.0', ], ['188****8811.0', ]]
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         print("test_go_data_masking_does_not_support_fuc",r.rows)
-        self.assertEqual(r.rows, rows)
-        self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+        self.assertEqual(r.rows, mask_result_rows)
 
     def test_go_data_masking_does_not_support_keyword(self, ):
         """不支持的关键字"""
