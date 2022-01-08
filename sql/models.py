@@ -692,6 +692,7 @@ class Permission(models.Model):
             ('menu_tools', '菜单 工具插件'),
             ('menu_archive', '菜单 数据归档'),
             ('menu_binlog2sql', '菜单 Binlog2SQL'),
+            ('menu_my2sql', '菜单 My2SQL'),
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
