@@ -28,7 +28,7 @@ class Soar(Plugin):
         :return:
         """
         if shell:
-            cmd_args = self.path if self.path else ''
+            cmd_args = shlex.quote(str(self.path)) if self.path else ''
             for name, value in args.items():
                 cmd_args += f" -{name}={shlex.quote(str(value))}"
         else:
