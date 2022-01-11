@@ -29,7 +29,7 @@ class PgSQLEngine(EngineBase):
         if self.conn:
             return self.conn
         self.conn = psycopg2.connect(host=self.host, port=self.port, user=self.user,
-                                     password=self.password, dbname=db_name)
+                                     password=self.password, dbname=db_name, connect_timeout=10)
         return self.conn
 
     @property
