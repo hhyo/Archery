@@ -26,7 +26,7 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
-                           encoding_errors='ignore', decode_responses=True)
+                           encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
 
     @property
     def name(self):

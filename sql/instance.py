@@ -13,6 +13,7 @@ from django.views.decorators.cache import cache_page
 
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from common.utils.convert import Convert
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
 from .models import Instance, ParamTemplate, ParamHistory
@@ -28,6 +29,8 @@ def lists(request):
     tags = request.POST.getlist('tags[]')
     limit = offset + limit
     search = request.POST.get('search', '')
+    sortName = str(request.POST.get('sortName'))
+    sortOrder = str(request.POST.get('sortOrder')).lower()
 
     # 组合筛选项
     filter_dict = dict()
@@ -48,7 +51,12 @@ def lists(request):
             instances = instances.filter(instance_tag=tag, instance_tag__active=True)
 
     count = instances.count()
-    instances = instances[offset:limit].values("id", "instance_name", "db_type", "type", "host", "port", "user")
+    if sortName == 'instance_name':
+        instances = instances.order_by(getattr(Convert(sortName, 'gbk'), sortOrder)())[offset:limit]
+    else:
+        instances = instances.order_by('-' + sortName if sortOrder == 'desc' else sortName)[offset:limit]
+    instances = instances.values("id", "instance_name", "db_type", "type", "host", "port", "user")
+
     # QuerySet 序列化
     rows = [row for row in instances]
 
