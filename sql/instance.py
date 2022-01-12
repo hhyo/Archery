@@ -201,15 +201,15 @@ def schemasync(request):
         "sync-comments": sync_comments,
         "tag": tag,
         "output-directory": output_directory,
-        "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=instance_info.user,
-                                                                            pwd=instance_info.password,
-                                                                            host=instance_info.host,
-                                                                            port=instance_info.port,
+        "source": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=shlex.quote(str(instance_info.user)),
+                                                                            pwd=shlex.quote(str(instance_info.password)),
+                                                                            host=shlex.quote(str(instance_info.host)),
+                                                                            port=shlex.quote(str(instance_info.port)),
                                                                             database=db_name),
-        "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=target_instance_info.user,
-                                                                            pwd=target_instance_info.password,
-                                                                            host=target_instance_info.host,
-                                                                            port=target_instance_info.port,
+        "target": r"mysql://{user}:'{pwd}'@{host}:{port}/{database}".format(user=shlex.quote(str(target_instance_info.user)),
+                                                                            pwd=shlex.quote(str(target_instance_info.password)),
+                                                                            host=shlex.quote(str(target_instance_info.host)),
+                                                                            port=shlex.quote(str(target_instance_info.port)),
                                                                             database=target_db_name)
     }
     # 参数检查

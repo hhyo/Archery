@@ -33,7 +33,7 @@ class Binlog2Sql(Plugin):
                          'start-datetime', 'stop-datetime']
         filter_options = ['databases', 'tables', 'only-dml', 'sql-type']
         if shell:
-            cmd_args = f'python {self.path}' if self.path else ''
+            cmd_args = f'python {shlex.quote(str(self.path))}' if self.path else ''
             for name, value in args.items():
                 if name in conn_options:
                     cmd_args += f' {value}'
