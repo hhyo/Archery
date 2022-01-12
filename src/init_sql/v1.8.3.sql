@@ -9,3 +9,6 @@ CREATE TABLE `audit_log` (
   PRIMARY KEY (`id`),
   KEY `idx_username` (`user_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='登录审计日志表';
+
+-- ssh 隧道功能修改
+ALTER TABLE `ssh_tunnel` ADD COLUMN pkey longtext NULL AFTER password DEFAULT CHARSET=utf8mb4 COMMENT='密钥信息';
