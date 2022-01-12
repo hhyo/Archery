@@ -1057,7 +1057,7 @@ class TestInception(TestCase):
         new_engine = GoInceptionEngine()
         command = 'pause'
         sqlsha1 = 'xxxxx'
-        sql = f"inception pause alter '{sqlsha1}';"
+        sql = f"inception pause osc '{sqlsha1}';"
         _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
         _query.assert_called_once_with(sql=sql)
