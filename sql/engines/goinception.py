@@ -37,6 +37,21 @@ class GoInceptionEngine(EngineBase):
                                     connect_timeout=10)
         return self.conn
 
+    @staticmethod
+    def get_backup_connection():
+        archer_config = SysConfig()
+        backup_host = archer_config.get('inception_remote_backup_host')
+        backup_port = int(archer_config.get('inception_remote_backup_port', 3306))
+        backup_user = archer_config.get('inception_remote_backup_user')
+        backup_password = archer_config.get('inception_remote_backup_password', '')
+        return MySQLdb.connect(host=backup_host,
+                               port=backup_port,
+                               user=backup_user,
+                               passwd=backup_password,
+                               charset='utf8mb4',
+                               autocommit=True
+                               )
+
     def execute_check(self, instance=None, db_name=None, sql=''):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
@@ -170,6 +185,59 @@ class GoInceptionEngine(EngineBase):
             raise SyntaxError(f"Inception Error: {print_info['query_tree']}")
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
+
+    def get_rollback(self, workflow):
+        """
+        获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
+        """
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        # 回滚语句倒序展示
+        list_execute_result.reverse()
+        list_backup_sql = []
+        # 创建连接
+        conn = self.get_backup_connection()
+        cur = conn.cursor()
+        for row in list_execute_result:
+            try:
+                # 获取backup_db_name， 兼容旧数据'[[]]'格式
+                if isinstance(row, list):
+                    if row[8] == 'None':
+                        continue
+                    backup_db_name = row[8]
+                    sequence = row[7]
+                    sql = row[5]
+                # 新数据
+                else:
+                    if row.get('backup_dbname') in ('None', ''):
+                        continue
+                    backup_db_name = row.get('backup_dbname')
+                    sequence = row.get('sequence')
+                    sql = row.get('sql')
+                # 获取备份表名
+                opid_time = sequence.replace("'", "")
+                sql_table = f"""select tablename
+                                from {backup_db_name}.$_$Inception_backup_information$_$
+                                where opid_time='{opid_time}';"""
+
+                cur.execute(sql_table)
+                list_tables = cur.fetchall()
+                if list_tables:
+                    # 获取备份语句
+                    table_name = list_tables[0][0]
+                    sql_back = f"""select rollback_statement
+                                   from {backup_db_name}.{table_name}
+                                   where opid_time='{opid_time}'"""
+                    cur.execute(sql_back)
+                    list_backup = cur.fetchall()
+                    # 拼接成回滚语句列表,['源语句'，'回滚语句']
+                    list_backup_sql.append([sql, '\n'.join([back_info[0] for back_info in list_backup])])
+            except Exception as e:
+                logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
+                raise Exception(e)
+        # 关闭连接
+        if conn:
+            conn.close()
+        return list_backup_sql
 
     def get_variables(self, variables=None):
         """获取实例参数"""
