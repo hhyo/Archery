@@ -409,7 +409,7 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.goinception')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_execute_check_critical_sql(self, _inception_engine):
         self.sys_config.set('goinception', 'true')
         self.sys_config.set('critical_ddl_regex', '^|update')
@@ -432,7 +432,7 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.goinception')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_execute_check_normal_sql(self, _inception_engine):
         self.sys_config.set('goinception', 'true')
         sql = 'update user set id=1'
@@ -449,7 +449,7 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.goinception')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_execute_check_normal_sql_with_Exception(self, _inception_engine):
         sql = 'update user set id=1'
         _inception_engine.return_value.execute_check.side_effect = RuntimeError()
