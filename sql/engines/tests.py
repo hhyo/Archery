@@ -1059,8 +1059,8 @@ class TestInception(TestCase):
         sqlsha1 = 'xxxxx'
         sql = f"inception pause alter '{sqlsha1}';"
         _query.return_value = ResultSet(full_sql=sql, rows=[], column_list=[])
-        with self.assertRaisesMessage(ValueError, 'pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！'):
-            new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        new_engine.osc_control(sqlsha1=sqlsha1, command=command)
+        _query.assert_called_once_with(sql=sql)
 
     @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_get_variables(self, _query):
