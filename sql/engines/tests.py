@@ -992,11 +992,7 @@ class TestInception(TestCase):
     @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_query_print(self, _query):
         sql = 'update user set id=100'
-        row = [1,
-               'select * from sql_instance limit 100',
-               0,
-               '{"command":"select","select_list":[{"type":"FIELD_ITEM","field":"*"}],"table_ref":[{"db":"archery","table":"sql_instance"}],"limit":{"limit":[{"type":"INT_ITEM","value":"100"}]}}',
-               'None']
+        row = {"text":"update user set id=100","TableRefs":{"text":"","TableRefs":{"text":"","resultFields":null,"Left":{"text":"","Source":{"text":"","resultFields":null,"Schema":{"O":"","L":""},"Name":{"O":"user","L":"user"},"DBInfo":null,"TableInfo":null,"IndexHints":null,"PartitionNames":null},"AsName":{"O":"","L":""}},"Right":null,"Tp":0,"On":null,"Using":null,"NaturalJoin":false,"StraightJoin":false}},"List":[{"text":"","Column":{"text":"","Schema":{"O":"","L":""},"Table":{"O":"","L":""},"Name":{"O":"id","L":"id"}},"Expr":{"text":"","k":1,"collation":0,"decimal":0,"length":0,"i":100,"b":null,"x":null,"Type":{"Tp":8,"Flag":128,"Flen":3,"Decimal":0,"Charset":"binary","Collate":"binary","Elems":null},"flag":0,"projectionOffset":-1}}],"Where":null,"Order":null,"Limit":null,"Priority":0,"IgnoreErr":false,"MultipleTable":false,"TableHints":null}
         column_list = ['ID', 'statement', 'errlevel', 'query_tree', 'errmsg']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
         new_engine = GoInceptionEngine()
