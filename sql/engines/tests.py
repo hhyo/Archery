@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from common.config import SysConfig
 from sql.engines import EngineBase
-from sql.engines.goinception import GoInceptionEngine
+from sql.engines.goinception import GoInceptionEngine, _repair_json_str
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
 from sql.engines.mssql import MssqlEngine
 from sql.engines.mysql import MysqlEngine
@@ -17,7 +17,6 @@ from sql.engines.redis import RedisEngine
 from sql.engines.pgsql import PgSQLEngine
 from sql.engines.oracle import OracleEngine
 from sql.engines.mongo import MongoEngine
-from sql.engines.inception import InceptionEngine, _repair_json_str
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -389,9 +388,9 @@ class TestMysql(TestCase):
         masking_result = new_engine.query_masking(db_name='archery', sql='explain select 1', resultset=query_result)
         self.assertEqual(masking_result, query_result)
 
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_execute_check_select_sql(self, _inception_engine):
-        self.sys_config.set('inception', 'true')
+        self.sys_config.set('goinception', 'true')
         sql = 'select * from user'
         inc_row = ReviewResult(id=1,
                                errlevel=0,
@@ -410,9 +409,9 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.goinception')
     def test_execute_check_critical_sql(self, _inception_engine):
-        self.sys_config.set('inception', 'true')
+        self.sys_config.set('goinception', 'true')
         self.sys_config.set('critical_ddl_regex', '^|update')
         self.sys_config.get_all_config()
         sql = 'update user set id=1'
@@ -433,9 +432,9 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.goinception')
     def test_execute_check_normal_sql(self, _inception_engine):
-        self.sys_config.set('inception', 'true')
+        self.sys_config.set('goinception', 'true')
         sql = 'update user set id=1'
         row = ReviewResult(id=1,
                            errlevel=0,
@@ -450,7 +449,7 @@ class TestMysql(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.goinception')
     def test_execute_check_normal_sql_with_Exception(self, _inception_engine):
         sql = 'update user set id=1'
         _inception_engine.return_value.execute_check.side_effect = RuntimeError()
@@ -459,9 +458,9 @@ class TestMysql(TestCase):
             new_engine.execute_check(db_name=0, sql=sql)
 
     @patch.object(MysqlEngine, 'query')
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_execute_workflow(self, _inception_engine, _query):
-        self.sys_config.set('inception', 'true')
+        self.sys_config.set('goinception', 'true')
         sql = 'update user set id=1'
         _inception_engine.return_value.execute.return_value = ReviewSet(full_sql=sql)
         _query.return_value.rows = (('0',),)
@@ -506,16 +505,16 @@ class TestMysql(TestCase):
 
     @patch('sql.engines.mysql.GoInceptionEngine')
     def test_osc_go_inception(self, _inception_engine):
-        self.sys_config.set('inception', 'false')
+        self.sys_config.set('goinception', 'false')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
         new_engine = MysqlEngine(instance=self.ins1)
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
 
-    @patch('sql.engines.mysql.InceptionEngine')
+    @patch('sql.engines.mysql.GoInceptionEngine')
     def test_osc_inception(self, _inception_engine):
-        self.sys_config.set('inception', 'true')
+        self.sys_config.set('goinception', 'true')
         _inception_engine.return_value.osc_control.return_value = ReviewSet()
         command = 'get'
         sqlsha1 = 'xxxxx'
@@ -906,7 +905,7 @@ class TestInception(TestCase):
     def setUp(self):
         self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='mysql', host='some_host',
                                            port=3306, user='ins_user', password='some_str')
-        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='inception',
+        self.ins_inc = Instance.objects.create(instance_name='some_ins_inc', type='slave', db_type='goinception',
                                                host='some_host', port=6669)
         self.wf = SqlWorkflow.objects.create(
             workflow_name='some_name',
@@ -931,44 +930,44 @@ class TestInception(TestCase):
 
     @patch('MySQLdb.connect')
     def test_get_connection(self, _connect):
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         new_engine.get_connection()
         _connect.assert_called_once()
 
     @patch('MySQLdb.connect')
     def test_get_backup_connection(self, _connect):
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         new_engine.get_backup_connection()
         _connect.assert_called_once()
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_execute_check_normal_sql(self, _query):
         sql = 'update user set id=100'
         row = [1, 'CHECKED', 0, 'Audit completed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
         _query.return_value = ResultSet(full_sql=sql, rows=[row])
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         check_result = new_engine.execute_check(instance=self.ins, db_name=0, sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_execute_exception(self, _query):
         sql = 'update user set id=100'
         row = [1, 'CHECKED', 1, 'Execute failed', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
         column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                        'backup_dbname', 'execute_time', 'sqlsha1']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_execute_finish(self, _query):
         sql = 'update user set id=100'
         row = [1, 'CHECKED', 0, 'Execute Successfully', 'None', 'use archery', 0, "'0_0_0'", 'None', '0', '']
         column_list = ['ID', 'stage', 'errlevel', 'stagestatus', 'errormessage', 'SQL', 'Affected_rows', 'sequence',
                        'backup_dbname', 'execute_time', 'sqlsha1']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         execute_result = new_engine.execute(workflow=self.wf)
         self.assertIsInstance(execute_result, ReviewSet)
 
@@ -977,7 +976,7 @@ class TestInception(TestCase):
     @patch('MySQLdb.connect')
     def test_query(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
 
@@ -986,11 +985,11 @@ class TestInception(TestCase):
     @patch('MySQLdb.connect')
     def test_query_not_limit(self, _conn, _cursor, _execute):
         _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
-        new_engine = InceptionEngine(instance=self.ins)
+        new_engine = GoInceptionEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='select 1', limit_num=0)
         self.assertIsInstance(query_result, ResultSet)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_query_print(self, _query):
         sql = 'update user set id=100'
         row = [1,
@@ -1000,7 +999,7 @@ class TestInception(TestCase):
                'None']
         column_list = ['ID', 'statement', 'errlevel', 'query_tree', 'errmsg']
         _query.return_value = ResultSet(full_sql=sql, rows=[row], column_list=column_list)
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         print_result = new_engine.query_print(self.ins, db_name=None, sql=sql)
         self.assertDictEqual(print_result, json.loads(_repair_json_str(row[3])))
 
@@ -1034,12 +1033,12 @@ class TestInception(TestCase):
             "actual_affected_rows": 3
         }]"""
         self.wf.sqlworkflowcontent.save()
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         new_engine.get_rollback(self.wf)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_osc_get(self, _query):
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         command = 'get'
         sqlsha1 = 'xxxxx'
         sql = f"inception get osc_percent '{sqlsha1}';"
@@ -1047,9 +1046,9 @@ class TestInception(TestCase):
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
         _query.assert_called_once_with(sql=sql)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_osc_kill(self, _query):
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         command = 'kill'
         sqlsha1 = 'xxxxx'
         sql = f"inception stop alter '{sqlsha1}';"
@@ -1057,9 +1056,9 @@ class TestInception(TestCase):
         new_engine.osc_control(sqlsha1=sqlsha1, command=command)
         _query.assert_called_once_with(sql=sql)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_osc_not_support(self, _query):
-        new_engine = InceptionEngine()
+        new_engine = GoInceptionEngine()
         command = 'stop'
         sqlsha1 = 'xxxxx'
         sql = f"inception stop alter '{sqlsha1}';"
@@ -1067,23 +1066,23 @@ class TestInception(TestCase):
         with self.assertRaisesMessage(ValueError, 'pt-osc不支持暂停和恢复，需要停止执行请使用终止按钮！'):
             new_engine.osc_control(sqlsha1=sqlsha1, command=command)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_get_variables(self, _query):
-        new_engine = InceptionEngine(instance=self.ins_inc)
+        new_engine = GoInceptionEngine(instance=self.ins_inc)
         new_engine.get_variables()
         sql = f"inception get variables;"
         _query.assert_called_once_with(sql=sql)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_get_variables_filter(self, _query):
-        new_engine = InceptionEngine(instance=self.ins_inc)
+        new_engine = GoInceptionEngine(instance=self.ins_inc)
         new_engine.get_variables(variables=['inception_osc_on'])
         sql = f"inception get variables 'inception_osc_on';"
         _query.assert_called_once_with(sql=sql)
 
-    @patch('sql.engines.inception.InceptionEngine.query')
+    @patch('sql.engines.goinception.GoInceptionEngine.query')
     def test_set_variable(self, _query):
-        new_engine = InceptionEngine(instance=self.ins)
+        new_engine = GoInceptionEngine(instance=self.ins)
         new_engine.set_variable('inception_osc_on', 'on')
         _query.assert_called_once_with(sql="inception set inception_osc_on=on;")
 

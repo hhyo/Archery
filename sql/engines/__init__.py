@@ -170,10 +170,6 @@ def get_engine(instance=None):  # pragma: no cover
         from .mongo import MongoEngine
 
         return MongoEngine(instance=instance)
-    elif instance.db_type == "inception":
-        from .inception import InceptionEngine
-
-        return InceptionEngine(instance=instance)
     elif instance.db_type == "goinception":
         from .goinception import GoInceptionEngine
 

@@ -13,7 +13,6 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
 from sql.utils.go_data_masking import go_data_masking
 from common.config import SysConfig
@@ -26,7 +25,7 @@ class MysqlEngine(EngineBase):
     def __init__(self, instance=None):
         super().__init__(instance=instance)
         self.config = SysConfig()
-        self.inc_engine = InceptionEngine() if self.config.get('inception') else GoInceptionEngine()
+        self.inc_engine = GoInceptionEngine()
 
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
@@ -235,13 +234,7 @@ class MysqlEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            ##判断是否设置了inception脱敏，如果未配置inception地址，则使用goinception脱敏
-            if (self.config.get('inception_host') is None):
-                mask_result = go_data_masking(self.instance, db_name, sql, resultset)
-                #print("use goinception")
-            else:
-                mask_result = data_masking(self.instance, db_name, sql, resultset)
-                #print("use inception")
+            mask_result = go_data_masking(self.instance, db_name, sql, resultset)
         else:
             mask_result = resultset
         return mask_result
@@ -345,7 +338,7 @@ class MysqlEngine(EngineBase):
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
-        inception_engine = InceptionEngine()
+        inception_engine = GoInceptionEngine()
         return inception_engine.get_rollback(workflow)
 
     def get_variables(self, variables=None):
