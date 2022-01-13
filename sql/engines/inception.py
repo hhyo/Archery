@@ -206,8 +206,8 @@ class InceptionEngine(EngineBase):
                     sql = row.get('sql')
                 # 获取备份表名
                 opid_time = sequence.replace("'", "")
-                sql_table = f"""select tablename 
-                                from {backup_db_name}.$_$Inception_backup_information$_$ 
+                sql_table = f"""select tablename
+                                from {backup_db_name}.$_$Inception_backup_information$_$
                                 where opid_time='{opid_time}';"""
 
                 cur.execute(sql_table)
@@ -215,8 +215,8 @@ class InceptionEngine(EngineBase):
                 if list_tables:
                     # 获取备份语句
                     table_name = list_tables[0][0]
-                    sql_back = f"""select rollback_statement 
-                                   from {backup_db_name}.{table_name} 
+                    sql_back = f"""select rollback_statement
+                                   from {backup_db_name}.{table_name}
                                    where opid_time='{opid_time}'"""
                     cur.execute(sql_back)
                     list_backup = cur.fetchall()

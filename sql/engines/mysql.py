@@ -13,8 +13,8 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
-from .inception import InceptionEngine
 from sql.utils.data_masking import data_masking
+from sql.utils.go_data_masking import go_data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
@@ -25,7 +25,7 @@ class MysqlEngine(EngineBase):
     def __init__(self, instance=None):
         super().__init__(instance=instance)
         self.config = SysConfig()
-        self.inc_engine = InceptionEngine() if self.config.get('inception') else GoInceptionEngine()
+        self.inc_engine = GoInceptionEngine()
 
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
@@ -112,7 +112,7 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
-        sql = f"""SELECT 
+        sql = f"""SELECT
             COLUMN_NAME,
             COLUMN_TYPE,
             CHARACTER_SET_NAME,
@@ -234,7 +234,7 @@ class MysqlEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            mask_result = data_masking(self.instance, db_name, sql, resultset)
+            mask_result = go_data_masking(self.instance, db_name, sql, resultset)
         else:
             mask_result = resultset
         return mask_result
@@ -338,7 +338,7 @@ class MysqlEngine(EngineBase):
 
     def get_rollback(self, workflow):
         """通过inception获取回滚语句列表"""
-        inception_engine = InceptionEngine()
+        inception_engine = GoInceptionEngine()
         return inception_engine.get_rollback(workflow)
 
     def get_variables(self, variables=None):
