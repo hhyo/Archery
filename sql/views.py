@@ -16,6 +16,7 @@ from archery import settings
 from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
+from common.utils.convert import Convert
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
@@ -68,7 +69,7 @@ def sqlworkflow(request):
     else:
         filter_dict['engineer'] = user.username
     instance_id = SqlWorkflow.objects.filter(**filter_dict).values('instance_id').distinct()
-    instance = Instance.objects.filter(pk__in=instance_id)
+    instance = Instance.objects.filter(pk__in=instance_id).order_by(Convert('instance_name', 'gbk').asc())
     resource_group_id = SqlWorkflow.objects.filter(**filter_dict).values('group_id').distinct()
     resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
 
@@ -342,7 +343,7 @@ def archive(request):
     """归档列表页面"""
     # 获取资源组
     group_list = user_groups(request.user)
-    ins_list = user_instances(request.user, db_type=['mysql'])
+    ins_list = user_instances(request.user, db_type=['mysql']).order_by(Convert('instance_name', 'gbk').asc())
     return render(request, 'archive.html', {'group_list': group_list, 'ins_list': ins_list})
 
 
