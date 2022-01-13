@@ -21,10 +21,10 @@ def go_data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
     try:
         if SysConfig().get('query_check'):
-            # 解析查询语句，禁用部分Inception无法解析关键词
+            # 解析查询语句，禁用部分goInception无法解析关键词，先放着空吧，，，，也许某天用上了，:)
             p = sqlparse.parse(sql)[0]
             for token in p.tokens:
-                if token.ttype is Keyword and token.value.upper() in ['UNION', 'UNION ALL']:
+                if token.ttype is Keyword and token.value.upper() in ['']:
                     logger.warning(f'数据脱敏异常，错误信息：不支持该查询语句脱敏！请联系管理员')
                     sql_result.error = '不支持该查询语句脱敏！请联系管理员'
                     sql_result.status = 1
@@ -32,6 +32,8 @@ def go_data_masking(instance, db_name, sql, sql_result):
         # 通过Inception获取语法树,并进行解析
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
+        #去重，避免后面循环字段数量大于结果集中字段数量
+        query_tree=DelRepeat(query_tree,'index')
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
 
@@ -137,6 +139,22 @@ def analyze_query_tree(query_tree, instance):
 
     return table_hit_columns, hit_columns
 
+def DelRepeat(data,key):
+    """输入的 data 是inception_engine.query_datamasking的list结果，
+    输入的 key 是上面 data中index 字段，用于筛选去重
+    去重前
+    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
+    去重后
+    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
+    返回同样结构的list.
+    """
+    new_data_list = []
+    values = []
+    for d in data:
+        if d[key] not in values:
+            new_data_list.append(d)
+            values.append(d[key])
+    return new_data_list
 
 def hit_column(masking_columns, instance, table_schema, table_name, column_name):
     """判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型"""
