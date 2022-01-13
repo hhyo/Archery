@@ -1267,6 +1267,7 @@ class TestDataMasking(TestCase):
         print("test_go_data_masking_max_function_support",r.rows)
         self.assertEqual(r.rows, mask_result_rows)
 
+    @patch('sql.utils.go_data_masking.GoInceptionEngine')
     def test_go_data_masking_union_support_keyword(self, _inception):
         """union关键字"""
         self.sys_config.set('query_check', 'true')
