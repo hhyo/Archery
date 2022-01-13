@@ -1240,8 +1240,8 @@ class TestDataMasking(TestCase):
         self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
-    def test_go_data_masking_does_not_support_aggregate(self, _inception):
-        """不支持的语法"""
+    def test_go_data_masking_concat_function_support(self, _inception):
+        """concat_函数支持"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"concat(phone,1)"}
         ]
@@ -1250,12 +1250,12 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['concat(phone,1)'], rows=rows, full_sql=sql)
         r = go_data_masking(self.ins, 'archery', sql, query_result)
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
-        print("test_go_data_masking_does_not_support_aggregate",r.rows)
+        print("test_go_data_masking_concat_function_support",r.rows)
         self.assertEqual(r.rows, mask_result_rows)
 
     @patch('sql.utils.go_data_masking.GoInceptionEngine')
-    def test_go_data_masking_does_not_support_fuc(self, _inception):
-        """不支持的语法"""
+    def test_go_data_masking_max_function_support(self, _inception):
+        """max_函数支持"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"max(phone+1)"}
         ]
@@ -1264,21 +1264,26 @@ class TestDataMasking(TestCase):
         query_result = ReviewSet(column_list=['max(phone+1)'], rows=rows, full_sql=sql)
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         r = go_data_masking(self.ins, 'archery', sql, query_result)
-        print("test_go_data_masking_does_not_support_fuc",r.rows)
+        print("test_go_data_masking_max_function_support",r.rows)
         self.assertEqual(r.rows, mask_result_rows)
 
-    def test_go_data_masking_does_not_support_keyword(self, ):
-        """不支持的关键字"""
+    @patch('sql.utils.go_data_masking.GoInceptionEngine')
+    def test_go_data_masking_union_support_keyword(self, _inception):
+        """union关键字"""
         self.sys_config.set('query_check', 'true')
         self.sys_config.get_all_config()
-
-        sqls = ["select id from test union select email from activity_email_all_in_one;",
-                "select id from test union all select email from activity_email_all_in_one;"]
+        _inception.return_value.query_datamasking.return_value = [
+            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+        ]
+        sqls = ["select phone from test union select phone from activity_email_all_in_one;",
+                "select phone from test union all select phone from activity_email_all_in_one;"]
+        rows = (('18888888888',), ('18888888889',), ('18888888810',))
+        mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         for sql in sqls:
-            query_result = ReviewSet(full_sql=sql)
+            query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
             r = go_data_masking(self.ins, 'archery', sql, query_result)
-            print("test_go_data_masking_does_not_support_keyword",r.rows)
-            self.assertEqual(r.error, '不支持该查询语句脱敏！请联系管理员')
+            print("test_go_data_masking_union_support_keyword",r.rows)
+            self.assertEqual(r.rows, mask_result_rows)
 
 
     def test_brute_mask(self):
