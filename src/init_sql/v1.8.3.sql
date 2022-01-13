@@ -15,4 +15,4 @@ set @content_type_id=(select id from django_content_type where app_label='sql' a
 INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 My2SQL', @content_type_id, 'menu_my2sql');
 
 -- ssh 隧道功能修改
-ALTER TABLE `ssh_tunnel` ADD COLUMN pkey longtext NULL AFTER password DEFAULT CHARSET=utf8mb4 COMMENT='密钥信息';
+ALTER TABLE `ssh_tunnel` ADD COLUMN pkey longtext NULL AFTER password;
