@@ -42,7 +42,7 @@ configMap:
       character-set-client-handshake=0
       character-set-server=utf8mb4
       inception_language_code=zh-CN
-      inception_remote_system_password=archery
+      inception_remote_system_password=MYSQL_ROOT_PASSWORD
       inception_remote_system_user=root
       inception_remote_backup_port=3306
       inception_remote_backup_host=archery-mysql
