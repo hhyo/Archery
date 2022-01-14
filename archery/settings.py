@@ -257,3 +257,11 @@ LOGGING = {
         # },
     }
 }
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if not os.path.exists(MEDIA_ROOT):
+    os.mkdir(MEDIA_ROOT)
+
+PKEY_ROOT = os.path.join(MEDIA_ROOT, 'keys')
+if not os.path.exists(PKEY_ROOT):
+    os.mkdir(PKEY_ROOT)
