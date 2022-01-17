@@ -158,6 +158,7 @@ def grant(request):
     """获取用户权限变更语句，并执行权限变更"""
     instance_id = request.POST.get('instance_id', 0)
     user_host = request.POST.get('user_host')
+    op_type = int(request.POST.get('op_type'))
     priv_type = int(request.POST.get('priv_type'))
     privs = json.loads(request.POST.get('privs'))
     grant_sql = ''
@@ -170,11 +171,12 @@ def grant(request):
         global_privs = privs['global_privs']
         if not all([global_privs]):
             return JsonResponse({'status': 1, 'msg': '信息不完整，请确认后提交', 'data': []})
-        if 'GRANT' in global_privs:
-            global_privs.remove('GRANT')
-            grant_sql = f"GRANT {','.join(global_privs)} ON *.* TO {user_host} WITH GRANT OPTION;"
-        else:
+        global_privs = ['GRANT OPTION' if g == 'GRANT' else g for g in global_privs]
+        if op_type == 0:
             grant_sql = f"GRANT {','.join(global_privs)} ON *.* TO {user_host};"
+        elif op_type == 1:
+            grant_sql = f"REVOKE {','.join(global_privs)} ON *.* FROM {user_host};"
+
     # 库权限
     elif priv_type == 1:
         db_privs = privs['db_privs']
@@ -182,11 +184,11 @@ def grant(request):
         if not all([db_privs, db_name]):
             return JsonResponse({'status': 1, 'msg': '信息不完整，请确认后提交', 'data': []})
         for db in db_name:
-            if 'GRANT' in db_privs:
-                db_privs.remove('GRANT')
-                grant_sql += f"GRANT {','.join(db_privs)} ON `{db}`.* TO {user_host} WITH GRANT OPTION;"
-            else:
+            db_privs = ['GRANT OPTION' if d == 'GRANT' else d for d in db_privs]
+            if op_type == 0:
                 grant_sql += f"GRANT {','.join(db_privs)} ON `{db}`.* TO {user_host};"
+            elif op_type == 1:
+                grant_sql += f"REVOKE {','.join(db_privs)} ON `{db}`.* FROM {user_host};"
     # 表权限
     elif priv_type == 2:
         tb_privs = privs['tb_privs']
@@ -195,11 +197,11 @@ def grant(request):
         if not all([tb_privs, db_name, tb_name]):
             return JsonResponse({'status': 1, 'msg': '信息不完整，请确认后提交', 'data': []})
         for tb in tb_name:
-            if 'GRANT' in tb_privs:
-                tb_privs.remove('GRANT')
-                grant_sql += f"GRANT {','.join(tb_privs)} ON `{db_name}`.`{tb}` TO {user_host} WITH GRANT OPTION;"
-            else:
+            tb_privs = ['GRANT OPTION' if t == 'GRANT' else t for t in tb_privs]
+            if op_type == 0:
                 grant_sql += f"GRANT {','.join(tb_privs)} ON `{db_name}`.`{tb}` TO {user_host};"
+            elif op_type == 1:
+                grant_sql += f"REVOKE {','.join(tb_privs)} ON `{db_name}`.`{tb}` FROM {user_host};"
     # 列权限
     elif priv_type == 3:
         col_privs = privs['col_privs']
@@ -209,7 +211,10 @@ def grant(request):
         if not all([col_privs, db_name, tb_name, col_name]):
             return JsonResponse({'status': 1, 'msg': '信息不完整，请确认后提交', 'data': []})
         for priv in col_privs:
-            grant_sql += f"GRANT {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` TO {user_host};"
+            if op_type == 0:
+                grant_sql += f"GRANT {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` TO {user_host};"
+            elif op_type == 1:
+                grant_sql += f"REVOKE {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` FROM {user_host};"
 
     # 执行变更语句
     try:
