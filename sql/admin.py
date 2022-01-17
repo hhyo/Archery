@@ -252,6 +252,6 @@ class CloudAccessKeyAdmin(admin.ModelAdmin):
 # 登录审计日志
 @admin.register(AuditEntry)
 class AuditEntryAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'user_name', 'action', 'ip', 'action_time')
-    list_filter = ('user_id', 'user_name', 'action', 'ip')
+    list_display = ('user_id', 'user_name', 'user_display', 'action', 'extra_info', 'action_time')
+    list_filter = ('user_id', 'user_name', 'user_display', 'action', 'extra_info')
 

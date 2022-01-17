@@ -848,6 +848,44 @@
                     }]
                 })
             }
+            // 对下载的按钮附加其他动作 需要等渲染结束后才能绑定
+            setTimeout("actionAppend()",100)
+        }
+
+        // 通过前端元素查看确定要绑定事件的对象，有其他更好的实现方式？
+        function downloadAppendOpt(){
+            $(".export.btn-group.open:first").children(".dropdown-menu:first")[0].onclick=function(){
+                // 实际绑定的动作
+                $.ajax({
+                    type: "post",
+                    url: "/audit/input/",
+                    dataType: "json",
+                    data: {
+                        action:"下载"
+                    },
+                    complete: function () {
+                        console.log("回调触发")
+                    },
+                    success: function (data) {
+                        console.log("回调成功")
+                        console.log(data)
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        console.log("回调失败")
+                    }
+                });
+
+            }
+        }
+        
+        // 对tab中的按钮添加事件，按钮触发下拉单，下拉单实际进行下载动作
+        function actionAppend(){
+            for (var i=0; i<$(".btn.btn-default.btn-undefined.dropdown-toggle").length; i++ ){
+                $(".btn.btn-default.btn-undefined.dropdown-toggle")[i].onclick=function(){
+                    // 下拉单必须渲染后才能绑定事件 但不能太后绑定以免点击后已经关闭
+                    setTimeout("downloadAppendOpt()",10)
+                }
+            }
         }
 
         //将数据通过ajax提交给后端进行检查
