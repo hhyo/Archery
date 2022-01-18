@@ -632,6 +632,17 @@ class OracleEngine(EngineBase):
                 statement = sqlitem.statement
                 if sqlitem.stmt_type == "SQL":
                     statement = statement.rstrip(';')
+                #如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
+                #需要授权 grant execute on dbms_metadata to xxxxx
+                if workflow.syntax_type == 1:
+                    object_name=self.get_sql_first_object_name(statement)
+                    back_obj_sql=f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
+                    from all_objects where (object_name=upper( '{object_name}' ) or OBJECT_NAME = '{sqlitem.object_name}')
+                    and owner='{workflow.db_name}'
+                                        """
+                    cursor.execute(back_obj_sql)
+                    metdata_back_flag=self.metdata_backup(workflow, cursor,statement)
+
                 with FuncTimer() as t:
                     if statement != '':
                         cursor.execute(statement)
@@ -760,6 +771,48 @@ class OracleEngine(EngineBase):
                         undo_sql = f' '
                     else:
                         undo_sql = f"{row[1]}"
+                    undo_sql = undo_sql.replace("'", "\\'")
+                    # 回滚SQL入库
+                    sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
+                    backup_cursor.execute(sql)
+        except Exception as e:
+            logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
+            return False
+        finally:
+            # 关闭连接
+            if conn:
+                conn.close()
+        return True
+
+    def metdata_backup(self, workflow, cursor ,redo_sql):
+        """
+        :param workflow: 工单对象，作为备份记录与工单的关联列
+        :param cursor: 执行SQL的当前会话游标，保存metadata
+        :param redo_sql: 执行的SQL
+        :return:
+        """
+        try:
+            # 备份存放数据库和MySQL备份库统一，需新建备份用database和table，table存放备份SQL，记录使用workflow.id关联上线工单
+            workflow_id = workflow.id
+            conn = self.get_backup_connection()
+            backup_cursor = conn.cursor()
+            backup_cursor.execute(f"""create database if not exists ora_backup;""")
+            backup_cursor.execute(f"use ora_backup;")
+            backup_cursor.execute(f"""CREATE TABLE if not exists `sql_rollback` (
+                                       `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                       `redo_sql` mediumtext,
+                                       `undo_sql` mediumtext,
+                                       `workflow_id` bigint(20) NOT NULL,
+                                        PRIMARY KEY (`id`),
+                                        key `idx_sql_rollback_01` (`workflow_id`)
+                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                for row in rows:
+                    if row[0] is None:
+                        undo_sql = f' '
+                    else:
+                        undo_sql = f"{row[0]}"
                     undo_sql = undo_sql.replace("'", "\\'")
                     # 回滚SQL入库
                     sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
