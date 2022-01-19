@@ -229,6 +229,18 @@ class TestView(TestCase):
         r = self.client.get(f'/audit/', data=data)
         self.assertEqual(r.status_code, 200)
 
+    def test_audit_sqlquery(self):
+        """测试audit_sqlquery页面"""
+        data = {}
+        r = self.client.get(f'/audit_sqlquery/', data=data)
+        self.assertEqual(r.status_code, 200)
+
+    def test_audit_sqlworkflow(self):
+        """测试audit_sqlworkflow页面"""
+        data = {}
+        r = self.client.get(f'/audit_sqlworkflow/', data=data)
+        self.assertEqual(r.status_code, 200)
+
     def test_groupmgmt(self):
         """测试groupmgmt页面"""
         data = {}

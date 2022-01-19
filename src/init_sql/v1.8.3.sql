@@ -16,3 +16,11 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 My
 
 -- ssh 隧道功能修改
 ALTER TABLE `ssh_tunnel` ADD COLUMN pkey longtext NULL AFTER password;
+
+-- 审计功能增强 
+alter table audit_log change `ip` `extra_info` varchar(255) DEFAULT NULL COMMENT '额外的信息'; 
+alter table audit_log add `user_display` varchar(50) DEFAULT NULL COMMENT '用户中文名'; 
+
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+insert IGNORE INTO auth_permission (name, content_type_id, codename) VALUES
+('审计权限 ', @content_type_id, 'audit_user');

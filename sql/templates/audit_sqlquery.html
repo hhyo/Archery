@@ -2,14 +2,6 @@
 
 {% block content %}
     <div id="toolbar" class="form-inline pull-left">
-        <div class="form-group">
-            <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">动作</option>
-                    {% for action_type in action_types %}
-                    <option value={{ action_type }}>{{ action_type }}</option>
-                    {% endfor %}
-            </select>
-        </div>
         <div class='form-group'>
             <div id="reservation" class="form-control"
                  style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
@@ -17,11 +9,11 @@
                 <span></span> <i class="fa fa-caret-down"></i>
             </div>
         </div>
-
     </div>
+
     <!-- 表格-->
     <div class="table-responsive">
-        <table id="group-list" data-toggle="table" class="table table-striped table-hover"
+        <table id="sql-log" data-toggle="table" class="table table-striped table-hover"
                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         </table>
     </div>
@@ -33,6 +25,7 @@
     <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+
     <script>
         // 初始化时间控件
         $(function () {
@@ -61,7 +54,7 @@
                     toLabel: "结束",
                     customRangeLabel: "自定义",
                     daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十月", "十一月", "十二月"],
+                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
                     firstDay: 1
                 },
                 ranges: {
@@ -74,7 +67,7 @@
                     "上个月": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
                 }
             }, cb).on('apply.daterangepicker', function (ev, picker) {
-                grouplist()
+                querylist()
             });
             cb(start, end);
         });
@@ -82,14 +75,13 @@
     </script>
     <script>
         //获取列表
-        function grouplist() {
-            //采取异步请求
+        function querylist() {
             //初始化table
-            $('#group-list').bootstrapTable('destroy').bootstrapTable({
+            $('#sql-log').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
-                method: 'post',
+                method: 'get',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/audit/log/",
+                url: "/query/querylog_audit/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -97,13 +89,15 @@
                 sortOrder: "asc",                   //排序方式
                 sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 14,                     //每页的记录行数（*）
-                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                pageSize: 14,                       //每页的记录行数（*）
+                pageList: [10, 30, 50, 100, 500, 1000],   //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
+                exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                 exportOptions: {
-                    fileName: 'audit_log'  //文件名称设置
+                    ignoreColumn: [0],  //忽略某些列的索引数组
+                    fileName: 'query_log'  //文件名称设置
                 },
-                search: true,                      //是否显示表格搜索
+                search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
                 showColumns: true,                  //是否显示所有的列（选择显示的列）
                 showRefresh: true,                  //是否显示刷新按钮
@@ -112,11 +106,11 @@
                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
+                detailView: true,                   //是否显示父子表
                 locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
+                toolbar: "#toolbar",      //指明自定义的toolbar
                 queryParamsType: 'limit',
-                //请求服务数据时所传参数
+                //获取查询列表请求服务数据时所传参数
                 queryParams:
                     function (params) {
                         let start_date = $("#reservation").data('daterangepicker').startDate;
@@ -129,32 +123,69 @@
                             end_date = ''
                         }
                         return {
+                            star: '',
+                            query_log_id: '',
                             limit: params.limit,
                             offset: params.offset,
                             search: params.search,
-                            action: $("#navStatus").val(),
                             start_date: start_date,
-                            end_date: end_date,
+                            end_date: end_date
                         }
                     },
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'sqllog') {
+                            let sql = value;
+                            //替换标签
+                            sql = sql.replace(/&/g, "&amp;");
+                            sql = sql.replace(/</g, "&lt;");
+                            sql = sql.replace(/>/g, "&gt;");
+                            sql = sql.replace(/"/g, "&quot;");
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
                 columns: [{
                     title: '用户',
-                    field: 'user_name',
-                    formatter: function (value, row, index) {
-                        return "<a target=\"_blank\" href=\"/admin/sql/users/" + row.user_id + "/change/\">" + value + "</a>"
-                    }
-                },{
-                    title: '中文名',
                     field: 'user_display'
-                },{
-                    title: '动作',
-                    field: 'action'
-                },{
-                    title: '额外信息',
-                    field: 'extra_info'
-                },{
-                    title: '操作时间',
-                    field: 'action_time'
+                }, {
+                    title: '实例',
+                    field: 'instance_name'
+                }, {
+                    title: '数据库',
+                    field: 'db_name'
+                }, {
+                    title: '查询时间',
+                    field: 'create_time'
+                }, {
+                    title: '语句',
+                    field: 'sqllog',
+                    formatter: function (value, row, index) {
+                        if (value.length > 50) {
+                            var sql = value.substr(0, 50) + '...';
+                            return sql;
+                        } else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '完整语句',
+                    field: 'sqllog',
+                    visible: false // 默认不显示
+                }, {
+                    title: '返回行数',
+                    field: 'effect_row'
+                }, {
+                    title: '耗时(秒)',
+                    field: 'cost_time'
                 }],
                 onLoadSuccess: function () {
                 },
@@ -164,16 +195,18 @@
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)
+                },
+                responseHandler: function (res) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return res;
                 }
             });
 
         }
-        $("#navStatus").change(function () {
-            grouplist();
-        });
+
         //初始化数据
         $(document).ready(function () {
-            grouplist();
+            querylist();
         });
     </script>
 {% endblock %}

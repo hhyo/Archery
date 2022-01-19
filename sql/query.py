@@ -182,6 +182,13 @@ def query(request):
 
 @permission_required('sql.menu_sqlquery', raise_exception=True)
 def querylog(request):
+    return _querylog(request)
+
+@permission_required('sql.audit_user', raise_exception=True)
+def querylog_audit(request):
+    return _querylog(request)
+
+def _querylog(request):
     """
     获取sql查询记录
     :param request:
@@ -196,6 +203,8 @@ def querylog(request):
     star = True if request.GET.get('star') == 'true' else False
     query_log_id = request.GET.get('query_log_id')
     search = request.GET.get('search', '')
+    start_date = request.GET.get('start_date','')
+    end_date = request.GET.get('end_date','')
 
     # 组合筛选项
     filter_dict = dict()
@@ -205,9 +214,14 @@ def querylog(request):
     # 语句别名
     if query_log_id:
         filter_dict['id'] = query_log_id
-    # 管理员查看全部数据,普通用户查看自己的数据
-    if not user.is_superuser:
+
+    # 管理员、审计员查看全部数据,普通用户查看自己的数据
+    if not (user.is_superuser or user.has_perm('sql.audit_user')):
         filter_dict['username'] = user.username
+ 
+    if start_date and end_date:
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
+        filter_dict['create_time__range'] = (start_date, end_date)
 
     # 过滤组合筛选项
     sql_log = QueryLog.objects.filter(**filter_dict)
