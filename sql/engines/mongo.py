@@ -273,7 +273,17 @@ class MongoEngine(EngineBase):
                 re_msg = []
                 for line in iter(p.stdout.read, ''):
                     re_msg.append(line)
-                msg = '\n'.join(re_msg)
+                # 因为返回的line中也有可能带有换行符，因此需要先全部转换成字符串
+                __msg = '\n'.join(re_msg)
+                _re_msg = []
+                for _line in __msg.split('\n'):
+                    if not _re_msg and re.match('WARNING.*', _line):
+                        # 第一行可能是WARNING语句，因此跳过
+                        continue
+                    _re_msg.append(_line)
+                
+                msg = '\n'.join(_re_msg)
+
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
         return msg
