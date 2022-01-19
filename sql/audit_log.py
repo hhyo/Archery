@@ -2,6 +2,8 @@
 import logging
 import datetime
 import simplejson as json
+import geolite2
+import maxminddb
 
 from django.dispatch import receiver
 from django.utils import timezone
@@ -84,8 +86,9 @@ def get_client_ip(request):
 @receiver(user_logged_in)
 def user_logged_in_callback(sender, request, user, **kwargs):
     ip = get_client_ip(request)
+    ua = request.META.get('HTTP_USER_AGENT', 'unknown')
     now = timezone.now()
-    AuditEntry.objects.create(action=u'登入', extra_info=ip, user_id=user.id, user_name=user.username, user_display=user.display, action_time=now)
+    AuditEntry.objects.create(action=u'登入', extra_info='|'.join([ip,ua]), user_id=user.id, user_name=user.username, user_display=user.display, action_time=now)
 
 
 @receiver(user_logged_out)
@@ -102,6 +105,7 @@ def user_login_failed_callback(sender, credentials, **kwargs):
     user_obj = Users.objects.filter(username=user_name)[0:1]
     user_count = user_obj.count()
     user_id = 0
+    user_display = ''
     if user_count > 0:
         user_id = user_obj[0].id
         user_display = user_obj[0].display
