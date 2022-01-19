@@ -6,19 +6,19 @@ replicaCount: 1
 
 image:
   repository: hhyo/archery
-  tag: 1.8.2
+  tag: v1.8.2
   pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
 
 service:
-  type: NodePort
+  type: ClusterIP
   port: 9123
   targetPort: 9123
 
 ingress:
-  enabled: false
+  enabled: true
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
@@ -35,53 +35,77 @@ ingress:
 
 # subcharts redis
 redis:
-  usePassword: "123456"
-  persistence:
-    enabled: false
+  architecture: standalone
+  auth:
+    password: "REDIS_PASSWORD"
+  master:
+    persistence:
+      enabled: false
+      size: 8Gi
+      # storageClass: ""
+
 # subcharts mysql
 mysql:
-  mysqlRootPassword: archery
-  mysqlDatabase: archery
-  persistence:
-    enabled: true
-    accessMode: ReadWriteOnce
-    size: 20Gi
-  ## Persist data to a persistent volume
-  ## database data Persistent Volume Storage Class
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack)
-  ##
-  # storageClass: "-"
+  architecture: standalone
+  auth:
+    database: archery
+    rootPassword: "MYSQL_ROOT_PASSWORD"	
+  primary:
+    configuration: |-
+      [mysqld]
+      default_authentication_plugin=mysql_native_password
+      skip-name-resolve
+      explicit_defaults_for_timestamp
+      basedir=/opt/bitnami/mysql
+      plugin_dir=/opt/bitnami/mysql/lib/plugin
+      socket=/opt/bitnami/mysql/tmp/mysql.sock
+      datadir=/bitnami/mysql/data
+      tmpdir=/opt/bitnami/mysql/tmp
+      bind-address=0.0.0.0
+      pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
+      log-error=/opt/bitnami/mysql/logs/mysqld.log
+      port            = 3306
+      skip-external-locking
+      lower_case_table_names=1
+      default-time_zone = '+8:00'
+      innodb_buffer_pool_size = 512M
+      server-id              = 100
+      log_bin                        = mysql-bin.log
+      expire_logs_days        = 1
+      max_binlog_size         = 500M
+      character-set-server = utf8mb4
+      collation-server = utf8mb4_general_ci
+      slow_query_log_file = mysql-slow.log
+      slow_query_log      = 1
+      long_query_time = 1
+      [client]
+      default-character-set=utf8mb4
+      socket=/opt/bitnami/mysql/tmp/mysql.sock
+      plugin_dir=/opt/bitnami/mysql/lib/plugin
+      [mysqldump]
+      quick
+      quote-names
+      max_allowed_packet      = 1024M
+      [manager]
+      port=3306
+      socket=/opt/bitnami/mysql/tmp/mysql.sock
+      pid-file=/opt/bitnami/mysql/tmp/mysqld.pid
 
-  configurationFiles:
-    mysql.cnf: |-
-       [mysqld_safe]
-       nice            = 0
-       [mysqld]
-       port            = 3306
-       skip-external-locking
-       lower_case_table_names=1
-       default-time_zone = '+8:00'
-       innodb_buffer_pool_size = 512M
-       server-id              = 100
-       log_bin                        = /var/log/mysql/mysql-bin.log
-       expire_logs_days        = 1
-       max_binlog_size         = 500M
-       character-set-server = utf8mb4
-       collation-server = utf8mb4_general_ci
-       slow_query_log_file = mysql-slow.log
-       slow_query_log      = 1
-       long_query_time = 1
-       [client]
-       default-character-set=utf8mb4
-       [mysqldump]
-       quick
-       quote-names
-       max_allowed_packet      = 1024M
-       !includedir /etc/mysql/conf.d/
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 20Gi
+      ## Persistent Volume Storage Class
+      ## If defined, storageClassName: <storageClass>
+      ## If set to "-", storageClassName: "", which disables dynamic provisioning
+      ## If undefined (the default) or set to null, no storageClassName spec is
+      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+      ##   GKE, AWS & OpenStack)
+      ##
+      # storageClass: "-"
+
+      # storageClass: ""
     
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -146,7 +170,7 @@ configMap:
         SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
         
         # SECURITY WARNING: don't run with debug turned on in production!
-        DEBUG = True
+        DEBUG = False
         
         ALLOWED_HOSTS = ['*']
         
@@ -257,7 +281,7 @@ configMap:
                 'ENGINE': 'django.db.backends.mysql',
                 'NAME': 'archery',
                 'USER': 'root',
-                'PASSWORD': 'archery',
+                'PASSWORD': 'MYSQL_ROOT_PASSWORD',
                 'HOST': 'archery-mysql',
                 'PORT': '3306',
                 'OPTIONS': {
@@ -290,18 +314,18 @@ configMap:
         CACHES = {
             "default": {
                 "BACKEND": "django_redis.cache.RedisCache",
-                "LOCATION": "redis://archery-redis:6379/0",
+                "LOCATION": "redis://archery-redis-master:6379/0",
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                    "PASSWORD": "123456"
+                    "PASSWORD": "REDIS_PASSWORD"
                 }
             },
             "dingding": {
                 "BACKEND": "django_redis.cache.RedisCache",
-                "LOCATION": "redis://archery-redis:6379/1",
+                "LOCATION": "redis://archery-redis-master:6379/1",
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                    "PASSWORD": "123456"
+                    "PASSWORD": "REDIS_PASSWORD"
                 }
             }
         }
@@ -433,7 +457,7 @@ configMap:
         monitor_db_host="archery-mysql"
         monitor_db_port=3306
         monitor_db_user="root"
-        monitor_db_password="archery"
+        monitor_db_password="MYSQL_ROOT_PASSWORD"
         monitor_db_database="archery"
         
         #实例慢日志位置
@@ -464,6 +488,7 @@ configMap:
         echo `date +"%Y-%m-%d %H:%M:%S"`>last_analysis_time_$hostname
     init-archery.sh: |-
       #!/bin/bash
+      mkdir -p /opt/archery/downloads/{binlog2sql,log,schemasync}
       cd /opt/archery
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
@@ -471,7 +496,8 @@ configMap:
       python3 manage.py makemigrations sql
       python3 manage.py migrate
       #数据初始化
-      python3 manage.py loaddata initial_data.json
+      python3 manage.py dbshell<sql/fixtures/auth_group.sql
+      python3 manage.py dbshell<src/init_sql/mysql_slow_query_review.sql
       #创建管理用户
       #python3 manage.py createsuperuser
       cat /opt/archery/src/docker/createsuperuser.py | python3 manage.py shell
@@ -479,8 +505,8 @@ configMap:
       #/usr/bin/python3 env
       from django.contrib.auth import get_user_model
       DJANGO_SU_NAME = "admin"
-      DJANGO_SU_EMAIL = "ll_archery@gmail.com"
-      DJANGO_SU_PASSWORD = "Archery2019"
+      DJANGO_SU_EMAIL = "you@example.com"
+      DJANGO_SU_PASSWORD = "ARCHERY_ADMIN_PASSWORD"
       DJANGO_DB_NAME = "archery"
       User = get_user_model()
       try:
@@ -496,30 +522,30 @@ configMap:
     startup.sh: |-
       #!/bin/bash
       cd /opt/archery
-      
+
       echo 切换python运行环境
       source /opt/venv4archery/bin/activate
-
       echo 修改重定向端口
       if [[ -z $NGINX_PORT ]]; then
           sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
       else
           sed -i "s/nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
       fi
-      
+
       echo 启动nginx
       /usr/sbin/nginx
-      
+
       echo 收集所有的静态文件到STATIC_ROOT
       python3 manage.py collectstatic -v0 --noinput
-      
+
       echo 启动Django Q cluster
-      supervisord -c qcluster_supervisord.conf
-      
+      supervisord -c /etc/supervisord.conf
+
+
       echo 启动服务
       settings=${1:-"archery.settings"}
       ip=${2:-"127.0.0.1"}
       port=${3:-8888}
-      
+
       gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --log-level=debug --error-logfile=/tmp/archery.err -b ${ip}:${port} --preload --timeout 600  archery.wsgi:application
 

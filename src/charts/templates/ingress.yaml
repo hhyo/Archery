@@ -2,7 +2,13 @@
 {{- $fullName := include "archery.fullname" . -}}
 {{- $ingressPaths := .Values.ingress.paths -}}
 {{- $servicePort := .Values.ingress.servicePort -}}
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+apiVersion: networking.k8s.io/v1
+{{- else if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1/Ingress" }}
+apiVersion: networking.k8s.io/v1beta1
+{{- else }}
 apiVersion: extensions/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
   name: {{ $fullName }}
@@ -16,26 +22,29 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-{{- if .Values.ingress.tls }}
-  tls:
-  {{- range .Values.ingress.tls }}
-    - hosts:
-      {{- range .hosts }}
-        - {{ . | quote }}
-      {{- end }}
-      secretName: {{ .secretName }}
-  {{- end }}
-{{- end }}
   rules:
-  {{- range .Values.ingress.hosts }}
-    - host: {{ . | quote }}
+    {{- range .Values.ingress.hosts }}
+      {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
       http:
         paths:
-        {{- range $ingressPaths }}
-          - path: {{ . }}
+          - path: /{{ rest $url | join "/" }}
             backend:
+              {{- if $.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $servicePort }}
+              {{- else }}
               serviceName: {{ $fullName }}
               servicePort: {{ $servicePort }}
-        {{- end }}
-  {{- end }}
-{{- end }}
+              {{- end }}
+            {{- if $.Capabilities.APIVersions.Has "networking.k8s.io/v1/Ingress" }}
+            pathType: Prefix
+            {{- end }}
+    {{- end -}}
+  {{- if .Values.ingress.tls }}
+  tls:
+{{ toYaml .Values.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}
