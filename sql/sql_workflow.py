@@ -33,6 +33,13 @@ logger = logging.getLogger('default')
 
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sql_workflow_list(request):
+    return _sql_workflow_list(request)
+
+@permission_required('sql.audit_user', raise_exception=True)
+def sql_workflow_list_audit(request):
+    return _sql_workflow_list(request)
+
+def _sql_workflow_list(request):
     """
     获取审核列表
     :param request:
@@ -64,8 +71,8 @@ def sql_workflow_list(request):
     if start_date and end_date:
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
         filter_dict['create_time__range'] = (start_date, end_date)
-    # 管理员，可查看所有工单
-    if user.is_superuser:
+    # 管理员，审计员，可查看所有工单
+    if user.is_superuser or user.has_perm('sql.audit_user'):
         pass
     # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
     elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):

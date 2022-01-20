@@ -728,6 +728,7 @@ class Permission(models.Model):
             ('archive_apply', '提交归档申请'),
             ('archive_review', '审核归档申请'),
             ('archive_mgt', '管理归档申请'),
+            ('audit_user','审计权限'),
         )
 
 
@@ -867,9 +868,10 @@ class AuditEntry(models.Model):
     登录审计日志
     """
     user_id = models.IntegerField('用户ID')
-    user_name = models.CharField('用户名称', max_length=255, null=True)
+    user_name = models.CharField('用户名称', max_length=30, null=True)
+    user_display  = models.CharField('用户中文名',max_length=50, null=True)
     action = models.CharField('动作', max_length=255)
-    ip = models.GenericIPAddressField('IP', null=True)
+    extra_info = models.CharField('额外的信息', max_length=255, null=True)
     action_time = models.DateTimeField('操作时间', auto_now_add=True)
 
     class Meta:
@@ -879,9 +881,9 @@ class AuditEntry(models.Model):
         verbose_name_plural = u'审计日志'
 
     def __unicode__(self):
-        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.ip
+        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.extra_info
                                                     , self.action, self.action_time)
 
     def __str__(self):
-        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.ip
+        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.extra_info
                                                     , self.action, self.action_time)
