@@ -142,7 +142,7 @@
                     title: '权限级别',
                     field: 'priv_type',
                     formatter: function (value, row, index) {
-                        if (value === 1) {
+                        if (String(value) === '1') {
                             return 'DATABASE';
                         } else {
                             return 'TABLE';
