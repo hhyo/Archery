@@ -45,7 +45,7 @@
                             aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
                     <h4 class="modal-title">表元数据展示</h4>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" id="modal-body-mysql" >
                     <div class="panel panel-default">
                         <div class="panel-heading">表信息</div>
                         <div class="panel-body">
@@ -129,6 +129,54 @@
                         </div>
                     </div>
                 </div> <!--modal-body-->
+                <div class="modal-body" id="modal-body-oracle" >
+                    <div class="panel panel-default">
+                        <div class="panel-heading">表信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                        <tr>
+                                            <th>表名</th>
+                                            <td id="TABLE_NAME"></td>
+                                            <th>表类型</th>
+                                            <td id="TABLE_TYPE"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>段类型</th>
+                                            <td id="SEGMENT_TYPE"></td>
+                                            <th>压缩</th>
+                                            <td id="COMPRESSION"></td>
+                                            <th>表空间</th>
+                                            <td id="TABLESPACE_NAME"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="index-list" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-->
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
@@ -139,6 +187,7 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        var instance_result ="";
         $(document).ready(function () {
             //获取用户实例列表
             $(function () {
@@ -147,7 +196,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: ['mysql','oracle']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -157,6 +206,7 @@
                     success: function (data) {
                         if (data.status === 0) {
                             let result = data['data'];
+                            instance_result = data['data'];
                             $("#instance_name").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
@@ -221,6 +271,9 @@
         function get_table_list() {
             var instance_name = $("#instance_name").val();
             var db_name = $('#db_name').val();
+
+            var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==instance_name);
+            var inst_db_type = instance_result[inst_db_type_ind]['db_type']
             if (instance_name === "" || db_name === "") {
                 alert("请先选择实例和数据库！");
             } else {
@@ -230,7 +283,8 @@
                     dataType: "json",
                     data: {
                         instance_name: instance_name,
-                        db_name: db_name
+                        db_name: db_name,
+                        db_type: inst_db_type
                     },
                     success: function (data) {
                         if (data.status === 0) {
@@ -277,6 +331,8 @@
         // 展示表信息
         function showTableInfo(ins_name, db_name, tb_name) {
             // console.log(ins_name, db_name, tb_name);
+            var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==ins_name);
+            var inst_db_type = instance_result[inst_db_type_ind]['db_type'];
             $.ajax({
                 type: "get",
                 url: "/data_dictionary/table_info/",
@@ -284,19 +340,45 @@
                 data: {
                     instance_name: ins_name,
                     db_name: db_name,
-                    tb_name: tb_name
+                    tb_name: tb_name,
+                    db_type: inst_db_type
                 },
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
+                        if ( inst_db_type === 'mysql') {
+                        $('#modal-body-oracle').remove();
+                        //console.log("hide_oracle");
 
+                        $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
+                        data: result['create_sql'],
+                        columns: [{
+                            field: 1,
+                            formatter: function (value, row, index) {
+                                var sql = window.sqlFormatter.format(value);
+                                //替换所有的换行符
+                                sql = sql.replace(/\r\n/g, "<br>");
+                                sql = sql.replace(/\n/g, "<br>");
+                                //替换所有的空格
+                                sql = sql.replace(/\s/g, " ");
+                                return sql;
+
+                            }
+                        }],
+                        locale: 'zh-CN'
+                        });
+                        }
+                        else if ( inst_db_type === 'oracle'){
+                        $('#modal-body-mysql').remove();
+                        //console.log("hide_mysql");
+
+                        }
                         var meta_data_columns = result['meta_data']['column_list'];
                         var meta_data_values = result['meta_data']['rows'];
                         for (var i = 0; i < meta_data_columns.length; i++) {
-                            // console.log(meta_data_columns[i], meta_data_values[i]);
+                            //console.log(meta_data_columns[i], meta_data_values[i]);
                             $('#meta_data #' + meta_data_columns[i]).text(meta_data_values[i])
                         }
-
                         var columns_field = [];
                         $.each(result['desc']['column_list'], function (i, column) {
                             columns_field.push({
@@ -347,23 +429,9 @@
                             pageList: [30, 50, 100, 500, 1000],
                             locale: 'zh-CN'
                         });
-                        $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
-                            data: result['create_sql'],
-                            columns: [{
-                                field: 1,
-                                formatter: function (value, row, index) {
-                                    var sql = window.sqlFormatter.format(value);
-                                    //替换所有的换行符
-                                    sql = sql.replace(/\r\n/g, "<br>");
-                                    sql = sql.replace(/\n/g, "<br>");
-                                    //替换所有的空格
-                                    sql = sql.replace(/\s/g, " ");
-                                    return sql;
 
-                                }
-                            }],
-                            locale: 'zh-CN'
-                        });
+
+                        //console.log("desc_rows" ,result['desc']['rows'])
                         $('#showModal').modal('show');
                     } else {
                         alert(data.msg);
