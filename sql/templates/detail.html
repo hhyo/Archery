@@ -621,11 +621,11 @@
                     title: '审核/执行状态',
                     field: 'errlevel',
                     formatter: function (value, row, index) {
-                        if (value === 0) {
+                        if (String(value) === '0') {
                             return 'pass'
-                        } else if (value === 1) {
+                        } else if (String(value) === '1') {
                             return 'warning'
-                        } else if (value === 2) {
+                        } else if (String(value) === '2') {
                             return 'error'
                         }
                     },

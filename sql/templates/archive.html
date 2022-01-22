@@ -328,7 +328,7 @@
                     title: '源数据',
                     field: 'no_delete',
                     formatter: function (value, row, index) {
-                        if (value === true) {
+                        if (String(value) === 'true') {
                             return '保留'
                         } else {
                             return '删除'
@@ -341,7 +341,7 @@
                     title: '启用状态',
                     field: 'state',
                     formatter: function (value, row, index) {
-                        if (value === true) {
+                        if (String(value) === 'true') {
                             return "<span class=\"label label-success\">" + '启用' + "</span>"
                         } else {
                             return "<span class=\"label label-danger\">" + '关闭' + "</span>"
