@@ -2785,7 +2785,8 @@ class TestDataDictionary(TestCase):
         _get_engine.return_value.query.return_value = ResultSet(rows=(('test1', '测试表1'), ('test2', '测试表2')))
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2811,7 +2812,8 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not exist ins',
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2826,7 +2828,8 @@ class TestDataDictionary(TestCase):
         _get_engine.side_effect = RuntimeError('test error')
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
