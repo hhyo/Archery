@@ -332,8 +332,8 @@ def export(request):
                                                     cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
                 table_metas.append(_meta)
             data = Template(html).render(db_name=db, tables=table_metas, export_time=datetime.datetime.now())
-        with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
-            f.write(data)
+            with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
+                f.write(data)
     elif  inst_type == 'oracle':
         #直接获取所有结果集，减少查询次数
         for db in dbs:
@@ -405,8 +405,8 @@ def export(request):
 
             data = Template(html).render(db_name=db, tables=table_metas, export_time=datetime.datetime.now())
 
-        with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
-            f.write(data)
+            with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
+                f.write(data)
 
 
     # 关闭连接
