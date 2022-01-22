@@ -2800,6 +2800,7 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not exist ins',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2845,7 +2846,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': self.ins.instance_name,
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2871,7 +2873,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': 'not exist ins',
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2887,7 +2890,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': self.ins.instance_name,
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2918,7 +2922,9 @@ class TestDataDictionary(TestCase):
         self.u1.user_permissions.add(data_dictionary_export)
         _user_instances.return_value.get.return_value = self.ins
         data = {
-            'instance_name': self.ins.instance_name
+            'instance_name': self.ins.instance_name,
+            'db_type': 'mysql'
+
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertDictEqual(json.loads(r.content),
@@ -2946,7 +2952,8 @@ class TestDataDictionary(TestCase):
              'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertEqual(r.status_code, 200)
