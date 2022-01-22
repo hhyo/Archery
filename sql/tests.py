@@ -2897,7 +2897,8 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not_exist',
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertDictEqual(json.loads(r.content), {'data': [], 'msg': '你所在组未关联该实例！', 'status': 1})
@@ -2969,7 +2970,8 @@ class TestDataDictionary(TestCase):
              'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
              'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
         data = {
-            'instance_name': self.ins.instance_name
+            'instance_name': self.ins.instance_name,
+            'db_type':'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertEqual(r.status_code, 200)
