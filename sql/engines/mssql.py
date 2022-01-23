@@ -99,9 +99,6 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['has_star'] = True
-        if '+' in sql_lower:
-            keyword_warning += '禁止使用 + 关键词\n'
-            result['bad_query'] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
