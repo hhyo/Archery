@@ -1055,7 +1055,7 @@
         function user_list() {
             //初始化table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
-                escape: true,
+                escape: false,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/instance/user/list",

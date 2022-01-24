@@ -1384,15 +1384,6 @@ class TestOracle(TestCase):
         self.assertDictEqual(check_result,
                              {'msg': '没有有效的SQL语句', 'bad_query': True, 'filtered_sql': sql.strip(), 'has_star': False})
 
-    @patch('sql.engines.oracle.OracleEngine.explain_check', return_value={'msg': '', 'rows': 0})
-    def test_query_check_plus(self, _explain_check):
-        sql = "select 100+1 from tb;"
-        new_engine = OracleEngine(instance=self.ins)
-        check_result = new_engine.query_check(db_name='archery', sql=sql)
-        self.assertDictEqual(check_result,
-                             {'msg': '禁止使用 + 关键词\n', 'bad_query': True, 'filtered_sql': sql.strip(';'),
-                              'has_star': False})
-
     def test_filter_sql_with_delimiter(self):
         sql = "select * from xx;"
         new_engine = OracleEngine(instance=self.ins)

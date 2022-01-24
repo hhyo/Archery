@@ -24,7 +24,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
-        sql = "SELECT name FROM master.sys.databases"
+        sql = "SELECT name FROM master.sys.databases order by name"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
                    if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
@@ -35,7 +35,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
+        WHERE TABLE_TYPE = 'BASE TABLE' order by TABLE_NAME;""".format(db_name)
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         result.rows = tb_list
@@ -99,9 +99,6 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['has_star'] = True
-        if '+' in sql_lower:
-            keyword_warning += '禁止使用 + 关键词\n'
-            result['bad_query'] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
