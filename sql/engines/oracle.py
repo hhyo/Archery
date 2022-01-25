@@ -314,9 +314,6 @@ class OracleEngine(EngineBase):
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['has_star'] = True
-        if '+' in sql_lower:
-            keyword_warning += '禁止使用 + 关键词\n'
-            result['bad_query'] = True
         if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result

@@ -9,7 +9,7 @@ import shlex
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django_q.tasks import async_task
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -107,6 +107,9 @@ def binlog2sql(request):
     only_dml = True if request.POST.get('only_dml') == 'true' else False
     sql_type = ['INSERT', 'UPDATE', 'DELETE'] if request.POST.getlist('sql_type[]') == [] else request.POST.getlist(
         'sql_type[]')
+    # 校验sql_type
+    if [i for i in sql_type if i not in ['INSERT', 'UPDATE', 'DELETE']]:
+        return JsonResponse({'status': 1, 'msg': '类型过滤参数不正确', 'data': {}})
 
     # flashback=True获取DML回滚语句
     result = {'status': 0, 'msg': 'ok', 'data': ''}
