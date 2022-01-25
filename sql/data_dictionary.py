@@ -160,26 +160,38 @@ def table_info(request):
 
                 instance = Instance.objects.get(instance_name=instance_name, db_type='oracle')
                 query_engine = get_engine(instance=instance)
-                meta_data_sql = f"""select  tcs.TABLE_NAME,
-                                            tcs.COMMENTS,
-                                            tcs.TABLE_TYPE,
-                                            ss.SEGMENT_TYPE,
-                                            ts.TABLESPACE_NAME,
-                                            ts.COMPRESSION
-                                          from dba_tab_comments tcs
-                                          left join dba_segments ss
-                                            on ss.owner = tcs.OWNER
-                                           and ss.segment_name = tcs.TABLE_NAME
-                                          left join dba_tables ts
-                                            on ts.OWNER = tcs.OWNER
-                                           and ts.TABLE_NAME = tcs.TABLE_NAME
-                                    WHERE
-                                        tcs.OWNER='{db_name}'
-                                        AND tcs.TABLE_NAME='{tb_name}'"""
+                meta_data_sql = f"""select      tcs.TABLE_NAME, --表名
+                                                tcs.COMMENTS, --表注释
+                                                tcs.TABLE_TYPE,  --表/试图 table/view
+                                                ss.SEGMENT_TYPE,  --段类型 堆表/分区表/IOT表
+                                                ts.TABLESPACE_NAME, --表空间
+                                                ts.COMPRESSION, --压缩属性
+                                                bss.NUM_ROWS, --表中的记录数
+                                                bss.BLOCKS, --表中数据所占的数据块数
+                                                bss.EMPTY_BLOCKS, --表中的空块数
+                                                bss.AVG_SPACE, --数据块中平均的使用空间
+                                                bss.CHAIN_CNT, --表中行连接和行迁移的数量
+                                                bss.AVG_ROW_LEN, --每条记录的平均长度
+                                                bss.LAST_ANALYZED  --上次统计信息搜集的时间
+                                            from dba_tab_comments tcs
+                                            left join dba_segments ss
+                                                on ss.owner = tcs.OWNER
+                                                and ss.segment_name = tcs.TABLE_NAME
+                                            left join dba_tables ts
+                                                on ts.OWNER = tcs.OWNER
+                                                and ts.TABLE_NAME = tcs.TABLE_NAME
+                                            left join DBA_TAB_STATISTICS bss
+                                                on bss.OWNER = tcs.owner
+                                                and bss.TABLE_NAME = tcs.table_name
+
+                                            WHERE
+                                                tcs.OWNER='{db_name}'
+                                                AND tcs.TABLE_NAME='{tb_name}'"""
                 _meta_data = query_engine.query(db_name=db_name, sql=meta_data_sql)
                 data['meta_data'] = {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
 
                 desc_sql = f"""SELECT bcs.COLUMN_NAME "列名",
+                                ccs.comments "列注释" ,
                                 bcs.data_type || case
                                  when bcs.data_precision is not null and nvl(data_scale, 0) > 0 then
                                   '(' || bcs.data_precision || ',' || data_scale || ')'
@@ -200,7 +212,7 @@ def table_info(request):
                                 bcs.DATA_DEFAULT "字段默认值",
                                 decode(nullable, 'N', ' NOT NULL') "是否为空",
                                 ics.INDEX_NAME "所属索引",
-                                ccs.comments "列注释"
+                                acs.constraint_type "约束类型"
                             FROM  dba_tab_columns bcs
                             left  join dba_col_comments ccs
                                 on  bcs.OWNER = ccs.owner
@@ -210,6 +222,10 @@ def table_info(request):
                                 on  bcs.OWNER = ics.TABLE_OWNER
                                 and  bcs.TABLE_NAME = ics.table_name
                                 and  bcs.COLUMN_NAME = ics.column_name
+                            left join dba_constraints acs
+                                on acs.owner = ics.TABLE_OWNER
+                                and acs.table_name = ics.TABLE_NAME
+                                and acs.index_name = ics.INDEX_NAME
                             WHERE
                                 bcs.OWNER='{db_name}'
                                 AND bcs.TABLE_NAME='{tb_name}'
@@ -218,16 +234,16 @@ def table_info(request):
                 data['desc'] = {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
 
                 index_sql = f""" SELECT
-                                    ais.INDEX_NAME,
-                                    ais.uniqueness,
-                                    ais.index_type,
-                                    ais.compression,
-                                    ais.tablespace_name,
-                                    ais.status,
-                                    ais.partitioned,
-                                    pis.partitioning_type,
-                                    pis.locality,
-                                    pis.alignment
+                                    ais.INDEX_NAME "索引名称",
+                                    ais.uniqueness "唯一性",
+                                    ais.index_type "索引类型",
+                                    ais.compression "压缩属性",
+                                    ais.tablespace_name "表空间",
+                                    ais.status "状态",
+                                    ais.partitioned "分区",
+                                    pis.partitioning_type "分区状态",
+                                    pis.locality "是否为LOCAL索引",
+                                    pis.alignment "前导列索引"
                                 FROM dba_indexes ais
                                 left join DBA_PART_INDEXES pis
                                     on ais.owner = pis.owner
@@ -332,8 +348,8 @@ def export(request):
                                                     cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
                 table_metas.append(_meta)
             data = Template(html).render(db_name=db, tables=table_metas, export_time=datetime.datetime.now())
-            with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
-                f.write(data)
+        with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
+            f.write(data)
     elif  inst_type == 'oracle':
         #直接获取所有结果集，减少查询次数
         for db in dbs:
@@ -405,8 +421,8 @@ def export(request):
 
             data = Template(html).render(db_name=db, tables=table_metas, export_time=datetime.datetime.now())
 
-            with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
-                f.write(data)
+        with open(f'{path}/{instance_name}_{db}.html', 'w') as f:
+            f.write(data)
 
 
     # 关闭连接
