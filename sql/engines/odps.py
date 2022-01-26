@@ -17,8 +17,12 @@ class ODPSEngine(EngineBase):
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
+
+        db_name = db_name if db_name else self.instance.db_name
+
         if db_name is None:
-            db_name = self.instance.db_name
+            raise ValueError("db_name不能为空")
+
         self.conn = ODPS(self.user, self.password, project=db_name, endpoint=self.host)
 
         return self.conn
@@ -42,13 +46,13 @@ class ODPSEngine(EngineBase):
             result.rows = [conn.project]
         except Exception as e:
             logger.warning(f"ODPS执行异常, {e}")
-            result.rows = [self.instance.service_name]
+            result.rows = [self.instance.db_name]
         return result
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
 
-        db_name = db_name if db_name else self.instance.service_name
+        db_name = db_name if db_name else self.instance.db_name
         result_set = ResultSet()
 
         try:
