@@ -18,7 +18,7 @@ class ODPSEngine(EngineBase):
         if self.conn:
             return self.conn
         if db_name is None:
-            db_name = self.instance.service_name
+            db_name = self.instance.db_name
         self.conn = ODPS(self.user, self.password, project=db_name, endpoint=self.host)
 
         return self.conn
