@@ -412,7 +412,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.([\w\.-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
