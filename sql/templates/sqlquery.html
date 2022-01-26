@@ -78,6 +78,7 @@
                                     <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
                                     <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
+                                    <optgroup id="optgroup-odps" label="ODPS"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1262,6 +1263,7 @@
                             $("#optgroup-pgsql").empty();
                             $("#optgroup-mongo").empty();
                             $("#optgroup-phoenix").empty();
+                            $("#optgroup-odps").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
@@ -1278,6 +1280,8 @@
                                     $("#optgroup-mongo").append(instance);
                                 } else if (result[i]['db_type'] === 'phoenix') {
                                     $("#optgroup-phoenix").append(instance);
+                                } else if (result[i]['db_type'] === 'odps') {
+                                    $("#optgroup-odps").append(instance);
                                 }
                             }
                             $('#instance_name').selectpicker('render');
