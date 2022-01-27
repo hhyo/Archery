@@ -369,9 +369,7 @@
                                 }],
                                 onLoadSuccess: function () {
                                 },
-                                onLoadError: function () {
-                                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                                }
+                                onLoadError: onLoadErrorCallback,
                             });
                         } else {
                             alert(data.msg);
