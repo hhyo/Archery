@@ -198,9 +198,7 @@
                     $('#sql-upload').fileinput('enable');
                     sessionStorage.setItem('analyze_text', text);
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 responseHandler: function (res) {
                     //在ajax获取到数据，渲染表格之前，修改数据源
                     return res;
@@ -345,10 +343,10 @@
                         $('#btn-analyze').removeClass('disabled');
                         $('#btn-analyze').prop('disabled', false);
                     },
-                    onLoadError: function () {
+                    onLoadError: function (status, jqXHR) {
                         $('#btn-analyze').removeClass('disabled');
                         $('#btn-analyze').prop('disabled', false);
-                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                        onLoadErrorCallback(status, jqXHR);
                     },
                     responseHandler: function (res) {
                         //在ajax获取到数据，渲染表格之前，修改数据源
