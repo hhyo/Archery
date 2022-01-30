@@ -281,7 +281,7 @@ class MongoEngine(EngineBase):
                         # 第一行可能是WARNING语句，因此跳过
                         continue
                     _re_msg.append(_line)
-                
+
                 msg = '\n'.join(_re_msg)
 
             except Exception as e:
@@ -412,7 +412,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*\.{0,1}[\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
@@ -439,7 +439,10 @@ class MongoEngine(EngineBase):
                                 check_result.rows += [result]
                                 continue
                         else:
-                            method = sql_str.split('.')[2]
+                            if re.search(".", table_name) is not None:
+                                method = sql_str.split(".")[3]
+                            else:
+                                method = sql_str.split('.')[2]
                             methodStr = method.split('(')[0].strip()
                         if methodStr in is_exist_premise_method and not is_in:
                             check_result.error = "文档不存在"
