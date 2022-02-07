@@ -439,7 +439,7 @@ class MongoEngine(EngineBase):
                                 check_result.rows += [result]
                                 continue
                         else:
-                            if re.search(".", table_name) is not None:
+                            if re.search("\.", table_name) is not None:
                                 method = sql_str.split(".")[3]
                             else:
                                 method = sql_str.split('.')[2]
