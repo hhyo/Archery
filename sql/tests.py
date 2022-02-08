@@ -2987,3 +2987,26 @@ class TestDataDictionary(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content),
                              {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
+
+    @patch('sql.data_dictionary.get_engine')
+    def oracle_test_export_instance(self, _get_engine):
+        """
+        测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            { 'TABLE_NAME': 'aliyun_rds_config', 'TABLE_COMMENTS': 'TABLE',  'COLUMN_NAME':'t1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'Y', 'INDEX_NAME': 'SYS_01', 'COMMENTS': 'SYS_01'
+             },
+            { 'TABLE_NAME': 'auth_group', 'TABLE_COMMENTS': 'TABLE', 'COLUMN_NAME': 't1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'N', 'INDEX_NAME': 'SYS_01','COMMENTS': 'SYS_01'
+            }))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_type':'oracle'
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content),
+                             {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
+
