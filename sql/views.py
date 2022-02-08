@@ -220,7 +220,8 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    return render(request, 'sqlquery.html', {'favorites': favorites})
+    is_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
+    return render(request, 'sqlquery.html', {'favorites': favorites, 'is_download':is_download})
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
