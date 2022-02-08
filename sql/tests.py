@@ -3006,6 +3006,7 @@ class TestDataDictionary(TestCase):
             'db_type':'oracle'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
+        print("oracle_test_export_instance" )
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content),
                              {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
