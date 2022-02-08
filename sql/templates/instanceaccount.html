@@ -1055,7 +1055,7 @@
         function user_list() {
             //初始化table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
-                escape: true,
+                escape: false,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/instance/user/list",
@@ -1125,7 +1125,8 @@
                             }
                             return priv
                         },
-                        width: "60%"
+                        width: "60",
+                        widthUnit:"%",
                     }, {
                         title: '备注',
                         field: 'remark'
@@ -1151,9 +1152,7 @@
 
                     }
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)

@@ -86,6 +86,7 @@ DB_TYPE_CHOICES = (
     ('oracle', 'Oracle'),
     ('mongo', 'Mongo'),
     ('phoenix', 'Phoenix'),
+    ('odps', 'ODPS'),
     ('goinception', 'goInception'))
 
 
@@ -871,7 +872,7 @@ class AuditEntry(models.Model):
     user_name = models.CharField('用户名称', max_length=30, null=True)
     user_display  = models.CharField('用户中文名',max_length=50, null=True)
     action = models.CharField('动作', max_length=255)
-    extra_info = models.CharField('额外的信息', max_length=255, null=True)
+    extra_info = models.TextField('额外的信息', null=True)
     action_time = models.DateTimeField('操作时间', auto_now_add=True)
 
     class Meta:

@@ -27,3 +27,4 @@ httptools==0.1.1
 uvicorn==0.12.2
 pycryptodome==3.10.1
 pandas
+pyodps==0.10.7.1

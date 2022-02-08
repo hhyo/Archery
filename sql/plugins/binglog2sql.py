@@ -44,6 +44,8 @@ class Binlog2Sql(Plugin):
                 elif name in filter_options and value:
                     if name == 'only-dml':
                         cmd_args += f' --{name}'
+                    elif name == 'sql-type':
+                        cmd_args += f' --{name} {value}'
                     else:
                         cmd_args += f' --{name} {shlex.quote(str(value))}'
         else:

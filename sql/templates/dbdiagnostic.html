@@ -196,9 +196,7 @@
                             alert("数据加载失败！" + data.msg);
                         }
                     },
-                    onLoadError: function () {
-                        alert("数据加载失败！请检查接口返回信息和错误日志！");
-                    },
+                    onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
@@ -292,9 +290,7 @@
                             alert("数据加载失败！" + data.msg);
                         }
                     },
-                    onLoadError: function () {
-                        alert("数据加载失败！请检查接口返回信息和错误日志！");
-                    },
+                    onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
@@ -430,9 +426,7 @@
                             alert("数据加载失败！" + data.msg);
                         }
                     },
-                    onLoadError: function () {
-                        alert("数据加载失败！请检查接口返回信息和错误日志！");
-                    },
+                    onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)
@@ -538,9 +532,7 @@
                             alert("数据加载失败！" + data.msg);
                         }
                     },
-                    onLoadError: function () {
-                        alert("数据加载失败！请检查接口返回信息和错误日志！");
-                    },
+                    onLoadError: onLoadErrorCallback,
                     onSearch: function (e) {
                         //传搜索参数给服务器
                         queryParams(e)

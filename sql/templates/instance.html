@@ -20,6 +20,7 @@
                 <option value="oracle">Oracle</option>
                 <option value="mongo">Mongo</option>
                 <option value="phoenix">Phoenix</option>
+                <option value="odps">ODPS</option>
             </select>
         </div>
         <div class="form-group">
@@ -171,9 +172,7 @@
                     }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)
