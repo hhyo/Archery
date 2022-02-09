@@ -2991,7 +2991,7 @@ class TestDataDictionary(TestCase):
     @patch('sql.data_dictionary.get_engine')
     def oracle_test_export_instance(self, _get_engine):
         """
-        测试导出
+        oracle元数据测试导出
         :return:
         """
         _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
