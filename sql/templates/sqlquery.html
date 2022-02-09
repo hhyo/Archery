@@ -265,7 +265,7 @@
     <script>
         //获取查询列表
         function get_querylog(query_log_id) {
-            var showExport = {{is_download}}==1
+            var showExport = {{can_download}}===1
             //初始化table
             $('#sql-log').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
@@ -782,7 +782,7 @@
                         if (optgroup == 'Mongo') {
                             isdetail = true
                         }
-                        var showExport = {{is_download}}==1
+                        var showExport = {{can_download}}===1
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],

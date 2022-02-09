@@ -220,8 +220,8 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    is_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
-    return render(request, 'sqlquery.html', {'favorites': favorites, 'is_download':is_download})
+    can_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
+    return render(request, 'sqlquery.html', {'favorites': favorites, 'can_download':can_download})
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -449,8 +449,7 @@ def audit_sqlquery(request):
     """SQL在线查询页面审计"""
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    is_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
-    return render(request, 'audit_sqlquery.html', {'favorites': favorites, 'is_download':is_download})
+    return render(request, 'audit_sqlquery.html', {'favorites': favorites})
 
 
 def audit_sqlworkflow(request):
