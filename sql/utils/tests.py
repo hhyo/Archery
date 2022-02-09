@@ -1208,8 +1208,8 @@ class TestDataMasking(TestCase):
         """[column_a,a.*,column_b]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select phone,*,phone from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1226,8 +1226,8 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
