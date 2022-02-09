@@ -730,7 +730,7 @@ class Permission(models.Model):
             ('archive_review', '审核归档申请'),
             ('archive_mgt', '管理归档申请'),
             ('audit_user','审计权限'),
-            ('download', '在线查询下载权限'),
+            ('query_download', '在线查询下载权限'),
         )
 
 
