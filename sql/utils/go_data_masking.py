@@ -33,12 +33,16 @@ def go_data_masking(instance, db_name, sql, sql_result):
                 #设置一个特殊标记，要是还有特殊关键字特殊处理，如果还有其他关键字需要特殊处理再逐步增加
                 elif token.ttype is Keyword and token.value.upper() in ['UNION','UNION ALL']:
                     particular_flag=1
+                elif token.ttype is Keyword and token.value.upper() in ['CONCAT']:
+                    particular_flag=2
 
         # 通过Inception获取语法树,并进行解析
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
         #1:union去重，避免后面循环字段数量大于结果集中字段数量
         if particular_flag == 1:
+            query_tree=DelRepeat(query_tree,'index')
+        elif particular_flag == 2:
             query_tree=DelRepeat(query_tree,'index')
 
         # 分析语法树获取命中脱敏规则的列数据
@@ -87,15 +91,12 @@ def go_data_masking(instance, db_name, sql, sql_result):
 def analyze_query_tree(query_tree, instance):
     """解析query_tree,获取语句信息,并返回命中脱敏规则的列信息"""
 
-    # old_select_list = query_tree.get('select_list', [])
-    # table_ref = query_tree.get('table_ref', [])
     old_select_list =[]
     table_ref=[]
-    #old_select_list=[{ 'field' : query_tree[0].get('field', []), 'alias' : query_tree[0].get('alias', [])}]
-    #table_ref= [{'schema' : query_tree[0].get('schema', []),'table' : query_tree[0].get('table', [])}]
+
     for list_i in query_tree:
 
-        old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'],'schema': list_i['schema'], 'table': list_i['table']})
+        old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'],'schema': list_i['schema'], 'table': list_i['table'] ,'index': list_i['index']})
         table_ref.append({'schema': list_i['schema'], 'table': list_i['table']})
 
     # 获取全部激活的脱敏字段信息，减少循环查询，提升效率
@@ -130,7 +131,6 @@ def analyze_query_tree(query_tree, instance):
                 table_hit_columns.extend(hit_columns_info)
 
             for index, item in enumerate(select_list):
-                item['index'] = index
                 if item.get('field') != '*':
                     columns.append(item)
 
@@ -142,7 +142,6 @@ def analyze_query_tree(query_tree, instance):
             if hit_info['is_hit']:
                 hit_info['index'] = column['index']
                 hit_columns.append(hit_info)
-
 
     return table_hit_columns, hit_columns
 
