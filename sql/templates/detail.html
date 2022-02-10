@@ -676,9 +676,7 @@
                 },
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                }
+                onLoadError: onLoadErrorCallback,
             });
         }
 
@@ -734,9 +732,7 @@
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: function () {
-                            alert("数据加载失败！请检查接口返回信息和错误日志！");
-                        }
+                        onLoadError: onLoadErrorCallback,
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -839,9 +835,7 @@
                     $("#osc-toolbar").show();
                     $('#osc_percent').modal('show');
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                }
+                onLoadError: onLoadErrorCallback,
             });
 
         }

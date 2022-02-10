@@ -116,9 +116,7 @@
                     sessionStorage.setItem('editSqlContent', backup_sql);
                 }
             },
-            onLoadError: function () {
-                alert("数据加载失败！请检查接口返回信息和错误日志！");
-            }
+            onLoadError: onLoadErrorCallback,
         });
         $(document).ready(function () {
             var isRollback = window.location.pathname.indexOf("rollback");
