@@ -2979,6 +2979,7 @@ class TestDataDictionary(TestCase):
             'db_type': 'oracle'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
+        print("oracle_test_export_db" )
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.streaming)
 
