@@ -818,7 +818,7 @@
                                                     rs = JSON.stringify(rs, null, 2)
                                                 }
                                             } catch (e) {
-                                                console.log("非json格式")
+                                                alert("非json格式，无法格式化！")
                                             }
                                         }
                                         html.push('<pre>' + highLight(rs) + '</pre>');
