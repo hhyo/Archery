@@ -818,7 +818,8 @@
                                                     rs = JSON.stringify(rs, null, 2)
                                                 }
                                             } catch (e) {
-                                                alert("非json格式，无法格式化！")
+                                                html.push('<strong>' + "非json格式，无法格式化！" + '</strong>');
+                                                return false;
                                             }
                                         }
                                         html.push('<pre>' + highLight(rs) + '</pre>');
