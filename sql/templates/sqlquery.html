@@ -779,7 +779,7 @@
                         //初始化查询结果
                         var isdetail = false
                         var optgroup = $('#instance_name :selected').parent().attr('label');
-                        if (optgroup == 'Mongo') {
+                        if (optgroup === 'Mongo' || optgroup === 'Redis') {
                             isdetail = true
                         }
                         var showExport = {{can_download}}===1
@@ -811,6 +811,17 @@
                                 $.each(row, function (key, value) {
                                     if (key === 0) {//mongodb这里要修改
                                         let rs = value;
+                                        if (optgroup === 'Redis') {
+                                            try {
+                                                rs = JSON.parse(rs);
+                                                if (typeof rs == 'object' && rs) {
+                                                    rs = JSON.stringify(rs, null, 2)
+                                                }
+                                            } catch (e) {
+                                                html.push('<strong>' + "非json格式，无法格式化！" + '</strong>');
+                                                return false;
+                                            }
+                                        }
                                         html.push('<pre>' + highLight(rs) + '</pre>');
                                     }
                                 });
