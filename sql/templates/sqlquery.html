@@ -79,6 +79,7 @@
                                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
                                     <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
                                     <optgroup id="optgroup-odps" label="ODPS"></optgroup>
+                                    <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -918,6 +919,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
                 }
+            } else if (optgroup === "ClickHouse") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
+                }
             }
             //提交请求
             $.ajax({
@@ -1016,6 +1022,14 @@
                 }
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "ClickHouse") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', false);
             }
         }
 
@@ -1264,6 +1278,7 @@
                             $("#optgroup-mongo").empty();
                             $("#optgroup-phoenix").empty();
                             $("#optgroup-odps").empty();
+                            $("#optgroup-clickhouse").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
@@ -1282,6 +1297,8 @@
                                     $("#optgroup-phoenix").append(instance);
                                 } else if (result[i]['db_type'] === 'odps') {
                                     $("#optgroup-odps").append(instance);
+                                } else if (result[i]['db_type'] === 'clickhouse') {
+                                    $("#optgroup-clickhouse").append(instance);
                                 }
                             }
                             $('#instance_name').selectpicker('render');

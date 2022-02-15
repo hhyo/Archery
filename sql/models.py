@@ -87,6 +87,7 @@ DB_TYPE_CHOICES = (
     ('mongo', 'Mongo'),
     ('phoenix', 'Phoenix'),
     ('odps', 'ODPS'),
+    ('clickhouse', 'ClickHouse'),
     ('goinception', 'goInception'))
 
 
