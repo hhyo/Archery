@@ -3030,6 +3030,7 @@ class TestDataDictionary(TestCase):
             'db_type':'oracle'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
+        print
         print(r.status_code)
         print("oracle_test_export_instance" )
         self.assertEqual(r.status_code, 200)
