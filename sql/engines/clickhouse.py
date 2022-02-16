@@ -1,11 +1,9 @@
 # -*- coding: UTF-8 -*-
 from clickhouse_driver import connect
 from . import EngineBase
-from .models import ResultSet, ReviewResult, ReviewSet
-from common.config import SysConfig
+from .models import ResultSet
 import sqlparse
 import logging
-import traceback
 import re
 
 logger = logging.getLogger('default')
@@ -42,25 +40,17 @@ class ClickHouseEngine(EngineBase):
 
     @property
     def server_version(self):
-        def numeric_part(s):
-            """Returns the leading numeric part of a string.
-            """
-            re_numeric_part = re.compile(r"^(\d+)")
-            m = re_numeric_part.match(s)
-            if m:
-                return int(m.group(1))
-            return None
-
         sql = "select value from system.build_options where name = 'VERSION_FULL';"
         result = self.query(sql=sql)
         version = result.rows[0][0].split(' ')[1]
-        return tuple([numeric_part(n) for n in version.split('.')[:3]])
+        return tuple([int(n) for n in version.split('.')[:3]])
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
         sql = "show databases"
         result = self.query(sql=sql)
-        db_list = [row[0] for row in result.rows if row[0] not in ('system')]
+        db_list = [row[0] for row in result.rows
+                   if row[0] not in ('system','INFORMATION_SCHEMA', 'information_schema', 'datasets')]
         result.rows = db_list
         return result
 
@@ -137,8 +127,12 @@ class ClickHouseEngine(EngineBase):
         if '*' in sql:
             result['has_star'] = True
             result['msg'] = 'SQL语句中含有 * '
+        # clickhouse 20.6.3版本开始正式支持explain语法
+        if re.match(r"^explain", sql, re.I) and self.server_version < (20, 6, 3):
+            result['bad_query'] = True
+            result['msg'] = f"当前ClickHouse实例版本低于20.6.3，不支持explain!"
         # select语句先使用Explain判断语法是否正确
-        if re.match(r"^select", sql, re.I):
+        if re.match(r"^select", sql, re.I) and self.server_version >= (20, 6, 3):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
             if explain_result.error:
                 result['bad_query'] = True
