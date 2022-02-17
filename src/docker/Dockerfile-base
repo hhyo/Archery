@@ -17,7 +17,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
 ENV LC_ALL zh_CN.utf8
 
 #python
-RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext \
+RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
