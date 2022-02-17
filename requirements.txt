@@ -26,5 +26,5 @@ uvloop==0.14.0
 httptools==0.1.1
 uvicorn==0.12.2
 pycryptodome==3.10.1
-pandas
+pandas==1.1.5
 pyodps==0.10.7.1
