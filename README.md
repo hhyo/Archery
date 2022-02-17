@@ -33,8 +33,11 @@ Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于
 | MsSQL | √ | × | √ | × | × | × | × | × | × | × |
 | Redis | √ | × | √ | × | × | × | × | × | × | × |
 | PgSQL | √ | × | √ | × | × | × | × | × | × | × |
-| Oracle | √ | × | √ | ✔️ | × | × | × | × | × | × |
+| Oracle | √ | √ | √ | √ | × | × | × | × | × | × |
 | MongoDB | √ | √  | √  | × | × | × | × | × | × | × |
+| Phoenix | √ | ×  | √  | × | × | × | × | × | × | × |
+| ODPS | √ | ×  | ×  | × | × | × | × | × | × | × |
+| ClickHous | √ | ×  | ×  | × | × | × | × | × | × | × |
 
   
 
@@ -119,6 +122,10 @@ python manage.py test -v 3
 - Redis Connector [redis-py](https://github.com/andymccurdy/redis-py)
 - PostgreSQL Connector [psycopg2](https://github.com/psycopg/psycopg2)
 - Oracle Connector [cx_Oracle](https://github.com/oracle/python-cx_Oracle)
+- MongoDB Connector [pymongo](https://github.com/mongodb/mongo-python-driver)
+- Phoenix Connector [phoenixdb](https://github.com/lalinsky/python-phoenixdb)
+- ODPS Connector [pyodps](https://github.com/aliyun/aliyun-odps-python-sdk)
+- ClickHouse Connector [clickhouse-driver](https://github.com/mymarilyn/clickhouse-driver)
 - SQL解析/切分/类型判断 [sqlparse](https://github.com/andialbrecht/sqlparse)
 - MySQL Binlog解析/回滚 [python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 - LDAP [django-auth-ldap](https://github.com/django-auth-ldap/django-auth-ldap)
@@ -130,6 +137,7 @@ python manage.py test -v 3
 - MySQL索引优化 [SQLAdvisor](https://github.com/Meituan-Dianping/SQLAdvisor)
 - SQL优化/压缩 [SOAR](https://github.com/XiaoMi/soar)
 - Binlog2SQL [binlog2sql](https://github.com/danfengcao/binlog2sql)
+- My2SQL [my2sql](https://github.com/liuhr/my2sql)
 - 表结构同步 [SchemaSync](https://github.com/hhyo/SchemaSync)
 - 慢日志解析展示 [pt-query-digest](https://www.percona.com/doc/percona-toolkit/3.0/pt-query-digest.html)|[aquila_v2](https://github.com/thinkdb/aquila_v2)
 - 大表DDL [gh-ost](https://github.com/github/gh-ost)|[pt-online-schema-change](https://www.percona.com/doc/percona-toolkit/3.0/pt-online-schema-change.html)
