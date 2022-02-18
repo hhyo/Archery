@@ -129,6 +129,7 @@ class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
     db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
+    mode = models.CharField('运行模式', max_length=10, default='', choices=(('standalone', '单机'), ('cluster', '集群')))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
