@@ -549,40 +549,40 @@ class TestRedis(TestCase):
         SqlWorkflow.objects.all().delete()
         SqlWorkflowContent.objects.all().delete()
 
-    @patch('Redis')
+    @patch('redis.Redis')
     def test_engine_base_info(self, _conn):
         new_engine = RedisEngine(instance=self.ins)
         self.assertEqual(new_engine.name, 'Redis')
         self.assertEqual(new_engine.info, 'Redis engine')
 
-    @patch('Redis')
+    @patch('redis.Redis')
     def test_get_connection(self, _conn):
         new_engine = RedisEngine(instance=self.ins)
         new_engine.get_connection()
         _conn.assert_called_once()
 
-    @patch('Redis.execute_command', return_value=[1, 2, 3])
+    @patch('redis.Redis.execute_command', return_value=[1, 2, 3])
     def test_query_return_list(self, _execute_command):
         new_engine = RedisEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
         self.assertTupleEqual(query_result.rows, ([1], [2], [3]))
 
-    @patch('Redis.execute_command', return_value='text')
+    @patch('redis.Redis.execute_command', return_value='text')
     def test_query_return_str(self, _execute_command):
         new_engine = RedisEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
         self.assertTupleEqual(query_result.rows, (['text'],))
 
-    @patch('Redis.execute_command', return_value='text')
+    @patch('redis.Redis.execute_command', return_value='text')
     def test_query_execute(self, _execute_command):
         new_engine = RedisEngine(instance=self.ins)
         query_result = new_engine.query(db_name=0, sql='keys *', limit_num=100)
         self.assertIsInstance(query_result, ResultSet)
         self.assertTupleEqual(query_result.rows, (['text'],))
 
-    @patch('Redis.config_get', return_value={"databases": 4})
+    @patch('redis.Redis.config_get', return_value={"databases": 4})
     def test_get_all_databases(self, _config_get):
         new_engine = RedisEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
@@ -628,7 +628,7 @@ class TestRedis(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
-    @patch('Redis.execute_command', return_value='text')
+    @patch('redis.Redis.execute_command', return_value='text')
     def test_execute_workflow_success(self, _execute_command):
         sql = 'set 1 1'
         row = ReviewResult(id=1,

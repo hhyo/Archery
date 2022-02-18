@@ -9,8 +9,7 @@
 import re
 import shlex
 
-from redis import Redis
-from redis.cluster import RedisCluster
+import redis
 import logging
 import traceback
 
@@ -27,10 +26,10 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == 'cluster':
-            return RedisCluster(host=self.host, port=self.port, password=self.password,
+            return redis.cluster.RedisCluster(host=self.host, port=self.port, password=self.password,
                                 encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
         else:
-            return Redis(host=self.host, port=self.port, db=db_name, password=self.password,
+            return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
                          encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
 
     @property
