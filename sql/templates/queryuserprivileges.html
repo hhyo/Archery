@@ -142,7 +142,7 @@
                     title: '权限级别',
                     field: 'priv_type',
                     formatter: function (value, row, index) {
-                        if (value === 1) {
+                        if (String(value) === '1') {
                             return 'DATABASE';
                         } else {
                             return 'TABLE';
@@ -175,9 +175,7 @@
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)

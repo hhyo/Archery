@@ -178,3 +178,13 @@ def get_engine(instance=None):  # pragma: no cover
         from .phoenix import PhoenixEngine
 
         return PhoenixEngine(instance=instance)
+
+    elif instance.db_type == 'odps':
+        from .odps import ODPSEngine
+
+        return ODPSEngine(instance=instance)
+
+    elif instance.db_type == 'clickhouse':
+        from .clickhouse import ClickHouseEngine
+
+        return ClickHouseEngine(instance=instance)

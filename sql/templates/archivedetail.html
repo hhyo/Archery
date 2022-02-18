@@ -408,7 +408,7 @@
                     title: '源数据',
                     field: 'no_delete',
                     formatter: function (value, row, index) {
-                        if (value === true) {
+                        if (String(value) === 'true') {
                             return '保留'
                         } else {
                             return '删除'
@@ -418,7 +418,7 @@
                     title: '状态',
                     field: 'success',
                     formatter: function (value, row, index) {
-                        if (value === true) {
+                        if (String(value) === 'true') {
                             return "<span class=\"label label-success\">" + '成功' + "</span>"
                         } else {
                             return "<span class=\"label label-danger\">" + '失败' + "</span>"
@@ -446,9 +446,7 @@
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                }
+                onLoadError: onLoadErrorCallback,
             });
         }
 
