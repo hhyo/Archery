@@ -42,6 +42,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
+          tags: |
+            type=sha
           images: |
             hhyo/archery-base
             ghcr.io/archery-base
@@ -52,6 +54,5 @@ jobs:
           context: .
           file: src/docker/Dockerfile-base
           push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            type=sha
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
