@@ -19,7 +19,7 @@ ENV LC_ALL zh_CN.UTF-8
 
 
 #python
-RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel \
+RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel xz-devel \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
