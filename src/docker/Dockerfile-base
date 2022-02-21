@@ -1,23 +1,25 @@
 FROM docker.io/centos:7
 
-ENV PYTHON_VERSION 3.8.6
+ENV PYTHON_VERSION 3.9.10
 ENV DOCKERIZE_VERSION v0.6.1
 ENV SOAR_VERSION 0.11.0
 
 ENV TZ=Asia/Shanghai
-ENV LANG en_US.UTF-8
 
 WORKDIR /opt
 
 #locale
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
     && yum -y install kde-l10n-Chinese \
+    && yum -y install glibc-common \
     && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
 
-ENV LC_ALL zh_CN.utf8
+ENV LANG zh_CN.UTF-8
+ENV LC_ALL zh_CN.UTF-8
+
 
 #python
-RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel \
+RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel xz-devel \
     && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
@@ -70,9 +72,9 @@ RUN cd /opt \
     && curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 \
     && yum -y install unixODBC-devel \
-#oracle instantclient
+#oracle
     && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
-#mongo instantclient
+#mongo
     && wget -c https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-3.6.20.tgz \
     && tar -xvf mongodb-linux-x86_64-rhel70-3.6.20.tgz \
     && cp mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/mongo \
