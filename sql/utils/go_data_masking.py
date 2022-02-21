@@ -40,12 +40,10 @@ def go_data_masking(instance, db_name, sql, sql_result):
         # 通过Inception获取语法树,并进行解析
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
-        print(query_tree)
         for keywords_i in keywords_list :
             #1:union去重，避免后面循环字段数量大于结果集中字段数量
             if keywords_i == 'UNION':
                 query_tree=DelRepeat(query_tree)
-                print(query_tree,type(query_tree))
 
 
         # 分析语法树获取命中脱敏规则的列数据
