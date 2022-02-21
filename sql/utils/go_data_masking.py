@@ -1,5 +1,6 @@
  # -*- coding:utf-8 -*-
 import logging
+from pickle import TRUE
 import traceback
 
 import sqlparse
@@ -10,6 +11,7 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
 
+
 logger = logging.getLogger('default')
 
 
@@ -19,7 +21,8 @@ logger = logging.getLogger('default')
 #不修改整体逻辑，主要修改由goInception返回的结果中关键字，比如db修改为schema
 def go_data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
-    particular_flag=0
+    #SQL中关键关键字
+    keywords_list=[]
     try:
         if SysConfig().get('query_check'):
             # 解析查询语句，禁用部分goInception无法解析关键词，先放着空吧，，，，也许某天用上了，:)
@@ -32,18 +35,18 @@ def go_data_masking(instance, db_name, sql, sql_result):
                     return sql_result
                 #设置一个特殊标记，要是还有特殊关键字特殊处理，如果还有其他关键字需要特殊处理再逐步增加
                 elif token.ttype is Keyword and token.value.upper() in ['UNION','UNION ALL']:
-                    particular_flag=1
-                elif token.ttype is Keyword and token.value.upper() in ['CONCAT']:
-                    particular_flag=2
+                    keywords_list.append('UNION')
 
         # 通过Inception获取语法树,并进行解析
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
-        #1:union去重，避免后面循环字段数量大于结果集中字段数量
-        if particular_flag == 1:
-            query_tree=DelRepeat(query_tree,'index')
-        elif particular_flag == 2:
-            query_tree=DelRepeat(query_tree,'index')
+        print(query_tree)
+        for keywords_i in keywords_list :
+            #1:union去重，避免后面循环字段数量大于结果集中字段数量
+            if keywords_i == 'UNION':
+                query_tree=DelRepeat(query_tree)
+                print(query_tree,type(query_tree))
+
 
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
@@ -90,7 +93,6 @@ def go_data_masking(instance, db_name, sql, sql_result):
 
 def analyze_query_tree(query_tree, instance):
     """解析query_tree,获取语句信息,并返回命中脱敏规则的列信息"""
-
     old_select_list =[]
     table_ref=[]
 
@@ -133,7 +135,7 @@ def analyze_query_tree(query_tree, instance):
             for index, item in enumerate(select_list):
                 if item.get('field') != '*':
                     columns.append(item)
-
+        #print(columns)
         # 格式化命中的列信息
         for column in columns:
             hit_info = hit_column(masking_columns, instance, column.get('schema'), column.get('table'),
@@ -145,21 +147,22 @@ def analyze_query_tree(query_tree, instance):
 
     return table_hit_columns, hit_columns
 
-def DelRepeat(data,key):
+def DelRepeat(query_tree):
     """输入的 data 是inception_engine.query_datamasking的list结果，
-    输入的 key 是上面 data中index 字段，用于筛选去重
     去重前
-    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
+    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 1, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
     去重后
     [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
     返回同样结构的list.
     """
     new_data_list = []
     values = []
-    for d in data:
-        if d[key] not in values:
+    for d in query_tree:
+
+        #print(bool([s    for s in values     if  d['field']   in  s['field'] ]))
+        if  bool([s    for s in values     if  d['field']   in  s['field'] ]) is  False:
             new_data_list.append(d)
-            values.append(d[key])
+            values.append(d)
     return new_data_list
 
 def hit_column(masking_columns, instance, table_schema, table_name, column_name):
