@@ -50,9 +50,10 @@ def _sql_workflow_list(request):
     resource_group_id = request.POST.get('group_id')
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.POST.get('limit',0))
+    offset = int(request.POST.get('offset',0))
     limit = offset + limit
+    limit = limit if limit else None
     search = request.POST.get('search')
     user = request.user
 

@@ -40,8 +40,8 @@ def audit_input(request):
 @permission_required('sql.audit_user', raise_exception=True)
 def audit_log(request):
     """获取审计日志列表"""
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.POST.get('limit',0))
+    offset = int(request.POST.get('offset',0))
     limit = offset + limit
     limit = limit if limit else None
     search = request.POST.get('search', '')

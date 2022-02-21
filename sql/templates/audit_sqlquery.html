@@ -93,9 +93,10 @@
                 pageList: [10, 30, 50, 100, 500, 1000],   //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
+                exportDataType: "all",
                 exportOptions: {
                     ignoreColumn: [0],  //忽略某些列的索引数组
-                    fileName: 'query_log'  //文件名称设置
+                    fileName: "query_log_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -137,18 +138,17 @@
                     var html = [];
                     $.each(row, function (key, value) {
                         if (key === 'sqllog') {
-                            let sql = value;
                             //替换标签
-                            sql = sql.replace(/&/g, "&amp;");
-                            sql = sql.replace(/</g, "&lt;");
-                            sql = sql.replace(/>/g, "&gt;");
-                            sql = sql.replace(/"/g, "&quot;");
+                            value = value.replace(/&/g, "&amp;");
+                            value = value.replace(/</g, "&lt;");
+                            value = value.replace(/>/g, "&gt;");
+                            value = value.replace(/"/g, "&quot;");
                             //替换所有的换行符
-                            sql = sql.replace(/\r\n/g, "<br>");
-                            sql = sql.replace(/\n/g, "<br>");
+                            value = value.replace(/\r\n/g, "<br>");
+                            value = value.replace(/\n/g, "<br>");
                             //替换所有的空格
-                            sql = sql.replace(/\s/g, "&nbsp;");
-                            html.push('<span>' + sql + '</span>');
+                            value = value.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + value + '</span>');
                         }
                     });
                     return html.join('');
@@ -169,8 +169,9 @@
                     title: '语句',
                     field: 'sqllog',
                     formatter: function (value, row, index) {
-                        if (value.length > 50) {
-                            var sql = value.substr(0, 50) + '...';
+                        var _sql=row.sqllog
+                        if (_sql.length > 50) {
+                            var sql = _sql.substr(0, 50) + '...';
                             return sql;
                         } else {
                             return value
