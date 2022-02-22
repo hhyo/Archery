@@ -2785,7 +2785,8 @@ class TestDataDictionary(TestCase):
         _get_engine.return_value.query.return_value = ResultSet(rows=(('test1', '测试表1'), ('test2', '测试表2')))
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2799,6 +2800,7 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not exist ins',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2811,7 +2813,8 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not exist ins',
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2826,7 +2829,8 @@ class TestDataDictionary(TestCase):
         _get_engine.side_effect = RuntimeError('test error')
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_list/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2842,7 +2846,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': self.ins.instance_name,
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2868,7 +2873,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': 'not exist ins',
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2884,7 +2890,8 @@ class TestDataDictionary(TestCase):
         data = {
             'instance_name': self.ins.instance_name,
             'db_name': self.db_name,
-            'tb_name': 'sql_instance'
+            'tb_name': 'sql_instance',
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/table_info/', data=data)
         self.assertEqual(r.status_code, 200)
@@ -2897,7 +2904,8 @@ class TestDataDictionary(TestCase):
         """
         data = {
             'instance_name': 'not_exist',
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertDictEqual(json.loads(r.content), {'data': [], 'msg': '你所在组未关联该实例！', 'status': 1})
@@ -2914,7 +2922,9 @@ class TestDataDictionary(TestCase):
         self.u1.user_permissions.add(data_dictionary_export)
         _user_instances.return_value.get.return_value = self.ins
         data = {
-            'instance_name': self.ins.instance_name
+            'instance_name': self.ins.instance_name,
+            'db_type': 'mysql'
+
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertDictEqual(json.loads(r.content),
@@ -2942,9 +2952,34 @@ class TestDataDictionary(TestCase):
              'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
         data = {
             'instance_name': self.ins.instance_name,
-            'db_name': self.db_name
+            'db_name': self.db_name,
+            'db_type': 'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.streaming)
+
+
+    @patch('sql.data_dictionary.get_engine')
+    def oracle_test_export_db(self, _get_engine):
+        """
+        oracle测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            { 'TABLE_NAME': 'aliyun_rds_config', 'TABLE_COMMENTS': 'TABLE',  'COLUMN_NAME':'t1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'Y', 'INDEX_NAME': 'SYS_01', 'COMMENTS': 'SYS_01'
+             },
+            { 'TABLE_NAME': 'auth_group', 'TABLE_COMMENTS': 'TABLE', 'COLUMN_NAME': 't1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'N', 'INDEX_NAME': 'SYS_01','COMMENTS': 'SYS_01'
+            }))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_name': self.db_name,
+            'db_type': 'oracle'
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+        print("oracle_test_export_db" )
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.streaming)
 
@@ -2969,9 +3004,36 @@ class TestDataDictionary(TestCase):
              'CREATE_TIME': datetime(2019, 5, 28, 9, 4, 11), 'UPDATE_TIME': None, 'CHECK_TIME': None,
              'TABLE_COLLATION': 'utf8_general_ci', 'CHECKSUM': None, 'CREATE_OPTIONS': '', 'TABLE_COMMENT': ''}))
         data = {
-            'instance_name': self.ins.instance_name
+            'instance_name': self.ins.instance_name,
+            'db_type':'mysql'
         }
         r = self.client.get(path='/data_dictionary/export/', data=data)
         self.assertEqual(r.status_code, 200)
         self.assertDictEqual(json.loads(r.content),
                              {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
+
+    @patch('sql.data_dictionary.get_engine')
+    def oracle_test_export_instance(self, _get_engine):
+        """
+        oracle元数据测试导出
+        :return:
+        """
+        _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
+            rows=(('test1',), ('test2',)))
+        _get_engine.return_value.query.return_value = ResultSet(rows=(
+            { 'TABLE_NAME': 'aliyun_rds_config', 'TABLE_COMMENTS': 'TABLE',  'COLUMN_NAME':'t1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'Y', 'INDEX_NAME': 'SYS_01', 'COMMENTS': 'SYS_01'
+             },
+            { 'TABLE_NAME': 'auth_group', 'TABLE_COMMENTS': 'TABLE', 'COLUMN_NAME': 't1', 'data_type': 'varcher2(20)', 'DATA_DEFAULT': 'Dynamic', 'NULLABLE': 'N', 'INDEX_NAME': 'SYS_01','COMMENTS': 'SYS_01'
+            }))
+        data = {
+            'instance_name': self.ins.instance_name,
+            'db_type':'oracle'
+        }
+        r = self.client.get(path='/data_dictionary/export/', data=data)
+
+        print(r.status_code)
+        print("oracle_test_export_instance" )
+        self.assertEqual(r.status_code, 200)
+        self.assertDictEqual(json.loads(r.content),
+                             {'data': [], 'msg': '实例test_instance数据字典导出成功，请到downloads目录下载！', 'status': 0})
+

@@ -17,6 +17,7 @@ class EngineBase:
             self.user = instance.user
             self.password = instance.password
             self.db_name = instance.db_name
+            self.mode = instance.mode
 
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
             if self.instance.tunnel:
@@ -181,4 +182,10 @@ def get_engine(instance=None):  # pragma: no cover
 
     elif instance.db_type == 'odps':
         from .odps import ODPSEngine
+
         return ODPSEngine(instance=instance)
+
+    elif instance.db_type == 'clickhouse':
+        from .clickhouse import ClickHouseEngine
+
+        return ClickHouseEngine(instance=instance)
