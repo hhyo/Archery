@@ -539,8 +539,8 @@ class TestMysql(TestCase):
 class TestRedis(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', host='some_host',
-                           port=1366, user='ins_user', password='some_str')
+        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', mode='standalone',
+                           host='some_host', port=1366, user='ins_user', password='some_str')
         cls.ins.save()
 
     @classmethod

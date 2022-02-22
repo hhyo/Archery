@@ -11,7 +11,7 @@ from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, 
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
     Tunnel, AuditEntry
 
-from sql.form import TunnelForm
+from sql.form import TunnelForm, InstanceForm
 
 
 # 用户管理
@@ -62,6 +62,7 @@ class InstanceTagAdmin(admin.ModelAdmin):
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
+    form = InstanceForm
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type', 'instance_tag')
