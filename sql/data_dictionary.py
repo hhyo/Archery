@@ -16,7 +16,7 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.utils.resource_group import user_instances
 from .models import Instance
 import time
-import pandas as pd
+#import pandas as pd   #安装有问题 等待解决
 
 @permission_required('sql.menu_data_dictionary', raise_exception=True)
 def table_list(request):
