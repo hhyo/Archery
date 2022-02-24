@@ -13,7 +13,8 @@
             <select id="saved" class="form-control selectpicker"
                     title="全部">
                 <option value="" selected="selected">全部</option>
-                <option value="true">已录入</option>
+                <option value="True">已录入</option>
+                <option value="False">未录入</option>
             </select>
         </div>
         <div class="form-group ">
@@ -75,7 +76,17 @@
                                    placeholder="请输入备注">
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label for="in_use" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <select id="in_use" class="form-control selectpicker"
+                                title="在用状态">
+                                <option value="Y" selected="selected">在用</option>
+                                <option value="N">停用</option>
+                            </select>
+                        </div>
                 </div>
+            </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" id="btnCreateDb" onclick="create_database()">创建
@@ -126,6 +137,17 @@
                                    placeholder="请输入备注">
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label for="edit_in_use" class="col-sm-3 col-form-label">备注</label>
+                        <div class="col-sm-9">
+                            <select id="edit_in_use" class="form-control selectpicker"
+                                title="在用状态">
+                                <option value="Y" selected="selected">在用</option>
+                                <option value="N">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
@@ -217,6 +239,10 @@
                         title: '备注',
                         field: 'remark'
                     }, {
+                    },{
+                        title: '在用状态',
+                        field: 'in_use'
+                    },{
                         title: '操作',
                         field: '',
                         formatter: function (value, row, index) {
@@ -270,7 +296,8 @@
                         instance_id: $("#instance").val(),
                         db_name: $("#db_name").val(),
                         owner: $("#owner").val(),
-                        remark: $("#remark").val()
+                        remark: $("#remark").val(),
+                        in_use: $("#in_use").val()
                     },
                     complete: function () {
                     },
@@ -297,10 +324,12 @@
             let row_data = $('#database-list').bootstrapTable('getRowByUniqueId', db_name);
             let owner = row_data['owner'];
             let remark = row_data['remark'];
+            let in_use = row_data['in_use'];
             $("#edit_db_name").val(db_name);
             $("#edit_owner").val(owner);
             $("#edit_owner").selectpicker('refresh');
             $("#edit_remark").val(remark);
+            $("#in_use").val(in_use);
             $('#modal-edit-database').modal('show');
 
             //变更用户权限
@@ -314,6 +343,7 @@
                         db_name: db_name,
                         owner: $("#edit_owner").val(),
                         remark: $("#edit_remark").val(),
+                        in_use: $("#edit_in_use").val(),
                     },
                     complete: function () {
                     },

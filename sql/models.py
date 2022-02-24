@@ -489,6 +489,7 @@ class InstanceDatabase(models.Model):
     owner = models.CharField('负责人', max_length=50, default='', blank=True)
     owner_display = models.CharField('负责人中文名', max_length=50, default='', blank=True)
     remark = models.CharField('备注', max_length=255, default='', blank=True)
+    in_use = models.CharField('在用状态', max_length=1, default='', blank=True)
     sys_time = models.DateTimeField('系统修改时间', auto_now=True)
 
     class Meta:
