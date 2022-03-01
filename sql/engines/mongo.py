@@ -320,13 +320,18 @@ class MongoEngine(EngineBase):
         """执行上线单，返回Review set"""
         return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
 
-    def execute(self, db_name=None, sql=''):
+    def execute(self, db_name=None, sql='', ddl=''):
         """mongo命令执行语句"""
         self.get_master()
         execute_result = ReviewSet(full_sql=sql)
         sql = sql.strip()
-        # 以；切分语句，逐句执行
-        sp_sql = sql.split(";")
+        #ddl create database语句
+        if ddl.lower() == 'true':
+          sp_sql = sql.split(";")
+          logger.debug("ddl:" + str(sp_sql))
+        else:       
+          # 以；切分语句，逐句执行
+          sp_sql = sql.split(";")
         line = 0
         for exec_sql in sp_sql:
             if not exec_sql == '':

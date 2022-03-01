@@ -17,6 +17,7 @@ from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import simple_column_mask
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 __author__ = 'hhyo、yyukai'
 
@@ -294,6 +295,34 @@ class PgSQLEngine(EngineBase):
                     execute_time=0,
                 ))
                 line += 1
+        finally:
+            if close_conn:
+                self.close()
+        return execute_result
+
+    def execute(self, db_name=None, sql='', ddl='', close_conn=True):
+        execute_result = ResultSet(full_sql=sql)
+        # 删除注释语句，切分语句，将切换CURRENT_SCHEMA语句增加到切分结果中
+        sql = sqlparse.format(sql, strip_comments=True)
+        split_sql = sqlparse.split(sql)
+        statement = None
+        try:
+            conn = self.get_connection(db_name=db_name)
+            # 设置事务隔离级别
+            if ddl.lower() == 'true':
+              conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            else:
+              pass
+            cursor = conn.cursor()
+            # 逐条执行切分语句，追加到执行结果中
+            for statement in split_sql:
+                statement = statement.rstrip(';')
+                with FuncTimer() as t:
+                    cursor.execute(statement)
+                    conn.commit()
+        except Exception as e:
+            logger.warning(f"PGSQL命令执行报错，语句：{statement or sql}， 错误信息：{traceback.format_exc()}")
+            execute_result.error = str(e)
         finally:
             if close_conn:
                 self.close()
