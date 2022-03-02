@@ -2782,7 +2782,7 @@ class TestDataDictionary(TestCase):
         测试获取表清单
         :return:
         """
-        _get_engine.return_value.query.return_value = ResultSet(rows=(('test1', '测试表1'), ('test2', '测试表2')))
+        _get_engine.return_value.get_group_tables_by_db.return_value = {'t': [['test1', '测试表1'], ['test2', '测试表2']]}
         data = {
             'instance_name': self.ins.instance_name,
             'db_name': self.db_name,

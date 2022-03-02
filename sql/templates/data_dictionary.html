@@ -10,6 +10,9 @@
                             name="instance_name"
                             title="请选择实例"
                             data-live-search="true">
+                        <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                        <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
+                        <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                     </select>
                 </div>
                 <div class="form-group">
@@ -102,7 +105,7 @@
                         <div class="panel-heading">列信息</div>
                         <div class="panel-body">
                             <div class="table-responsive">
-                                <table id="field-list" data-toggle="table" class="table table-striped table-hover"
+                                <table id="field-list-mysql" data-toggle="table" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 </table>
                             </div>
@@ -112,7 +115,7 @@
                         <div class="panel-heading">索引信息</div>
                         <div class="panel-body">
                             <div class="table-responsive">
-                                <table id="index-list" data-toggle="table" class="table table-striped table-hover"
+                                <table id="index-list-mysql" data-toggle="table" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 </table>
                             </div>
@@ -123,6 +126,70 @@
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table id="create-table-sql" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!--modal-body-->
+                <div class="modal-body" id="modal-body-mssql" >
+                    <div class="panel panel-default">
+                        <div class="panel-heading">表信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="meta_data" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    <tbody>
+                                    <tr>
+                                        <th>表名</th>
+                                        <td id="table_name"></td>
+                                        <th>表行数</th>
+                                        <td id="table_rows"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>数据长度（K）</th>
+                                        <td id="data_length"></td>
+                                        <th>索引长度（K）</th>
+                                        <td id="index_length"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>数据总大小（K）</th>
+                                        <td id="data_total"></td>
+                                        <th>碎片大小</th>
+                                        <td id="data_free"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>创建时间</th>
+                                        <td id="create_time"></td>
+                                        <th>更新时间</th>
+                                        <td id="update_time"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>当前自增值</th>
+                                        <td id="auto_increment"></td>
+                                        <th>表说明</th>
+                                        <td id="table_comment"></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">列信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="field-list-mssql" data-toggle="table" class="table table-striped table-hover"
+                                       style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">索引信息</div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="index-list-mssql" data-toggle="table" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 </table>
                             </div>
@@ -188,7 +255,7 @@
                         <div class="panel-heading">列信息</div>
                         <div class="panel-body">
                             <div class="table-responsive">
-                                <table id="field-list" data-toggle="table" class="table table-striped table-hover"
+                                <table id="field-list-oracle" data-toggle="table" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 </table>
                             </div>
@@ -198,7 +265,7 @@
                         <div class="panel-heading">索引信息</div>
                         <div class="panel-body">
                             <div class="table-responsive">
-                                <table id="index-list" data-toggle="table" class="table table-striped table-hover"
+                                <table id="index-list-oracle" data-toggle="table" class="table table-striped table-hover"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 </table>
                             </div>
@@ -224,7 +291,7 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql','oracle']
+                        db_type: ['mysql', 'mssql', 'oracle']
                     },
                     complete: function () {
                         if ($('#instance_name').val()) {
@@ -235,10 +302,20 @@
                         if (data.status === 0) {
                             let result = data['data'];
                             instance_result = data['data'];
-                            $("#instance_name").empty();
+
+                            $("#optgroup-mysql").empty();
+                            $("#optgroup-mssql").empty();
+                            $("#optgroup-oracle").empty();
+                            console.log(instance_result);
                             for (let i = 0; i < result.length; i++) {
                                 let instance_name = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                $("#instance_name").append(instance_name);
+                                if (result[i]['db_type'] === 'mysql') {
+                                    $("#optgroup-mysql").append(instance_name);
+                                } else if (result[i]['db_type'] === 'mssql') {
+                                    $("#optgroup-mssql").append(instance_name);
+                                } else if (result[i]['db_type'] === 'oracle') {
+                                    $("#optgroup-oracle").append(instance_name);
+                                }
                             }
                             $('#instance_name').selectpicker('render');
                             $('#instance_name').selectpicker('refresh');
@@ -356,11 +433,18 @@
             }
         }
 
+        // 根据传入的参数显示哪一种数据库的modal body
+        function showModalBody(db_type) {
+            $(".modal-body").hide();
+            $("#modal-body-" + db_type).show();
+        }
+
         // 展示表信息
         function showTableInfo(ins_name, db_name, tb_name) {
             // console.log(ins_name, db_name, tb_name);
             var inst_db_type_ind = instance_result.findIndex((value)=>value.instance_name==ins_name);
             var inst_db_type = instance_result[inst_db_type_ind]['db_type'];
+
             $.ajax({
                 type: "get",
                 url: "/data_dictionary/table_info/",
@@ -374,32 +458,32 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
-                        if ( inst_db_type === 'mysql') {
-                        $('#modal-body-oracle').remove();
-                        //console.log("hide_oracle");
+                        if (inst_db_type === 'mysql') {
+                            showModalBody('mysql');
+                            //console.log("hide_oracle");
 
-                        $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
-                        data: result['create_sql'],
-                        columns: [{
-                            field: 1,
-                            formatter: function (value, row, index) {
-                                var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
-                                sql = sql.replace(/\r\n/g, "<br>");
-                                sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
-                                sql = sql.replace(/\s/g, " ");
-                                return sql;
+                            $("#create-table-sql").bootstrapTable('destroy').bootstrapTable({
+                                data: result['create_sql'],
+                                columns: [{
+                                    field: 1,
+                                    formatter: function (value, row, index) {
+                                        var sql = window.sqlFormatter.format(value);
+                                        //替换所有的换行符
+                                        sql = sql.replace(/\r\n/g, "<br>");
+                                        sql = sql.replace(/\n/g, "<br>");
+                                        //替换所有的空格
+                                        sql = sql.replace(/\s/g, " ");
+                                        return sql;
 
-                            }
-                        }],
-                        locale: 'zh-CN'
-                        });
-                        }
-                        else if ( inst_db_type === 'oracle'){
-                        $('#modal-body-mysql').remove();
-                        //console.log("hide_mysql");
-
+                                    }
+                                }],
+                                locale: 'zh-CN'
+                            });
+                        } else if (inst_db_type === 'oracle') {
+                            showModalBody('oracle');
+                            //console.log("hide_mysql");
+                        } else if (inst_db_type === 'mssql') {
+                            showModalBody('mssql');
                         }
                         var meta_data_columns = result['meta_data']['column_list'];
                         var meta_data_values = result['meta_data']['rows'];
@@ -415,7 +499,7 @@
                                 "sortable": true
                             });
                         });
-                        $("#field-list").bootstrapTable('destroy').bootstrapTable({
+                        $("#field-list-" + inst_db_type).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['desc']['rows'],
                             columns: columns_field,
@@ -443,7 +527,7 @@
                                 "sortable": true
                             });
                         });
-                        $("#index-list").bootstrapTable('destroy').bootstrapTable({
+                        $("#index-list-" + inst_db_type).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['index']['rows'],
                             columns: columns_index,
