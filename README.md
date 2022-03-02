@@ -37,7 +37,7 @@ Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于
 | MongoDB | √ | √  | √  | × | × | × | × | × | × | × |
 | Phoenix | √ | ×  | √  | × | × | × | × | × | × | × |
 | ODPS | √ | ×  | ×  | × | × | × | × | × | × | × |
-| ClickHouse | √ | ×  | ×  | × | × | × | × | × | × | × |
+| ClickHouse | √ | √  | √  | × | × | × | × | × | × | × |
 
   
 
