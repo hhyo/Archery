@@ -1656,10 +1656,26 @@ class TestClickHouse(TestCase):
                              port=9000, user='ins_user', password='some_str')
         self.ins1.save()
         self.sys_config = SysConfig()
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=False,
+            instance=self.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
 
     def tearDown(self):
         self.ins1.delete()
         self.sys_config.purge()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
 
     @patch.object(ClickHouseEngine, 'query')
     def test_server_version(self, mock_query):
@@ -1669,6 +1685,16 @@ class TestClickHouse(TestCase):
         new_engine = ClickHouseEngine(instance=self.ins1)
         server_version = new_engine.server_version
         self.assertTupleEqual(server_version, (22, 1, 3))
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_table_engine(self, mock_query):
+        table_name = 'default.tb_test'
+        result = ResultSet()
+        result.rows = [('MergeTree',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        self.assertDictEqual(table_engine, {'status': 1, 'engine': 'MergeTree'})
 
     @patch('clickhouse_driver.connect')
     def test_engine_base_info(self, _conn):
@@ -1740,6 +1766,36 @@ class TestClickHouse(TestCase):
                              {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': 'update user set id=0',
                               'has_star': False})
 
+    @patch.object(ClickHouseEngine, 'query')
+    def test_explain_check(self, mock_query):
+        result = ResultSet()
+        result.rows = [('ClickHouse 20.1.3.7',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        server_version = new_engine.server_version
+        sql = "insert into tb_test(note) values ('xbb');"
+        check_result = ReviewSet(full_sql=sql)
+        explain_result = new_engine.explain_check(check_result, db_name='some_db', line=1, statement=sql)
+        self.assertEqual(explain_result.stagestatus, "Audit completed")
+
+    def test_execute_check_select_sql(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        select_sql = 'select id,name from tb_test'
+        check_result = new_engine.execute_check(db_name='some_db', sql=select_sql)
+        self.assertEqual(check_result.rows[0].errormessage, "仅支持DML和DDL语句，查询语句请使用SQL查询功能！")
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_execute_check_alter_sql(self, mock_query):
+        table_name = 'default.tb_test'
+        result = ResultSet()
+        result.rows = [('Log',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        alter_sql = "alter table default.tb_test add column remark String"
+        check_result = new_engine.execute_check(db_name='some_db', sql=alter_sql)
+        self.assertEqual(check_result.rows[0].errormessage, "ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！")
+
     def test_filter_sql_with_delimiter(self):
         new_engine = ClickHouseEngine(instance=self.ins1)
         sql_without_limit = 'select user from usertable;'
@@ -1787,3 +1843,42 @@ class TestClickHouse(TestCase):
         sql_without_limit = 'show create table usertable;'
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
         self.assertEqual(check_result, 'show create table usertable;')
+
+    @patch('clickhouse_driver.connect.cursor.execute')
+    @patch('clickhouse_driver.connect.cursor')
+    @patch('clickhouse_driver.connect')
+    def test_execute(self, _connect, _cursor, _execute):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        execute_result = new_engine.execute(self.wf)
+        self.assertIsInstance(execute_result, ResultSet)
+
+    @patch('clickhouse_driver.connect.cursor.execute')
+    @patch('clickhouse_driver.connect.cursor')
+    @patch('clickhouse_driver.connect')
+    def test_execute_workflow_success(self, _conn, _cursor, _execute):
+        sql = "insert into tb_test values('test')"
+        row = ReviewResult(id=1,
+                           errlevel=0,
+                           stagestatus='Execute Successfully',
+                           errormessage='None',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0)
+        wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=False,
+            instance=self.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
