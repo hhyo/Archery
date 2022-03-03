@@ -1273,7 +1273,7 @@ class TestDataMasking(TestCase):
         self.sys_config.set('query_check', 'true')
         self.sys_config.get_all_config()
         _inception.return_value.query_datamasking.return_value = [
-            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":0,"field":"phone","type":"varchar(80)","table":"activity_email_all_in_one","schema":"archer_test","alias":"phone"}
         ]
         sqls = ["select phone from test union select phone from activity_email_all_in_one;",
                 "select phone from test union all select phone from activity_email_all_in_one;"]
