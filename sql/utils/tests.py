@@ -1282,7 +1282,7 @@ class TestDataMasking(TestCase):
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         sql1 =  """select phone from users union select phone from users;"""
         query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql1)
-        r = go_data_masking(self.ins, 'archery', sql, query_result)
+        r = go_data_masking(self.ins, 'archery', sql1, query_result)
         print("test_go_data_masking_union_support_keyword1",r.rows)
         for sql in sqls:
             query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
