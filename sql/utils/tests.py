@@ -1276,8 +1276,8 @@ class TestDataMasking(TestCase):
             {"index":0,"field":"phone","type":"varchar(80)","table":"activity_email_all_in_one","schema":"archer_test","alias":"phone"},
             {"index":1,"field":"phone","type":"varchar(80)","table":"activity_email_all_in_one","schema":"archer_test","alias":"phone"}
         ]
-        sqls = ["select phone from test union select phone from activity_email_all_in_one;",
-                "select phone from test union all select phone from activity_email_all_in_one;"]
+        sqls = ["select phone from test union select phone from users;",
+                "select phone from test union all select phone from users;"]
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         for sql in sqls:
