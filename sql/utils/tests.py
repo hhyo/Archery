@@ -1283,6 +1283,7 @@ class TestDataMasking(TestCase):
         for sql in sqls:
             query_result = ReviewSet(column_list=['phone'], rows=rows, full_sql=sql)
             r = go_data_masking(self.ins, 'archery', sql, query_result)
+            print("test_go_data_masking_union_support_keyword",r)
             print("test_go_data_masking_union_support_keyword",r.rows)
             self.assertEqual(r.rows, mask_result_rows)
 
