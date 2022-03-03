@@ -101,7 +101,7 @@
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
-                    fileName: 'audit_log'  //文件名称设置
+                    fileName: "audit_log_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -112,7 +112,7 @@
                 uniqueId: "id",                     //每一行的唯一标识，一般为主键列
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
-                detailView: false,                  //是否显示父子表
+                detailView: true,                  //是否显示父子表
                 locale: 'zh-CN',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
@@ -137,6 +137,26 @@
                             end_date: end_date,
                         }
                     },
+                //格式化详情
+                detailFormatter: function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'extra_info') {
+                            //替换标签
+                            value = value.replace(/&/g, "&amp;");
+                            value = value.replace(/</g, "&lt;");
+                            value = value.replace(/>/g, "&gt;");
+                            value = value.replace(/"/g, "&quot;");
+                            //替换所有的换行符
+                            value = value.replace(/\r\n/g, "<br>");
+                            value = value.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            value = value.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + value + '</span>');
+                        }
+                    });
+                    return html.join('');
+                },
                 columns: [{
                     title: '用户',
                     field: 'user_name',
@@ -149,9 +169,25 @@
                 },{
                     title: '动作',
                     field: 'action'
+                
                 },{
                     title: '额外信息',
-                    field: 'extra_info'
+                    field: 'extra_info',
+                    formatter: function (value, row, index) {
+                        var _info=row.extra_info
+                        if (!_info) {
+                            return _info
+                        }
+                        if (_info.length > 100) {
+                            return _info.substr(0, 100) + '...';
+                        } else {
+                            return value
+                        }
+                    }
+                },{
+                    title: '完整额外信息',
+                    field: 'extra_info',
+                    visible: false
                 },{
                     title: '操作时间',
                     field: 'action_time'

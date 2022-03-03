@@ -1,0 +1,37 @@
+<html>
+    <meta charset="utf-8">
+    <title>数据库表结构说明文档</title>
+    <style>
+        body,td,th {font-family:"宋体"; font-size:12px;}
+        table,h1,p{width:960px;margin:0px auto;}
+        table{border-collapse:collapse;border:1px solid #CCC;background:#efefef;}
+        table caption{text-align:left; background-color:#fff; line-height:2em; font-size:14px; font-weight:bold; }
+        table th{text-align:left; font-weight:bold;height:26px; line-height:26px; font-size:12px; border:1px solid #CCC;padding-left:5px;}
+        table td{height:20px; font-size:12px; border:1px solid #CCC;background-color:#fff;padding-left:5px;}
+    </style>
+    {% load format_tags %}
+    <body>
+    <h1 style="text-align:center;">{{ db_name }} 数据字典 (共 {{ tables|length }} 个表)</h1>
+    <p style="text-align:center;margin:20px auto;">生成时间：{{ export_time }}</p>
+    {% for tb in tables %}
+        <table border="1" cellspacing="0" cellpadding="0" align="center">
+            <caption>表名：{{ tb.TABLE_INFO.TABLE_NAME }}</caption>
+            <caption>注释：{{ tb.TABLE_INFO.TABLE_COMMENT }}</caption>
+            <tbody>
+            <tr>
+                {% for key_dict in tb.ENGINE_KEYS %}
+                    <th>{{ key_dict.value }}</th>
+                {% endfor %}
+            </tr>
+            {% for col in tb.COLUMNS %}
+                <tr>
+                    {% for key_dict in tb.ENGINE_KEYS %}
+                        <td>{{ col|key_value:key_dict.key }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table></br>
+    {% endfor %}
+    </body>
+</html>

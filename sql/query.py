@@ -197,9 +197,10 @@ def _querylog(request):
     # 获取用户信息
     user = request.user
 
-    limit = int(request.GET.get('limit'))
-    offset = int(request.GET.get('offset'))
+    limit = int(request.GET.get('limit',0))
+    offset = int(request.GET.get('offset',0))
     limit = offset + limit
+    limit = limit if limit else None
     star = True if request.GET.get('star') == 'true' else False
     query_log_id = request.GET.get('query_log_id')
     search = request.GET.get('search', '')

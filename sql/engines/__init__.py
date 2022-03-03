@@ -101,6 +101,26 @@ class EngineBase:
         """获取table 列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 
+    def get_group_tables_by_db(self, db_name, **kwargs):
+        """获取首字符分组的table列表，返回一个dict"""
+        return dict()
+
+    def get_table_meta_data(self, db_name, tb_name, **kwargs):
+        """获取表格元信息"""
+        return dict()
+
+    def get_table_desc_data(self, db_name, tb_name, **kwargs):
+        """获取表格字段信息"""
+        return dict()
+
+    def get_table_index_data(self, db_name, tb_name, **kwargs):
+        """获取表格索引信息"""
+        return dict()
+
+    def get_tables_metas_data(self, db_name, **kwargs):
+        """获取数据库所有表格信息，用作数据字典导出接口"""
+        return list()
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet，rows=list"""
         return ResultSet()
