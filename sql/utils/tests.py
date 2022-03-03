@@ -1274,7 +1274,7 @@ class TestDataMasking(TestCase):
         self.sys_config.get_all_config()
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
         ]
         sqls = ["select phone from users union select phone from users;",
                 "select phone from users union all select phone from users;"]
