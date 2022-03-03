@@ -24,7 +24,6 @@ __author__ = 'hhyo'
 def databases(request):
     """获取实例数据库列表"""
     instance_id = request.POST.get('instance_id')
-
     saved  = request.POST.get('saved')
 
     if not instance_id:
