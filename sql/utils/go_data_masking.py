@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-import traceback
 
 import sqlparse
 from sqlparse.tokens import Keyword
