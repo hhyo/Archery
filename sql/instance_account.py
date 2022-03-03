@@ -17,14 +17,8 @@ from .models import Instance, InstanceAccount
 def users(request):
     """获取实例用户列表"""
     instance_id = request.POST.get('instance_id')
-    saved = True if request.POST.get('saved') == 'true' else False  # 平台是否保存
+    saved  = request.POST.get('saved')
 
-    if request.POST.get('saved') == 'True' :
-        saved = True
-    elif  request.POST.get('saved') == 'False':
-        saved = bool(0)  # 平台是否保存
-    else:
-        saved = request.POST.get('saved')
     if not instance_id:
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
     try:
@@ -35,7 +29,7 @@ def users(request):
     # 获取已录入用户
     cnf_users = dict()
     for user in InstanceAccount.objects.filter(instance=instance).values('id', 'user', 'host' , 'password', 'remark'):
-        user['saved'] = True
+        user['saved'] = 'True'
         cnf_users[f"`{user['user']}`@`{user['host']}`"] = user
     # 获取所有用户
     sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
@@ -53,15 +47,16 @@ def users(request):
                 'user': db_user[1],
                 'host': db_user[2],
                 'privileges': user_priv,
-                'saved': False
+                'saved': 'False'
             }
             # 合并数据
             if user_host in cnf_users.keys():
                 row = dict(row, **cnf_users[user_host])
+                #print(row['saved'],type(row['saved']))
             rows.append(row)
         # 过滤参数
-        if type(saved ) == bool:
-            rows = [row for row in rows  if row['saved'] == saved  ]
+        if saved:
+            rows = [row for row in rows if row['saved'] == str(saved) ]
 
         result = {'status': 0, 'msg': 'ok', 'rows': rows}
     else:
