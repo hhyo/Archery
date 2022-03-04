@@ -45,12 +45,14 @@ def go_data_masking(instance, db_name, sql, sql_result):
         keywords_count = {}
         for key in keywords_list:
             keywords_count[key] = keywords_count.get(key, 0) + 1
+        print("keywords_count",keywords_count)
         #如果UNION存在，那么调用去重函数
         if keywords_count.get('UNION') :
             query_tree = DelRepeat(query_tree,keywords_count)
             print("union_test",query_tree)
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
+        print(table_hit_columns,  hit_columns)
 
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
     except Exception as msg:
