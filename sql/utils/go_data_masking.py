@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-import traceback
 
 import sqlparse
 from sqlparse.tokens import Keyword
@@ -41,20 +40,19 @@ def go_data_masking(instance, db_name, sql, sql_result):
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
 
-        #统计需要特殊处理的关键字数量
+        # 统计需要特殊处理的关键字数量
         keywords_count = {}
         for key in keywords_list:
             keywords_count[key] = keywords_count.get(key, 0) + 1
-        print("keywords_count",keywords_count)
-        #如果UNION存在，那么调用去重函数
-        if keywords_count.get('UNION') :
-            query_tree = DelRepeat(query_tree,keywords_count)
-            print("union_test",query_tree)
+
+        # 如果UNION存在，那么调用去重函数
+        if keywords_count.get('UNION'):
+            query_tree = DelRepeat(query_tree, keywords_count)
+
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
-        print(table_hit_columns,  hit_columns)
-
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
+
     except Exception as msg:
         logger.warning(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
@@ -148,7 +146,7 @@ def analyze_query_tree(query_tree, instance):
     return table_hit_columns, hit_columns
 
 
-def DelRepeat(query_tree,keywords_count):
+def DelRepeat(query_tree, keywords_count):
     """输入的 data 是inception_engine.query_datamasking的list结果，
     去重前
     [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 1, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
@@ -157,13 +155,13 @@ def DelRepeat(query_tree,keywords_count):
     返回同样结构的list.
     keywords_count 关键词出现的次数
     """
-    #先将query_tree转换成表，方便统计
+    # 先将query_tree转换成表，方便统计
     df = pd.DataFrame(query_tree)
-    result_index =  df.groupby(['field','table','schema']).filter(lambda g: len(g) > 1 ).to_dict('records')
-    #再统计重复数量
+    result_index = df.groupby(['field', 'table', 'schema']).filter(lambda g: len(g) > 1).to_dict('records')
+    # 再统计重复数量
     result_len = len(result_index)
-    #再计算取列表前多少的值=重复数量/(union次数+1)
-    group_count = int (result_len / (keywords_count['UNION'] + 1))
+    # 再计算取列表前多少的值=重复数量/(union次数+1)
+    group_count = int(result_len / (keywords_count['UNION'] + 1))
     result = result_index[:group_count]
     return result
 
