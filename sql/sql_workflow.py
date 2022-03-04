@@ -227,8 +227,10 @@ def submit(request):
         logger.error(traceback.format_exc())
         return render(request, 'error.html', context)
     else:
-        # 自动审核通过才进行消息通知
-        if workflow_status == 'workflow_manreviewing':
+        # 自动审核通过且开启了Apply阶段通知参数才发送消息通知
+        is_notified = json.loads(sys_config.get('notify_phase_control'))['Apply'] \
+            if sys_config.get('notify_phase_control') else 'true'
+        if workflow_status == 'workflow_manreviewing' and is_notified == 'true':
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
@@ -368,9 +370,13 @@ def passed(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
-                   task_name=f'sqlreview-pass-{workflow_id}')
+        # 开启了Pass阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = json.loads(sys_config.get('notify_phase_control'))['Pass'] \
+            if sys_config.get('notify_phase_control') else 'true'
+        if is_notified == 'true':
+            async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                       task_name=f'sqlreview-pass-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -432,8 +438,12 @@ def execute(request):
                       operation_info='确认手工执行结束',
                       operator=request.user.username,
                       operator_display=request.user.display)
-        # 发送消息
-        notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+        # 开启了Execute阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = json.loads(sys_config.get('notify_phase_control'))['Execute'] \
+            if sys_config.get('notify_phase_control') else 'true'
+        if is_notified == 'true':
+            notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
@@ -565,13 +575,17 @@ def cancel(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 发送取消、驳回通知
-        audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+        # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = json.loads(sys_config.get('notify_phase_control'))['Cancel'] \
+            if sys_config.get('notify_phase_control') else 'true'
+        if is_notified == 'true':
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
-        if audit_detail.current_status in (
-                WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
-            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
-                       task_name=f'sqlreview-cancel-{workflow_id}')
+            if audit_detail.current_status in (
+                    WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
+                async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
+                           task_name=f'sqlreview-cancel-{workflow_id}')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

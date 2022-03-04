@@ -414,6 +414,25 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="notify_phase_control"
+                                       class="col-sm-4 control-label">NOTIFY_PHASE_CONTROL</label>
+                                <div class="col-sm-5">
+                                    <select id="notify_phase_control" key="notify_phase_control"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="工单通知分阶段控制"
+                                            multiple required>
+                                        {% for phase, status in config.notify_phase_control.items %}
+                                            {% if status == 'true' %}
+                                                <option value="{{ phase }}" selected>{{ phase }}</option>
+                                            {% else %}
+                                                <option value="{{ phase }}">{{ phase }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="mail"
                                        class="col-sm-4 control-label">MAIL</label>
                                 <div class="col-sm-8">
