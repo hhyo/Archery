@@ -155,17 +155,16 @@ def DelRepeat(query_tree,keywords_count):
     去重后
     [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
     返回同样结构的list.
+    keywords_count 关键词出现的次数
     """
     #先将query_tree转换成表，方便统计
-    new_data_list = []
     df = pd.DataFrame(query_tree)
-    result_index =  df.query("field == 'phone' and table == 'users' and schema == 'db1'").groupby(['field','table','schema']).filter(lambda g: len(g) > 1 ).to_dict('records')
+    result_index =  df.groupby(['field','table','schema']).filter(lambda g: len(g) > 1 ).to_dict('records')
     #再统计重复数量
     result_len = len(result_index)
     #再计算取列表前多少的值=重复数量/(union次数+1)
     group_count = int (result_len / (keywords_count['UNION'] + 1))
     result = result_index[:group_count]
-    new_data_list=result
     return result
 
 
