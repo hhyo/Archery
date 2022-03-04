@@ -9,7 +9,7 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
 import pandas as pd
-
+import traceback
 
 logger = logging.getLogger('default')
 
