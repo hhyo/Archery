@@ -166,7 +166,7 @@ def DelRepeat(query_tree,keywords_count):
     group_count = int (result_len / (keywords_count['UNION'] + 1))
     result = result_index[:group_count]
     new_data_list=result
-    return new_data_list
+    return result
 
 
 def hit_column(masking_columns, instance, table_schema, table_name, column_name):

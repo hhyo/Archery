@@ -5,14 +5,22 @@
 @file: tests.py
 @time: 2019/03/14
 """
+
+import os
+import sys
+import os
+import django
+
 import datetime
 import json
 from unittest.mock import patch, MagicMock
+
 
 from django.conf import settings
 from django.contrib.auth.models import Permission, Group
 from django.test import TestCase, Client
 from django_q.models import Schedule
+
 
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
@@ -28,6 +36,7 @@ from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.workflow_audit import Audit
 from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
 from sql.utils.go_data_masking import go_data_masking, brute_mask, simple_column_mask
+
 
 User = Users
 __author__ = 'hhyo'
