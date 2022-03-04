@@ -48,7 +48,7 @@ def go_data_masking(instance, db_name, sql, sql_result):
         #如果UNION存在，那么调用去重函数
         if keywords_count.get('UNION') :
             query_tree = DelRepeat(query_tree,keywords_count)
-        print("union_test",query_tree)
+            print("union_test",query_tree)
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
 
