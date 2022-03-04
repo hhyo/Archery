@@ -79,6 +79,7 @@
                                     <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
                                     <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
                                     <optgroup id="optgroup-odps" label="ODPS"></optgroup>
+                                    <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -265,6 +266,7 @@
     <script>
         //获取查询列表
         function get_querylog(query_log_id) {
+            var showExport = {{can_download}}===1
             //初始化table
             $('#sql-log').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
@@ -280,7 +282,7 @@
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                 pageSize: 14,                       //每页的记录行数（*）
                 pageList: [10, 30, 50, 100],        //可供选择的每页的行数（*）
-                showExport: true,                   //是否显示导出按钮
+                showExport: showExport,                   //是否显示导出按钮
                 exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                 exportOptions: {
                     ignoreColumn: [0],  //忽略某些列的索引数组
@@ -778,14 +780,15 @@
                         //初始化查询结果
                         var isdetail = false
                         var optgroup = $('#instance_name :selected').parent().attr('label');
-                        if (optgroup == 'Mongo') {
+                        if (optgroup === 'Mongo' || optgroup === 'Redis') {
                             isdetail = true
                         }
+                        var showExport = {{can_download}}===1
                         $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
                             columns: columns,
-                            showExport: true,
+                            showExport: showExport,
                             exportDataType: "all",
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
@@ -809,6 +812,17 @@
                                 $.each(row, function (key, value) {
                                     if (key === 0) {//mongodb这里要修改
                                         let rs = value;
+                                        if (optgroup === 'Redis') {
+                                            try {
+                                                rs = JSON.parse(rs);
+                                                if (typeof rs == 'object' && rs) {
+                                                    rs = JSON.stringify(rs, null, 2)
+                                                }
+                                            } catch (e) {
+                                                html.push('<strong>' + "非json格式，无法格式化！" + '</strong>');
+                                                return false;
+                                            }
+                                        }
                                         html.push('<pre>' + highLight(rs) + '</pre>');
                                     }
                                 });
@@ -916,6 +930,11 @@
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
                 }
+            } else if (optgroup === "ClickHouse") {
+                //查看执行计划
+                if (sql === 'explain') {
+                    sqlContent = 'explain ' + sqlContent
+                }
             }
             //提交请求
             $.ajax({
@@ -1014,6 +1033,14 @@
                 }
                 $("#btn-format").attr('disabled', false);
                 $("#btn-explain").attr('disabled', true);
+            } else if (optgroup === "ClickHouse") {
+                if (change) {
+                    $("#div-table_name").show();
+                    $("#div-schema_name").hide();
+                    redis_help_tab_remove();
+                }
+                $("#btn-format").attr('disabled', false);
+                $("#btn-explain").attr('disabled', false);
             }
         }
 
@@ -1262,6 +1289,7 @@
                             $("#optgroup-mongo").empty();
                             $("#optgroup-phoenix").empty();
                             $("#optgroup-odps").empty();
+                            $("#optgroup-clickhouse").empty();
                             for (let i = 0; i < result.length; i++) {
                                 let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                 if (result[i]['db_type'] === 'mysql') {
@@ -1280,6 +1308,8 @@
                                     $("#optgroup-phoenix").append(instance);
                                 } else if (result[i]['db_type'] === 'odps') {
                                     $("#optgroup-odps").append(instance);
+                                } else if (result[i]['db_type'] === 'clickhouse') {
+                                    $("#optgroup-clickhouse").append(instance);
                                 }
                             }
                             $('#instance_name').selectpicker('render');

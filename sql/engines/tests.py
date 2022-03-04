@@ -17,6 +17,7 @@ from sql.engines.redis import RedisEngine
 from sql.engines.pgsql import PgSQLEngine
 from sql.engines.oracle import OracleEngine
 from sql.engines.mongo import MongoEngine
+from sql.engines.clickhouse import ClickHouseEngine
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -538,8 +539,8 @@ class TestMysql(TestCase):
 class TestRedis(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', host='some_host',
-                           port=1366, user='ins_user', password='some_str')
+        cls.ins = Instance(instance_name='some_ins', type='slave', db_type='redis', mode='standalone',
+                           host='some_host', port=1366, user='ins_user', password='some_str')
         cls.ins.save()
 
     @classmethod
@@ -1646,3 +1647,238 @@ class MongoTest(TestCase):
                   {"_id": {"$oid": "7f10162029684728e70045ab"}, "author": "archery"}]
         cols = self.engine.fill_query_columns(cursor, columns=columns)
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
+
+
+class TestClickHouse(TestCase):
+
+    def setUp(self):
+        self.ins1 = Instance(instance_name='some_ins', type='slave', db_type='clickhouse', host='some_host',
+                             port=9000, user='ins_user', password='some_str')
+        self.ins1.save()
+        self.sys_config = SysConfig()
+        self.wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=False,
+            instance=self.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=self.wf)
+
+    def tearDown(self):
+        self.ins1.delete()
+        self.sys_config.purge()
+        SqlWorkflow.objects.all().delete()
+        SqlWorkflowContent.objects.all().delete()
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_server_version(self, mock_query):
+        result = ResultSet()
+        result.rows = [('ClickHouse 22.1.3.7',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        server_version = new_engine.server_version
+        self.assertTupleEqual(server_version, (22, 1, 3))
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_table_engine(self, mock_query):
+        table_name = 'default.tb_test'
+        result = ResultSet()
+        result.rows = [('MergeTree',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        self.assertDictEqual(table_engine, {'status': 1, 'engine': 'MergeTree'})
+
+    @patch('clickhouse_driver.connect')
+    def test_engine_base_info(self, _conn):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        self.assertEqual(new_engine.name, 'ClickHouse')
+        self.assertEqual(new_engine.info, 'ClickHouse engine')
+
+    @patch.object(ClickHouseEngine, 'get_connection')
+    def testGetConnection(self, connect):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        new_engine.get_connection()
+        connect.assert_called_once()
+
+    @patch.object(ClickHouseEngine, 'query')
+    def testQuery(self, mock_query):
+        result = ResultSet()
+        result.rows = [('v1', 'v2'), ]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        query_result = new_engine.query(sql='some_sql', limit_num=100)
+        self.assertListEqual(query_result.rows, [('v1', 'v2'), ])
+
+    @patch.object(ClickHouseEngine, 'query')
+    def testAllDb(self, mock_query):
+        db_result = ResultSet()
+        db_result.rows = [('db_1',), ('db_2',)]
+        mock_query.return_value = db_result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        dbs = new_engine.get_all_databases()
+        self.assertEqual(dbs.rows, ['db_1', 'db_2'])
+
+    @patch.object(ClickHouseEngine, 'query')
+    def testAllTables(self, mock_query):
+        table_result = ResultSet()
+        table_result.rows = [('tb_1', 'some_des'), ('tb_2', 'some_des')]
+        mock_query.return_value = table_result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        tables = new_engine.get_all_tables('some_db')
+        mock_query.assert_called_once_with(db_name='some_db', sql=ANY)
+        self.assertEqual(tables.rows, ['tb_1', 'tb_2'])
+
+    @patch.object(ClickHouseEngine, 'query')
+    def testAllColumns(self, mock_query):
+        db_result = ResultSet()
+        db_result.rows = [('col_1', 'type'), ('col_2', 'type2')]
+        mock_query.return_value = db_result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        dbs = new_engine.get_all_columns_by_tb('some_db', 'some_tb')
+        self.assertEqual(dbs.rows, ['col_1', 'col_2'])
+
+    @patch.object(ClickHouseEngine, 'query')
+    def testDescribe(self, mock_query):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        new_engine.describe_table('some_db', 'some_db')
+        mock_query.assert_called_once()
+
+    def test_query_check_wrong_sql(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        wrong_sql = '-- 测试'
+        check_result = new_engine.query_check(db_name='some_db', sql=wrong_sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': '-- 测试', 'has_star': False})
+
+    def test_query_check_update_sql(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        update_sql = 'update user set id=0'
+        check_result = new_engine.query_check(db_name='some_db', sql=update_sql)
+        self.assertDictEqual(check_result,
+                             {'msg': '不支持的查询语法类型!', 'bad_query': True, 'filtered_sql': 'update user set id=0',
+                              'has_star': False})
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_explain_check(self, mock_query):
+        result = ResultSet()
+        result.rows = [('ClickHouse 20.1.3.7',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        server_version = new_engine.server_version
+        sql = "insert into tb_test(note) values ('xbb');"
+        check_result = ReviewSet(full_sql=sql)
+        explain_result = new_engine.explain_check(check_result, db_name='some_db', line=1, statement=sql)
+        self.assertEqual(explain_result.stagestatus, "Audit completed")
+
+    def test_execute_check_select_sql(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        select_sql = 'select id,name from tb_test'
+        check_result = new_engine.execute_check(db_name='some_db', sql=select_sql)
+        self.assertEqual(check_result.rows[0].errormessage, "仅支持DML和DDL语句，查询语句请使用SQL查询功能！")
+
+    @patch.object(ClickHouseEngine, 'query')
+    def test_execute_check_alter_sql(self, mock_query):
+        table_name = 'default.tb_test'
+        result = ResultSet()
+        result.rows = [('Log',)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        alter_sql = "alter table default.tb_test add column remark String"
+        check_result = new_engine.execute_check(db_name='some_db', sql=alter_sql)
+        self.assertEqual(check_result.rows[0].errormessage, "ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！")
+
+    def test_filter_sql_with_delimiter(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable;'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, 'select user from usertable limit 100;')
+
+    def test_filter_sql_without_delimiter(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, 'select user from usertable limit 100;')
+
+    def test_filter_sql_with_limit(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 1;')
+
+    def test_filter_sql_with_limit_min(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, 'select user from usertable limit 10;')
+
+    def test_filter_sql_with_limit_offset(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10 offset 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 1 offset 100;')
+
+    def test_filter_sql_with_limit_nn(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'select user from usertable limit 10, 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'select user from usertable limit 10,1;')
+
+    def test_filter_sql_upper(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'SELECT USER FROM usertable LIMIT 10, 100'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'SELECT USER FROM usertable limit 10,1;')
+
+    def test_filter_sql_not_select(self):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        sql_without_limit = 'show create table usertable;'
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, 'show create table usertable;')
+
+    @patch('clickhouse_driver.connect.cursor.execute')
+    @patch('clickhouse_driver.connect.cursor')
+    @patch('clickhouse_driver.connect')
+    def test_execute(self, _connect, _cursor, _execute):
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        execute_result = new_engine.execute(self.wf)
+        self.assertIsInstance(execute_result, ResultSet)
+
+    @patch('clickhouse_driver.connect.cursor.execute')
+    @patch('clickhouse_driver.connect.cursor')
+    @patch('clickhouse_driver.connect')
+    def test_execute_workflow_success(self, _conn, _cursor, _execute):
+        sql = "insert into tb_test values('test')"
+        row = ReviewResult(id=1,
+                           errlevel=0,
+                           stagestatus='Execute Successfully',
+                           errormessage='None',
+                           sql=sql,
+                           affected_rows=0,
+                           execute_time=0)
+        wf = SqlWorkflow.objects.create(
+            workflow_name='some_name',
+            group_id=1,
+            group_name='g1',
+            engineer_display='',
+            audit_auth_groups='some_group',
+            create_time=datetime.now() - timedelta(days=1),
+            status='workflow_finish',
+            is_backup=False,
+            instance=self.ins1,
+            db_name='some_db',
+            syntax_type=1
+        )
+        SqlWorkflowContent.objects.create(workflow=wf, sql_content=sql)
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        execute_result = new_engine.execute_workflow(workflow=wf)
+        self.assertIsInstance(execute_result, ReviewSet)
+        self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())

@@ -50,9 +50,10 @@ def _sql_workflow_list(request):
     resource_group_id = request.POST.get('group_id')
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.POST.get('limit',0))
+    offset = int(request.POST.get('offset',0))
     limit = offset + limit
+    limit = limit if limit else None
     search = request.POST.get('search')
     user = request.user
 
@@ -218,7 +219,7 @@ def submit(request):
             workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流
             if workflow_status == 'workflow_manreviewing':
-                # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+                # 调用工作流插入审核信息, SQL上线权限申请workflow_type=2
                 Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")

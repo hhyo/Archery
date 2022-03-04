@@ -23,4 +23,13 @@ alter table audit_log add `user_display` varchar(50) DEFAULT NULL COMMENT '用�
 
 set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
 insert IGNORE INTO auth_permission (name, content_type_id, codename) VALUES
-('审计权限 ', @content_type_id, 'audit_user');
+('审计权限', @content_type_id, 'audit_user');
+
+-- 在线查询下载权限
+set @content_type_id=(select id from django_content_type where app_label='sql' and model='permission');
+insert IGNORE INTO auth_permission (name, content_type_id, codename) VALUES
+('在线查询下载权限', @content_type_id, 'query_download');
+
+-- 实例配置表新增mode字段，用于redis实例；为历史数据设置默认值
+alter table sql_instance add column `mode` varchar(10) DEFAULT '' after `db_type`;
+update sql_instance set mode='standalone' where db_type='redis';
