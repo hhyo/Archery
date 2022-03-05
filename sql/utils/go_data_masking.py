@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-import traceback
 
 import sqlparse
 from sqlparse.tokens import Keyword
@@ -9,16 +8,20 @@ from common.config import SysConfig
 from sql.engines.goinception import GoInceptionEngine
 from sql.models import DataMaskingRules, DataMaskingColumns
 import re
+import pandas as pd
+import traceback
 
 logger = logging.getLogger('default')
 
 
 # TODO 待优化，没想好
 
-#Inception转为goInception，将archery中数据脱敏的IP和端口指向goInception的
-#不修改整体逻辑，主要修改由goInception返回的结果中关键字，比如db修改为schema
+# Inception转为goInception，将archery中数据脱敏的IP和端口指向goInception的
+# 不修改整体逻辑，主要修改由goInception返回的结果中关键字，比如db修改为schema
 def go_data_masking(instance, db_name, sql, sql_result):
     """脱敏数据"""
+    # SQL中关键关键字
+    keywords_list = []
     try:
         if SysConfig().get('query_check'):
             # 解析查询语句，禁用部分goInception无法解析关键词，先放着空吧，，，，也许某天用上了，:)
@@ -29,15 +32,27 @@ def go_data_masking(instance, db_name, sql, sql_result):
                     sql_result.error = '不支持该查询语句脱敏！请联系管理员'
                     sql_result.status = 1
                     return sql_result
+                # 设置一个特殊标记，要是还有特殊关键字特殊处理，如果还有其他关键字需要特殊处理再逐步增加
+                elif token.ttype is Keyword and token.value.upper() in ['UNION', 'UNION ALL']:
+                    keywords_list.append('UNION')
+
         # 通过Inception获取语法树,并进行解析
         inception_engine = GoInceptionEngine()
         query_tree = inception_engine.query_datamasking(instance=instance, db_name=db_name, sql=sql)
-        #去重，避免后面循环字段数量大于结果集中字段数量
-        query_tree=DelRepeat(query_tree,'index')
+
+        # 统计需要特殊处理的关键字数量
+        keywords_count = {}
+        for key in keywords_list:
+            keywords_count[key] = keywords_count.get(key, 0) + 1
+
+        # 如果UNION存在，那么调用去重函数
+        if keywords_count.get('UNION'):
+            query_tree = DelRepeat(query_tree, keywords_count)
+
         # 分析语法树获取命中脱敏规则的列数据
         table_hit_columns,  hit_columns = analyze_query_tree(query_tree, instance)
-
         sql_result.mask_rule_hit = True if table_hit_columns or hit_columns else False
+
     except Exception as msg:
         logger.warning(f'数据脱敏异常，错误信息：{traceback.format_exc()}')
         sql_result.error = str(msg)
@@ -47,7 +62,6 @@ def go_data_masking(instance, db_name, sql, sql_result):
         if table_hit_columns and sql_result.rows:
             column_list = sql_result.column_list
             table_hit_column = dict()
-
 
             for index, item in enumerate(column_list):
                 if item in table_hit_column.keys():
@@ -79,16 +93,12 @@ def go_data_masking(instance, db_name, sql, sql_result):
 
 def analyze_query_tree(query_tree, instance):
     """解析query_tree,获取语句信息,并返回命中脱敏规则的列信息"""
+    old_select_list = []
+    table_ref = []
 
-    # old_select_list = query_tree.get('select_list', [])
-    # table_ref = query_tree.get('table_ref', [])
-    old_select_list =[]
-    table_ref=[]
-    #old_select_list=[{ 'field' : query_tree[0].get('field', []), 'alias' : query_tree[0].get('alias', [])}]
-    #table_ref= [{'schema' : query_tree[0].get('schema', []),'table' : query_tree[0].get('table', [])}]
     for list_i in query_tree:
 
-        old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'],'schema': list_i['schema'], 'table': list_i['table']})
+        old_select_list.append({'field': list_i['field'], 'alias': list_i['alias'], 'schema': list_i['schema'], 'table': list_i['table'], 'index': list_i['index']})
         table_ref.append({'schema': list_i['schema'], 'table': list_i['table']})
 
     # 获取全部激活的脱敏字段信息，减少循环查询，提升效率
@@ -123,10 +133,8 @@ def analyze_query_tree(query_tree, instance):
                 table_hit_columns.extend(hit_columns_info)
 
             for index, item in enumerate(select_list):
-                item['index'] = index
                 if item.get('field') != '*':
                     columns.append(item)
-
         # 格式化命中的列信息
         for column in columns:
             hit_info = hit_column(masking_columns, instance, column.get('schema'), column.get('table'),
@@ -135,26 +143,28 @@ def analyze_query_tree(query_tree, instance):
             if hit_info['is_hit']:
                 hit_info['index'] = column['index']
                 hit_columns.append(hit_info)
-
-
     return table_hit_columns, hit_columns
 
-def DelRepeat(data,key):
+
+def DelRepeat(query_tree, keywords_count):
     """输入的 data 是inception_engine.query_datamasking的list结果，
-    输入的 key 是上面 data中index 字段，用于筛选去重
     去重前
-    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
+    [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}, {'index': 1, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
     去重后
     [{'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'db1', 'alias': 'phone'}]
     返回同样结构的list.
+    keywords_count 关键词出现的次数
     """
-    new_data_list = []
-    values = []
-    for d in data:
-        if d[key] not in values:
-            new_data_list.append(d)
-            values.append(d[key])
-    return new_data_list
+    # 先将query_tree转换成表，方便统计
+    df = pd.DataFrame(query_tree)
+    result_index = df.groupby(['field', 'table', 'schema']).filter(lambda g: len(g) > 1).to_dict('records')
+    # 再统计重复数量
+    result_len = len(result_index)
+    # 再计算取列表前多少的值=重复数量/(union次数+1)
+    group_count = int(result_len / (keywords_count['UNION'] + 1))
+    result = result_index[:group_count]
+    return result
+
 
 def hit_column(masking_columns, instance, table_schema, table_name, column_name):
     """判断字段是否命中脱敏规则,如果命中则返回脱敏的规则id和规则类型"""
