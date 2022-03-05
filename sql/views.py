@@ -390,11 +390,6 @@ def config(request):
     sys_config = {}
     for items in all_config:
         sys_config[items['item']] = items['value']
-    # notify_phase_control参数初始化
-    if not any(cfg['item'] == 'notify_phase_control' for cfg in all_config):
-        sys_config['notify_phase_control'] = {phase: 'true' for phase in ['Apply', 'Pass', 'Execute', 'Cancel']}
-    else:
-        sys_config['notify_phase_control'] = json.loads(sys_config['notify_phase_control'])
 
     context = {'group_list': group_list, 'auth_group_list': auth_group_list, 'instance_tags': instance_tags,
                'config': sys_config, 'WorkflowDict': WorkflowDict}

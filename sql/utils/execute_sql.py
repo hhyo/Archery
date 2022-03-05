@@ -9,7 +9,6 @@ from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
-import simplejson as json
 
 
 def execute(workflow_id, user=None):
@@ -94,7 +93,7 @@ def execute_callback(task):
 
     # 开启了Execute阶段通知参数才发送消息通知
     sys_config = SysConfig()
-    is_notified = json.loads(sys_config.get('notify_phase_control'))['Execute'] \
-        if sys_config.get('notify_phase_control') else 'true'
-    if is_notified == 'true':
+    is_notified = 'Execute' in sys_config.get('notify_phase_control').split(',') \
+        if sys_config.get('notify_phase_control') else True
+    if is_notified:
         notify_for_execute(workflow)

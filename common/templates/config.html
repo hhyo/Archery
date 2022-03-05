@@ -422,13 +422,6 @@
                                             data-live-search="true"
                                             data-none-selected-text="工单通知分阶段控制"
                                             multiple required>
-                                        {% for phase, status in config.notify_phase_control.items %}
-                                            {% if status == 'true' %}
-                                                <option value="{{ phase }}" selected>{{ phase }}</option>
-                                            {% else %}
-                                                <option value="{{ phase }}">{{ phase }}</option>
-                                            {% endif %}
-                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
@@ -879,6 +872,32 @@
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
+        // notify_phase_control参数处理
+        $(document).ready(function (){
+            let cfg_value = "{{ config.notify_phase_control }}";
+            let phases = ['Apply', 'Pass', 'Execute', 'Cancel'];
+            // notify_phase_control未设置时默认全部开启
+            if (cfg_value === "") {
+                for (let i in phases) {
+                    let phase = "<option value=\"" + phases[i]+ "\" selected>" + phases[i] + "</option>"
+                    $("#notify_phase_control").append(phase)
+                }
+            } else {
+                for (let i=0;i<phases.length;i++) {
+                    let phase = "";
+                    let cfg_arr = cfg_value.split(',');
+                    if (cfg_arr.indexOf(phases[i]) >= 0) {
+                        phase = "<option value=\"" + phases[i]+ "\" selected>" + phases[i] + "</option>"
+                    } else {
+                        phase = "<option value=\"" + phases[i]+ "\">" + phases[i] + "</option>"
+                    }
+                    $("#notify_phase_control").append(phase)
+                }
+            }
+            $("#notify_phase_control").selectpicker('render');
+            $("#notify_phase_control").selectpicker('refresh');
+        })
+
         //配置项切换
         $("#config").change(function () {
             sessionStorage.setItem('config_type', $("#config").val());

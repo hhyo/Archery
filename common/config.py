@@ -57,16 +57,9 @@ class SysConfig(object):
         try:
             with transaction.atomic():
                 self.purge()
-                config_items = []
-                for items in json.loads(configs):
-                    if items['key'].strip() == 'notify_phase_control':
-                        notify_status = {phase: 'true' if phase in items['value'].strip().split(',') else 'false'
-                                         for phase in ['Apply', 'Pass', 'Execute', 'Cancel']}
-                        Config.objects.create(item=items['key'].strip(), value=json.dumps(notify_status))
-                    else:
-                        config_items.append(Config(item=items['key'].strip(),
-                                                   value=str(items['value']).strip()))
-                Config.objects.bulk_create(config_items)
+                Config.objects.bulk_create(
+                    [Config(item=items['key'].strip(),
+                            value=str(items['value']).strip()) for items in json.loads(configs)])
         except Exception as e:
             logger.error(traceback.format_exc())
             result['status'] = 1
