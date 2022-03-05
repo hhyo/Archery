@@ -5,14 +5,22 @@
 @file: tests.py
 @time: 2019/03/14
 """
+
+import os
+import sys
+import os
+import django
+
 import datetime
 import json
 from unittest.mock import patch, MagicMock
+
 
 from django.conf import settings
 from django.contrib.auth.models import Permission, Group
 from django.test import TestCase, Client
 from django_q.models import Schedule
+
 
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
@@ -28,6 +36,7 @@ from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.workflow_audit import Audit
 from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
 from sql.utils.go_data_masking import go_data_masking, brute_mask, simple_column_mask
+
 
 User = Users
 __author__ = 'hhyo'
@@ -1208,8 +1217,8 @@ class TestDataMasking(TestCase):
         """[column_a,a.*,column_b]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select phone,*,phone from users;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1226,8 +1235,8 @@ class TestDataMasking(TestCase):
         """[a.*, column_a, b.*]"""
         _inception.return_value.query_datamasking.return_value = [
             {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":3,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
-            {"index":4,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {"index":1,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"},
+            {"index":2,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
         ]
         sql = """select a.*,phone,a.* from users a;"""
         rows = (('18888888888', '18888888888', '18888888888',),
@@ -1273,10 +1282,12 @@ class TestDataMasking(TestCase):
         self.sys_config.set('query_check', 'true')
         self.sys_config.get_all_config()
         _inception.return_value.query_datamasking.return_value = [
-            {"index":0,"field":"phone","type":"varchar(80)","table":"users","schema":"archer_test","alias":"phone"}
+            {'index': 0, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'archer_test', 'alias': 'phone'},
+            {'index': 1, 'field': 'phone', 'type': 'varchar(80)', 'table': 'users', 'schema': 'archer_test', 'alias': 'phone'}
+
         ]
-        sqls = ["select phone from test union select phone from activity_email_all_in_one;",
-                "select phone from test union all select phone from activity_email_all_in_one;"]
+        sqls = ["select phone from users union select phone from users;",
+                "select phone from users union all select phone from users;"]
         rows = (('18888888888',), ('18888888889',), ('18888888810',))
         mask_result_rows = [['188****8888', ], ['188****8889', ], ['188****8810', ]]
         for sql in sqls:
