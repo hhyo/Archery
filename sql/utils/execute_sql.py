@@ -3,6 +3,7 @@
 from django.db import close_old_connections, connection, transaction
 from django_redis import get_redis_connection
 from common.utils.const import WorkflowDict
+from common.config import SysConfig
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute
@@ -90,5 +91,9 @@ def execute_callback(task):
         for key in r.scan_iter(match='*insRes*', count=2000):
             r.delete(key)
 
-    # 发送消息
-    notify_for_execute(workflow)
+    # 开启了Execute阶段通知参数才发送消息通知
+    sys_config = SysConfig()
+    is_notified = 'Execute' in sys_config.get('notify_phase_control').split(',') \
+        if sys_config.get('notify_phase_control') else True
+    if is_notified:
+        notify_for_execute(workflow)
