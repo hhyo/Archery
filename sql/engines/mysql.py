@@ -14,7 +14,6 @@ from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
-from sql.utils.go_data_masking import go_data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
@@ -340,7 +339,7 @@ class MysqlEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            mask_result = go_data_masking(self.instance, db_name, sql, resultset)
+            mask_result = data_masking(self.instance, db_name, sql, resultset)
         else:
             mask_result = resultset
         return mask_result
