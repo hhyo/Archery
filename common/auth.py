@@ -71,7 +71,7 @@ class ArcheryAuth(object):
         except:
             logger.error('验证用户密码时报错')
             logger.error(traceback.format_exc())
-            return {'status': 1, 'msg': f'服务器错误{traceback.format_exc()}', 'data': ''}
+            return {'status': 1, 'msg': f'服务异常，请联系管理员处理', 'data': ''}
         # 已存在用户, 验证是否在锁期间
         # 读取配置文件
         lock_count = int(self.sys_config.get('lock_cnt_threshold', 5))
