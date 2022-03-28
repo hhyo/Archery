@@ -195,8 +195,8 @@ class ClickHouseEngine(EngineBase):
                               sql=statement,
                               affected_rows=0,
                               execute_time=0, )
-        # clickhouse版本>=20.6.3才使用explain检查
-        if self.server_version >= (20, 6, 3):
+        # clickhouse版本>=21.1.2 explain ast才支持非select语句检查
+        if self.server_version >= (21, 1, 2):
             explain_result = self.query(db_name=db_name, sql=f"explain ast {statement}")
             if explain_result.error:
                 check_result.is_critical = True
