@@ -51,47 +51,35 @@ def slowquery_review(request):
 
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
-        # DBName非必传
-        if db_name:
-            # 获取慢查数据
-            slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__db_max=db_name,
-                slowqueryhistory__ts_min__range=(start_time, end_time),
-                fingerprint__icontains=search
-            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
-                CreateTime=Max('slowqueryhistory__ts_max'),
-                DBName=Max('slowqueryhistory__db_max'),  # 数据库
-                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            )
-        else:
-            # 获取慢查数据
-            slowsql_obj = SlowQuery.objects.filter(
-                slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                slowqueryhistory__ts_min__range=(start_time, end_time),
-                fingerprint__icontains=search
-            ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
-                CreateTime=Max('slowqueryhistory__ts_max'),
-                DBName=Max('slowqueryhistory__db_max'),  # 数据库
-                QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
-                MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
-                MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
-                ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
-                ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
-            )
+        filter_kwargs = {"slowqueryhistory__db_max": db_name} if db_name else {}
+        # 获取慢查数据
+        slowsql_obj = SlowQuery.objects.filter(
+            slowqueryhistory__hostname_max=(instance_info.host + ':' + str(instance_info.port)),
+            slowqueryhistory__ts_min__range=(start_time, end_time),
+            fingerprint__icontains=search,
+            **filter_kwargs
+        ).annotate(SQLText=F('fingerprint'), SQLId=F('checksum')).values('SQLText', 'SQLId').annotate(
+            CreateTime=Max('slowqueryhistory__ts_max'),
+            DBName=Max('slowqueryhistory__db_max'),  # 数据库
+            QueryTimeAvg=Sum('slowqueryhistory__query_time_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均执行时长
+            MySQLTotalExecutionCounts=Sum('slowqueryhistory__ts_cnt'),  # 执行总次数
+            MySQLTotalExecutionTimes=Sum('slowqueryhistory__query_time_sum'),  # 执行总时长
+            ParseTotalRowCounts=Sum('slowqueryhistory__rows_examined_sum'),  # 扫描总行数
+            ReturnTotalRowCounts=Sum('slowqueryhistory__rows_sent_sum'),  # 返回总行数
+            ParseRowAvg=Sum('slowqueryhistory__rows_examined_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均扫描行数
+            ReturnRowAvg=Sum('slowqueryhistory__rows_sent_sum') / Sum('slowqueryhistory__ts_cnt'),  # 平均返回行数
+        )
         slow_sql_count = slowsql_obj.count()
         # 默认“执行总次数”倒序排列
-        slow_sql_list = slowsql_obj.order_by('-'+sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit]
+        slow_sql_list = slowsql_obj.order_by('-' + sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit]
 
         # QuerySet 序列化
         sql_slow_log = []
         for SlowLog in slow_sql_list:
             SlowLog['QueryTimeAvg'] = round(SlowLog['QueryTimeAvg'], 6)
             SlowLog['MySQLTotalExecutionTimes'] = round(SlowLog['MySQLTotalExecutionTimes'], 6)
+            SlowLog['ParseRowAvg'] = int(SlowLog['ParseRowAvg'])
+            SlowLog['ReturnRowAvg'] = int(SlowLog['ReturnRowAvg'])
             sql_slow_log.append(SlowLog)
         result = {"total": slow_sql_count, "rows": sql_slow_log}
 
@@ -130,71 +118,36 @@ def slowquery_review_history(request):
         # 时间处理
         end_time = datetime.datetime.strptime(end_time, '%Y-%m-%d') + datetime.timedelta(days=1)
         limit = offset + limit
+        filter_kwargs = {}
+        filter_kwargs.update({"checksum": sql_id}) if sql_id else None
+        filter_kwargs.update({'db_max': db_name}) if db_name else None
         # SQLId、DBName非必传
-        if sql_id:
-            # 获取慢查明细数据
-            slow_sql_record_obj = SlowQueryHistory.objects.filter(
-                hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                checksum=sql_id,
-                ts_min__range=(start_time, end_time),
-                sample__icontains=search
-            ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
-                       DBName=F('db_max'),  # 数据库名
-                       HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),  # 用户名
-                       SQLText=F('sample'),  # SQL语句
-                       TotalExecutionCounts=F('ts_cnt'),  # 本次统计该sql语句出现的次数
-                       QueryTimePct95=F('query_time_pct_95'),  # 本次统计该sql语句95%耗时
-                       QueryTimes=F('query_time_sum'),  # 本次统计该sql语句花费的总时间(秒)
-                       LockTimes=F('lock_time_sum'),  # 本次统计该sql语句锁定总时长(秒)
-                       ParseRowCounts=F('rows_examined_sum'),  # 本次统计该sql语句解析总行数
-                       ReturnRowCounts=F('rows_sent_sum')  # 本次统计该sql语句返回总行数
-                       )
-        else:
-            if db_name:
-                # 获取慢查明细数据
-                slow_sql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    db_max=db_name,
-                    ts_min__range=(start_time, end_time),
-                    sample__icontains=search
-                ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
-                           DBName=F('db_max'),  # 数据库名
-                           HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),
-                           # 用户名
-                           SQLText=F('sample'),  # SQL语句
-                           TotalExecutionCounts=F('ts_cnt'),  # 本次统计该sql语句出现的次数
-                           QueryTimePct95=F('query_time_pct_95'),  # 本次统计该sql语句出现的次数
-                           QueryTimes=F('query_time_sum'),  # 本次统计该sql语句花费的总时间(秒)
-                           LockTimes=F('lock_time_sum'),  # 本次统计该sql语句锁定总时长(秒)
-                           ParseRowCounts=F('rows_examined_sum'),  # 本次统计该sql语句解析总行数
-                           ReturnRowCounts=F('rows_sent_sum')  # 本次统计该sql语句返回总行数
-                           )
-            else:
-                # 获取慢查明细数据
-                slow_sql_record_obj = SlowQueryHistory.objects.filter(
-                    hostname_max=(instance_info.host + ':' + str(instance_info.port)),
-                    ts_min__range=(start_time, end_time),
-                    sample__icontains=search
-                ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
-                           DBName=F('db_max'),  # 数据库名
-                           HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),
-                           # 用户名
-                           SQLText=F('sample'),  # SQL语句
-                           TotalExecutionCounts=F('ts_cnt'),  # 本次统计该sql语句出现的次数
-                           QueryTimePct95=F('query_time_pct_95'),  # 本次统计该sql语句95%耗时
-                           QueryTimes=F('query_time_sum'),  # 本次统计该sql语句花费的总时间(秒)
-                           LockTimes=F('lock_time_sum'),  # 本次统计该sql语句锁定总时长(秒)
-                           ParseRowCounts=F('rows_examined_sum'),  # 本次统计该sql语句解析总行数
-                           ReturnRowCounts=F('rows_sent_sum')  # 本次统计该sql语句返回总行数
-                           )
+        # 获取慢查明细数据
+        slow_sql_record_obj = SlowQueryHistory.objects.filter(
+            hostname_max=(instance_info.host + ':' + str(instance_info.port)),
+            ts_min__range=(start_time, end_time),
+            sample__icontains=search,
+            **filter_kwargs
+        ).annotate(ExecutionStartTime=F('ts_min'),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
+                   DBName=F('db_max'),  # 数据库名
+                   HostAddress=Concat(V('\''), 'user_max', V('\''), V('@'), V('\''), 'client_max', V('\'')),  # 用户名
+                   SQLText=F('sample'),  # SQL语句
+                   TotalExecutionCounts=F('ts_cnt'),  # 本次统计该sql语句出现的次数
+                   QueryTimePct95=F('query_time_pct_95'),  # 本次统计该sql语句95%耗时
+                   QueryTimes=F('query_time_sum'),  # 本次统计该sql语句花费的总时间(秒)
+                   LockTimes=F('lock_time_sum'),  # 本次统计该sql语句锁定总时长(秒)
+                   ParseRowCounts=F('rows_examined_sum'),  # 本次统计该sql语句解析总行数
+                   ReturnRowCounts=F('rows_sent_sum')  # 本次统计该sql语句返回总行数
+                   )
 
         slow_sql_record_count = slow_sql_record_obj.count()
-        slow_sql_record_list = slow_sql_record_obj.order_by('-' + sortName if 'desc'.__eq__(sortOrder) else sortName)[offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
-                                                                        'SQLText',
-                                                                        'TotalExecutionCounts', 'QueryTimePct95',
-                                                                        'QueryTimes', 'LockTimes', 'ParseRowCounts',
-                                                                        'ReturnRowCounts'
-                                                                        )
+        slow_sql_record_list = slow_sql_record_obj.order_by('-' + sortName if 'desc'.__eq__(sortOrder) else sortName)[
+                               offset:limit].values('ExecutionStartTime', 'DBName', 'HostAddress',
+                                                    'SQLText',
+                                                    'TotalExecutionCounts', 'QueryTimePct95',
+                                                    'QueryTimes', 'LockTimes', 'ParseRowCounts',
+                                                    'ReturnRowCounts'
+                                                    )
 
         # QuerySet 序列化
         sql_slow_record = []
