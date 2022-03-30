@@ -1189,6 +1189,7 @@
 
         }
 
+
         //获取实例数据库
         function db_list() {
             $.ajax({
@@ -1540,15 +1541,40 @@
                 });
             });
         }
+
+        //显示密码
         function show_password_modal (obj) {
             let user_host = $(obj).attr("user_host");
             let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
-            let user = row_data['user'];
-            let host = row_data['host'];
-            let password = row_data['password'];
-            $("#show-user").text(user_host);
-            $("#show-password").text(password);
-            $("#show-pwd").modal('show');
+
+            $.ajax({
+                type: "post",
+                url: "/instance/user/requ_password",
+                dataType: "json",
+                data: {
+                        instance_id: $("#instance").val(),
+                        user: row_data['user'],
+                        host: row_data['host']
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    //console.log(data);
+                    if (data.status === 0) {
+                        let result = data.rows;
+                        let password = result.password;
+                        //console.log(result);
+                        $("#show-user").text(user_host);
+                        $("#show-password").text(password);
+                        $("#show-pwd").modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
         }
 
         //删除账号

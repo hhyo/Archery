@@ -67,6 +67,30 @@ def users(request):
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
+@permission_required('sql.instance_account_manage', raise_exception=True)
+def requ_password(request):
+    """获取数据库用户密码"""
+    instance_id = request.POST.get('instance_id', 0)
+    user = request.POST.get('user')
+    host = request.POST.get('host')
+
+    if not instance_id:
+        return JsonResponse({'status': 0, 'msg': '', 'data': []})
+    try:
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+    except Instance.DoesNotExist:
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
+
+    # 获取已录入用户
+
+    cnf_users = dict()
+    for user_password in   InstanceAccount.objects.filter(instance=instance,user = user, host = host).values('id', 'user','host','password' ):
+        cnf_users = user_password
+
+    result = {'status': 0, 'msg': 'ok', 'rows': cnf_users}
+
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 @permission_required('sql.instance_account_manage', raise_exception=True)
 def create(request):
