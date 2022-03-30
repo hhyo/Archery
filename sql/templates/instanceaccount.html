@@ -939,6 +939,29 @@
             </div>
         </div>
     </div>
+    <!-- 锁定账号模态框 -->
+    <div class="modal fade" id="lock-account" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"><span id="lock-title">锁定账号</span>
+                        实例: <span id="lock-instance" style="color: red"></span>
+                        账号: <span id="lock-user" style="color: red"></span></h4>
+                </div>
+                <div class="modal-body form-group">
+                    <span id="lock-text" style="color: red">
+                        确认锁定该账号？
+                    </span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="lockBtn">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- 删除账号模态框 -->
     <div class="modal fade" id="delete-account" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
@@ -1138,7 +1161,13 @@
                             let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
                             let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
                             let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
-                            return btn_edit + btn_modify_grants + btn_reset_passwd + btn_del_account
+                            let btn_lock_account = "";
+                            if (row.is_locked === 'N') {
+                                btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">锁定</button>\n";
+                            } else if (row.is_locked === 'Y') {
+                                btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">解锁</button>\n";
+                            }
+                            return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
                         }
                     }],
                 onLoadSuccess: function (data) {
@@ -1281,6 +1310,7 @@
                 let ins_name = $("#instance option:selected").text();
                 $("#modify-instance").text(ins_name);
                 $("#reset-instance").text(ins_name);
+                $("#lock-instance").text(ins_name);
                 $("#delete-instance").text(ins_name);
                 db_list();
             }
@@ -1500,6 +1530,43 @@
                         if (data.status === 0) {
                             $('#reset-pwd').modal('hide');
                             $("#reset-pwd input").val("");
+                            user_list()
+                        } else {
+                            alert(data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            });
+        }
+
+        //锁定or解锁账号
+        function show_lock_modal(obj) {
+            let user_host = $(obj).attr("user_host");
+            let is_locked = $(obj).attr("is_locked");
+            let operation = $(obj).text();
+            $("#lock-user").text(user_host);
+            $("#lock-title").text(operation + "账号")
+            $("#lock-text").text("确认" + operation + "该账号？")
+            $("#lock-account").modal('show');
+
+            $("#lockBtn").unbind("click").click(function () {
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/lock/",
+                    dataType: "json",
+                    data: {
+                        instance_id: $("#instance").val(),
+                        user_host: user_host,
+                        is_locked: is_locked,
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        if (data.status === 0) {
+                            $('#lock-account').modal('hide');
                             user_list()
                         } else {
                             alert(data.msg);
