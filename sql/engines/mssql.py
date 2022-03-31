@@ -24,7 +24,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
-        sql = "SELECT name FROM master.sys.databases"
+        sql = "SELECT name FROM master.sys.databases order by name"
         result = self.query(sql=sql)
         db_list = [row[0] for row in result.rows
                    if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
@@ -35,11 +35,154 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_TYPE = 'BASE TABLE';""".format(db_name)
+        WHERE TABLE_TYPE = 'BASE TABLE' order by TABLE_NAME;""".format(db_name)
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
         result.rows = tb_list
         return result
+
+    def get_group_tables_by_db(self, db_name):
+        """
+        根据传入的数据库名，获取该库下的表和注释，并按首字符分组，比如 'a': ['account1','apply']
+        :param db_name:
+        :return:
+        """
+        data = {}
+        sql = f"""
+        SELECT t.name AS table_name, 
+            case when td.value is not null then convert(varchar(max),td.value) else '' end AS table_comment
+        FROM    sysobjects t
+        LEFT OUTER JOIN sys.extended_properties td
+        ON      td.major_id = t.id
+        AND     td.minor_id = 0
+        AND     td.name = 'MS_Description'
+        WHERE t.type = 'u' ORDER BY t.name;"""
+        result = self.query(db_name=db_name, sql=sql)
+        for row in result.rows:
+            table_name, table_cmt = row[0], row[1]
+            if table_name[0] not in data:
+                data[table_name[0]] = list()
+            data[table_name[0]].append([table_name, table_cmt])
+        return data
+
+    def get_table_meta_data(self, db_name, tb_name, **kwargs):
+        """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
+        sql = f"""
+            SELECT space.*,table_comment,index_length,IDENT_CURRENT('{tb_name}') as auto_increment
+            FROM (
+            SELECT 
+                t.NAME AS table_name,
+                t.create_date as create_time,
+                t.modify_date as update_time,
+                p.rows AS table_rows,
+                SUM(a.total_pages) * 8 AS data_total,
+                SUM(a.used_pages) * 8 AS data_length,
+                (SUM(a.total_pages) - SUM(a.used_pages)) * 8 AS data_free
+            FROM 
+                sys.tables t
+            INNER JOIN      
+                sys.indexes i ON t.OBJECT_ID = i.object_id
+            INNER JOIN 
+                sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+            INNER JOIN 
+                sys.allocation_units a ON p.partition_id = a.container_id
+            WHERE 
+                t.NAME ='{tb_name}'
+                AND t.is_ms_shipped = 0
+                AND i.OBJECT_ID > 255 
+            GROUP BY 
+                t.Name, t.create_date, t.modify_date, p.Rows) 
+            AS space 
+            INNER JOIN (
+            SELECT      t.name AS table_name,
+                        convert(varchar(max),td.value) AS table_comment
+            FROM		sysobjects t
+            LEFT OUTER JOIN sys.extended_properties td
+                ON      td.major_id = t.id
+                AND     td.minor_id = 0
+                AND     td.name = 'MS_Description'
+            WHERE t.type = 'u' and t.name = '{tb_name}') AS comment 
+            ON space.table_name = comment.table_name
+            INNER JOIN (
+            SELECT
+                t.NAME				AS table_name,
+                SUM(page_count * 8) AS index_length
+            FROM sys.dm_db_index_physical_stats(
+                db_id(), object_id('{tb_name}'), NULL, NULL, 'DETAILED') AS s
+            JOIN sys.indexes AS i
+            ON s.[object_id] = i.[object_id] AND s.index_id = i.index_id
+            INNER JOIN      
+                sys.tables t ON t.OBJECT_ID = i.object_id
+            GROUP BY t.NAME
+            ) AS index_size 
+            ON index_size.table_name = space.table_name;
+        """
+        _meta_data = self.query(db_name, sql)
+        return {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
+
+    def get_table_desc_data(self, db_name, tb_name, **kwargs):
+        """获取表格字段信息"""
+        sql = f"""
+            select COLUMN_NAME 列名, case when ISNUMERIC(CHARACTER_MAXIMUM_LENGTH)=1 
+then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' else DATA_TYPE end 列类型,
+                COLLATION_NAME 列字符集,
+                IS_NULLABLE 是否为空,
+                COLUMN_DEFAULT 默认值
+            from INFORMATION_SCHEMA.columns where TABLE_CATALOG='{db_name}' and TABLE_NAME = '{tb_name}';"""
+        _desc_data = self.query(db_name, sql)
+        return {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
+
+    def get_table_index_data(self, db_name, tb_name, **kwargs):
+        """获取表格索引信息"""
+        sql = f"""SELECT 
+stuff((select ',' + COL_NAME(t.object_id,t.column_id) from sys.index_columns as t where i.object_id = t.object_id and 
+i.index_id = t.index_id and t.is_included_column = 0 order by key_ordinal for xml path('')),1,1,'') as 列名,
+                i.name AS 索引名,
+                is_unique as 唯一性,is_primary_key as 是否主建
+            FROM sys.indexes AS i  
+            WHERE i.object_id = OBJECT_ID('{tb_name}')
+            group by i.name,i.object_id,i.index_id,is_unique,is_primary_key;"""
+        _index_data = self.query(db_name, sql)
+        return {'column_list': _index_data.column_list, 'rows': _index_data.rows}
+
+    def get_tables_metas_data(self, db_name, **kwargs):
+        """获取数据库所有表格信息，用作数据字典导出接口"""
+        sql = """SELECT t.name AS TABLE_NAME, 
+            case when td.value is not null then convert(varchar(max),td.value) else '' end AS TABLE_COMMENT
+        FROM    sysobjects t
+        LEFT OUTER JOIN sys.extended_properties td
+        ON      td.major_id = t.id
+        AND     td.minor_id = 0
+        AND     td.name = 'MS_Description'
+        WHERE t.type = 'u' ORDER BY t.name;"""
+        result = self.query(db_name=db_name, sql=sql)
+        # query result to dict
+        tbs = []
+        for row in result.rows:
+            tbs.append(dict(zip(result.column_list, row)))
+        table_metas = []
+        for tb in tbs:
+            _meta = dict()
+            engine_keys = [{"key": "COLUMN_NAME", "value": "字段名"}, {"key": "COLUMN_TYPE", "value": "数据类型"},
+                           {"key": "COLLATION_NAME", "value": "列字符集"}, {"key": "IS_NULLABLE", "value": "允许非空"},
+                           {"key": "COLUMN_DEFAULT", "value": "默认值"}]
+            _meta["ENGINE_KEYS"] = engine_keys
+            _meta['TABLE_INFO'] = tb
+            sql_cols = f"""select COLUMN_NAME, case when ISNUMERIC(CHARACTER_MAXIMUM_LENGTH)=1 
+then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' else DATA_TYPE end COLUMN_TYPE,
+                COLLATION_NAME,
+                IS_NULLABLE,
+                COLUMN_DEFAULT
+            from INFORMATION_SCHEMA.columns where TABLE_CATALOG='{db_name}' and TABLE_NAME = '{tb["TABLE_NAME"]}';"""
+            query_result = self.query(db_name=db_name, sql=sql_cols, close_conn=False)
+
+            columns = []
+            # 转换查询结果为dict
+            for row in query_result.rows:
+                columns.append(dict(zip(query_result.column_list, row)))
+            _meta['COLUMNS'] = tuple(columns)
+            table_metas.append(_meta)
+        return table_metas
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
@@ -99,9 +242,6 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['has_star'] = True
-        if '+' in sql_lower:
-            keyword_warning += '禁止使用 + 关键词\n'
-            result['bad_query'] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:

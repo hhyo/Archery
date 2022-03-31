@@ -179,7 +179,16 @@
                                 </div>
                                 <div class="panel-body">
                                     <div class="form-group">
-                                        <h5 class="control-label text-bold">选择授权类型：</h5>
+                                        <h5 class="control-label text-bold">选择操作类型：</h5>
+                                        <div class="form-group">
+                                            <select id="op-type" name="op-type"
+                                                    class="selectpicker show-tick form-control bs-select-hidden"
+                                                    data-name="操作类型" title="请选择操作类型" required>
+                                                <option value="0" selected="selected">赋权</option>
+                                                <option value="1">回收</option>
+                                            </select>
+                                        </div>
+                                        <h5 class="control-label text-bold">选择权限类型：</h5>
                                         <div class="form-group">
                                             <select id="priv-type" name="priv-type"
                                                     class="selectpicker show-tick form-control bs-select-hidden"
@@ -1046,7 +1055,7 @@
         function user_list() {
             //初始化table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
-                escape: true,
+                escape: false,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
                 url: "/instance/user/list",
@@ -1116,7 +1125,8 @@
                             }
                             return priv
                         },
-                        width: "60%"
+                        width: "60",
+                        widthUnit:"%",
                     }, {
                         title: '备注',
                         field: 'remark'
@@ -1142,9 +1152,7 @@
 
                     }
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)
@@ -1382,6 +1390,7 @@
 
             //变更账号权限
             $("#grantsBtn").unbind("click").click(function () {
+                let op_type = $("#op-type").val();
                 let priv_type = $("#priv-type").val();
                 let db_name = $("#db_name").val();
                 let tb_name = $("#tb_name").val();
@@ -1431,6 +1440,7 @@
                     data: {
                         instance_id: $("#instance").val(),
                         user_host: $("#modify-user").text(),
+                        op_type: op_type,
                         priv_type: priv_type,
                         privs: JSON.stringify(privs),
                         db_name: db_name,
@@ -1446,7 +1456,9 @@
                                 this.checked = false
                             });
                             $("#priv-type").val("0");
+                            $("#op-type").val("0");
                             $("#priv-type").trigger("change");
+                            $("#op-type").trigger("change");
                             user_list()
                         } else {
                             alert(data.msg);

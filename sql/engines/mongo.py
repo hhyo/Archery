@@ -273,7 +273,17 @@ class MongoEngine(EngineBase):
                 re_msg = []
                 for line in iter(p.stdout.read, ''):
                     re_msg.append(line)
-                msg = '\n'.join(re_msg)
+                # 因为返回的line中也有可能带有换行符，因此需要先全部转换成字符串
+                __msg = '\n'.join(re_msg)
+                _re_msg = []
+                for _line in __msg.split('\n'):
+                    if not _re_msg and re.match('WARNING.*', _line):
+                        # 第一行可能是WARNING语句，因此跳过
+                        continue
+                    _re_msg.append(_line)
+                
+                msg = '\n'.join(_re_msg)
+
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
         return msg
@@ -402,7 +412,7 @@ class MongoEngine(EngineBase):
                                            "remove", "replaceOne", "renameCollection", "update", "updateOne",
                                            "updateMany", "renameCollection"]
                 pattern = re.compile(
-                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.(\w+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
+                    r'''^db\.createCollection\(([\s\S]*)\)$|^db\.([\w\.-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)''')
                 m = pattern.match(check_sql)
                 if m is not None and (re.search(re.compile(r'}(?:\s*){'), check_sql) is None) and check_sql.count(
                         '{') == check_sql.count('}') and check_sql.count('(') == check_sql.count(')'):
@@ -429,8 +439,9 @@ class MongoEngine(EngineBase):
                                 check_result.rows += [result]
                                 continue
                         else:
-                            method = sql_str.split('.')[2]
-                            methodStr = method.split('(')[0].strip()
+                            # method = sql_str.split('.')[2]
+                            # methodStr = method.split('(')[0].strip()
+                            methodStr = sql_str.split('(')[0].split('.')[-1].strip()    # 最后一个.和括号(之间的字符串作为方法
                         if methodStr in is_exist_premise_method and not is_in:
                             check_result.error = "文档不存在"
                             check_result.error_count += 1

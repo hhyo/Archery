@@ -242,11 +242,24 @@
                                     </ul>
                                     <!-- /.nav-third-level -->
                                 </li>
-                                <li>
-                                    <a href="/audit/">登录审计日志</a>
-                                </li>
                             </ul>
                             <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.audit_user %}
+                        <li>
+                            <a href="#"><i class="fa fa-eye fa-fw"></i> 系统审计<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/audit/">通用审计</a>
+                                </li>
+                                <li>
+                                    <a href="/audit_sqlworkflow/">sql上线审计</a>
+                                </li>
+                                <li>
+                                    <a href="/audit_sqlquery/">查询审计</a>
+                                </li>
+                            </ul>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_document %}
@@ -288,6 +301,7 @@
 <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
+<script src="{% static 'dist/js/utils.js' %}"></script>
 
 </body>
 <script>

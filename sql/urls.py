@@ -57,9 +57,12 @@ urlpatterns = [
     path('archive/<int:id>/', views.archive_detail, name='archive_detail'),
     path('config/', views.config),
     path('audit/', views.audit),
+    path('audit_sqlquery/', views.audit_sqlquery),
+    path('audit_sqlworkflow/', views.audit_sqlworkflow),
 
     path('authenticate/', auth.authenticate_entry),
     path('sqlworkflow_list/', sql_workflow.sql_workflow_list),
+    path('sqlworkflow_list_audit/', sql_workflow.sql_workflow_list_audit),
     path('sqlworkflow/detail_content/', sql_workflow.detail_content),
     path('sqlworkflow/backup_sql/', sql_workflow.backup_sql),
     path('simplecheck/', sql_workflow.check),
@@ -116,6 +119,7 @@ urlpatterns = [
 
     path('query/', query.query),
     path('query/querylog/', query.querylog),
+    path('query/querylog_audit/', query.querylog_audit),
     path('query/favorite/', query.favorite),
     path('query/explain/', sql.sql_optimize.explain),
     path('query/applylist/', sql.query_privileges.query_priv_apply_list),
@@ -154,4 +158,5 @@ urlpatterns = [
     path('4admin/sync_ding_user/', ding_api.sync_ding_user),
 
     path('audit/log/', audit_log.audit_log),
+    path('audit/input/', audit_log.audit_input),
 ]

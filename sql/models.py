@@ -86,7 +86,8 @@ DB_TYPE_CHOICES = (
     ('oracle', 'Oracle'),
     ('mongo', 'Mongo'),
     ('phoenix', 'Phoenix'),
-    ('inception', 'Inception'),
+    ('odps', 'ODPS'),
+    ('clickhouse', 'ClickHouse'),
     ('goinception', 'goInception'))
 
 
@@ -99,13 +100,20 @@ class Tunnel(models.Model):
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True, null=True)
     password = fields.EncryptedCharField(verbose_name='密码', max_length=300, default='', blank=True, null=True)
-    pkey_path = fields.EncryptedCharField(verbose_name='密钥地址', max_length=300, default='', blank=True, null=True)
+    pkey = fields.EncryptedTextField(verbose_name="密钥", blank=True, null=True)
+    pkey_path = models.FileField(verbose_name="密钥地址", blank=True, null=True, upload_to='keys/')
     pkey_password = fields.EncryptedCharField(verbose_name='密钥密码', max_length=300, default='', blank=True, null=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     update_time = models.DateTimeField('更新时间', auto_now=True)
 
     def __str__(self):
         return self.tunnel_name
+
+    def short_pkey(self):
+        if len(str(self.pkey)) > 20:
+            return '{}...'.format(str(self.pkey)[0:19])
+        else:
+            return str(self.pkey)
 
     class Meta:
         managed = True
@@ -121,6 +129,7 @@ class Instance(models.Model):
     instance_name = models.CharField('实例名称', max_length=50, unique=True)
     type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
     db_type = models.CharField('数据库类型', max_length=20, choices=DB_TYPE_CHOICES)
+    mode = models.CharField('运行模式', max_length=10, default='', blank=True, choices=(('standalone', '单机'), ('cluster', '集群')))
     host = models.CharField('实例连接', max_length=200)
     port = models.IntegerField('端口', default=0)
     user = fields.EncryptedCharField(verbose_name='用户名', max_length=200, default='', blank=True)
@@ -722,6 +731,8 @@ class Permission(models.Model):
             ('archive_apply', '提交归档申请'),
             ('archive_review', '审核归档申请'),
             ('archive_mgt', '管理归档申请'),
+            ('audit_user','审计权限'),
+            ('query_download', '在线查询下载权限'),
         )
 
 
@@ -861,9 +872,10 @@ class AuditEntry(models.Model):
     登录审计日志
     """
     user_id = models.IntegerField('用户ID')
-    user_name = models.CharField('用户名称', max_length=255, null=True)
+    user_name = models.CharField('用户名称', max_length=30, null=True)
+    user_display  = models.CharField('用户中文名',max_length=50, null=True)
     action = models.CharField('动作', max_length=255)
-    ip = models.GenericIPAddressField('IP', null=True)
+    extra_info = models.TextField('额外的信息', null=True)
     action_time = models.DateTimeField('操作时间', auto_now_add=True)
 
     class Meta:
@@ -873,9 +885,9 @@ class AuditEntry(models.Model):
         verbose_name_plural = u'审计日志'
 
     def __unicode__(self):
-        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.ip
+        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.extra_info
                                                     , self.action, self.action_time)
 
     def __str__(self):
-        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.ip
+        return '{0} - {1} - {2} - {3} - {4}'.format(self.user_id, self.user_name, self.extra_info
                                                     , self.action, self.action_time)

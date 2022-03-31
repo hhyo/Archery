@@ -20,6 +20,8 @@
                 <option value="oracle">Oracle</option>
                 <option value="mongo">Mongo</option>
                 <option value="phoenix">Phoenix</option>
+                <option value="odps">ODPS</option>
+                <option value="clickhouse">ClickHouse</option>
             </select>
         </div>
         <div class="form-group">
@@ -91,6 +93,7 @@
                 pagination: true,                   //是否显示分页（*）
                 sortable: true,                     //是否启用排序
                 sortOrder: "asc",                   //排序方式
+                sortName: 'id',                   //排序字段
                 sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                 pageSize: 14,                     //每页的记录行数（*）
@@ -122,15 +125,19 @@
                             type: $("#type").val(),
                             db_type: $("#db_type").val(),
                             tags: $("#tags").val(),
+                            sortName: params.sort,
+                            sortOrder: params.order
                         }
                     },
                 columns: [
                     {
                         title: 'ID',
-                        field: 'id'
+                        field: 'id',
+                        sortable: true
                     }, {
                         title: '实例名称',
                         field: 'instance_name',
+                        sortable: true,
                         formatter: function (value, row, index) {
                             return "<a target=\"_blank\" href=\"/admin/sql/instance/" + row.id + "/change/\">" + value + "</a>"
                         }
@@ -139,10 +146,12 @@
                         field: 'type'
                     }, {
                         title: '数据库类型',
-                        field: 'db_type'
+                        field: 'db_type',
+                        sortable: true
                     }, {
                         title: 'HOST',
-                        field: 'host'
+                        field: 'host',
+                        sortable: true
                     }, {
                         title: 'PORT',
                         field: 'port'
@@ -164,9 +173,7 @@
                     }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)

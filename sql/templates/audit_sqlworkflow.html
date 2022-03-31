@@ -36,13 +36,6 @@
                 <span></span> <i class="fa fa-caret-down"></i>
             </div>
         </div>
-        <div class="form-group ">
-            <button id="btn_add" type="button" class="btn btn-default"
-                    onclick="window.location.href='/submitsql/'">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                提交SQL
-            </button>
-        </div>
     </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">
@@ -134,7 +127,7 @@
                 escape: true,
                 method: 'post',
                 contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow_list/",
+                url: "/sqlworkflow_list_audit/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -145,8 +138,9 @@
                 pageSize: 14,                     //每页的记录行数（*）
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
+                exportDataType: "all",
                 exportOptions: {
-                    fileName: 'sqlworkflow'  //文件名称设置
+                    fileName: "sqlworkflow_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -323,7 +317,7 @@
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: onLoadErrorCallback
+                        onLoadError: onLoadErrorCallback,
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {

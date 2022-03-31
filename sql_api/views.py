@@ -43,6 +43,14 @@ def debug(request):
 
     # 系统配置
     sys_config = SysConfig().sys_config
+    # 敏感信息处理
+    secret_keys = [
+        'inception_remote_backup_password',
+        'ding_app_secret',
+        'feishu_app_secret',
+        'mail_smtp_password'
+    ]
+    sys_config.update({k: "******" for k in secret_keys})
 
     # MySQL信息
     cursor = connection.cursor()

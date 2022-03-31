@@ -7,7 +7,7 @@ import sqlparse
 import MySQLdb
 import simplejson as json
 import threading
-
+import pandas as pd
 from common.config import SysConfig
 from common.utils.timer import FuncTimer
 from sql.utils.sql_utils import get_syntax_type, get_full_sqlitem_list, get_exec_sqlitem_list
@@ -118,6 +118,188 @@ class OracleEngine(EngineBase):
         result.rows = tb_list
         return result
 
+    def get_group_tables_by_db(self, db_name):
+        data = {}
+        table_list_sql = f"""SELECT     table_name,   comments     FROM    dba_tab_comments        WHERE     owner = '{db_name}'"""
+        result = self.query(db_name=db_name, sql=table_list_sql)
+        for row in result.rows:
+            table_name, table_cmt = row[0], row[1]
+            if table_name[0] not in data:
+                data[table_name[0]] = list()
+            data[table_name[0]].append([table_name, table_cmt])
+        return data
+
+    def get_table_meta_data(self, db_name, tb_name, **kwargs):
+        """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
+        meta_data_sql = f"""select      tcs.TABLE_NAME, --表名
+                                        tcs.COMMENTS, --表注释
+                                        tcs.TABLE_TYPE,  --表/试图 table/view
+                                        ss.SEGMENT_TYPE,  --段类型 堆表/分区表/IOT表
+                                        ts.TABLESPACE_NAME, --表空间
+                                        ts.COMPRESSION, --压缩属性
+                                        bss.NUM_ROWS, --表中的记录数
+                                        bss.BLOCKS, --表中数据所占的数据块数
+                                        bss.EMPTY_BLOCKS, --表中的空块数
+                                        bss.AVG_SPACE, --数据块中平均的使用空间
+                                        bss.CHAIN_CNT, --表中行连接和行迁移的数量
+                                        bss.AVG_ROW_LEN, --每条记录的平均长度
+                                        bss.LAST_ANALYZED  --上次统计信息搜集的时间
+                                    from dba_tab_comments tcs
+                                    left join dba_segments ss
+                                        on ss.owner = tcs.OWNER
+                                        and ss.segment_name = tcs.TABLE_NAME
+                                    left join dba_tables ts
+                                        on ts.OWNER = tcs.OWNER
+                                        and ts.TABLE_NAME = tcs.TABLE_NAME
+                                    left join DBA_TAB_STATISTICS bss
+                                        on bss.OWNER = tcs.owner
+                                        and bss.TABLE_NAME = tcs.table_name
+    
+                                    WHERE
+                                        tcs.OWNER='{db_name}'
+                                        AND tcs.TABLE_NAME='{tb_name}'"""
+        _meta_data = self.query(db_name=db_name, sql=meta_data_sql)
+        return {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
+
+    def get_table_desc_data(self, db_name, tb_name, **kwargs):
+        """获取表格字段信息"""
+        desc_sql = f"""SELECT bcs.COLUMN_NAME "列名",
+                            ccs.comments "列注释" ,
+                            bcs.data_type || case
+                             when bcs.data_precision is not null and nvl(data_scale, 0) > 0 then
+                              '(' || bcs.data_precision || ',' || data_scale || ')'
+                             when bcs.data_precision is not null and nvl(data_scale, 0) = 0 then
+                              '(' || bcs.data_precision || ')'
+                             when bcs.data_precision is null and data_scale is not null then
+                              '(*,' || data_scale || ')'
+                             when bcs.char_length > 0 then
+                              '(' || bcs.char_length || case char_used
+                                when 'B' then
+                                 ' Byte'
+                                when 'C' then
+                                 ' Char'
+                                else
+                                 null
+                              end || ')'
+                            end "字段类型",
+                            bcs.DATA_DEFAULT "字段默认值",
+                            decode(nullable, 'N', ' NOT NULL') "是否为空",
+                            ics.INDEX_NAME "所属索引",
+                            acs.constraint_type "约束类型"
+                        FROM  dba_tab_columns bcs
+                        left  join dba_col_comments ccs
+                            on  bcs.OWNER = ccs.owner
+                            and  bcs.TABLE_NAME = ccs.table_name
+                            and  bcs.COLUMN_NAME = ccs.column_name
+                        left  join dba_ind_columns ics
+                            on  bcs.OWNER = ics.TABLE_OWNER
+                            and  bcs.TABLE_NAME = ics.table_name
+                            and  bcs.COLUMN_NAME = ics.column_name
+                        left join dba_constraints acs
+                            on acs.owner = ics.TABLE_OWNER
+                            and acs.table_name = ics.TABLE_NAME
+                            and acs.index_name = ics.INDEX_NAME
+                        WHERE
+                            bcs.OWNER='{db_name}'
+                            AND bcs.TABLE_NAME='{tb_name}'
+                        ORDER BY bcs.COLUMN_NAME"""
+        _desc_data = self.query(db_name=db_name, sql=desc_sql)
+        return {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
+
+    def get_table_index_data(self, db_name, tb_name, **kwargs):
+        """获取表格索引信息"""
+        index_sql = f""" SELECT ais.INDEX_NAME "索引名称",
+                                ais.uniqueness "唯一性",
+                                ais.index_type "索引类型",
+                                ais.compression "压缩属性",
+                                ais.tablespace_name "表空间",
+                                ais.status "状态",
+                                ais.partitioned "分区",
+                                pis.partitioning_type "分区状态",
+                                pis.locality "是否为LOCAL索引",
+                                pis.alignment "前导列索引"
+                            FROM dba_indexes ais
+                            left join DBA_PART_INDEXES pis
+                                on ais.owner = pis.owner
+                                and ais.index_name = pis.index_name
+                            WHERE
+                                ais.owner = '{db_name}'
+                                AND ais.table_name = '{tb_name}'"""
+        _index_data = self.query(db_name, index_sql)
+        return {'column_list': _index_data.column_list, 'rows': _index_data.rows}
+
+    def get_tables_metas_data(self, db_name, **kwargs):
+        """获取数据库所有表格信息，用作数据字典导出接口"""
+        table_metas = []
+        sql_cols = f""" SELECT bcs.TABLE_NAME TABLE_NAME,
+                                   tcs.COMMENTS TABLE_COMMENTS,
+                                   bcs.COLUMN_NAME COLUMN_NAME,
+                                   bcs.data_type || case
+                                     when bcs.data_precision is not null and nvl(data_scale, 0) > 0 then
+                                      '(' || bcs.data_precision || ',' || data_scale || ')'
+                                     when bcs.data_precision is not null and nvl(data_scale, 0) = 0 then
+                                      '(' || bcs.data_precision || ')'
+                                     when bcs.data_precision is null and data_scale is not null then
+                                      '(*,' || data_scale || ')'
+                                     when bcs.char_length > 0 then
+                                      '(' || bcs.char_length || case char_used
+                                        when 'B' then
+                                         ' Byte'
+                                        when 'C' then
+                                         ' Char'
+                                        else
+                                         null
+                                      end || ')'
+                                   end data_type,
+                                   bcs.DATA_DEFAULT,
+                                   decode(nullable, 'N', ' NOT NULL') nullable,
+                                   t1.index_name,
+                                   lcs.comments comments
+                              FROM dba_tab_columns bcs
+                              left join dba_col_comments lcs
+                                on bcs.OWNER = lcs.owner
+                               and bcs.TABLE_NAME = lcs.table_name
+                               and bcs.COLUMN_NAME = lcs.column_name
+                              left join dba_tab_comments tcs
+                                on bcs.OWNER = tcs.OWNER
+                               and bcs.TABLE_NAME = tcs.TABLE_NAME
+                              left join (select acs.OWNER,
+                                                acs.TABLE_NAME,
+                                                scs.column_name,
+                                                acs.index_name
+                                           from dba_cons_columns scs
+                                           join dba_constraints acs
+                                             on acs.constraint_name = scs.constraint_name
+                                            and acs.owner = scs.OWNER
+                                          where acs.constraint_type = 'P') t1
+                                on t1.OWNER = bcs.OWNER
+                               AND t1.TABLE_NAME = bcs.TABLE_NAME
+                               AND t1.column_name = bcs.COLUMN_NAME
+                             WHERE bcs.OWNER = '{db_name}'
+                             order by bcs.TABLE_NAME, comments"""
+        cols_req = self.query(sql=sql_cols, close_conn=False).rows
+
+        # 给查询结果定义列名，query_engine.query的游标是0 1 2
+        cols_df = pd.DataFrame(cols_req,
+                               columns=['TABLE_NAME', 'TABLE_COMMENTS', 'COLUMN_NAME', 'COLUMN_TYPE', 'COLUMN_DEFAULT',
+                                        'IS_NULLABLE', 'COLUMN_KEY', 'COLUMN_COMMENT'])
+
+        # 获得表名称去重
+        col_list = cols_df.drop_duplicates('TABLE_NAME').to_dict('records')
+        for cl in col_list:
+            _meta = dict()
+            engine_keys = [{"key": "COLUMN_NAME", "value": "字段名"}, {"key": "COLUMN_TYPE", "value": "数据类型"},
+                           {"key": "COLUMN_DEFAULT", "value": "默认值"}, {"key": "IS_NULLABLE", "value": "允许非空"},
+                           {"key": "COLUMN_KEY", "value": "是否主键"}, {"key": "COLUMN_COMMENT", "value": "备注"}]
+            _meta["ENGINE_KEYS"] = engine_keys
+            _meta['TABLE_INFO'] = {'TABLE_NAME': cl['TABLE_NAME'], 'TABLE_COMMENTS': cl['TABLE_COMMENTS']}
+            table_name = cl['TABLE_NAME']
+            # 查询DataFrame中满足表名的记录，并转为list
+            _meta['COLUMNS'] = cols_df.query("TABLE_NAME == @table_name").to_dict('records')
+
+            table_metas.append(_meta)
+        return table_metas
+
     def get_all_objects(self, db_name, **kwargs):
         """获取object_name 列表, 返回一个ResultSet"""
         sql = f"""SELECT object_name FROM all_objects WHERE OWNER = '{db_name}' """
@@ -140,13 +322,17 @@ class OracleEngine(EngineBase):
         """return ResultSet"""
         # https://www.thepolyglotdeveloper.com/2015/01/find-tables-oracle-database-column-name/
         sql = f"""SELECT
-        column_name,
+        a.column_name,
         data_type,
         data_length,
         nullable,
-        data_default
-        FROM all_tab_cols
-        WHERE table_name = '{tb_name}' and owner = '{db_name}' order by column_id
+        data_default,
+        b.comments
+        FROM all_tab_cols a, all_col_comments b
+        WHERE a.table_name = b.table_name
+        and a.owner = b.OWNER
+        and a.COLUMN_NAME = b.COLUMN_NAME
+        and a.table_name = '{tb_name}' and a.owner = '{db_name}' order by column_id
         """
         result = self.query(db_name=db_name, sql=sql)
         return result
@@ -318,9 +504,6 @@ class OracleEngine(EngineBase):
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += '禁止使用 * 关键词\n'
             result['has_star'] = True
-        if '+' in sql_lower:
-            keyword_warning += '禁止使用 + 关键词\n'
-            result['bad_query'] = True
         if result.get('bad_query') or result.get('has_star'):
             result['msg'] = keyword_warning
         return result
@@ -649,6 +832,17 @@ class OracleEngine(EngineBase):
                 statement = sqlitem.statement
                 if sqlitem.stmt_type == "SQL":
                     statement = statement.rstrip(';')
+                #如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
+                #需要授权 grant execute on dbms_metadata to xxxxx
+                if workflow.syntax_type == 1:
+                    object_name=self.get_sql_first_object_name(statement)
+                    back_obj_sql=f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
+                    from all_objects where (object_name=upper( '{object_name}' ) or OBJECT_NAME = '{sqlitem.object_name}')
+                    and owner='{workflow.db_name}'
+                                        """
+                    cursor.execute(back_obj_sql)
+                    metdata_back_flag=self.metdata_backup(workflow, cursor,statement)
+
                 with FuncTimer() as t:
                     if statement != '':
                         cursor.execute(statement)
@@ -777,6 +971,48 @@ class OracleEngine(EngineBase):
                         undo_sql = f' '
                     else:
                         undo_sql = f"{row[1]}"
+                    undo_sql = undo_sql.replace("'", "\\'")
+                    # 回滚SQL入库
+                    sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""
+                    backup_cursor.execute(sql)
+        except Exception as e:
+            logger.warning(f"备份失败，错误信息{traceback.format_exc()}")
+            return False
+        finally:
+            # 关闭连接
+            if conn:
+                conn.close()
+        return True
+
+    def metdata_backup(self, workflow, cursor ,redo_sql):
+        """
+        :param workflow: 工单对象，作为备份记录与工单的关联列
+        :param cursor: 执行SQL的当前会话游标，保存metadata
+        :param redo_sql: 执行的SQL
+        :return:
+        """
+        try:
+            # 备份存放数据库和MySQL备份库统一，需新建备份用database和table，table存放备份SQL，记录使用workflow.id关联上线工单
+            workflow_id = workflow.id
+            conn = self.get_backup_connection()
+            backup_cursor = conn.cursor()
+            backup_cursor.execute(f"""create database if not exists ora_backup;""")
+            backup_cursor.execute(f"use ora_backup;")
+            backup_cursor.execute(f"""CREATE TABLE if not exists `sql_rollback` (
+                                       `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                       `redo_sql` mediumtext,
+                                       `undo_sql` mediumtext,
+                                       `workflow_id` bigint(20) NOT NULL,
+                                        PRIMARY KEY (`id`),
+                                        key `idx_sql_rollback_01` (`workflow_id`)
+                                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;""")
+            rows = cursor.fetchall()
+            if len(rows) > 0:
+                for row in rows:
+                    if row[0] is None:
+                        undo_sql = f' '
+                    else:
+                        undo_sql = f"{row[0]}"
                     undo_sql = undo_sql.replace("'", "\\'")
                     # 回滚SQL入库
                     sql = f"""insert into sql_rollback(redo_sql,undo_sql,workflow_id) values('{redo_sql}','{undo_sql}',{workflow_id});"""

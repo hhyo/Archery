@@ -11,6 +11,8 @@ from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, 
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
     Tunnel, AuditEntry
 
+from sql.form import TunnelForm, InstanceForm
+
 
 # 用户管理
 @admin.register(Users)
@@ -60,6 +62,7 @@ class InstanceTagAdmin(admin.ModelAdmin):
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
+    form = InstanceForm
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type', 'instance_tag')
@@ -87,13 +90,14 @@ class TunnelAdmin(admin.ModelAdmin):
     search_fields = ('id', 'tunnel_name')
     fieldsets = (
                     None,
-                    {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password',), }),
+                    {'fields': ('tunnel_name', 'host', 'port', 'user', 'password', 'pkey_path', 'pkey_password', 'pkey'), }),
     ordering = ('id',)
     # 添加页显示内容
     add_fieldsets = (
         ('隧道信息', {'fields': ('tunnel_name', 'host', 'port')}),
-        ('连接信息', {'fields': ('user', 'password', 'pkey_path', 'pkey_password')}),
+        ('连接信息', {'fields': ('user', 'password', 'pkey_path', 'pkey_password', 'pkey')}),
     )
+    form = TunnelForm
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name in ['password', 'pkey_password']:
@@ -249,6 +253,6 @@ class CloudAccessKeyAdmin(admin.ModelAdmin):
 # 登录审计日志
 @admin.register(AuditEntry)
 class AuditEntryAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'user_name', 'action', 'ip', 'action_time')
-    list_filter = ('user_id', 'user_name', 'action', 'ip')
+    list_display = ('user_id', 'user_name', 'user_display', 'action', 'extra_info', 'action_time')
+    list_filter = ('user_id', 'user_name', 'user_display', 'action', 'extra_info')
 

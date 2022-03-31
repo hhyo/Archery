@@ -91,7 +91,7 @@ configMap:
       backup_host="archery-mysql"
       backup_port=3306
       backup_user="root"
-      backup_password="archery"
+      backup_password="MYSQL_ROOT_PASSWORD"
       #安全更新是否开启.
       #-1表示不做操作,基于远端数据库[默认值]
       #0表示关闭安全更新

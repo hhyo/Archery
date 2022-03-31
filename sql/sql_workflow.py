@@ -33,6 +33,13 @@ logger = logging.getLogger('default')
 
 @permission_required('sql.menu_sqlworkflow', raise_exception=True)
 def sql_workflow_list(request):
+    return _sql_workflow_list(request)
+
+@permission_required('sql.audit_user', raise_exception=True)
+def sql_workflow_list_audit(request):
+    return _sql_workflow_list(request)
+
+def _sql_workflow_list(request):
     """
     获取审核列表
     :param request:
@@ -43,9 +50,10 @@ def sql_workflow_list(request):
     resource_group_id = request.POST.get('group_id')
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
-    limit = int(request.POST.get('limit'))
-    offset = int(request.POST.get('offset'))
+    limit = int(request.POST.get('limit',0))
+    offset = int(request.POST.get('offset',0))
     limit = offset + limit
+    limit = limit if limit else None
     search = request.POST.get('search')
     user = request.user
 
@@ -64,8 +72,8 @@ def sql_workflow_list(request):
     if start_date and end_date:
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d') + datetime.timedelta(days=1)
         filter_dict['create_time__range'] = (start_date, end_date)
-    # 管理员，可查看所有工单
-    if user.is_superuser:
+    # 管理员，审计员，可查看所有工单
+    if user.is_superuser or user.has_perm('sql.audit_user'):
         pass
     # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
     elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
@@ -211,7 +219,7 @@ def submit(request):
             workflow_id = sql_workflow.id
             # 自动审核通过了，才调用工作流
             if workflow_status == 'workflow_manreviewing':
-                # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+                # 调用工作流插入审核信息, SQL上线权限申请workflow_type=2
                 Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
     except Exception as msg:
         logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
@@ -219,8 +227,10 @@ def submit(request):
         logger.error(traceback.format_exc())
         return render(request, 'error.html', context)
     else:
-        # 自动审核通过才进行消息通知
-        if workflow_status == 'workflow_manreviewing':
+        # 自动审核通过且开启了Apply阶段通知参数才发送消息通知
+        is_notified = 'Apply' in sys_config.get('notify_phase_control').split(',') \
+            if sys_config.get('notify_phase_control') else True
+        if workflow_status == 'workflow_manreviewing' and is_notified:
             # 获取审核信息
             audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
@@ -360,9 +370,13 @@ def passed(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 消息通知
-        async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
-                   task_name=f'sqlreview-pass-{workflow_id}')
+        # 开启了Pass阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = 'Pass' in sys_config.get('notify_phase_control').split(',') \
+            if sys_config.get('notify_phase_control') else True
+        if is_notified:
+            async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                       task_name=f'sqlreview-pass-{workflow_id}')
 
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
@@ -424,8 +438,12 @@ def execute(request):
                       operation_info='确认手工执行结束',
                       operator=request.user.username,
                       operator_display=request.user.display)
-        # 发送消息
-        notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+        # 开启了Execute阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = 'Execute' in sys_config.get('notify_phase_control').split(',') \
+            if sys_config.get('notify_phase_control') else True
+        if is_notified:
+            notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 
@@ -557,13 +575,17 @@ def cancel(request):
         context = {'errMsg': msg}
         return render(request, 'error.html', context)
     else:
-        # 发送取消、驳回通知
-        audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+        # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
+        sys_config = SysConfig()
+        is_notified = 'Cancel' in sys_config.get('notify_phase_control').split(',') \
+            if sys_config.get('notify_phase_control') else True
+        if is_notified:
+            audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                                    workflow_type=WorkflowDict.workflow_type['sqlreview'])
-        if audit_detail.current_status in (
-                WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
-            async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
-                       task_name=f'sqlreview-cancel-{workflow_id}')
+            if audit_detail.current_status in (
+                    WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
+                async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
+                           task_name=f'sqlreview-cancel-{workflow_id}')
     return HttpResponseRedirect(reverse('sql:detail', args=(workflow_id,)))
 
 

@@ -16,11 +16,12 @@ from archery import settings
 from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
+from common.utils.convert import Convert
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig, AuditEntry
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
@@ -56,7 +57,7 @@ def sqlworkflow(request):
     # 过滤筛选项的数据
     filter_dict = dict()
     # 管理员，可查看所有工单
-    if user.is_superuser:
+    if user.is_superuser or user.has_perm('sql.audit_user'):
         pass
     # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
     elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
@@ -68,7 +69,7 @@ def sqlworkflow(request):
     else:
         filter_dict['engineer'] = user.username
     instance_id = SqlWorkflow.objects.filter(**filter_dict).values('instance_id').distinct()
-    instance = Instance.objects.filter(pk__in=instance_id)
+    instance = Instance.objects.filter(pk__in=instance_id).order_by(Convert('instance_name', 'gbk').asc())
     resource_group_id = SqlWorkflow.objects.filter(**filter_dict).values('group_id').distinct()
     resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
 
@@ -219,7 +220,8 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    return render(request, 'sqlquery.html', {'favorites': favorites})
+    can_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
+    return render(request, 'sqlquery.html', {'favorites': favorites, 'can_download':can_download})
 
 
 @permission_required('sql.menu_queryapplylist', raise_exception=True)
@@ -342,7 +344,7 @@ def archive(request):
     """归档列表页面"""
     # 获取资源组
     group_list = user_groups(request.user)
-    ins_list = user_instances(request.user, db_type=['mysql'])
+    ins_list = user_instances(request.user, db_type=['mysql']).order_by(Convert('instance_name', 'gbk').asc())
     return render(request, 'archive.html', {'group_list': group_list, 'ins_list': ins_list})
 
 
@@ -434,7 +436,44 @@ def dbaprinciples(request):
     return render(request, 'dbaprinciples.html', {'md': md})
 
 
-@superuser_required
+@permission_required('sql.audit_user', raise_exception=True)
 def audit(request):
-    """登录审计日志页面"""
-    return render(request, 'audit.html')
+    """通用审计日志页面"""
+    _action_types = AuditEntry.objects.values_list('action').distinct()
+    action_types = [ i[0] for i in _action_types ]
+    return render(request, 'audit.html', {'action_types': action_types})
+
+
+@permission_required('sql.audit_user', raise_exception=True)
+def audit_sqlquery(request):
+    """SQL在线查询页面审计"""
+    user = request.user
+    favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
+    return render(request, 'audit_sqlquery.html', {'favorites': favorites})
+
+
+def audit_sqlworkflow(request):
+    """SQL上线工单列表页面"""
+    user = request.user
+    # 过滤筛选项的数据
+    filter_dict = dict()
+    # 管理员，可查看所有工单
+    if user.is_superuser or user.has_perm('sql.audit_user'):
+        pass
+    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
+    elif user.has_perm('sql.sql_review') or user.has_perm('sql.sql_execute_for_resource_group'):
+        # 先获取用户所在资源组列表
+        group_list = user_groups(user)
+        group_ids = [group.group_id for group in group_list]
+        filter_dict['group_id__in'] = group_ids
+    # 其他人只能查看自己提交的工单
+    else:
+        filter_dict['engineer'] = user.username
+    instance_id = SqlWorkflow.objects.filter(**filter_dict).values('instance_id').distinct()
+    instance = Instance.objects.filter(pk__in=instance_id)
+    resource_group_id = SqlWorkflow.objects.filter(**filter_dict).values('group_id').distinct()
+    resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
+
+    return render(request, 'audit_sqlworkflow.html',
+                  {'status_list': SQL_WORKFLOW_CHOICES,
+                   'instance': instance, 'resource_group': resource_group})
