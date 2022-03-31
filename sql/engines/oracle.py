@@ -340,9 +340,25 @@ class OracleEngine(EngineBase):
         if '.' in object_name:
             schema_name = object_name.split('.')[0]
             object_name = object_name.split('.')[1]
-            sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{schema_name}') and  OBJECT_NAME =  upper('{object_name}')"""
+            if '"' in schema_name:
+                schema_name = schema_name.replace( '"','' )
+                if '"' in object_name:
+                    object_name = object_name.replace( '"','' )
+                else:
+                    object_name = object_name.upper()
+            else:
+                schema_name = schema_name.upper()
+                if '"' in object_name:
+                    object_name = object_name.replace( '"','' )
+                else:
+                    object_name = object_name.upper()
         else:
-            sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{db_name}') and  OBJECT_NAME = upper('{object_name}')"""
+            schema_name = db_name
+            if '"' in object_name:
+                object_name = object_name.replace( '"','' )
+            else:
+                object_name = object_name.upper()
+        sql = f""" SELECT object_name FROM all_objects WHERE OWNER = '{schema_name}' and OBJECT_NAME = '{object_name}' """
         result = self.query(db_name=db_name, sql=sql, close_conn=False)
         if result.affected_rows > 0:
             return True
@@ -451,7 +467,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+                cursor.execute(f" ALTER SESSION SET CURRENT_SCHEMA = \"{db_name}\" ")
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -515,7 +531,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+                cursor.execute(f" ALTER SESSION SET CURRENT_SCHEMA = \"{db_name}\" ")
             sql = sql.rstrip(';')
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
@@ -575,6 +591,7 @@ class OracleEngine(EngineBase):
             sqlitemList = get_full_sqlitem_list(sql, db_name)
             for sqlitem in sqlitemList:
                 sql_lower = sqlitem.statement.lower().rstrip(';')
+                sql_nolower = sqlitem.statement.rstrip(';')
                 # 禁用语句
                 if re.match(r"^select|^with|^explain", sql_lower):
                     check_result.is_critical = True
@@ -642,12 +659,25 @@ class OracleEngine(EngineBase):
                         else:
                             # 对create table\create index\create unique index语法做对象存在性检测
                             if re.match(r"^create\s+table|^create\s+index|^create\s+unique\s+index", sql_lower):
-                                object_name = self.get_sql_first_object_name(sql=sql_lower)
+                                object_name = self.get_sql_first_object_name(sql=sql_nolower)
                                 # 保存create对象对后续SQL做存在性判断
                                 if '.' in object_name:
-                                    object_name = object_name
+                                    schema_name = object_name.split('.')[0]
+                                    object_name = object_name.split('.')[1]
+                                    if '"' in schema_name:
+                                        schema_name = schema_name
+                                        if '"' not in object_name:
+                                            object_name = object_name.upper()
+                                    else:
+                                        schema_name = schema_name.upper()
+                                        if '"' not in object_name:
+                                            object_name = object_name.upper()
                                 else:
-                                    object_name = f"""{db_name}.{object_name}"""
+                                    schema_name = ( '"' + db_name + '"' )
+                                    if '"' not in object_name:
+                                        object_name = object_name.upper()
+
+                                object_name = f"""{schema_name}.{object_name}"""
                                 if self.object_name_check(db_name=db_name,
                                                           object_name=object_name) or object_name in object_name_list:
                                     check_result.is_critical = True
@@ -706,11 +736,24 @@ class OracleEngine(EngineBase):
                 else:
                     # 对alter table做对象存在性检查
                     if re.match(r"^alter\s+table\s", sql_lower):
-                        object_name = self.get_sql_first_object_name(sql=sql_lower)
+                        object_name = self.get_sql_first_object_name(sql=sql_nolower)
                         if '.' in object_name:
-                            object_name = object_name
+                            schema_name = object_name.split('.')[0]
+                            object_name = object_name.split('.')[1]
+                            if '"' in schema_name:
+                                schema_name = schema_name
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
+                            else:
+                                schema_name = schema_name.upper()
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
                         else:
-                            object_name = f"""{db_name}.{object_name}"""
+                            schema_name = ( '"' + db_name + '"' )
+                            if '"' not in object_name:
+                                object_name = object_name.upper()
+
+                        object_name = f"""{schema_name}.{object_name}"""
                         if not self.object_name_check(db_name=db_name,
                                                       object_name=object_name) and object_name not in object_name_list:
                             check_result.is_critical = True
@@ -731,11 +774,24 @@ class OracleEngine(EngineBase):
                                                   execute_time=0, )
                     # 对create做对象存在性检查
                     elif re.match(r"^create", sql_lower):
-                        object_name = self.get_sql_first_object_name(sql=sql_lower)
+                        object_name = self.get_sql_first_object_name(sql=sql_nolower)
                         if '.' in object_name:
-                            object_name = object_name
+                            schema_name = object_name.split('.')[0]
+                            object_name = object_name.split('.')[1]
+                            if '"' in schema_name:
+                                schema_name = schema_name
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
+                            else:
+                                schema_name = schema_name.upper()
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
                         else:
-                            object_name = f"""{db_name}.{object_name}"""
+                            schema_name = ( '"' + db_name + '"' )
+                            if '"' not in object_name:
+                                object_name = object_name.upper()
+
+                        object_name = f"""{schema_name}.{object_name}"""
                         if self.object_name_check(db_name=db_name,
                                                   object_name=object_name) or object_name in object_name_list:
                             check_result.is_critical = True
