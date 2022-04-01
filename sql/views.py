@@ -220,7 +220,7 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    can_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
+    can_download = 1 if user.has_perm('sql.query_download') or user.is_superuser else 0
     return render(request, 'sqlquery.html', {'favorites': favorites, 'can_download':can_download})
 
 
