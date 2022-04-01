@@ -1,13 +1,18 @@
 # -*- coding: UTF-8 -*-
+import logging
+import traceback
 
 from django.db import close_old_connections, connection, transaction
 from django_redis import get_redis_connection
 from common.utils.const import WorkflowDict
+from common.config import SysConfig
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
 from sql.notify import notify_for_execute
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
+
+logger = logging.getLogger('default')
 
 
 def execute(workflow_id, user=None):
@@ -68,11 +73,19 @@ def execute_callback(task):
     else:
         execute_result = task.result
         workflow.status = 'workflow_finish'
-    # 保存执行结果
-    workflow.sqlworkflowcontent.execute_result = execute_result.json()
-    workflow.sqlworkflowcontent.save()
-    workflow.save()
-
+    try:
+        # 保存执行结果
+        workflow.sqlworkflowcontent.execute_result = execute_result.json()
+        workflow.sqlworkflowcontent.save()
+        workflow.save()
+    except Exception as e:
+        logger.error(f'SQL工单回调异常: {workflow_id} {traceback.format_exc()}')
+        SqlWorkflow.objects.filter(id=workflow_id).update(
+            finish_time=task.stopped,
+            status='workflow_exception',
+        )
+        workflow.sqlworkflowcontent.execute_result = {f'{e}'}
+        workflow.sqlworkflowcontent.save()
     # 增加工单日志
     audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
                                            workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
@@ -90,5 +103,9 @@ def execute_callback(task):
         for key in r.scan_iter(match='*insRes*', count=2000):
             r.delete(key)
 
-    # 发送消息
-    notify_for_execute(workflow)
+    # 开启了Execute阶段通知参数才发送消息通知
+    sys_config = SysConfig()
+    is_notified = 'Execute' in sys_config.get('notify_phase_control').split(',') \
+        if sys_config.get('notify_phase_control') else True
+    if is_notified:
+        notify_for_execute(workflow)

@@ -52,6 +52,7 @@ class RedisEngine(EngineBase):
         except Exception as e:
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
             rows = 16
+            result.error = str(e)
 
         db_list = [str(x) for x in range(int(rows))]
         result.rows = db_list

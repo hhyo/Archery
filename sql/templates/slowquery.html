@@ -40,13 +40,13 @@
         <!-- 慢日志统计-->
         <div id="slowsql" role="tabpanel" class="tab-pane fade in active table-responsive">
             <table id="slowsql-list" data-toggle="table" class="table table-hover"
-                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
 
         </div>
         <!-- 慢日志明细-->
         <div id="slowsqlinfo" role="tabpanel" class="tab-pane fade table-responsive">
             <table id="slowsqlinfo-list" data-toggle="table" class="table table-hover"
-                   style="table-layout:inherit;word-break:break-word;overflow:hidden;text-overflow:ellipsis;"></table>
+                   style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
         </div>
     </div>
 {% endblock content %}
@@ -418,6 +418,14 @@
                     }, {
                         title: '返回总行数',
                         field: 'ReturnTotalRowCounts',
+                        sortable:true
+                    }, {
+                        title: '平均扫描行数',
+                        field: 'ParseRowAvg',
+                        sortable:true
+                    }, {
+                        title: '平均返回行数',
+                        field: 'ReturnRowAvg',
                         sortable:true
                     }],
                     locale: 'zh-CN',
