@@ -385,6 +385,8 @@ def config(request):
     auth_group_list = Group.objects.all()
     # 获取所有实例标签
     instance_tags = InstanceTag.objects.all()
+    # 支持自动审核的数据库类型
+    db_type = ['mysql', 'oracle', 'mongo', 'clickhouse']
     # 获取所有配置项
     all_config = Config.objects.all().values('item', 'value')
     sys_config = {}
@@ -392,7 +394,7 @@ def config(request):
         sys_config[items['item']] = items['value']
 
     context = {'group_list': group_list, 'auth_group_list': auth_group_list, 'instance_tags': instance_tags,
-               'config': sys_config, 'WorkflowDict': WorkflowDict}
+               'db_type': db_type, 'config': sys_config, 'WorkflowDict': WorkflowDict}
     return render(request, 'config.html', context)
 
 
