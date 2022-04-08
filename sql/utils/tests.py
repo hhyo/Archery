@@ -227,6 +227,7 @@ class TestSQLReview(TestCase):
         """
         # 开启自动审批设置
         self.sys_config.set('auto_review', 'true')
+        self.sys_config.set('auto_review_db_type', 'mysql')
         self.sys_config.set('auto_review_regex', '^drop')  # drop语句需要审批
         self.sys_config.set('auto_review_max_update_rows', '2')  # update影响行数大于2需要审批
         self.sys_config.set('auto_review_tag', 'GA')  # 仅GA开启自动审批
