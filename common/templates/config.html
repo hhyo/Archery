@@ -209,6 +209,24 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label for="auto_review_db_type"
+                                           class="col-sm-4 control-label">AUTO_REVIEW_DB_TYPE</label>
+                                    <div class="col-sm-5">
+                                        <select id="auto_review_db_type" key="auto_review_db_type"
+                                                class="form-control selectpicker" data-live-search="true"
+                                                multiple data-selected-text-format="count > 5"
+                                                data-none-selected-text="自动审批的数据库类型">
+                                            {% for type in db_type %}
+                                                {% if type|is_in:config.auto_review_db_type %}
+                                                    <option value="{{ type }}" selected>{{ type }}</option>
+                                                {% else %}
+                                                    <option value="{{ type }}">{{ type }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                     <div class="col-sm-5">
