@@ -18,6 +18,7 @@ from sql.engines.pgsql import PgSQLEngine
 from sql.engines.oracle import OracleEngine
 from sql.engines.mongo import MongoEngine
 from sql.engines.clickhouse import ClickHouseEngine
+from sql.engines.odps import ODPSEngine
 from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
@@ -1882,3 +1883,98 @@ class TestClickHouse(TestCase):
         execute_result = new_engine.execute_workflow(workflow=wf)
         self.assertIsInstance(execute_result, ReviewSet)
         self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
+
+
+class ODPSTest(TestCase):
+    def setUp(self) -> None:
+        self.ins = Instance.objects.create(instance_name='some_ins', type='slave', db_type='odps',
+                                           host='some_host', port=9200, user='ins_user', db_name='some_db')
+        self.engine = ODPSEngine(instance=self.ins)
+
+    def tearDown(self) -> None:
+        self.ins.delete()
+
+    @patch('sql.engines.odps.ODPSEngine.get_connection')
+    def test_get_connection(self, mock_odps):
+        _ = self.engine.get_connection()
+        mock_odps.assert_called_once()
+
+    @patch('sql.engines.odps.ODPSEngine.get_connection')
+    def test_query(self, mock_get_connection):
+        test_sql = """select 123"""
+        self.assertIsInstance(self.engine.query('some_db', test_sql), ResultSet)
+
+    def test_query_check(self):
+        test_sql = """select 123; -- this is comment
+                      select 456;"""
+
+        result_sql = "select 123;"
+
+        check_result = self.engine.query_check(sql=test_sql)
+
+        self.assertIsInstance(check_result, dict)
+        self.assertEqual(False, check_result.get("bad_query"))
+        self.assertEqual(result_sql, check_result.get("filtered_sql"))
+
+    def test_query_check_error(self):
+        test_sql = """drop table table_a"""
+
+        check_result = self.engine.query_check(sql=test_sql)
+
+        self.assertIsInstance(check_result, dict)
+        self.assertEqual(True, check_result.get("bad_query"))
+
+    @patch('sql.engines.odps.ODPSEngine.get_connection')
+    def test_get_all_databases(self, mock_get_connection):
+
+        mock_conn = Mock()
+        mock_conn.exist_project.return_value = True
+        mock_conn.project = 'some_db'
+
+        mock_get_connection.return_value = mock_conn
+
+        result = self.engine.get_all_databases()
+
+        self.assertIsInstance(result, ResultSet)
+        self.assertEqual(result.rows, ['some_db'])
+
+    @patch('sql.engines.odps.ODPSEngine.get_connection')
+    def test_get_all_tables(self, mock_get_connection):
+
+        # 下面是查表示例返回结果
+        class T:
+            def __init__(self, name):
+                self.name = name
+
+        mock_conn = Mock()
+        mock_conn.list_tables.return_value = [T('u'), T('v'), T('w')]
+        mock_get_connection.return_value = mock_conn
+
+        table_list = self.engine.get_all_tables('some_db')
+
+        self.assertEqual(table_list.rows, ['u', 'v', 'w'])
+
+    @patch('sql.engines.odps.ODPSEngine.get_all_columns_by_tb')
+    def test_describe_table(self, mock_get_all_columns_by_tb):
+        self.engine.describe_table('some_db', 'some_table')
+        mock_get_all_columns_by_tb.assert_called_once()
+
+    @patch('sql.engines.odps.ODPSEngine.get_connection')
+    def test_get_all_columns_by_tb(self, mock_get_connection):
+
+        mock_conn = Mock()
+
+        mock_cols = Mock()
+
+        mock_col = Mock()
+        mock_col.name, mock_col.type, mock_col.comment = 'XiaoMing', 'string', 'name'
+
+        mock_cols.schema.columns = [mock_col]
+        mock_conn.get_table.return_value = mock_cols
+        mock_get_connection.return_value = mock_conn
+
+        result = self.engine.get_all_columns_by_tb('some_db', 'some_table')
+        mock_get_connection.assert_called_once()
+        mock_conn.get_table.assert_called_once()
+        self.assertEqual(result.rows, [['XiaoMing', 'string', 'name']])
+        self.assertEqual(result.column_list, ['COLUMN_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT'])
