@@ -261,6 +261,7 @@
     <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'watermark/shuiyin.js' %}"></script>
 
     <!-- 查询历史  -->
     <script>
@@ -385,6 +386,9 @@
                     if (query_log_id) {
                         re_query(query_log_id)
                     }
+                    var now = getNow();
+                    var user = document.getElementById('user').innerHTML
+                    watermark.load({ watermark_txt: user + " " + now })
                 },
                 onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
@@ -829,6 +833,11 @@
                                 return html.join('');
                             },
                             locale: 'zh-CN',
+                            onPageChange: function(number, size) {
+                                var now = getNow();
+                                var user = document.getElementById('user').innerHTML
+                                watermark.load({ watermark_txt: user + " " + now })
+                            },
                             onExportSaved: function (e) {
                                 var tabs = $("#nav-tabs li")
                                 for(let i=0;i<tabs.length;i++){
