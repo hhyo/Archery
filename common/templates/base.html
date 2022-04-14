@@ -44,8 +44,7 @@
         <!-- /.navbar-header -->
         <ul class="nav navbar-top-links navbar-right">
             <li>
-                <a>你好，<span id="user">{{ user }}</span></a>
-                <span id="watermark" style="display:none;">{{ watermark_enabled }}</span>
+                <a>你好，{{ user }}</a>
             </li>
             {% if todo > 0 %}
                 <li>
@@ -305,9 +304,9 @@
 <script src="{% static 'dist/js/utils.js' %}"></script>
 <script src="{% static 'watermark/shuiyin.js' %}"></script>
 <script type="text/javascript">
-    var watermark_enabled = document.getElementById('watermark').innerHTML
     var now = getNow();
-    var user = document.getElementById('user').innerHTML
+    var user = '{{ user }}';
+    var watermark_enabled = '{{ watermark_enabled }}';
     if(watermark_enabled == 'True'){
         watermark.init({ watermark_txt: user + " " + now })
         window.onscroll = function(){
