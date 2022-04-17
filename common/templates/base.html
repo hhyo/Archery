@@ -302,7 +302,18 @@
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 <script src="{% static 'dist/js/utils.js' %}"></script>
-
+<script src="{% static 'watermark/shuiyin.js' %}"></script>
+<script type="text/javascript">
+    var now = getNow();
+    var user = '{{ user }}';
+    var watermark_enabled = '{{ watermark_enabled }}';
+    if(watermark_enabled == 'True'){
+        watermark.init({ watermark_txt: user + " " + now })
+        window.onscroll = function(){
+            watermark.load({ watermark_txt: user + " " + now })
+        }
+    };
+</script>
 </body>
 <script>
     <!-- 解决CSRF-->
