@@ -98,6 +98,7 @@ urlpatterns = [
     path('instance/user/edit/', instance_account.edit),
     path('instance/user/grant/', instance_account.grant),
     path('instance/user/reset_pwd/', instance_account.reset_pwd),
+    path('instance/user/lock/', instance_account.lock),
     path('instance/user/delete/', instance_account.delete),
 
     path('instance/database/list/', sql.instance_database.databases),
