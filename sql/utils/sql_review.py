@@ -19,8 +19,9 @@ def is_auto_review(workflow_id):
 
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     auto_review_tags = SysConfig().get('auto_review_tag', '').split(',')
+    auto_review_db_type = SysConfig().get('auto_review_db_type', '').split(',')
     # TODO 这里也可以放到engine中实现，但是配置项可能会相对复杂
-    if ( workflow.instance.db_type == 'mysql' or workflow.instance.db_type == 'oracle' ) and workflow.instance.instance_tag.filter(
+    if workflow.instance.db_type in auto_review_db_type and workflow.instance.instance_tag.filter(
             tag_code__in=auto_review_tags).exists():
         # 获取正则表达式
         auto_review_regex = SysConfig().get(
