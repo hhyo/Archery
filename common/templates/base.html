@@ -267,6 +267,11 @@
                             <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
                         </li>
                     {% endif %}
+                    {% if perms.sql.menu_openapi %}
+                        <li>
+                            <a href="/api/swagger/" target="_blank"><i class="fa fa-code-fork fa-fw"></i> OpenAPI</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
             <!-- /.sidebar-collapse -->
