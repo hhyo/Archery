@@ -3,6 +3,7 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from datetime import timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -32,6 +33,9 @@ INSTALLED_APPS = (
     'sql',
     'sql_api',
     'common',
+    'rest_framework',
+    'django_filters',
+    'drf_spectacular',
 )
 
 MIDDLEWARE = (
@@ -170,6 +174,46 @@ CACHES = {
             "PASSWORD": ""
         }
     }
+}
+
+# API Framework
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
+    # 授权
+    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
+    # 权限
+    'DEFAULT_PERMISSION_CLASSES': ('sql_api.permissions.IsInUserWhitelist',),
+    # 限速（anon：未认证用户  user：认证用户）
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '120/min',
+        'user': '600/min'
+    },
+    # 过滤
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    # 分页
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
+}
+
+# Swagger UI
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Archery API',
+    'DESCRIPTION': 'OpenAPI 3.0',
+    'VERSION': '1.0.0',
+}
+
+# API Authentication
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=4),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # LDAP
