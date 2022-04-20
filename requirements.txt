@@ -33,3 +33,4 @@ djangorestframework==3.12.4
 djangorestframework-simplejwt==4.3.0
 django-filter==21.1
 drf-spectacular==0.22.0
+pyjwt==1.7.1
