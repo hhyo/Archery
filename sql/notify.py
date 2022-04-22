@@ -51,6 +51,7 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [user.ding_user_id for user in chain(msg_to, msg_cc) if user.ding_user_id]
+    msg_to_fs_user = [user.feishu_open_id for user in chain(msg_to, msg_cc) if user.feishu_open_id]
     msg_to_wx_user = [user.wx_user_id if user.wx_user_id else user.username for user in chain(msg_to, msg_cc)]
     logger.info(f'{msg_to_email}{msg_cc_email}{msg_to_wx_user}{chain(msg_to, msg_cc)}')
     if sys_config.get('mail'):
@@ -62,7 +63,7 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     if sys_config.get('wx'):
         msg_sender.send_wx2user(msg_title + '\n' + msg_content, msg_to_wx_user)
     if sys_config.get("feishu_webhook") and feishu_webhook:
-        msg_sender.send_feishu_webhook(feishu_webhook, msg_title, msg_content)
+        msg_sender.send_feishu_rich_text(feishu_webhook, msg_title, msg_content, msg_to_fs_user)
     if sys_config.get("feishu"):
         open_id = [user.feishu_open_id for user in chain(msg_to, msg_cc) if user.feishu_open_id]
         user_mail = [user.email for user in chain(msg_to, msg_cc) if not user.feishu_open_id]

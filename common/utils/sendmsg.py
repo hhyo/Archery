@@ -203,7 +203,7 @@ class MsgSender(object):
         data = {
             "msgtype": "markdown",
             "markdown": {
-                "content": msg 
+                "content": msg
             },
         }
         res = requests.post(url=send_url, json=data, timeout=5)
@@ -237,10 +237,73 @@ class MsgSender(object):
 
         r = requests.post(url=url, json=data)
         r_json = r.json()
-        if 'ok' in r_json or ('StatusCode' in r_json and r_json['StatusCode'] == 0) or ('code' in r_json and r_json['code'] == 0):
+        if 'ok' in r_json or ('StatusCode' in r_json and r_json['StatusCode'] == 0) or (
+                'code' in r_json and r_json['code'] == 0):
             logger.debug(f'飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
         else:
             logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
+
+    @staticmethod
+    def send_feishu_rich_text(url, title, content, open_id_list):
+        data = MsgSender.format_feishu_rich_text(title, content, open_id_list)
+        r = requests.post(url=url, json=data)
+        r_json = r.json()
+        if 'ok' in r_json or ('StatusCode' in r_json and r_json['StatusCode'] == 0) or (
+                'code' in r_json and r_json['code'] == 0):
+            logger.debug(f'飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}')
+        else:
+            logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
+
+    @classmethod
+    def format_feishu_rich_text(self, title, data, open_id_list):
+        data_split = data.split('\n')
+        content = []
+
+        for s in data_split:
+            if s:
+                tag_list = []
+                # 判断是否包含url
+                url = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', s)
+                if url:
+                    tag_list.append({
+                        "tag": "text",
+                        "text": s.split(url[0])[0],
+                    })
+                    tag_list.append({
+                        "tag": "a",
+                        "text": "请点击链接",
+                        "href": url[0]}
+                    )
+
+                else:
+                    tag_list.append({
+                        "tag": "text",
+                        "text": s})
+
+                content.append(tag_list)
+        # # 加入at的人
+        at = []
+
+        for user_id in open_id_list:
+            if user_id:
+                at.append({"tag": "at", "user_id": user_id})
+        if at:
+            content.append(at)
+
+        feishu_format_data = {
+            "msg_type": "post",
+            "content": {
+                "post": {
+                    "zh_cn": {
+                        "title": title,
+                        "content": content
+
+                    }
+                }
+            }
+        }
+
+        return feishu_format_data
 
     @staticmethod
     def send_feishu_user(title, content, open_id, user_mail):
