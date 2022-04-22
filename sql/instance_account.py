@@ -32,8 +32,13 @@ def users(request):
         user['saved'] = True
         cnf_users[f"`{user['user']}`@`{user['host']}`"] = user
     # 获取所有用户
-    sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
     query_engine = get_engine(instance=instance)
+    server_version = query_engine.server_version
+    # MySQL 5.7.6版本起支持ACCOUNT LOCK
+    if server_version >= (5, 7, 6):
+        sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
+    else:
+        sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
     query_result = query_engine.query('mysql', sql_get_user)
     if not query_result.error:
         db_users = query_result.rows
@@ -47,7 +52,8 @@ def users(request):
                 'user': db_user[1],
                 'host': db_user[2],
                 'privileges': user_priv,
-                'saved': False
+                'saved': False,
+                'is_locked': db_user[3] if server_version >= (5, 7, 6) else None
             }
             # 合并数据
             if user_host in cnf_users.keys():
@@ -107,7 +113,7 @@ def create(request):
     for host in hosts:
         create_user_cmd += f"create user '{user}'@'{host}' identified by '{password1}';"
         accounts.append(InstanceAccount(instance=instance, user=user, host=host, password=password1, remark=remark))
-    exec_result = engine.execute(db_name='information_schema', sql=create_user_cmd)
+    exec_result = engine.execute(db_name='mysql', sql=create_user_cmd)
     if exec_result.error:
         return JsonResponse({'status': 1, 'msg': exec_result.error})
 
@@ -223,7 +229,7 @@ def grant(request):
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
     engine = get_engine(instance=instance)
-    exec_result = engine.execute(db_name='information_schema', sql=grant_sql)
+    exec_result = engine.execute(db_name='mysql', sql=grant_sql)
     if exec_result.error:
         return JsonResponse({'status': 1, 'msg': exec_result.error})
     return JsonResponse({'status': 0, 'msg': '', 'data': grant_sql})
@@ -261,7 +267,7 @@ def reset_pwd(request):
         return JsonResponse({'status': 1, 'msg': f'{msg}', 'data': []})
 
     engine = get_engine(instance=instance)
-    exec_result = engine.execute(db_name='information_schema',
+    exec_result = engine.execute(db_name='mysql',
                                  sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd1}';")
     if exec_result.error:
         result = {'status': 1, 'msg': exec_result.error}
@@ -270,6 +276,37 @@ def reset_pwd(request):
     else:
         InstanceAccount.objects.update_or_create(instance=instance, user=user, host=host,
                                                  defaults={'password': reset_pwd1})
+    return JsonResponse({'status': 0, 'msg': '', 'data': []})
+
+
+@permission_required('sql.instance_account_manage', raise_exception=True)
+def lock(request):
+    """锁定/解锁账号"""
+    instance_id = request.POST.get('instance_id', 0)
+    user_host = request.POST.get('user_host')
+    is_locked = request.POST.get('is_locked')
+    lock_sql = ''
+
+    if not all([user_host]):
+        return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
+
+    try:
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+    except Instance.DoesNotExist:
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
+
+    # escape
+    user_host = MySQLdb.escape_string(user_host).decode('utf-8')
+
+    if is_locked == 'N':
+        lock_sql = f"ALTER USER {user_host} ACCOUNT LOCK;"
+    elif is_locked == 'Y':
+        lock_sql = f"ALTER USER {user_host} ACCOUNT UNLOCK;"
+
+    engine = get_engine(instance=instance)
+    exec_result = engine.execute(db_name='mysql', sql=lock_sql)
+    if exec_result.error:
+        return JsonResponse({'status': 1, 'msg': exec_result.error})
     return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
 
@@ -293,7 +330,7 @@ def delete(request):
     user_host = MySQLdb.escape_string(user_host).decode('utf-8')
 
     engine = get_engine(instance=instance)
-    exec_result = engine.execute(db_name='information_schema', sql=f"DROP USER {user_host};")
+    exec_result = engine.execute(db_name='mysql', sql=f"DROP USER {user_host};")
     if exec_result.error:
         return JsonResponse({'status': 1, 'msg': exec_result.error})
     # 删除数据库对应记录
