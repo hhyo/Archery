@@ -810,6 +810,19 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="api_user_whitelist"
+                                       class="col-sm-4 control-label">API_USER_WHITELIST</label>
+                                <div class="col-sm-5">
+                                    <select id="api_user_whitelist" key="api_user_whitelist"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="API用户白名单"
+                                            multiple data-selected-text-format="count > 5"
+                                            required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="lock_time_threshold"
                                        class="col-sm-4 control-label">LOCK_TIME_THRESHOLD</label>
                                 <div class="col-sm-5">
@@ -903,8 +916,9 @@
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
-        // notify_phase_control参数处理
+
         $(document).ready(function (){
+            // notify_phase_control参数处理
             let cfg_value = "{{ config.notify_phase_control }}";
             let phases = ['Apply', 'Pass', 'Execute', 'Cancel'];
             // notify_phase_control未设置时默认全部开启
@@ -927,6 +941,36 @@
             }
             $("#notify_phase_control").selectpicker('render');
             $("#notify_phase_control").selectpicker('refresh');
+
+            // api_user_whitelist参数处理
+            let api_config = "{{ config.api_user_whitelist }}";
+            $.ajax({
+                type: "post",
+                url: "/user/list/",
+                dataType: "json",
+                success: function (data) {
+                    if (data.status === 0) {
+                        let users = data.data;
+                        let user_arr = api_config.split(',');
+                        for (let i=0;i<users.length;i++) {
+                            let user = "";
+                            if (user_arr.indexOf(users[i].id.toString()) >= 0) {
+                                user = "<option value=\"" + users[i].id+ "\" selected>" + users[i].display + "(" + users[i].username + ")</option>"
+                            } else {
+                                user = "<option value=\"" + users[i].id+ "\">" + users[i].display + "(" + users[i].username + ")</option>"
+                            }
+                            $("#api_user_whitelist").append(user)
+                            $("#api_user_whitelist").selectpicker('render');
+                            $("#api_user_whitelist").selectpicker('refresh');
+                        }
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
         })
 
         //配置项切换
