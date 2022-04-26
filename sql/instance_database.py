@@ -38,7 +38,7 @@ def databases(request):
     cnf_dbs = dict()
     for db in InstanceDatabase.objects.filter(
            instance=instance).values('id', 'db_name', 'owner', 'owner_display', 'remark','in_use'):
-        db['saved'] = 'True'
+        db['saved'] = True
         cnf_dbs[f"{db['db_name']}"] = db
 
     # 获取所有数据库
@@ -63,7 +63,7 @@ group by TABLE_SCHEMA;"""
                 'charset': db[1],
                 'collation': db[2],
                 'grantees': bind_users[0][0].split(',') if bind_users else [],
-                'saved': 'False'
+                'saved': False
             }
             # 合并数据
             if db_name in cnf_dbs.keys():
@@ -71,7 +71,11 @@ group by TABLE_SCHEMA;"""
             rows.append(row)
         # 过滤参数
         if saved:
-            rows = [row for row in rows if row['saved'] == str(saved) ]
+            if saved == 'True':
+                saved = bool(saved)
+            else:
+                saved = bool("")
+            rows = [row for row in rows if row['saved'] == saved ]
 
         result = {'status': 0, 'msg': 'ok', 'rows': rows}
     else:
