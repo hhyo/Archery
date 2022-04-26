@@ -706,6 +706,7 @@ class Permission(models.Model):
             ('menu_schemasync', '菜单 SchemaSync'),
             ('menu_system', '菜单 系统管理'),
             ('menu_document', '菜单 相关文档'),
+            ('menu_openapi', '菜单 OpenAPI'),
             ('sql_submit', '提交SQL上线工单'),
             ('sql_review', '审核SQL上线工单'),
             ('sql_execute_for_resource_group', '执行SQL上线工单(资源组粒度)'),
