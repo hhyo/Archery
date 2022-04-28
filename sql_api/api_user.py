@@ -1,12 +1,17 @@
-from rest_framework import views, generics, status
+from rest_framework import views, generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from .serializers import UserSerializer, UserDetailSerializer, GroupSerializer, ResourceGroupSerializer
+from .serializers import UserSerializer, UserDetailSerializer, GroupSerializer, \
+    ResourceGroupSerializer, TwoFASerializer, UserAuthSerializer, TwoFAVerifySerializer
 from .pagination import CustomizedPagination
+from .permissions import IsOwner
 from .filters import UserFilter
 from django.contrib.auth.models import Group
+from django.contrib.auth import authenticate, login
+from django.conf import settings
 from django.http import Http404
-from sql.models import Users, ResourceGroup
+from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
+from common.twofa import TwoFactorAuthBase, get_authenticator
 
 
 class UserList(generics.ListAPIView):
@@ -203,3 +208,101 @@ class ResourceGroupDetail(views.APIView):
         group = self.get_object(pk)
         group.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserAuth(views.APIView):
+    """
+    用户认证校验
+    """
+    permission_classes = [IsOwner]
+
+    @extend_schema(summary="用户认证校验",
+                   request=UserAuthSerializer,
+                   description="用户认证校验")
+    def post(self, request):
+        # 参数验证
+        serializer = UserAuthSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        result = {'status': 0, 'msg': '认证成功'}
+        engineer = request.data['engineer']
+        password = request.data['password']
+
+        user = authenticate(username=engineer, password=password)
+        if not user:
+            result = {'status': 1, 'msg': '用户名或密码错误！'}
+
+        return Response(result)
+
+
+class TwoFA(views.APIView):
+    """
+    配置2fa
+    """
+    permission_classes = [IsOwner]
+
+    @extend_schema(summary="配置2fa",
+                   request=TwoFASerializer,
+                   description="启用或关闭2fa")
+    def post(self, request):
+        # 参数验证
+        serializer = TwoFASerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        engineer = request.data['engineer']
+        auth_type = request.data['auth_type']
+        user = Users.objects.get(username=engineer)
+
+        if auth_type == 'disabled':
+            # 关闭2fa
+            authenticator = TwoFactorAuthBase(user=user)
+            result = authenticator.disable()
+        else:
+            # 启用2fa
+            authenticator = get_authenticator(user=user, auth_type=auth_type)
+            result = authenticator.enable()
+
+        return Response(result)
+
+
+class TwoFAVerify(views.APIView):
+    """
+    检验2fa密码
+    """
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(summary="检验2fa密码",
+                   request=TwoFAVerifySerializer,
+                   description="检验2fa密码")
+    def post(self, request):
+        # 参数验证
+        serializer = TwoFAVerifySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        engineer = request.data['engineer']
+        otp = request.data['otp']
+        user = Users.objects.get(username=engineer)
+
+        request_user = request.session.get('user')
+        if request_user:
+            if request_user != engineer:
+                return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
+        else:
+            return Response({'status': 1, 'msg': '需先校验用户密码！'})
+
+        twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
+        if not twofa_config:
+            return Response({'status': 1, 'msg': '用户未配置2FA！'})
+
+        authenticator = get_authenticator(user=user, auth_type=twofa_config[0].auth_type)
+        result = authenticator.verify(otp)
+
+        # 校验通过后自动登录，刷新expire_date
+        if result['status'] == 0:
+            login(request, user)
+            request.session.set_expiry(settings.SESSION_COOKIE_AGE)
+
+        return Response(result)

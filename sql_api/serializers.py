@@ -90,6 +90,41 @@ class ResourceGroupSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserAuthSerializer(serializers.Serializer):
+    engineer = serializers.CharField(label='用户名')
+    password = serializers.CharField(label='密码')
+
+
+class TwoFASerializer(serializers.Serializer):
+    engineer = serializers.CharField(label='用户名')
+    auth_type = serializers.ChoiceField(choices=['disabled', 'totp'], label='认证类型：disabled-关闭，totp-Google身份验证器')
+
+    def validate(self, attrs):
+        engineer = attrs.get('engineer')
+
+        try:
+            Users.objects.get(username=engineer)
+        except Users.DoesNotExist:
+            raise serializers.ValidationError({"errors": "不存在该用户"})
+
+        return attrs
+
+
+class TwoFAVerifySerializer(serializers.Serializer):
+    engineer = serializers.CharField(label='用户名')
+    otp = serializers.IntegerField(label='一次性密码/验证码')
+
+    def validate(self, attrs):
+        engineer = attrs.get('engineer')
+
+        try:
+            user = Users.objects.get(username=engineer)
+        except Users.DoesNotExist:
+            raise serializers.ValidationError({"errors": "不存在该用户"})
+
+        return attrs
+
+
 class InstanceSerializer(serializers.ModelSerializer):
 
     class Meta:
