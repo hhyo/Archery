@@ -73,6 +73,7 @@
                             <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> 管理后台</a>
                         </li>
                     {% endif %}
+                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-credit-card fa-fw"></i> 双重认证</a></li>
                     <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
                     <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
                 </ul>
@@ -279,6 +280,59 @@
         <!-- /.navbar-static-side -->
     </nav>
 
+<!-- 双重认证模态框-->
+<div class="modal fade" id="2fa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel1">双重认证</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="auth_type">认证方式:</label>
+                    <select id="auth_type" class="form-control show-tick selectpicker" name="instances"
+                                    title="选择额外认证方式:"
+                                    data-live-search="true">
+                        <option value="disabled">关闭双重认证</option>
+                        <option value="totp" selected="selected">Google身份验证器</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="passwd">需输入密码验证:</label>
+                    <input type="password" class="form-control" id="passwd" placeholder="确认密码" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="btnConfirm" type="submit" class="btn btn-success">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 二维码模态框-->
+<div class="modal fade bs-example-modal-sm" id="qrcode" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel2">请使用Google身份验证器扫码</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <img id="qrcode-img" src="">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-dismiss="modal" class="btn btn-success">完成</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- Page Content -->
     <div id="page-wrapper">
         <div class="clearfix">
@@ -318,6 +372,94 @@
             watermark.load({ watermark_txt: user + " " + now })
         }
     };
+</script>
+<script>
+    function twofa(auth_type) {
+        // 配置2fa
+        let result;
+        $.ajax({
+            type: "post",
+            url: "/api/v1/user/2fa/",
+            dataType: "json",
+            data: {
+                engineer: '{{ user.username }}',
+                auth_type: auth_type
+            },
+            async: false,
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    result = data
+                    $("#2fa").modal('hide');
+                } else {
+                    alert(data.msg);
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown + ' : ' + XMLHttpRequest.responseText);
+            }
+        })
+        return result
+    }
+
+    function auth(username, password) {
+        // 用户认证校验
+        let result = false;
+        $.ajax({
+            type: "post",
+            url: "/api/v1/user/auth/",
+            dataType: "json",
+            data: {
+                engineer: username,
+                password: password
+            },
+            async: false,
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    $("#2fa").modal('hide');
+                    result = true
+                } else {
+                    alert(data.msg);
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown + ' : ' + XMLHttpRequest.responseText);
+            }
+        });
+        return result
+    }
+
+    $("#2fa-menu").click(function () {
+        $("#2fa").modal('show');
+    })
+
+    $("#btnConfirm").click(function () {
+        let auth_type = $("#auth_type").val();
+        let password = $("#passwd").val();
+        password = password.replace(/(^\s*)|(\s*$)/g, "");
+        if (!password) {
+            alert('请输入密码！')
+            return
+        }
+        $("#passwd").val('');
+        let isAuthenticated = auth('{{ user.username }}', password);
+        if (isAuthenticated) {
+            let data = twofa(auth_type);
+            if (data.status === 0) {
+                alert("配置成功！")
+                if (auth_type === 'totp') {
+                    // 展示二维码
+                    $("#qrcode-img").attr("src", "/static/" + data.src)
+                    $("#qrcode").modal("show");
+                }
+            } else {
+                alert(data.msg)
+            }
+        }
+    })
 </script>
 </body>
 <script>

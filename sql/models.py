@@ -2,9 +2,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
-
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
+
 
 class ResourceGroup(models.Model):
     """
@@ -59,6 +59,30 @@ class Users(AbstractUser):
         db_table = 'sql_users'
         verbose_name = u'用户管理'
         verbose_name_plural = u'用户管理'
+
+
+class TwoFactorAuthConfig(models.Model):
+    """
+    2fa配置信息
+    """
+    auth_type_choice = (
+        ('totp', 'Google身份验证器'),
+    )
+
+    username = models.CharField('用户名', max_length=150)
+    auth_type = models.CharField('认证类型', max_length=16, choices=auth_type_choice)
+    secret_key = models.CharField('用户密钥', max_length=64, null=True)
+    qrcode = models.CharField('二维码图片', max_length=128, null=True)
+    user = models.OneToOneField(Users, on_delete=models.CASCADE)
+
+    def __int__(self):
+        return self.username
+
+    class Meta:
+        managed = True
+        db_table = '2fa_config'
+        verbose_name = u'2FA配置'
+        verbose_name_plural = u'2FA配置'
 
 
 class InstanceTag(models.Model):

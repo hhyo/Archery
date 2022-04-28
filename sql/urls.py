@@ -17,6 +17,7 @@ urlpatterns = [
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     path('index/', views.index),
     path('login/', views.login, name='login'),
+    path('login/2fa/', views.twofa, name='twofa'),
     path('logout/', auth.sign_out),
     path('signup/', auth.sign_up),
     path('sqlworkflow/', views.sqlworkflow),
