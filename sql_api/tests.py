@@ -6,7 +6,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from common.config import SysConfig
 from sql.models import ResourceGroup, Instance, AliyunRdsConfig, CloudAccessKey, Tunnel, \
-    SqlWorkflow, SqlWorkflowContent, WorkflowAudit, WorkflowLog, InstanceTag, WorkflowAuditSetting
+    SqlWorkflow, SqlWorkflowContent, WorkflowAudit, WorkflowLog, InstanceTag, WorkflowAuditSetting, \
+    TwoFactorAuthConfig
 import json
 
 User = get_user_model()
@@ -159,6 +160,36 @@ class TestUser(APITestCase):
         r = self.client.delete(f'/api/v1/user/resourcegroup/{self.res_group.group_id}/', format='json')
         self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Group.objects.filter(name='test').count(), 0)
+
+    def test_user_auth(self):
+        """测试用户认证校验"""
+        json_data = {
+            "engineer": "test_user",
+            "password": "test_password"
+        }
+        r = self.client.post(f'/api/v1/user/auth/', json_data, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json(), {'status': 0, 'msg': '认证成功'})
+
+    def test_2fa_config(self):
+        """测试用户配置2fa"""
+        json_data = {
+            "engineer": "test_user",
+            "auth_type": "totp"
+        }
+        r = self.client.post(f'/api/v1/user/2fa/', json_data, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(TwoFactorAuthConfig.objects.count(), 1)
+
+    def test_2fa_verify(self):
+        """测试2fa验证码校验"""
+        json_data = {
+            "engineer": "test_user",
+            "otp": 1234567
+        }
+        r = self.client.post(f'/api/v1/user/2fa/verify/', json_data, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.json()['status'], 1)
 
 
 class TestInstance(APITestCase):

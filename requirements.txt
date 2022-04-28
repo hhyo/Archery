@@ -34,3 +34,6 @@ djangorestframework-simplejwt==4.3.0
 django-filter==21.1
 drf-spectacular==0.22.0
 pyjwt==1.7.1
+pyotp==2.6.0
+pillow==8.4.0
+qrcode==7.3.1
