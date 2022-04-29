@@ -22,12 +22,10 @@ class TwoFactorAuthBase:
     def disable(self):
         """禁用"""
         result = {'status': 0, 'msg': 'ok'}
-        twofa = TwoFactorAuthConfig.objects.filter(user=self.user)
-        if twofa:
-            if twofa[0].qrcode:
-                qrcode_file = os.path.join(settings.STATICFILES_DIRS[0], twofa[0].qrcode)
-                os.remove(qrcode_file)
-            twofa.delete()
+        try:
+            TwoFactorAuthConfig.objects.get(user=self.user).delete()
+        except TwoFactorAuthConfig.DoesNotExist as e:
+            result = {'status': 0, 'msg': str(e)}
         return result
 
     @property

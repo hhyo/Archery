@@ -1,9 +1,11 @@
 # -*- coding: UTF-8 -*-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
+import os
 
 
 class ResourceGroup(models.Model):
@@ -77,6 +79,15 @@ class TwoFactorAuthConfig(models.Model):
 
     def __int__(self):
         return self.username
+
+    def delete(self, using=None, keep_parents=False):
+        # 先删除二维码图片
+        if self.qrcode:
+            qrcode_img = os.path.join(settings.STATICFILES_DIRS[0], self.qrcode)
+            if os.path.exists(qrcode_img):
+                os.remove(qrcode_img)
+
+        super(TwoFactorAuthConfig, self).delete()
 
     class Meta:
         managed = True
