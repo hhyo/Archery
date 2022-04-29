@@ -1,6 +1,4 @@
 from sql.models import TwoFactorAuthConfig
-from django.conf import settings
-import os
 
 
 class TwoFactorAuthBase:
