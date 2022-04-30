@@ -280,22 +280,22 @@
         <!-- /.navbar-static-side -->
     </nav>
 
-<!-- 双重认证模态框-->
+<!-- 两步验证配置模态框-->
 <div class="modal fade" id="2fa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel1">双重认证</h4>
+                <h4 class="modal-title" id="myModalLabel1">两步验证</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="auth_type">认证方式:</label>
+                    <label for="auth_type">验证方式:</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="instances"
-                                    title="选择额外认证方式:"
+                                    title="选择额外验证方式:"
                                     data-live-search="true">
-                        <option value="disabled">关闭双重认证</option>
+                        <option value="disabled">关闭两步验证</option>
                         <option value="totp" selected="selected">Google身份验证器</option>
                     </select>
                 </div>
