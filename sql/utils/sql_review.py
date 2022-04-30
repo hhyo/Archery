@@ -118,8 +118,7 @@ def can_timingtask(user, workflow_id):
 def can_cancel(user, workflow_id):
     """
     判断用户当前是否是可终止，
-    审核中的工单，审核人和提交人可终止
-    审核通过但未执行的工单，有执行权限的用户终止
+    审核中、审核通过的的工单，审核人和提交人可终止
     :param user:
     :param workflow_id:
     :return:
@@ -127,13 +126,10 @@ def can_cancel(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
     # 审核中的工单，审核人和提交人可终止
-    if workflow_detail.status == 'workflow_manreviewing':
+    if workflow_detail.status in ['workflow_manreviewing', 'workflow_review_pass', 'workflow_timingtask']:
         from sql.utils.workflow_audit import Audit
         if Audit.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
             result = True
-    # 审核通过但未执行的工单，执行人可以打回
-    if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
-        result = True if can_execute(user, workflow_id) else False
     return result
 
 
