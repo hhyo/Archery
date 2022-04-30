@@ -126,10 +126,11 @@ def can_cancel(user, workflow_id):
     workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
     result = False
     # 审核中的工单，审核人和提交人可终止
-    if workflow_detail.status in ['workflow_manreviewing', 'workflow_review_pass', 'workflow_timingtask']:
+    if workflow_detail.status == 'workflow_manreviewing':
         from sql.utils.workflow_audit import Audit
-        if Audit.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
-            result = True
+        return any([Audit.can_review(user, workflow_id, 2), user.username == workflow_detail.engineer])
+    elif workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
+        return any([can_execute(user, workflow_id), user.username == workflow_detail.engineer])
     return result
 
 

@@ -434,18 +434,18 @@ class TestSQLReview(TestCase):
         self.assertTrue(r)
 
     @patch('sql.utils.sql_review.can_execute')
-    def test_can_cancel_false(self, _can_execute):
+    def test_can_cancel_true_for_submit_user(self, _can_execute):
         """
-        测试是否能取消，审核通过但未执行的工单，无执行权限的用户无法终止
+        测试是否能取消，审核通过但未执行的工单，提交人可终止
         :return:
         """
         # 修改工单为workflow_review_pass，当前登录用户为提交人
         self.wf1.status = 'workflow_review_pass'
         self.wf1.engineer = self.user.username
         self.wf1.save(update_fields=('status', 'engineer'))
-        _can_execute.return_value = False
+        _can_execute.return_value = True
         r = can_cancel(user=self.user, workflow_id=self.wfc1.workflow_id)
-        self.assertFalse(r)
+        self.assertTrue(r)
 
     def test_on_correct_time_period(self):
         """
