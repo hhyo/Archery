@@ -5,10 +5,10 @@ INSERT INTO auth_permission (name, content_type_id, codename) VALUES ('菜单 Op
 -- 新增2fa配置表
 CREATE TABLE `2fa_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `username` varchar(150) NOT NULL,
-  `auth_type` varchar(16) NOT NULL,
-  `secret_key` varchar(64) DEFAULT NULL,
-  `qrcode` varchar(128) DEFAULT NULL,
+  `username` varchar(200) NOT NULL,
+  `auth_type` varchar(128) NOT NULL,
+  `secret_key` varchar(256) DEFAULT NULL,
+  `qrcode` varchar(256) DEFAULT NULL,
   `user_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),

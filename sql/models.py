@@ -71,10 +71,10 @@ class TwoFactorAuthConfig(models.Model):
         ('totp', 'Google身份验证器'),
     )
 
-    username = models.CharField('用户名', max_length=150)
-    auth_type = models.CharField('认证类型', max_length=16, choices=auth_type_choice)
-    secret_key = models.CharField('用户密钥', max_length=64, null=True)
-    qrcode = models.CharField('二维码图片', max_length=128, null=True)
+    username = fields.EncryptedCharField(verbose_name='用户名', max_length=200)
+    auth_type = fields.EncryptedCharField(verbose_name='认证类型', max_length=128, choices=auth_type_choice)
+    secret_key = fields.EncryptedCharField(verbose_name='用户密钥', max_length=256, null=True)
+    qrcode = fields.EncryptedCharField(verbose_name='二维码图片', max_length=256, null=True)
     user = models.OneToOneField(Users, on_delete=models.CASCADE)
 
     def __int__(self):
