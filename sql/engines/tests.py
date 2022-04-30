@@ -400,7 +400,7 @@ class TestMysql(TestCase):
                                errormessage='None',
                                sql=sql,
                                affected_rows=0,
-                               execute_time=0, )
+                               execute_time='', )
         row = ReviewResult(id=1, errlevel=2,
                            stagestatus='驳回不支持语句',
                            errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
@@ -423,7 +423,7 @@ class TestMysql(TestCase):
                                errormessage='None',
                                sql=sql,
                                affected_rows=0,
-                               execute_time=0, )
+                               execute_time='', )
         row = ReviewResult(id=1, errlevel=2,
                            stagestatus='驳回高危SQL',
                            errormessage='禁止提交匹配' + '^|update' + '条件的语句！',
