@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^v1/user/resourcegroup/(?P<pk>[0-9]+)/$', api_user.ResourceGroupDetail.as_view()),
     path('v1/user/auth/', api_user.UserAuth.as_view()),
     path('v1/user/2fa/', api_user.TwoFA.as_view()),
+    path('v1/user/2fa/save/', api_user.TwoFASave.as_view()),
     path('v1/user/2fa/verify/', api_user.TwoFAVerify.as_view()),
     path('v1/instance/', api_instance.InstanceList.as_view()),
     url(r'^v1/instance/(?P<pk>[0-9]+)/$', api_instance.InstanceDetail.as_view()),

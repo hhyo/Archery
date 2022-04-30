@@ -43,7 +43,7 @@ class UsersAdmin(UserAdmin):
 # 用户2fa管理
 @admin.register(TwoFactorAuthConfig)
 class TwoFactorAuthConfigAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'auth_type', 'secret_key', 'qrcode', 'user_id')
+    list_display = ('id', 'username', 'auth_type', 'secret_key', 'user_id')
 
 
 # 资源组管理

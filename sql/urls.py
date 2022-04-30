@@ -7,6 +7,7 @@ import sql.instance_database
 import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
+from common.twofa import totp
 from sql import views, sql_workflow, sql_analyze, query, slowlog, instance, instance_account, db_diagnostic, \
     resource_group, binlog, data_dictionary, archiver, audit_log, user
 from sql.utils import tasks
@@ -162,4 +163,5 @@ urlpatterns = [
     path('audit/log/', audit_log.audit_log),
     path('audit/input/', audit_log.audit_input),
     path('user/list/', user.lists),
+    path('user/qrcode/<str:data>/', totp.generate_qrcode),
 ]

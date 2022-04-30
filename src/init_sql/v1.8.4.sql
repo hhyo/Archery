@@ -8,7 +8,6 @@ CREATE TABLE `2fa_config` (
   `username` varchar(200) NOT NULL,
   `auth_type` varchar(128) NOT NULL,
   `secret_key` varchar(256) DEFAULT NULL,
-  `qrcode` varchar(256) DEFAULT NULL,
   `user_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),

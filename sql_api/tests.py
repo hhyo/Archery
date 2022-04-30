@@ -175,9 +175,20 @@ class TestUser(APITestCase):
         """测试用户配置2fa"""
         json_data = {
             "engineer": "test_user",
-            "auth_type": "totp"
+            "auth_type": "disabled"
         }
         r = self.client.post(f'/api/v1/user/2fa/', json_data, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(TwoFactorAuthConfig.objects.count(), 0)
+
+    def test_2fa_save(self):
+        """测试用户保存2fa配置"""
+        json_data = {
+            "engineer": "test_user",
+            "auth_type": "totp",
+            "key": "ZUGRIJZP6H7LIOAL4LH5JA4GSXXT3WOK"
+        }
+        r = self.client.post(f'/api/v1/user/2fa/save/', json_data, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(TwoFactorAuthConfig.objects.count(), 1)
 
@@ -185,7 +196,9 @@ class TestUser(APITestCase):
         """测试2fa验证码校验"""
         json_data = {
             "engineer": "test_user",
-            "otp": 1234567
+            "otp": 123456,
+            "key": "ZUGRIJZP6H7LIOAL4LH5JA4GSXXT3WOK",
+            "auth_type": "totp"
         }
         r = self.client.post(f'/api/v1/user/2fa/verify/', json_data, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK)

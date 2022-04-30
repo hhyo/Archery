@@ -319,15 +319,19 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel2">请使用Google身份验证器扫码</h4>
+                <h4 class="modal-title" id="myModalLabel2">扫码绑定</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <img id="qrcode-img" src="">
+                    <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                    <img id="qrcode-img" key="" src="">
+                    <label class="control-label" for="otp">2. 输入6位验证码完成绑定：</label>
+                    <input class="form-control ng-valid ng-dirty ng-touched" id="otp" name="otpCode" type="text"
+                       oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" data-dismiss="modal" class="btn btn-success">完成</button>
+                <button id="binding" type="button" class="btn btn-success">绑定</button>
             </div>
         </div>
     </div>
@@ -403,6 +407,60 @@
         return result
     }
 
+    function save(key) {
+        $.ajax({
+            type: "post",
+            url: "/api/v1/user/2fa/save/",
+            dataType: "json",
+            data: {
+                engineer: '{{ user.username }}',
+                key: key,
+            },
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    alert("已开启两步验证！");
+                    $("#qrcode").modal("hide");
+                } else {
+                    alert(data.msg)
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown + ' : ' + XMLHttpRequest.responseText)
+            }
+        });
+    }
+
+    function authOTP(otp) {
+        let key = $("#qrcode-img").attr('key');
+        let auth_type = $("#auth_type").val();
+        $.ajax({
+            type: "post",
+            url: "/api/v1/user/2fa/verify/",
+            dataType: "json",
+            data: {
+                engineer: '{{ user.username }}',
+                auth_type: auth_type,
+                key: key,
+                otp: otp
+            },
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    alert("验证成功！");
+                    save(key);
+                } else {
+                    alert(data.msg)
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown + ' : ' + XMLHttpRequest.responseText)
+            }
+        });
+    }
+
     function auth(username, password) {
         // 用户认证校验
         let result = false;
@@ -436,6 +494,11 @@
         $("#2fa").modal('show');
     })
 
+    $("#binding").click(function () {
+        let otp = $('#otp').val();
+        authOTP(otp);
+    })
+
     $("#btnConfirm").click(function () {
         let auth_type = $("#auth_type").val();
         let password = $("#passwd").val();
@@ -449,10 +512,13 @@
         if (isAuthenticated) {
             let data = twofa(auth_type);
             if (data.status === 0) {
-                alert("配置成功！")
-                if (auth_type === 'totp') {
+                if (auth_type === 'disabled') {
+                    alert("已关闭两步验证！")
+                } else if (auth_type === 'totp') {
+                    let key = data.data.key;
+                    $("#qrcode-img").attr("key", key)
+                    $("#qrcode-img").attr("src", "/user/qrcode/" + key)
                     // 展示二维码
-                    $("#qrcode-img").attr("src", "/static/" + data.src)
                     $("#qrcode").modal("show");
                 }
             } else {

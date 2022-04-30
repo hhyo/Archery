@@ -2,7 +2,7 @@ from rest_framework import views, generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .serializers import UserSerializer, UserDetailSerializer, GroupSerializer, \
-    ResourceGroupSerializer, TwoFASerializer, UserAuthSerializer, TwoFAVerifySerializer
+    ResourceGroupSerializer, TwoFASerializer, UserAuthSerializer, TwoFAVerifySerializer, TwoFASaveSerializer
 from .pagination import CustomizedPagination
 from .permissions import IsOwner
 from .filters import UserFilter
@@ -259,10 +259,39 @@ class TwoFA(views.APIView):
             # 关闭2fa
             authenticator = TwoFactorAuthBase(user=user)
             result = authenticator.disable()
+        elif auth_type == 'totp':
+            # 启用2fa - 先生成secret key
+            authenticator = get_authenticator(user=user, auth_type=auth_type)
+            result = authenticator.generate_key()
         else:
             # 启用2fa
             authenticator = get_authenticator(user=user, auth_type=auth_type)
             result = authenticator.enable()
+
+        return Response(result)
+
+
+class TwoFASave(views.APIView):
+    """
+    保存2fa配置（TOTP)
+    """
+    permission_classes = [IsOwner]
+
+    @extend_schema(summary="保存2fa配置（TOTP)",
+                   request=TwoFASaveSerializer,
+                   description="保存2fa配置（TOTP)")
+    def post(self, request):
+        # 参数验证
+        serializer = TwoFASaveSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        engineer = request.data['engineer']
+        key = request.data['key']
+        user = Users.objects.get(username=engineer)
+
+        authenticator = get_authenticator(user=user, auth_type='totp')
+        result = authenticator.save(key)
 
         return Response(result)
 
@@ -284,24 +313,30 @@ class TwoFAVerify(views.APIView):
 
         engineer = request.data['engineer']
         otp = request.data['otp']
+        key = request.data['key'] if 'key' in request.data.keys() else None
         user = Users.objects.get(username=engineer)
-
         request_user = request.session.get('user')
-        if request_user:
-            if request_user != engineer:
-                return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
+
+        print(request.user)
+        if not request.user.is_authenticated:
+            if request_user:
+                if request_user != engineer:
+                    return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
+            else:
+                return Response({'status': 1, 'msg': '需先校验用户密码！'})
+
+            twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
+            if not twofa_config:
+                return Response({'status': 1, 'msg': '用户未配置2FA！'})
+            auth_type = twofa_config[0].auth_type
         else:
-            return Response({'status': 1, 'msg': '需先校验用户密码！'})
+            auth_type = request.data['auth_type']
 
-        twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
-        if not twofa_config:
-            return Response({'status': 1, 'msg': '用户未配置2FA！'})
-
-        authenticator = get_authenticator(user=user, auth_type=twofa_config[0].auth_type)
-        result = authenticator.verify(otp)
+        authenticator = get_authenticator(user=user, auth_type=auth_type)
+        result = authenticator.verify(otp, key)
 
         # 校验通过后自动登录，刷新expire_date
-        if result['status'] == 0:
+        if result['status'] == 0 and not request.user.is_authenticated:
             login(request, user)
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
 

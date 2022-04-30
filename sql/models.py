@@ -74,20 +74,10 @@ class TwoFactorAuthConfig(models.Model):
     username = fields.EncryptedCharField(verbose_name='用户名', max_length=200)
     auth_type = fields.EncryptedCharField(verbose_name='认证类型', max_length=128, choices=auth_type_choice)
     secret_key = fields.EncryptedCharField(verbose_name='用户密钥', max_length=256, null=True)
-    qrcode = fields.EncryptedCharField(verbose_name='二维码图片', max_length=256, null=True)
     user = models.OneToOneField(Users, on_delete=models.CASCADE)
 
     def __int__(self):
         return self.username
-
-    def delete(self, using=None, keep_parents=False):
-        # 先删除二维码图片
-        if self.qrcode:
-            qrcode_img = os.path.join(settings.STATICFILES_DIRS[0], self.qrcode)
-            if os.path.exists(qrcode_img):
-                os.remove(qrcode_img)
-
-        super(TwoFactorAuthConfig, self).delete()
 
     class Meta:
         managed = True
