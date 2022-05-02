@@ -129,6 +129,7 @@ def query(request):
                 else:
                     result['data'] = masking_result.__dict__
             except Exception as msg:
+                logger.error(traceback.format_exc())
                 # 抛出未定义异常，并且开启query_check，直接返回异常，禁止执行
                 if config.get('query_check'):
                     result['status'] = 1
