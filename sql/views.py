@@ -45,6 +45,20 @@ def login(request):
     return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
+def twofa(request):
+    """2fa认证页面"""
+    if request.user.is_authenticated:
+        return HttpResponseRedirect('/')
+
+    username = request.session.get('user')
+    if username:
+        auth_type = request.session.get('auth_type')
+    else:
+        return HttpResponseRedirect('/login/')
+
+    return render(request, '2fa.html', context={'auth_type': auth_type, 'username': username})
+
+
 @permission_required('sql.menu_dashboard', raise_exception=True)
 def dashboard(request):
     """dashboard页面"""
