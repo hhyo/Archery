@@ -5,6 +5,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 IGNORE_URL = [
     '/login/',
+    '/login/2fa/',
     '/authenticate/',
     '/signup/',
     '/api/info'

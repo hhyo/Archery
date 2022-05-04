@@ -297,8 +297,8 @@ class MysqlEngine(EngineBase):
                 result['bad_query'] = True
                 result['msg'] = explain_result.error
         # 不应该查看mysql.user表
-        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*',sql.lower().replace('\n','')) or\
-           (db_name=="mysql" and  re.match('.*(\\s)+(user|`user`)((\\s)*|;).*',sql.lower().replace('\n',''))):
+        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', '')) or \
+                (db_name == "mysql" and re.match('.*(\\s)+(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', ''))):
             result['bad_query'] = True
             result['msg'] = '您无权查看该表'
 
@@ -348,62 +348,36 @@ class MysqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         # 进行Inception检查，获取检测结果
         try:
-            inc_check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+            check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
         except Exception as e:
             logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
             raise RuntimeError(f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}")
 
         # 判断Inception检测结果
-        if inc_check_result.error:
-            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{inc_check_result.error}")
-            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{inc_check_result.error}")
+        if check_result.error:
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{check_result.error}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{check_result.error}")
 
         # 禁用/高危语句检查
-        check_critical_result = ReviewSet(full_sql=sql)
-        line = 1
         critical_ddl_regex = self.config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
-        check_critical_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
-
-        for row in inc_check_result.rows:
+        for row in check_result.rows:
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type='mysql')
             # 禁用语句
             if re.match(r"^select", statement.lower()):
-                check_critical_result.is_critical = True
-                result = ReviewResult(id=line, errlevel=2,
-                                      stagestatus='驳回不支持语句',
-                                      errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
-                                      sql=statement)
+                check_result.error_count += 1
+                row.stagestatus = '驳回不支持语句'
+                row.errlevel = 2
+                row.errormessage = '仅支持DML和DDL语句，查询语句请使用SQL查询功能！'
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
-                check_critical_result.is_critical = True
-                result = ReviewResult(id=line, errlevel=2,
-                                      stagestatus='驳回高危SQL',
-                                      errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                                      sql=statement)
-            # 正常语句
-            else:
-                result = ReviewResult(id=line, errlevel=0,
-                                      stagestatus='Audit completed',
-                                      errormessage='None',
-                                      sql=statement,
-                                      affected_rows=0,
-                                      execute_time=0, )
-
-            # 没有找出DDL语句的才继续执行此判断
-            if check_critical_result.syntax_type == 2:
-                if get_syntax_type(statement, parser=False, db_type='mysql') == 'DDL':
-                    check_critical_result.syntax_type = 1
-            check_critical_result.rows += [result]
-
-            # 遇到禁用和高危语句直接返回
-            if check_critical_result.is_critical:
-                check_critical_result.error_count += 1
-                return check_critical_result
-            line += 1
-        return inc_check_result
+                check_result.error_count += 1
+                row.stagestatus = '驳回高危SQL'
+                row.errlevel = 2
+                row.errormessage = '禁止提交匹配' + critical_ddl_regex + '条件的语句！'
+        return check_result
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""

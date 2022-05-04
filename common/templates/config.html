@@ -266,7 +266,7 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -280,31 +280,6 @@
                                                    value="{{ config.data_masking }}" type="checkbox">
                                             是否开启动态脱敏
                                         </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="div-inception-config" style="display: none">
-                                <div class="form-group">
-                                    <label for="inception_host"
-                                           class="col-sm-4 control-label">INCEPTION_HOST</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="inception_host"
-                                               key="inception_host"
-                                               value="{{ config.inception_host }}"
-                                               placeholder="Inception地址">
-                                    </div>
-                                    <button id='check_incption' class='btn-sm btn-info'>测试连接</button>
-                                </div>
-                                <div class="form-group">
-                                    <label for="inception_port"
-                                           class="col-sm-4 control-label">INCEPTION_PORT</label>
-                                    <div class="col-sm-5">
-                                        <input type="number" class="form-control"
-                                               id="inception_port"
-                                               key="inception_port"
-                                               value="{{ config.inception_port }}"
-                                               placeholder="Inception端口">
                                     </div>
                                 </div>
                             </div>

@@ -22,15 +22,6 @@ services:
       MYSQL_DATABASE: archery
       MYSQL_ROOT_PASSWORD: 123456
 
-  inception:
-    image: hhyo/inception
-    container_name: inception
-    restart: always
-    expose:
-      - "6669"
-    volumes:
-      - "./inception/inc.cnf:/etc/inc.cnf"
-
   goinception:
     image: hanchuanchuan/goinception
     container_name: goinception
@@ -41,7 +32,7 @@ services:
       - "./inception/config.toml:/etc/config.toml"
 
   archery:
-    image: hhyo/archery:v1.8.3
+    image: hhyo/archery:v1.8.4
     container_name: archery
     restart: always
     ports:

@@ -13,3 +13,16 @@ class IsInUserWhitelist(permissions.BasePermission):
 
         # 只有在api_user_whitelist参数中的用户才有权限
         return request.user.id in api_user_whitelist
+
+
+class IsOwner(permissions.BasePermission):
+    """
+    当参数engineer与请求用户一致时才有权限
+    """
+    def has_permission(self, request, view):
+        try:
+            engineer = request.data['engineer']
+        except KeyError as e:
+            return False
+
+        return engineer == request.user.username
