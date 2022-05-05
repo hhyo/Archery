@@ -133,9 +133,15 @@ class TwoFAVerifySerializer(serializers.Serializer):
 
     def validate(self, attrs):
         engineer = attrs.get('engineer')
+        key = attrs.get('key')
+        auth_type = attrs.get('auth_type')
+
+        if key:
+            if not auth_type:
+                raise serializers.ValidationError({"errors": "缺少 auth_type"})
 
         try:
-            user = Users.objects.get(username=engineer)
+            Users.objects.get(username=engineer)
         except Users.DoesNotExist:
             raise serializers.ValidationError({"errors": "不存在该用户"})
 
