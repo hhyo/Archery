@@ -347,7 +347,7 @@ class TwoFAVerify(views.APIView):
 
         # 校验通过后自动登录，刷新expire_date
         if result['status'] == 0 and not request.user.is_authenticated:
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
 
         return Response(result)
