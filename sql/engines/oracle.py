@@ -982,8 +982,8 @@ class OracleEngine(EngineBase):
                                         options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
                                     end;'''
             undo_sql = f'''select 
-                           xmlagg(xmlparse(content sql_redo)  order by  scn,rs_id,ssn,rownum).getclobval() ,
-                           xmlagg(xmlparse(content sql_undo)  order by  scn,rs_id,ssn,rownum).getclobval() 
+                           xmlagg(xmlparse(content sql_redo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() ,
+                           xmlagg(xmlparse(content sql_undo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() 
                            from v$logmnr_contents
                            where  SEG_OWNER not in ('SYS')
                            and session# = (select sid from v$mystat where rownum = 1)
