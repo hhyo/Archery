@@ -256,11 +256,12 @@ class TwoFA(views.APIView):
         user = Users.objects.get(username=engineer)
         request_user = request.session.get('user')
 
-        if request_user:
-            if request_user != engineer:
-                return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
-        else:
-            return Response({'status': 1, 'msg': '需先校验用户密码！'})
+        if not request.user.is_authenticated:
+            if request_user:
+                if request_user != engineer:
+                    return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
+            else:
+                return Response({'status': 1, 'msg': '需先校验用户密码！'})
 
         if auth_type == 'disabled':
             # 关闭2fa
