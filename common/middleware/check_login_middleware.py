@@ -22,5 +22,6 @@ class CheckLoginMiddleware(MiddlewareMixin):
         """
         if not request.user.is_authenticated:
             # 以下是不用跳转到login页面的url白名单
-            if request.path not in IGNORE_URL and re.match(IGNORE_URL_RE, request.path) is None:
+            if request.path not in IGNORE_URL and re.match(IGNORE_URL_RE, request.path) is None \
+                    and not (re.match(r'/user/qrcode/\w+', request.path) and request.session.get('user')):
                 return HttpResponseRedirect('/login/')

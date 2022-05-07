@@ -105,23 +105,42 @@ def authenticate_entry(request):
     if result['status'] == 0:
         authenticated_user = result['data']
         twofa_enabled = TwoFactorAuthConfig.objects.filter(user=authenticated_user)
-        if twofa_enabled:
-            # 用户设置了2fa的情况需要进一步验证
-            auth_type = twofa_enabled[0].auth_type
+        # 是否开启全局2fa
+        if SysConfig().get('enforce_2fa'):
+            # 用户是否配置过2fa
+            if twofa_enabled:
+                auth_type = twofa_enabled[0].auth_type
+                verify_mode = 'verify_only'
+            else:
+                auth_type = 'totp'
+                verify_mode = 'verify_config'
             # 设置无登录状态cookie
             s = SessionStore()
             s['user'] = authenticated_user.username
             s['auth_type'] = auth_type
+            s['verify_mode'] = verify_mode
             s.set_expiry(300)
             s.create()
             result = {'status': 0, 'msg': 'ok', 'data': s.session_key}
         else:
-            # 未设置2fa直接登录
-            login(request, authenticated_user)
-            # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
-            if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
-                get_ding_user_id(request.POST.get('username'))
-            result = {'status': 0, 'msg': 'ok', 'data': None}
+            # 用户是否配置过2fa
+            if twofa_enabled:
+                auth_type = twofa_enabled[0].auth_type
+                # 设置无登录状态cookie
+                s = SessionStore()
+                s['user'] = authenticated_user.username
+                s['auth_type'] = auth_type
+                s['verify_mode'] = 'verify_only'
+                s.set_expiry(300)
+                s.create()
+                result = {'status': 0, 'msg': 'ok', 'data': s.session_key}
+            else:
+                # 未设置2fa直接登录
+                login(request, authenticated_user)
+                # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
+                if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
+                    get_ding_user_id(request.POST.get('username'))
+                result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 
