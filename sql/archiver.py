@@ -275,7 +275,7 @@ def archive(archive_id):
 
     pt_archiver = PtArchiver()
     # 准备参数
-    source = fr"h={s_ins.host},u={s_ins.user},p={s_ins.password}," \
+    source = fr"h={s_ins.host},u={s_ins.user},p='{s_ins.password}'," \
         fr"P={s_ins.port},D={src_db_name},t={src_table_name},A={s_charset}"
     args = {
         "no-version-check": True,
