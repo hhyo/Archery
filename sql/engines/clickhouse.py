@@ -116,9 +116,19 @@ class ClickHouseEngine(EngineBase):
                 rows = cursor.fetchall()
             fields = cursor.description
 
+            # 对特殊数据类型做字符串化处理：UUID、IPv4、IPv6
+            processed_rows = []
+            for row in rows:
+                processed_row = []
+                for value in row:
+                    if value.__class__.__name__ in ('UUID', 'IPv4Address', 'IPv6Address'):
+                        value = str(value)
+                    processed_row.append(value)
+                processed_rows.append(processed_row)
+
             result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.rows = rows
-            result_set.affected_rows = len(rows)
+            result_set.rows = processed_rows
+            result_set.affected_rows = len(processed_rows)
         except Exception as e:
             logger.warning(f"ClickHouse语句执行报错，语句：{sql}，错误信息{e}")
             result_set.error = str(e).split('Stack trace')[0]
