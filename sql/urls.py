@@ -158,6 +158,11 @@ urlpatterns = [
     path('archive/once/', archiver.archive_once),
     path('archive/log/', archiver.archive_log),
 
+    path('passedbatch/', sql_workflow.passedbatch),
+    path('executebatch/', sql_workflow.executebatch),
+    path('cancelbatch/', sql_workflow.cancelbatch),
+    path('rollbackbatch/', sql_workflow.rollbackbatch),
+
     path('4admin/sync_ding_user/', ding_api.sync_ding_user),
 
     path('audit/log/', audit_log.audit_log),
