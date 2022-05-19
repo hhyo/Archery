@@ -64,7 +64,7 @@
     <!-- 审核列表的表格-->
     <div class="table-responsive">
         <table id="sqlaudit-list" data-toggle="table" class="table table-striped table-hover"
-        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
     </div>
     <!-- 日志信息-->
     <div class="modal fade" id="logs">
@@ -100,7 +100,7 @@
         $(function () {
             let start = moment().subtract(29, 'days');
             let end = moment();
-            
+
             function cb(start, end) {
                 if (start.isValid() && end.isValid()) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
@@ -108,6 +108,7 @@
                     $('#reservation span').html('全部数据');
                 }
             }
+
             $('#reservation').daterangepicker({
                 startDate: start,
                 endDate: end,
@@ -159,7 +160,7 @@
                 sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
                 pageSize: 14,                     //每页的记录行数（*）
-                pageList: [14, 500, 1000, 2000],       //可供选择的每页的行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
                     fileName: 'sqlworkflow'  //文件名称设置
@@ -204,7 +205,7 @@
                     title: '',
                     field: 'checkbox',
                     checkbox: true
-                },{
+                    },{
                     title: '工单名称',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
@@ -226,11 +227,11 @@
                     title: '类型',
                     field: 'syntax_type',
                     formatter: function (value, row, index) {
-                        if (value === 0) {
+                        if (String(value) === '0') {
                             return '其他'
-                        } else if (value === 1) {
+                        } else if (String(value) === '1') {
                             return 'DDL'
-                        } else if (value === 2) {
+                        } else if (String(value) === '2') {
                             return 'DML'
                         }
                     }
@@ -248,7 +249,7 @@
                     field: 'is_backup',
                     visible: true, // 默认显示
                     formatter: function (value, row, index) {
-                        if (value === true) {
+                        if (String(value) === 'true') {
                             return '是'
                         } else {
                             return '否'
@@ -275,9 +276,7 @@
                 }],
                 onLoadSuccess: function () {
                 },
-                onLoadError: function () {
-                    alert("数据加载失败！请检查接口返回信息和错误日志！");
-                },
+                onLoadError: onLoadErrorCallback,
                 onSearch: function (e) {
                     //传搜索参数给服务器
                     queryParams(e)
@@ -287,7 +286,8 @@
                     return res;
                 }
             });
-        };
+
+        }
         // 选择批量处理操作
         function get_batch_oper() {
             var batch_oper_value = $("#batchOper").val()
@@ -430,6 +430,7 @@
                 })
             }
         };
+
         // 获取操作日志
         function getLog(obj) {
             var workflow_id = $(obj).attr("workflow_id");
@@ -485,9 +486,7 @@
                         }],
                         onLoadSuccess: function () {
                         },
-                        onLoadError: function () {
-                            alert("数据加载失败！请检查接口返回信息和错误日志！");
-                        }
+                        onLoadError: onLoadErrorCallback
                     });
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
@@ -495,7 +494,7 @@
                 }
             })
         }
-        
+
         $("#batchOper").change(function () {
             get_batch_oper();
         });
