@@ -9,9 +9,9 @@ from .models import Users, Instance, SqlWorkflow, SqlWorkflowContent, QueryLog, 
     AliyunRdsConfig, CloudAccessKey, ResourceGroup, QueryPrivilegesApply, \
     QueryPrivileges, InstanceAccount, InstanceDatabase, ArchiveConfig, \
     WorkflowAudit, WorkflowLog, ParamTemplate, ParamHistory, InstanceTag, \
-    Tunnel, AuditEntry
+    Tunnel, AuditEntry, TwoFactorAuthConfig
 
-from sql.form import TunnelForm
+from sql.form import TunnelForm, InstanceForm
 
 
 # 用户管理
@@ -40,6 +40,12 @@ class UsersAdmin(UserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'resource_group')
 
 
+# 用户2fa管理
+@admin.register(TwoFactorAuthConfig)
+class TwoFactorAuthConfigAdmin(admin.ModelAdmin):
+    list_display = ('id', 'username', 'auth_type', 'secret_key', 'user_id')
+
+
 # 资源组管理
 @admin.register(ResourceGroup)
 class ResourceGroupAdmin(admin.ModelAdmin):
@@ -62,6 +68,7 @@ class InstanceTagAdmin(admin.ModelAdmin):
 # 实例管理
 @admin.register(Instance)
 class InstanceAdmin(admin.ModelAdmin):
+    form = InstanceForm
     list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
     search_fields = ['instance_name', 'host', 'port', 'user']
     list_filter = ('db_type', 'type', 'instance_tag')

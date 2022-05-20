@@ -14,7 +14,6 @@ from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
-from sql.utils.go_data_masking import go_data_masking
 from common.config import SysConfig
 
 logger = logging.getLogger('default')
@@ -110,6 +109,112 @@ class MysqlEngine(EngineBase):
         result.rows = tb_list
         return result
 
+    def get_group_tables_by_db(self, db_name):
+        # escape
+        db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+        data = {}
+        sql = f"""SELECT TABLE_NAME,
+                            TABLE_COMMENT
+                        FROM
+                            information_schema.TABLES
+                        WHERE
+                            TABLE_SCHEMA='{db_name}';"""
+        result = self.query(db_name=db_name, sql=sql)
+        for row in result.rows:
+            table_name, table_cmt = row[0], row[1]
+            if table_name[0] not in data:
+                data[table_name[0]] = list()
+            data[table_name[0]].append([table_name, table_cmt])
+        return data
+
+    def get_table_meta_data(self, db_name, tb_name, **kwargs):
+        """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
+        # escape
+        db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+        tb_name = MySQLdb.escape_string(tb_name).decode('utf-8')
+        sql = f"""SELECT
+                        TABLE_NAME as table_name,
+                        ENGINE as engine,
+                        ROW_FORMAT as row_format,
+                        TABLE_ROWS as table_rows,
+                        AVG_ROW_LENGTH as avg_row_length,
+                        round(DATA_LENGTH/1024, 2) as data_length,
+                        MAX_DATA_LENGTH as max_data_length,
+                        round(INDEX_LENGTH/1024, 2) as index_length,
+                        round((DATA_LENGTH + INDEX_LENGTH)/1024, 2) as data_total,
+                        DATA_FREE as data_free,
+                        AUTO_INCREMENT as auto_increment,
+                        TABLE_COLLATION as table_collation,
+                        CREATE_TIME as create_time,
+                        CHECK_TIME as check_time,
+                        UPDATE_TIME as update_time,
+                        TABLE_COMMENT as table_comment
+                    FROM
+                        information_schema.TABLES
+                    WHERE
+                        TABLE_SCHEMA='{db_name}'
+                            AND TABLE_NAME='{tb_name}'"""
+        _meta_data = self.query(db_name, sql)
+        return {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
+
+    def get_table_desc_data(self, db_name, tb_name, **kwargs):
+        """获取表格字段信息"""
+        sql = f"""SELECT 
+                        COLUMN_NAME as '列名',
+                        COLUMN_TYPE as '列类型',
+                        CHARACTER_SET_NAME as '列字符集',
+                        IS_NULLABLE as '是否为空',
+                        COLUMN_KEY as '索引列',
+                        COLUMN_DEFAULT as '默认值',
+                        EXTRA as '拓展信息',
+                        COLUMN_COMMENT as '列说明'
+                    FROM
+                        information_schema.COLUMNS
+                    WHERE
+                        TABLE_SCHEMA = '{db_name}'
+                            AND TABLE_NAME = '{tb_name}'
+                    ORDER BY ORDINAL_POSITION;"""
+        _desc_data = self.query(db_name, sql)
+        return {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
+
+    def get_table_index_data(self, db_name, tb_name, **kwargs):
+        """获取表格索引信息"""
+        sql = f"""SELECT
+                        COLUMN_NAME as '列名',
+                        INDEX_NAME as '索引名',
+                        NON_UNIQUE as '唯一性',
+                        SEQ_IN_INDEX as '列序列',
+                        CARDINALITY as '基数',
+                        NULLABLE as '是否为空',
+                        INDEX_TYPE as '索引类型',
+                        COMMENT as '备注'
+                    FROM
+                        information_schema.STATISTICS
+                    WHERE
+                        TABLE_SCHEMA = '{db_name}'
+                    AND TABLE_NAME = '{tb_name}';"""
+        _index_data = self.query(db_name, sql)
+        return {'column_list': _index_data.column_list, 'rows': _index_data.rows}
+
+    def get_tables_metas_data(self, db_name, **kwargs):
+        """获取数据库所有表格信息，用作数据字典导出接口"""
+        sql_tbs = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
+        tbs = self.query(sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
+        table_metas = []
+        for tb in tbs:
+            _meta = dict()
+            engine_keys = [{"key": "COLUMN_NAME", "value": "字段名"}, {"key": "COLUMN_TYPE", "value": "数据类型"},
+                           {"key": "COLUMN_DEFAULT", "value": "默认值"}, {"key": "IS_NULLABLE", "value": "允许非空"},
+                           {"key": "EXTRA", "value": "自动递增"}, {"key": "COLUMN_KEY", "value": "是否主键"},
+                           {"key": "COLUMN_COMMENT", "value": "备注"}]
+            _meta["ENGINE_KEYS"] = engine_keys
+            _meta['TABLE_INFO'] = tb
+            sql_cols = f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+                            WHERE TABLE_SCHEMA='{tb['TABLE_SCHEMA']}' AND TABLE_NAME='{tb['TABLE_NAME']}';"""
+            _meta['COLUMNS'] = self.query(sql=sql_cols, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
+            table_metas.append(_meta)
+        return table_metas
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         sql = f"""SELECT
@@ -192,8 +297,8 @@ class MysqlEngine(EngineBase):
                 result['bad_query'] = True
                 result['msg'] = explain_result.error
         # 不应该查看mysql.user表
-        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*',sql.lower().replace('\n','')) or\
-           (db_name=="mysql" and  re.match('.*(\\s)+(user|`user`)((\\s)*|;).*',sql.lower().replace('\n',''))):
+        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', '')) or \
+                (db_name == "mysql" and re.match('.*(\\s)+(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', ''))):
             result['bad_query'] = True
             result['msg'] = '您无权查看该表'
 
@@ -234,7 +339,7 @@ class MysqlEngine(EngineBase):
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
         if re.match(r"^select", sql, re.I):
-            mask_result = go_data_masking(self.instance, db_name, sql, resultset)
+            mask_result = data_masking(self.instance, db_name, sql, resultset)
         else:
             mask_result = resultset
         return mask_result
@@ -243,62 +348,36 @@ class MysqlEngine(EngineBase):
         """上线单执行前的检查, 返回Review set"""
         # 进行Inception检查，获取检测结果
         try:
-            inc_check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+            check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
         except Exception as e:
             logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
             raise RuntimeError(f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}")
 
         # 判断Inception检测结果
-        if inc_check_result.error:
-            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{inc_check_result.error}")
-            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{inc_check_result.error}")
+        if check_result.error:
+            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{check_result.error}")
+            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{check_result.error}")
 
         # 禁用/高危语句检查
-        check_critical_result = ReviewSet(full_sql=sql)
-        line = 1
         critical_ddl_regex = self.config.get('critical_ddl_regex', '')
         p = re.compile(critical_ddl_regex)
-        check_critical_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
-
-        for row in inc_check_result.rows:
+        for row in check_result.rows:
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type='mysql')
             # 禁用语句
             if re.match(r"^select", statement.lower()):
-                check_critical_result.is_critical = True
-                result = ReviewResult(id=line, errlevel=2,
-                                      stagestatus='驳回不支持语句',
-                                      errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
-                                      sql=statement)
+                check_result.error_count += 1
+                row.stagestatus = '驳回不支持语句'
+                row.errlevel = 2
+                row.errormessage = '仅支持DML和DDL语句，查询语句请使用SQL查询功能！'
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
-                check_critical_result.is_critical = True
-                result = ReviewResult(id=line, errlevel=2,
-                                      stagestatus='驳回高危SQL',
-                                      errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
-                                      sql=statement)
-            # 正常语句
-            else:
-                result = ReviewResult(id=line, errlevel=0,
-                                      stagestatus='Audit completed',
-                                      errormessage='None',
-                                      sql=statement,
-                                      affected_rows=0,
-                                      execute_time=0, )
-
-            # 没有找出DDL语句的才继续执行此判断
-            if check_critical_result.syntax_type == 2:
-                if get_syntax_type(statement, parser=False, db_type='mysql') == 'DDL':
-                    check_critical_result.syntax_type = 1
-            check_critical_result.rows += [result]
-
-            # 遇到禁用和高危语句直接返回
-            if check_critical_result.is_critical:
-                check_critical_result.error_count += 1
-                return check_critical_result
-            line += 1
-        return inc_check_result
+                check_result.error_count += 1
+                row.stagestatus = '驳回高危SQL'
+                row.errlevel = 2
+                row.errormessage = '禁止提交匹配' + critical_ddl_regex + '条件的语句！'
+        return check_result
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""

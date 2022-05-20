@@ -29,3 +29,11 @@ pycryptodome==3.10.1
 pandas==1.1.5
 pyodps==0.10.7.1
 clickhouse-driver==0.2.3
+djangorestframework==3.12.4
+djangorestframework-simplejwt==4.3.0
+django-filter==21.1
+drf-spectacular==0.22.0
+pyjwt==1.7.1
+pyotp==2.6.0
+pillow==8.4.0
+qrcode==7.3.1

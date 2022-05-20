@@ -4,6 +4,8 @@ import simplejson as json
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 from functools import singledispatch
+from ipaddress import IPv4Address, IPv6Address
+from uuid import UUID
 
 
 @singledispatch
@@ -39,6 +41,21 @@ def _(o):
 @convert.register(set)
 def _(o):
     return list(o)
+
+
+@convert.register(UUID)
+def _(o):
+    return str(o)
+
+
+@convert.register(IPv4Address)
+def _(o):
+    return str(o)
+
+
+@convert.register(IPv6Address)
+def _(o):
+    return str(o)
 
 
 class ExtendJSONEncoder(json.JSONEncoder):

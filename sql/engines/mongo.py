@@ -430,7 +430,6 @@ class MongoEngine(EngineBase):
                             alert = ""
                             if is_in:
                                 check_result.error = "文档已经存在"
-                                check_result.error_count += 1
                                 result = ReviewResult(id=line, errlevel=2,
                                                       stagestatus='文档已经存在',
                                                       errormessage='文档已经存在！',
@@ -444,7 +443,6 @@ class MongoEngine(EngineBase):
                             methodStr = sql_str.split('(')[0].split('.')[-1].strip()    # 最后一个.和括号(之间的字符串作为方法
                         if methodStr in is_exist_premise_method and not is_in:
                             check_result.error = "文档不存在"
-                            check_result.error_count += 1
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus='文档不存在',
                                                   errormessage=f'文档不存在，不能进行{methodStr}操作！',
@@ -492,7 +490,6 @@ class MongoEngine(EngineBase):
                                                       sql=check_sql,
                                                       execute_time=0)
                         else:
-                            check_result.error_count += 1
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus='驳回不支持语句',
                                                   errormessage='仅支持DML和DDL语句，如需查询请使用数据库查询功能！',
@@ -500,7 +497,6 @@ class MongoEngine(EngineBase):
 
                 else:
                     check_result.error = "语法错误"
-                    check_result.error_count += 1
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='语法错误',
                                           errormessage='请检查语句的正确性或（）{} },{是否正确匹配！',
@@ -511,6 +507,12 @@ class MongoEngine(EngineBase):
         check_result.column_list = ['Result']  # 审核结果的列名
         check_result.checked = True
         check_result.warning = self.warning
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
         return check_result
 
     def get_connection(self, db_name=None):

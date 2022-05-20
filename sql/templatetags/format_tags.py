@@ -27,3 +27,11 @@ def split(string, sep):
 @register.filter
 def is_in(var, args):
     return True if str(var) in args.split(',') else False
+
+
+@register.filter
+def key_value(data, key):
+    try:
+        return data[key]
+    except KeyError:
+        return ''

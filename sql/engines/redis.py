@@ -25,8 +25,12 @@ logger = logging.getLogger('default')
 class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
-        return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
-                           encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
+        if self.mode == 'cluster':
+            return redis.cluster.RedisCluster(host=self.host, port=self.port, password=self.password,
+                                encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
+        else:
+            return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
+                         encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
 
     @property
     def name(self):
@@ -48,6 +52,7 @@ class RedisEngine(EngineBase):
         except Exception as e:
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
             rows = 16
+            result.error = str(e)
 
         db_list = [str(x) for x in range(int(rows))]
         result.rows = db_list

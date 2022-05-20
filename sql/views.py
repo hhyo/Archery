@@ -45,6 +45,21 @@ def login(request):
     return render(request, 'login.html', context={'sign_up_enabled': SysConfig().get('sign_up_enabled')})
 
 
+def twofa(request):
+    """2fa认证页面"""
+    if request.user.is_authenticated:
+        return HttpResponseRedirect('/')
+
+    username = request.session.get('user')
+    if username:
+        auth_type = request.session.get('auth_type')
+        verify_mode = request.session.get('verify_mode')
+    else:
+        return HttpResponseRedirect('/login/')
+
+    return render(request, '2fa.html', context={'verify_mode': verify_mode, 'auth_type': auth_type, 'username': username})
+
+
 @permission_required('sql.menu_dashboard', raise_exception=True)
 def dashboard(request):
     """dashboard页面"""
@@ -220,7 +235,7 @@ def sqlquery(request):
     # 收藏语句
     user = request.user
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values('id', 'alias')
-    can_download = 1 if user.has_perm('sql.download') or user.is_superuser else 0
+    can_download = 1 if user.has_perm('sql.query_download') or user.is_superuser else 0
     return render(request, 'sqlquery.html', {'favorites': favorites, 'can_download':can_download})
 
 
@@ -385,6 +400,8 @@ def config(request):
     auth_group_list = Group.objects.all()
     # 获取所有实例标签
     instance_tags = InstanceTag.objects.all()
+    # 支持自动审核的数据库类型
+    db_type = ['mysql', 'oracle', 'mongo', 'clickhouse']
     # 获取所有配置项
     all_config = Config.objects.all().values('item', 'value')
     sys_config = {}
@@ -392,7 +409,7 @@ def config(request):
         sys_config[items['item']] = items['value']
 
     context = {'group_list': group_list, 'auth_group_list': auth_group_list, 'instance_tags': instance_tags,
-               'config': sys_config, 'WorkflowDict': WorkflowDict}
+               'db_type': db_type, 'config': sys_config, 'WorkflowDict': WorkflowDict}
     return render(request, 'config.html', context)
 
 

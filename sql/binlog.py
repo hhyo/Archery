@@ -117,8 +117,9 @@ def binlog2sql(request):
     # 提交给binlog2sql进行解析
     binlog2sql = Binlog2Sql()
     # 准备参数
+    instance_password = shlex.quote(f'"{str(instance.password)}"')
     args = {"conn_options": fr"-h{shlex.quote(str(instance.host))} -u{shlex.quote(str(instance.user))} \
-                -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))} ",
+                -p'{instance_password}' -P{shlex.quote(str(instance.port))} ",
             "stop_never": False,
             "no-primary-key": no_pk,
             "flashback": flashback,
@@ -127,8 +128,8 @@ def binlog2sql(request):
             "start-position": start_pos,
             "stop-file": end_file,
             "stop-position": end_pos,
-            "start-datetime": start_time,
-            "stop-datetime": stop_time,
+            "start-datetime": '"'+start_time+'"',
+            "stop-datetime": '"'+stop_time+'"',
             "databases": ' '.join(only_schemas),
             "tables": ' '.join(only_tables),
             "only-dml": only_dml,
@@ -196,8 +197,9 @@ def binlog2sql_file(args, user):
     """
     binlog2sql = Binlog2Sql()
     instance = args.get('instance')
+    instance_password = shlex.quote(f'"{str(instance.password)}"')
     conn_options = fr"-h{shlex.quote(str(instance.host))} -u{shlex.quote(str(instance.user))} \
-        -p'{shlex.quote(str(instance.password))}' -P{shlex.quote(str(instance.port))}"
+        -p'{instance_password}' -P{shlex.quote(str(instance.port))}"
     args['conn_options'] = conn_options
     timestamp = int(time.time())
     path = os.path.join(settings.BASE_DIR, 'downloads/binlog2sql/')
@@ -252,8 +254,9 @@ def my2sql(request):
     my2sql = My2SQL()
 
     # 准备参数
+    instance_password = shlex.quote(f'"{str(instance.password)}"')
     args = {"conn_options": fr"-host {shlex.quote(str(instance.host))} -user {shlex.quote(str(instance.user))} \
-                -password '{shlex.quote(str(instance.password))}' -port {shlex.quote(str(instance.port))} ",
+                -password '{instance_password}' -port {shlex.quote(str(instance.port))} ",
             "work-type": work_type,
             "start-file": start_file,
             "start-pos": start_pos,
@@ -336,8 +339,9 @@ def my2sql_file(args, user):
     """
     my2sql = My2SQL()
     instance = args.get('instance')
+    instance_password = shlex.quote(f'"{str(instance.password)}"')
     conn_options = fr"-host {shlex.quote(str(instance.host))} -user {shlex.quote(str(instance.user))} \
-        -password '{shlex.quote(str(instance.password))}' -port {shlex.quote(str(instance.port))} "
+        -password '{instance_password}' -port {shlex.quote(str(instance.port))} "
     args['conn_options'] = conn_options
     path = os.path.join(settings.BASE_DIR, 'downloads/my2sql/')
     os.makedirs(path, exist_ok=True)

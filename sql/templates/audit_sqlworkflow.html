@@ -138,8 +138,9 @@
                 pageSize: 14,                     //每页的记录行数（*）
                 pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
+                exportDataType: "all",
                 exportOptions: {
-                    fileName: 'sqlworkflow'  //文件名称设置
+                    fileName: "sqlworkflow_" + dateFormat("yyyyMMddhhmmss",new Date())
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索

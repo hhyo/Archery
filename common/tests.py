@@ -316,12 +316,13 @@ class CheckTest(TestCase):
     def testInstanceCheck(self, _get_engine, _conn):
         _get_engine.return_value.get_connection = _conn
         _get_engine.return_value.get_all_databases.return_value.rows.return_value = ResultSet(
-            rows=(('test1',), ('test2',)))
+            rows=((),),
+            error='Wrong password')
         c = Client()
         c.force_login(self.superuser1)
         r = c.post('/check/instance/', data={'instance_id': self.slave1.id})
         r_json = r.json()
-        self.assertEqual(r_json['status'], 0)
+        self.assertEqual(r_json['status'], 1)
 
     @patch('MySQLdb.connect')
     def test_inception_check(self, _conn):
