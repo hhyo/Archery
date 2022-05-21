@@ -13,7 +13,7 @@ on:
 jobs:
   django_ci:
     name: Build and Test a Django Project
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
@@ -70,7 +70,9 @@ jobs:
         
     - name: Install Dependencies
       run: |
-        sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
+        sudo apt-get -y update  
+        sudo apt-get -y upgrade  
+        sudo apt-get -y install --fix-missing  install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install codecov coverage flake8 -r requirements.txt
         
