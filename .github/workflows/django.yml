@@ -70,8 +70,7 @@ jobs:
         
     - name: Install Dependencies
       run: |
-        sudo echo "deb http://archive.ubuntu.com/ubuntu/ trusty main universe restricted multiverse" > /etc/apt/sources.list
-        sudo apt-get -y install --fix-missing  install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
+        sudo apt-get update && sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
         pip install codecov coverage flake8 -r requirements.txt
         
