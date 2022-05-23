@@ -296,6 +296,7 @@ def backup_sql(request):
         query_engine = get_engine(instance=workflow.instance)
         list_backup_sql = query_engine.get_rollback(workflow=workflow)
     except Exception as msg:
+        logger.error(traceback.format_exc())
         return JsonResponse({'status': 1, 'msg': f'{msg}', 'rows': []})
 
     result = {'status': 0, 'msg': '', 'rows': list_backup_sql}
