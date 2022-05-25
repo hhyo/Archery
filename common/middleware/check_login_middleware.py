@@ -11,7 +11,7 @@ IGNORE_URL = [
     '/api/info'
 ]
 
-IGNORE_URL_RE = r'(/admin/\w*|/api/(v1|auth)/\w+)'
+IGNORE_URL_RE = r'/api/(v1|auth)/\w+'
 
 
 class CheckLoginMiddleware(MiddlewareMixin):
