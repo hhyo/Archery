@@ -233,16 +233,16 @@ if ENABLE_LDAP:
         'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
     )
 
-    AUTH_LDAP_SERVER_URI = env("AUTH_LDAP_SERVER_URI", "ldap://xxx")
-    AUTH_LDAP_USER_DN_TEMPLATE = env("AUTH_LDAP_USER_DN_TEMPLATE", None)
+    AUTH_LDAP_SERVER_URI = env("AUTH_LDAP_SERVER_URI", default="ldap://xxx")
+    AUTH_LDAP_USER_DN_TEMPLATE = env("AUTH_LDAP_USER_DN_TEMPLATE", default=None)
     if not AUTH_LDAP_USER_DN_TEMPLATE:
         del AUTH_LDAP_USER_DN_TEMPLATE
-        AUTH_LDAP_BIND_DN = env("AUTH_LDAP_BIND_DN", "cn=xxx,ou=xxx,dc=xxx,dc=xxx")
-        AUTH_LDAP_BIND_PASSWORD = env("AUTH_LDAP_BIND_PASSWORD", "***********")
-        AUTH_LDAP_USER_SEARCH_BASE = env("AUTH_LDAP_USER_SEARCH_BASE", "ou=xxx,dc=xxx,dc=xxx")
-        AUTH_LDAP_USER_SEARCH_FILTER = env("AUTH_LDAP_USER_SEARCH_FILTER", '(cn=%(user)s)')
+        AUTH_LDAP_BIND_DN = env("AUTH_LDAP_BIND_DN", default="cn=xxx,ou=xxx,dc=xxx,dc=xxx")
+        AUTH_LDAP_BIND_PASSWORD = env("AUTH_LDAP_BIND_PASSWORD", default="***********")
+        AUTH_LDAP_USER_SEARCH_BASE = env("AUTH_LDAP_USER_SEARCH_BASE", default="ou=xxx,dc=xxx,dc=xxx")
+        AUTH_LDAP_USER_SEARCH_FILTER = env("AUTH_LDAP_USER_SEARCH_FILTER", default='(cn=%(user)s)')
         AUTH_LDAP_USER_SEARCH = LDAPSearch(AUTH_LDAP_USER_SEARCH_BASE, ldap.SCOPE_SUBTREE, AUTH_LDAP_USER_SEARCH_FILTER)
-    AUTH_LDAP_ALWAYS_UPDATE_USER = env("AUTH_LDAP_ALWAYS_UPDATE_USER", True)  # 每次登录从ldap同步用户信息
+    AUTH_LDAP_ALWAYS_UPDATE_USER = env("AUTH_LDAP_ALWAYS_UPDATE_USER", default=True)  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
 
 # LOG配置
