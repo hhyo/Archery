@@ -76,8 +76,9 @@ class TOTP(TwoFactorAuthBase):
 
 def generate_qrcode(request, data):
     """生成并返回二维码图片流"""
+    user = request.user
 
-    username = request.user.username
+    username = user.username if user.is_authenticated else request.session.get('user')
     secret_key = data
 
     # 生成二维码

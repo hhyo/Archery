@@ -194,7 +194,7 @@ class GoInceptionEngine(EngineBase):
         """
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
-        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result or '[]')
         # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []

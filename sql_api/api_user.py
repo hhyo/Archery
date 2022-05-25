@@ -240,7 +240,7 @@ class TwoFA(views.APIView):
     """
     配置2fa
     """
-    permission_classes = [IsOwner]
+    permission_classes = [permissions.AllowAny]
 
     @extend_schema(summary="配置2fa",
                    request=TwoFASerializer,
@@ -254,6 +254,14 @@ class TwoFA(views.APIView):
         engineer = request.data['engineer']
         auth_type = request.data['auth_type']
         user = Users.objects.get(username=engineer)
+        request_user = request.session.get('user')
+
+        if not request.user.is_authenticated:
+            if request_user:
+                if request_user != engineer:
+                    return Response({'status': 1, 'msg': '登录用户与校验用户不一致！'})
+            else:
+                return Response({'status': 1, 'msg': '需先校验用户密码！'})
 
         if auth_type == 'disabled':
             # 关闭2fa
@@ -317,7 +325,6 @@ class TwoFAVerify(views.APIView):
         user = Users.objects.get(username=engineer)
         request_user = request.session.get('user')
 
-        print(request.user)
         if not request.user.is_authenticated:
             if request_user:
                 if request_user != engineer:
@@ -327,8 +334,12 @@ class TwoFAVerify(views.APIView):
 
             twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
             if not twofa_config:
-                return Response({'status': 1, 'msg': '用户未配置2FA！'})
-            auth_type = twofa_config[0].auth_type
+                if key:
+                    auth_type = request.data['auth_type']
+                else:
+                    return Response({'status': 1, 'msg': '用户未配置2FA！'})
+            else:
+                auth_type = twofa_config[0].auth_type
         else:
             auth_type = request.data['auth_type']
 
@@ -337,7 +348,7 @@ class TwoFAVerify(views.APIView):
 
         # 校验通过后自动登录，刷新expire_date
         if result['status'] == 0 and not request.user.is_authenticated:
-            login(request, user)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
 
         return Response(result)

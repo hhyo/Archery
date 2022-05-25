@@ -108,7 +108,7 @@ def optimize_soar(request):
         return HttpResponse(json.dumps(result), content_type='application/json')
 
     # 目标实例的连接信息
-    online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(user=instance_info.user,
+    online_dsn = '{user}:"{pwd}"@{host}:{port}/{db}'.format(user=instance_info.user,
                                                           pwd=instance_info.password,
                                                           host=instance_info.host,
                                                           port=instance_info.port,

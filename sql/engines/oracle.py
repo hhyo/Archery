@@ -981,10 +981,14 @@ class OracleEngine(EngineBase):
                                         endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
                                         options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
                                     end;'''
-            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents
-                                  where  SEG_OWNER not in ('SYS','SYSTEM')
-                                         and session# = (select sid from v$mystat where rownum = 1)
-                                         and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
+            undo_sql = f'''select 
+                           xmlagg(xmlparse(content sql_redo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() ,
+                           xmlagg(xmlparse(content sql_undo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() 
+                           from v$logmnr_contents
+                           where  SEG_OWNER not in ('SYS')
+                           and session# = (select sid from v$mystat where rownum = 1)
+                           and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 ))  
+                           group by  scn,rs_id,ssn  order by scn desc'''
             logmnr_end_sql = f'''begin
                                     dbms_logmnr.end_logmnr;
                                  end;'''

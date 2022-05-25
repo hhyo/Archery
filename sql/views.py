@@ -53,10 +53,11 @@ def twofa(request):
     username = request.session.get('user')
     if username:
         auth_type = request.session.get('auth_type')
+        verify_mode = request.session.get('verify_mode')
     else:
         return HttpResponseRedirect('/login/')
 
-    return render(request, '2fa.html', context={'auth_type': auth_type, 'username': username})
+    return render(request, '2fa.html', context={'verify_mode': verify_mode, 'auth_type': auth_type, 'username': username})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)
