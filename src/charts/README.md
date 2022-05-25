@@ -8,15 +8,15 @@ helm dependency update
 
 ### 2.1 mysql
 执行以下命令，执行前将${your mysql password}替换为想要设置的mysql密码。
-`grep -rn "MYSQL_ROOT_PASSWORD" *|awk -F: '{print $1}'|uniq|xargs sed -i s/MYSQL_ROOT_PASSWORD/${your mysql password}/g`
+`grep -rn "MYSQL_ROOT_PASSWORD" *|awk -F: '{print $1}'|uniq|grep -vv README.md|xargs sed -i s/MYSQL_ROOT_PASSWORD/${your mysql password}/g`
 
 ### 2.2 redis
 执行以下命令，执行前将${your redis password}替换为想要设置的redis密码。
-`grep -rn "REDIS_PASSWORD" *|awk -F: '{print $1}'|uniq|xargs sed -i s/REDIS_PASSWORD/${your redis password}/g`
+`grep -rn "REDIS_PASSWORD" *|awk -F: '{print $1}'|uniq|grep -vv README.md|xargs sed -i s/REDIS_PASSWORD/${your redis password}/g`
 
 ### 2.3 archery默认admin登录密码
 执行以下命令，执行前将${your archery password}替换为想要设置的archery密码。
-`grep -rn "ARCHERY_ADMIN_PASSWORD" *|awk -F: '{print $1}'|uniq|xargs sed -i s/ARCHERY_ADMIN_PASSWORD/${your archery password}/g`
+`grep -rn "ARCHERY_ADMIN_PASSWORD" *|awk -F: '{print $1}'|uniq|grep -vv README.md|xargs sed -i s/ARCHERY_ADMIN_PASSWORD/${your archery password}/g`
 
 ## 3. 更改mysql持久化配置
 
