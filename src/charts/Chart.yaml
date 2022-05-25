@@ -15,8 +15,8 @@ dependencies:
   - name: redis
     version: ~15.7.1
     repository: https://charts.bitnami.com/bitnami
-    condition: not redis.external
+    condition: redis.embedded
   - name: mysql
     version: ~8.8.20
     repository: https://charts.bitnami.com/bitnami
-    condition: not mysql.external
+    condition: mysql.embedded

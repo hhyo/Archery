@@ -19,6 +19,7 @@ service:
 
 ingress:
   enabled: true
+  className: "nginx"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
@@ -36,14 +37,14 @@ ingress:
 
 # subcharts redis
 redis:
-  external: true
-  url: "redis://127.0.0.1:6379/0"
-  urlSecret: ""
-  urlSecretKey: "CACHE_URL"
-  dingdingUrl: "redis://127.0.0.1:6379/1"
-  dingdingUrlSecret: ""
-  dingdingUrlSecretKey: "DINGDING_CACHE_URL"
-  # external 为 true时, 会使用外部的 redis, 下方的 redis 就不会生效
+  embedded: true
+  # url: "redis://127.0.0.1:6379/0"
+  # urlSecret: ""
+  # urlSecretKey: "CACHE_URL"
+  # dingdingUrl: "redis://127.0.0.1:6379/1"
+  # dingdingUrlSecret: ""
+  # dingdingUrlSecretKey: "DINGDING_CACHE_URL"
+  # embedded 为 false, 会使用外部的 redis, 下方的 redis 就不会生效
   architecture: standalone
   auth:
     password: "REDIS_PASSWORD"
@@ -55,11 +56,11 @@ redis:
 
 # subcharts mysql
 mysql:
-  external: true
+  embedded: true
   url: "mysql://root:@127.0.0.1:3306/archery"
   urlSecret: ""
   urlSecretKey: "DATABASE_URL"
-  # external 为 true时, 会使用外部的 mysql, 下方的 mysql 配置不会生效
+  # embedded 为 false时, 会使用外部的 mysql, 下方的 mysql 配置不会生效
   architecture: standalone
   auth:
     database: archery
