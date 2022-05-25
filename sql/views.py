@@ -448,7 +448,7 @@ def dbaprinciples(request):
     """SQL文档页面"""
     #  读取MD文件
     file = os.path.join(settings.BASE_DIR, 'docs/docs.md')
-    with open(file, 'r') as f:
+    with open(file, 'r', encoding="utf-8") as f:
         md = f.read().replace('\n', '\\n')
     return render(request, 'dbaprinciples.html', {'md': md})
 

@@ -3,17 +3,37 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from typing import List
 from datetime import timedelta
+import environ
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+env = environ.Env(
+    DEBUG=(bool, True),
+    ALLOWED_HOSTS=(List, ["*"]),
+    SECRET_KEY=(str, 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'),
+    DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
+    CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    DINGDING_CACHE_URL=(str, "redis://127.0.0.1:6379/1"),
+    ENABLE_LDAP=(bool, False),
+    AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
+    AUTH_LDAP_USER_ATTR_MAP=(dict, {
+        "username": "cn",
+        "display": "displayname",
+        "email": "mail"
+    })
+)
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6'
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 # 解决nginx部署跳转404
 USE_X_FORWARDED_HOST = True
@@ -123,22 +143,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 关闭浏览器，则COOKIE失效
 
 # 该项目本身的mysql数据库地址
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'archery',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4'
-        },
-        'TEST': {
-            'NAME': 'test_archery',
-            'CHARSET': 'utf8mb4',
-        },
-    }
+    'default': env.db()
 }
 
 # Django-Q
@@ -153,27 +158,13 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'label': 'Django Q',
     'django_redis': 'default',
-    'sync': False  # 本地调试可以修改为True，使用同步模式
+    'sync': DEBUG  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": ""
-        }
-    },
-    "dingding": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": ""
-        }
-    }
+    "default": env.cache(),
+    "dingding": env.cache_url("DINGDING_CACHE_URL")
 }
 
 # API Framework
@@ -220,7 +211,7 @@ SIMPLE_JWT = {
 }
 
 # LDAP
-ENABLE_LDAP = False
+ENABLE_LDAP = env("ENABLE_LDAP", False)
 if ENABLE_LDAP:
     import ldap
     from django_auth_ldap.config import LDAPSearch
@@ -230,20 +221,17 @@ if ENABLE_LDAP:
         'django.contrib.auth.backends.ModelBackend',  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
     )
 
-    AUTH_LDAP_SERVER_URI = "ldap://xxx"
-    AUTH_LDAP_USER_DN_TEMPLATE = "cn=%(user)s,ou=xxx,dc=xxx,dc=xxx"
-    # ldap认证的另一种方式,使用时注释AUTH_LDAP_USER_DN_TEMPLATE
-    """
-    AUTH_LDAP_BIND_DN = "cn=xxx,ou=xxx,dc=xxx,dc=xxx"
-    AUTH_LDAP_BIND_PASSWORD = "***********"
-    AUTH_LDAP_USER_SEARCH = LDAPSearch('ou=xxx,dc=xxx,dc=xxx',ldap.SCOPE_SUBTREE, '(cn=%(user)s)',)
-    """
-    AUTH_LDAP_ALWAYS_UPDATE_USER = True  # 每次登录从ldap同步用户信息
-    AUTH_LDAP_USER_ATTR_MAP = {  # key为archery.sql_users字段名，value为ldap中字段名，用户同步信息
-        "username": "cn",
-        "display": "displayname",
-        "email": "mail"
-    }
+    AUTH_LDAP_SERVER_URI = env("AUTH_LDAP_SERVER_URI", "ldap://xxx")
+    AUTH_LDAP_USER_DN_TEMPLATE = env("AUTH_LDAP_USER_DN_TEMPLATE", None)
+    if not AUTH_LDAP_USER_DN_TEMPLATE:
+        del AUTH_LDAP_USER_DN_TEMPLATE
+        AUTH_LDAP_BIND_DN = env("AUTH_LDAP_BIND_DN", "cn=xxx,ou=xxx,dc=xxx,dc=xxx")
+        AUTH_LDAP_BIND_PASSWORD = env("AUTH_LDAP_BIND_PASSWORD", "***********")
+        AUTH_LDAP_USER_SEARCH_BASE = env("AUTH_LDAP_USER_SEARCH_BASE", "ou=xxx,dc=xxx,dc=xxx")
+        AUTH_LDAP_USER_SEARCH_FILTER = env("AUTH_LDAP_USER_SEARCH_FILTER", '(cn=%(user)s)')
+        AUTH_LDAP_USER_SEARCH = LDAPSearch(AUTH_LDAP_USER_SEARCH_BASE, ldap.SCOPE_SUBTREE, AUTH_LDAP_USER_SEARCH_FILTER)
+    AUTH_LDAP_ALWAYS_UPDATE_USER = env("AUTH_LDAP_ALWAYS_UPDATE_USER", True)  # 每次登录从ldap同步用户信息
+    AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
 
 # LOG配置
 LOGGING = {
@@ -312,3 +300,8 @@ if not os.path.exists(MEDIA_ROOT):
 PKEY_ROOT = os.path.join(MEDIA_ROOT, 'keys')
 if not os.path.exists(PKEY_ROOT):
     os.mkdir(PKEY_ROOT)
+
+try:
+    from local_settings import *
+except ImportError:
+    print("import local settings failed, ignored")
