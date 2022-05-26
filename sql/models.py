@@ -1,11 +1,10 @@
 # -*- coding: UTF-8 -*-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.conf import settings
 from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
-import os
+import uuid
 
 
 class ResourceGroup(models.Model):
@@ -630,7 +629,8 @@ class Config(models.Model):
     """
     配置信息表
     """
-    item = models.CharField('配置项', max_length=200, primary_key=True)
+    id = models.UUIDField('id', primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.CharField('配置项', max_length=200, unique=True)
     value = fields.EncryptedCharField(verbose_name='配置项值', max_length=500)
     description = models.CharField('描述', max_length=200, default='', blank=True)
 

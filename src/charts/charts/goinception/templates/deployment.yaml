@@ -19,6 +19,20 @@ spec:
         app.kubernetes.io/name: {{ include "goinception.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: override-configs
+          image: busybox:1.28
+          {{- with .Values.initEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: ['sh', '-c',
+                    'sed "s/BACKUP_PASSWORD_PLACEHOLDER/${BACKUP_PASSWORD}/g" /etc/goinception-template/config.toml.template > /etc/goinception/config.toml']
+          volumeMounts:
+            - name: goinception-config-volume
+              mountPath: /etc/goinception
+            - name: goinception-config-template
+              mountPath: /etc/goinception-template
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -32,12 +46,17 @@ spec:
               port: goinception
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          command:
+            - "/usr/local/bin/dumb-init"
+            - "/goInception"
+            - "--config=/etc/goinception/config.toml"
           volumeMounts:
             - name: goinception-config-volume
-              subPath: config.toml
-              mountPath: /etc/config.toml
+              mountPath: /etc/goinception
       volumes:
         - name: goinception-config-volume
+          emptyDir: {}
+        - name: goinception-config-template
           configMap:
             name: goinception-config
       {{- with .Values.nodeSelector }}

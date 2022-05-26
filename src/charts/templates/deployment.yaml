@@ -68,7 +68,7 @@ spec:
                   key: {{ .Values.redis.dingdingUrlSecretKey }}
           {{- end }}
           {{- with .Values.envs }}
-          {{ toYaml . | indent 12 }}
+            {{ toYaml . | nindent 12 }}
           {{- end}}
           volumeMounts:
           - name: archery-settings
@@ -128,7 +128,7 @@ spec:
                   key: {{ .Values.redis.dingdingUrlSecretKey }}
           {{- end }}
           {{- with .Values.envs }}
-          {{ toYaml . | indent 12 }}
+            {{ toYaml . | nindent 12 }}
           {{- end}}
           ports:
             - name: archery
