@@ -64,11 +64,17 @@ def del_repeat(select_list, keywords_count):
     """
     # 先将query_tree转换成表，方便统计
     df = pd.DataFrame(select_list)
-    result_index = df.groupby(['field', 'table', 'schema']).filter(lambda g: len(g) > 1).to_dict('records')
+
+    #从原来的库、表、字段去重改为字段
+    #result_index = df.groupby(['field', 'table', 'schema']).filter(lambda g: len(g) > 1).to_dict('records')
+    result_index = df.groupby(['field']).filter(lambda g: len(g) > 1).to_dict('records')
+
     # 再统计重复数量
     result_len = len(result_index)
+ 
     # 再计算取列表前多少的值=重复数量/(union次数+1)
     group_count = int(result_len / (keywords_count['UNION'] + 1))
+
     result = result_index[:group_count]
     return result
 
