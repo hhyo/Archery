@@ -3,6 +3,15 @@
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="form-inline pull-left">
+        <div class="form-group">
+            <select id="db_type1" class="form-control selectpicker" name="db_type"
+                    title="请选择数据库类型"
+                    data-live-search="true">
+                <option value="mysql">mysql</option>
+                <option value="pgsql">pgsql</option>
+                <option value="mongo">mongo</option>
+            </select>
+        </div>        
         <div class="form-group ">
             <select id=instance class="form-control selectpicker" name="instance_list"
                     title="请选择实例"
@@ -68,11 +77,11 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="remark" class="col-sm-3 col-form-label">备注</label>
+                        <label for="remark" class="col-sm-3 col-form-label">备注/mongo密码</label>
                         <div class="col-sm-9">
                             <input type="text" id="remark" class="form-control"
                                    autocomplete="off"
-                                   placeholder="请输入备注">
+                                   placeholder="请输入备注/mongo密码">
                         </div>
                     </div>
                 </div>
@@ -178,11 +187,12 @@
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
-                        if ($("#instance").val()) {
+                        if ($("#instance").val() && $("#db_type1").val()) {
                             return {
                                 search: params.search,
                                 instance_id: $("#instance").val(),
-                                saved: $("#saved").val()
+                                saved: $("#saved").val(),
+                                db_type1: $("#db_type1").val()                                
                             }
                         }
                     },
@@ -200,11 +210,18 @@
                         title: '授权账号',
                         field: 'grantees',
                         formatter: function (value, row, index) {
+                          if ( $("#db_type1").val() == 'mysql' ) {
                             let grantee = '';
                             for (let i = 0; i < value.length; i++) {
                                 grantee = grantee + value[i] + '</br>'
                             }
                             return grantee
+                          } 
+                          else {
+                            let grantee = '';
+                            grantee = value
+                            return grantee
+                          } 
                         }
                     }, {
                         title: '负责人',
@@ -214,7 +231,7 @@
                         title: '负责人',
                         field: 'owner_display'
                     }, {
-                        title: '备注',
+                        title: '备注/mongo密码',
                         field: 'remark'
                     }, {
                         title: '操作',
@@ -259,7 +276,7 @@
 
         //创建数据库
         function create_database() {
-            if (!$("#instance").val()) {
+            if (!$("#instance").val() || !$("#db_type1").val()) {
                 alert("请选择实例！");
             } else {
                 $.ajax({
@@ -270,7 +287,8 @@
                         instance_id: $("#instance").val(),
                         db_name: $("#db_name").val(),
                         owner: $("#owner").val(),
-                        remark: $("#remark").val()
+                        remark: $("#remark").val(),
+                        db_type1: $("#db_type1").val()                        
                     },
                     complete: function () {
                     },
@@ -337,13 +355,13 @@
         $(document).ready(function () {
             database_list();
             //获取用户实例列表
-            $(function () {
+            $("#db_type1").change(function () {
                 $.ajax({
                     type: "get",
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: [$("#db_type1").val()]
                     },
                     complete: function () {
                     },

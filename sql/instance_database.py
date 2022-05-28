@@ -23,14 +23,15 @@ __author__ = 'hhyo'
 @permission_required('sql.menu_database', raise_exception=True)
 def databases(request):
     """获取实例数据库列表"""
+    db_type1 =  request.POST.get('db_type1')
     instance_id = request.POST.get('instance_id')
     saved = True if request.POST.get('saved') == 'true' else False  # 平台是否保存
 
-    if not instance_id:
+    if not instance_id or not db_type1:
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
 
     try:
-        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql','pgsql','mongo']).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
@@ -41,46 +42,117 @@ def databases(request):
         db['saved'] = True
         cnf_dbs[f"{db['db_name']}"] = db
 
-    # 获取所有数据库
-    sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
-FROM information_schema.SCHEMATA
-WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
-    query_engine = get_engine(instance=instance)
-    query_result = query_engine.query('information_schema', sql_get_db, close_conn=False)
-    if not query_result.error:
-        dbs = query_result.rows
-        # 获取数据库关联用户信息
-        rows = []
-        for db in dbs:
-            db_name = db[0]
-            sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
-from information_schema.SCHEMA_PRIVILEGES
-where TABLE_SCHEMA='{db_name}'
-group by TABLE_SCHEMA;"""
-            bind_users = query_engine.query('information_schema', sql_get_bind_users, close_conn=False).rows
-            row = {
-                'db_name': db_name,
-                'charset': db[1],
-                'collation': db[2],
-                'grantees': bind_users[0][0].split(',') if bind_users else [],
-                'saved': False
-            }
-            # 合并数据
-            if db_name in cnf_dbs.keys():
-                row = dict(row, **cnf_dbs[db_name])
-            rows.append(row)
-        # 过滤参数
-        if saved:
-            rows = [row for row in rows if row['saved']]
+    if db_type1 == "pgsql":
+      # 获取所有数据库
+      sql_get_db = """SELECT datname,datctype,datcollate,datacl 
+FROM pg_database 
+where datname not in ('postgres','template1','template0');"""
+      query_engine = get_engine(instance=instance)
+      query_result = query_engine.query('postgres', sql_get_db, close_conn=False)
+      if not query_result.error:
+          dbs = query_result.rows
+          # 获取数据库关联用户信息
+          rows = []
+          for db in dbs:
+              db_name = db[0]
+              row = {
+                  'db_name': db_name,
+                  'charset': db[1],
+                  'collation': db[2],
+                  'grantees': db[3],
+                  'saved': False
+              }
+              # 合并数据
+              if db_name in cnf_dbs.keys():
+                  row = dict(row, **cnf_dbs[db_name])
+              rows.append(row)
+          # 过滤参数
+          if saved:
+              rows = [row for row in rows if row['saved']]
 
-        result = {'status': 0, 'msg': 'ok', 'rows': rows}
+          result = {'status': 0, 'msg': 'ok', 'rows': rows}
+      else:
+          result = {'status': 1, 'msg': query_result.error}
+
+      # 关闭连接
+      query_engine.close()
+      return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                          content_type='application/json')       
+    elif db_type1 == "mongo":
+      # 获取所有数据库
+      query_engine = get_engine(instance=instance)
+      query_result = query_engine.get_all_databases()
+      if not query_result.error:
+          dbs = query_result.rows
+          # 获取数据库关联用户信息
+          rows = []
+          for db in dbs:
+              db_name = db
+              row = {
+                  'db_name': db_name,
+                  'charset': '',
+                  'collation': '',
+                  'grantees': '',
+                  'saved': False
+              }
+              # 合并数据
+              if db_name in cnf_dbs.keys():
+                  row = dict(row, **cnf_dbs[db_name])
+              rows.append(row)
+          # 过滤参数
+          if saved:
+              rows = [row for row in rows if row['saved']]
+
+          result = {'status': 0, 'msg': 'ok', 'rows': rows}
+      else:
+          result = {'status': 1, 'msg': query_result.error}
+
+      # 关闭连接
+      query_engine.close()
+      return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                          content_type='application/json')
     else:
-        result = {'status': 1, 'msg': query_result.error}
+      # 获取所有数据库
+      sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+    FROM information_schema.SCHEMATA
+    WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
+      query_engine = get_engine(instance=instance)
+      query_result = query_engine.query('information_schema', sql_get_db, close_conn=False)
+      if not query_result.error:
+          dbs = query_result.rows
+          # 获取数据库关联用户信息
+          rows = []
+          for db in dbs:
+              db_name = db[0]
+              sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
+    from information_schema.SCHEMA_PRIVILEGES
+    where TABLE_SCHEMA='{db_name}'
+    group by TABLE_SCHEMA;"""
+              bind_users = query_engine.query('information_schema', sql_get_bind_users, close_conn=False).rows
+              row = {
+                  'db_name': db_name,
+                  'charset': db[1],
+                  'collation': db[2],
+                  'grantees': bind_users[0][0].split(',') if bind_users else [],
+                  'saved': False
+              }
+              # 合并数据
+              if db_name in cnf_dbs.keys():
+                  row = dict(row, **cnf_dbs[db_name])
+              rows.append(row)
+          # 过滤参数
+          if saved:
+              rows = [row for row in rows if row['saved']]
 
-    # 关闭连接
-    query_engine.close()
-    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-                        content_type='application/json')
+          result = {'status': 0, 'msg': 'ok', 'rows': rows}
+      else:
+          result = {'status': 1, 'msg': query_result.error}
+      
+      # 关闭连接
+      query_engine.close()
+      return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                          content_type='application/json')
+
 
 
 @permission_required('sql.menu_database', raise_exception=True)
@@ -90,12 +162,13 @@ def create(request):
     db_name = request.POST.get('db_name')
     owner = request.POST.get('owner', '')
     remark = request.POST.get('remark', '')
+    db_type1 = request.POST.get('db_type1')    
 
     if not all([db_name]):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
 
     try:
-        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql','pgsql','mongo']).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
@@ -108,7 +181,16 @@ def create(request):
     db_name = MySQLdb.escape_string(db_name).decode('utf-8')
 
     engine = get_engine(instance=instance)
-    exec_result = engine.execute(db_name='information_schema', sql=f"create database {db_name};")
+
+    if db_type1 == "pgsql":                          
+      exec_result = engine.execute(db_name='postgres', sql=f"create database {db_name};", ddl='true')
+    elif db_type1 == "mongo":
+      password = remark.strip()
+      exec_sql=f"db.createUser("+"{user:"+f"'{db_name}',pwd:"+f"'{password}',roles:["+"{role:'dbAdmin',db:"+f"'{db_name}'"+"}],mechanisms:['SCRAM-SHA-1']});db.testcoll.insert({testid:'test01'});"
+      exec_result = engine.execute(db_name=db_name, sql=exec_sql, ddl='true')
+    else:
+      exec_result = engine.execute(db_name='information_schema', sql=f"create database {db_name};") 
+
     if exec_result.error:
         return JsonResponse({'status': 1, 'msg': exec_result.error})
     # 保存到数据库
@@ -134,7 +216,7 @@ def edit(request):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
 
     try:
-        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+        instance = user_instances(request.user, db_type=['mysql','pgsql','mongo']).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
 
