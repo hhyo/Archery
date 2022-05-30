@@ -7,8 +7,7 @@ import json
 import subprocess
 import simplejson as json
 import datetime
-import uuid
-import os
+import tempfile
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -261,42 +260,37 @@ class MongoEngine(EngineBase):
         if self.user and self.password and self.port and self.host:
             msg = ""
             auth_db = self.instance.db_name or 'admin'
-            # 以uuid命名临时mongo脚本文件，防止冲突
-            uuid_ = str(uuid.uuid4())
-            tempfile = '/opt/archery/scripts/mongodb/' + uuid_ + '.js'
-            with open(f'{tempfile}', 'w') as f:
-                f.write(sql)
-            try:
-                if not sql.startswith('var host='): #在master节点执行的情况
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile}')\nEOF".format(
-                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
-                        db_name=db_name, sql=sql, auth_db=auth_db, slave_ok=slave_ok, tempfile=tempfile)
-                else:
-                    cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
-                        mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db)
-                logger.debug(cmd)
-                p = subprocess.Popen(cmd, shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     universal_newlines=True)
-                re_msg = []
-                for line in iter(p.stdout.read, ''):
-                    re_msg.append(line)
-                # 因为返回的line中也有可能带有换行符，因此需要先全部转换成字符串
-                __msg = '\n'.join(re_msg)
-                _re_msg = []
-                for _line in __msg.split('\n'):
-                    if not _re_msg and re.match('WARNING.*', _line):
-                        # 第一行可能是WARNING语句，因此跳过
-                        continue
-                    _re_msg.append(_line)
-                
-                msg = '\n'.join(_re_msg)
-            except Exception as e:
-                logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
-             # 删除mongo脚本临时文件
-            if os.path.exists(f'{tempfile}'):
-                os.remove(tempfile)
+            # 因为要知道具体的临时文件位置，所以用了NamedTemporaryFile模块
+            with tempfile.NamedTemporaryFile(suffix=".js", prefix="mongo_", dir='/tmp/', delete=True) as fp:
+                fp.write(sql.encode('utf-8'))
+                try:
+                    if not sql.startswith('var host='): #在master节点执行的情况
+                        cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile}')\nEOF".format(
+                            mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
+                            db_name=db_name, sql=sql, auth_db=auth_db, slave_ok=slave_ok, tempfile=fp.name)
+                    else:
+                        cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                            mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db)
+                    logger.debug(cmd)
+                    p = subprocess.Popen(cmd, shell=True,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         universal_newlines=True)
+                    re_msg = []
+                    for line in iter(p.stdout.read, ''):
+                        re_msg.append(line)
+                    # 因为返回的line中也有可能带有换行符，因此需要先全部转换成字符串
+                    __msg = '\n'.join(re_msg)
+                    _re_msg = []
+                    for _line in __msg.split('\n'):
+                        if not _re_msg and re.match('WARNING.*', _line):
+                            # 第一行可能是WARNING语句，因此跳过
+                            continue
+                        _re_msg.append(_line)
+                    
+                    msg = '\n'.join(_re_msg)
+                except Exception as e:
+                    logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
         return msg
 
     def get_master(self):
