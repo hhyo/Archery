@@ -271,7 +271,6 @@ class MongoEngine(EngineBase):
                     else:
                         cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
                             mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db)
-                    logger.debug(cmd)
                     p = subprocess.Popen(cmd, shell=True,
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE,
