@@ -260,9 +260,12 @@ class MongoEngine(EngineBase):
         if self.user and self.password and self.port and self.host:
             msg = ""
             auth_db = self.instance.db_name or 'admin'
+            # 因为用mongo load方法执行js脚本，所以需要重新改写一下sql，以便回显js执行结果
+            sql = 'var result = ' + sql + '\nprintjson(result);'
             # 因为要知道具体的临时文件位置，所以用了NamedTemporaryFile模块
             with tempfile.NamedTemporaryFile(suffix=".js", prefix="mongo_", dir='/tmp/', delete=True) as fp:
                 fp.write(sql.encode('utf-8'))
+                fp.seek(0)  # 把文件指针指向第一个，这样内容才能落到磁盘文件上
                 try:
                     if not sql.startswith('var host='): #在master节点执行的情况
                         cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile}')\nEOF".format(
