@@ -26,7 +26,7 @@ def is_auto_review(workflow_id):
         # 获取正则表达式
         auto_review_regex = SysConfig().get(
             'auto_review_regex', '^alter|^create|^drop|^truncate|^rename|^delete')
-        p = re.compile(auto_review_regex, re.I| re.M)
+        p = re.compile(auto_review_regex, re.I)
 
         # 判断是否匹配到需要手动审核的语句
         auto_review = True
@@ -35,7 +35,7 @@ def is_auto_review(workflow_id):
         for review_row in json.loads(review_content):
             review_result = ReviewResult(**review_row)
             # 去除SQL注释 https://github.com/hhyo/Archery/issues/949
-            sql = remove_comments(review_result.sql)
+            sql = remove_comments(review_result.sql).replace("\n","").replace("\r", "")
             # 正则匹配
             if p.match(sql):
                 auto_review = False
