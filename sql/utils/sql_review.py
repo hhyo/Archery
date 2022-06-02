@@ -26,7 +26,7 @@ def is_auto_review(workflow_id):
         # 获取正则表达式
         auto_review_regex = SysConfig().get(
             'auto_review_regex', '^alter|^create|^drop|^truncate|^rename|^delete')
-        p = re.compile(auto_review_regex, re.I)
+        p = re.compile(auto_review_regex, re.I| re.M)
 
         # 判断是否匹配到需要手动审核的语句
         auto_review = True
