@@ -199,11 +199,10 @@ class ClickHouseEngine(EngineBase):
         if self.server_version >= (21, 1, 2):
             explain_result = self.query(db_name=db_name, sql=f"explain ast {statement}")
             if explain_result.error:
-                check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
-                                    stagestatus='驳回未通过检查SQL',
-                                    errormessage=f'explain语法检查错误：{explain_result.error}',
-                                    sql=statement)
+                                      stagestatus='驳回未通过检查SQL',
+                                      errormessage=f'explain语法检查错误：{explain_result.error}',
+                                      sql=statement)
         return result
 
     def execute_check(self, db_name=None, sql=''):
@@ -222,14 +221,12 @@ class ClickHouseEngine(EngineBase):
             statement = statement.rstrip(';')
             # 禁用语句
             if re.match(r"^select|^show", statement.lower()):
-                check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
-                check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回高危SQL',
                                       errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
@@ -245,7 +242,6 @@ class ClickHouseEngine(EngineBase):
                     table_exist = self.get_table_engine(table_name)['status']
                     if table_exist == 1:
                         if not table_engine.endswith('MergeTree') and table_engine not in ('Merge', 'Distributed'):
-                            check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus='驳回不支持SQL',
                                                   errormessage='ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！',
@@ -254,7 +250,6 @@ class ClickHouseEngine(EngineBase):
                             # delete与update语句，实际是alter语句的变种
                             if re.match(r"^alter\s+table\s+(.+?)\s+(delete|update)\s+", statement.lower()):
                                 if not table_engine.endswith('MergeTree'):
-                                    check_result.is_critical = True
                                     result = ReviewResult(id=line, errlevel=2,
                                                           stagestatus='驳回不支持SQL',
                                                           errormessage='DELETE与UPDATE仅支持*MergeTree引擎表！',
@@ -264,7 +259,6 @@ class ClickHouseEngine(EngineBase):
                             else:
                                 result = self.explain_check(check_result, db_name, line, statement)
                     else:
-                        check_result.is_critical = True
                         result = ReviewResult(id=line, errlevel=2,
                                               stagestatus='表不存在',
                                               errormessage=f'表 {table_name} 不存在！',
@@ -281,7 +275,6 @@ class ClickHouseEngine(EngineBase):
                 table_exist = self.get_table_engine(table_name)['status']
                 if table_exist == 1:
                     if table_engine in ('View', 'File,', 'URL', 'Buffer', 'Null'):
-                        check_result.is_critical = True
                         result = ReviewResult(id=line, errlevel=2,
                                               stagestatus='驳回不支持SQL',
                                               errormessage='TRUNCATE不支持View,File,URL,Buffer和Null表引擎！',
@@ -289,7 +282,6 @@ class ClickHouseEngine(EngineBase):
                     else:
                         result = self.explain_check(check_result, db_name, line, statement)
                 else:
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='表不存在',
                                           errormessage=f'表 {table_name} 不存在！',
@@ -310,13 +302,11 @@ class ClickHouseEngine(EngineBase):
                                               affected_rows=0,
                                               execute_time=0, )
                     else:
-                        check_result.is_critical = True
                         result = ReviewResult(id=line, errlevel=2,
                                               stagestatus='表不存在',
                                               errormessage=f'表 {table_name} 不存在！',
                                               sql=statement)
                 else:
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回不支持SQL',
                                           errormessage='INSERT语法不正确！',
@@ -330,12 +320,13 @@ class ClickHouseEngine(EngineBase):
                 if get_syntax_type(statement, parser=False, db_type='mysql') == 'DDL':
                     check_result.syntax_type = 1
             check_result.rows += [result]
-
-            # 遇到禁用和高危语句直接返回
-            if check_result.is_critical:
-                check_result.error_count += 1
-                return check_result
             line += 1
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
         return check_result
 
     def execute_workflow(self, workflow):

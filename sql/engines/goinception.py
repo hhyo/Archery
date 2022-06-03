@@ -165,9 +165,9 @@ class GoInceptionEngine(EngineBase):
             raise RuntimeError(print_info.get('errmsg'))
         return print_info
 
-    def query_datamasking(self, instance, db_name=None, sql=''):
+    def query_data_masking(self, instance, db_name=None, sql=''):
         """
-        将sql交给goInception打印语法树。
+        将sql交给goInception打印语法树，获取select list
         使用 masking 参数，可参考 https://github.com/hanchuanchuan/goInception/pull/355
         """
         # 判断如果配置了隧道则连接隧道
@@ -177,12 +177,16 @@ class GoInceptionEngine(EngineBase):
                           use `{db_name}`;
                           {sql}
                           inception_magic_commit;"""
-        print_info = self.query(db_name=db_name, sql=sql).to_dict()[0]
+        query_result = self.query(db_name=db_name, sql=sql)
+        # 有异常时主动抛出
+        if query_result.error:
+            raise RuntimeError(f'Inception Error: {query_result.error}')
+        if not query_result.rows:
+            raise RuntimeError(f'Inception Error: 未获取到语法信息')
         # 兼容语法错误时errlevel=0的场景
-        if print_info['errlevel'] == 0 and print_info['errmsg'] is None :
-            return json.loads(_repair_json_str(print_info['query_tree']))
-        elif print_info['errlevel'] == 0 and print_info['errmsg'] == 'Global environment':
-            raise SyntaxError(f"Inception Error: {print_info['query_tree']}")
+        print_info = query_result.to_dict()[0]
+        if print_info['errlevel'] == 0 and print_info['errmsg'] is None:
+            return json.loads(print_info['query_tree'])
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 
@@ -190,7 +194,7 @@ class GoInceptionEngine(EngineBase):
         """
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
-        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result)
+        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result or '[]')
         # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []
@@ -337,15 +341,3 @@ def get_session_variables(instance):
     for k, v in variables.items():
         set_session_sql += f"inception set session {k} = '{v}';\n"
     return variables, set_session_sql
-
-def _repair_json_str(json_str):
-    """
-    处理JSONDecodeError: Expecting property name enclosed in double quotes
-    inception语法树出现{"a":1,}、["a":1,]、{'a':1}、[, { }]
-    """
-    json_str = re.sub(r"{\s*'(.+)':", r'{"\1":', json_str)
-    json_str = re.sub(r",\s*?]", "]", json_str)
-    json_str = re.sub(r",\s*?}", "}", json_str)
-    json_str = re.sub(r"\[,\s*?{", "[{", json_str)
-    json_str = json_str.replace("'", "\"")
-    return json_str

@@ -209,6 +209,24 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
+                                    <label for="auto_review_db_type"
+                                           class="col-sm-4 control-label">AUTO_REVIEW_DB_TYPE</label>
+                                    <div class="col-sm-5">
+                                        <select id="auto_review_db_type" key="auto_review_db_type"
+                                                class="form-control selectpicker" data-live-search="true"
+                                                multiple data-selected-text-format="count > 5"
+                                                data-none-selected-text="自动审批的数据库类型">
+                                            {% for type in db_type %}
+                                                {% if type|is_in:config.auto_review_db_type %}
+                                                    <option value="{{ type }}" selected>{{ type }}</option>
+                                                {% else %}
+                                                    <option value="{{ type }}">{{ type }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
                                     <label for="auto_review_regex"
                                            class="col-sm-4 control-label">AUTO_REVIEW_REGEX</label>
                                     <div class="col-sm-5">
@@ -248,7 +266,7 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启脱敏功能必须要配置Inception信息，用于SQL语法解析</h6>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -262,31 +280,6 @@
                                                    value="{{ config.data_masking }}" type="checkbox">
                                             是否开启动态脱敏
                                         </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="div-inception-config" style="display: none">
-                                <div class="form-group">
-                                    <label for="inception_host"
-                                           class="col-sm-4 control-label">INCEPTION_HOST</label>
-                                    <div class="col-sm-5">
-                                        <input type="text" class="form-control"
-                                               id="inception_host"
-                                               key="inception_host"
-                                               value="{{ config.inception_host }}"
-                                               placeholder="Inception地址">
-                                    </div>
-                                    <button id='check_incption' class='btn-sm btn-info'>测试连接</button>
-                                </div>
-                                <div class="form-group">
-                                    <label for="inception_port"
-                                           class="col-sm-4 control-label">INCEPTION_PORT</label>
-                                    <div class="col-sm-5">
-                                        <input type="number" class="form-control"
-                                               id="inception_port"
-                                               key="inception_port"
-                                               value="{{ config.inception_port }}"
-                                               placeholder="Inception端口">
                                     </div>
                                 </div>
                             </div>
@@ -792,6 +785,19 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="api_user_whitelist"
+                                       class="col-sm-4 control-label">API_USER_WHITELIST</label>
+                                <div class="col-sm-5">
+                                    <select id="api_user_whitelist" key="api_user_whitelist"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="API用户白名单"
+                                            multiple data-selected-text-format="count > 5"
+                                            required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="lock_time_threshold"
                                        class="col-sm-4 control-label">LOCK_TIME_THRESHOLD</label>
                                 <div class="col-sm-5">
@@ -822,6 +828,32 @@
                                             <input id="sign_up_enabled" key="sign_up_enabled"
                                                    value="{{ config.sign_up_enabled }}"
                                                    type="checkbox"> 是否开启注册功能
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="watermark_enabled"
+                                       class="col-sm-4 control-label">WATERMARK_ENABLED</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="watermark_enabled" key="watermark_enabled"
+                                                   value="{{ config.watermark_enabled }}"
+                                                   type="checkbox"> 是否开启水印功能
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="enforce_2fa"
+                                       class="col-sm-4 control-label">ENFORCE_2FA</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="enforce_2fa" key="enforce_2fa"
+                                                   value="{{ config.enforce_2fa }}"
+                                                   type="checkbox"> 登录是否强制使用2FA
                                         </label>
                                     </div>
                                 </div>
@@ -872,8 +904,9 @@
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet" type="text/css"/>
     <script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
     <script>
-        // notify_phase_control参数处理
+
         $(document).ready(function (){
+            // notify_phase_control参数处理
             let cfg_value = "{{ config.notify_phase_control }}";
             let phases = ['Apply', 'Pass', 'Execute', 'Cancel'];
             // notify_phase_control未设置时默认全部开启
@@ -896,6 +929,36 @@
             }
             $("#notify_phase_control").selectpicker('render');
             $("#notify_phase_control").selectpicker('refresh');
+
+            // api_user_whitelist参数处理
+            let api_config = "{{ config.api_user_whitelist }}";
+            $.ajax({
+                type: "post",
+                url: "/user/list/",
+                dataType: "json",
+                success: function (data) {
+                    if (data.status === 0) {
+                        let users = data.data;
+                        let user_arr = api_config.split(',');
+                        for (let i=0;i<users.length;i++) {
+                            let user = "";
+                            if (user_arr.indexOf(users[i].id.toString()) >= 0) {
+                                user = "<option value=\"" + users[i].id+ "\" selected>" + users[i].display + "(" + users[i].username + ")</option>"
+                            } else {
+                                user = "<option value=\"" + users[i].id+ "\">" + users[i].display + "(" + users[i].username + ")</option>"
+                            }
+                            $("#api_user_whitelist").append(user)
+                            $("#api_user_whitelist").selectpicker('render');
+                            $("#api_user_whitelist").selectpicker('refresh');
+                        }
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
         })
 
         //配置项切换

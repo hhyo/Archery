@@ -19,8 +19,9 @@ def is_auto_review(workflow_id):
 
     workflow = SqlWorkflow.objects.get(id=workflow_id)
     auto_review_tags = SysConfig().get('auto_review_tag', '').split(',')
+    auto_review_db_type = SysConfig().get('auto_review_db_type', '').split(',')
     # TODO 这里也可以放到engine中实现，但是配置项可能会相对复杂
-    if workflow.instance.db_type == 'mysql' and workflow.instance.instance_tag.filter(
+    if workflow.instance.db_type in auto_review_db_type and workflow.instance.instance_tag.filter(
             tag_code__in=auto_review_tags).exists():
         # 获取正则表达式
         auto_review_regex = SysConfig().get(
@@ -117,8 +118,7 @@ def can_timingtask(user, workflow_id):
 def can_cancel(user, workflow_id):
     """
     判断用户当前是否是可终止，
-    审核中的工单，审核人和提交人可终止
-    审核通过但未执行的工单，有执行权限的用户终止
+    审核中、审核通过的的工单，审核人和提交人可终止
     :param user:
     :param workflow_id:
     :return:
@@ -128,11 +128,9 @@ def can_cancel(user, workflow_id):
     # 审核中的工单，审核人和提交人可终止
     if workflow_detail.status == 'workflow_manreviewing':
         from sql.utils.workflow_audit import Audit
-        if Audit.can_review(user, workflow_id, 2) or user.username == workflow_detail.engineer:
-            result = True
-    # 审核通过但未执行的工单，执行人可以打回
-    if workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
-        result = True if can_execute(user, workflow_id) else False
+        return any([Audit.can_review(user, workflow_id, 2), user.username == workflow_detail.engineer])
+    elif workflow_detail.status in ['workflow_review_pass', 'workflow_timingtask']:
+        return any([can_execute(user, workflow_id), user.username == workflow_detail.engineer])
     return result
 
 

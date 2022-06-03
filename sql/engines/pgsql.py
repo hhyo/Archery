@@ -207,14 +207,12 @@ class PgSQLEngine(EngineBase):
             statement = sqlparse.format(statement, strip_comments=True)
             # 禁用语句
             if re.match(r"^select", statement.lower()):
-                check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回不支持语句',
                                       errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                       sql=statement)
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
-                check_result.is_critical = True
                 result = ReviewResult(id=line, errlevel=2,
                                       stagestatus='驳回高危SQL',
                                       errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
@@ -232,12 +230,13 @@ class PgSQLEngine(EngineBase):
             if get_syntax_type(statement) == 'DDL':
                 check_result.syntax_type = 1
             check_result.rows += [result]
-
-            # 遇到禁用和高危语句直接返回，提高效率
-            if check_result.is_critical:
-                check_result.error_count += 1
-                return check_result
             line += 1
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):

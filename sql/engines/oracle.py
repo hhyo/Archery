@@ -340,9 +340,25 @@ class OracleEngine(EngineBase):
         if '.' in object_name:
             schema_name = object_name.split('.')[0]
             object_name = object_name.split('.')[1]
-            sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{schema_name}') and  OBJECT_NAME =  upper('{object_name}')"""
+            if '"' in schema_name:
+                schema_name = schema_name.replace('"', '')
+                if '"' in object_name:
+                    object_name = object_name.replace('"', '')
+                else:
+                    object_name = object_name.upper()
+            else:
+                schema_name = schema_name.upper()
+                if '"' in object_name:
+                    object_name = object_name.replace('"', '')
+                else:
+                    object_name = object_name.upper()
         else:
-            sql = f"""SELECT object_name FROM all_objects WHERE OWNER = upper('{db_name}') and  OBJECT_NAME = upper('{object_name}')"""
+            schema_name = db_name
+            if '"' in object_name:
+                object_name = object_name.replace('"', '')
+            else:
+                object_name = object_name.upper()
+        sql = f""" SELECT object_name FROM all_objects WHERE OWNER = '{schema_name}' and OBJECT_NAME = '{object_name}' """
         result = self.query(db_name=db_name, sql=sql, close_conn=False)
         if result.affected_rows > 0:
             return True
@@ -353,26 +369,26 @@ class OracleEngine(EngineBase):
     def get_sql_first_object_name(sql=''):
         """获取sql文本中的object_name"""
         object_name = ''
-        if re.match(r"^create\s+table\s", sql):
-            object_name = re.match(r"^create\s+table\s(.+?)(\s|\()", sql, re.M).group(1)
-        elif re.match(r"^create\s+index\s", sql):
-            object_name = re.match(r"^create\s+index\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+unique\s+index\s", sql):
-            object_name = re.match(r"^create\s+unique\s+index\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+sequence\s", sql):
-            object_name = re.match(r"^create\s+sequence\s(.+?)(\s|$)", sql, re.M).group(1)
-        elif re.match(r"^alter\s+table\s", sql):
-            object_name = re.match(r"^alter\s+table\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+function\s", sql):
-            object_name = re.match(r"^create\s+function\s(.+?)(\s|\()", sql, re.M).group(1)
-        elif re.match(r"^create\s+view\s", sql):
-            object_name = re.match(r"^create\s+view\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+procedure\s", sql):
-            object_name = re.match(r"^create\s+procedure\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+package\s+body", sql):
-            object_name = re.match(r"^create\s+package\s+body\s(.+?)\s", sql, re.M).group(1)
-        elif re.match(r"^create\s+package\s", sql):
-            object_name = re.match(r"^create\s+package\s(.+?)\s", sql, re.M).group(1)
+        if re.match(r"^create\s+table\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+table\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+index\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+unique\s+index\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+unique\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+sequence\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+sequence\s(.+?)(\s|$)", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^alter\s+table\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^alter\s+table\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+function\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+view\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+view\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+procedure\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+package\s+body", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
+        elif re.match(r"^create\s+package\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(r"^create\s+package\s(.+?)\s", sql, re.M | re.IGNORECASE).group(1)
         else:
             return object_name.strip()
         return object_name.strip()
@@ -419,7 +435,8 @@ class OracleEngine(EngineBase):
             else:
                 return False
         elif re.match(r"^insert\s", sql):
-            table_name = re.match(r"^insert\s+((into)|(all\s+into)|(all\s+when\s(.+?)into))\s+(.+?)(\(|\s)", sql, re.M).group(6)
+            table_name = re.match(r"^insert\s+((into)|(all\s+into)|(all\s+when\s(.+?)into))\s+(.+?)(\(|\s)", sql,
+                                  re.M).group(6)
             if '.' not in table_name:
                 table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
@@ -451,7 +468,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+                cursor.execute(f" ALTER SESSION SET CURRENT_SCHEMA = \"{db_name}\" ")
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -515,7 +532,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {db_name}")
+                cursor.execute(f" ALTER SESSION SET CURRENT_SCHEMA = \"{db_name}\" ")
             sql = sql.rstrip(';')
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
@@ -543,7 +560,6 @@ class OracleEngine(EngineBase):
             if close_conn:
                 self.close()
         return result_set
-
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """简单字段脱敏规则, 仅对select有效"""
@@ -575,30 +591,27 @@ class OracleEngine(EngineBase):
             sqlitemList = get_full_sqlitem_list(sql, db_name)
             for sqlitem in sqlitemList:
                 sql_lower = sqlitem.statement.lower().rstrip(';')
+                sql_nolower = sqlitem.statement.rstrip(';')
                 # 禁用语句
                 if re.match(r"^select|^with|^explain", sql_lower):
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回不支持语句',
                                           errormessage='仅支持DML和DDL语句，查询语句请使用SQL查询功能！',
                                           sql=sqlitem.statement)
                 # 高危语句
                 elif critical_ddl_regex and p.match(sql_lower.strip()):
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回高危SQL',
                                           errormessage='禁止提交匹配' + critical_ddl_regex + '条件的语句！',
                                           sql=sqlitem.statement)
                 # 驳回未带where数据修改语句，如确实需做全部删除或更新，显示的带上where 1=1
                 elif re.match(r"^update((?!where).)*$|^delete((?!where).)*$", sql_lower):
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='驳回未带where数据修改',
                                           errormessage='数据修改需带where条件！',
                                           sql=sqlitem.statement)
                 # 驳回事务控制，会话控制SQL
                 elif re.match(r"^set|^rollback|^exit", sql_lower):
-                    check_result.is_critical = True
                     result = ReviewResult(id=line, errlevel=2,
                                           stagestatus='SQL中不能包含^set|^rollback|^exit',
                                           errormessage='SQL中不能包含^set|^rollback|^exit',
@@ -634,7 +647,6 @@ class OracleEngine(EngineBase):
                     else:
                         result_set = self.explain_check(db_name=db_name, sql=sqlitem.statement, close_conn=False)
                         if result_set['msg']:
-                            check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus='explain语法检查未通过！',
                                                   errormessage=result_set['msg'],
@@ -642,15 +654,27 @@ class OracleEngine(EngineBase):
                         else:
                             # 对create table\create index\create unique index语法做对象存在性检测
                             if re.match(r"^create\s+table|^create\s+index|^create\s+unique\s+index", sql_lower):
-                                object_name = self.get_sql_first_object_name(sql=sql_lower)
+                                object_name = self.get_sql_first_object_name(sql=sql_nolower)
                                 # 保存create对象对后续SQL做存在性判断
                                 if '.' in object_name:
-                                    object_name = object_name
+                                    schema_name = object_name.split('.')[0]
+                                    object_name = object_name.split('.')[1]
+                                    if '"' in schema_name:
+                                        schema_name = schema_name
+                                        if '"' not in object_name:
+                                            object_name = object_name.upper()
+                                    else:
+                                        schema_name = schema_name.upper()
+                                        if '"' not in object_name:
+                                            object_name = object_name.upper()
                                 else:
-                                    object_name = f"""{db_name}.{object_name}"""
+                                    schema_name = ('"' + db_name + '"')
+                                    if '"' not in object_name:
+                                        object_name = object_name.upper()
+
+                                object_name = f"""{schema_name}.{object_name}"""
                                 if self.object_name_check(db_name=db_name,
                                                           object_name=object_name) or object_name in object_name_list:
-                                    check_result.is_critical = True
                                     result = ReviewResult(id=line, errlevel=2,
                                                           stagestatus=f"""{object_name}对象已经存在！""",
                                                           errormessage=f"""{object_name}对象已经存在！""",
@@ -706,14 +730,26 @@ class OracleEngine(EngineBase):
                 else:
                     # 对alter table做对象存在性检查
                     if re.match(r"^alter\s+table\s", sql_lower):
-                        object_name = self.get_sql_first_object_name(sql=sql_lower)
+                        object_name = self.get_sql_first_object_name(sql=sql_nolower)
                         if '.' in object_name:
-                            object_name = object_name
+                            schema_name = object_name.split('.')[0]
+                            object_name = object_name.split('.')[1]
+                            if '"' in schema_name:
+                                schema_name = schema_name
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
+                            else:
+                                schema_name = schema_name.upper()
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
                         else:
-                            object_name = f"""{db_name}.{object_name}"""
+                            schema_name = ('"' + db_name + '"')
+                            if '"' not in object_name:
+                                object_name = object_name.upper()
+
+                        object_name = f"""{schema_name}.{object_name}"""
                         if not self.object_name_check(db_name=db_name,
                                                       object_name=object_name) and object_name not in object_name_list:
-                            check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus=f"""{object_name}对象不存在！""",
                                                   errormessage=f"""{object_name}对象不存在！""",
@@ -731,14 +767,26 @@ class OracleEngine(EngineBase):
                                                   execute_time=0, )
                     # 对create做对象存在性检查
                     elif re.match(r"^create", sql_lower):
-                        object_name = self.get_sql_first_object_name(sql=sql_lower)
+                        object_name = self.get_sql_first_object_name(sql=sql_nolower)
                         if '.' in object_name:
-                            object_name = object_name
+                            schema_name = object_name.split('.')[0]
+                            object_name = object_name.split('.')[1]
+                            if '"' in schema_name:
+                                schema_name = schema_name
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
+                            else:
+                                schema_name = schema_name.upper()
+                                if '"' not in object_name:
+                                    object_name = object_name.upper()
                         else:
-                            object_name = f"""{db_name}.{object_name}"""
+                            schema_name = ('"' + db_name + '"')
+                            if '"' not in object_name:
+                                object_name = object_name.upper()
+
+                        object_name = f"""{schema_name}.{object_name}"""
                         if self.object_name_check(db_name=db_name,
                                                   object_name=object_name) or object_name in object_name_list:
-                            check_result.is_critical = True
                             result = ReviewResult(id=line, errlevel=2,
                                                   stagestatus=f"""{object_name}对象已经存在！""",
                                                   errormessage=f"""{object_name}对象已经存在！""",
@@ -770,10 +818,6 @@ class OracleEngine(EngineBase):
                 if get_syntax_type(sql=sqlitem.statement, db_type='oracle') == 'DDL':
                     check_result.syntax_type = 1
                 check_result.rows += [result]
-                # 遇到禁用和高危语句直接返回，提高效率
-                if check_result.is_critical:
-                    check_result.error_count += 1
-                    return check_result
                 line += 1
         except Exception as e:
             logger.warning(f"Oracle 语句执行报错，第{line}个SQL：{sqlitem.statement}，错误信息{traceback.format_exc()}")
@@ -781,6 +825,12 @@ class OracleEngine(EngineBase):
         finally:
             if close_conn:
                 self.close()
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
         return check_result
 
     def execute_workflow(self, workflow, close_conn=True):
@@ -811,16 +861,16 @@ class OracleEngine(EngineBase):
                 statement = sqlitem.statement
                 if sqlitem.stmt_type == "SQL":
                     statement = statement.rstrip(';')
-                #如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
-                #需要授权 grant execute on dbms_metadata to xxxxx
+                # 如果是DDL的工单，获取对象的原定义，并保存到sql_rollback.undo_sql
+                # 需要授权 grant execute on dbms_metadata to xxxxx
                 if workflow.syntax_type == 1:
-                    object_name=self.get_sql_first_object_name(statement)
-                    back_obj_sql=f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
+                    object_name = self.get_sql_first_object_name(statement)
+                    back_obj_sql = f"""select dbms_metadata.get_ddl(object_type,object_name,owner)
                     from all_objects where (object_name=upper( '{object_name}' ) or OBJECT_NAME = '{sqlitem.object_name}')
                     and owner='{workflow.db_name}'
                                         """
                     cursor.execute(back_obj_sql)
-                    metdata_back_flag=self.metdata_backup(workflow, cursor,statement)
+                    metdata_back_flag = self.metdata_backup(workflow, cursor, statement)
 
                 with FuncTimer() as t:
                     if statement != '':
@@ -931,10 +981,14 @@ class OracleEngine(EngineBase):
                                         endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
                                         options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
                                     end;'''
-            undo_sql = f'''select sql_redo,sql_undo from v$logmnr_contents
-                                  where  SEG_OWNER not in ('SYS','SYSTEM')
-                                         and session# = (select sid from v$mystat where rownum = 1)
-                                         and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 )) order by scn desc'''
+            undo_sql = f'''select 
+                           xmlagg(xmlparse(content sql_redo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() ,
+                           xmlagg(xmlparse(content sql_undo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() 
+                           from v$logmnr_contents
+                           where  SEG_OWNER not in ('SYS')
+                           and session# = (select sid from v$mystat where rownum = 1)
+                           and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 ))  
+                           group by  scn,rs_id,ssn  order by scn desc'''
             logmnr_end_sql = f'''begin
                                     dbms_logmnr.end_logmnr;
                                  end;'''
@@ -963,7 +1017,7 @@ class OracleEngine(EngineBase):
                 conn.close()
         return True
 
-    def metdata_backup(self, workflow, cursor ,redo_sql):
+    def metdata_backup(self, workflow, cursor, redo_sql):
         """
         :param workflow: 工单对象，作为备份记录与工单的关联列
         :param cursor: 执行SQL的当前会话游标，保存metadata

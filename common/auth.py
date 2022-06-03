@@ -3,6 +3,7 @@ import logging
 import traceback
 
 import simplejson as json
+from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -12,7 +13,7 @@ from django.urls import reverse
 
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
-from sql.models import Users, ResourceGroup
+from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
 
 logger = logging.getLogger('default')
 
@@ -64,7 +65,6 @@ class ArcheryAuth(object):
             if authenticated_user:
                 # ldap 首次登录逻辑
                 init_user(authenticated_user)
-                login(self.request, authenticated_user)
                 return {'status': 0, 'msg': 'ok', 'data': authenticated_user}
             else:
                 return {'status': 1, 'msg': '用户名或密码错误，请重新输入！', 'data': ''}
@@ -90,7 +90,6 @@ class ArcheryAuth(object):
         if authenticated_user:
             if not authenticated_user.last_login:
                 init_user(authenticated_user)
-            login(self.request, authenticated_user)
             return {'status': 0, 'msg': 'ok', 'data': authenticated_user}
         user.failed_login_count += 1
         user.last_login_failed_at = datetime.datetime.now()
@@ -104,11 +103,44 @@ def authenticate_entry(request):
     new_auth = ArcheryAuth(request)
     result = new_auth.authenticate()
     if result['status'] == 0:
-        # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
-        if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
-            get_ding_user_id(request.POST.get('username'))
-
-        result = {'status': 0, 'msg': 'ok', 'data': None}
+        authenticated_user = result['data']
+        twofa_enabled = TwoFactorAuthConfig.objects.filter(user=authenticated_user)
+        # 是否开启全局2fa
+        if SysConfig().get('enforce_2fa'):
+            # 用户是否配置过2fa
+            if twofa_enabled:
+                auth_type = twofa_enabled[0].auth_type
+                verify_mode = 'verify_only'
+            else:
+                auth_type = 'totp'
+                verify_mode = 'verify_config'
+            # 设置无登录状态cookie
+            s = SessionStore()
+            s['user'] = authenticated_user.username
+            s['auth_type'] = auth_type
+            s['verify_mode'] = verify_mode
+            s.set_expiry(300)
+            s.create()
+            result = {'status': 0, 'msg': 'ok', 'data': s.session_key}
+        else:
+            # 用户是否配置过2fa
+            if twofa_enabled:
+                auth_type = twofa_enabled[0].auth_type
+                # 设置无登录状态cookie
+                s = SessionStore()
+                s['user'] = authenticated_user.username
+                s['auth_type'] = auth_type
+                s['verify_mode'] = 'verify_only'
+                s.set_expiry(300)
+                s.create()
+                result = {'status': 0, 'msg': 'ok', 'data': s.session_key}
+            else:
+                # 未设置2fa直接登录
+                login(request, authenticated_user)
+                # 从钉钉获取该用户的 dingding_id，用于单独给他发消息
+                if SysConfig().get("ding_to_person") is True and "admin" not in request.POST.get('username'):
+                    get_ding_user_id(request.POST.get('username'))
+                result = {'status': 0, 'msg': 'ok', 'data': None}
 
     return HttpResponse(json.dumps(result), content_type='application/json')
 

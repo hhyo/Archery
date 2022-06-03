@@ -24,6 +24,28 @@ var dateFormat = function(fmt, date) {
     return fmt;
 };
 
+// 格式与高亮json格式的字符串
+var jsonHighLight = function(json) {
+    json = json.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'text-muted';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'text-success';
+            } else {
+                match = match
+                cls = 'text-primary';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'text-success';
+        } else if (/null/.test(match)) {
+            cls = 'text-warning';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+};
+
+// 这个函数存在报错，因此不应该把任何模块放在这个模块之后
 // 实例配置页面根据db_type选择显示或隐藏mode字段，mode字段只适用于redis实例
 (function($) {
     $(function() {
@@ -41,3 +63,4 @@ var dateFormat = function(fmt, date) {
         });
     });
 })(django.jQuery);
+

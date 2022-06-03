@@ -216,8 +216,13 @@
                 $('#btnLogin').prop('disabled', false);
             },
             success: function (data) {
-                if (data.status == 0) {
-                    $(location).attr('href', '/index/');
+                if (data.status === 0) {
+                    if (data.data) {
+                        document.cookie = "sessionid=" + data.data
+                        $(location).attr('href', '/login/2fa/');
+                    } else {
+                        $(location).attr('href', '/index/');
+                    }
                 } else {
                     $('#wrongpwd-modal-body').html(data.msg);
                     $('#wrongpwd-modal').modal({
