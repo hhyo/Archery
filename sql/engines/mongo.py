@@ -879,3 +879,76 @@ class MongoEngine(EngineBase):
                 if key not in cols:
                     cols.append(key)
         return cols
+
+    def current_op(self, command_type):
+        """
+        获取当前连接信息
+        
+        command_type:
+        Full    包含活跃与不活跃的连接，包含内部的连接，即全部的连接状态 
+        All     包含活跃与不活跃的连接，不包含内部的连接
+        Active  包含活跃
+        Inner   内部连接
+        """
+        result_set = ResultSet(full_sql='db.aggregate([{"$currentOp": {"allUsers":true, "idleConnections":true}}])')
+        try:
+            conn = self.get_connection()
+            processlists = []
+            if not command_type:
+                command_type = 'Active'
+            if command_type in ['Full','All','Inner']:
+                idle_connections = True
+            else:
+                idle_connections = False
+    
+            # conn.admin.current_op() 这个方法已经被pymongo废除，但mongodb3.6+才支持aggregate
+            with conn.admin.aggregate([{'$currentOp': {'allUsers':True,'idleConnections':idle_connections}}]) as cursor:
+                for operation in cursor:
+                    # 对sharding集群的特殊处理
+                    if not 'client' in operation and operation.get('clientMetadata',{}).get('mongos',{}).get('client',{}):
+                        operation['client'] = operation['clientMetadata']['mongos']['client']
+
+                    # client_s 只是处理的mongos，并不是实际客户端
+                    # client 在sharding获取不到？
+                    if command_type in ['Full']:
+                        processlists.append(operation)
+                    elif command_type in ['All','Active']:
+                        if 'clientMetadata' in operation:
+                            processlists.append(operation)
+                    elif command_type in ['Inner']:
+                        if not 'clientMetadata' in operation:
+                            processlists.append(operation)
+                            
+            result_set.rows = processlists
+        except Exception as e:
+            logger.warning(f'mongodb获取连接信息错误，错误信息{traceback.format_exc()}')
+            result_set.error = str(e)
+        
+        return result_set
+
+    def get_kill_command(self, opids):        
+        """由传入的opid列表生成kill字符串"""
+        conn = self.get_connection()
+        active_opid = []
+        with conn.admin.aggregate([{'$currentOp': {'allUsers':True,'idleConnections': False}}]) as cursor:
+            for operation in cursor:
+                if 'opid' in operation and operation['opid'] in opids:
+                    active_opid.append(operation['opid'])
+
+        kill_command = ''
+        for opid in active_opid:
+            if isinstance(a,int):
+                kill_command = kill_command + 'db.killOp({});'.format(opid)
+            else:
+                kill_command = kill_command + 'db.killOp("{}");'.format(opid)
+        
+        return kill_command
+    
+    def kill_op(opids):
+        """kill"""
+        conn = self.get_connection()
+        db = conn.admin
+        for opid in json.loads(opids):
+            conn.admin.command({ 'killOp': 1, 'op': opid})
+    
+       
