@@ -41,7 +41,7 @@ def pyecharts(request):
                              orient="vertical", pos_top="15%", pos_left="2%", is_show=False
                          ))
     pie1.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
-    pie1.add("", [list(z) for z in zip(attr, value)])
+    pie1.add("", [list(z) for z in zip(attr, value)]) if attr and data else None
 
     # 工单按人统计
     data = chart_dao.workflow_by_user(30)
@@ -61,7 +61,7 @@ def pyecharts(request):
                              orient="vertical", pos_top="15%", pos_left="2%"
                          ))
     pie2.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
-    pie2.add("", [list(z) for z in zip(attr, value)])
+    pie2.add("", [list(z) for z in zip(attr, value)]) if attr and data else None
 
     # SQL查询统计(每日检索行数)
     attr = chart_dao.get_date_list(one_month_before, today)
@@ -95,7 +95,7 @@ def pyecharts(request):
                              orient="vertical", pos_top="15%", pos_left="2%", is_show=False
                          ))
     pie4.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
-    pie4.add("", [list(z) for z in zip(attr, value)])
+    pie4.add("", [list(z) for z in zip(attr, value)]) if attr and data else None
 
     # SQL查询统计(DB检索行数)
     data = chart_dao.querylog_effect_row_by_db(30)
@@ -107,7 +107,7 @@ def pyecharts(request):
                              orient="vertical", pos_top="15%", pos_left="2%", is_show=False
                          ))
     pie5.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}", position="left"))
-    pie5.add("", [list(z) for z in zip(attr, value)])
+    pie5.add("", [list(z) for z in zip(attr, value)]) if attr and data else None
 
     # 慢查询db/user维度统计(最近1天)
     data = chart_dao.slow_query_count_by_db_by_user(1)
@@ -119,7 +119,7 @@ def pyecharts(request):
                              orient="vertical", pos_top="15%", pos_left="2%", is_show=False
                          ))
     pie3.set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}", position="left"))
-    pie3.add("", [list(z) for z in zip(attr, value)])
+    pie3.add("", [list(z) for z in zip(attr, value)]) if attr and data else None
 
     # 慢查询db维度统计(最近1天)
     data = chart_dao.slow_query_count_by_db(1)
