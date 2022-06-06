@@ -1650,7 +1650,7 @@ class MongoTest(TestCase):
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
     
     def test_current_op(self):
-        command_types = ['Full','All','Inner',''Active'']
+        command_types = ['Full','All','Inner','Active']
         for command_type in command_types:
             result_set = self.engine.current_op(command_type)
             self.assertIsInstance(result_set, ResultSet)
@@ -1663,6 +1663,7 @@ class MongoTest(TestCase):
     
     def test_kill_op(self):
         self.engine.kill_op([111,222])
+        self.engine.kill_op(['shards: 111','shards: 222'])
         self.assertEqual("","")
     
     

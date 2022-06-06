@@ -890,6 +890,7 @@ class MongoEngine(EngineBase):
         Active  包含活跃
         Inner   内部连接
         """
+        print(command_type)
         result_set = ResultSet(full_sql='db.aggregate([{"$currentOp": {"allUsers":true, "idleConnections":true}}])')
         try:
             conn = self.get_connection()
@@ -937,18 +938,18 @@ class MongoEngine(EngineBase):
 
         kill_command = ''
         for opid in active_opid:
-            if isinstance(a,int):
+            if isinstance(opid,int):
                 kill_command = kill_command + 'db.killOp({});'.format(opid)
             else:
                 kill_command = kill_command + 'db.killOp("{}");'.format(opid)
         
         return kill_command
     
-    def kill_op(opids):
+    def kill_op(self, opids):
         """kill"""
         conn = self.get_connection()
         db = conn.admin
-        for opid in json.loads(opids):
+        for opid in opids:
             conn.admin.command({ 'killOp': 1, 'op': opid})
     
        

@@ -711,7 +711,11 @@
                 //获取选择的线程id
                 var AllSelectionIds = [];
                 for (var i = 0; i < AllSelections.length; i++) {
-                    AllSelectionIds.push(AllSelections[i]['id'])
+                    if (AllSelections[i]['id']){
+                        AllSelectionIds.push(AllSelections[i]['id'])    // mysql
+                    } else if (AllSelections[i]['opid']) {
+                        AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
+                    }
                 }
                 var instance_name = $("#instance_name").val();
                 var request_params = $("#request_params").val();

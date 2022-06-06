@@ -52,6 +52,7 @@ def process(request):
 
     elif instance.db_type == 'mongo':
         query_result = query_engine.current_op(command_type)
+        print(query_result)
         
     else:
         result = {'status': 1, 'msg': '暂时不支持%s类型数据库的进程列表查询' % instance.db_type , 'data': []}
@@ -141,7 +142,7 @@ def kill_session(request):
             engine.execute('information_schema', kill_sql)
     
     elif instance.db_type == 'mongo':
-        engine.kill(json.loads(thread_ids))
+        engine.kill_op(json.loads(thread_ids))
 
     else:
         result = {'status': 1, 'msg': '暂时不支持%s类型数据库终止会话' % instance.db_type , 'data': []}
