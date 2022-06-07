@@ -7,6 +7,7 @@ import json
 import subprocess
 import simplejson as json
 import datetime
+import tempfile
 from bson.son import SON
 from bson import json_util
 from pymongo.errors import OperationFailure
@@ -254,18 +255,31 @@ class MongoEngine(EngineBase):
 
     def exec_cmd(self, sql, db_name=None, slave_ok=''):
         """审核时执行的语句"""
+        
 
         if self.user and self.password and self.port and self.host:
             msg = ""
             auth_db = self.instance.db_name or 'admin'
+            sql_len = len(sql)
+            is_load = False # 默认不使用load方法执行mongodb sql语句
             try:
-                if not sql.startswith('var host='): #在master节点执行的情况
+                if not sql.startswith('var host=') and sql_len > 4000:  # 在master节点执行的情况，如果sql长度大于4000,就采取load js的方法
+                    # 因为用mongo load方法执行js脚本，所以需要重新改写一下sql，以便回显js执行结果
+                    sql = 'var result = ' + sql + '\nprintjson(result);'
+                    # 因为要知道具体的临时文件位置，所以用了NamedTemporaryFile模块
+                    fp = tempfile.NamedTemporaryFile(suffix=".js", prefix="mongo_", dir='/tmp/', delete=True)
+                    fp.write(sql.encode('utf-8'))
+                    fp.seek(0)  # 把文件指针指向开始，这样写的sql内容才能落到磁盘文件上
+                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF".format(
+                        mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port,
+                        db_name=db_name, sql=sql, auth_db=auth_db, slave_ok=slave_ok, tempfile_=fp.name)
+                    is_load = True  # 标记使用了load方法，用来在finally里面判断是否需要强制删除临时文件
+                elif not sql.startswith('var host=') and sql_len < 4000: # 在master节点执行的情况， 如果sql长度小于4000,就直接用mongo shell执行，减少磁盘交换，节省性能
                     cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
                         mongo=mongo, uname=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db, slave_ok=slave_ok)
                 else:
                     cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
                         mongo=mongo, user=self.user, password=self.password, host=self.host, port=self.port, db_name=db_name, sql=sql, auth_db=auth_db)
-                logger.debug(cmd)
                 p = subprocess.Popen(cmd, shell=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE,
@@ -283,9 +297,11 @@ class MongoEngine(EngineBase):
                     _re_msg.append(_line)
                 
                 msg = '\n'.join(_re_msg)
-
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
+            finally:
+                if is_load:
+                    fp.close()
         return msg
 
     def get_master(self):
