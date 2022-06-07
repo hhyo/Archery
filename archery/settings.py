@@ -23,7 +23,8 @@ env = environ.Env(
         "username": "cn",
         "display": "displayname",
         "email": "mail"
-    })
+    }),
+    Q_CLUISTER_SYNC=(bool, False) # qcluster 同步模式, debug 时可以调整为 True
 )
 
 
@@ -170,7 +171,7 @@ Q_CLUSTER = {
     'queue_limit': 50,
     'label': 'Django Q',
     'django_redis': 'default',
-    'sync': DEBUG  # 本地调试可以修改为True，使用同步模式
+    'sync': env("Q_CLUISTER_SYNC")  # 本地调试可以修改为True，使用同步模式
 }
 
 # 缓存配置
