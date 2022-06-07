@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractUser
 from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
-import uuid
 
 
 class ResourceGroup(models.Model):
