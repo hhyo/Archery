@@ -17,7 +17,7 @@ from .models import Instance, InstanceAccount
 def users(request):
     """获取实例用户列表"""
     instance_id = request.POST.get('instance_id')
-    saved = True if request.POST.get('saved') == 'true' else False  # 平台是否保存
+    saved  = request.POST.get('saved')
 
     if not instance_id:
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
@@ -28,7 +28,7 @@ def users(request):
 
     # 获取已录入用户
     cnf_users = dict()
-    for user in InstanceAccount.objects.filter(instance=instance).values('id', 'user', 'host', 'remark'):
+    for user in InstanceAccount.objects.filter(instance=instance).values('id', 'user', 'host' , 'password', 'remark'):
         user['saved'] = True
         cnf_users[f"`{user['user']}`@`{user['host']}`"] = user
     # 获取所有用户
@@ -61,7 +61,12 @@ def users(request):
             rows.append(row)
         # 过滤参数
         if saved:
-            rows = [row for row in rows if row['saved']]
+            #request.POST.get传来的是str，list中保存的是布尔
+            if saved == 'True':
+                saved = bool(saved)
+            else:
+                saved = bool("")
+            rows = [row for row in rows if row['saved'] == saved]
 
         result = {'status': 0, 'msg': 'ok', 'rows': rows}
     else:
@@ -72,6 +77,30 @@ def users(request):
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
 
+@permission_required('sql.instance_account_manage', raise_exception=True)
+def requ_password(request):
+    """获取数据库用户密码"""
+    instance_id = request.POST.get('instance_id', 0)
+    user = request.POST.get('user')
+    host = request.POST.get('host')
+
+    if not instance_id:
+        return JsonResponse({'status': 0, 'msg': '', 'data': []})
+    try:
+        instance = user_instances(request.user, db_type=['mysql']).get(id=instance_id)
+    except Instance.DoesNotExist:
+        return JsonResponse({'status': 1, 'msg': '你所在组未关联该实例', 'data': []})
+
+    # 获取已录入用户
+
+    cnf_users = dict()
+    for user_password in   InstanceAccount.objects.filter(instance=instance,user = user, host = host).values('id', 'user','host','password' ):
+        cnf_users = user_password
+
+    result = {'status': 0, 'msg': 'ok', 'rows': cnf_users}
+
+    return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+                        content_type='application/json')
 
 @permission_required('sql.instance_account_manage', raise_exception=True)
 def create(request):

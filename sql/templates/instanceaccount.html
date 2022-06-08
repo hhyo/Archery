@@ -15,7 +15,8 @@
             <select id="saved" class="form-control selectpicker"
                     title="全部">
                 <option value="" selected="selected">全部</option>
-                <option value="true">已录入</option>
+                <option value="True">已录入</option>
+                <option value="False">未录入</option>
             </select>
         </div>
         <div class="form-group ">
@@ -985,6 +986,31 @@
             </div>
         </div>
     </div>
+
+    <!-- 显示密码模态框 -->
+    <div class="modal fade" id="show-pwd" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title">查看密码
+                                实例: <span id="show-instance" style="color: red"></span>
+                                账号: <span id="show-user" style="color: red"></span></h4>
+                        </div>
+                        <div>
+                            <h4 class="modal-title">
+                            密码: <span id="show-password" style="color: red"></span></h4>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-danger" id="lockBtn">确定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 {% block js %}
     {% load static %}
@@ -1161,13 +1187,20 @@
                             let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
                             let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
                             let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+
                             let btn_lock_account = "";
                             if (row.is_locked === 'N') {
                                 btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">锁定</button>\n";
                             } else if (row.is_locked === 'Y') {
                                 btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">解锁</button>\n";
                             }
-                            return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
+
+                            if ($("#saved").val()  == 'True') {
+                                let btn_show_password = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_password_modal(this)" + "\">显密</button>\n";
+                                return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account + btn_show_password
+                            }else{
+                                return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
+                            }
                         }
                     }],
                 onLoadSuccess: function (data) {
@@ -1189,6 +1222,7 @@
             });
 
         }
+
 
         //获取实例数据库
         function db_list() {
@@ -1507,6 +1541,7 @@
             let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
             let user = row_data['user'];
             let host = row_data['host'];
+            let password = row_data['password'];
             $("#reset-user").text(user_host);
             $("#reset-pwd").modal('show');
 
@@ -1540,6 +1575,42 @@
                     }
                 });
             });
+        }
+
+        //显示密码
+        function show_password_modal (obj) {
+            let user_host = $(obj).attr("user_host");
+            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+
+            $.ajax({
+                type: "post",
+                url: "/instance/user/requ_password",
+                dataType: "json",
+                data: {
+                        instance_id: $("#instance").val(),
+                        user: row_data['user'],
+                        host: row_data['host']
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    //console.log(data);
+                    if (data.status === 0) {
+                        let result = data.rows;
+                        let password = result.password;
+                        //console.log(result);
+                        $("#show-user").text(user_host);
+                        $("#show-password").text(password);
+                        $("#show-pwd").modal('show');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+
         }
 
         //锁定or解锁账号

@@ -96,6 +96,7 @@ urlpatterns = [
     path('instance/list/', instance.lists),
 
     path('instance/user/list', instance_account.users),
+    path('instance/user/requ_password', instance_account.requ_password),
     path('instance/user/create/', instance_account.create),
     path('instance/user/edit/', instance_account.edit),
     path('instance/user/grant/', instance_account.grant),

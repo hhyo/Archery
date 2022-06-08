@@ -33,3 +33,6 @@ insert IGNORE INTO auth_permission (name, content_type_id, codename) VALUES
 -- 实例配置表新增mode字段，用于redis实例；为历史数据设置默认值
 alter table sql_instance add column `mode` varchar(10) DEFAULT '' after `db_type`;
 update sql_instance set mode='standalone' where db_type='redis';
+
+-- 已录入数据库新增in_use字段，用于标识数据库还是否在用,Y是在用，N是停用
+alter table instance_database add in_use varchar(1) COMMENT '在用状态';

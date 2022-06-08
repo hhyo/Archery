@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 @author: hhyo
 @license: Apache Licence
 @file: instance_database.py
@@ -24,7 +24,7 @@ __author__ = 'hhyo'
 def databases(request):
     """获取实例数据库列表"""
     instance_id = request.POST.get('instance_id')
-    saved = True if request.POST.get('saved') == 'true' else False  # 平台是否保存
+    saved  = request.POST.get('saved')
 
     if not instance_id:
         return JsonResponse({'status': 0, 'msg': '', 'data': []})
@@ -37,12 +37,12 @@ def databases(request):
     # 获取已录入数据库
     cnf_dbs = dict()
     for db in InstanceDatabase.objects.filter(
-            instance=instance).values('id', 'db_name', 'owner', 'owner_display', 'remark'):
+           instance=instance).values('id', 'db_name', 'owner', 'owner_display', 'remark','in_use'):
         db['saved'] = True
         cnf_dbs[f"{db['db_name']}"] = db
 
     # 获取所有数据库
-    sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+    sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME
 FROM information_schema.SCHEMATA
 WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
     query_engine = get_engine(instance=instance)
@@ -71,7 +71,11 @@ group by TABLE_SCHEMA;"""
             rows.append(row)
         # 过滤参数
         if saved:
-            rows = [row for row in rows if row['saved']]
+            if saved == 'True':
+                saved = bool(saved)
+            else:
+                saved = bool("")
+            rows = [row for row in rows if row['saved'] == saved ]
 
         result = {'status': 0, 'msg': 'ok', 'rows': rows}
     else:
@@ -90,6 +94,7 @@ def create(request):
     db_name = request.POST.get('db_name')
     owner = request.POST.get('owner', '')
     remark = request.POST.get('remark', '')
+    in_use = request.POST.get('in_use', '')
 
     if not all([db_name]):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
@@ -114,7 +119,7 @@ def create(request):
     # 保存到数据库
     else:
         InstanceDatabase.objects.create(
-            instance=instance, db_name=db_name, owner=owner, owner_display=owner_display, remark=remark)
+            instance=instance, db_name=db_name, owner=owner, owner_display=owner_display, remark=remark,in_use = in_use )
         # 清空实例资源缓存
         r = get_redis_connection("default")
         for key in r.scan_iter(match='*insRes*', count=2000):
@@ -129,6 +134,7 @@ def edit(request):
     db_name = request.POST.get('db_name')
     owner = request.POST.get('owner', '')
     remark = request.POST.get('remark', '')
+    in_use = request.POST.get('in_use', '')
 
     if not all([db_name]):
         return JsonResponse({'status': 1, 'msg': '参数不完整，请确认后提交', 'data': []})
@@ -147,5 +153,5 @@ def edit(request):
     InstanceDatabase.objects.update_or_create(
         instance=instance,
         db_name=db_name,
-        defaults={"owner": owner, "owner_display": owner_display, "remark": remark})
+        defaults={"owner": owner, "owner_display": owner_display, "remark": remark,"in_use" : in_use})
     return JsonResponse({'status': 0, 'msg': '', 'data': []})
