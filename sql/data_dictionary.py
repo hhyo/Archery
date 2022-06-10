@@ -1,10 +1,10 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import os
+from urllib.parse import quote
 
 import MySQLdb
 import simplejson as json
-from django.utils.http import urlquote
 from django.template import loader
 from archery import settings
 from sql.engines import get_engine
@@ -107,7 +107,7 @@ def export(request):
     if db_name:
         response = FileResponse(open(f'{path}/{instance_name}_{db_name}.html', 'rb'))
         response['Content-Type'] = 'application/octet-stream'
-        response['Content-Disposition'] = f'attachment;filename="{urlquote(instance_name)}_{urlquote(db_name)}.html"'
+        response['Content-Disposition'] = f'attachment;filename="{quote(instance_name)}_{quote(db_name)}.html"'
         return response
 
     else:

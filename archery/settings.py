@@ -176,6 +176,9 @@ CACHES = {
     }
 }
 
+# https://docs.djangoproject.com/en/3.2/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # API Framework
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

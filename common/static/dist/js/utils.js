@@ -62,5 +62,4 @@ var jsonHighLight = function(json) {
             toggleMode($(this).val());
         });
     });
-})(django.jQuery);
-
+})(django && django.jQuery || jQuery);

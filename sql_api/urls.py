@@ -1,5 +1,4 @@
 from django.urls import path, include
-from django.conf.urls import url
 from sql_api import views
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
@@ -17,17 +16,17 @@ urlpatterns = [
     path('swagger/', SpectacularSwaggerView.as_view(url_name='sql_api:schema'), name='swagger'),
     path('redoc/', SpectacularRedocView.as_view(url_name='sql_api:schema'), name='redoc'),
     path('v1/user/', api_user.UserList.as_view()),
-    url(r'^v1/user/(?P<pk>[0-9]+)/$', api_user.UserDetail.as_view()),
+    path('v1/user/<int:pk>/', api_user.UserDetail.as_view()),
     path('v1/user/group/', api_user.GroupList.as_view()),
-    url(r'^v1/user/group/(?P<pk>[0-9]+)/$', api_user.GroupDetail.as_view()),
+    path('v1/user/group/<int:pk>/', api_user.GroupDetail.as_view()),
     path('v1/user/resourcegroup/', api_user.ResourceGroupList.as_view()),
-    url(r'^v1/user/resourcegroup/(?P<pk>[0-9]+)/$', api_user.ResourceGroupDetail.as_view()),
+    path('v1/user/resourcegroup/<int:pk>/', api_user.ResourceGroupDetail.as_view()),
     path('v1/user/auth/', api_user.UserAuth.as_view()),
     path('v1/user/2fa/', api_user.TwoFA.as_view()),
     path('v1/user/2fa/save/', api_user.TwoFASave.as_view()),
     path('v1/user/2fa/verify/', api_user.TwoFAVerify.as_view()),
     path('v1/instance/', api_instance.InstanceList.as_view()),
-    url(r'^v1/instance/(?P<pk>[0-9]+)/$', api_instance.InstanceDetail.as_view()),
+    path('v1/instance/<int:pk>/', api_instance.InstanceDetail.as_view()),
     path('v1/instance/resource/', api_instance.InstanceResource.as_view()),
     path('v1/instance/tunnel/', api_instance.TunnelList.as_view()),
     path('v1/instance/rds/', api_instance.AliyunRdsList.as_view()),
