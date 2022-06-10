@@ -134,7 +134,10 @@ class ResultSet:
     def to_dict(self):
         tmp_list = []
         for r in self.rows:
-            tmp_list += [dict(zip(self.column_list, r))]
+            if isinstance(r,dict):
+                tmp_list += [r]
+            else:
+                tmp_list += [dict(zip(self.column_list, r))]
         return tmp_list
 
     def to_sep_dict(self):

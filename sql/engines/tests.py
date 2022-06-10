@@ -1648,8 +1648,25 @@ class MongoTest(TestCase):
                   {"_id": {"$oid": "7f10162029684728e70045ab"}, "author": "archery"}]
         cols = self.engine.fill_query_columns(cursor, columns=columns)
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
-
-
+    
+    def test_current_op(self):
+        command_types = ['Full','All','Inner','Active']
+        for command_type in command_types:
+            result_set = self.engine.current_op(command_type)
+            self.assertIsInstance(result_set, ResultSet)
+    
+    def test_get_kill_command(self):
+        kill_command1 = self.engine.get_kill_command([111,222])
+        kill_command2 = self.engine.get_kill_command(['shards: 111','shards: 222'])
+        self.assertEqual(kill_command1, 'db.killOp(111);db.killOp(222);')
+        self.assertEqual(kill_command2, 'db.killOp("shards: 111");db.killOp("shards: 111");')
+    
+    def test_kill_op(self):
+        self.engine.kill_op([111,222])
+        self.engine.kill_op(['shards: 111','shards: 222'])
+        self.assertEqual("","")
+    
+    
 class TestClickHouse(TestCase):
 
     def setUp(self):
