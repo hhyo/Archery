@@ -40,4 +40,4 @@ var dateFormat = function(fmt, date) {
             toggleMode($(this).val());
         });
     });
-})(django.jQuery);
+})(django && django.jQuery || jQuery);
