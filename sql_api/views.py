@@ -116,35 +116,12 @@ def debug(request):
         django_q_info = f'获取django_q信息报错:{e}'
 
     # Inception和goInception信息
-    inception_host = sys_config.get('inception_host')
-    inception_port = sys_config.get('inception_port', 0)
     go_inception_host = sys_config.get('go_inception_host')
     go_inception_port = sys_config.get('go_inception_port', 0)
     inception_remote_backup_host = sys_config.get('inception_remote_backup_host', '')
     inception_remote_backup_port = sys_config.get('inception_remote_backup_port', '')
     inception_remote_backup_user = sys_config.get('inception_remote_backup_user', '')
     inception_remote_backup_password = sys_config.get('inception_remote_backup_password', '')
-
-    # inception
-    try:
-        inc_conn = MySQLdb.connect(host=inception_host, port=int(inception_port),
-                                   connect_timeout=1, cursorclass=MySQLdb.cursors.DictCursor)
-        cursor = inc_conn.cursor()
-        cursor.execute('inception get variables')
-        rows = cursor.fetchall()
-        full_inception_info = dict()
-        for row in rows:
-            full_inception_info[row.get('Variable_name')] = row.get('Value')
-        inception_info = {
-            'version': full_inception_info.get('version'),
-            'max_allowed_packet': full_inception_info.get('max_allowed_packet'),
-            'inception_language_code': full_inception_info.get('inception_language_code'),
-            'inception_osc_on': full_inception_info.get('inception_osc_on'),
-            'inception_osc_bin_dir': full_inception_info.get('inception_osc_bin_dir'),
-        }
-    except Exception as e:
-        inception_info = f'获取Inception信息报错:{e}'
-        full_inception_info = inception_info
 
     # goInception
     try:
@@ -179,7 +156,7 @@ def debug(request):
         cursor.execute('select 1;')
         backup_info = 'normal'
     except Exception as e:
-        backup_info = f'无法连接Inception备份库\n{e}'
+        backup_info = f'无法连接goInception备份库\n{e}'
 
     # PACKAGES
     installed_packages = pkg_resources.working_set
@@ -193,8 +170,6 @@ def debug(request):
         },
         'django_q': django_q_info,
         'inception': {
-            'enable_inception': sys_config.get('inception'),
-            'inception_info': full_inception_info if full else inception_info,
             'goinception_info': full_goinception_info if full else goinception_info,
             'backup_info': backup_info
         },
