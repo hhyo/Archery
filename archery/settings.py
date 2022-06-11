@@ -25,6 +25,8 @@ env = environ.Env(
         "email": "mail"
     }),
     Q_CLUISTER_SYNC=(bool, False) # qcluster 同步模式, debug 时可以调整为 True
+    # CSRF_TRUSTED_ORIGINS=subdomain.example.com,subdomain.example2.com subdomain.example.com
+    CSRF_TRUSTED_ORIGINS=(list, []) 
 )
 
 
@@ -35,6 +37,9 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+
+# https://docs.djangoproject.com/en/4.0/ref/settings/#csrf-trusted-origins
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 # 解决nginx部署跳转404
 USE_X_FORWARDED_HOST = True
