@@ -21,16 +21,18 @@
         </li>
         <div class="form-inline pull-right">
             <div class="form-group ">
-                <select id=instance_name class="form-control selectpicker" name="instance_name_list"
+                <select id="instance_name" class="form-control selectpicker" name="instance_name_list"
                         title="请选择实例:"
                         data-live-search="true">
+                        <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                        <optgroup id="optgroup-mongo" label="mongo"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
                 <select id="command" class="form-control selectpicker" name="command_type" title="command类型">
-                    <option value="All">All</option>
+                    <!--option value="All">All</option>
                     <option value="Query" selected="selected">Query</option>
-                    <option value="Not Sleep">Not Sleep</option>
+                    <option value="Not Sleep">Not Sleep</option-->
                 </select>
             </div>
         </div>
@@ -91,6 +93,173 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+
+        var processListColumns  = NaN;
+        var processListDetailFormatCallback = NaN;
+
+        // get_process_list函数表格的格式化信息
+        // 0.数据库类型； 1.类型过滤； 2.字段映射；  3.详细信息的处理函数
+        var processListTableInfos = [
+            [
+                'mysql',
+                ["All","Not Sleep","Query"],
+                [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true
+                }, {
+                    title: 'THEEAD ID',
+                    field: 'id',
+                    sortable: true
+                }, {
+                    title: 'USER',
+                    field: 'user',
+                    sortable: true
+                }, {
+                    title: 'HOST',
+                    field: 'host',
+                    sortable: true
+                }, {
+                    title: 'DATABASE',
+                    field: 'db',
+                    sortable: true
+                }, {
+                    title: 'TIME(s)',
+                    field: 'time',
+                    sortable: true
+                }, {
+                    title: 'COMMAND',
+                    field: 'command',
+                    sortable: true
+                }, {
+                    title: 'STATE',
+                    field: 'state',
+                    sortable: true
+                }, {
+                    title: 'INFO',
+                    field: 'info',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        if (value.length > 20) {
+                            var sql = value.substr(0, 20) + '...';
+                            return sql;
+                        } else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: '完整INFO',
+                    field: 'info',
+                    sortable: true,
+                    visible: false // 默认不显示
+                }],
+                function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'info') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                }
+            ],
+            [
+                'mongo',
+                ["All","Active","Full","Inner"],
+                [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true
+                }, {
+                    title: 'opid',
+                    field: 'opid',
+                    sortable: true
+                }, {
+                    title: 'client',
+                    field: 'client',
+                    sortable: true
+                }, {
+                    title: 'client_s',
+                    field: 'client_s',
+                    sortable: true
+                }, {
+                    title: 'type',
+                    field: 'type',
+                    sortable: true
+                }, {
+                    title: 'desc',
+                    field: 'desc',
+                    sortable: true
+                }, {
+                    title: 'microsecs_running',
+                    field: 'microsecs_running',
+                    sortable: true
+                }, {
+                    title: 'waitingForLock',
+                    field: 'waitingForLock',
+                    sortable: true
+                    
+                },{
+                    title: 'locks',
+                    field: 'locks',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        return JSON.stringify(value);
+                    },
+                    visible: false 
+                }, {
+                    title: 'lockStats',
+                    field: 'lockStats',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        return JSON.stringify(value);
+                    },
+                    visible: false 
+                }, {
+                    title: 'command',
+                    field: 'command',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        if (value) {
+                            let c = JSON.stringify(value);
+                            if (c.length > 20) {
+                                return c.substr(0, 80) + '...}';
+                            } else {
+                                return c;
+                            }
+                        }
+                    }
+                }, {
+                    title: '完整command',
+                    field: 'command',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        return JSON.stringify(value);
+                    },
+                    visible: false // 默认不显示
+                }, {
+                    title: 'clientMetadata',
+                    field: 'clientMetadata',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        return JSON.stringify(value);
+                    },
+                    visible: false // 默认不显示
+                }],
+                function (index, row) {
+                    delete row['checkbox'];
+                    return "<pre>"+jsonHighLight(JSON.stringify(row, null, 2))+"</pre>";
+                }
+            ],
+        ]
+
+
         // 问题诊断--进程列表
         function get_process_list() {
             $("#command-div").show();
@@ -124,21 +293,7 @@
                     cardView: false,                    //是否显示详细视图
                     detailView: true,                  //是否显示父子表
                     //格式化详情
-                    detailFormatter: function (index, row) {
-                        var html = [];
-                        $.each(row, function (key, value) {
-                            if (key === 'info') {
-                                var sql = window.sqlFormatter.format(value);
-                                //替换所有的换行符
-                                sql = sql.replace(/\r\n/g, "<br>");
-                                sql = sql.replace(/\n/g, "<br>");
-                                //替换所有的空格
-                                sql = sql.replace(/\s/g, "&nbsp;");
-                                html.push('<span>' + sql + '</span>');
-                            }
-                        });
-                        return html.join('');
-                    },
+                    detailFormatter: processListDetailFormatCallback,
                     locale: 'zh-CN',                    //本地化
                     toolbar: "#process-toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
@@ -149,48 +304,7 @@
                             command_type: $("#command").val()
                         }
                     },
-                    columns: [{
-                        title: '',
-                        field: 'checkbox',
-                        checkbox: true
-                    }, {
-                        title: 'THEEAD ID',
-                        field: 'id'
-                    }, {
-                        title: 'USER',
-                        field: 'user'
-                    }, {
-                        title: 'HOST',
-                        field: 'host'
-                    }, {
-                        title: 'DATABASE',
-                        field: 'db'
-                    }, {
-                        title: 'TIME(s)',
-                        field: 'time',
-                        sortable: true
-                    }, {
-                        title: 'COMMAND',
-                        field: 'command'
-                    }, {
-                        title: 'STATE',
-                        field: 'state'
-                    }, {
-                        title: 'INFO',
-                        field: 'info',
-                        formatter: function (value, row, index) {
-                            if (value.length > 20) {
-                                var sql = value.substr(0, 20) + '...';
-                                return sql;
-                            } else {
-                                return value
-                            }
-                        }
-                    }, {
-                        title: '完整INFO',
-                        field: 'info',
-                        visible: false // 默认不显示
-                    }],
+                    columns: processListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
                             alert("数据加载失败！" + data.msg);
@@ -550,7 +664,11 @@
                     //获取选择的线程id
                     var AllSelectionIds = [];
                     for (var i = 0; i < AllSelections.length; i++) {
-                        AllSelectionIds.push(AllSelections[i]['id'])
+                        if (AllSelections[i]['id']){
+                            AllSelectionIds.push(AllSelections[i]['id'])    // mysql
+                        } else if (AllSelections[i]['opid']) {
+                            AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
+                        }
                     }
                     var instance_name = $("#instance_name").val();
 
@@ -593,7 +711,11 @@
                 //获取选择的线程id
                 var AllSelectionIds = [];
                 for (var i = 0; i < AllSelections.length; i++) {
-                    AllSelectionIds.push(AllSelections[i]['id'])
+                    if (AllSelections[i]['id']){
+                        AllSelectionIds.push(AllSelections[i]['id'])    // mysql
+                    } else if (AllSelections[i]['opid']) {
+                        AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
+                    }
                 }
                 var instance_name = $("#instance_name").val();
                 var request_params = $("#request_params").val();
@@ -627,7 +749,7 @@
             }
         }
 
-
+        var allInstances = NaN;
         $(document).ready(function () {
                 //获取用户实例列表
                 $(function () {
@@ -636,7 +758,7 @@
                         url: "/group/user_all_instances/",
                         dataType: "json",
                         data: {
-                            db_type: ['mysql']
+                            db_type: ['mysql','mongo']
                         },
                         complete: function () {
                             //如果已选择instance_name，进入页面自动填充，并且重置激活id
@@ -650,10 +772,18 @@
                         success: function (data) {
                             if (data.status === 0) {
                                 let result = data['data'];
-                                $("#instance_name").empty();
+                                allInstances = result;
+                                // $("#instance_name").empty();
+                                $("#optgroup-mysql").empty();
+                                $("#optgroup-mongo").empty();
                                 for (let i = 0; i < result.length; i++) {
                                     let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                    $("#instance_name").append(instance);
+                                    // $("#instance_name").append(instance);
+                                    if (result[i]['db_type'] === 'mysql') {
+                                        $("#optgroup-mysql").append(instance);
+                                    } else if (result[i]['db_type'] === 'mongo') {
+                                        $("#optgroup-mongo").append(instance);
+                                    } 
                                 }
                                 $('#instance_name').selectpicker('render');
                                 $('#instance_name').selectpicker('refresh');
@@ -690,6 +820,33 @@
 
         //实例变动时保存实例信息
         $("#instance_name").change(function () {
+            // 不同类型的数据库有不同的操作
+            $("#command").empty();
+            
+            let command_types = NaN;
+            let db_type = NaN;
+            allInstances.forEach((instanceInfo,i) => {
+                if (instanceInfo["instance_name"] === $("#instance_name").val()) {
+                    db_type = instanceInfo["db_type"];
+                }
+            })
+            processListTableInfos.forEach((processListTableInfo,i) =>{
+                if (processListTableInfo[0] === db_type) {
+                    command_types = processListTableInfo[1];
+                    processListColumns = processListTableInfo[2];
+                    processListDetailFormatCallback = processListTableInfo[3];
+                }
+            })
+            
+            // console.log(command_types);
+            for (let i = 0; i < command_types.length; i++) {
+                let instance = "<option value=\"" + command_types[i]+ "\">" + command_types[i] + "</option>";
+                $("#command").append(instance);
+            }
+
+            $('#command').selectpicker('render');
+            $('#command').selectpicker('refresh');
+            
             sessionStorage.setItem('diagnostic_instance_name', $("#instance_name").val());
             var active_li_id = sessionStorage.getItem('diagnostic_active_li_id');
             if (active_li_id === 'process_tab') {
@@ -701,6 +858,7 @@
             } else if (active_li_id === 'trx_tab') {
                 get_trx_list();
             }
+
         });
 
         //请求类型变动时自动刷新
