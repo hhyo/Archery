@@ -33,3 +33,4 @@ drf-spectacular==0.22.0
 pyotp==2.6.0
 pillow==9.0.1
 qrcode==7.3.1
+django-environ

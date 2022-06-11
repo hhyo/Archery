@@ -8,8 +8,67 @@ metadata:
     helm.sh/chart: {{ include "archery.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- with .Values.configMap.data }}
 data:
-{{- toYaml . | nindent 2 }}
-{{- end -}}
+  init-archery.sh: |-
+    #!/bin/bash
+    mkdir -p /opt/archery/downloads/{binlog2sql,log,schemasync}
+    cd /opt/archery
+    echo 切换python运行环境
+    source /opt/venv4archery/bin/activate
+    
+    python3 manage.py makemigrations sql
+    python3 manage.py migrate
+    #数据初始化
+    python3 manage.py dbshell<sql/fixtures/auth_group.sql
+    python3 manage.py dbshell<src/init_sql/mysql_slow_query_review.sql
+    #创建管理用户
+    #python3 manage.py createsuperuser
+    cat /opt/archery/src/docker/createsuperuser.py | python3 manage.py shell
+  createsuperuser.py: |-
+    #/usr/bin/python3 env
+    from django.contrib.auth import get_user_model
+    DJANGO_SU_NAME = "{{ .Values.configMap.superuser.username }}"
+    DJANGO_SU_EMAIL = "{{ .Values.configMap.superuser.email }}"
+    DJANGO_SU_PASSWORD = "{{ .Values.configMap.superuser.password }}"
+    User = get_user_model()
+    try:
+      superuser=User.objects.create_superuser(
+      username=DJANGO_SU_NAME,
+      email=DJANGO_SU_EMAIL,
+      password=DJANGO_SU_PASSWORD)
+    except:
+      print('Error,用户重复创建或创建失败，请登录pod检查!')
+      exit(0)
+    else:
+      superuser.save()
+  startup.sh: |-
+    #!/bin/bash
+    cd /opt/archery
+
+    echo 切换python运行环境
+    source /opt/venv4archery/bin/activate
+    echo 修改重定向端口
+    if [[ -z $NGINX_PORT ]]; then
+        sed -i "s/:nginx_port//g" /etc/nginx/nginx.conf
+    else
+        sed -i "s/nginx_port/$NGINX_PORT/g" /etc/nginx/nginx.conf
+    fi
+
+    echo 启动nginx
+    /usr/sbin/nginx
+
+    echo 收集所有的静态文件到STATIC_ROOT
+    python3 manage.py collectstatic -v0 --noinput
+
+    echo 启动Django Q cluster
+    supervisord -c /etc/supervisord.conf
+
+
+    echo 启动服务
+    settings=${1:-"archery.settings"}
+    ip=${2:-"127.0.0.1"}
+    port=${3:-8888}
+
+    gunicorn -w 4 --env DJANGO_SETTINGS_MODULE=${settings} --log-level=debug --error-logfile=/tmp/archery.err -b ${ip}:${port} --preload --timeout 600  archery.wsgi:application
+{{- toYaml .Values.configMap.data | nindent 2 }}
 {{- end }}

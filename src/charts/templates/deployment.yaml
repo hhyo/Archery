@@ -20,17 +20,60 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       initContainers:
+        {{- if .Values.redis.embedded }}
         - image: busybox
           name: init-mysql
           imagePullPolicy: IfNotPresent
           command: ['sh', '-c', 'until nslookup archery-mysql; do echo waiting for mysql; sleep 10; done;']
+        {{- end}}
         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           name: init-archery
           imagePullPolicy: IfNotPresent
+          env:
+            - name: NGINX_PORT
+              value: "9123"
+          {{- if .Values.mysql.embedded }}
+            - name: DATABASE_URL
+              value: mysql://root:{{ .Values.mysql.auth.rootPassword }}@{{ include "archery.fullname" . }}-mysql/{{ .Values.mysql.auth.database }}
+          {{- else if .Values.mysql.url }}
+            - name: DATABASE_URL
+              value: {{ .Values.mysql.url }}
+          {{- else if .Values.mysql.urlSecret}}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.urlSecret }}
+                  key: {{ .Values.mysql.urlSecretKey }}
+          {{- end}}
+          {{- if .Values.redis.embedded }}
+            - name: CACHE_URL
+              value: redis://root:{{ .Values.redis.auth.rootPassword }}@{{ include "archery.fullname" . }}-redis:6379/0
+            - name: DINGDING_CACHE_URL
+              value: redis://root:{{ .Values.redis.auth.rootPassword }}@{{ include "archery.fullname" . }}-redis:6379/1
+          {{- else if .Values.redis.url }}
+            - name: CACHE_URL
+              value: {{ .Values.redis.url }}
+            - name: DINGDING_CACHE_URL
+              value: {{ .Values.redis.dingdingUrl }}
+          {{- else if .Values.redis.urlSecret}}
+            - name: CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.urlSecret }}
+                  key: {{ .Values.redis.urlSecretKey }}
+            - name: DINGDING_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.dingdingUrlSecret }}
+                  key: {{ .Values.redis.dingdingUrlSecretKey }}
+          {{- end }}
+          {{- with .Values.envs }}
+            {{ toYaml . | nindent 12 }}
+          {{- end}}
           volumeMounts:
           - name: archery-settings
-            subPath: settings.py
-            mountPath: /opt/archery/archery/settings.py
+            subPath: local_settings.py
+            mountPath: /opt/archery/local_settings.py
           - name: archery-settings
             subPath: init-archery.sh
             mountPath: /opt/archery/src/docker/init-archery.sh
@@ -49,6 +92,44 @@ spec:
           env:
             - name: NGINX_PORT
               value: "9123"
+          {{- if .Values.mysql.embedded }}
+            - name: DATABASE_URL
+              value: mysql://root:{{ .Values.mysql.auth.rootPassword }}@{{ include "archery.fullname" . }}-mysql/{{ .Values.mysql.auth.database }}
+          {{- else if .Values.mysql.url }}
+            - name: DATABASE_URL
+              value: {{ .Values.mysql.url }}
+          {{- else if .Values.mysql.urlSecret}}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.urlSecret }}
+                  key: {{ .Values.mysql.urlSecretKey }}
+          {{- end}}
+          {{- if .Values.redis.embedded }}
+            - name: CACHE_URL
+              value: redis://root:{{ .Values.redis.auth.rootPassword }}@{{ include "archery.fullname" . }}-redis:6379/0
+            - name: DINGDING_CACHE_URL
+              value: redis://root:{{ .Values.redis.auth.rootPassword }}@{{ include "archery.fullname" . }}-redis:6379/1
+          {{- else if .Values.redis.url }}
+            - name: CACHE_URL
+              value: {{ .Values.redis.url }}
+            - name: DINGDING_CACHE_URL
+              value: {{ .Values.redis.dingdingUrl }}
+          {{- else if .Values.redis.urlSecret}}
+            - name: CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.urlSecret }}
+                  key: {{ .Values.redis.urlSecretKey }}
+            - name: DINGDING_CACHE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.dingdingUrlSecret }}
+                  key: {{ .Values.redis.dingdingUrlSecretKey }}
+          {{- end }}
+          {{- with .Values.envs }}
+            {{ toYaml . | nindent 12 }}
+          {{- end}}
           ports:
             - name: archery
               containerPort: 9123

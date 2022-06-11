@@ -1,9 +1,9 @@
-aiVersion: v2
+apiVersion: v2
 appVersion: "1.0"
 home: https://archerydms.com/
 description: Archery Helm chart for Kubernetes
 name: archery
-version: 0.1.1
+version: 0.2.0
 sources:
   - https://github.com/hhyo/Archery
 
@@ -15,6 +15,8 @@ dependencies:
   - name: redis
     version: ~15.7.1
     repository: https://charts.bitnami.com/bitnami
+    condition: redis.embedded
   - name: mysql
     version: ~8.8.20
     repository: https://charts.bitnami.com/bitnami
+    condition: mysql.embedded

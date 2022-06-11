@@ -35,7 +35,7 @@ def is_auto_review(workflow_id):
         for review_row in json.loads(review_content):
             review_result = ReviewResult(**review_row)
             # 去除SQL注释 https://github.com/hhyo/Archery/issues/949
-            sql = remove_comments(review_result.sql)
+            sql = remove_comments(review_result.sql).replace("\n","").replace("\r", "")
             # 正则匹配
             if p.match(sql):
                 auto_review = False

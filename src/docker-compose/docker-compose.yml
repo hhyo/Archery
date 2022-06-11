@@ -38,7 +38,7 @@ services:
     ports:
       - "9123:9123"
     volumes:
-      - "./archery/settings.py:/opt/archery/archery/settings.py"
+      - "./archery/settings.py:/opt/archery/local_settings.py"
       - "./archery/soar.yaml:/etc/soar.yaml"
       - "./archery/docs.md:/opt/archery/docs/docs.md"
       - "./archery/downloads:/opt/archery/downloads"
@@ -48,3 +48,7 @@ services:
     entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
     environment:
       NGINX_PORT: 9123
+      DATABASE_URL: "mysql://root:123456@mysql:3306/archery"
+      CACHE_URL: "redis://redis:6379/0?PASSWORD=123456"
+      DINGDING_CACHE_URL: "redis://redis:6379/1?PASSWORD=123456"
+      

@@ -17,25 +17,18 @@ service:
   port: 4000
   targetPort: 4000
 
-ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  paths: []
-  hosts:
-    - chart-example.local
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+initEnv:
+  - name: BACKUP_PASSWORD
+    value: "my-password"
+# - name: xxx
+#   value: xxx
 
 resources: {}
 
 configMap:
   enabled: true
   data:
-    config.toml: |-
+    config.toml.template: |-
       host="0.0.0.0"
       advertise_address=""
       port=4000
@@ -91,7 +84,7 @@ configMap:
       backup_host="archery-mysql"
       backup_port=3306
       backup_user="root"
-      backup_password="MYSQL_ROOT_PASSWORD"
+      backup_password="BACKUP_PASSWORD_PLACEHOLDER"
       #安全更新是否开启.
       #-1表示不做操作,基于远端数据库[默认值]
       #0表示关闭安全更新
