@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/release/hhyo/archery.svg)](https://github.com/hhyo/archery/releases/)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/pypi/pyversions/django)](https://img.shields.io/pypi/pyversions/django/)
-[![version](https://img.shields.io/badge/django-3.1-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/3.1/)
+[![version](https://img.shields.io/badge/django-4.0-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/4.0/)
 [![Publish Docker image](https://github.com/hhyo/Archery/actions/workflows/docker-image.yml/badge.svg)](https://github.com/hhyo/Archery/actions/workflows/docker-image.yml)
 [![docker_pulls](https://img.shields.io/docker/pulls/hhyo/archery.svg)](https://hub.docker.com/r/hhyo/archery/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
@@ -15,7 +15,7 @@
 
 [文档](https://archerydms.com/) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) | [Releases](https://github.com/hhyo/archery/releases/)
 
-![](https://images.gitee.com/uploads/images/2019/1110/202317_32bd4a1c_1038040.png)
+![](https://github.com/hhyo/Archery/wiki/images/dashboard.png)
 
 </div>
 
@@ -39,20 +39,20 @@ Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于
 | ODPS | √ | ×  | ×  | × | × | × | × | × | × | × |
 | ClickHouse | √ | √  | √  | × | × | × | × | × | × | × |
 
-  
+
 
 快速开始
 ===============
 ### 系统体验
 [在线体验](https://demo.archerydms.com)
-  
+
 | 账号 | 密码 |
 | --- | --- |
 | archer | archer |
 
 ### Docker
 #### 准备运行配置
-具体可参考：https://github.com/hhyo/Archery/tree/master/src/docker-compose    
+具体可参考：https://github.com/hhyo/Archery/tree/master/src/docker-compose
 
 #### 启动
 下载 [Releases](https://github.com/hhyo/archery/releases/)文件，解压后进入docker-compose文件夹
@@ -65,7 +65,7 @@ docker-compose -f docker-compose.yml up -d
 docker exec -ti archery /bin/bash
 cd /opt/archery
 source /opt/venv4archery/bin/activate
-python3 manage.py makemigrations sql  
+python3 manage.py makemigrations sql
 python3 manage.py migrate
 
 #数据初始化
@@ -148,18 +148,17 @@ python manage.py test -v 3
 
 贡献代码
 ===============
-可查阅主页的开发计划以及依赖清单，在对应issues中回复认领，或者直接提交PR，感谢你对Archery的贡献  
+可查阅主页的开发计划以及依赖清单，在对应Issues中回复认领，或者直接提交PR，感谢你对Archery的贡献
 贡献包括但不限于以下方式：
-- Wiki文档（开放编辑）
+- [Wiki文档](https://github.com/hhyo/Archery/wiki)（开放编辑）
 - Bug修复
 - 新功能提交
 - 代码优化
 - 测试用例完善
 
-问题反馈
+交流反馈
 ===============
-[Issues](https://github.com/hhyo/archery/issues)是本项目唯一的沟通渠道，如果在使用过程中遇到问题，请先查阅文档，如果仍无法解决，请查看相关日志，保存截图信息，给我们提交[Issue](https://github.com/hhyo/archery/issues)，请按照模板提供相关信息，否则会被直接关闭，感谢理解
+- 使用咨询、需求沟通：[Discussions](https://github.com/hhyo/Archery/discussions)
+- Bug提交：[Issues](https://github.com/hhyo/archery/issues)
 
-
-
-
+在提交Issue时请按照模板提供相关信息，不符合标准的问题可能会被直接关闭，非Bug类的交流请在Discussions上发布
