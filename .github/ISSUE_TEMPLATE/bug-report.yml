@@ -1,4 +1,4 @@
-name: 🐛 报告BUG
+name: 🐛 Bug Report
 description: 报告BUG请务必使用这个模板，不规范的提交可能会被直接关闭
 title: "[ bug ] 请对问题进行简要的描述"
 labels: ["bug"]
