@@ -1,6 +1,6 @@
-name: 🐛 Bug Report
+name: 🐛 报告BUG
 description: 报告BUG请务必使用这个模板，不规范的提交可能会被直接关闭
-title: "[ bug ] 请对问题进行简要的描述"
+title: "请对问题进行简要的描述"
 labels: ["bug"]
 body:
   - type: markdown
@@ -8,6 +8,7 @@ body:
       value: |
         感谢你花费时间来报告这个问题，在提交前请先查阅 [WIKI](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) 等文档，确保这是一个需要修复的问题🐛。如果是对于使用方法的咨询🤔🙏，或者你有好的想法和建议💡，请通过[Discussions](https://github.com/hhyo/Archery/discussions)来发布，再次感谢你对Archery的贡献 🎉🎉🎉
   - type: checkboxes
+    id: search-issues
     attributes:
       label: 问题是否已经被报告?
       description: 请适当进行搜索查看是否已存在类似的报告
@@ -26,6 +27,7 @@ body:
     validations:
       required: true
   - type: textarea
+    id: current-behavior
     attributes:
       label: 预期外的结果
       description: |
@@ -39,7 +41,7 @@ body:
     attributes:
       label: 日志文本
       description: |
-        将日志信息粘贴到此处，将会自动格式化处理，关于日志的查看方式
+        你可以将相关日志信息粘贴到此处，将会自动格式化处理，关于日志的查看方式
         1. logs/archery.log
         2. logs/qcluster.log
         3. docker logs archery -f --tail=10
@@ -60,20 +62,19 @@ body:
       label: 部署方式
       description: 请告诉我们你的应用部署方式
       options:
-        - Docker (Default)
-        - K8S (K8S)
+        - Docker
+        - K8S
         - 手工部署
     validations:
       required: true
   - type: textarea
+    id: other-msg
     attributes:
       label: 是否还有其他可以辅助定位问题的信息？比如数据库、浏览器、goInception等
       description: |
         部分信息可以在Archery的debug api中获取：[参考debug地址](https://demo.archerydms.com/api/debug?full=true)
-        examples:
-          - **MySQL**: 5.7.26
-          - **Browsers**: Chrome
-          - **goInception**: v1.2.5-49
-      render: markdown
+        - **MySQL**: 5.7.26
+        - **Browsers**: Chrome
+        - **goInception**: v1.2.5-49
     validations:
       required: false
