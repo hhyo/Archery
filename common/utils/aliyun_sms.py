@@ -35,7 +35,7 @@ class AliyunSMS:
             phone_numbers=kwargs['phone'],
             sign_name=self.sign_name,
             template_code=self.template_code,
-            template_param=f"{{{self.variable_name}: {kwargs['otp']}}}"
+            template_param=f"{{{self.variable_name}: \'{kwargs['otp']}\'}}"
         )
         runtime = util_models.RuntimeOptions()
         try:
