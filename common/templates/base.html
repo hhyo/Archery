@@ -291,12 +291,23 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
+                <label class="text-success">当前验证方式：</label>
+                <i>{% if twofa_type == 'disabled' %}
+                        未启用
+                    {% elif twofa_type == 'totp' %}
+                        TOTP验证
+                    {% elif twofa_type == 'sms' %}
+                        短信验证
+                    {% endif %}</i>
+                </div>
+                <div class="form-group">
                     <label for="auth_type">验证方式:</label>
                     <select id="auth_type" class="form-control show-tick selectpicker" name="instances"
                                     title="选择额外验证方式:"
                                     data-live-search="true">
                         <option value="disabled">关闭两步验证</option>
                         <option value="totp" selected="selected">Google身份验证器</option>
+                        <option value="sms">短信验证码</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -312,8 +323,8 @@
     </div>
 </div>
 
-<!-- 二维码模态框-->
-<div class="modal fade bs-example-modal-sm" id="qrcode" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<!-- 验证模态框-->
+<div class="modal fade bs-example-modal-sm" id="2fa-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -323,19 +334,28 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
-                    <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
+                    <div id="totp-form" class="form-group">
+                        <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                        <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
+                    </div>
+                    <div id="sms-form" class="form-group" style="display:none;">
+                        <label class="control-label" for="qrcode-img">1. 输入要绑定的手机号码：</label>
+                        <input class="form-control ng-valid ng-dirty ng-touched" id="phone" name="phone" type="text"
+                        oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
+                    </div>
                     <label class="control-label" for="otp">2. 输入6位验证码完成绑定：</label>
                     <input class="form-control ng-valid ng-dirty ng-touched" id="otp" name="otpCode" type="text"
                        oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
                 </div>
             </div>
             <div class="modal-footer">
+                <button id="get_captcha" type="button" class="btn btn-primary" style="display: none">获取验证码</button>
                 <button id="binding" type="button" class="btn btn-success">绑定</button>
             </div>
         </div>
     </div>
 </div>
+
 
     <!-- Page Content -->
     <div id="page-wrapper">
@@ -387,14 +407,15 @@
             dataType: "json",
             data: {
                 engineer: '{{ user.username }}',
-                auth_type: auth_type
+                auth_type: auth_type,
+                phone: $("#phone").val()
             },
             async: false,
             complete: function () {
             },
             success: function (data) {
+                result = data
                 if (data.status === 0) {
-                    result = data
                     $("#2fa").modal('hide');
                 } else {
                     alert(data.msg);
@@ -407,21 +428,23 @@
         return result
     }
 
-    function save(key) {
+    function save() {
         $.ajax({
             type: "post",
             url: "/api/v1/user/2fa/save/",
             dataType: "json",
             data: {
                 engineer: '{{ user.username }}',
-                key: key,
+                auth_type: $("#auth_type").val(),
+                key: $("#qrcode-img").attr('key'),
+                phone: $("#phone").val()
             },
             complete: function () {
             },
             success: function (data) {
                 if (data.status === 0) {
                     alert("已开启两步验证！");
-                    $("#qrcode").modal("hide");
+                    $("#2fa-auth").modal("hide");
                 } else {
                     alert(data.msg)
                 }
@@ -433,16 +456,15 @@
     }
 
     function authOTP(otp) {
-        let key = $("#qrcode-img").attr('key');
-        let auth_type = $("#auth_type").val();
         $.ajax({
             type: "post",
             url: "/api/v1/user/2fa/verify/",
             dataType: "json",
             data: {
                 engineer: '{{ user.username }}',
-                auth_type: auth_type,
-                key: key,
+                auth_type: $("#auth_type").val(),
+                key: $("#qrcode-img").attr('key'),
+                phone: $("#phone").val(),
                 otp: otp
             },
             complete: function () {
@@ -450,7 +472,7 @@
             success: function (data) {
                 if (data.status === 0) {
                     alert("验证成功！");
-                    save(key);
+                    save();
                 } else {
                     alert(data.msg)
                 }
@@ -490,14 +512,42 @@
         return result
     }
 
+    $("#auth_type").change(function () {
+        let auth_type = $("#auth_type").val();
+        if (auth_type === 'totp') {
+            $("#totp-form").show();
+            $("#sms-form").hide();
+            $("#get_captcha").hide();
+            $("#myModalLabel2").text('扫码绑定')
+        } else if (auth_type === 'sms') {
+            $("#totp-form").hide();
+            $("#sms-form").show();
+            $("#get_captcha").show();
+            $("#myModalLabel2").text('绑定手机号')
+        }
+    })
+
     $("#2fa-menu").click(function () {
         $("#2fa").modal('show');
     })
 
     $("#binding").click(function () {
         let otp = $('#otp').val();
+        if (!otp) {
+            alert('请输入验证码！')
+            return
+        }
         authOTP(otp);
     })
+
+    $('#2fa-auth').on('hide.bs.modal', function () {
+        $("#otp").val('');
+        $("#phone").val('')
+    });
+
+    $('#2fa').on('hide.bs.modal', function () {
+        $("#passwd").val('')
+    });
 
     $("#btnConfirm").click(function () {
         let auth_type = $("#auth_type").val();
@@ -510,20 +560,39 @@
         $("#passwd").val('');
         let isAuthenticated = auth('{{ user.username }}', password);
         if (isAuthenticated) {
-            let data = twofa(auth_type);
-            if (data.status === 0) {
-                if (auth_type === 'disabled') {
-                    alert("已关闭两步验证！")
-                } else if (auth_type === 'totp') {
-                    let key = data.data.key;
-                    $("#qrcode-img").attr("key", key)
-                    $("#qrcode-img").attr("src", "/user/qrcode/" + key)
-                    // 展示二维码
-                    $("#qrcode").modal("show");
-                }
+            if (auth_type === 'sms') {
+                $("#2fa-auth").modal("show");
             } else {
-                alert(data.msg)
+                let data = twofa(auth_type);
+                if (data.status === 0) {
+                    if (auth_type === 'disabled') {
+                        alert("已关闭两步验证！")
+                    } else if (auth_type === 'totp') {
+                        let key = data.data.key;
+                        $("#qrcode-img").attr("key", key)
+                        $("#qrcode-img").attr("src", "/user/qrcode/" + key)
+                        // 展示二维码
+                        $("#2fa-auth").modal("show");
+                    }
+                } else {
+                    alert(data.msg)
+                }
             }
+        }
+    })
+
+    $("#get_captcha").click(function () {
+        let phone = $("#phone").val();
+        if (!phone) {
+            alert('请输入手机号！')
+            return
+        }
+
+        let auth_type = $("#auth_type").val();
+        let data = twofa(auth_type);
+        if (data.status === 0) {
+            init_countdown(this);
+            alert('验证码已发送，5分钟内有效');
         }
     })
 </script>

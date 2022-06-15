@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.conf import settings
 from django.http import HttpResponse
 from qrcode import QRCode, constants
 from sql.models import TwoFactorAuthConfig
@@ -8,7 +7,6 @@ from io import BytesIO
 import traceback
 import logging
 import pyotp
-import os
 
 logger = logging.getLogger('default')
 
@@ -20,7 +18,7 @@ class TOTP(TwoFactorAuthBase):
         super(TOTP, self).__init__(user=user)
         self.user = user
 
-    def verify(self, opt, key=None):
+    def verify(self, otp, key=None):
         """校验一次性验证码"""
         result = {'status': 0, 'msg': 'ok'}
         if key:
@@ -28,7 +26,7 @@ class TOTP(TwoFactorAuthBase):
         else:
             secret_key = TwoFactorAuthConfig.objects.get(username=self.user.username).secret_key
         t = pyotp.TOTP(secret_key)
-        status = t.verify(opt)
+        status = t.verify(otp)
         result['status'] = 0 if status else 1
         result['msg'] = 'ok' if status else '验证码不正确！'
         return result

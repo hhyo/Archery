@@ -34,3 +34,4 @@ pyotp==2.6.0
 pillow==9.0.1
 qrcode==7.3.1
 django-environ
+alibabacloud_dysmsapi20170525==2.0.9

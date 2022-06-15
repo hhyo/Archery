@@ -374,6 +374,8 @@
                         <h6 style="color:red">注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）</h6>
                         <hr/>
                         <div class="form-horizontal">
+                        <h5 style="color: darkgrey"><b>工单通知</b></h5>
+                            <hr/>
                             <div class="form-group">
                                 <label for="archery_base_url"
                                        class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
@@ -704,8 +706,65 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <h5 style="color: darkgrey"><b>阿里云短信服务</b></h5>
+                            <hr/>
+                            <div class="form-group">
+                                <label for="sms_access_key_id"
+                                       class="col-sm-4 control-label">SMS_ACCESS_KEY_ID</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="sms_access_key_id"
+                                           key="sms_access_key_id"
+                                           value="{{ config.sms_access_key_id }}"
+                                           placeholder="阿里云访问密钥ID，用于标识用户">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="sms_access_key_secret"
+                                       class="col-sm-4 control-label">SMS_ACCESS_KEY_SECRET</label>
+                                <div class="col-sm-5">
+                                    <input type="password" class="form-control"
+                                           id="sms_access_key_secret"
+                                           key="sms_access_key_secret"
+                                           value="{{ config.sms_access_key_secret }}"
+                                           placeholder="阿里云访问密钥（AccessKey），用于验证用户的密钥">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="sms_sign_name"
+                                       class="col-sm-4 control-label">SMS_SIGN_NAME</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="sms_sign_name"
+                                           key="sms_sign_name"
+                                           value="{{ config.sms_sign_name }}"
+                                           placeholder="短信签名，需为审核通过状态">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="sms_template_code"
+                                       class="col-sm-4 control-label">SMS_TEMPLATE_CODE</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="sms_template_code"
+                                           key="sms_template_code"
+                                           value="{{ config.sms_template_code }}"
+                                           placeholder="短信模板Code，需为审核通过状态">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="sms_variable_name"
+                                       class="col-sm-4 control-label">SMS_VARIABLE_NAME</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="sms_variable_name"
+                                           key="sms_variable_name"
+                                           value="{{ config.sms_variable_name }}"
+                                           placeholder="短信模板中的变量名，如：code">
+                                </div>
+                            </div>
                         <br>
+                        </div>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>
                         <div class="form-horizontal">

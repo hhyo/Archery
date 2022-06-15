@@ -9,7 +9,7 @@ class TwoFactorAuthBase:
     def get_captcha(self):
         """获取验证码"""
 
-    def verify(self, opt):
+    def verify(self, otp):
         """校验一次性验证码"""
 
     def enable(self):
@@ -38,3 +38,8 @@ def get_authenticator(user=None, auth_type=None):
         from .totp import TOTP
 
         return TOTP(user=user)
+
+    elif auth_type == "sms":
+        from .sms import SMS
+
+        return SMS(user=user)

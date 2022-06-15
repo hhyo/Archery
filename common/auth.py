@@ -110,15 +110,18 @@ def authenticate_entry(request):
             # 用户是否配置过2fa
             if twofa_enabled:
                 auth_type = twofa_enabled[0].auth_type
+                phone = twofa_enabled[0].phone
                 verify_mode = 'verify_only'
             else:
                 auth_type = 'totp'
+                phone = ''
                 verify_mode = 'verify_config'
-            # 设置无登录状态cookie
+            # 设置无登录状态session
             s = SessionStore()
             s['user'] = authenticated_user.username
             s['auth_type'] = auth_type
             s['verify_mode'] = verify_mode
+            s['phone'] = phone
             s.set_expiry(300)
             s.create()
             result = {'status': 0, 'msg': 'ok', 'data': s.session_key}
@@ -126,11 +129,13 @@ def authenticate_entry(request):
             # 用户是否配置过2fa
             if twofa_enabled:
                 auth_type = twofa_enabled[0].auth_type
-                # 设置无登录状态cookie
+                phone = twofa_enabled[0].phone
+                # 设置无登录状态session
                 s = SessionStore()
                 s['user'] = authenticated_user.username
                 s['auth_type'] = auth_type
                 s['verify_mode'] = 'verify_only'
+                s['phone'] = phone
                 s.set_expiry(300)
                 s.create()
                 result = {'status': 0, 'msg': 'ok', 'data': s.session_key}

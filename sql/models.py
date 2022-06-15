@@ -67,10 +67,12 @@ class TwoFactorAuthConfig(models.Model):
     """
     auth_type_choice = (
         ('totp', 'Google身份验证器'),
+        ('sms', '短信验证码'),
     )
 
     username = fields.EncryptedCharField(verbose_name='用户名', max_length=200)
     auth_type = fields.EncryptedCharField(verbose_name='认证类型', max_length=128, choices=auth_type_choice)
+    phone = fields.EncryptedCharField(verbose_name='手机号码', max_length=64, null=True, default='')
     secret_key = fields.EncryptedCharField(verbose_name='用户密钥', max_length=256, null=True)
     user = models.OneToOneField(Users, on_delete=models.CASCADE)
 

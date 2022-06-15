@@ -6,12 +6,16 @@ from .serializers import UserSerializer, UserDetailSerializer, GroupSerializer, 
 from .pagination import CustomizedPagination
 from .permissions import IsOwner
 from .filters import UserFilter
+from django_redis import get_redis_connection
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate, login
 from django.conf import settings
 from django.http import Http404
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
 from common.twofa import TwoFactorAuthBase, get_authenticator
+import random
+import json
+import time
 
 
 class UserList(generics.ListAPIView):
@@ -271,6 +275,16 @@ class TwoFA(views.APIView):
             # 启用2fa - 先生成secret key
             authenticator = get_authenticator(user=user, auth_type=auth_type)
             result = authenticator.generate_key()
+        elif auth_type == 'sms':
+            # 启用2fa - 先发送短信验证码
+            phone = request.data['phone']
+            otp = '{:06d}'.format(random.randint(0, 999999))
+            authenticator = get_authenticator(user=user, auth_type=auth_type)
+            result = authenticator.get_captcha(phone=phone, otp=otp)
+            if result['status'] == 0:
+                r = get_redis_connection('default')
+                data = {'otp': otp, 'update_time': int(time.time())}
+                r.set(f'captcha-{phone}', json.dumps(data), 300)
         else:
             # 启用2fa
             authenticator = get_authenticator(user=user, auth_type=auth_type)
@@ -285,9 +299,9 @@ class TwoFASave(views.APIView):
     """
     permission_classes = [IsOwner]
 
-    @extend_schema(summary="保存2fa配置（TOTP)",
+    @extend_schema(summary="保存2fa配置",
                    request=TwoFASaveSerializer,
-                   description="保存2fa配置（TOTP)")
+                   description="保存2fa配置")
     def post(self, request):
         # 参数验证
         serializer = TwoFASaveSerializer(data=request.data)
@@ -295,11 +309,16 @@ class TwoFASave(views.APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         engineer = request.data['engineer']
-        key = request.data['key']
+        auth_type = request.data['auth_type']
+        key = request.data['key'] if 'key' in request.data.keys() else None
+        phone = request.data['phone'] if 'phone' in request.data.keys() else None
         user = Users.objects.get(username=engineer)
 
-        authenticator = get_authenticator(user=user, auth_type='totp')
-        result = authenticator.save(key)
+        authenticator = get_authenticator(user=user, auth_type=auth_type)
+        if auth_type == 'sms':
+            result = authenticator.save(phone)
+        else:
+            result = authenticator.save(key)
 
         return Response(result)
 
@@ -322,6 +341,7 @@ class TwoFAVerify(views.APIView):
         engineer = request.data['engineer']
         otp = request.data['otp']
         key = request.data['key'] if 'key' in request.data.keys() else None
+        phone = request.data['phone'] if 'phone' in request.data.keys() else None
         user = Users.objects.get(username=engineer)
         request_user = request.session.get('user')
 
@@ -344,7 +364,10 @@ class TwoFAVerify(views.APIView):
             auth_type = request.data['auth_type']
 
         authenticator = get_authenticator(user=user, auth_type=auth_type)
-        result = authenticator.verify(otp, key)
+        if auth_type == 'sms':
+            result = authenticator.verify(otp, phone)
+        else:
+            result = authenticator.verify(otp, key)
 
         # 校验通过后自动登录，刷新expire_date
         if result['status'] == 0 and not request.user.is_authenticated:
