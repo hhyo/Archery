@@ -13,11 +13,11 @@ logger = logging.getLogger('default')
 class AliyunSMS:
     def __init__(self):
         all_config = SysConfig()
-        self.access_key_id = all_config.get('sms_access_key_id', '')
-        self.access_key_secret = all_config.get('sms_access_key_secret', '')
-        self.sign_name = all_config.get('sms_sign_name', '')
-        self.template_code = all_config.get('sms_template_code', '')
-        self.variable_name = all_config.get('sms_variable_name', 'code')
+        self.access_key_id = all_config.get('aliyun_access_key_id', '')
+        self.access_key_secret = all_config.get('aliyun_access_key_secret', '')
+        self.sign_name = all_config.get('aliyun_sign_name', '')
+        self.template_code = all_config.get('aliyun_template_code', '')
+        self.variable_name = all_config.get('aliyun_variable_name', 'code')
 
     def create_client(self):
         config = open_api_models.Config(
@@ -50,3 +50,8 @@ class AliyunSMS:
             logger.error(traceback.format_exc())
 
         return result
+
+    @property
+    def provider(self):
+        """返回服务商代码"""
+        return "aliyun"

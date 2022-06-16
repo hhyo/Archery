@@ -3,6 +3,7 @@ from django_redis import get_redis_connection
 from django.db import transaction
 from sql.models import TwoFactorAuthConfig
 from . import TwoFactorAuthBase
+from common.config import SysConfig
 import traceback
 import logging
 import json
@@ -18,6 +19,16 @@ class SMS(TwoFactorAuthBase):
         super(SMS, self).__init__(user=user)
         self.user = user
 
+        sms_provider = SysConfig().get('sms_provider', 'disabled')
+        if sms_provider == 'aliyun':
+            from common.utils.aliyun_sms import AliyunSMS
+            self.client = AliyunSMS()
+        elif sms_provider == 'tencent':
+            from common.utils.tencent_sms import TencentSMS
+            self.client = TencentSMS()
+        else:
+            self.client = None
+
     def get_captcha(self, **kwargs):
         """获取验证码"""
         result = {'status': 0, 'msg': 'ok'}
@@ -26,12 +37,18 @@ class SMS(TwoFactorAuthBase):
         if data:
             captcha = json.loads(data.decode('utf8'))
             if int(time.time()) - captcha['update_time'] > 60:
-                result = AliyunSMS().send_code(**kwargs)
+                if self.client:
+                    result = self.client.send_code(**kwargs)
+                else:
+                    result = {'status': 1, 'msg': '系统未配置短信服务商！'}
             else:
                 result['status'] = 1
                 result['msg'] = f"获取验证码太频繁，请于{captcha['update_time'] - int(time.time()) + 60}秒后再试"
         else:
-            result = AliyunSMS().send_code(**kwargs)
+            if self.client:
+                result = self.client.send_code(**kwargs)
+            else:
+                result = {'status': 1, 'msg': '系统未配置短信服务商！'}
         return result
 
     def verify(self, otp, phone=None):
