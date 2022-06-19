@@ -10,7 +10,6 @@ from django.test import Client, TestCase
 from unittest.mock import patch, ANY
 from django.contrib.auth import get_user_model
 
-from sql.plugins.binglog2sql import Binlog2Sql
 from sql.plugins.my2sql import My2SQL
 from sql.plugins.schemasync import SchemaSync
 from sql.plugins.soar import Soar
@@ -170,34 +169,6 @@ class TestPlugin(TestCase):
         cmd_args = schema_sync.generate_args2cmd(args, False)
         self.assertIsInstance(cmd_args, list)
         cmd_args = schema_sync.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
-
-    def test_binlog2ql_generate_args2cmd(self):
-        """
-        测试binlog2sql参数转换
-        :return:
-        """
-        args = {'conn_options': "-hmysql -uroot -p'123456' -P3306 ",
-                'stop_never': False,
-                'no-primary-key': False,
-                'flashback': True,
-                'back-interval': 0,
-                'start-file': 'mysql-bin.000043',
-                'start-position': 111,
-                'stop-file': '',
-                'stop-position': '',
-                'start-datetime': '',
-                'stop-datetime': '',
-                'databases': 'account_center',
-                'tables': 'ac_apps',
-                'only-dml': True,
-                'sql-type': 'UPDATE'}
-        self.sys_config.set('binlog2sql', '/opt/archery/src/plugins/binlog2sql/binlog2sql.py')
-        self.sys_config.get_all_config()
-        binlog2sql = Binlog2Sql()
-        cmd_args = binlog2sql.generate_args2cmd(args, False)
-        self.assertIsInstance(cmd_args, list)
-        cmd_args = binlog2sql.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
     def test_my2sql_generate_args2cmd(self):
