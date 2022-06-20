@@ -2,7 +2,8 @@ from rest_framework import views, generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .serializers import UserSerializer, UserDetailSerializer, GroupSerializer, \
-    ResourceGroupSerializer, TwoFASerializer, UserAuthSerializer, TwoFAVerifySerializer, TwoFASaveSerializer
+    ResourceGroupSerializer, TwoFASerializer, UserAuthSerializer, TwoFAVerifySerializer, \
+    TwoFASaveSerializer, TwoFAStateSerializer
 from .pagination import CustomizedPagination
 from .permissions import IsOwner
 from .filters import UserFilter
@@ -248,7 +249,7 @@ class TwoFA(views.APIView):
 
     @extend_schema(summary="配置2fa",
                    request=TwoFASerializer,
-                   description="启用或关闭2fa")
+                   description="配置2fa")
     def post(self, request):
         # 参数验证
         serializer = TwoFASerializer(data=request.data)
@@ -256,6 +257,7 @@ class TwoFA(views.APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         engineer = request.data['engineer']
+        enable = request.data['enable']
         auth_type = request.data['auth_type']
         user = Users.objects.get(username=engineer)
         request_user = request.session.get('user')
@@ -267,28 +269,50 @@ class TwoFA(views.APIView):
             else:
                 return Response({'status': 1, 'msg': '需先校验用户密码！'})
 
-        if auth_type == 'disabled':
-            # 关闭2fa
-            authenticator = TwoFactorAuthBase(user=user)
-            result = authenticator.disable()
-        elif auth_type == 'totp':
-            # 启用2fa - 先生成secret key
-            authenticator = get_authenticator(user=user, auth_type=auth_type)
-            result = authenticator.generate_key()
-        elif auth_type == 'sms':
-            # 启用2fa - 先发送短信验证码
-            phone = request.data['phone']
-            otp = '{:06d}'.format(random.randint(0, 999999))
-            authenticator = get_authenticator(user=user, auth_type=auth_type)
-            result = authenticator.get_captcha(phone=phone, otp=otp)
-            if result['status'] == 0:
-                r = get_redis_connection('default')
-                data = {'otp': otp, 'update_time': int(time.time())}
-                r.set(f'captcha-{phone}', json.dumps(data), 300)
+        authenticator = get_authenticator(user=user, auth_type=auth_type)
+        if enable == 'true':
+            if auth_type == 'totp':
+                # 启用2fa - 先生成secret key
+                result = authenticator.generate_key()
+            elif auth_type == 'sms':
+                # 启用2fa - 先发送短信验证码
+                phone = request.data['phone']
+                otp = '{:06d}'.format(random.randint(0, 999999))
+                result = authenticator.get_captcha(phone=phone, otp=otp)
+                if result['status'] == 0:
+                    r = get_redis_connection('default')
+                    data = {'otp': otp, 'update_time': int(time.time())}
+                    r.set(f'captcha-{phone}', json.dumps(data), 300)
+            else:
+                # 启用2fa
+                result = authenticator.enable()
         else:
-            # 启用2fa
-            authenticator = get_authenticator(user=user, auth_type=auth_type)
-            result = authenticator.enable()
+            result = authenticator.disable(auth_type)
+
+        return Response(result)
+
+
+class TwoFAState(views.APIView):
+    """
+    查询用户2fa配置情况
+    """
+    permission_classes = [IsOwner]
+
+    @extend_schema(summary="查询2fa配置情况",
+                   request=TwoFAStateSerializer,
+                   description="查询2fa配置情况")
+    def post(self, request):
+        # 参数验证
+        serializer = TwoFAStateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        result = {'status': 0, 'msg': 'ok', 'data': {}}
+        engineer = request.data['engineer']
+        user = Users.objects.get(username=engineer)
+        configs = TwoFactorAuthConfig.objects.filter(user=user)
+        result['data']['totp'] = 'enabled' if configs.filter(auth_type='totp') else 'disabled'
+        result['data']['sms'] = 'enabled' if configs.filter(auth_type='sms') else 'disabled'
 
         return Response(result)
 
@@ -354,15 +378,10 @@ class TwoFAVerify(views.APIView):
 
             twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
             if not twofa_config:
-                if key:
-                    auth_type = request.data['auth_type']
-                else:
+                if not key:
                     return Response({'status': 1, 'msg': '用户未配置2FA！'})
-            else:
-                auth_type = twofa_config[0].auth_type
-        else:
-            auth_type = request.data['auth_type']
 
+        auth_type = request.data['auth_type']
         authenticator = get_authenticator(user=user, auth_type=auth_type)
         if auth_type == 'sms':
             result = authenticator.verify(otp, phone)

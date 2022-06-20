@@ -78,7 +78,7 @@ class SMS(TwoFactorAuthBase):
         try:
             with transaction.atomic():
                 # 删除旧的2fa配置
-                self.disable()
+                self.disable(self.auth_type)
                 # 创建新的2fa配置
                 TwoFactorAuthConfig.objects.create(
                     username=self.user.username,

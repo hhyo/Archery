@@ -17,11 +17,11 @@ class TwoFactorAuthBase:
         result = {'status': 1, 'msg': 'failed'}
         return result
 
-    def disable(self):
+    def disable(self, auth_type):
         """禁用"""
         result = {'status': 0, 'msg': 'ok'}
         try:
-            TwoFactorAuthConfig.objects.get(user=self.user).delete()
+            TwoFactorAuthConfig.objects.get(user=self.user, auth_type=auth_type).delete()
         except TwoFactorAuthConfig.DoesNotExist as e:
             result = {'status': 0, 'msg': str(e)}
         return result

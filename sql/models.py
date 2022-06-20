@@ -74,7 +74,7 @@ class TwoFactorAuthConfig(models.Model):
     auth_type = fields.EncryptedCharField(verbose_name='认证类型', max_length=128, choices=auth_type_choice)
     phone = fields.EncryptedCharField(verbose_name='手机号码', max_length=64, null=True, default='')
     secret_key = fields.EncryptedCharField(verbose_name='用户密钥', max_length=256, null=True)
-    user = models.OneToOneField(Users, on_delete=models.CASCADE)
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __int__(self):
         return self.username
@@ -84,6 +84,7 @@ class TwoFactorAuthConfig(models.Model):
         db_table = '2fa_config'
         verbose_name = u'2FA配置'
         verbose_name_plural = u'2FA配置'
+        unique_together = ('user', 'auth_type')
 
 
 class InstanceTag(models.Model):

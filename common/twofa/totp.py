@@ -24,7 +24,8 @@ class TOTP(TwoFactorAuthBase):
         if key:
             secret_key = key
         else:
-            secret_key = TwoFactorAuthConfig.objects.get(username=self.user.username).secret_key
+            secret_key = TwoFactorAuthConfig.objects.get(username=self.user.username,
+                                                         auth_type=self.auth_type).secret_key
         t = pyotp.TOTP(secret_key)
         status = t.verify(otp)
         result['status'] = 0 if status else 1
@@ -51,7 +52,7 @@ class TOTP(TwoFactorAuthBase):
         try:
             with transaction.atomic():
                 # 删除旧的2fa配置
-                self.disable()
+                self.disable(self.auth_type)
                 # 创建新的2fa配置
                 TwoFactorAuthConfig.objects.create(
                     username=self.user.username,

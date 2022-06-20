@@ -175,7 +175,8 @@ class TestUser(APITestCase):
         """测试用户配置2fa"""
         json_data = {
             "engineer": "test_user",
-            "auth_type": "disabled"
+            "auth_type": "totp",
+            "enable": "false"
         }
         r = self.client.post(f'/api/v1/user/2fa/', json_data, format='json')
         self.assertEqual(r.status_code, status.HTTP_200_OK)

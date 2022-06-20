@@ -17,6 +17,7 @@
     <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet">
     <style type="text/css">
     table{
         max-width: none !important;      /*解决 ios 横向滚动失效*/
@@ -287,31 +288,57 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel1">两步验证</h4>
+                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold">两步验证</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="totp-switch" class="col-sm-4 control-label">TOTP：</label>
+                    <div class="col-sm-8">
+                        <div class="switch switch-small">
+                            <label>
+                                <input id="totp-switch" name="2fa" auth_type="totp" type="checkbox">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sms-switch" class="col-sm-4 control-label">短信：</label>
+                    <div class="col-sm-8">
+                        <div class="switch switch-small">
+                            <label>
+                                <input id="sms-switch" name="2fa" auth_type="sms" type="checkbox">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <input id="enable" style="display: none">
+                <input id="state" style="display: none">
+                <select id="auth_type" style="display:none">
+                    <option value="totp"></option>
+                    <option value="sms"></option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 密码验证模态框-->
+<div class="modal fade" id="passwd-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel1">验证当前用户密码</h4>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                <label class="text-success">当前验证方式：</label>
-                <i>{% if twofa_type == 'disabled' %}
-                        未启用
-                    {% elif twofa_type == 'totp' %}
-                        TOTP验证
-                    {% elif twofa_type == 'sms' %}
-                        短信验证
-                    {% endif %}</i>
-                </div>
-                <div class="form-group">
-                    <label for="auth_type">验证方式:</label>
-                    <select id="auth_type" class="form-control show-tick selectpicker" name="instances"
-                                    title="选择额外验证方式:"
-                                    data-live-search="true">
-                        <option value="disabled">关闭两步验证</option>
-                        <option value="totp" selected="selected">Google身份验证器</option>
-                        <option value="sms">短信验证码</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="passwd">需输入密码验证:</label>
+                    <label for="passwd">输入密码验证:</label>
                     <input type="password" class="form-control" id="passwd" placeholder="确认密码" required>
                 </div>
             </div>
@@ -323,7 +350,7 @@
     </div>
 </div>
 
-<!-- 验证模态框-->
+<!-- OTP验证模态框-->
 <div class="modal fade bs-example-modal-sm" id="2fa-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
@@ -382,6 +409,7 @@
 <script src="{% static 'bootstrap-select/js/i18n/defaults-zh_CN.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table.min.js' %}"></script>
 <script src="{% static 'bootstrap-table/js/bootstrap-table-zh-CN.min.js' %}"></script>
+<script src="{% static 'bootstrap-switch/js/bootstrap-switch.min.js' %}"></script>
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 <script src="{% static 'dist/js/utils.js' %}"></script>
@@ -398,7 +426,7 @@
     };
 </script>
 <script>
-    function twofa(auth_type) {
+    function twofa(enable, auth_type) {
         // 配置2fa
         let result;
         $.ajax({
@@ -407,6 +435,7 @@
             dataType: "json",
             data: {
                 engineer: '{{ user.username }}',
+                enable: enable,
                 auth_type: auth_type,
                 phone: $("#phone").val()
             },
@@ -499,7 +528,6 @@
             },
             success: function (data) {
                 if (data.status === 0) {
-                    $("#2fa").modal('hide');
                     result = true
                 } else {
                     alert(data.msg);
@@ -512,7 +540,7 @@
         return result
     }
 
-    $("#auth_type").change(function () {
+    $("#auth_type").change(function() {
         let auth_type = $("#auth_type").val();
         if (auth_type === 'totp') {
             $("#totp-form").show();
@@ -545,12 +573,13 @@
         $("#phone").val('')
     });
 
-    $('#2fa').on('hide.bs.modal', function () {
+    $('#passwd-auth').on('hide.bs.modal', function () {
         $("#passwd").val('')
     });
 
     $("#btnConfirm").click(function () {
         let auth_type = $("#auth_type").val();
+        let enable = $("#enable").val();
         let password = $("#passwd").val();
         password = password.replace(/(^\s*)|(\s*$)/g, "");
         if (!password) {
@@ -560,22 +589,29 @@
         $("#passwd").val('');
         let isAuthenticated = auth('{{ user.username }}', password);
         if (isAuthenticated) {
-            if (auth_type === 'sms') {
-                $("#2fa-auth").modal("show");
-            } else {
-                let data = twofa(auth_type);
+            $("#passwd-auth").modal("hide");
+            if (enable === 'false') {
+                let data = twofa(enable, auth_type);
                 if (data.status === 0) {
-                    if (auth_type === 'disabled') {
-                        alert("已关闭两步验证！")
-                    } else if (auth_type === 'totp') {
-                        let key = data.data.key;
-                        $("#qrcode-img").attr("key", key)
-                        $("#qrcode-img").attr("src", "/user/qrcode/" + key)
-                        // 展示二维码
-                        $("#2fa-auth").modal("show");
-                    }
+                    alert('配置成功')
                 } else {
                     alert(data.msg)
+                }
+            } else {
+                if (auth_type === 'sms') {
+                    $("#2fa-auth").modal("show");
+                } else {
+                    let data = twofa(enable, auth_type);
+                    if (data.status === 0) {
+                            if (auth_type === 'totp') {
+                                let key = data.data.key;
+                                $("#qrcode-img").attr("key", key)
+                                $("#qrcode-img").attr("src", "/user/qrcode/" + key)
+                            }
+                            $("#2fa-auth").modal("show");
+                    } else {
+                        alert(data.msg)
+                    }
                 }
             }
         }
@@ -583,18 +619,88 @@
 
     $("#get_captcha").click(function () {
         let phone = $("#phone").val();
+        let enable = $("#enable").val();
         if (!phone) {
             alert('请输入手机号！')
             return
         }
 
         let auth_type = $("#auth_type").val();
-        let data = twofa(auth_type);
+        let data = twofa(enable, auth_type);
         if (data.status === 0) {
             init_countdown(this);
             alert('验证码已发送，5分钟内有效');
         }
     })
+
+    $("#2fa").on('show.bs.modal',function() {
+        $('input[name="2fa"]').each(function (i) {
+            $(this).bootstrapSwitch({
+                onText: "启用",
+                offText: "禁用",
+                onColor: "success",
+                size: "small",
+            })
+        })
+        $.ajax({
+            type: "post",
+            url: "/api/v1/user/2fa/state/",
+            dataType: "json",
+            data: {
+                engineer: '{{ user.username }}'
+            },
+            complete: function () {
+            },
+            success: function (data) {
+                if (data.status === 0) {
+                    if (data.data.totp === 'enabled') {
+                        $("#totp-switch").val('true');
+                    } else {
+                        $("#totp-switch").val('false');
+                    }
+                    if (data.data.sms === 'enabled') {
+                        $("#sms-switch").val('true');
+                    } else {
+                        $("#sms-switch").val('false');
+                    }
+                } else {
+                    alert(data.msg)
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown + ' : ' + XMLHttpRequest.responseText)
+            }
+        })
+    })
+
+    $("#2fa").on('shown.bs.modal',function(){
+        $("#state").val('initial');
+        $('input[name="2fa"]').each(function (i) {
+            if ($(this).val() === 'true') {
+                $(this).bootstrapSwitch('state', true);
+            } else {
+                $(this).bootstrapSwitch('state', false);
+            }
+        });
+        $("#state").val('')
+    })
+
+    $('input[name="2fa"]').on('switchChange.bootstrapSwitch', function(event, state) {
+        if ($("#state").val() !== 'initial') {
+            $("#auth_type").val($(this).attr('auth_type'));
+            $("#auth_type").trigger('change');
+            $("#enable").val(state);
+            $("#2fa").modal("hide");
+            $("#passwd-auth").modal("show");
+            if (state) {
+                $(this).val(true);
+            } else {
+                $(this).val(false);
+            }
+        }
+    })
+
+
 </script>
 </body>
 <script>

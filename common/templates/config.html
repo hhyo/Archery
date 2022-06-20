@@ -1130,7 +1130,7 @@
                 $("#div-system-config").show();
                 $("#div-workflow").hide();
                 $("#div-workflow-config").hide();
-                $('input[type="checkbox"]').each(function (i) {
+                $("#div-system-config").find('input[type="checkbox"]').each(function (i) {
                     if ($(this).val() === 'true') {
                         $(this).bootstrapSwitch('state', true);
                     } else {
