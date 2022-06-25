@@ -9,7 +9,7 @@ class TwoFactorAuthBase:
     def get_captcha(self):
         """获取验证码"""
 
-    def verify(self, opt):
+    def verify(self, otp):
         """校验一次性验证码"""
 
     def enable(self):
@@ -17,11 +17,11 @@ class TwoFactorAuthBase:
         result = {'status': 1, 'msg': 'failed'}
         return result
 
-    def disable(self):
+    def disable(self, auth_type):
         """禁用"""
         result = {'status': 0, 'msg': 'ok'}
         try:
-            TwoFactorAuthConfig.objects.get(user=self.user).delete()
+            TwoFactorAuthConfig.objects.get(user=self.user, auth_type=auth_type).delete()
         except TwoFactorAuthConfig.DoesNotExist as e:
             result = {'status': 0, 'msg': str(e)}
         return result
@@ -38,3 +38,8 @@ def get_authenticator(user=None, auth_type=None):
         from .totp import TOTP
 
         return TOTP(user=user)
+
+    elif auth_type == "sms":
+        from .sms import SMS
+
+        return SMS(user=user)

@@ -97,7 +97,30 @@ class UserAuthSerializer(serializers.Serializer):
 
 class TwoFASerializer(serializers.Serializer):
     engineer = serializers.CharField(label='用户名')
-    auth_type = serializers.ChoiceField(choices=['disabled', 'totp'], label='验证类型：disabled-关闭，totp-Google身份验证器')
+    enable = serializers.ChoiceField(choices=['true', 'false'], label='启用or禁用')
+    phone = serializers.CharField(required=False, label='手机号码')
+    auth_type = serializers.ChoiceField(choices=['totp', 'sms'],
+                                        label='验证类型：totp-Google身份验证器，sms-短信验证码')
+
+    def validate(self, attrs):
+        auth_type = attrs.get('auth_type')
+        engineer = attrs.get('engineer')
+        enable = attrs.get('enable')
+
+        try:
+            Users.objects.get(username=engineer)
+        except Users.DoesNotExist:
+            raise serializers.ValidationError({"errors": "不存在该用户"})
+
+        if auth_type == 'sms' and enable == 'true':
+            if not attrs.get('phone'):
+                raise serializers.ValidationError({"errors": "缺少 phone"})
+
+        return attrs
+
+
+class TwoFAStateSerializer(serializers.Serializer):
+    engineer = serializers.CharField(label='用户名')
 
     def validate(self, attrs):
         engineer = attrs.get('engineer')
@@ -112,10 +135,24 @@ class TwoFASerializer(serializers.Serializer):
 
 class TwoFASaveSerializer(serializers.Serializer):
     engineer = serializers.CharField(label='用户名')
-    key = serializers.CharField(label='密钥')
+    key = serializers.CharField(required=False, label='密钥')
+    phone = serializers.CharField(required=False, label='手机号码')
+    auth_type = serializers.ChoiceField(choices=['disabled', 'totp', 'sms'],
+                                        label='验证类型：disabled-关闭，totp-Google身份验证器，sms-短信验证码')
 
     def validate(self, attrs):
         engineer = attrs.get('engineer')
+        auth_type = attrs.get('auth_type')
+        key = attrs.get('key')
+        phone = attrs.get('phone')
+
+        if auth_type == 'sms':
+            if not phone:
+                raise serializers.ValidationError({"errors": "缺少 phone"})
+
+        if auth_type == 'totp':
+            if not key:
+                raise serializers.ValidationError({"errors": "缺少 key"})
 
         try:
             Users.objects.get(username=engineer)
@@ -129,16 +166,16 @@ class TwoFAVerifySerializer(serializers.Serializer):
     engineer = serializers.CharField(label='用户名')
     otp = serializers.IntegerField(label='一次性密码/验证码')
     key = serializers.CharField(required=False, label='密钥')
-    auth_type = serializers.CharField(required=False, label='验证方式')
+    phone = serializers.CharField(required=False, label='手机号码')
+    auth_type = serializers.CharField(label='验证方式')
 
     def validate(self, attrs):
         engineer = attrs.get('engineer')
-        key = attrs.get('key')
         auth_type = attrs.get('auth_type')
 
-        if key:
-            if not auth_type:
-                raise serializers.ValidationError({"errors": "缺少 auth_type"})
+        if auth_type == 'sms':
+            if not attrs.get('phone'):
+                raise serializers.ValidationError({"errors": "缺少 phone"})
 
         try:
             Users.objects.get(username=engineer)

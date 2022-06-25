@@ -374,6 +374,8 @@
                         <h6 style="color:red">注3：企业微信群机器人需要配置资源组webhook地址（企业微信群机器人是通知到群；企业微信自建应用是通过应用通知到指定人）</h6>
                         <hr/>
                         <div class="form-horizontal">
+                        <h5 style="color: darkgrey"><b>工单通知</b></h5>
+                            <hr/>
                             <div class="form-group">
                                 <label for="archery_base_url"
                                        class="col-sm-4 control-label">ARCHERY_BASE_URL</label>
@@ -704,8 +706,136 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <h5 style="color: darkgrey"><b>短信服务</b></h5>
+                            <hr/>
+                            <div class="form-group">
+                                <label for="sms_provider"
+                                       class="col-sm-4 control-label">短信服务提供商</label>
+                                <div class="col-sm-5">
+                                    <select id="sms_provider" key="sms_provider"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="短信服务商"
+                                            required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="aliyun_sms" style="display: none">
+                                <div class="form-group">
+                                    <label for="aliyun_access_key_id"
+                                           class="col-sm-4 control-label">ALIYUN_ACCESS_KEY_ID</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="aliyun_access_key_id"
+                                               key="aliyun_access_key_id"
+                                               value="{{ config.aliyun_access_key_id }}"
+                                               placeholder="阿里云访问密钥ID，用于标识用户">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="aliyun_access_key_secret"
+                                           class="col-sm-4 control-label">ALIYUN_ACCESS_KEY_SECRET</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="aliyun_access_key_secret"
+                                               key="aliyun_access_key_secret"
+                                               value="{{ config.aliyun_access_key_secret }}"
+                                               placeholder="阿里云访问密钥（AccessKey），用于验证用户的密钥">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="aliyun_sign_name"
+                                           class="col-sm-4 control-label">ALIYUN_SIGN_NAME</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="aliyun_sign_name"
+                                               key="aliyun_sign_name"
+                                               value="{{ config.aliyun_sign_name }}"
+                                               placeholder="短信签名，需为审核通过状态">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="aliyun_template_code"
+                                           class="col-sm-4 control-label">ALIYUN_TEMPLATE_CODE</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="aliyun_template_code"
+                                               key="aliyun_template_code"
+                                               value="{{ config.aliyun_template_code }}"
+                                               placeholder="短信模板Code，需为审核通过状态">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="aliyun_variable_name"
+                                           class="col-sm-4 control-label">ALIYUN_VARIABLE_NAME</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="aliyun_variable_name"
+                                               key="aliyun_variable_name"
+                                               value="{{ config.aliyun_variable_name }}"
+                                               placeholder="短信模板中的变量名，如：code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="tencent_sms" style="display: none">
+                                <div class="form-group">
+                                    <label for="tencent_secret_id"
+                                           class="col-sm-4 control-label">TENCENT_SECRET_ID</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="tencent_secret_id"
+                                               key="tencent_secret_id"
+                                               value="{{ config.tencent_secret_id }}"
+                                               placeholder="用于标识API调用者的身份">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tencent_secret_key"
+                                           class="col-sm-4 control-label">TENCENT_SECRET_KEY</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="tencent_secret_key"
+                                               key="tencent_secret_key"
+                                               value="{{ config.tencent_secret_key }}"
+                                               placeholder="用于加密签名字符串和服务器端验证签名字符串的密钥">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tencent_sign_name"
+                                           class="col-sm-4 control-label">TENCENT_SIGN_NAME</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="tencent_sign_name"
+                                               key="tencent_sign_name"
+                                               value="{{ config.tencent_sign_name }}"
+                                               placeholder="短信签名，需为审核通过状态">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tencent_template_id"
+                                           class="col-sm-4 control-label">TENCENT_TEMPLATE_ID</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="tencent_template_id"
+                                               key="tencent_template_id"
+                                               value="{{ config.tencent_template_id }}"
+                                               placeholder="短信模板ID，需为审核通过状态">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tencent_sdk_appid"
+                                           class="col-sm-4 control-label">TENCENT_SDK_APPID</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="tencent_sdk_appid"
+                                               key="tencent_sdk_appid"
+                                               value="{{ config.tencent_sdk_appid }}"
+                                               placeholder="短信应用ID">
+                                    </div>
+                                </div>
+                            </div>
                         <br>
+                        </div>
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>
                         <div class="form-horizontal">
@@ -959,6 +1089,38 @@
                     alert(errorThrown);
                 }
             });
+
+            // sms_provider参数处理
+            function provider_display(provider) {
+                if (provider === 'disabled') {
+                    return '关闭'
+                } else if (provider === 'aliyun') {
+                    return '阿里云'
+                } else if (provider === 'tencent') {
+                    return '腾讯云'
+                }
+            }
+            let sms_provider = "{{ config.sms_provider }}";
+            if (sms_provider === 'disabled' || sms_provider === '') {
+                $("#aliyun_sms").hide();
+                $("#tencent_sms").hide();
+            } else if (sms_provider === 'aliyun') {
+                $("#aliyun_sms").show();
+                $("#tencent_sms").hide();
+            } else if (sms_provider === 'tencent') {
+                $("#aliyun_sms").hide();
+                $("#tencent_sms").show();
+            }
+            let providers = ['disabled', 'aliyun', 'tencent'];
+            for (let i=0;i<providers.length;i++) {
+                let provider;
+                if (providers[i] === sms_provider) {
+                    provider = "<option value=\"" + providers[i]+ "\" selected>" + provider_display(providers[i]) + "</option>"
+                } else {
+                    provider = "<option value=\"" + providers[i]+ "\">" + provider_display(providers[i]) + "</option>"
+                }
+                $("#sms_provider").append(provider)
+            }
         })
 
         //配置项切换
@@ -968,7 +1130,7 @@
                 $("#div-system-config").show();
                 $("#div-workflow").hide();
                 $("#div-workflow-config").hide();
-                $('input[type="checkbox"]').each(function (i) {
+                $("#div-system-config").find('input[type="checkbox"]').each(function (i) {
                     if ($(this).val() === 'true') {
                         $(this).bootstrapSwitch('state', true);
                     } else {
@@ -1307,6 +1469,21 @@
                 }
             });
         });
+
+        // 短信服务商切换
+        $("#sms_provider").change(function () {
+            let provider = this.value;
+            if (provider === 'disabled') {
+                $("#aliyun_sms").hide();
+                $("#tencent_sms").hide();
+            } else if (provider === 'aliyun') {
+                $("#aliyun_sms").show();
+                $("#tencent_sms").hide();
+            } else if (provider === 'tencent') {
+                $("#aliyun_sms").hide();
+                $("#tencent_sms").show();
+            }
+        })
 
         //自动填充操作项
         $(document).ready(function () {

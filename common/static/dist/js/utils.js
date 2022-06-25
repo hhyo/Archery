@@ -45,7 +45,6 @@ var jsonHighLight = function(json) {
     });
 };
 
-// 这个函数存在报错，因此不应该把任何模块放在这个模块之后
 // 实例配置页面根据db_type选择显示或隐藏mode字段，mode字段只适用于redis实例
 (function($) {
     $(function() {
@@ -62,4 +61,25 @@ var jsonHighLight = function(json) {
             toggleMode($(this).val());
         });
     });
-})(django && django.jQuery || jQuery);
+})(jQuery);
+
+// 短信验证码倒计时
+let countdown = 60, clock, btn_captcha;
+function init_countdown(obj) {
+    btn_captcha = obj;
+    btn_captcha.disabled = true;
+    btn_captcha.innerText = countdown + ' 秒后重试';
+    clock = setInterval(countdown_loop, 1000);
+}
+
+function countdown_loop() {
+    countdown--;
+    if(countdown > 0){
+        btn_captcha.innerText = countdown + ' 秒后重试';
+    } else {
+        clearInterval(clock);
+        btn_captcha.disabled = false;
+        btn_captcha.innerText = '获取验证码';
+        countdown = 60;
+    }
+}

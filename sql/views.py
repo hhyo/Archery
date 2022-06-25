@@ -21,7 +21,8 @@ from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import Users, SqlWorkflow, QueryPrivileges, ResourceGroup, \
-    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, QueryLog, ArchiveConfig, AuditEntry
+    QueryPrivilegesApply, Config, SQL_WORKFLOW_CHOICES, InstanceTag, Instance, \
+    QueryLog, ArchiveConfig, AuditEntry, TwoFactorAuthConfig
 from sql.utils.workflow_audit import Audit
 from sql.utils.sql_review import can_execute, can_timingtask, can_cancel, can_view, can_rollback
 from common.utils.const import Const, WorkflowDict
@@ -52,12 +53,28 @@ def twofa(request):
 
     username = request.session.get('user')
     if username:
-        auth_type = request.session.get('auth_type')
         verify_mode = request.session.get('verify_mode')
+        twofa_enabled = TwoFactorAuthConfig.objects.filter(username=username)
+        user_auth_types = [twofa.auth_type for twofa in twofa_enabled]
+
+        auth_types = []
+        for user_auth_type in user_auth_types:
+            auth_type = {}
+            auth_type['code'] = user_auth_type
+            if user_auth_type == 'totp':
+                auth_type['display'] = 'Google身份验证器'
+            elif user_auth_type == 'sms':
+                auth_type['display'] = '短信验证码'
+            auth_types.append(auth_type)
+        if 'sms' in user_auth_types:
+            phone = TwoFactorAuthConfig.objects.get(username=username, auth_type='sms').phone
+        else:
+            phone = 0
     else:
         return HttpResponseRedirect('/login/')
 
-    return render(request, '2fa.html', context={'verify_mode': verify_mode, 'auth_type': auth_type, 'username': username})
+    return render(request, '2fa.html', context={'verify_mode': verify_mode, 'auth_types': auth_types,
+                                                'username': username, 'phone': phone})
 
 
 @permission_required('sql.menu_dashboard', raise_exception=True)
