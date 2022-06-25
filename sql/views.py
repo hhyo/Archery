@@ -353,12 +353,6 @@ def instance_param(request):
     return render(request, 'param.html')
 
 
-@permission_required('sql.menu_binlog2sql', raise_exception=True)
-def binlog2sql(request):
-    """binlog2sql页面"""
-    return render(request, 'binlog2sql.html')
-
-
 @permission_required('sql.menu_my2sql', raise_exception=True)
 def my2sql(request):
     """my2sql页面"""

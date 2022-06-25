@@ -11,9 +11,9 @@ import sql.query_privileges
 from common.config import SysConfig
 from common.utils.const import WorkflowDict
 from sql.archiver import add_archive_task, archive
-from sql.binlog import binlog2sql_file, my2sql_file
+from sql.binlog import my2sql_file
 from sql.engines.models import ResultSet, ReviewSet, ReviewResult
-from sql.notify import notify_for_audit, notify_for_execute, notify_for_binlog2sql, notify_for_my2sql
+from sql.notify import notify_for_audit, notify_for_execute, notify_for_my2sql
 from sql.utils.execute_sql import execute_callback
 from sql.query import kill_query_conn
 from sql.models import Users, Instance, QueryPrivilegesApply, QueryPrivileges, SqlWorkflow, SqlWorkflowContent, \
@@ -185,12 +185,6 @@ class TestView(TestCase):
         """测试instance_param页面"""
         data = {}
         r = self.client.get(f'/instanceparam/', data=data)
-        self.assertEqual(r.status_code, 200)
-
-    def test_binlog2sql(self):
-        """测试binlog2sql页面"""
-        data = {}
-        r = self.client.get(f'/binlog2sql/', data=data)
         self.assertEqual(r.status_code, 200)
 
     def test_my2sql(self):
@@ -2066,29 +2060,6 @@ class TestBinLog(TestCase):
         r = self.client.post(path='/binlog/list/', data=data)
         # self.assertEqual(json.loads(r.content).get('status'), 1)
 
-    def test_binlog2sql_path_not_exist(self):
-        """
-        测试获取解析binlog，path未设置
-        :return:
-        """
-        data = {"instance_name": "test_instance",
-                "save_sql": "false",
-                "no_pk": "false",
-                "flashback": "false",
-                "back_interval": "",
-                "num": "",
-                "start_file": "mysql-bin.000045",
-                "start_pos": "",
-                "end_file": "",
-                "end_pos": "",
-                "stop_time": "",
-                "start_time": "",
-                "only_schemas": "",
-                "only_dml": "true",
-                "sql_type": ""}
-        r = self.client.post(path='/binlog/binlog2sql/', data=data)
-        self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '可执行文件路径不能为空！', 'data': {}})
-
     def test_my2sql_path_not_exist(self):
         """
         测试获取解析binlog，path未设置
@@ -2114,33 +2085,6 @@ class TestBinLog(TestCase):
                 "sql_type": ""}
         r = self.client.post(path='/binlog/my2sql/', data=data)
         self.assertEqual(json.loads(r.content), {'status': 1, 'msg': '可执行文件路径不能为空！', 'data': {}})
-
-    @patch('sql.plugins.plugin.subprocess')
-    def test_binlog2sql(self, _subprocess):
-        """
-        测试获取解析binlog，path设置
-        :param _subprocess:
-        :return:
-        """
-        self.sys_config.set('binlog2sql', '/opt/binlog2sql')
-        self.sys_config.get_all_config()
-        data = {"instance_name": "test_instance",
-                "save_sql": "1",
-                "no_pk": "false",
-                "flashback": "false",
-                "back_interval": "",
-                "num": "1",
-                "start_file": "mysql-bin.000045",
-                "start_pos": "",
-                "end_file": "",
-                "end_pos": "",
-                "stop_time": "",
-                "start_time": "",
-                "only_schemas": "",
-                "only_dml": "true",
-                "sql_type": ""}
-        r = self.client.post(path='/binlog/binlog2sql/', data=data)
-        self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": [{"sql": {}, "binlog_info": {}}]})
 
     @patch('sql.plugins.plugin.subprocess')
     def test_my2sql(self, _subprocess):
@@ -2171,32 +2115,6 @@ class TestBinLog(TestCase):
                 "sql_type": ""}
         r = self.client.post(path='/binlog/my2sql/', data=data)
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": []})
-
-    @patch('builtins.open')
-    def test_binlog2sql_file(self, _open):
-        """
-        测试保存文件
-        :param _subprocess:
-        :return:
-        """
-        args = {"instance_name": "test_instance",
-                "save_sql": "1",
-                "no_pk": "false",
-                "flashback": "false",
-                "back_interval": "",
-                "num": "1",
-                "start_file": "",
-                "start_pos": "",
-                "end_file": "",
-                "end_pos": "",
-                "stop_time": "",
-                "start_time": "",
-                "only_schemas": "",
-                "only_dml": "true",
-                "sql_type": "",
-                "instance": self.master}
-        r = binlog2sql_file(args=args, user=self.superuser)
-        self.assertEqual(self.superuser, r[0])
 
     @patch('builtins.open')
     def test_my2sql_file(self, _open):
@@ -2689,17 +2607,6 @@ class TestNotify(TestCase):
         self.assertIsNone(r)
         _msg_sender.assert_called()
 
-    @patch('sql.notify.MsgSender')
-    def test_notify_for_binlog2sql_disable(self, _msg_sender):
-        """
-        测试执行消息关闭
-        :return:
-        """
-        # 开启消息通知
-        self.sys_config.set('mail', 'false')
-        self.sys_config.set('ding', 'false')
-        r = notify_for_execute(self.wf)
-        self.assertIsNone(r)
 
     @patch('sql.notify.MsgSender')
     def test_notify_for_my2sql_disable(self, _msg_sender):
@@ -2713,20 +2620,6 @@ class TestNotify(TestCase):
         r = notify_for_execute(self.wf)
         self.assertIsNone(r)
 
-    @patch('django_q.tasks.async_task')
-    @patch('sql.notify.MsgSender')
-    def test_notify_for_binlog2sql(self, _msg_sender, _async_task):
-        """
-        测试执行消息
-        :return:
-        """
-        # 开启消息通知
-        self.sys_config.set('mail', 'true')
-        # 设置为task成功
-        _async_task.return_value.success.return_value = True
-        r = notify_for_binlog2sql(_async_task)
-        self.assertIsNone(r)
-        _msg_sender.assert_called_once()
 
     @patch('django_q.tasks.async_task')
     @patch('sql.notify.MsgSender')

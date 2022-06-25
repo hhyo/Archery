@@ -275,26 +275,6 @@ def notify_for_execute(workflow):
             __send(msg_title, msg_content, msg_to, msg_cc)
 
 
-def notify_for_binlog2sql(task):
-    """
-    binlog2sql执行结束的通知
-    :param task:
-    :return:
-    """
-    # 判断是否开启消息通知，未开启直接返回
-    if not __notify_cnf_status():
-        return None
-    if task.success:
-        msg_title = '[Archery 通知]Binlog2SQL执行结束'
-        msg_content = f'解析的SQL文件为{task.result[1]}，请到指定目录查看'
-    else:
-        msg_title = '[Archery 通知]Binlog2SQL执行失败'
-        msg_content = f'{task.result}'
-    # 发送
-    msg_to = [task.kwargs['user']]
-    __send(msg_title, msg_content, msg_to)
-
-
 def notify_for_my2sql(task):
     """
     my2sql执行结束的通知

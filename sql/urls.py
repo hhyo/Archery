@@ -52,7 +52,6 @@ urlpatterns = [
     path('instanceaccount/', views.instanceaccount),
     path('database/', views.database),
     path('instanceparam/', views.instance_param),
-    path('binlog2sql/', views.binlog2sql),
     path('my2sql/', views.my2sql),
     path('schemasync/', views.schemasync),
     path('archive/', views.archive),
@@ -132,7 +131,6 @@ urlpatterns = [
     path('query/privaudit/', sql.query_privileges.query_priv_audit),
 
     path('binlog/list/', binlog.binlog_list),
-    path('binlog/binlog2sql/', binlog.binlog2sql),
     path('binlog/my2sql/', binlog.my2sql),
     path('binlog/del_log/', binlog.del_binlog),
 
