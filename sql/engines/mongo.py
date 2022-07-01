@@ -591,10 +591,10 @@ class MongoEngine(EngineBase):
             for d in db[collection_name].find().limit(2):
                 documents_sample.append(d)
         else:
-            for d in db[collection_name].find().sort([("$natural", 1)]).limit(1):
+            for d in db[collection_name].find().sort([("_id", 1)]).limit(1):
                 documents_sample.append(d)
 
-            for d in db[collection_name].find().sort([("$natural", -1)]).limit(1):
+            for d in db[collection_name].find().sort([("_id", -1)]).limit(1):
                 documents_sample.append(d)
         columns = []
         # _merge_property_names
