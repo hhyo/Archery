@@ -138,7 +138,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <button id="binlog2sql" class="btn btn-danger">获取SQL</button>
+                        <button id="my2sql" class="btn btn-danger">获取SQL</button>
                     </div>
                 </div>
             </div>
@@ -154,7 +154,7 @@
                             保存到项目downloads目录，在开启消息通知后，执行结束会发送通知给操作人</b>
                     </h5>
                     <br>
-                    <table id="tb-binlog2sql" data-toggle="table" class="table table-condensed"
+                    <table id="tb-my2sql" data-toggle="table" class="table table-condensed"
                            style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                 </div>
             </div>
@@ -263,6 +263,16 @@
             });
         });
 
+        //start-file变更重置start-pos
+        $("#start_file").change(function () {
+            $("#start_pos").val('');
+        });
+
+        //end-file变更重置end-pos
+        $("#end_file").change(function () {
+            $("#end_pos").val('');
+        });
+
         //数据库变更获取表名称
         $("#only_schemas").change(function () {
             //将数据通过ajax提交给获取db_name
@@ -296,8 +306,16 @@
         });
 
         //获取语句
-        $("#binlog2sql").click(function () {
+        $("#my2sql").click(function () {
             if ($("#instance_name").val() && $("#start_file").val()) {
+                if (!$("#end_file").val()) {
+                    $("#end_file").val($("#start_file").val());
+                    $('#end_file').selectpicker('render');
+                }
+                if (!$("#end_pos").val()) {
+                    let default_end_pos = $("#end_file option:selected").text().split('Size:')[1];
+                    $("#end_pos").val(default_end_pos);
+                }
                 $(this).addClass('disabled');
                 $(this).prop('disabled', true);
                 $.ajax({
@@ -328,12 +346,12 @@
                         sql_type: $("#sql_type").val(),
                     },
                     complete: function () {
-                        $("#binlog2sql").removeClass('disabled');
-                        $("#binlog2sql").prop('disabled', false);
+                        $("#my2sql").removeClass('disabled');
+                        $("#my2sql").prop('disabled', false);
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            $('#tb-binlog2sql').bootstrapTable('destroy').bootstrapTable({
+                            $('#tb-my2sql').bootstrapTable('destroy').bootstrapTable({
                                 escape: true,
                                 striped: true,                      //是否显示行间隔色
                                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
