@@ -44,6 +44,7 @@ RUN yum -y install libffi-devel wget gcc make zlib-devel openssl openssl-devel n
     && yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm \
     && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 \
     && yum -y install percona-toolkit \
+    && ln -fs /usr/lib64/mysql/libmysqlclient.so.18 /usr/lib64/libperconaserverclient_r.so \
     && cd /opt \
     && git clone https://github.com/hhyo/SQLAdvisor.git --depth 3 \
     && cd /opt/SQLAdvisor/ \
