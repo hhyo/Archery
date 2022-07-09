@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponseRedirect, FileResponse
+from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
 
 from archery import settings
@@ -446,6 +446,8 @@ def workflowsdetail(request, audit_id):
     """待办详情"""
     # 按照不同的workflow_type返回不同的详情
     audit_detail = Audit.detail(audit_id)
+    if not audit_detail:
+        raise Http404("不存在对应的工单记录")
     if audit_detail.workflow_type == WorkflowDict.workflow_type['query']:
         return HttpResponseRedirect(reverse('sql:queryapplydetail', args=(audit_detail.workflow_id,)))
     elif audit_detail.workflow_type == WorkflowDict.workflow_type['sqlreview']:
