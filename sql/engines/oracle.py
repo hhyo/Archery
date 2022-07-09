@@ -479,7 +479,7 @@ class OracleEngine(EngineBase):
             cursor.execute(f"select CARDINALITY from SYS.PLAN_TABLE$ where id = 0")
             rows = cursor.fetchone()
             conn.rollback()
-            if rows[0] is None:
+            if not rows:
                 result['rows'] = 0
             else:
                 result['rows'] = rows[0]
