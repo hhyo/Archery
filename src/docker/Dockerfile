@@ -1,4 +1,4 @@
-FROM hhyo/archery-base:sha-3c64fc8
+FROM hhyo/archery-base:sha-bc1191f
 
 WORKDIR /opt/archery
 

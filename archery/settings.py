@@ -151,6 +151,8 @@ DATABASES = {
     'default': {
         **env.db(),
         **{
+            'DEFAULT_CHARSET': 'utf8mb4',
+            'CONN_MAX_AGE': 50,
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4'
@@ -181,7 +183,6 @@ Q_CLUSTER = {
 # 缓存配置
 CACHES = {
     "default": env.cache(),
-    "dingding": env.cache_url("DINGDING_CACHE_URL")
 }
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
