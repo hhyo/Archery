@@ -33,6 +33,6 @@ drf-spectacular==0.22.0
 pyotp==2.6.0
 pillow==9.0.1
 qrcode==7.3.1
-django-environ
+django-environ==0.8.1
 alibabacloud_dysmsapi20170525==2.0.9
 tencentcloud-sdk-python==3.0.656
