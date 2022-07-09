@@ -535,8 +535,59 @@ class TestMysql(TestCase):
         new_engine.seconds_behind_master
         _query.assert_called_once_with(sql="show slave status", close_conn=False,
                                        cursorclass=MySQLdb.cursors.DictCursor)
+    
+    @patch.object(MysqlEngine, 'query')
+    def test_processlist(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value = ResultSet()
+        for command_type in [ 'Query', 'All', 'Not Sleep']:
+            r = new_engine.processlist(command_type)
+            self.assertIsInstance(r, ResultSet)
+    
+    @patch.object(MysqlEngine, 'query')
+    def test_get_kill_command(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value.rows = (('kill 1;',),('kill 2;',)) 
+        r = new_engine.get_kill_command([1,2])
+        self.assertEqual(r, 'kill 1;kill 2;')
+    
+    @patch('MySQLdb.connect.cursor.execute')
+    @patch('MySQLdb.connect.cursor')
+    @patch('MySQLdb.connect')
+    @patch.object(MysqlEngine, 'query')
+    def test_kill(self, _query, _connect, _cursor, _execute):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value.rows = (('kill 1;',),('kill 2;',))
+        _execute.return_value =  ResultSet()
+        r = new_engine.kill([1,2])
+        self.assertIsInstance(r, ResultSet)
+    
+    @patch.object(MysqlEngine, 'query')
+    def test_tablesapce(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value = ResultSet()
+        r = new_engine.tablesapce()
+        self.assertIsInstance(r, ResultSet)
+    
+    @patch.object(MysqlEngine, 'query')
+    @patch('MySQLdb.connect')
+    def test_trxandlocks(self, _connect, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _connect.return_value = Mock()
+        for v in ['5.7.0','8.0.1']:
+            _connect.return_value.get_server_info.return_value = v
+            _query.return_value = ResultSet()
+            r = new_engine.trxandlocks()
+            self.assertIsInstance(r, ResultSet)
 
+    @patch.object(MysqlEngine, 'query')
+    def test_get_long_transaction(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value = ResultSet()
+        r = new_engine.get_long_transaction()
+        self.assertIsInstance(r, ResultSet)
 
+    
 class TestRedis(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1467,29 +1518,48 @@ class MongoTest(TestCase):
         cols = self.engine.fill_query_columns(cursor, columns=columns)
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
 
-    @patch('sql.engines.mongo.MongoEngine.current_op')
-    def test_current_op(self, mock_current_op):
-        mock_current_op.return_value = ResultSet()
-        command_types = ['Full', 'All', 'Inner', 'Active']
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_current_op(self, mock_get_connection):
+        class Aggregate():
+            def __enter__(self):
+                yield {'client':'single_client'}
+                yield {'clientMetadata':{'mongos':{'client':'sharding_client'}}}
+            def __exit__(self,*arg, **kwargs):
+                pass
+        mock_conn = Mock()
+        mock_conn.admin.aggregate.return_value = Aggregate()
+        mock_get_connection.return_value = mock_conn
+        command_types = ['Full','All','Inner','Active']
         for command_type in command_types:
             result_set = self.engine.current_op(command_type)
             self.assertIsInstance(result_set, ResultSet)
 
-    @patch('sql.engines.mongo.MongoEngine.get_kill_command')
-    def test_get_kill_command(self, mock_kill_command):
-        """TODO mock后这个测试无意义，后续CI可增加真实的mongo验证"""
-        mock_kill_command.return_value = 'db.killOp(111);db.killOp(222);'
-        kill_command1 = self.engine.get_kill_command([111, 222])
-        self.assertEqual(kill_command1, 'db.killOp(111);db.killOp(222);')
-        mock_kill_command.return_value = 'db.killOp("shards: 111");db.killOp("shards: 111");'
-        kill_command2 = self.engine.get_kill_command(['shards: 111', 'shards: 222'])
-        self.assertEqual(kill_command2, 'db.killOp("shards: 111");db.killOp("shards: 111");')
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_get_kill_command(self, mock_get_connection):        
+        class Aggregate():
+            def __enter__(self):
+                yield {'opid': 111}
+                yield {'opid': 'shard1: 111'}
+            def __exit__(self,*arg, **kwargs):
+                pass
+        mock_conn = Mock()
+        mock_conn.admin.aggregate.return_value = Aggregate()
+        mock_get_connection.return_value = mock_conn
+        kill_command1 = self.engine.get_kill_command([111,222])
+        kill_command2 = self.engine.get_kill_command(['shard1: 111','shard2: 222'])
+        self.assertEqual(kill_command1, 'db.killOp(111);')
+        self.assertEqual(kill_command2, 'db.killOp("shard1: 111");')
 
-    @patch('sql.engines.mongo.MongoEngine.kill_op')
-    def test_kill_op(self, mock_kill_op):
-        self.engine.kill_op([111, 222])
-        self.engine.kill_op(['shards: 111', 'shards: 222'])
-        self.assertEqual("", "")
+    @patch('sql.engines.mongo.MongoEngine.get_connection')
+    def test_kill_op(self, mock_get_connection):
+        def command(self, *arg, **kwargs):
+            pass
+        mock_conn = Mock()
+        mock_conn.admin.command.return_value = command
+        mock_get_connection.return_value = mock_conn
+        self.engine.kill_op([111,222])
+        self.engine.kill_op(['shards: 111','shards: 222'])
+        mock_conn.admin.command.assert_called()
 
 
 class TestClickHouse(TestCase):

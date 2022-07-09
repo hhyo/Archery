@@ -908,7 +908,6 @@ class MongoEngine(EngineBase):
         Active  包含活跃
         Inner   内部连接
         """
-        print(command_type)
         result_set = ResultSet(full_sql='db.aggregate([{"$currentOp": {"allUsers":true, "idleConnections":true}}])')
         try:
             conn = self.get_connection()
@@ -967,7 +966,16 @@ class MongoEngine(EngineBase):
 
     def kill_op(self, opids):
         """kill"""
-        conn = self.get_connection()
-        db = conn.admin
-        for opid in opids:
-            conn.admin.command({'killOp': 1, 'op': opid})
+        result = ResultSet()
+        try:
+            conn = self.get_connection()
+            db = conn.admin
+            for opid in opids:
+                conn.admin.command({'killOp': 1, 'op': opid})
+        except Exception as e:
+            try:
+                sql = {'killOp': 1, 'op': _opid}
+            except:
+                sql = {'killOp': 1, 'op': ''}
+            logger.warning(f"mongodb语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}")
+            result.error = str(e)
