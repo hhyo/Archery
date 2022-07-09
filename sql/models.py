@@ -245,7 +245,7 @@ class SqlWorkflow(models.Model):
     """
 
     workflow_name = models.CharField("工单内容", max_length=50)
-    demand_url = models.CharField("需求链接", max_length=500)
+    demand_url = models.CharField("需求链接", max_length=500, blank=True)
     group_id = models.IntegerField("组ID")
     group_name = models.CharField("组名称", max_length=100)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)

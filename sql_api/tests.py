@@ -348,6 +348,7 @@ class TestWorkflow(APITestCase):
             workflow_type=2,
             audit_auth_groups=self.group.id,
         )
+        can_submit = Permission.objects.get(codename="sql_submit")
         can_execute_permission = Permission.objects.get(codename="sql_execute")
         can_execute_resource_permission = Permission.objects.get(
             codename="sql_execute_for_resource_group"
@@ -357,6 +358,7 @@ class TestWorkflow(APITestCase):
         self.user.set_password("test_password")
         self.user.save()
         self.user.user_permissions.add(
+            can_submit,
             can_execute_permission,
             can_execute_resource_permission,
             can_review_permission,

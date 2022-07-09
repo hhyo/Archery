@@ -17,7 +17,6 @@ from common.config import SysConfig
 from sql.engines import get_engine
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
-from sql.engines.models import ReviewResult, ReviewSet
 from sql.utils.tasks import task_info
 
 from .models import (
@@ -163,9 +162,6 @@ def submit_sql(request):
     # 获取组信息
     group_list = user_groups(user)
 
-    # 获取所有有效用户，通知对象
-    active_user = Users.objects.filter(is_active=1)
-
     # 获取系统配置
     archer_config = SysConfig()
 
@@ -175,7 +171,6 @@ def submit_sql(request):
     )
 
     context = {
-        "active_user": active_user,
         "group_list": group_list,
         "enable_backup_switch": archer_config.get("enable_backup_switch"),
     }
