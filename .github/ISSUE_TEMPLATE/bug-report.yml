@@ -6,14 +6,6 @@ body:
     attributes:
       value: |
         感谢你花费时间来报告这个问题，在提交前请先查阅 [WIKI](https://github.com/hhyo/archery/wiki) | [FAQ](https://github.com/hhyo/archery/wiki/FAQ) 等文档，确保这是一个需要修复的问题🐛。如果是对于使用方法的咨询🤔🙏，或者你有好的想法和建议💡，请通过[Discussions](https://github.com/hhyo/Archery/discussions)来发布，再次感谢你对Archery的贡献 🎉🎉🎉
-  - type: checkboxes
-    id: search-issues
-    attributes:
-      label: 问题是否已经被报告?
-      description: 请适当进行搜索查看是否已存在类似的报告
-      options:
-        - label: 我已经搜索了当前存在的问题
-          required: true
   - type: textarea
     id: what-happened
     attributes:
@@ -69,7 +61,7 @@ body:
   - type: textarea
     id: other-msg
     attributes:
-      label: 是否还有其他可以辅助定位问题的信息？比如数据库、浏览器、goInception等
+      label: 是否还有其他可以辅助定位问题的信息？比如数据库版本等
       description: |
         部分信息可以在Archery的debug api中获取：[参考debug地址](https://demo.archerydms.com/api/debug?full=true)
         - **MySQL**: 5.7.26
