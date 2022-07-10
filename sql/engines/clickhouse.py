@@ -13,6 +13,7 @@ logger = logging.getLogger('default')
 
 
 class ClickHouseEngine(EngineBase):
+    test_query = "SELECT 1"
 
     def __init__(self, instance=None):
         super(ClickHouseEngine, self).__init__(instance=instance)

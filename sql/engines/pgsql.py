@@ -24,6 +24,8 @@ logger = logging.getLogger('default')
 
 
 class PgSQLEngine(EngineBase):
+    test_query = "SELECT 1"
+
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name or 'postgres'
         if self.conn:
