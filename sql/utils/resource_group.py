@@ -58,5 +58,5 @@ def auth_group_users(auth_group_names, group_id):
     # 获取资源组关联的用户
     users = ResourceGroup.objects.get(group_id=group_id).users_set.all()
     # 过滤在该权限组中的用户
-    users = users.filter(groups__name__in=auth_group_names)
+    users = users.filter(groups__name__in=auth_group_names, is_active=1)
     return users
