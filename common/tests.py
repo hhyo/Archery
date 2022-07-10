@@ -325,22 +325,6 @@ class CheckTest(TestCase):
         self.assertEqual(r_json['status'], 1)
 
     @patch('MySQLdb.connect')
-    def test_inception_check(self, _conn):
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "inception_host": "inception",
-            "inception_port": "6669",
-            "inception_remote_backup_host": "mysql",
-            "inception_remote_backup_port": 3306,
-            "inception_remote_backup_user": "mysql",
-            "inception_remote_backup_password": "123456"
-        }
-        r = c.post('/check/inception/', data=data)
-        r_json = r.json()
-        self.assertEqual(r_json['status'], 0)
-
-    @patch('MySQLdb.connect')
     def test_go_inception_check(self, _conn):
         c = Client()
         c.force_login(self.superuser1)
