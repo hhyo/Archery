@@ -1,10 +1,11 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
-from sql.engines.models import ResultSet
+from sql.engines.models import ResultSet, ReviewSet
 from sql.utils.ssh_tunnel import SSHConnection
 
 
 class EngineBase:
     """enginebase 只定义了init函数和若干方法的名字, 具体实现用mysql.py pg.py等实现"""
+    test_query = None
 
     def __init__(self, instance=None):
         self.conn = None
@@ -31,7 +32,7 @@ class EngineBase:
                     instance.tunnel.pkey,
                     instance.tunnel.pkey_password,
                 )
-                self.host,self.port = self.ssh.get_ssh()
+                self.host, self.port = self.ssh.get_ssh()
 
     def __del__(self):
         if hasattr(self, 'ssh'):
@@ -64,6 +65,10 @@ class EngineBase:
 
     def get_connection(self, db_name=None):
         """返回一个conn实例"""
+
+    def test_connection(self):
+        """测试实例链接是否正常"""
+        return self.query(sql=self.test_query)
 
     @property
     def name(self):
@@ -138,6 +143,7 @@ class EngineBase:
 
     def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
         """实际查询 返回一个ResultSet"""
+        return ResultSet()
 
     def query_masking(self, db_name=None, sql='', resultset=None):
         """传入 sql语句, db名, 结果集,
@@ -146,15 +152,18 @@ class EngineBase:
 
     def execute_check(self, db_name=None, sql=''):
         """执行语句的检查 返回一个ReviewSet"""
+        return ReviewSet()
 
     def execute(self):
         """执行语句 返回一个ReviewSet"""
+        return ReviewSet()
 
     def get_execute_percentage(self):
         """获取执行进度"""
 
     def get_rollback(self, workflow):
         """获取工单回滚语句"""
+        return list()
 
     def get_variables(self, variables=None):
         """获取实例参数，返回一个 ResultSet"""

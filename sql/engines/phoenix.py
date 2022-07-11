@@ -12,6 +12,8 @@ logger = logging.getLogger('default')
 
 
 class PhoenixEngine(EngineBase):
+    test_query = "SELECT 1"
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn

@@ -253,6 +253,9 @@ class MongoEngine(EngineBase):
     warning = None
     methodStr = None
 
+    def test_connection(self):
+        return self.get_all_databases()
+
     def exec_cmd(self, sql, db_name=None, slave_ok=''):
         """审核时执行的语句"""
 

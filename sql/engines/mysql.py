@@ -20,6 +20,7 @@ logger = logging.getLogger('default')
 
 
 class MysqlEngine(EngineBase):
+    test_query = "SELECT 1"
 
     def __init__(self, instance=None):
         super().__init__(instance=instance)

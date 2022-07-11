@@ -20,6 +20,7 @@ logger = logging.getLogger('default')
 
 
 class OracleEngine(EngineBase):
+    test_query = "SELECT 1 FROM DUAL"
 
     def __init__(self, instance=None):
         super(OracleEngine, self).__init__(instance=instance)

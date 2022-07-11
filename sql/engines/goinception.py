@@ -15,6 +15,8 @@ logger = logging.getLogger('default')
 
 
 class GoInceptionEngine(EngineBase):
+    test_query = "INCEPTION GET VARIABLES"
+
     @property
     def name(self):
         return 'GoInception'
