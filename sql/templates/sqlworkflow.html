@@ -43,6 +43,23 @@
                 提交SQL
             </button>
         </div>
+        <div class="form-group">
+            <select id="batchOper" class="form-control selectpicker">
+                <option value="" selected="selected" >选择操作</option>
+                    {% if perms.sql.sql_submitbatch %}
+                    <option class="glyphicon glyphicon-plus" value="batchRollback">提交批量回滚工单</option>
+                    {% endif %}
+                    {% if perms.sql.sql_reviewbatch %}
+                    <option class="glyphicon glyphicon-ok" value="batchPass">批量审核SQL</option>
+                    {% endif %}
+                    {% if perms.sql.sql_executebatch %}
+                    <option class="glyphicon glyphicon-play" value="batchExecute">批量执行SQL</option>
+                    {% endif %}
+                    {% if perms.sql.sql_reviewbatch %}
+                    <option class="glyphicon glyphicon-remove" value="batchCancel">批量终止工单</option>
+                    {% endif %}
+            </select>
+        </div>
     </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">
@@ -185,6 +202,10 @@
                         }
                     },
                 columns: [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true
+                    },{
                     title: '工单名称',
                     field: 'workflow_name',
                     formatter: function (value, row, index) {
@@ -267,6 +288,148 @@
             });
 
         }
+        // 选择批量处理操作
+        function get_batch_oper() {
+            var batch_oper_value = $("#batchOper").val()
+            switch (batch_oper_value) {
+                case "batchRollback":
+                    apply_batch_rollback();
+                    break;
+                case "batchPass":
+                    apply_batch_pass();
+                    break;
+                case "batchExecute":
+                    apply_batch_execute();
+                    break;
+                case "batchCancel":
+                    apply_batch_cancel();
+                    break;
+            }
+        };
+        // 提交批量回滚
+        function apply_batch_rollback() {
+            //获取form对象，判断输入，通过则提交
+            var AllSelections = $("#sqlaudit-list").bootstrapTable('getSelections');
+            if(AllSelections.length == 0){
+                alert("请勾选需要提交回滚的工单!!!");
+                location.reload();
+            } else {
+                var AllSelectionIds = [];
+                for (var i = 0; i < AllSelections.length; i++) {
+                    AllSelectionIds.push(AllSelections[i]['id'])
+                }
+                $.ajax({
+                    url:"/rollbackbatch/",
+                    type:"POST",
+                    data:{
+                        'workflowid_array': JSON.stringify(AllSelectionIds)
+                    },
+                    success:function(data) {
+                        if(data.status == 1){
+                            alert("勾选了包含非【已正常结束】状态的工单,请核查重新提交");
+                            location.reload();
+                        }else {
+                            alert("请求已发送后台，请稍后主动刷新页面查看提交工单");
+                            location.reload();
+                        }
+                    }
+                })
+            }
+        };
+        // 提交批量审核
+        function apply_batch_pass() {
+            //获取form对象，判断输入，通过则提交
+            // $("#audit_remark").val($("#remark").val());
+            var AllSelections = $("#sqlaudit-list").bootstrapTable('getSelections');
+            if(AllSelections.length == 0){
+                alert("请勾选需要批量审核的工单!!!");
+                location.reload();
+            } else {
+                var AllSelectionIds = [];
+                for (var i = 0; i < AllSelections.length; i++) {
+                    AllSelectionIds.push(AllSelections[i]['id'])
+                }
+                $.ajax({
+                    url:"/passedbatch/",
+                    type:"POST",
+                    data:{
+                        'workflowid_array': JSON.stringify(AllSelectionIds)
+                    },
+                    success:function(data) {
+                        if(data.status == 1){
+                            alert("勾选了包含非【等待审核人审核】状态的工单,请核查重新提交");
+                            location.reload();
+                        }else {
+                            location.reload();
+                        }
+                    }
+                })
+            }
+        };
+        // 提交批量执行
+        function apply_batch_execute () {
+            var AllSelections = $("#sqlaudit-list").bootstrapTable('getSelections');
+            if(AllSelections.length == 0){
+                alert("请勾选需要批量执行的工单!!!");
+                location.reload();
+            } else {
+                var AllSelectionIds = [];
+                for (var i = 0; i < AllSelections.length; i++) {
+                    AllSelectionIds.push(AllSelections[i]['id'])
+                }
+                var isContinue = confirm("请确认是否立即执行？");
+                if (isContinue) {
+                    $.ajax({
+                        url:"/executebatch/",
+                        type:"POST",
+                        data:{
+                            'workflowid_array': JSON.stringify(AllSelectionIds)
+                        },
+                        success:function(data) {
+                            if(data.status == 1){
+                                alert("勾选了包含非【审核通过】状态的工单,请核查重新提交");
+                                location.reload();
+                            }else {
+                                location.reload();
+                                alert("后台执行中，请稍后刷新页面获取工单最新状态");
+                            }
+                        }
+                    })
+                } else {
+                    location.reload();
+                }
+            }
+        };
+        // 提交批量终止
+        function apply_batch_cancel() {
+            var AllSelections = $("#sqlaudit-list").bootstrapTable('getSelections');
+            //获取form对象，判断输入，通过则提交
+            if(AllSelections.length == 0){
+                alert("请勾选需要终止的工单!!!");
+                location.reload();
+            } else {
+                var AllSelectionIds = [];
+                for (var i = 0; i < AllSelections.length; i++) {
+                    AllSelectionIds.push(AllSelections[i]['id'])
+                }
+                $.ajax({
+                    url:"/cancelbatch/",
+                    type:"POST",
+                    data:{
+                        'workflowid_array': JSON.stringify(AllSelectionIds) 
+                    },
+                    success:function(data) {
+                        if(data.status == 1){
+                            alert("勾选了包含非【审核通过】或【等待审核人审核】状态的工单,请核查重新提交");
+                            location.reload();
+                        }else {
+                            alert("请求已发送后台，请稍后主动刷新页面查看提交工单");
+                            location.reload();
+                        }
+                    }
+                })
+            }
+        };
 
         // 获取操作日志
         function getLog(obj) {
@@ -331,6 +494,10 @@
                 }
             })
         }
+
+        $("#batchOper").change(function () {
+            get_batch_oper();
+        });
 
         //筛选变动自动刷新
         $("#navStatus").change(function () {

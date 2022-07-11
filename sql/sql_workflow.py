@@ -622,3 +622,323 @@ def osc_control(request):
     result = {"total": len(rows), "rows": rows, "msg": error}
     return HttpResponse(json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
                         content_type='application/json')
+
+
+
+@permission_required('sql.sql_submitbatch', raise_exception=True)
+def rollbackbatch(request):
+    """
+    批量提交回滚流程
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST['workflowid_array']
+    workflow_id_list = json.loads(workflow_id_list)
+
+    workflow_status_result = list(SqlWorkflow.objects.filter(id__in = workflow_id_list).values('status').distinct())
+    workflow_status_list = [item[key] for item in workflow_status_result for key in item]
+
+    if len(workflow_status_list) == 1 and 'workflow_finish' in workflow_status_list:
+        workflow_title_list = list()
+        for workflow_id in workflow_id_list:
+            workflow = SqlWorkflow.objects.get(id=int(workflow_id))
+            rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
+            workflow_title_list.append(rollback_workflow_name)
+            context = {'workflow_detail': workflow, 'rollback_workflow_name': rollback_workflow_name}
+
+            if not can_rollback(request.user, workflow_id):
+                raise PermissionDenied
+            workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
+
+            try:
+                query_engine = get_engine(instance=workflow.instance)
+                list_backup_sql = query_engine.get_rollback(workflow=workflow)
+            except Exception as msg:
+                return JsonResponse({'status': 1, 'msg': f'{msg}', 'rows': []})
+
+            sql_content = ''
+            for i in range(len(list_backup_sql)):
+                backup_sql = list_backup_sql[i][1]
+                sql_content = sql_content+'\n'+backup_sql
+
+            workflow_title = rollback_workflow_name
+            group_name = workflow.group_name
+            group_id = ResourceGroup.objects.get(group_name=group_name).group_id
+            instance_name = workflow.instance.instance_name
+            demand_url = ''
+            instance = Instance.objects.get(instance_name=instance_name)
+            db_name = workflow.db_name
+            is_backup = True
+            cc_users = request.POST.getlist('cc_users')
+            run_date_start = None
+            run_date_end = None
+            # 服务器端参数验证
+            if None in [sql_content, db_name, instance_name, db_name, is_backup, demand_url]:
+                context = {'errMsg': '页面提交参数可能为空'}
+                return render(request, 'error.html', context)
+
+            # 验证组权限（用户是否在该组、该组是否有指定实例）
+            try:
+                user_instances(request.user, tag_codes=['can_write']).get(instance_name=instance_name)
+            except instance.DoesNotExist:
+                context = {'errMsg': '你所在组未关联该实例！'}
+                return render(request, 'error.html', context)
+
+            # 再次交给engine进行检测，防止绕过
+            try:
+                check_engine = get_engine(instance=instance)
+                check_result = check_engine.execute_check(db_name=db_name, sql=sql_content.strip())
+            except Exception as e:
+                context = {'errMsg': str(e)}
+                return render(request, 'error.html', context)
+
+            # 未开启备份选项，并且engine支持备份，强制设置备份
+            sys_config = SysConfig()
+            if not sys_config.get('enable_backup_switch') and check_engine.auto_backup:
+                is_backup = True
+
+            # 按照系统配置确定是自动驳回还是放行
+            auto_review_wrong = sys_config.get('auto_review_wrong', '')  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+            workflow_status = 'workflow_manreviewing'
+            if check_result.warning_count > 0 and auto_review_wrong == '1':
+                workflow_status = 'workflow_autoreviewwrong'
+            elif check_result.error_count > 0 and auto_review_wrong in ('', '1', '2'):
+                workflow_status = 'workflow_autoreviewwrong'
+
+            # 调用工作流生成工单
+            # 使用事务保持数据一致性
+            try:
+                with transaction.atomic():
+                    # 存进数据库里
+                    sql_workflow = SqlWorkflow.objects.create(
+                        workflow_name=workflow_title,
+                        demand_url=demand_url,
+                        group_id=group_id,
+                        group_name=group_name,
+                        engineer=request.user.username,
+                        engineer_display=request.user.display,
+                        audit_auth_groups=Audit.settings(group_id, WorkflowDict.workflow_type['sqlreview']),
+                        status=workflow_status,
+                        is_backup=is_backup,
+                        instance=instance,
+                        db_name=db_name,
+                        is_manual=0,
+                        syntax_type=check_result.syntax_type,
+                        create_time=timezone.now(),
+                        run_date_start=run_date_start or None,
+                        run_date_end=run_date_end or None
+                    )
+                    SqlWorkflowContent.objects.create(workflow=sql_workflow,
+                                                    sql_content=sql_content,
+                                                    review_content=check_result.json(),
+                                                    execute_result=''
+                                                    )
+                    workflow_id = sql_workflow.id
+                    # 自动审核通过了，才调用工作流
+                    if workflow_status == 'workflow_manreviewing' or workflow_status == 'workflow_autoreviewwrong':
+                        # 调用工作流插入审核信息, 查询权限申请workflow_type=2
+                        Audit.add(WorkflowDict.workflow_type['sqlreview'], workflow_id)
+
+            except Exception as msg:
+                logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
+                context = {'errMsg': msg}
+                logger.error(traceback.format_exc())
+                return render(request, 'error.html', context)
+            else:
+                # 自动审核通过才进行消息通知
+                if workflow_status == 'workflow_manreviewing':
+                    # 获取审核信息
+                    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                        workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+                    async_task(notify_for_audit, audit_id=audit_id, cc_users=cc_users, timeout=60,
+                            task_name=f'sqlreview-submit-{workflow_id}')
+        return HttpResponseRedirect('/sqlworkflow')
+    else:
+        result = {"status": 1, "msg": "", "data": ""}
+        return JsonResponse(result)
+
+@permission_required('sql.sql_reviewbatch', raise_exception=True)
+def passedbatch(request):
+    """
+    批量审核通过，不执行
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST['workflowid_array']
+    workflow_id_list = json.loads(workflow_id_list)
+
+    workflow_status_result = list(SqlWorkflow.objects.filter(id__in = workflow_id_list).values('status').distinct())
+    workflow_status_list = [item[key] for item in workflow_status_result for key in item]
+
+    if len(workflow_status_list) == 1 and'workflow_manreviewing' in workflow_status_list:
+        audit_remark = '批量审核，线下沟通'
+        for workflow_id in workflow_id_list:
+            user = request.user
+            if Audit.can_review(user, workflow_id, 2) is False:
+                context = {'errMsg': '你无权操作当前工单！'}
+                logger.error(context)
+                return render(request, 'error.html', context)
+            # 使用事务保持数据一致性
+            try:
+                with transaction.atomic():
+                    # 调用工作流接口审核
+                    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                        workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+                    audit_result = Audit.audit(audit_id, WorkflowDict.workflow_status['audit_success'],
+                                            user.username, audit_remark)
+
+                    # 按照审核结果更新业务表审核状态
+                    if audit_result['data']['workflow_status'] == WorkflowDict.workflow_status['audit_success']:
+                        # 将流程状态修改为审核通过
+                        SqlWorkflow(id=workflow_id, status='workflow_review_pass').save(update_fields=['status'])
+            except Exception as msg:
+                logger.error(f"审核工单报错，错误信息：{traceback.format_exc()}")
+                context = {'errMsg': msg}
+                return render(request, 'error.html', context)
+            else:
+                # 消息通知
+                async_task(notify_for_audit, audit_id=audit_id, audit_remark=audit_remark, timeout=60,
+                     task_name=f'sqlreview-pass-{workflow_id}')
+        return HttpResponseRedirect('/sqlworkflow')
+    else:
+        result = {"status": 1, "msg": "", "data": ""}
+        return JsonResponse(result)
+
+@permission_required('sql.sql_executebatch', raise_exception=True)
+def executebatch(request):
+    """
+    批量执行SQL
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST['workflowid_array']
+    workflow_id_list = json.loads(workflow_id_list)
+
+    workflow_status_result = list(SqlWorkflow.objects.filter(id__in = workflow_id_list).values('status').distinct())
+    workflow_status_list = [item[key] for item in workflow_status_result for key in item]
+
+    if len(workflow_status_list) == 1 and 'workflow_review_pass' in workflow_status_list:
+        # 校验多个权限
+        if not (request.user.has_perm('sql.sql_executebatch')):
+            raise PermissionDenied
+        mode = 'auto'
+
+        for workflow_id in workflow_id_list:
+            if on_correct_time_period(workflow_id) is False:
+                context = {'errMsg': '不在可执行时间范围内，如果需要修改执行时间请重新提交工单!'}
+                logger.error(context)
+                return render(request, 'error.html', context)
+
+            if can_execute(request.user, workflow_id) is False:
+                context = {'errMsg': '你无权操作当前工单！'}
+                logger.error(context)
+                return render(request, 'error.html', context)
+        # 获取审核信息
+            audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                workflow_type=WorkflowDict.workflow_type['sqlreview']).audit_id
+
+            # 交由系统执行
+            if mode == "auto":
+                # 修改工单状态为排队中
+                SqlWorkflow(id=workflow_id, status="workflow_queuing").save(update_fields=['status'])
+                # 删除定时执行任务
+                schedule_name = f"sqlreview-timing-{workflow_id}"
+                del_schedule(schedule_name)
+                # 加入执行队列
+                async_task('sql.utils.execute_sql.execute', workflow_id, request.user,
+                   hook='sql.utils.execute_sql.execute_callback',
+                   timeout=-1, task_name=f'sqlreview-execute-{workflow_id}')
+                # 增加工单日志
+                Audit.add_log(audit_id=audit_id,
+                            operation_type=5,
+                            operation_type_desc='执行工单',
+                            operation_info='工单执行排队中',
+                            operator=request.user.username,
+                            operator_display=request.user.display)
+        return HttpResponseRedirect('/sqlworkflow')
+    else:
+        result = {"status": 1, "msg": "", "data": ""}
+        return JsonResponse(result)
+
+@permission_required('sql.sql_reviewbatch', raise_exception=True)
+def cancelbatch(request):
+    """
+    批量终止流程
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST['workflowid_array']
+    workflow_id_list = json.loads(workflow_id_list)
+    audit_remark = '批量终止,线下沟通'
+    workflow_status_result = list(SqlWorkflow.objects.filter(id__in = workflow_id_list).values('status').distinct())
+    workflow_status_list = [item[key] for item in workflow_status_result for key in item]
+    if (len(workflow_status_list) == 1 and ('workflow_review_pass' in workflow_status_list or 'workflow_manreviewing' in workflow_status_list)) \
+    or (len(workflow_status_list) == 2 and ['workflow_manreviewing','workflow_review_pass'] == sorted(workflow_status_list)):
+        for workflow_id in workflow_id_list:
+            user = request.user
+            if can_cancel(request.user, workflow_id) is False:
+                context = {'errMsg': '你无权操作当前工单！'}
+                return render(request, 'error.html', context)
+            workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+        # 使用事务保持数据一致性
+            try:
+                with transaction.atomic():
+                    # 调用工作流接口取消或者驳回
+                    audit_id = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                        workflow_type=WorkflowDict.workflow_type[
+                                                            'sqlreview']).audit_id
+                    # 仅待审核的需要调用工作流，审核通过的不需要
+                    if workflow_detail.status != 'workflow_manreviewing':
+                        # 增加工单日志
+                        if user.username == workflow_detail.engineer:
+                            Audit.add_log(audit_id=audit_id,
+                                        operation_type=3,
+                                        operation_type_desc='取消执行',
+                                        operation_info="取消原因：{}".format(audit_remark),
+                                        operator=request.user.username,
+                                        operator_display=request.user.display
+                                        )
+                        else:
+                            Audit.add_log(audit_id=audit_id,
+                                        operation_type=2,
+                                        operation_type_desc='审批不通过',
+                                        operation_info="审批备注：{}".format(audit_remark),
+                                        operator=request.user.username,
+                                        operator_display=request.user.display
+                                        )
+                    else:
+                        if user.username == workflow_detail.engineer:
+                            Audit.audit(audit_id,
+                                        WorkflowDict.workflow_status['audit_abort'],
+                                        user.username, audit_remark)
+                        # 非提交人需要校验审核权限
+                        elif user.has_perm('sql.sql_review'):
+                            Audit.audit(audit_id,
+                                        WorkflowDict.workflow_status['audit_reject'],
+                                        user.username, audit_remark)
+                        else:
+                            raise PermissionDenied
+
+                    # 删除定时执行task
+                    if workflow_detail.status == 'workflow_timingtask':
+                        schedule_name = f"sqlreview-timing-{workflow_id}"
+                        del_schedule(schedule_name)
+                    # 将流程状态修改为人工终止流程
+                    workflow_detail.status = 'workflow_abort'
+                    workflow_detail.save()
+            except Exception as msg:
+                logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
+                context = {'errMsg': msg}
+                return render(request, 'error.html', context)
+            else:
+                # 发送取消、驳回通知
+                audit_detail = Audit.detail_by_workflow_id(workflow_id=workflow_id,
+                                                        workflow_type=WorkflowDict.workflow_type['sqlreview'])
+                if audit_detail.current_status in (
+                        WorkflowDict.workflow_status['audit_abort'], WorkflowDict.workflow_status['audit_reject']):
+                    async_task(notify_for_audit, audit_id=audit_detail.audit_id, audit_remark=audit_remark, timeout=60,
+                            task_name=f'sqlreview-cancel-{workflow_id}')
+        return HttpResponseRedirect('/sqlworkflow')
+    else:
+        result = {"status": 1, "msg": "", "data": ""}
+        return JsonResponse(result)
