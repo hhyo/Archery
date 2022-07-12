@@ -16,29 +16,6 @@ logger = logging.getLogger('default')
 
 # 检测inception配置
 @superuser_required
-def inception(request):
-    result = {'status': 0, 'msg': 'ok', 'data': []}
-    inception_host = request.POST.get('inception_host', '')
-    inception_port = request.POST.get('inception_port', '')
-    try:
-        conn = MySQLdb.connect(host=inception_host, port=int(inception_port), charset='utf8mb4',
-                               connect_timeout=5)
-        cur = conn.cursor()
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        result['status'] = 1
-        result['msg'] = '无法连接Inception\n{}'.format(str(e))
-        return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        cur.close()
-        conn.close()
-
-    # 返回结果
-    return HttpResponse(json.dumps(result), content_type='application/json')
-
-
-# 检测inception配置
-@superuser_required
 def go_inception(request):
     result = {'status': 0, 'msg': 'ok', 'data': []}
     go_inception_host = request.POST.get('go_inception_host', '')
@@ -128,11 +105,10 @@ def instance(request):
     instance = Instance.objects.get(id=instance_id)
     try:
         engine = get_engine(instance=instance)
-        engine.get_connection()
-        dbs = engine.get_all_databases()
-        if dbs.error:
+        test_result = engine.test_connection()
+        if test_result.error:
             result['status'] = 1
-            result['msg'] = '无法连接实例,\n{}'.format(dbs.error)
+            result['msg'] = '无法连接实例,\n{}'.format(test_result.error)
     except Exception as e:
         result['status'] = 1
         result['msg'] = '无法连接实例,\n{}'.format(str(e))

@@ -27,10 +27,11 @@ class RedisEngine(EngineBase):
         db_name = db_name or self.db_name
         if self.mode == 'cluster':
             return redis.cluster.RedisCluster(host=self.host, port=self.port, password=self.password,
-                                encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
+                                              encoding_errors='ignore', decode_responses=True,
+                                              socket_connect_timeout=10)
         else:
             return redis.Redis(host=self.host, port=self.port, db=db_name, password=self.password,
-                         encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
+                               encoding_errors='ignore', decode_responses=True, socket_connect_timeout=10)
 
     @property
     def name(self):
@@ -39,6 +40,9 @@ class RedisEngine(EngineBase):
     @property
     def info(self):
         return 'Redis engine'
+
+    def test_connection(self):
+        return self.get_all_databases()
 
     def get_all_databases(self, **kwargs):
         """
@@ -51,8 +55,8 @@ class RedisEngine(EngineBase):
             rows = conn.config_get('databases')['databases']
         except Exception as e:
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
-            rows = 16
-            result.error = str(e)
+            dbs = [int(i.split('db')[1]) for i in conn.info('Keyspace').keys() if len(i.split('db')) == 2]
+            rows = max(dbs, [16])
 
         db_list = [str(x) for x in range(int(rows))]
         result.rows = db_list
@@ -64,7 +68,7 @@ class RedisEngine(EngineBase):
         safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
                     "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
                     "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex",
-                    "zrange","zrangebyscore","zscore","zcard","zcount","zrank"]
+                    "zrange", "zrangebyscore", "zscore", "zcard", "zcount", "zrank"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
             if re.match(fr'^{cmd}', sql.strip(), re.I):
