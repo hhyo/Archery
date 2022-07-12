@@ -126,7 +126,8 @@ def kill_session(request):
 @permission_required('sql.tablespace_view', raise_exception=True)
 def tablesapce(request):
     instance_name = request.POST.get('instance_name')
-
+    offset = int(request.POST.get('offset',0))
+    limit = int(request.POST.get('limit',14))
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
     except Instance.DoesNotExist:
@@ -139,7 +140,9 @@ def tablesapce(request):
         if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
             result = aliyun_sapce_status(request)
         else:
-            query_result = query_engine.tablesapce()
+            query_result = query_engine.tablesapce(offset,limit)
+            r = query_engine.tablesapce_num()
+            total = r.rows[0][0]
     else:
         result = {'status': 1, 'msg': '暂时不支持{}类型数据库的表空间信息查询'.format(instance.db_type), 'data': []}
         return HttpResponse(json.dumps(result), content_type='application/json')
@@ -147,7 +150,7 @@ def tablesapce(request):
     if query_result: 
         if not query_result.error:
             table_space = query_result.to_dict()
-            result = {'status': 0, 'msg': 'ok', 'rows': table_space}
+            result = {'status': 0, 'msg': 'ok', 'rows': table_space, 'total':total}
         else:
             result = {'status': 1, 'msg': query_result.error}
     # 返回查询结果
