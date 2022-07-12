@@ -479,7 +479,7 @@ class MysqlEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute('information_schema', kill_sql)        
         
-    def tablesapce(self): 
+    def tablesapce(self, offset=0, row_count=14): 
         """获取表空间信息"""
         sql = '''
         SELECT
@@ -495,7 +495,15 @@ class MysqlEngine(EngineBase):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
-        LIMIT 14;'''
+        LIMIT {},{};'''.format(offset, row_count)
+        return self.query('information_schema', sql)
+    
+    def tablesapce_num(self): 
+        """获取表空间数量"""
+        sql = '''
+        SELECT count(*)
+        FROM information_schema.tables 
+        WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')'''
         return self.query('information_schema', sql)
         
     def trxandlocks(self):

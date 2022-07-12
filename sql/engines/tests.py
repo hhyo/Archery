@@ -570,6 +570,13 @@ class TestMysql(TestCase):
         self.assertIsInstance(r, ResultSet)
     
     @patch.object(MysqlEngine, 'query')
+    def test_tablesapce_num(self, _query):
+        new_engine = MysqlEngine(instance=self.ins1)
+        _query.return_value = ResultSet()
+        r = new_engine.tablesapce_num()
+        self.assertIsInstance(r, ResultSet)
+    
+    @patch.object(MysqlEngine, 'query')
     @patch('MySQLdb.connect')
     def test_trxandlocks(self, _connect, _query):
         new_engine = MysqlEngine(instance=self.ins1)
