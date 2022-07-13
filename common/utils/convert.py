@@ -9,9 +9,11 @@ class Convert(Func):
     """
 
     def __init__(self, expression, transcoding_name, **extra):
-        super(Convert, self).__init__(expression=expression, transcoding_name=transcoding_name, **extra)
+        super(Convert, self).__init__(
+            expression=expression, transcoding_name=transcoding_name, **extra
+        )
 
     def as_mysql(self, compiler, connection):
-        self.function = 'CONVERT'
-        self.template = '%(function)s(%(expression)s USING  %(transcoding_name)s)'
+        self.function = "CONVERT"
+        self.template = "%(function)s(%(expression)s USING  %(transcoding_name)s)"
         return super(Convert, self).as_sql(compiler, connection)

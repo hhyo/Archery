@@ -18,16 +18,18 @@ class TunnelForm(ModelForm):
         model = Tunnel
         fields = "__all__"
         widgets = {
-            'PKey': Textarea(attrs={'cols': 40, 'rows': 8}),
+            "PKey": Textarea(attrs={"cols": 40, "rows": 8}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data.get('pkey_path'):
+        if cleaned_data.get("pkey_path"):
             try:
-                pkey_path = cleaned_data.get('pkey_path').read()
+                pkey_path = cleaned_data.get("pkey_path").read()
                 if pkey_path:
-                    cleaned_data['pkey'] = str(pkey_path, 'utf-8').replace(r'\r', '').replace(r'\n', '')
+                    cleaned_data["pkey"] = (
+                        str(pkey_path, "utf-8").replace(r"\r", "").replace(r"\n", "")
+                    )
             except IOError:
                 raise ValidationError("秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存")
 
@@ -35,4 +37,7 @@ class TunnelForm(ModelForm):
 class InstanceForm(ModelForm):
     class Media:
         model = Instance
-        js = ('jquery/jquery.min.js', 'dist/js/utils.js', )
+        js = (
+            "jquery/jquery.min.js",
+            "dist/js/utils.js",
+        )

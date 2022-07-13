@@ -12,7 +12,12 @@ def user_groups(user):
     if user.is_superuser:
         group_list = [group for group in ResourceGroup.objects.filter(is_deleted=0)]
     else:
-        group_list = [group for group in Users.objects.get(id=user.id).resource_group.filter(is_deleted=0)]
+        group_list = [
+            group
+            for group in Users.objects.get(id=user.id).resource_group.filter(
+                is_deleted=0
+            )
+        ]
     return group_list
 
 
@@ -26,7 +31,7 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
     :return:
     """
     # 拥有所有实例权限的用户
-    if user.has_perm('sql.query_all_instances'):
+    if user.has_perm("sql.query_all_instances"):
         instances = Instance.objects.all()
     else:
         # 先获取用户关联的资源组
@@ -44,7 +49,9 @@ def user_instances(user, type=None, db_type=None, tag_codes=None):
     # 过滤tag
     if tag_codes:
         for tag_code in tag_codes:
-            instances = instances.filter(instance_tag__tag_code=tag_code, instance_tag__active=True)
+            instances = instances.filter(
+                instance_tag__tag_code=tag_code, instance_tag__active=True
+            )
     return instances.distinct()
 
 

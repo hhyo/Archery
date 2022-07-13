@@ -10,8 +10,8 @@ from common.utils.permission import superuser_required
 from sql.models import Users
 from sql.utils.tasks import add_sync_ding_user_schedule
 
-logger = logging.getLogger('default')
-rs = get_redis_connection('default')
+logger = logging.getLogger("default")
+rs = get_redis_connection("default")
 
 
 def get_access_token():
@@ -26,13 +26,13 @@ def get_access_token():
         return access_token.decode()
     # 请求钉钉接口获取
     sys_config = SysConfig()
-    app_key = sys_config.get('ding_app_key')
-    app_secret = sys_config.get('ding_app_secret')
+    app_key = sys_config.get("ding_app_key")
+    app_secret = sys_config.get("ding_app_secret")
     url = f"https://oapi.dingtalk.com/gettoken?appkey={app_key}&appsecret={app_secret}"
     resp = requests.get(url, timeout=3).json()
-    if resp.get('errcode') == 0:
-        access_token = resp.get('access_token')
-        expires_in = resp.get('expires_in')
+    if resp.get("errcode") == 0:
+        access_token = resp.get("access_token")
+        expires_in = resp.get("expires_in")
         rs.execute_command(f"SETEX ding_access_token {expires_in-60} {access_token}")
         return access_token
     else:
@@ -43,12 +43,12 @@ def get_access_token():
 def get_ding_user_id(username):
     """更新用户ding_user_id"""
     try:
-        ding_user_id = rs.execute_command('GET {}'.format(username.lower()))
+        ding_user_id = rs.execute_command("GET {}".format(username.lower()))
         if ding_user_id:
             user = Users.objects.get(username=username)
             if user.ding_user_id != str(ding_user_id, encoding="utf8"):
                 user.ding_user_id = str(ding_user_id, encoding="utf8")
-                user.save(update_fields=['ding_user_id'])
+                user.save(update_fields=["ding_user_id"])
     except Exception as e:
         logger.error(f"更新用户ding_user_id失败:{e}")
 
@@ -56,9 +56,13 @@ def get_ding_user_id(username):
 def get_dept_list_id_fetch_child(token, parent_dept_id):
     """获取所有子部门列表"""
     ids = [int(parent_dept_id)]
-    url = 'https://oapi.dingtalk.com/department/list_ids?id={0}&access_token={1}'.format(parent_dept_id, token)
+    url = (
+        "https://oapi.dingtalk.com/department/list_ids?id={0}&access_token={1}".format(
+            parent_dept_id, token
+        )
+    )
     resp = requests.get(url, timeout=3).json()
-    if resp.get('errcode') == 0:
+    if resp.get("errcode") == 0:
         for dept_id in resp.get("sub_dept_id_list"):
             ids.extend(get_dept_list_id_fetch_child(token, dept_id))
     return list(set(ids))
@@ -70,40 +74,46 @@ def sync_ding_user_id():
     所以可根据钉钉中 jobnumber 查到该用户的 ding_user_id。
     """
     sys_config = SysConfig()
-    ding_dept_ids = sys_config.get('ding_dept_ids', '')
-    username2ding = sys_config.get('ding_archery_username')
+    ding_dept_ids = sys_config.get("ding_dept_ids", "")
+    username2ding = sys_config.get("ding_archery_username")
     token = get_access_token()
     if not token:
         return False
     # 获取全部部门列表
     sub_dept_id_list = []
-    for dept_id in list(set(ding_dept_ids.split(','))):
+    for dept_id in list(set(ding_dept_ids.split(","))):
         sub_dept_id_list.extend(get_dept_list_id_fetch_child(token, dept_id))
     # 遍历部门下的用户
     user_ids = []
     for sdi in sub_dept_id_list:
-        url = f'https://oapi.dingtalk.com/user/getDeptMember?access_token={token}&deptId={sdi}'
+        url = f"https://oapi.dingtalk.com/user/getDeptMember?access_token={token}&deptId={sdi}"
         try:
             resp = requests.get(url, timeout=3).json()
-            if resp.get('errcode') == 0:
-                user_ids.extend(resp.get('userIds'))
+            if resp.get("errcode") == 0:
+                user_ids.extend(resp.get("userIds"))
             else:
-                raise Exception(f'获取部门用户出错:{resp}')
+                raise Exception(f"获取部门用户出错:{resp}")
         except Exception as e:
-            raise Exception(f'获取部门用户出错:{e}')
+            raise Exception(f"获取部门用户出错:{e}")
     # 获取所有用户信息并缓存
     for user_id in list(set(user_ids)):
-        url = f'https://oapi.dingtalk.com/user/get?access_token={token}&userid={user_id}'
+        url = (
+            f"https://oapi.dingtalk.com/user/get?access_token={token}&userid={user_id}"
+        )
         try:
             resp = requests.get(url, timeout=3).json()
-            if resp.get('errcode') == 0:
+            if resp.get("errcode") == 0:
                 if not resp.get(username2ding):
-                    raise Exception(f'钉钉用户信息不包含{username2ding}字段，无法获取id信息，请确认ding_archery_username配置{resp}')
-                rs.execute_command(f"SETEX {resp.get(username2ding).lower()} 86400 {resp.get('userid')}")
+                    raise Exception(
+                        f"钉钉用户信息不包含{username2ding}字段，无法获取id信息，请确认ding_archery_username配置{resp}"
+                    )
+                rs.execute_command(
+                    f"SETEX {resp.get(username2ding).lower()} 86400 {resp.get('userid')}"
+                )
             else:
-                raise Exception(f'获取用户信息出错:{resp}')
+                raise Exception(f"获取用户信息出错:{resp}")
         except Exception as e:
-            raise Exception(f'获取用户信息出错:{e}')
+            raise Exception(f"获取用户信息出错:{e}")
     return True
 
 

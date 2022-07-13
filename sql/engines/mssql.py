@@ -9,7 +9,7 @@ import pyodbc
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import brute_mask
 
-logger = logging.getLogger('default')
+logger = logging.getLogger("default")
 
 
 class MssqlEngine(EngineBase):
@@ -17,8 +17,13 @@ class MssqlEngine(EngineBase):
 
     def get_connection(self, db_name=None):
         connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
-client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self.port, self.user, self.password,
-                                                                 self.instance.charset or 'UTF8')
+client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(
+            self.host,
+            self.port,
+            self.user,
+            self.password,
+            self.instance.charset or "UTF8",
+        )
         if self.conn:
             return self.conn
         self.conn = pyodbc.connect(connstr)
@@ -28,8 +33,11 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         """获取数据库列表, 返回一个ResultSet"""
         sql = "SELECT name FROM master.sys.databases order by name"
         result = self.query(sql=sql)
-        db_list = [row[0] for row in result.rows
-                   if row[0] not in ('master', 'msdb', 'tempdb', 'model')]
+        db_list = [
+            row[0]
+            for row in result.rows
+            if row[0] not in ("master", "msdb", "tempdb", "model")
+        ]
         result.rows = db_list
         return result
 
@@ -37,9 +45,11 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
         """获取table 列表, 返回一个ResultSet"""
         sql = """SELECT TABLE_NAME
         FROM {0}.INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_TYPE = 'BASE TABLE' order by TABLE_NAME;""".format(db_name)
+        WHERE TABLE_TYPE = 'BASE TABLE' order by TABLE_NAME;""".format(
+            db_name
+        )
         result = self.query(db_name=db_name, sql=sql)
-        tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
+        tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
         result.rows = tb_list
         return result
 
@@ -120,7 +130,7 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(self.host, self
             ON index_size.table_name = space.table_name;
         """
         _meta_data = self.query(db_name, sql)
-        return {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
+        return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
         """获取表格字段信息"""
@@ -132,7 +142,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 COLUMN_DEFAULT 默认值
             from INFORMATION_SCHEMA.columns where TABLE_CATALOG='{db_name}' and TABLE_NAME = '{tb_name}';"""
         _desc_data = self.query(db_name, sql)
-        return {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
+        return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
         """获取表格索引信息"""
@@ -145,7 +155,7 @@ i.index_id = t.index_id and t.is_included_column = 0 order by key_ordinal for xm
             WHERE i.object_id = OBJECT_ID('{tb_name}')
             group by i.name,i.object_id,i.index_id,is_unique,is_primary_key;"""
         _index_data = self.query(db_name, sql)
-        return {'column_list': _index_data.column_list, 'rows': _index_data.rows}
+        return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
@@ -165,11 +175,15 @@ i.index_id = t.index_id and t.is_included_column = 0 order by key_ordinal for xm
         table_metas = []
         for tb in tbs:
             _meta = dict()
-            engine_keys = [{"key": "COLUMN_NAME", "value": "字段名"}, {"key": "COLUMN_TYPE", "value": "数据类型"},
-                           {"key": "COLLATION_NAME", "value": "列字符集"}, {"key": "IS_NULLABLE", "value": "允许非空"},
-                           {"key": "COLUMN_DEFAULT", "value": "默认值"}]
+            engine_keys = [
+                {"key": "COLUMN_NAME", "value": "字段名"},
+                {"key": "COLUMN_TYPE", "value": "数据类型"},
+                {"key": "COLLATION_NAME", "value": "列字符集"},
+                {"key": "IS_NULLABLE", "value": "允许非空"},
+                {"key": "COLUMN_DEFAULT", "value": "默认值"},
+            ]
             _meta["ENGINE_KEYS"] = engine_keys
-            _meta['TABLE_INFO'] = tb
+            _meta["TABLE_INFO"] = tb
             sql_cols = f"""select COLUMN_NAME, case when ISNUMERIC(CHARACTER_MAXIMUM_LENGTH)=1 
 then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' else DATA_TYPE end COLUMN_TYPE,
                 COLLATION_NAME,
@@ -182,7 +196,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             # 转换查询结果为dict
             for row in query_result.rows:
                 columns.append(dict(zip(query_result.column_list, row)))
-            _meta['COLUMNS'] = tuple(columns)
+            _meta["COLUMNS"] = tuple(columns)
             table_metas.append(_meta)
         return table_metas
 
@@ -211,64 +225,89 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         left join {0}..sysindexkeys i on i.id=o.id and i.colid=c.colid and i.indid=ie.indid
         WHERE O.name NOT LIKE 'MS%' AND O.name NOT LIKE 'SY%'
         and O.name='{1}'
-        order by o.name,c.colid""".format(db_name, tb_name)
+        order by o.name,c.colid""".format(
+            db_name, tb_name
+        )
         result = self.query(sql=sql)
         return result
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        banned_keywords = ["ascii", "char", "charindex", "concat", "concat_ws", "difference", "format",
-                           "len", "nchar", "patindex", "quotename", "replace", "replicate",
-                           "reverse", "right", "soundex", "space", "str", "string_agg",
-                           "string_escape", "string_split", "stuff", "substring", "trim", "unicode"]
-        keyword_warning = ''
+        result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
+        banned_keywords = [
+            "ascii",
+            "char",
+            "charindex",
+            "concat",
+            "concat_ws",
+            "difference",
+            "format",
+            "len",
+            "nchar",
+            "patindex",
+            "quotename",
+            "replace",
+            "replicate",
+            "reverse",
+            "right",
+            "soundex",
+            "space",
+            "str",
+            "string_agg",
+            "string_escape",
+            "string_split",
+            "stuff",
+            "substring",
+            "trim",
+            "unicode",
+        ]
+        keyword_warning = ""
         star_patter = r"(^|,|\s)\*(\s|\(|$)"
-        sql_whitelist = ['select', 'sp_helptext']
+        sql_whitelist = ["select", "sp_helptext"]
         # 根据白名单list拼接pattern语句
         whitelist_pattern = "^" + "|^".join(sql_whitelist)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sql.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
-            result['filtered_sql'] = sql.strip()
+            result["filtered_sql"] = sql.strip()
             sql_lower = sql.lower()
         except IndexError:
-            result['bad_query'] = True
-            result['msg'] = '没有有效的SQL语句'
+            result["bad_query"] = True
+            result["msg"] = "没有有效的SQL语句"
             return result
         if re.match(whitelist_pattern, sql_lower) is None:
-            result['bad_query'] = True
-            result['msg'] = '仅支持{}语法!'.format(','.join(sql_whitelist))
+            result["bad_query"] = True
+            result["msg"] = "仅支持{}语法!".format(",".join(sql_whitelist))
             return result
         if re.search(star_patter, sql_lower) is not None:
-            keyword_warning += '禁止使用 * 关键词\n'
-            result['has_star'] = True
+            keyword_warning += "禁止使用 * 关键词\n"
+            result["has_star"] = True
         for keyword in banned_keywords:
             pattern = r"(^|,| |=){}( |\(|$)".format(keyword)
             if re.search(pattern, sql_lower) is not None:
-                keyword_warning += '禁止使用 {} 关键词\n'.format(keyword)
-                result['bad_query'] = True
-        if result.get('bad_query') or result.get('has_star'):
-            result['msg'] = keyword_warning
+                keyword_warning += "禁止使用 {} 关键词\n".format(keyword)
+                result["bad_query"] = True
+        if result.get("bad_query") or result.get("has_star"):
+            result["msg"] = keyword_warning
         return result
 
-    def filter_sql(self, sql='', limit_num=0):
+    def filter_sql(self, sql="", limit_num=0):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
-            if sql_lower.find(' top ') == -1:
-                return sql_lower.replace('select', 'select top {}'.format(limit_num))
+            if sql_lower.find(" top ") == -1:
+                return sql_lower.replace("select", "select top {}".format(limit_num))
         return sql.strip()
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
-        """返回 ResultSet """
+    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+        """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute('use [{}];'.format(db_name))
+                cursor.execute("use [{}];".format(db_name))
             cursor.execute(sql)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
@@ -287,7 +326,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
                 self.close()
         return result_set
 
-    def query_masking(self, db_name=None, sql='', resultset=None):
+    def query_masking(self, db_name=None, sql="", resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
@@ -298,11 +337,11 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             filtered_result = resultset
         return filtered_result
 
-    def execute_check(self, db_name=None, sql=''):
+    def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
         check_result = ReviewSet(full_sql=sql)
         # 切分语句，追加到检测结果中，默认全部检测通过
-        split_reg = re.compile('^GO$', re.I | re.M)
+        split_reg = re.compile("^GO$", re.I | re.M)
         sql = re.split(split_reg, sql, 0)
         sql = filter(None, sql)
         split_sql = [f"""use [{db_name}]"""]
@@ -310,14 +349,17 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             split_sql = split_sql + [i]
         rowid = 1
         for statement in split_sql:
-            check_result.rows.append(ReviewResult(
-                id=rowid,
-                errlevel=0,
-                stagestatus='Audit completed',
-                errormessage='None',
-                sql=statement,
-                affected_rows=0,
-                execute_time=0, ))
+            check_result.rows.append(
+                ReviewResult(
+                    id=rowid,
+                    errlevel=0,
+                    stagestatus="Audit completed",
+                    errormessage="None",
+                    sql=statement,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+            )
             rowid += 1
         return check_result
 
@@ -325,14 +367,16 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         if workflow.is_backup:
             # TODO mssql 备份未实现
             pass
-        return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+        return self.execute(
+            db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content
+        )
 
-    def execute(self, db_name=None, sql='', close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True):
         """执行sql语句 返回 Review set"""
         execute_result = ReviewSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         cursor = conn.cursor()
-        split_reg = re.compile('^GO$', re.I | re.M)
+        split_reg = re.compile("^GO$", re.I | re.M)
         sql = re.split(split_reg, sql, 0)
         sql = filter(None, sql)
         split_sql = [f"""use [{db_name}]"""]
@@ -345,44 +389,50 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             except Exception as e:
                 logger.warning(f"Mssql命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
                 execute_result.error = str(e)
-                execute_result.rows.append(ReviewResult(
-                    id=rowid,
-                    errlevel=2,
-                    stagestatus='Execute Failed',
-                    errormessage=f'异常信息：{e}',
-                    sql=statement,
-                    affected_rows=0,
-                    execute_time=0,
-                ))
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"异常信息：{e}",
+                        sql=statement,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+                )
                 break
             else:
-                execute_result.rows.append(ReviewResult(
-                    id=rowid,
-                    errlevel=0,
-                    stagestatus='Execute Successfully',
-                    errormessage='None',
-                    sql=statement,
-                    affected_rows=cursor.rowcount,
-                    execute_time=0,
-                ))
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=rowid,
+                        errlevel=0,
+                        stagestatus="Execute Successfully",
+                        errormessage="None",
+                        sql=statement,
+                        affected_rows=cursor.rowcount,
+                        execute_time=0,
+                    )
+                )
             rowid += 1
         if execute_result.error:
             # 如果失败, 将剩下的部分加入结果集, 并将语句回滚
             for statement in split_sql[rowid:]:
-                execute_result.rows.append(ReviewResult(
-                    id=rowid,
-                    errlevel=2,
-                    stagestatus='Execute Failed',
-                    errormessage=f'前序语句失败, 未执行',
-                    sql=statement,
-                    affected_rows=0,
-                    execute_time=0,
-                ))
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage=f"前序语句失败, 未执行",
+                        sql=statement,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+                )
                 rowid += 1
             cursor.rollback()
             for row in execute_result.rows:
-                if row.stagestatus == 'Execute Successfully':
-                    row.stagestatus += '\nRollback Successfully'
+                if row.stagestatus == "Execute Successfully":
+                    row.stagestatus += "\nRollback Successfully"
         else:
             cursor.commit()
         if close_conn:

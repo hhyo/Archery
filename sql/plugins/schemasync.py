@@ -5,16 +5,15 @@
 @file: schemasync.py
 @time: 2019/03/05
 """
-__author__ = 'hhyo'
+__author__ = "hhyo"
 
 import shlex
 from sql.plugins.plugin import Plugin
 
 
 class SchemaSync(Plugin):
-
     def __init__(self):
-        self.path = 'schemasync'
+        self.path = "schemasync"
         self.required_args = []
         self.disable_args = []
         super(Plugin, self).__init__()
@@ -26,26 +25,26 @@ class SchemaSync(Plugin):
         :param shell:
         :return:
         """
-        k_options = ['sync-auto-inc', 'sync-comments']
-        kv_options = ['tag', 'output-directory', 'log-directory']
-        v_options = ['source', 'target']
+        k_options = ["sync-auto-inc", "sync-comments"]
+        kv_options = ["tag", "output-directory", "log-directory"]
+        v_options = ["source", "target"]
         if shell:
-            cmd_args = self.path if self.path else ''
+            cmd_args = self.path if self.path else ""
             for name, value in args.items():
                 if name in k_options and value:
-                    cmd_args += f' --{name}'
+                    cmd_args += f" --{name}"
                 elif name in kv_options:
-                    cmd_args += f' --{name}={shlex.quote(str(value))}'
+                    cmd_args += f" --{name}={shlex.quote(str(value))}"
                 elif name in v_options:
-                    cmd_args += f' {value}'
+                    cmd_args += f" {value}"
         else:
             cmd_args = [self.path]
             for name, value in args.items():
                 if name in k_options and value:
-                    cmd_args.append(f'--{name}')
+                    cmd_args.append(f"--{name}")
                 elif name in kv_options:
-                    cmd_args.append(f'--{name}')
-                    cmd_args.append(f'{value}')
-                elif name in ['source', 'target']:
-                    cmd_args.append(f'{value}')
+                    cmd_args.append(f"--{name}")
+                    cmd_args.append(f"{value}")
+                elif name in ["source", "target"]:
+                    cmd_args.append(f"{value}")
         return cmd_args

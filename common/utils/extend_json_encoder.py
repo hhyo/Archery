@@ -13,17 +13,17 @@ from bson.timestamp import Timestamp
 
 @singledispatch
 def convert(o):
-    raise TypeError('can not convert type')
+    raise TypeError("can not convert type")
 
 
 @convert.register(datetime)
 def _(o):
-    return o.strftime('%Y-%m-%d %H:%M:%S')
+    return o.strftime("%Y-%m-%d %H:%M:%S")
 
 
 @convert.register(date)
 def _(o):
-    return o.strftime('%Y-%m-%d')
+    return o.strftime("%Y-%m-%d")
 
 
 @convert.register(timedelta)
@@ -80,11 +80,10 @@ class ExtendJSONEncoder(json.JSONEncoder):
 
 
 class ExtendJSONEncoderFTime(json.JSONEncoder):
-
     def default(self, obj):
         try:
             if isinstance(obj, datetime):
-                return obj.isoformat(' ')
+                return obj.isoformat(" ")
             else:
                 return convert(obj)
         except TypeError:
@@ -93,19 +92,20 @@ class ExtendJSONEncoderFTime(json.JSONEncoder):
 
 # 使用simplejson处理形如 b'\xaa' 的bytes类型数据会失败，但使用json模块构造这个对象时不能使用bigint_as_string方法
 import json
+
+
 class ExtendJSONEncoderBytes(json.JSONEncoder):
-    def default(self, obj): 
+    def default(self, obj):
         try:
             # 使用convert.register处理会报错 ValueError: Circular reference detected
             # 不是utf-8格式的bytes格式需要先进行base64编码转换
             if isinstance(obj, bytes):
                 try:
-                    return o.decode('utf-8')
+                    return o.decode("utf-8")
                 except:
-                    return base64.b64encode(obj).decode('utf-8')
+                    return base64.b64encode(obj).decode("utf-8")
             else:
                 return convert(obj)
         except TypeError:
             print(type(obj))
             return super(ExtendJSONEncoderBytes, self).default(obj)
-

@@ -20,7 +20,7 @@ from common.config import SysConfig
 
 User = get_user_model()
 
-__author__ = 'hhyo'
+__author__ = "hhyo"
 
 
 class TestPlugin(TestCase):
@@ -30,7 +30,7 @@ class TestPlugin(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.superuser = User(username='super', is_superuser=True)
+        cls.superuser = User(username="super", is_superuser=True)
         cls.superuser.save()
         cls.sys_config = SysConfig()
         cls.client = Client()
@@ -46,74 +46,87 @@ class TestPlugin(TestCase):
         测试路径
         :return:
         """
-        args = {"online-dsn": '',
-                "test-dsn": '',
-                "allow-online-as-test": "false",
-                "report-type": "markdown",
-                "query": "select 1;"
-                }
-        self.sys_config.set('soar', '')
+        args = {
+            "online-dsn": "",
+            "test-dsn": "",
+            "allow-online-as-test": "false",
+            "report-type": "markdown",
+            "query": "select 1;",
+        }
+        self.sys_config.set("soar", "")
         self.sys_config.get_all_config()
         soar = Soar()
         args_check_result = soar.check_args(args)
-        self.assertDictEqual(args_check_result, {'status': 1, 'msg': '可执行文件路径不能为空！', 'data': {}})
+        self.assertDictEqual(
+            args_check_result, {"status": 1, "msg": "可执行文件路径不能为空！", "data": {}}
+        )
         # 路径不为空
-        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
         args_check_result = soar.check_args(args)
-        self.assertDictEqual(args_check_result, {'status': 0, 'msg': 'ok', 'data': {}})
+        self.assertDictEqual(args_check_result, {"status": 0, "msg": "ok", "data": {}})
 
     def test_check_args_disable(self):
         """
         测试禁用参数
         :return:
         """
-        args = {"online-dsn": '',
-                "test-dsn": '',
-                "allow-online-as-test": "false",
-                "report-type": "markdown",
-                "query": "select 1;"
-                }
-        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        args = {
+            "online-dsn": "",
+            "test-dsn": "",
+            "allow-online-as-test": "false",
+            "report-type": "markdown",
+            "query": "select 1;",
+        }
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
-        soar.disable_args = ['allow-online-as-test']
+        soar.disable_args = ["allow-online-as-test"]
         args_check_result = soar.check_args(args)
-        self.assertDictEqual(args_check_result, {'status': 1, 'msg': 'allow-online-as-test参数已被禁用', 'data': {}})
+        self.assertDictEqual(
+            args_check_result,
+            {"status": 1, "msg": "allow-online-as-test参数已被禁用", "data": {}},
+        )
 
     def test_check_args_required(self):
         """
         测试必选参数
         :return:
         """
-        args = {"online-dsn": '',
-                "test-dsn": '',
-                "allow-online-as-test": "false",
-                "report-type": "markdown",
-                }
-        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        args = {
+            "online-dsn": "",
+            "test-dsn": "",
+            "allow-online-as-test": "false",
+            "report-type": "markdown",
+        }
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
-        soar.required_args = ['query']
+        soar.required_args = ["query"]
         args_check_result = soar.check_args(args)
-        self.assertDictEqual(args_check_result, {'status': 1, 'msg': '必须指定query参数', 'data': {}})
-        args['query'] = ""
+        self.assertDictEqual(
+            args_check_result, {"status": 1, "msg": "必须指定query参数", "data": {}}
+        )
+        args["query"] = ""
         args_check_result = soar.check_args(args)
-        self.assertDictEqual(args_check_result, {'status': 1, 'msg': 'query参数值不能为空', 'data': {}})
+        self.assertDictEqual(
+            args_check_result, {"status": 1, "msg": "query参数值不能为空", "data": {}}
+        )
 
     def test_soar_generate_args2cmd(self):
         """
         测试SOAR参数转换
         :return:
         """
-        args = {"online-dsn": '',
-                "test-dsn": '',
-                "allow-online-as-test": "false",
-                "report-type": "markdown",
-                "query": "select 1;"
-                }
-        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        args = {
+            "online-dsn": "",
+            "test-dsn": "",
+            "allow-online-as-test": "false",
+            "report-type": "markdown",
+            "query": "select 1;",
+        }
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
         cmd_args = soar.generate_args2cmd(args, False)
@@ -126,15 +139,16 @@ class TestPlugin(TestCase):
         测试sql_advisor参数转换
         :return:
         """
-        args = {"h": 'mysql',
-                "P": 3306,
-                "u": 'root',
-                "p": '',
-                "d": 'archery',
-                "v": 1,
-                "q": 'select 1;'
-                }
-        self.sys_config.set('sqladvisor', '/opt/archery/src/plugins/SQLAdvisor')
+        args = {
+            "h": "mysql",
+            "P": 3306,
+            "u": "root",
+            "p": "",
+            "d": "archery",
+            "v": 1,
+            "q": "select 1;",
+        }
+        self.sys_config.set("sqladvisor", "/opt/archery/src/plugins/SQLAdvisor")
         self.sys_config.get_all_config()
         sql_advisor = SQLAdvisor()
         cmd_args = sql_advisor.generate_args2cmd(args, False)
@@ -150,20 +164,16 @@ class TestPlugin(TestCase):
         args = {
             "sync-auto-inc": True,
             "sync-comments": True,
-            "tag": 'tag_v',
-            "output-directory": '',
-            "source": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(user='root',
-                                                                              pwd='123456',
-                                                                              host='127.0.0.1',
-                                                                              port=3306,
-                                                                              database='*'),
-            "target": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(user='root',
-                                                                              pwd='123456',
-                                                                              host='127.0.0.1',
-                                                                              port=3306,
-                                                                              database='*')
+            "tag": "tag_v",
+            "output-directory": "",
+            "source": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(
+                user="root", pwd="123456", host="127.0.0.1", port=3306, database="*"
+            ),
+            "target": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(
+                user="root", pwd="123456", host="127.0.0.1", port=3306, database="*"
+            ),
         }
-        self.sys_config.set('schemasync', '/opt/venv4schemasync/bin/schemasync')
+        self.sys_config.set("schemasync", "/opt/venv4schemasync/bin/schemasync")
         self.sys_config.get_all_config()
         schema_sync = SchemaSync()
         cmd_args = schema_sync.generate_args2cmd(args, False)
@@ -176,24 +186,26 @@ class TestPlugin(TestCase):
         测试my2sql参数转换
         :return:
         """
-        args = {'conn_options': "-host mysql -user root -password '123456' -port 3306 ",
-                'work-type': '2sql',
-                'start-file': 'mysql-bin.000043',
-                'start-pos': 111,
-                'stop-file': '',
-                'stop-pos': '',
-                'start-datetime': '',
-                'stop-datetime': '',
-                'databases': 'account_center',
-                'tables': 'ac_apps',
-                'sql': 'update',
-                "threads": 1,
-                "add-extraInfo": "false",
-                "ignore-primaryKey-forInsert": "false",
-                "full-columns": "false",
-                "do-not-add-prifixDb": "false",
-                "file-per-table": "false"}
-        self.sys_config.set('my2sql', '/opt/archery/src/plugins/my2sql')
+        args = {
+            "conn_options": "-host mysql -user root -password '123456' -port 3306 ",
+            "work-type": "2sql",
+            "start-file": "mysql-bin.000043",
+            "start-pos": 111,
+            "stop-file": "",
+            "stop-pos": "",
+            "start-datetime": "",
+            "stop-datetime": "",
+            "databases": "account_center",
+            "tables": "ac_apps",
+            "sql": "update",
+            "threads": 1,
+            "add-extraInfo": "false",
+            "ignore-primaryKey-forInsert": "false",
+            "full-columns": "false",
+            "do-not-add-prifixDb": "false",
+            "file-per-table": "false",
+        }
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         self.sys_config.get_all_config()
         my2sql = My2SQL()
         cmd_args = my2sql.generate_args2cmd(args, False)
@@ -208,14 +220,14 @@ class TestPlugin(TestCase):
         """
         args = {
             "no-version-check": True,
-            "source": '',
-            "where": '',
+            "source": "",
+            "where": "",
             "progress": 5000,
             "statistics": True,
-            "charset": 'UTF8',
+            "charset": "UTF8",
             "limit": 10000,
             "txn-size": 1000,
-            "sleep": 1
+            "sleep": 1,
         }
         pt_archiver = PtArchiver()
         cmd_args = pt_archiver.generate_args2cmd(args, False)
@@ -223,32 +235,32 @@ class TestPlugin(TestCase):
         cmd_args = pt_archiver.generate_args2cmd(args, True)
         self.assertIsInstance(cmd_args, str)
 
-    @patch('sql.plugins.plugin.subprocess')
+    @patch("sql.plugins.plugin.subprocess")
     def test_execute_cmd(self, mock_subprocess):
-        args = {"online-dsn": '',
-                "test-dsn": '',
-                "allow-online-as-test": "false",
-                "report-type": "markdown",
-                "query": "select 1;"
-                }
-        self.sys_config.set('soar', '/opt/archery/src/plugins/soar')
+        args = {
+            "online-dsn": "",
+            "test-dsn": "",
+            "allow-online-as-test": "false",
+            "report-type": "markdown",
+            "query": "select 1;",
+        }
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
         cmd_args = soar.generate_args2cmd(args, True)
 
-        mock_subprocess.Popen.return_value.communicate.return_value = ('some_stdout', 'some_stderr')
+        mock_subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
         stdout, stderr = soar.execute_cmd(cmd_args, True).communicate()
         mock_subprocess.Popen.assert_called_once_with(
-            cmd_args,
-            shell=True,
-            stdout=ANY,
-            stderr=ANY,
-            universal_newlines=ANY
+            cmd_args, shell=True, stdout=ANY, stderr=ANY, universal_newlines=ANY
         )
-        self.assertIn('some_stdout', stdout)
+        self.assertIn("some_stdout", stdout)
         # 异常
 
-        mock_subprocess.Popen.side_effect = Exception('Boom! some exception!')
+        mock_subprocess.Popen.side_effect = Exception("Boom! some exception!")
         with self.assertRaises(RuntimeError):
             soar.execute_cmd(cmd_args, False)
 
@@ -260,13 +272,13 @@ class TestSoar(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        soar_path = '/opt/archery/src/plugins/soar'  # 修改为本机的soar路径
-        cls.superuser = User(username='super', is_superuser=True)
+        soar_path = "/opt/archery/src/plugins/soar"  # 修改为本机的soar路径
+        cls.superuser = User(username="super", is_superuser=True)
         cls.superuser.save()
         cls.client = Client()
         cls.client.force_login(cls.superuser)
         cls.sys_config = SysConfig()
-        cls.sys_config.set('soar', soar_path)
+        cls.sys_config.set("soar", soar_path)
         cls.sys_config.get_all_config()
         cls.soar = Soar()
 
@@ -327,4 +339,4 @@ class TestSoar(TestCase):
         self.soar.rewrite(sql)
         # 异常测试
         with self.assertRaises(RuntimeError):
-            self.soar.rewrite(sql, 'unknown')
+            self.soar.rewrite(sql, "unknown")

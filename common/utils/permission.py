@@ -12,10 +12,10 @@ def superuser_required(func):
 
         if user.is_superuser is False:
             if request.is_ajax():
-                result = {'status': 1, 'msg': '您无权操作，请联系管理员', 'data': []}
-                return HttpResponse(json.dumps(result), content_type='application/json')
+                result = {"status": 1, "msg": "您无权操作，请联系管理员", "data": []}
+                return HttpResponse(json.dumps(result), content_type="application/json")
             else:
-                context = {'errMsg': "您无权操作，请联系管理员"}
+                context = {"errMsg": "您无权操作，请联系管理员"}
                 return render(request, "error.html", context)
 
         return func(request, *args, **kw)
@@ -31,10 +31,12 @@ def role_required(roles=()):
             user = request.user
             if user.role not in roles and user.is_superuser is False:
                 if request.is_ajax():
-                    result = {'status': 1, 'msg': '您无权操作，请联系管理员', 'data': []}
-                    return HttpResponse(json.dumps(result), content_type='application/json')
+                    result = {"status": 1, "msg": "您无权操作，请联系管理员", "data": []}
+                    return HttpResponse(
+                        json.dumps(result), content_type="application/json"
+                    )
                 else:
-                    context = {'errMsg': "您无权操作，请联系管理员"}
+                    context = {"errMsg": "您无权操作，请联系管理员"}
                     return render(request, "error.html", context)
 
             return func(request, *args, **kw)
