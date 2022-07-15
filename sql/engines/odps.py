@@ -10,7 +10,7 @@ from .models import ResultSet
 from odps import ODPS
 
 
-logger = logging.getLogger('default')
+logger = logging.getLogger("default")
 
 
 class ODPSEngine(EngineBase):
@@ -31,16 +31,16 @@ class ODPSEngine(EngineBase):
 
     @property
     def name(self):
-        return 'ODPS'
+        return "ODPS"
 
     @property
     def info(self):
-        return 'ODPS engine'
+        return "ODPS engine"
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet
-           ODPS只有project概念, 直接返回project名称
-           TODO: 目前ODPS获取所有项目接口比较慢, 暂时支持返回一个project，后续再优化
+        ODPS只有project概念, 直接返回project名称
+        TODO: 目前ODPS获取所有项目接口比较慢, 暂时支持返回一个project，后续再优化
         """
         result = ResultSet()
 
@@ -80,7 +80,7 @@ class ODPSEngine(EngineBase):
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
 
-        column_list = ['COLUMN_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT']
+        column_list = ["COLUMN_NAME", "COLUMN_TYPE", "COLUMN_COMMENT"]
 
         conn = self.get_connection(db_name)
 
@@ -105,27 +105,27 @@ class ODPSEngine(EngineBase):
 
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True,  **kwargs):
-        """返回 ResultSet """
+    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+        """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
 
         if not re.match(r"^select", sql, re.I):
             result_set.error = str("仅支持ODPS查询语句")
 
         # 存在limit，替换limit; 不存在，添加limit
-        if re.search('limit', sql):
-            sql = re.sub('limit.+(\d+)', 'limit ' + str(limit_num), sql)
+        if re.search("limit", sql):
+            sql = re.sub("limit.+(\d+)", "limit " + str(limit_num), sql)
         else:
-            if sql.strip()[-1] == ';':
+            if sql.strip()[-1] == ";":
                 sql = sql[:-1]
-            sql = sql + ' limit ' + str(limit_num) + ';'
+            sql = sql + " limit " + str(limit_num) + ";"
 
         try:
             conn = self.get_connection(db_name)
             effect_row = conn.execute_sql(sql)
             reader = effect_row.open_reader()
             rows = [row.values for row in reader]
-            column_list = getattr(reader, '_schema').names
+            column_list = getattr(reader, "_schema").names
 
             result_set.column_list = column_list
             result_set.rows = rows
@@ -136,27 +136,27 @@ class ODPSEngine(EngineBase):
             result_set.error = str(e)
         return result_set
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
-        keyword_warning = ''
-        sql_whitelist = ['select']
+        result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
+        keyword_warning = ""
+        sql_whitelist = ["select"]
         # 根据白名单list拼接pattern语句
         whitelist_pattern = re.compile("^" + "|^".join(sql_whitelist), re.IGNORECASE)
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sqlparse.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
-            result['filtered_sql'] = sql.strip()
+            result["filtered_sql"] = sql.strip()
             # sql_lower = sql.lower()
         except IndexError:
-            result['bad_query'] = True
-            result['msg'] = '没有有效的SQL语句'
+            result["bad_query"] = True
+            result["msg"] = "没有有效的SQL语句"
             return result
         if whitelist_pattern.match(sql) is None:
-            result['bad_query'] = True
-            result['msg'] = '仅支持{}语法!'.format(','.join(sql_whitelist))
+            result["bad_query"] = True
+            result["msg"] = "仅支持{}语法!".format(",".join(sql_whitelist))
             return result
-        if result.get('bad_query'):
-            result['msg'] = keyword_warning
+        if result.get("bad_query"):
+            result["msg"] = keyword_warning
         return result

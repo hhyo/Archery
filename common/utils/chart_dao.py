@@ -16,10 +16,7 @@ class ChartDao(object):
         if fields:
             for i in fields:
                 column_list.append(i[0])
-        return {
-            'column_list': column_list,
-            'rows': rows
-        }
+        return {"column_list": column_list, "rows": rows}
 
     # 获取连续时间
     @staticmethod
@@ -33,7 +30,7 @@ class ChartDao(object):
 
     # 语法类型
     def syntax_type(self):
-        sql = '''
+        sql = """
         select
           case when syntax_type = 1
             then 'DDL'
@@ -43,73 +40,83 @@ class ChartDao(object):
           end as syntax_type,
           count(*)
         from sql_workflow
-        group by syntax_type;'''
+        group by syntax_type;"""
         return self.__query(sql)
 
     # 工单数量统计
     def workflow_by_date(self, cycle):
-        sql = '''
+        sql = """
         select
           date_format(create_time, '%Y-%m-%d'),
           count(*)
         from sql_workflow
         where create_time >= date_add(now(), interval -{} day)
         group by date_format(create_time, '%Y-%m-%d')
-        order by 1 asc;'''.format(cycle)
+        order by 1 asc;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # 工单按组统计
     def workflow_by_group(self, cycle):
-        sql = '''
+        sql = """
         select
           group_name,
           count(*)
         from sql_workflow
         where create_time >= date_add(now(), interval -{} day )
         group by group_id
-        order by count(*) desc;'''.format(cycle)
+        order by count(*) desc;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     def workflow_by_user(self, cycle):
         """工单按人统计"""
         # TODO select 的对象应该为engineer ID, 查询时应作联合查询查出用户中文名
-        sql = '''
+        sql = """
         select
           engineer_display,
           count(*)
         from sql_workflow
         where create_time >= date_add(now(), interval -{} day)
         group by engineer_display
-        order by count(*) desc;'''.format(cycle)
+        order by count(*) desc;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # SQL查询统计(每日检索行数)
     def querylog_effect_row_by_date(self, cycle):
-        sql = '''
+        sql = """
         select
           date_format(create_time, '%Y-%m-%d'),
           sum(effect_row)
         from query_log
         where create_time >= date_add(now(), interval -{} day )
         group by date_format(create_time, '%Y-%m-%d')
-        order by sum(effect_row) desc;'''.format(cycle)
+        order by sum(effect_row) desc;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # SQL查询统计(每日检索次数)
     def querylog_count_by_date(self, cycle):
-        sql = '''
+        sql = """
         select
           date_format(create_time, '%Y-%m-%d'),
           count(*)
         from query_log
         where create_time >= date_add(now(), interval -{} day )
         group by date_format(create_time, '%Y-%m-%d')
-        order by count(*) desc;'''.format(cycle)
+        order by count(*) desc;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # SQL查询统计(用户检索行数)
     def querylog_effect_row_by_user(self, cycle):
-        sql = '''
+        sql = """
         select 
           user_display,
           sum(effect_row)
@@ -117,12 +124,14 @@ class ChartDao(object):
         where create_time >= date_add(now(), interval -{} day)
         group by user_display
         order by sum(effect_row) desc
-        limit 10;'''.format(cycle)
+        limit 10;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # SQL查询统计(DB检索行数)
     def querylog_effect_row_by_db(self, cycle):
-        sql = '''
+        sql = """
        select
           db_name,
           sum(effect_row)
@@ -130,7 +139,9 @@ class ChartDao(object):
         where create_time >= date_add(now(), interval -{} day)
         group by db_name
         order by sum(effect_row) desc
-        limit 10;'''.format(cycle)
+        limit 10;""".format(
+            cycle
+        )
         return self.__query(sql)
 
     # 慢日志历史趋势图(按次数)
@@ -151,24 +162,28 @@ group by date(date_add(ts_min, interval 8 HOUR));"""
 
     # 慢日志db/user维度统计
     def slow_query_count_by_db_by_user(self, cycle):
-        sql = '''
+        sql = """
         select
             concat(db_max,' user: ' ,user_max),
             sum(ts_cnt) 
         from mysql_slow_query_review_history 
         where ts_min >= date_sub(now(), interval {} day) 
         group by db_max,user_max order by sum(ts_cnt) desc limit 50;
-        '''.format(cycle)
+        """.format(
+            cycle
+        )
         return self.__query(sql)
 
     # 慢日志db维度统计
     def slow_query_count_by_db(self, cycle):
-        sql = '''
+        sql = """
         select
             db_max,
             sum(ts_cnt) 
         from mysql_slow_query_review_history 
         where ts_min >= date_sub(now(), interval {} day) 
         group by db_max order by sum(ts_cnt) desc limit 50;
-        '''.format(cycle)
+        """.format(
+            cycle
+        )
         return self.__query(sql)

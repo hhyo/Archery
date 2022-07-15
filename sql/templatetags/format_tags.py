@@ -10,7 +10,7 @@ register = template.Library()
 @register.simple_tag
 def format_str(string):
     # 换行
-    return mark_safe(string.replace(',', '<br/>').replace('\n', '<br/>'))
+    return mark_safe(string.replace(",", "<br/>").replace("\n", "<br/>"))
 
 
 # split
@@ -26,7 +26,7 @@ def split(string, sep):
 # in
 @register.filter
 def is_in(var, args):
-    return True if str(var) in args.split(',') else False
+    return True if str(var) in args.split(",") else False
 
 
 @register.filter
@@ -34,4 +34,4 @@ def key_value(data, key):
     try:
         return data[key]
     except KeyError:
-        return ''
+        return ""

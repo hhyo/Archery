@@ -53,9 +53,12 @@ def is_subselect(parsed):
     if not parsed.is_group:
         return False
     for item in parsed.tokens:
-        if (
-            item.ttype is DML
-            and item.value.upper() in ("SELECT", "INSERT", "UPDATE", "CREATE", "DELETE")
+        if item.ttype is DML and item.value.upper() in (
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "CREATE",
+            "DELETE",
         ):
             return True
     return False
@@ -82,18 +85,23 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             # Also 'SELECT * FROM abc JOIN def' will trigger this elif
             # condition. So we need to ignore the keyword JOIN and its variants
             # INNER JOIN, FULL OUTER JOIN, etc.
-            elif item.ttype is Keyword and (not item.value.upper() == "FROM") and (
-                not item.value.upper().endswith("JOIN")
+            elif (
+                item.ttype is Keyword
+                and (not item.value.upper() == "FROM")
+                and (not item.value.upper().endswith("JOIN"))
             ):
                 tbl_prefix_seen = False
             else:
                 yield item
         elif item.ttype is Keyword or item.ttype is Keyword.DML:
             item_val = item.value.upper()
-            if (
-                item_val in ("COPY", "FROM", "INTO", "UPDATE", "TABLE")
-                or item_val.endswith("JOIN")
-            ):
+            if item_val in (
+                "COPY",
+                "FROM",
+                "INTO",
+                "UPDATE",
+                "TABLE",
+            ) or item_val.endswith("JOIN"):
                 tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.
@@ -139,8 +147,8 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                 try:
                     schema_name = identifier.get_parent_name()
                     real_name = identifier.get_real_name()
-                    is_function = (
-                        allow_functions and _identifier_is_function(identifier)
+                    is_function = allow_functions and _identifier_is_function(
+                        identifier
                     )
                 except AttributeError:
                     continue

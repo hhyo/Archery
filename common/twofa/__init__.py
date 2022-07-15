@@ -2,7 +2,6 @@ from sql.models import TwoFactorAuthConfig
 
 
 class TwoFactorAuthBase:
-
     def __init__(self, user=None):
         self.user = user
 
@@ -14,16 +13,18 @@ class TwoFactorAuthBase:
 
     def enable(self):
         """启用"""
-        result = {'status': 1, 'msg': 'failed'}
+        result = {"status": 1, "msg": "failed"}
         return result
 
     def disable(self, auth_type):
         """禁用"""
-        result = {'status': 0, 'msg': 'ok'}
+        result = {"status": 0, "msg": "ok"}
         try:
-            TwoFactorAuthConfig.objects.get(user=self.user, auth_type=auth_type).delete()
+            TwoFactorAuthConfig.objects.get(
+                user=self.user, auth_type=auth_type
+            ).delete()
         except TwoFactorAuthConfig.DoesNotExist as e:
-            result = {'status': 0, 'msg': str(e)}
+            result = {"status": 0, "msg": str(e)}
         return result
 
     @property

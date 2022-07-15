@@ -11,7 +11,7 @@ from sql.utils.sql_utils import get_syntax_type
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 
-logger = logging.getLogger('default')
+logger = logging.getLogger("default")
 
 
 class GoInceptionEngine(EngineBase):
@@ -19,42 +19,51 @@ class GoInceptionEngine(EngineBase):
 
     @property
     def name(self):
-        return 'GoInception'
+        return "GoInception"
 
     @property
     def info(self):
-        return 'GoInception engine'
+        return "GoInception engine"
 
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
-        if hasattr(self, 'instance'):
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, charset=self.instance.charset or 'utf8mb4',
-                                        connect_timeout=10)
+        if hasattr(self, "instance"):
+            self.conn = MySQLdb.connect(
+                host=self.host,
+                port=self.port,
+                charset=self.instance.charset or "utf8mb4",
+                connect_timeout=10,
+            )
             return self.conn
         archer_config = SysConfig()
-        go_inception_host = archer_config.get('go_inception_host')
-        go_inception_port = int(archer_config.get('go_inception_port', 4000))
-        self.conn = MySQLdb.connect(host=go_inception_host, port=go_inception_port, charset='utf8mb4',
-                                    connect_timeout=10)
+        go_inception_host = archer_config.get("go_inception_host")
+        go_inception_port = int(archer_config.get("go_inception_port", 4000))
+        self.conn = MySQLdb.connect(
+            host=go_inception_host,
+            port=go_inception_port,
+            charset="utf8mb4",
+            connect_timeout=10,
+        )
         return self.conn
 
     @staticmethod
     def get_backup_connection():
         archer_config = SysConfig()
-        backup_host = archer_config.get('inception_remote_backup_host')
-        backup_port = int(archer_config.get('inception_remote_backup_port', 3306))
-        backup_user = archer_config.get('inception_remote_backup_user')
-        backup_password = archer_config.get('inception_remote_backup_password', '')
-        return MySQLdb.connect(host=backup_host,
-                               port=backup_port,
-                               user=backup_user,
-                               passwd=backup_password,
-                               charset='utf8mb4',
-                               autocommit=True
-                               )
+        backup_host = archer_config.get("inception_remote_backup_host")
+        backup_port = int(archer_config.get("inception_remote_backup_port", 3306))
+        backup_user = archer_config.get("inception_remote_backup_user")
+        backup_password = archer_config.get("inception_remote_backup_password", "")
+        return MySQLdb.connect(
+            host=backup_host,
+            port=backup_port,
+            user=backup_user,
+            passwd=backup_password,
+            charset="utf8mb4",
+            autocommit=True,
+        )
 
-    def execute_check(self, instance=None, db_name=None, sql=''):
+    def execute_check(self, instance=None, db_name=None, sql=""):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
         host, port, user, password = self.remote_instance_conn(instance)
@@ -78,7 +87,7 @@ class GoInceptionEngine(EngineBase):
                 check_result.error_count += 1
             # 没有找出DDL语句的才继续执行此判断
             if check_result.syntax_type == 2:
-                if get_syntax_type(r[5], parser=False, db_type='mysql') == 'DDL':
+                if get_syntax_type(r[5], parser=False, db_type="mysql") == "DDL":
                     check_result.syntax_type = 1
         check_result.column_list = inception_result.column_list
         check_result.checked = True
@@ -109,12 +118,15 @@ class GoInceptionEngine(EngineBase):
         # 执行报错，inception crash或者执行中连接异常的场景
         if inception_result.error and not execute_result.rows:
             execute_result.error = inception_result.error
-            execute_result.rows = [ReviewResult(
-                stage='Execute failed',
-                errlevel=2,
-                stagestatus='异常终止',
-                errormessage=f'goInception Error: {inception_result.error}',
-                sql=workflow.sqlworkflowcontent.sql_content)]
+            execute_result.rows = [
+                ReviewResult(
+                    stage="Execute failed",
+                    errlevel=2,
+                    stagestatus="异常终止",
+                    errormessage=f"goInception Error: {inception_result.error}",
+                    sql=workflow.sqlworkflowcontent.sql_content,
+                )
+            ]
             return execute_result
 
         # 把结果转换为ReviewSet
@@ -123,13 +135,17 @@ class GoInceptionEngine(EngineBase):
 
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         for r in execute_result.rows:
-            if r.errlevel in (1, 2) and not re.search(r"Execute Successfully", r.stagestatus):
-                execute_result.error = "Line {0} has error/warning: {1}".format(r.id, r.errormessage)
+            if r.errlevel in (1, 2) and not re.search(
+                r"Execute Successfully", r.stagestatus
+            ):
+                execute_result.error = "Line {0} has error/warning: {1}".format(
+                    r.id, r.errormessage
+                )
                 break
         return execute_result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
-        """返回 ResultSet """
+    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+        """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         conn = self.get_connection()
         try:
@@ -145,13 +161,13 @@ class GoInceptionEngine(EngineBase):
             result_set.rows = rows
             result_set.affected_rows = effect_row
         except Exception as e:
-            logger.warning(f'goInception语句执行报错，错误信息{traceback.format_exc()}')
+            logger.warning(f"goInception语句执行报错，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
         if close_conn:
             self.close()
         return result_set
 
-    def query_print(self, instance, db_name=None, sql=''):
+    def query_print(self, instance, db_name=None, sql=""):
         """
         打印语法树。
         """
@@ -163,11 +179,11 @@ class GoInceptionEngine(EngineBase):
                           {sql.rstrip(';')};
                           inception_magic_commit;"""
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[1]
-        if print_info.get('errmsg'):
-            raise RuntimeError(print_info.get('errmsg'))
+        if print_info.get("errmsg"):
+            raise RuntimeError(print_info.get("errmsg"))
         return print_info
 
-    def query_data_masking(self, instance, db_name=None, sql=''):
+    def query_data_masking(self, instance, db_name=None, sql=""):
         """
         将sql交给goInception打印语法树，获取select list
         使用 masking 参数，可参考 https://github.com/hanchuanchuan/goInception/pull/355
@@ -182,13 +198,13 @@ class GoInceptionEngine(EngineBase):
         query_result = self.query(db_name=db_name, sql=sql)
         # 有异常时主动抛出
         if query_result.error:
-            raise RuntimeError(f'Inception Error: {query_result.error}')
+            raise RuntimeError(f"Inception Error: {query_result.error}")
         if not query_result.rows:
-            raise RuntimeError(f'Inception Error: 未获取到语法信息')
+            raise RuntimeError(f"Inception Error: 未获取到语法信息")
         # 兼容语法错误时errlevel=0的场景
         print_info = query_result.to_dict()[0]
-        if print_info['errlevel'] == 0 and print_info['errmsg'] is None:
-            return json.loads(print_info['query_tree'])
+        if print_info["errlevel"] == 0 and print_info["errmsg"] is None:
+            return json.loads(print_info["query_tree"])
         else:
             raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
 
@@ -196,7 +212,9 @@ class GoInceptionEngine(EngineBase):
         """
         获取回滚语句，并且按照执行顺序倒序展示，return ['源语句'，'回滚语句']
         """
-        list_execute_result = json.loads(workflow.sqlworkflowcontent.execute_result or '[]')
+        list_execute_result = json.loads(
+            workflow.sqlworkflowcontent.execute_result or "[]"
+        )
         # 回滚语句倒序展示
         list_execute_result.reverse()
         list_backup_sql = []
@@ -207,18 +225,18 @@ class GoInceptionEngine(EngineBase):
             try:
                 # 获取backup_db_name， 兼容旧数据'[[]]'格式
                 if isinstance(row, list):
-                    if row[8] == 'None':
+                    if row[8] == "None":
                         continue
                     backup_db_name = row[8]
                     sequence = row[7]
                     sql = row[5]
                 # 新数据
                 else:
-                    if row.get('backup_dbname') in ('None', ''):
+                    if row.get("backup_dbname") in ("None", ""):
                         continue
-                    backup_db_name = row.get('backup_dbname')
-                    sequence = row.get('sequence')
-                    sql = row.get('sql')
+                    backup_db_name = row.get("backup_dbname")
+                    sequence = row.get("sequence")
+                    sql = row.get("sql")
                 # 获取备份表名
                 opid_time = sequence.replace("'", "")
                 sql_table = f"""select tablename
@@ -236,7 +254,9 @@ class GoInceptionEngine(EngineBase):
                     cur.execute(sql_back)
                     list_backup = cur.fetchall()
                     # 拼接成回滚语句列表,['源语句'，'回滚语句']
-                    list_backup_sql.append([sql, '\n'.join([back_info[0] for back_info in list_backup])])
+                    list_backup_sql.append(
+                        [sql, "\n".join([back_info[0] for back_info in list_backup])]
+                    )
             except Exception as e:
                 logger.error(f"获取回滚语句报错，异常信息{traceback.format_exc()}")
                 raise Exception(e)
@@ -260,9 +280,9 @@ class GoInceptionEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""
-        sqlsha1 = kwargs.get('sqlsha1')
-        command = kwargs.get('command')
-        if command == 'get':
+        sqlsha1 = kwargs.get("sqlsha1")
+        command = kwargs.get("command")
+        if command == "get":
             sql = f"inception get osc_percent '{sqlsha1}';"
         else:
             sql = f"inception {command} osc '{sqlsha1}';"
@@ -270,7 +290,7 @@ class GoInceptionEngine(EngineBase):
 
     @staticmethod
     def get_table_ref(query_tree, db_name=None):
-        __author__ = 'xxlrr'
+        __author__ = "xxlrr"
         """
         * 从goInception解析后的语法树里解析出兼容Inception格式的引用表信息。
         * 目前的逻辑是在SQL语法树中通过递归查找选中最小的 TableRefs 子树（可能有多个），
@@ -294,12 +314,15 @@ class GoInceptionEngine(EngineBase):
             else:
                 snodes = tree.find_max_tree("Source")
                 if snodes:
-                    table_ref.extend([
-                        {
-                            "schema": snode['Source']['Schema']['O'] or db_name,
-                            "name": snode['Source']['Name']['O']
-                        } for snode in snodes
-                    ])
+                    table_ref.extend(
+                        [
+                            {
+                                "schema": snode["Source"]["Schema"]["O"] or db_name,
+                                "name": snode["Source"]["Name"]["O"],
+                            }
+                            for snode in snodes
+                        ]
+                    )
                 # assert: source node must exists if table_refs node exists.
                 # else:
                 #     raise Exception("GoInception Error: not found source node")
@@ -313,7 +336,7 @@ class GoInceptionEngine(EngineBase):
 
 class DictTree(dict):
     def find_max_tree(self, *keys):
-        __author__ = 'xxlrr'
+        __author__ = "xxlrr"
         """通过广度优先搜索算法查找满足条件的最大子树(不找叶子节点)"""
         fit = []
         find_queue = [self]
@@ -331,14 +354,15 @@ class DictTree(dict):
 def get_session_variables(instance):
     """按照目标实例动态设置goInception的会话参数，可用于按照业务组自定义审核规则等场景"""
     variables = {}
-    set_session_sql = ''
+    set_session_sql = ""
     if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-        variables.update({
-            "ghost_aliyun_rds": "on",
-            "ghost_allow_on_master": "true",
-            "ghost_assume_rbr": "true",
-
-        })
+        variables.update(
+            {
+                "ghost_aliyun_rds": "on",
+                "ghost_allow_on_master": "true",
+                "ghost_assume_rbr": "true",
+            }
+        )
     # 转换成SQL语句
     for k, v in variables.items():
         set_session_sql += f"inception set session {k} = '{v}';\n"

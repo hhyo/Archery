@@ -7,7 +7,7 @@
 """
 import datetime
 
-__author__ = 'hhyo'
+__author__ = "hhyo"
 
 
 class FuncTimer(object):

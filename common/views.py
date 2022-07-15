@@ -7,30 +7,32 @@
 """
 from django.shortcuts import render
 
-__author__ = 'hhyo'
+__author__ = "hhyo"
 
 from django.http import (
-    HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
     HttpResponseServerError,
 )
 from django.views.decorators.csrf import requires_csrf_token
 
 
 @requires_csrf_token
-def bad_request(request, exception, template_name='errors/400.html'):
+def bad_request(request, exception, template_name="errors/400.html"):
     return HttpResponseBadRequest(render(request, template_name))
 
 
 @requires_csrf_token
-def permission_denied(request, exception, template_name='errors/403.html'):
+def permission_denied(request, exception, template_name="errors/403.html"):
     return HttpResponseForbidden(render(request, template_name))
 
 
 @requires_csrf_token
-def page_not_found(request, exception, template_name='errors/404.html'):
+def page_not_found(request, exception, template_name="errors/404.html"):
     return HttpResponseNotFound(render(request, template_name))
 
 
 @requires_csrf_token
-def server_error(request, template_name='errors/500.html'):
+def server_error(request, template_name="errors/500.html"):
     return HttpResponseServerError(render(request, template_name))

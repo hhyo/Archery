@@ -16,7 +16,7 @@ from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
 
-logger = logging.getLogger('default')
+logger = logging.getLogger("default")
 
 
 class MysqlEngine(EngineBase):
@@ -30,30 +30,41 @@ class MysqlEngine(EngineBase):
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
         conversions = MySQLdb.converters.conversions
-        conversions[FIELD_TYPE.BIT] = lambda data: data == b'\x01'
+        conversions[FIELD_TYPE.BIT] = lambda data: data == b"\x01"
         if self.conn:
             self.thread_id = self.conn.thread_id()
             return self.conn
         if db_name:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        db=db_name, charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
-                                        connect_timeout=10)
+            self.conn = MySQLdb.connect(
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                passwd=self.password,
+                db=db_name,
+                charset=self.instance.charset or "utf8mb4",
+                conv=conversions,
+                connect_timeout=10,
+            )
         else:
-            self.conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
-                                        charset=self.instance.charset or 'utf8mb4',
-                                        conv=conversions,
-                                        connect_timeout=10)
+            self.conn = MySQLdb.connect(
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                passwd=self.password,
+                charset=self.instance.charset or "utf8mb4",
+                conv=conversions,
+                connect_timeout=10,
+            )
         self.thread_id = self.conn.thread_id()
         return self.conn
 
     @property
     def name(self):
-        return 'MySQL'
+        return "MySQL"
 
     @property
     def info(self):
-        return 'MySQL engine'
+        return "MySQL engine"
 
     @property
     def auto_backup(self):
@@ -62,14 +73,21 @@ class MysqlEngine(EngineBase):
 
     @property
     def seconds_behind_master(self):
-        slave_status = self.query(sql='show slave status', close_conn=False, cursorclass=MySQLdb.cursors.DictCursor)
-        return slave_status.rows[0].get('Seconds_Behind_Master') if slave_status.rows else None
+        slave_status = self.query(
+            sql="show slave status",
+            close_conn=False,
+            cursorclass=MySQLdb.cursors.DictCursor,
+        )
+        return (
+            slave_status.rows[0].get("Seconds_Behind_Master")
+            if slave_status.rows
+            else None
+        )
 
     @property
     def server_version(self):
         def numeric_part(s):
-            """Returns the leading numeric part of a string.
-            """
+            """Returns the leading numeric part of a string."""
             re_numeric_part = re.compile(r"^(\d+)")
             m = re_numeric_part.match(s)
             if m:
@@ -78,27 +96,32 @@ class MysqlEngine(EngineBase):
 
         self.get_connection()
         version = self.conn.get_server_info()
-        return tuple([numeric_part(n) for n in version.split('.')[:3]])
+        return tuple([numeric_part(n) for n in version.split(".")[:3]])
 
     @property
     def schema_object(self):
         """获取实例对象信息"""
-        url = build_database_url(host=self.host,
-                                 username=self.user,
-                                 password=self.password,
-                                 port=self.port)
-        return schemaobject.SchemaObject(url, charset=self.instance.charset or 'utf8mb4')
+        url = build_database_url(
+            host=self.host, username=self.user, password=self.password, port=self.port
+        )
+        return schemaobject.SchemaObject(
+            url, charset=self.instance.charset or "utf8mb4"
+        )
 
     def kill_connection(self, thread_id):
         """终止数据库连接"""
-        self.query(sql=f'kill {thread_id}')
+        self.query(sql=f"kill {thread_id}")
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
         sql = "show databases"
         result = self.query(sql=sql)
-        db_list = [row[0] for row in result.rows
-                   if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')]
+        db_list = [
+            row[0]
+            for row in result.rows
+            if row[0]
+            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+        ]
         result.rows = db_list
         return result
 
@@ -106,13 +129,13 @@ class MysqlEngine(EngineBase):
         """获取table 列表, 返回一个ResultSet"""
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
-        tb_list = [row[0] for row in result.rows if row[0] not in ['test']]
+        tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
         result.rows = tb_list
         return result
 
     def get_group_tables_by_db(self, db_name):
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode('utf-8')
+        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
         data = {}
         sql = f"""SELECT TABLE_NAME,
                             TABLE_COMMENT
@@ -131,8 +154,8 @@ class MysqlEngine(EngineBase):
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
         """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode('utf-8')
-        tb_name = MySQLdb.escape_string(tb_name).decode('utf-8')
+        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
         sql = f"""SELECT
                         TABLE_NAME as table_name,
                         ENGINE as engine,
@@ -156,7 +179,7 @@ class MysqlEngine(EngineBase):
                         TABLE_SCHEMA='{db_name}'
                             AND TABLE_NAME='{tb_name}'"""
         _meta_data = self.query(db_name, sql)
-        return {'column_list': _meta_data.column_list, 'rows': _meta_data.rows[0]}
+        return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
         """获取表格字段信息"""
@@ -176,7 +199,7 @@ class MysqlEngine(EngineBase):
                             AND TABLE_NAME = '{tb_name}'
                     ORDER BY ORDINAL_POSITION;"""
         _desc_data = self.query(db_name, sql)
-        return {'column_list': _desc_data.column_list, 'rows': _desc_data.rows}
+        return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
         """获取表格索引信息"""
@@ -195,24 +218,35 @@ class MysqlEngine(EngineBase):
                         TABLE_SCHEMA = '{db_name}'
                     AND TABLE_NAME = '{tb_name}';"""
         _index_data = self.query(db_name, sql)
-        return {'column_list': _index_data.column_list, 'rows': _index_data.rows}
+        return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
-        sql_tbs = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
-        tbs = self.query(sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
+        sql_tbs = (
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
+        )
+        tbs = self.query(
+            sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+        ).rows
         table_metas = []
         for tb in tbs:
             _meta = dict()
-            engine_keys = [{"key": "COLUMN_NAME", "value": "字段名"}, {"key": "COLUMN_TYPE", "value": "数据类型"},
-                           {"key": "COLUMN_DEFAULT", "value": "默认值"}, {"key": "IS_NULLABLE", "value": "允许非空"},
-                           {"key": "EXTRA", "value": "自动递增"}, {"key": "COLUMN_KEY", "value": "是否主键"},
-                           {"key": "COLUMN_COMMENT", "value": "备注"}]
+            engine_keys = [
+                {"key": "COLUMN_NAME", "value": "字段名"},
+                {"key": "COLUMN_TYPE", "value": "数据类型"},
+                {"key": "COLUMN_DEFAULT", "value": "默认值"},
+                {"key": "IS_NULLABLE", "value": "允许非空"},
+                {"key": "EXTRA", "value": "自动递增"},
+                {"key": "COLUMN_KEY", "value": "是否主键"},
+                {"key": "COLUMN_COMMENT", "value": "备注"},
+            ]
             _meta["ENGINE_KEYS"] = engine_keys
-            _meta['TABLE_INFO'] = tb
+            _meta["TABLE_INFO"] = tb
             sql_cols = f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
                             WHERE TABLE_SCHEMA='{tb['TABLE_SCHEMA']}' AND TABLE_NAME='{tb['TABLE_NAME']}';"""
-            _meta['COLUMNS'] = self.query(sql=sql_cols, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False).rows
+            _meta["COLUMNS"] = self.query(
+                sql=sql_cols, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+            ).rows
             table_metas.append(_meta)
         return table_metas
 
@@ -243,11 +277,11 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
-    def query(self, db_name=None, sql='', limit_num=0, close_conn=True, **kwargs):
-        """返回 ResultSet """
+    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+        """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
-        max_execution_time = kwargs.get('max_execution_time', 0)
-        cursorclass = kwargs.get('cursorclass') or MySQLdb.cursors.Cursor
+        max_execution_time = kwargs.get("max_execution_time", 0)
+        cursorclass = kwargs.get("cursorclass") or MySQLdb.cursors.Cursor
         try:
             conn = self.get_connection(db_name=db_name)
             conn.autocommit(True)
@@ -274,68 +308,75 @@ class MysqlEngine(EngineBase):
                 self.close()
         return result_set
 
-    def query_check(self, db_name=None, sql=''):
+    def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
-        result = {'msg': '', 'bad_query': False, 'filtered_sql': sql, 'has_star': False}
+        result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
         # 删除注释语句，进行语法判断，执行第一条有效sql
         try:
             sql = sqlparse.format(sql, strip_comments=True)
             sql = sqlparse.split(sql)[0]
-            result['filtered_sql'] = sql.strip()
+            result["filtered_sql"] = sql.strip()
         except IndexError:
-            result['bad_query'] = True
-            result['msg'] = '没有有效的SQL语句'
+            result["bad_query"] = True
+            result["msg"] = "没有有效的SQL语句"
         if re.match(r"^select|^show|^explain", sql, re.I) is None:
-            result['bad_query'] = True
-            result['msg'] = '不支持的查询语法类型!'
-        if '*' in sql:
-            result['has_star'] = True
-            result['msg'] = 'SQL语句中含有 * '
+            result["bad_query"] = True
+            result["msg"] = "不支持的查询语法类型!"
+        if "*" in sql:
+            result["has_star"] = True
+            result["msg"] = "SQL语句中含有 * "
         # select语句先使用Explain判断语法是否正确
         if re.match(r"^select", sql, re.I):
             explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
             if explain_result.error:
-                result['bad_query'] = True
-                result['msg'] = explain_result.error
+                result["bad_query"] = True
+                result["msg"] = explain_result.error
         # 不应该查看mysql.user表
-        if re.match('.*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', '')) or \
-                (db_name == "mysql" and re.match('.*(\\s)+(user|`user`)((\\s)*|;).*', sql.lower().replace('\n', ''))):
-            result['bad_query'] = True
-            result['msg'] = '您无权查看该表'
+        if re.match(
+            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
+            sql.lower().replace("\n", ""),
+        ) or (
+            db_name == "mysql"
+            and re.match(
+                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
+            )
+        ):
+            result["bad_query"] = True
+            result["msg"] = "您无权查看该表"
 
         return result
 
-    def filter_sql(self, sql='', limit_num=0):
+    def filter_sql(self, sql="", limit_num=0):
         # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
-        sql = sql.rstrip(';').strip()
+        sql = sql.rstrip(";").strip()
         if re.match(r"^select", sql, re.I):
             # LIMIT N
-            limit_n = re.compile(r'limit\s+(\d+)\s*$', re.I)
+            limit_n = re.compile(r"limit\s+(\d+)\s*$", re.I)
             # LIMIT M OFFSET N
-            limit_offset = re.compile(r'limit\s+(\d+)\s+offset\s+(\d+)\s*$', re.I)
+            limit_offset = re.compile(r"limit\s+(\d+)\s+offset\s+(\d+)\s*$", re.I)
             # LIMIT M,N
-            offset_comma_limit = re.compile(r'limit\s+(\d+)\s*,\s*(\d+)\s*$', re.I)
+            offset_comma_limit = re.compile(r"limit\s+(\d+)\s*,\s*(\d+)\s*$", re.I)
             if limit_n.search(sql):
                 sql_limit = limit_n.search(sql).group(1)
                 limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_n.sub(f'limit {limit_num};', sql)
+                sql = limit_n.sub(f"limit {limit_num};", sql)
             elif limit_offset.search(sql):
                 sql_limit = limit_offset.search(sql).group(1)
                 sql_offset = limit_offset.search(sql).group(2)
                 limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_offset.sub(f'limit {limit_num} offset {sql_offset};', sql)
+                sql = limit_offset.sub(f"limit {limit_num} offset {sql_offset};", sql)
             elif offset_comma_limit.search(sql):
                 sql_offset = offset_comma_limit.search(sql).group(1)
                 sql_limit = offset_comma_limit.search(sql).group(2)
                 limit_num = min(int(limit_num), int(sql_limit))
-                sql = offset_comma_limit.sub(f'limit {sql_offset},{limit_num};', sql)
+                sql = offset_comma_limit.sub(f"limit {sql_offset},{limit_num};", sql)
             else:
-                sql = f'{sql} limit {limit_num};'
+                sql = f"{sql} limit {limit_num};"
         else:
-            sql = f'{sql};'
+            sql = f"{sql};"
         return sql
 
-    def query_masking(self, db_name=None, sql='', resultset=None):
+    def query_masking(self, db_name=None, sql="", resultset=None):
         """传入 sql语句, db名, 结果集,
         返回一个脱敏后的结果集"""
         # 仅对select语句脱敏
@@ -345,53 +386,65 @@ class MysqlEngine(EngineBase):
             mask_result = resultset
         return mask_result
 
-    def execute_check(self, db_name=None, sql=''):
+    def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
         # 进行Inception检查，获取检测结果
         try:
-            check_result = self.inc_engine.execute_check(instance=self.instance, db_name=db_name, sql=sql)
+            check_result = self.inc_engine.execute_check(
+                instance=self.instance, db_name=db_name, sql=sql
+            )
         except Exception as e:
             logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
-            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}")
+            raise RuntimeError(
+                f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}"
+            )
 
         # 判断Inception检测结果
         if check_result.error:
             logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{check_result.error}")
-            raise RuntimeError(f"{self.inc_engine.name}检测语句报错，错误信息：\n{check_result.error}")
+            raise RuntimeError(
+                f"{self.inc_engine.name}检测语句报错，错误信息：\n{check_result.error}"
+            )
 
         # 禁用/高危语句检查
-        critical_ddl_regex = self.config.get('critical_ddl_regex', '')
+        critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
         for row in check_result.rows:
             statement = row.sql
             # 去除注释
-            statement = remove_comments(statement, db_type='mysql')
+            statement = remove_comments(statement, db_type="mysql")
             # 禁用语句
             if re.match(r"^select", statement.lower()):
                 check_result.error_count += 1
-                row.stagestatus = '驳回不支持语句'
+                row.stagestatus = "驳回不支持语句"
                 row.errlevel = 2
-                row.errormessage = '仅支持DML和DDL语句，查询语句请使用SQL查询功能！'
+                row.errormessage = "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
                 check_result.error_count += 1
-                row.stagestatus = '驳回高危SQL'
+                row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
-                row.errormessage = '禁止提交匹配' + critical_ddl_regex + '条件的语句！'
+                row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
         return check_result
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         # 判断实例是否只读
-        read_only = self.query(sql='SELECT @@global.read_only;').rows[0][0]
-        if read_only in (1, 'ON'):
+        read_only = self.query(sql="SELECT @@global.read_only;").rows[0][0]
+        if read_only in (1, "ON"):
             result = ReviewSet(
                 full_sql=workflow.sqlworkflowcontent.sql_content,
-                rows=[ReviewResult(id=1, errlevel=2,
-                                   stagestatus='Execute Failed',
-                                   errormessage='实例read_only=1，禁止执行变更语句!',
-                                   sql=workflow.sqlworkflowcontent.sql_content)])
-            result.error = '实例read_only=1，禁止执行变更语句!',
+                rows=[
+                    ReviewResult(
+                        id=1,
+                        errlevel=2,
+                        stagestatus="Execute Failed",
+                        errormessage="实例read_only=1，禁止执行变更语句!",
+                        sql=workflow.sqlworkflowcontent.sql_content,
+                    )
+                ],
+            )
+            result.error = ("实例read_only=1，禁止执行变更语句!",)
             return result
         # TODO 原生执行
         # if workflow.is_manual == 1:
@@ -399,7 +452,7 @@ class MysqlEngine(EngineBase):
         # inception执行
         return self.inc_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql='', close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
@@ -424,8 +477,16 @@ class MysqlEngine(EngineBase):
     def get_variables(self, variables=None):
         """获取实例参数"""
         if variables:
-            variables = "','".join(variables) if isinstance(variables, list) else "','".join(list(variables))
-            db = 'performance_schema' if self.server_version > (5, 7) else 'information_schema'
+            variables = (
+                "','".join(variables)
+                if isinstance(variables, list)
+                else "','".join(list(variables))
+            )
+            db = (
+                "performance_schema"
+                if self.server_version > (5, 7)
+                else "information_schema"
+            )
             sql = f"""select * from {db}.global_variables where variable_name in ('{variables}');"""
         else:
             sql = "show global variables;"
@@ -438,7 +499,7 @@ class MysqlEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等
-            get、kill、pause、resume
+        get、kill、pause、resume
         """
         return self.inc_engine.osc_control(**kwargs)
 
@@ -446,42 +507,44 @@ class MysqlEngine(EngineBase):
         """获取连接信息"""
         base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
         # escape
-        command_type = MySQLdb.escape_string(command_type).decode('utf-8')
+        command_type = MySQLdb.escape_string(command_type).decode("utf-8")
         if not command_type:
-            command_type = 'Query'
-        if command_type == 'All':
-            sql = base_sql + ';'
-        elif command_type == 'Not Sleep':
+            command_type = "Query"
+        if command_type == "All":
+            sql = base_sql + ";"
+        elif command_type == "Not Sleep":
             sql = "{} where command<>'Sleep';".format(base_sql)
         else:
             sql = "{} where command= '{}';".format(base_sql, command_type)
-        
-        return self.query('information_schema', sql)
-    
+
+        return self.query("information_schema", sql)
+
     def get_kill_command(self, thread_ids):
         """由传入的线程列表生成kill命令"""
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});"\
-            .format(','.join(str(tid) for tid in thread_ids))
-        all_kill_sql = self.query('information_schema', sql)
-        kill_sql = ''
-        for row in all_kill_sql.rows:
-            kill_sql = kill_sql + row[0] 
-        
-        return kill_sql
-        
-    def kill(self, thread_ids): 
-        """kill线程"""
-        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});"\
-            .format(','.join(str(tid) for tid in thread_ids))
-        all_kill_sql = self.query('information_schema', sql)
-        kill_sql = ''
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
+            ",".join(str(tid) for tid in thread_ids)
+        )
+        all_kill_sql = self.query("information_schema", sql)
+        kill_sql = ""
         for row in all_kill_sql.rows:
             kill_sql = kill_sql + row[0]
-        return self.execute('information_schema', kill_sql)        
-        
-    def tablesapce(self, offset=0, row_count=14): 
+
+        return kill_sql
+
+    def kill(self, thread_ids):
+        """kill线程"""
+        sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
+            ",".join(str(tid) for tid in thread_ids)
+        )
+        all_kill_sql = self.query("information_schema", sql)
+        kill_sql = ""
+        for row in all_kill_sql.rows:
+            kill_sql = kill_sql + row[0]
+        return self.execute("information_schema", kill_sql)
+
+    def tablesapce(self, offset=0, row_count=14):
         """获取表空间信息"""
-        sql = '''
+        sql = """
         SELECT
           table_schema AS table_schema,
           table_name AS table_name,
@@ -495,22 +558,24 @@ class MysqlEngine(EngineBase):
         FROM information_schema.tables 
         WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')
           ORDER BY total_size DESC 
-        LIMIT {},{};'''.format(offset, row_count)
-        return self.query('information_schema', sql)
-    
-    def tablesapce_num(self): 
+        LIMIT {},{};""".format(
+            offset, row_count
+        )
+        return self.query("information_schema", sql)
+
+    def tablesapce_num(self):
         """获取表空间数量"""
-        sql = '''
+        sql = """
         SELECT count(*)
         FROM information_schema.tables 
-        WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')'''
-        return self.query('information_schema', sql)
-        
+        WHERE table_schema NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys')"""
+        return self.query("information_schema", sql)
+
     def trxandlocks(self):
         """获取锁等待信息"""
         server_version = self.server_version
         if server_version < (8, 0, 1):
-            sql = '''
+            sql = """
                 SELECT
                 rtrx.`trx_state`                                                        AS "等待的状态",
                 rtrx.`trx_started`                                                      AS "等待事务开始时间",
@@ -536,10 +601,10 @@ class MysqlEngine(EngineBase):
                 WHERE rl.`lock_id` = lw.`requested_lock_id`
                     AND l.`lock_id` = lw.`blocking_lock_id`
                     AND lw.requesting_trx_id = rtrx.trx_id
-                    AND lw.blocking_trx_id = trx.trx_id;'''
-        
+                    AND lw.blocking_trx_id = trx.trx_id;"""
+
         else:
-            sql = '''
+            sql = """
                 SELECT
                 rtrx.`trx_state`                                                           AS "等待的状态",
                 rtrx.`trx_started`                                                         AS "等待事务开始时间",
@@ -565,13 +630,13 @@ class MysqlEngine(EngineBase):
                 WHERE rl.`ENGINE_LOCK_ID` = lw.`REQUESTING_ENGINE_LOCK_ID`
                     AND l.`ENGINE_LOCK_ID` = lw.`BLOCKING_ENGINE_LOCK_ID`
                     AND lw.REQUESTING_ENGINE_TRANSACTION_ID = rtrx.trx_id
-                    AND lw.BLOCKING_ENGINE_TRANSACTION_ID = trx.trx_id;'''
-        
-        return self.query('information_schema', sql)
-        
+                    AND lw.BLOCKING_ENGINE_TRANSACTION_ID = trx.trx_id;"""
+
+        return self.query("information_schema", sql)
+
     def get_long_transaction(self, thread_time=3):
         """获取长事务"""
-        sql = '''select trx.trx_started,
+        sql = """select trx.trx_started,
         trx.trx_state,
         trx.trx_operation_state,
         trx.trx_mysql_thread_id,
@@ -598,10 +663,12 @@ class MysqlEngine(EngineBase):
         WHERE trx.trx_state = 'RUNNING'
         AND p.COMMAND = 'Sleep'
         AND p.time > {}
-        ORDER BY trx.trx_started ASC;'''.format(thread_time)
-    
-        return self.query('information_schema', sql)    
-    
+        ORDER BY trx.trx_started ASC;""".format(
+            thread_time
+        )
+
+        return self.query("information_schema", sql)
+
     def close(self):
         if self.conn:
             self.conn.close()

@@ -6,7 +6,7 @@
 @time: 2019/06/01
 """
 
-__author__ = 'hhyo'
+__author__ = "hhyo"
 
 from django.contrib.staticfiles.storage import ManifestStaticFilesStorage
 
