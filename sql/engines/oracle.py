@@ -700,6 +700,12 @@ class OracleEngine(EngineBase):
             for sqlitem in sqlitemList:
                 sql_lower = sqlitem.statement.lower().rstrip(";")
                 sql_nolower = sqlitem.statement.rstrip(";")
+                object_name = self.get_sql_first_object_name(sql=sql_lower)
+                if "." in object_name:
+                    object_name = object_name
+                else:
+                    object_name = f"""{db_name}.{object_name}"""
+                object_name_list.add(object_name)
                 # 禁用语句
                 if re.match(r"^select|^with|^explain", sql_lower):
                     result = ReviewResult(
@@ -746,12 +752,6 @@ class OracleEngine(EngineBase):
                         sql=sql_lower,
                         object_name_list=object_name_list,
                     ):
-                        object_name = self.get_sql_first_object_name(sql=sql_lower)
-                        if "." in object_name:
-                            object_name = object_name
-                        else:
-                            object_name = f"""{db_name}.{object_name}"""
-                        object_name_list.add(object_name)
                         result = ReviewResult(
                             id=line,
                             errlevel=1,
