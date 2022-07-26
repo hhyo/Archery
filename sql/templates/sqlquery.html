@@ -702,7 +702,7 @@
         }
 
         // 展示数据
-        function display_data(data, target='', sqlContent='') {
+        function display_data(data, target='') {
             var result = data.data;
             var query_str = target+'|'+result['full_sql'];
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
@@ -977,8 +977,7 @@
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
-                    // display_data(data, target);
-                    display_data(data, target, sqlContent);
+                    display_data(data, target);
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
