@@ -138,10 +138,10 @@ def my2sql(request):
     my2sql = My2SQL()
 
     # 准备参数
-    instance_password = shlex.quote(f'"{str(instance.password)}"')
+    instance_password = shlex.quote(str(instance.password))
     args = {
         "conn_options": rf"-host {shlex.quote(str(instance.host))} -user {shlex.quote(str(instance.user))} \
-                -password '{instance_password}' -port {shlex.quote(str(instance.port))} ",
+                -password ''{instance_password}'' -port {shlex.quote(str(instance.port))} ",
         "work-type": work_type,
         "start-file": start_file,
         "start-pos": start_pos,
