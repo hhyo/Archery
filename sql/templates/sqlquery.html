@@ -518,6 +518,7 @@
             href_a.setAttribute("data-toggle", "tab");
             href_a.innerHTML = "Redis帮助文档"; //链接显示文本（相当于标签标题）
             li.appendChild(href_a);//将a添加到li
+
             $("#nav-tabs").prepend(li);//li添加到ul
             $("#nav-tabs a:first").tab('show')
         }
@@ -549,6 +550,13 @@
 
             }
             li.appendChild(href_a);//将a添加到li
+
+            //缓存sql
+            var cache_sql = document.createElement("input");
+            cache_sql.setAttribute("type", "hidden")
+            cache_sql.setAttribute("sql_cache", editor.getValue())
+            li.appendChild(cache_sql);
+
             $("#nav-tabs").append(li);//li添加到ul
 
             //执行结果tab数量加1
@@ -658,6 +666,19 @@
         editor.session.on('change', function (delta) {
             var sqlContent = editor.getValue();
             window.sessionStorage.setItem('sqlContent', sqlContent);
+            //获取当前的标签页
+            var active_li_id = sessionStorage.getItem('active_li_id');
+            var active_li_title = sessionStorage.getItem('active_li_title');
+            if (active_li_title.match(/^执行结果\d$/)){
+              //当前激活的执行结果页
+              var n = active_li_id.split("execute_result_tab")[1];
+              //填入sql
+              var inputs = $("#execute_result_tab"+n + " input");
+              if(inputs.length > 0){
+                inputs[0].setAttribute("sql_cache", sqlContent)
+              }
+            }
+
         });
 
         function highLight(json) {
@@ -1241,6 +1262,16 @@
                 if ($(e.target).parents().attr('id') === 'sqllog_tab') {
                     get_querylog();
                 }
+                //回填sql
+                let li_sql = $(e.target).parent().children("input");
+                if(li_sql.length>0){
+                  var sql = li_sql[0].getAttribute('sql_cache');
+                  if(sql){
+                    editor.setValue(sql);
+                  }
+
+                }
+
             });
         });
 
