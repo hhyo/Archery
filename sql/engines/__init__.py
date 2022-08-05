@@ -183,6 +183,12 @@ class EngineBase:
 def get_engine(instance=None):  # pragma: no cover
     """获取数据库操作engine"""
     if instance.db_type == "mysql":
+        from sql.models import AliyunRdsConfig
+
+        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+            from .cloud.aliyun_rds import AliyunRDS
+
+            return AliyunRDS(instance=instance)
         from .mysql import MysqlEngine
 
         return MysqlEngine(instance=instance)

@@ -13,12 +13,8 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncode
 from sql.utils.resource_group import user_instances
 from .models import AliyunRdsConfig, Instance
 
-from .aliyun_rds import (
-    process_status as aliyun_process_status,
-    create_kill_session as aliyun_create_kill_session,
-    kill_session as aliyun_kill_session,
-    sapce_status as aliyun_sapce_status,
-)
+# from .aliyun_rds import process_status as aliyun_process_status, create_kill_session as aliyun_create_kill_session, \
+#    kill_session as aliyun_kill_session, sapce_status as aliyun_sapce_status
 
 logger = logging.getLogger("default")
 
@@ -38,10 +34,10 @@ def process(request):
     query_result = None
     if instance.db_type == "mysql":
         # 判断是RDS还是其他实例
-        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-            result = aliyun_process_status(request)
-        else:
-            query_result = query_engine.processlist(command_type)
+        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        #    result = aliyun_process_status(request)
+        # else:
+        query_result = query_engine.processlist(command_type)
 
     elif instance.db_type == "mongo":
         query_result = query_engine.current_op(command_type)
@@ -83,10 +79,10 @@ def create_kill_session(request):
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
         # 判断是RDS还是其他实例
-        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-            result = aliyun_create_kill_session(request)
-        else:
-            result["data"] = query_engine.get_kill_command(json.loads(thread_ids))
+        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        #    result = aliyun_create_kill_session(request)
+        # else:
+        result["data"] = query_engine.get_kill_command(json.loads(thread_ids))
     elif instance.db_type == "mongo":
         kill_command = query_engine.get_kill_command(json.loads(thread_ids))
         result["data"] = kill_command
@@ -109,6 +105,7 @@ def create_kill_session(request):
 def kill_session(request):
     instance_name = request.POST.get("instance_name")
     thread_ids = request.POST.get("ThreadIDs")
+    request_params = request.POST.get("request_params", "{}")
     result = {"status": 0, "msg": "ok", "data": []}
 
     try:
@@ -121,10 +118,10 @@ def kill_session(request):
     r = None
     if instance.db_type == "mysql":
         # 判断是RDS还是其他实例
-        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-            result = aliyun_kill_session(request)
-        else:
-            r = engine.kill(json.loads(thread_ids))
+        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        #    result = aliyun_kill_session(request)
+        # else:
+        r = engine.kill(json.loads(thread_ids), request_params=request_params)
     elif instance.db_type == "mongo":
         r = engine.kill_op(json.loads(thread_ids))
     else:
@@ -159,12 +156,10 @@ def tablesapce(request):
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
         # 判断是RDS还是其他实例
-        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-            result = aliyun_sapce_status(request)
-        else:
-            query_result = query_engine.tablesapce(offset, limit)
-            r = query_engine.tablesapce_num()
-            total = r.rows[0][0]
+        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+        #    result = aliyun_sapce_status(request)
+        # else:
+        query_result = query_engine.tablesapce(offset, limit)
     else:
         result = {
             "status": 1,
@@ -176,6 +171,8 @@ def tablesapce(request):
     if query_result:
         if not query_result.error:
             table_space = query_result.to_dict()
+            r = query_engine.tablesapce_num()
+            total = r[0][0]
             result = {"status": 0, "msg": "ok", "rows": table_space, "total": total}
         else:
             result = {"status": 1, "msg": query_result.error}
