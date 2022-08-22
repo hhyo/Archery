@@ -949,7 +949,10 @@ class MongoEngine(EngineBase):
         if "limit" in query_dict and query_dict["limit"]:
             query_limit = int(query_dict["limit"])
             limit = min(limit_num, query_limit) if query_limit else limit_num
-            find_cmd += ".limit(limit)"
+            find_cmd += f".limit({limit})"
+        if "skip" in query_dict and query_dict["skip"]:
+            query_skip = int(query_dict["skip"])
+            find_cmd += f".skip({query_skip})"
         if "count" in query_dict:
             find_cmd += ".count()"
         if "explain" in query_dict:
