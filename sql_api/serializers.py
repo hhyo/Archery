@@ -323,7 +323,6 @@ class WorkflowSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = [
             "status",
-            "is_backup",
             "syntax_type",
             "audit_auth_groups",
             "engineer_display",
