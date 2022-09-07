@@ -30,10 +30,17 @@ logger = logging.getLogger("default")
 
 class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
-        user = Users(**validated_data)
-        user.set_password(validated_data["password"])
-        user.save()
-        return user
+        with transaction.atomic():
+            extra_data = dict()
+            for field in ("groups", "user_permissions", "resource_group"):
+                if field in validated_data.keys():
+                    extra_data[field] = validated_data.pop(field)
+            user = Users(**validated_data)
+            user.set_password(validated_data["password"])
+            user.save()
+            for field in extra_data.keys():
+                getattr(user, field).set(extra_data[field])
+            return user
 
     def validate_password(self, password):
         try:
@@ -53,6 +60,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             if attr == "password":
                 instance.set_password(value)
+            elif attr in ("groups", "user_permissions", "resource_group"):
+                getattr(instance, attr).set(value)
             else:
                 setattr(instance, attr, value)
         instance.save()
@@ -314,7 +323,6 @@ class WorkflowSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = [
             "status",
-            "is_backup",
             "syntax_type",
             "audit_auth_groups",
             "engineer_display",
