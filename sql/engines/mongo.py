@@ -378,6 +378,9 @@ class MongoEngine(EngineBase):
         sql = """var host=""; rs.status().members.forEach(function(item) {i=1; if (item.stateStr =="SECONDARY") \
         {host=item.name } }); print(host);"""
         slave_msg = self.exec_cmd(sql)
+        # 如果是阿里云的云mongodb，会获取不到备节点真实的ip和端口，无法用备节点执行sql，那就不获取，直接用主节点来执行sql
+        if slave_msg.strip() == 'SECONDARY' or slave_msg.strip() == 'hiddenNode':
+            return False
         if slave_msg.lower().find("undefined") < 0:
             sp_host = slave_msg.replace('"', "").split(":")
             self.host = sp_host[0]
