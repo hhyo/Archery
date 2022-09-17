@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from rest_framework.test import APITestCase
 from rest_framework import status
 from common.config import SysConfig
+from sql.engines import ReviewSet
+from sql.engines.models import ReviewResult
 from sql.models import (
     ResourceGroup,
     Instance,
@@ -348,6 +352,7 @@ class TestWorkflow(APITestCase):
             workflow_type=2,
             audit_auth_groups=self.group.id,
         )
+        can_submit = Permission.objects.get(codename="sql_submit")
         can_execute_permission = Permission.objects.get(codename="sql_execute")
         can_execute_resource_permission = Permission.objects.get(
             codename="sql_execute_for_resource_group"
@@ -357,6 +362,7 @@ class TestWorkflow(APITestCase):
         self.user.set_password("test_password")
         self.user.save()
         self.user.user_permissions.add(
+            can_submit,
             can_execute_permission,
             can_execute_resource_permission,
             can_review_permission,
@@ -449,6 +455,92 @@ class TestWorkflow(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.json()["count"], 1)
 
+    def test_check_param_is_None(self):
+        """测试工单检测，参数内容为空"""
+        json_data = {
+            "full_sql": "",
+            "db_name": "test_db",
+            "instance_id": self.ins.id,
+        }
+        r = self.client.post("/api/v1/workflow/sqlcheck/", json_data, format="json")
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("sql_api.api_workflow.get_engine")
+    def test_check_inception_Exception(self, _get_engine):
+        """测试工单检测，inception报错"""
+        json_data = {
+            "full_sql": "use mysql",
+            "db_name": "test_db",
+            "instance_id": self.ins.id,
+        }
+        _get_engine.side_effect = RuntimeError("RuntimeError")
+        r = self.client.post("/api/v1/workflow/sqlcheck/", json_data, format="json")
+        print(json.loads(r.content))
+        self.assertDictEqual(json.loads(r.content), {"errors": "RuntimeError"})
+
+    @patch("sql_api.serializers.get_engine")
+    def test_check(self, _get_engine):
+        """测试工单检测，正常返回"""
+        json_data = {
+            "full_sql": "use mysql",
+            "db_name": "test_db",
+            "instance_id": self.ins.id,
+        }
+        column_list = [
+            "id",
+            "stage",
+            "errlevel",
+            "stagestatus",
+            "errormessage",
+            "sql",
+            "affected_rows",
+            "sequence",
+            "backup_dbname",
+            "execute_time",
+            "sqlsha1",
+            "backup_time",
+            "actual_affected_rows",
+        ]
+
+        rows = [
+            ReviewResult(
+                id=1,
+                stage="CHECKED",
+                errlevel=0,
+                stagestatus="Audit Completed",
+                errormessage="",
+                sql="use `archer`",
+                affected_rows=0,
+                actual_affected_rows=0,
+                sequence="0_0_00000000",
+                backup_dbname="",
+                execute_time="0",
+                sqlsha1="",
+            )
+        ]
+        _get_engine.return_value.execute_check.return_value = ReviewSet(
+            warning_count=0, error_count=0, column_list=column_list, rows=rows
+        )
+        r = self.client.post("/api/v1/workflow/sqlcheck/", json_data, format="json")
+        self.assertListEqual(
+            list(json.loads(r.content).keys()),
+            [
+                "is_execute",
+                "checked",
+                "warning",
+                "error",
+                "warning_count",
+                "error_count",
+                "is_critical",
+                "syntax_type",
+                "rows",
+                "column_list",
+                "status",
+                "affected_rows",
+            ],
+        )
+        self.assertListEqual(list(json.loads(r.content)["rows"][0].keys()), column_list)
+
     def test_submit_workflow(self):
         """测试提交SQL上线工单"""
         json_data = {
@@ -465,6 +557,22 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/", json_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
+
+    def test_submit_param_is_None(self):
+        """测试SQL提交，参数内容为空"""
+        json_data = {
+            "workflow": {
+                "workflow_name": "上线工单1",
+                "demand_url": "test",
+                "group_id": 1,
+                "db_name": "test_db",
+                "engineer": self.user.username,
+                "instance": self.ins.id,
+            },
+            "sql_content": "",
+        }
+        r = self.client.post("/api/v1/workflow/", json_data, format="json")
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_audit_workflow(self):
         """测试审核工单"""
