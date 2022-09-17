@@ -58,10 +58,14 @@ class ExecuteCheck(views.APIView):
         serializer = ExecuteCheckSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.get_instance()
-        check_engine = get_engine(instance=instance)
-        check_result = check_engine.execute_check(
-            db_name=request.data["db_name"], sql=request.data["full_sql"].strip()
-        )
+        # 交给engine进行检测
+        try:
+            check_engine = get_engine(instance=instance)
+            check_result = check_engine.execute_check(
+                db_name=request.data["db_name"], sql=request.data["full_sql"].strip()
+            )
+        except Exception as e:
+            raise serializers.ValidationError({"errors": f"{e}"})
         review_result_list = []
         for r in check_result.rows:
             review_result_list += [r.__dict__]
