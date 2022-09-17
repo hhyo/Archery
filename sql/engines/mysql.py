@@ -18,6 +18,38 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
+# https://github.com/mysql/mysql-connector-python/blob/master/lib/mysql/connector/constants.py#L168
+column_types_map = {
+    0: "DECIMAL",
+    1: "TINY",
+    2: "SHORT",
+    3: "LONG",
+    4: "FLOAT",
+    5: "DOUBLE",
+    6: "NULL",
+    7: "TIMESTAMP",
+    8: "LONGLONG",
+    9: "INT24",
+    10: "DATE",
+    11: "TIME",
+    12: "DATETIME",
+    13: "YEAR",
+    14: "NEWDATE",
+    15: "VARCHAR",
+    16: "BIT",
+    245: "JSON",
+    246: "NEWDECIMAL",
+    247: "ENUM",
+    248: "SET",
+    249: "TINY_BLOB",
+    250: "MEDIUM_BLOB",
+    251: "LONG_BLOB",
+    252: "BLOB",
+    253: "VAR_STRING",
+    254: "STRING",
+    255: "GEOMETRY",
+}
+
 
 class MysqlEngine(EngineBase):
     test_query = "SELECT 1"
@@ -120,7 +152,7 @@ class MysqlEngine(EngineBase):
             row[0]
             for row in result.rows
             if row[0]
-            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+               not in ("information_schema", "performance_schema", "mysql", "test", "sys")
         ]
         result.rows = db_list
         return result
@@ -277,6 +309,22 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
+    @staticmethod
+    def result_set_binary_as_hex(result_set):
+        """处理ResultSet，将binary处理成hex"""
+        new_rows, hex_column_index = [], []
+        for idx, _type in enumerate(result_set.column_type):
+            if _type in ['TINY_BLOB', 'MEDIUM_BLOB', 'LONG_BLOB', 'BLOB']:
+                hex_column_index.append(idx)
+        if hex_column_index:
+            for row in result_set.rows:
+                row = list(row)
+                for index in hex_column_index:
+                    row[index] = row[index].hex() if row[index] else row[index]
+                new_rows.append(row)
+        result_set.rows = tuple(new_rows)
+        return result_set
+
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
@@ -298,8 +346,11 @@ class MysqlEngine(EngineBase):
             fields = cursor.description
 
             result_set.column_list = [i[0] for i in fields] if fields else []
+            result_set.column_type = [column_types_map.get(i[1], '') for i in fields] if fields else []
             result_set.rows = rows
             result_set.affected_rows = effect_row
+            if kwargs.get('binary_as_hex'):
+                result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
@@ -333,13 +384,13 @@ class MysqlEngine(EngineBase):
                 result["msg"] = explain_result.error
         # 不应该查看mysql.user表
         if re.match(
-            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
-            sql.lower().replace("\n", ""),
+                ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
+                sql.lower().replace("\n", ""),
         ) or (
-            db_name == "mysql"
-            and re.match(
-                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
-            )
+                db_name == "mysql"
+                and re.match(
+            ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
+        )
         ):
             result["bad_query"] = True
             result["msg"] = "您无权查看该表"
