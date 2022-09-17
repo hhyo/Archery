@@ -1265,7 +1265,7 @@
                 let li_sql = $(e.target).parent().children("input");
                 if(li_sql.length>0){
                   var sql = li_sql[0].getAttribute('sql_cache');
-                  if(sql){
+                  if(sql && !editor.getValue()){
                     editor.setValue(sql);
                   }
 
