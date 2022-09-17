@@ -632,6 +632,7 @@
                 },
                 success: function (data) {
                     if (data.status === 0) {
+                        $("optgroup[id^='optgroup']").empty();
                         let result = data['data']
                         const supportDb = ['mysql', 'mssql', 'redis', 'pgsql', 'oracle', 'mongo', 'phoenix', 'clickhouse']
                         for (let i of result) {
