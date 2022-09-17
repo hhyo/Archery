@@ -136,7 +136,7 @@ class GoInceptionEngine(EngineBase):
         # 如果发现任何一个行执行结果里有errLevel为1或2，并且状态列没有包含Execute Successfully，则最终执行结果为有异常.
         for r in execute_result.rows:
             if r.errlevel in (1, 2) and not re.search(
-                r"Execute Successfully", r.stagestatus
+                    r"Execute Successfully", r.stagestatus
             ):
                 execute_result.error = "Line {0} has error/warning: {1}".format(
                     r.id, r.errormessage
@@ -282,8 +282,8 @@ class GoInceptionEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""
-        sqlsha1 = kwargs.get("sqlsha1")
-        command = kwargs.get("command")
+        sqlsha1 = MySQLdb.escape_string(kwargs.get("sqlsha1")).decode("utf-8")
+        command = MySQLdb.escape_string(kwargs.get("command")).decode("utf-8")
         if command == "get":
             sql = f"inception get osc_percent '{sqlsha1}';"
         else:
