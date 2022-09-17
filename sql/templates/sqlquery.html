@@ -763,12 +763,11 @@
                                 }
                             },
                             formatter: function (value, row, index, field) {
-                                if (typeof (value) == "object" && Object.prototype.toString.call(value).toLowerCase() == "[object object]" && !value.length) {
+                                if (value instanceof Array || value instanceof Object){
                                     return JSON.stringify(value);
                                 }
                                 return value
                             }
-
                         });
                     });
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
