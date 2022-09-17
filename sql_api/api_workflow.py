@@ -66,10 +66,7 @@ class ExecuteCheck(views.APIView):
             )
         except Exception as e:
             raise serializers.ValidationError({"errors": f"{e}"})
-        review_result_list = []
-        for r in check_result.rows:
-            review_result_list += [r.__dict__]
-        check_result.rows = review_result_list
+        check_result.rows = check_result.to_dict()
         serializer_obj = ExecuteCheckResultSerializer(check_result)
         return Response(serializer_obj.data)
 
