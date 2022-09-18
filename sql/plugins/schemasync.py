@@ -7,7 +7,6 @@
 """
 __author__ = "hhyo"
 
-import shlex
 from sql.plugins.plugin import Plugin
 
 
@@ -18,33 +17,20 @@ class SchemaSync(Plugin):
         self.disable_args = []
         super(Plugin, self).__init__()
 
-    def generate_args2cmd(self, args, shell):
+    def generate_args2cmd(self, args):
         """
-        转换请求参数为命令行
-        :param args:
-        :param shell:
+        将请求参数转换为命令行参数
         :return:
         """
-        k_options = ["sync-auto-inc", "sync-comments"]
-        kv_options = ["tag", "output-directory", "log-directory"]
+        cmd_args = [self.path]
         v_options = ["source", "target"]
-        if shell:
-            cmd_args = self.path if self.path else ""
-            for name, value in args.items():
-                if name in k_options and value:
-                    cmd_args += f" --{name}"
-                elif name in kv_options:
-                    cmd_args += f" --{name}={shlex.quote(str(value))}"
-                elif name in v_options:
-                    cmd_args += f" {value}"
-        else:
-            cmd_args = [self.path]
-            for name, value in args.items():
-                if name in k_options and value:
-                    cmd_args.append(f"--{name}")
-                elif name in kv_options:
-                    cmd_args.append(f"--{name}")
-                    cmd_args.append(f"{value}")
-                elif name in ["source", "target"]:
-                    cmd_args.append(f"{value}")
+        for arg, value in args.items():
+            if not value:
+                continue
+            if arg in v_options:
+                cmd_args.append(f"{value}")
+                continue
+            cmd_args.append(f"--{arg}")
+            if not isinstance(value, bool):
+                cmd_args.append(f"{value}")
         return cmd_args

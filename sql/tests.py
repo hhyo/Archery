@@ -2197,6 +2197,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         r = self.client.post(path="/sql_analyze/generate/", data={})
         self.assertEqual(json.loads(r.content), {"rows": [], "total": 0})
 
@@ -2205,6 +2206,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text不为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         r = self.client.post(path="/sql_analyze/generate/", data={"text": text})
         self.assertEqual(
@@ -2231,6 +2233,7 @@ class TestSQLAnalyze(TestCase):
         测试分析SQL，text不为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         instance_name = self.master.instance_name
         db_name = settings.DATABASES["default"]["TEST"]["NAME"]
@@ -2328,7 +2331,7 @@ class TestBinLog(TestCase):
         :param _subprocess:
         :return:
         """
-        self.sys_config.set("my2sql", "/opt/my2sql")
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         self.sys_config.get_all_config()
         data = {
             "instance_name": "test_instance",
@@ -2360,6 +2363,7 @@ class TestBinLog(TestCase):
         :param _subprocess:
         :return:
         """
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         args = {
             "instance_name": "test_instance",
             "save_sql": "1",
