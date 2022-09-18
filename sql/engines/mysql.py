@@ -521,6 +521,9 @@ class MysqlEngine(EngineBase):
 
     def get_kill_command(self, thread_ids):
         """由传入的线程列表生成kill命令"""
+        # 校验传参
+        if [i for i in thread_ids if not isinstance(i, int)]:
+            return None
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )
@@ -533,6 +536,9 @@ class MysqlEngine(EngineBase):
 
     def kill(self, thread_ids):
         """kill线程"""
+        # 校验传参
+        if [i for i in thread_ids if not isinstance(i, int)]:
+            return ResultSet(full_sql="")
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )
