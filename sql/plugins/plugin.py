@@ -8,7 +8,6 @@
 __author__ = "hhyo"
 
 import logging
-import os
 import subprocess
 import traceback
 

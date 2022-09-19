@@ -277,16 +277,17 @@ class TestSoar(TestCase):
         cls.superuser.delete()
         cls.sys_config.replace(json.dumps({}))
 
-    def test_fingerprint(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_fingerprint(self, _subprocess):
         """
         测试SQL指纹打印，未断言
         :return:
         """
         sql = """select * from sql_users where id>0 and email<>'';"""
-        finger = self.soar.fingerprint(sql)
-        # self.assertEqual(finger, 'select * from sql_users where id>? and email<>?\n')
+        self.soar.fingerprint(sql)
 
-    def test_compress(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_compress(self, _subprocess):
         """
         测试SQL压缩，未断言
         :return:
@@ -296,10 +297,10 @@ class TestSoar(TestCase):
         from sql_users
         where id>0 and email<>'';
         """
-        compress_sql = self.soar.compress(sql)
-        # self.assertEqual(compress_sql, "select * from sql_users where id>0 and email<>'';\n")
+        self.soar.compress(sql)
 
-    def test_pretty(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_pretty(self, _subprocess):
         """
         测试SQL美化，未断言
         :return:
@@ -307,7 +308,8 @@ class TestSoar(TestCase):
         sql = """select * from sql_users where id>0 and email<>'';"""
         self.soar.pretty(sql)
 
-    def test_remove_comment(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_remove_comment(self, _subprocess):
         """
         测试去除注释，未断言
         :return:
@@ -320,7 +322,8 @@ class TestSoar(TestCase):
                 # and ;"""
         self.soar.remove_comment(sql)
 
-    def test_rewrite(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_rewrite(self, _subprocess):
         """
         测试SQL改写
         :return:
