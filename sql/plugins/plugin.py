@@ -49,14 +49,22 @@ class Plugin:
                 }
         return args_check_result
 
-    def generate_args2cmd(self, args, shell):
+    def generate_args2cmd(self, args):
         """
         将请求参数转换为命令行参数
         :return:
         """
+        cmd_args = [self.path]
+        for arg, value in args.items():
+            if not value:
+                continue
+            cmd_args.append(f"-{arg}")
+            if not isinstance(value, bool):
+                cmd_args.append(f"{value}")
+        return cmd_args
 
     @staticmethod
-    def execute_cmd(cmd_args, shell):
+    def execute_cmd(cmd_args):
         """
         执行命令并且返回process
         :return:
@@ -64,7 +72,7 @@ class Plugin:
         try:
             p = subprocess.Popen(
                 cmd_args,
-                shell=shell,
+                shell=False,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,

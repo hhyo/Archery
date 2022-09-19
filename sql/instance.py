@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import shlex
 
 import MySQLdb
 import os
@@ -11,7 +10,6 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.views.decorators.cache import cache_page
 
-from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.convert import Convert
 from sql.engines import get_engine
@@ -225,8 +223,8 @@ def schemasync(request):
         target_db_name = "*"
 
     # 取出该实例的连接方式
-    instance_info = Instance.objects.get(instance_name=instance_name)
-    target_instance_info = Instance.objects.get(instance_name=target_instance_name)
+    instance = Instance.objects.get(instance_name=instance_name)
+    target_instance = Instance.objects.get(instance_name=target_instance_name)
 
     # 提交给SchemaSync获取对比结果
     schema_sync = SchemaSync()
@@ -234,27 +232,13 @@ def schemasync(request):
     tag = int(time.time())
     output_directory = os.path.join(settings.BASE_DIR, "downloads/schemasync/")
     os.makedirs(output_directory, exist_ok=True)
-    db_name = shlex.quote(db_name)
-    target_db_name = shlex.quote(target_db_name)
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
         "tag": tag,
         "output-directory": output_directory,
-        "source": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(
-            user=shlex.quote(str(instance_info.user)),
-            pwd=shlex.quote(str(instance_info.password)),
-            host=shlex.quote(str(instance_info.host)),
-            port=shlex.quote(str(instance_info.port)),
-            database=db_name,
-        ),
-        "target": r"mysql://{user}:{pwd}@{host}:{port}/{database}".format(
-            user=shlex.quote(str(target_instance_info.user)),
-            pwd=shlex.quote(str(target_instance_info.password)),
-            host=shlex.quote(str(target_instance_info.host)),
-            port=shlex.quote(str(target_instance_info.port)),
-            database=target_db_name,
-        ),
+        "source": f"mysql://{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}",
+        "target": f"mysql://{target_instance.user}:{target_instance.password}@{target_instance.host}:{target_instance.port}/{target_db_name}",
     }
     # 参数检查
     args_check_result = schema_sync.check_args(args)
@@ -263,10 +247,10 @@ def schemasync(request):
             json.dumps(args_check_result), content_type="application/json"
         )
     # 参数转换
-    cmd_args = schema_sync.generate_args2cmd(args, shell=True)
+    cmd_args = schema_sync.generate_args2cmd(args)
     # 执行命令
     try:
-        stdout, stderr = schema_sync.execute_cmd(cmd_args, shell=True).communicate()
+        stdout, stderr = schema_sync.execute_cmd(cmd_args).communicate()
         diff_stdout = f"{stdout}{stderr}"
     except RuntimeError as e:
         diff_stdout = str(e)

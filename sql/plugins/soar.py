@@ -7,7 +7,6 @@
 """
 __author__ = "hhyo"
 
-import shlex
 from common.config import SysConfig
 from sql.plugins.plugin import Plugin
 
@@ -19,24 +18,6 @@ class Soar(Plugin):
         self.disable_args = []
         super(Plugin, self).__init__()
 
-    def generate_args2cmd(self, args, shell):
-        """
-        转换请求参数为命令行
-        :param args:
-        :param shell:
-        :return:
-        """
-        if shell:
-            cmd_args = shlex.quote(str(self.path)) if self.path else ""
-            for name, value in args.items():
-                cmd_args += f" -{name}={shlex.quote(str(value))}"
-        else:
-            cmd_args = [self.path]
-            for name, value in args.items():
-                cmd_args.append(f"-{name}")
-                cmd_args.append(f"{value}")
-        return cmd_args
-
     def fingerprint(self, sql):
         """
         输出SQL的指纹
@@ -44,8 +25,8 @@ class Soar(Plugin):
         :return:
         """
         args = {"query": sql, "report-type": "fingerprint"}
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)
 
     def compress(self, sql):
         """
@@ -54,8 +35,8 @@ class Soar(Plugin):
         :return:
         """
         args = {"query": sql, "report-type": "compress"}
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)
 
     def pretty(self, sql):
         """
@@ -68,8 +49,8 @@ class Soar(Plugin):
             "max-pretty-sql-length": 100000,  # 超出该长度的SQL会转换成指纹输出 (default 1024)
             "report-type": "pretty",
         }
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)
 
     def remove_comment(self, sql):
         """
@@ -78,8 +59,8 @@ class Soar(Plugin):
         :return:
         """
         args = {"query": sql, "report-type": "remove-comment"}
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)
 
     def rewrite(self, sql, rewrite_rules=None):
         """
@@ -117,8 +98,8 @@ class Soar(Plugin):
             "report-type": "rewrite",
             "rewrite-rules": ",".join(rewrite_type_list),
         }
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)
 
     def query_tree(self, sql):
         """
@@ -127,5 +108,5 @@ class Soar(Plugin):
         :return:
         """
         args = {"query": sql, "report-type": "ast-json"}
-        cmd_args = self.generate_args2cmd(args, shell=True)
-        return self.execute_cmd(cmd_args=cmd_args, shell=True)
+        cmd_args = self.generate_args2cmd(args)
+        return self.execute_cmd(cmd_args=cmd_args)

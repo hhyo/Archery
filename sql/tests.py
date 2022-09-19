@@ -1704,11 +1704,16 @@ class TestOptimize(TestCase):
         self.master.delete()
         self.sys_config.replace(json.dumps({}))
 
-    def test_sqladvisor(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_sqladvisor(self, _subprocess):
         """
         测试SQLAdvisor报告
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
         r = self.client.post(path="/slowquery/optimize_sqladvisor/")
         self.assertEqual(
             json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
@@ -1728,11 +1733,16 @@ class TestOptimize(TestCase):
         )
         self.assertEqual(json.loads(r.content)["status"], 0)
 
-    def test_soar(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_soar(self, _subprocess):
         """
         测试SOAR报告
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
         r = self.client.post(path="/slowquery/optimize_soar/")
         self.assertEqual(
             json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
@@ -2197,6 +2207,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         r = self.client.post(path="/sql_analyze/generate/", data={})
         self.assertEqual(json.loads(r.content), {"rows": [], "total": 0})
 
@@ -2205,6 +2216,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text不为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         r = self.client.post(path="/sql_analyze/generate/", data={"text": text})
         self.assertEqual(
@@ -2226,11 +2238,17 @@ class TestSQLAnalyze(TestCase):
         r = self.client.post(path="/sql_analyze/analyze/", data={})
         self.assertEqual(json.loads(r.content), {"rows": [], "total": 0})
 
-    def test_analyze_text_not_None(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_analyze_text_not_None(self, _subprocess):
         """
         测试分析SQL，text不为空
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         instance_name = self.master.instance_name
         db_name = settings.DATABASES["default"]["TEST"]["NAME"]
@@ -2328,7 +2346,7 @@ class TestBinLog(TestCase):
         :param _subprocess:
         :return:
         """
-        self.sys_config.set("my2sql", "/opt/my2sql")
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         self.sys_config.get_all_config()
         data = {
             "instance_name": "test_instance",
@@ -2354,12 +2372,18 @@ class TestBinLog(TestCase):
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": []})
 
     @patch("builtins.open")
-    def test_my2sql_file(self, _open):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_my2sql_file(self, _open, _subprocess):
         """
         测试保存文件
         :param _subprocess:
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         args = {
             "instance_name": "test_instance",
             "save_sql": "1",

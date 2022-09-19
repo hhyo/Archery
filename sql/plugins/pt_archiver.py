@@ -22,48 +22,16 @@ class PtArchiver(Plugin):
         self.disable_args = ["analyze"]
         super(Plugin, self).__init__()
 
-    def generate_args2cmd(self, args, shell):
+    def generate_args2cmd(self, args):
         """
-        转换请求参数为命令行
-        :param args:
-        :param shell:
+        将请求参数转换为命令行参数
         :return:
         """
-        k_options = [
-            "no-version-check",
-            "statistics",
-            "bulk-insert",
-            "bulk-delete",
-            "purge",
-            "no-delete",
-        ]
-        kv_options = [
-            "source",
-            "dest",
-            "file",
-            "where",
-            "progress",
-            "charset",
-            "limit",
-            "txn-size",
-            "sleep",
-        ]
-        if shell:
-            cmd_args = self.path if self.path else ""
-            for name, value in args.items():
-                if name in k_options and value:
-                    cmd_args += f" --{name}"
-                elif name in kv_options:
-                    if name == "where":
-                        cmd_args += f' --{name} "{value}"'
-                    else:
-                        cmd_args += f" --{name} {value}"
-        else:
-            cmd_args = [self.path]
-            for name, value in args.items():
-                if name in k_options and value:
-                    cmd_args.append(f"--{name}")
-                elif name in kv_options:
-                    cmd_args.append(f"--{name}")
-                    cmd_args.append(f"{value}")
+        cmd_args = [self.path]
+        for arg, value in args.items():
+            if not value:
+                continue
+            cmd_args.append(f"--{arg}")
+            if not isinstance(value, bool):
+                cmd_args.append(f"{value}")
         return cmd_args
