@@ -1,12 +1,13 @@
 <div align="center">
 
 # <a href="https://archerydms.com/" target="_blank" rel="noopener noreferrer">Archery</a>
+<h4> SQL 审核查询平台<h4>
 
 [![Django CI](https://github.com/hhyo/Archery/actions/workflows/django.yml/badge.svg)](https://github.com/hhyo/Archery/actions/workflows/django.yml)
 [![Release](https://img.shields.io/github/release/hhyo/archery.svg)](https://github.com/hhyo/archery/releases/)
 [![codecov](https://codecov.io/gh/hhyo/archery/branch/master/graph/badge.svg)](https://codecov.io/gh/hhyo/archery)
 [![version](https://img.shields.io/pypi/pyversions/django)](https://img.shields.io/pypi/pyversions/django/)
-[![version](https://img.shields.io/badge/django-4.0-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/4.0/)
+[![version](https://img.shields.io/badge/django-4.1-brightgreen.svg)](https://docs.djangoproject.com/zh-hans/4.1/)
 [![Publish Docker image](https://github.com/hhyo/Archery/actions/workflows/docker-image.yml/badge.svg)](https://github.com/hhyo/Archery/actions/workflows/docker-image.yml)
 [![docker_pulls](https://img.shields.io/docker/pulls/hhyo/archery.svg)](https://hub.docker.com/r/hhyo/archery/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/hhyo/archery/blob/master/LICENSE)
@@ -18,15 +19,10 @@
 
 </div>
 
-
-介绍
-============
-Archery是[archer](https://github.com/jly8866/archer)的分支项目，定位于SQL审核查询平台，旨在提升DBA的工作效率，支持多数据库的SQL上线和查询，同时支持丰富的MySQL运维功能，所有功能都兼容手机端操作
-
 功能清单
 ====
 
-|  | 查询 | 审核 | 执行 | 备份 | 数据字典 | 慢日志 | 会话管理 | 账号管理 | 参数管理 | 数据归档 |
+| 数据库 | 查询 | 审核 | 执行 | 备份 | 数据字典 | 慢日志 | 会话管理 | 账号管理 | 参数管理 | 数据归档 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | MySQL | √ | √ | √ | √ | √ | √ | √ | √ | √ | √ |
 | MsSQL | √ | × | √ | × | √ | × | × | × | × | × |
@@ -147,6 +143,7 @@ python manage.py test -v 3
 贡献代码
 ===============
 可查阅主页的开发计划以及依赖清单，在对应Issues中回复认领，或者直接提交PR，感谢你对Archery的贡献
+
 贡献包括但不限于以下方式：
 - [Wiki文档](https://github.com/hhyo/Archery/wiki)（开放编辑）
 - Bug修复
@@ -159,4 +156,10 @@ python manage.py test -v 3
 - 使用咨询、需求沟通：[Discussions](https://github.com/hhyo/Archery/discussions)
 - Bug提交：[Issues](https://github.com/hhyo/archery/issues)
 
-在提交Issue时请按照模板提供相关信息，不符合标准的问题可能会被直接关闭，非Bug类的交流请在Discussions上发布
+致谢
+===============
+- [archer](https://github.com/jly8866/archer) Archery 项目是基于 archer 二次开发而来
+- [goInception](https://github.com/hanchuanchuan/goInception) 一个集审核、执行、备份及生成回滚语句于一身的MySQL运维工具
+- [JetBrains Open Source](https://www.jetbrains.com/zh-cn/opensource/?from=archery) 为项目提供免费的 IDE 授权  
+  [<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" width="200"/>](https://www.jetbrains.com/opensource/)
+
