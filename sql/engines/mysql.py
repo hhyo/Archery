@@ -152,7 +152,7 @@ class MysqlEngine(EngineBase):
             row[0]
             for row in result.rows
             if row[0]
-               not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
         ]
         result.rows = db_list
         return result
@@ -314,7 +314,7 @@ class MysqlEngine(EngineBase):
         """处理ResultSet，将binary处理成hex"""
         new_rows, hex_column_index = [], []
         for idx, _type in enumerate(result_set.column_type):
-            if _type in ['TINY_BLOB', 'MEDIUM_BLOB', 'LONG_BLOB', 'BLOB']:
+            if _type in ["TINY_BLOB", "MEDIUM_BLOB", "LONG_BLOB", "BLOB"]:
                 hex_column_index.append(idx)
         if hex_column_index:
             for row in result_set.rows:
@@ -346,10 +346,12 @@ class MysqlEngine(EngineBase):
             fields = cursor.description
 
             result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.column_type = [column_types_map.get(i[1], '') for i in fields] if fields else []
+            result_set.column_type = (
+                [column_types_map.get(i[1], "") for i in fields] if fields else []
+            )
             result_set.rows = rows
             result_set.affected_rows = effect_row
-            if kwargs.get('binary_as_hex'):
+            if kwargs.get("binary_as_hex"):
                 result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
@@ -384,13 +386,13 @@ class MysqlEngine(EngineBase):
                 result["msg"] = explain_result.error
         # 不应该查看mysql.user表
         if re.match(
-                ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
-                sql.lower().replace("\n", ""),
+            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
+            sql.lower().replace("\n", ""),
         ) or (
-                db_name == "mysql"
-                and re.match(
-            ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
-        )
+            db_name == "mysql"
+            and re.match(
+                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
+            )
         ):
             result["bad_query"] = True
             result["msg"] = "您无权查看该表"
