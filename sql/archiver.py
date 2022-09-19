@@ -357,12 +357,13 @@ def archive(archive_id):
         dest_db_name = archive_info.dest_db_name
         dest_table_name = archive_info.dest_table_name
         # 目标表的字符集信息
-        d_engine = get_engine(d_ins)
-        d_db = d_engine.schema_object.databases[dest_db_name]
+        schema_object = get_engine(d_ins).schema_object
+        d_db = schema_object.databases[dest_db_name]
         d_tb = d_db.tables[dest_table_name]
         d_charset = d_tb.options["charset"].value
         if d_charset is None:
             d_charset = d_db.options["charset"].value
+        schema_object.connection.close()
         # dest
         dest = (
             rf"h={d_ins.host},u={d_ins.user},p={d_ins.password},P={d_ins.port},"
