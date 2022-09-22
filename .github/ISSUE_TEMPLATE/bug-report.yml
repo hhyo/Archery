@@ -44,7 +44,7 @@ body:
     attributes:
       label: 版本
       description: 请告诉我们你正在使用的Archery版本
-      placeholder: 1.8.5
+      placeholder: 1.9.0
     validations:
       required: true
   - type: dropdown
