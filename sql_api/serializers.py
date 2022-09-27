@@ -387,6 +387,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             is_backup=is_backup,
             is_manual=0,
             syntax_type=check_result.syntax_type,
+            engineer=user.username,
             engineer_display=user.display,
             group_name=group.group_name,
             audit_auth_groups=Audit.settings(

@@ -557,6 +557,8 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/", json_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
+        self.assertEqual(r.json()["workflow"]["engineer"], self.user.username)
+        self.assertEqual(r.json()["workflow"]["engineer_display"], self.user.display)
 
     def test_submit_param_is_None(self):
         """测试SQL提交，参数内容为空"""
