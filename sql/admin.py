@@ -80,7 +80,7 @@ class UsersAdmin(UserAdmin):
             },
         ),
         ("资源组", {"fields": ("resource_group",)}),
-        ("其他信息", {"fields": ("date_joined",)}),
+        ("其他信息", {"fields": ("date_joined", "failed_login_count")}),
     )
     # 添加页显示内容
     add_fieldsets = (
