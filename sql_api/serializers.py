@@ -500,6 +500,19 @@ class WorkflowLogSerializer(serializers.Serializer):
         choices=[1, 2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
     )
 
+    def validate(self, attrs):
+        workflow_id = attrs.get("workflow_id")
+        workflow_type = attrs.get("workflow_type")
+
+        try:
+            WorkflowAudit.objects.get(
+                workflow_id=workflow_id, workflow_type=workflow_type
+            )
+        except WorkflowAudit.DoesNotExist:
+            raise serializers.ValidationError({"errors": "不存在该工单"})
+
+        return attrs
+
 
 class WorkflowLogListSerializer(serializers.ModelSerializer):
     class Meta:
