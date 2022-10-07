@@ -1,5 +1,4 @@
 from django.urls import path, include
-from sql_api import views
 from rest_framework import routers
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -11,12 +10,20 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from . import api_user, api_instance, api_workflow
+import sql_api.api_views.system as api_system
+import sql_api.api_views.user as api_user
+import sql_api.api_views.instance as api_instance
+import sql_api.api_views.workflow as api_workflow
+import sql_api.api_views.sql_workflow as api_sql_workflow
+
 
 router = routers.DefaultRouter()
+router.register(
+    r"v2/workflow/sql", api_sql_workflow.SqlWorkflowView, basename="sql_workflow"
+)
 
 urlpatterns = [
-    path("v1/", include(router.urls)),
+    path("", include(router.urls)),
     path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
@@ -46,12 +53,12 @@ urlpatterns = [
     path("v1/instance/tunnel/", api_instance.TunnelList.as_view()),
     path("v1/instance/rds/", api_instance.AliyunRdsList.as_view()),
     path("v1/workflow/", api_workflow.WorkflowList.as_view()),
-    path("v1/workflow/sqlcheck/", api_workflow.ExecuteCheck.as_view()),
+    path("v1/workflow/sqlcheck/", api_sql_workflow.ExecuteCheck.as_view()),
     path("v1/workflow/audit/", api_workflow.AuditWorkflow.as_view()),
     path("v1/workflow/auditlist/", api_workflow.WorkflowAuditList.as_view()),
     path("v1/workflow/execute/", api_workflow.ExecuteWorkflow.as_view()),
     path("v1/workflow/log/", api_workflow.WorkflowLogList.as_view()),
-    path("info", views.info),
-    path("debug", views.debug),
-    path("do_once/mirage", views.mirage),
+    path("info", api_system.info),
+    path("debug", api_system.debug),
+    path("do_once/mirage", api_system.mirage),
 ]

@@ -871,73 +871,6 @@ class TestWorkflowView(TransactionTestCase):
         self.wfc1.save()
         r = c.get("/detail/{}/".format(self.wf1.id))
 
-    def testWorkflowListView(self):
-        """测试工单列表"""
-        c = Client()
-        c.force_login(self.superuser1)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1 , 是已正常结束
-        self.assertEqual(r_json["rows"][1]["status"], "workflow_finish")
-
-        # u1拿到u1的
-        c.force_login(self.u1)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 1)
-        self.assertEqual(r_json["rows"][0]["id"], self.wf1.id)
-
-        # u3拿到None
-        c.force_login(self.u3)
-        r = c.post("/sqlworkflow_list/", {"limit": 10, "offset": 0, "navStatus": ""})
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 0)
-
-    def testWorkflowListViewFilter(self):
-        """测试工单列表筛选"""
-        c = Client()
-        c.force_login(self.superuser1)
-        # 工单状态
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "navStatus": "workflow_finish"},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 1)
-        # 列表按创建时间倒序排列
-        self.assertEqual(r_json["rows"][0]["status"], "workflow_finish")
-
-        # 实例
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "instance_id": self.wf1.instance_id},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1
-        self.assertEqual(r_json["rows"][1]["workflow_name"], self.wf1.workflow_name)
-
-        # 资源组
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "resource_group_id": self.wf1.group_id},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-        # 列表按创建时间倒序排列, 第二个是wf1
-        self.assertEqual(r_json["rows"][1]["workflow_name"], self.wf1.workflow_name)
-
-        # 时间
-        start_date = datetime.strftime(self.now, "%Y-%m-%d")
-        end_date = datetime.strftime(self.now, "%Y-%m-%d")
-        r = c.post(
-            "/sqlworkflow_list/",
-            {"limit": 10, "offset": 0, "start_date": start_date, "end_date": end_date},
-        )
-        r_json = r.json()
-        self.assertEqual(r_json["total"], 2)
-
     @patch("sql.notify.auto_notify")
     @patch("sql.utils.workflow_audit.AuditV2.operate")
     def testWorkflowPassedView(self, mock_operate, _):
@@ -992,7 +925,7 @@ class TestWorkflowView(TransactionTestCase):
     # 参见 : https://docs.python.org/3/library/unittest.mock.html#where-to-patch
     @patch("sql.sql_workflow.can_cancel")
     def testWorkflowCancelView(
-        self, _can_cancel, mock_audit_operate, mock_notify, _add_log
+            self, _can_cancel, mock_audit_operate, mock_notify, _add_log
     ):
         """测试工单驳回、取消"""
         c = Client()
@@ -1706,7 +1639,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_not_config(
-        self, _get_engine, _get_variables, _set_variable
+            self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，参数未在模板配置
@@ -1726,7 +1659,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_not_change(
-        self, _get_engine, _get_variables, _set_variable
+            self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，但是值无变化
@@ -1756,7 +1689,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_change(
-        self, _get_engine, _get_variables, _set_variable
+            self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，且值有变化
@@ -1786,7 +1719,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_error(
-        self, _get_engine, _get_variables, _set_variable
+            self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，修改抛错

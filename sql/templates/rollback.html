@@ -17,8 +17,8 @@
         $('#tb-rollback').bootstrapTable('destroy').bootstrapTable({
             escape: true,
             method: 'get',
-            contentType: "application/x-www-form-urlencoded",
-            url: "/sqlworkflow/backup_sql/",
+            contentType: "application/json",
+            url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/rollback_sql/",
             striped: true,                      //是否显示行间隔色
             cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
             pagination: true,                   //是否显示分页（*）
@@ -65,14 +65,6 @@
                 );
                 return html.join('');
             },
-            queryParamsType: 'limit',
-            //请求服务数据时所传参数
-            queryParams:
-                function (params) {
-                    return {
-                        workflow_id: "{{ workflow_detail.id }}",
-                    }
-                },
             locale: 'zh-CN',                    //本地化
             columns: [{
                 title: '执行语句',
@@ -92,7 +84,7 @@
                 title: '回滚语句',
                 field: 1,
                 formatter: function (value, row, index) {
-                    var sql=row[1];
+                    var sql = row[1];
                     if (sql.length > 80) {
                         return sql.substr(0, 80) + '...';
                     } else {
@@ -104,17 +96,17 @@
                 field: 1,
                 visible: false // 默认不显示
             }],
+            responseHandler: function (data) {
+                //在ajax获取到数据，渲染表格之前，修改数据源
+                return data;
+            },
             onLoadSuccess: function (data) {
                 // 设置回滚语句，供快速提交
-                if (data.status !== 0) {
-                    alert("数据加载失败！" + data.msg);
-                } else {
-                    let backup_sql = '';
-                    for (let sql of data.rows) {
-                        backup_sql += sql[1] + '\n'
-                    }
-                    sessionStorage.setItem('editSqlContent', backup_sql);
+                let backup_sql = '';
+                for (let sql of data) {
+                    backup_sql += sql[1] + '\n'
                 }
+                sessionStorage.setItem('editSqlContent', backup_sql);
             },
             onLoadError: onLoadErrorCallback,
         });
