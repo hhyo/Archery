@@ -32,7 +32,7 @@ services:
       - "./inception/config.toml:/etc/config.toml"
 
   archery:
-    image: hhyo/archery:v1.9.0
+    image: hhyo/archery:v1.9.1
     container_name: archery
     restart: always
     ports:
