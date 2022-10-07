@@ -312,12 +312,23 @@ class WorkflowSerializer(serializers.ModelSerializer):
             data["run_date_end"] = None
         return super().to_internal_value(data)
 
-    def validate_group_id(self, group_id):
+    @staticmethod
+    def validate_group_id(group_id):
         try:
             ResourceGroup.objects.get(pk=group_id)
         except ResourceGroup.DoesNotExist:
             raise serializers.ValidationError({"errors": f"不存在该资源组：{group_id}"})
         return group_id
+
+    def validate_engineer(self, engineer):
+        """仅管理员做engineer校验"""
+        user = self.context["request"].user
+        if user.is_superuser:
+            try:
+                Users.objects.get(username=engineer)
+            except Users.DoesNotExist:
+                raise serializers.ValidationError({"errors": f"不存在用户：{engineer}"})
+        return engineer
 
     class Meta:
         model = SqlWorkflow
@@ -330,11 +341,11 @@ class WorkflowSerializer(serializers.ModelSerializer):
             "group_name",
             "finish_time",
             "is_manual",
-            "engineer",
         ]
         extra_kwargs = {
             "demand_url": {"required": False},
             "is_backup": {"required": False},
+            "engineer": {"required": False},
         }
 
 
@@ -346,10 +357,17 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         workflow_data = validated_data.pop("workflow")
         instance = workflow_data["instance"]
         sql_content = validated_data["sql_content"].strip()
-        user = self.context["request"].user  # 只能提交自己负责的资源
         group = ResourceGroup.objects.get(pk=workflow_data["group_id"])
+        engineer = workflow_data.get("engineer")
 
-        # 验证组权限（用户是否在该组、该组是否有指定实例）
+        # 管理员可以指定提交人信息
+        if self.context["request"].user.is_superuser:
+            user = Users.objects.get(username=engineer)
+        # 提交人只能是自己
+        else:
+            user = self.context["request"].user
+
+        # 验证提交用户的组权限（用户是否在该组、该组是否有指定实例）
         try:
             user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
         except instance.DoesNotExist:
@@ -387,6 +405,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             is_backup=is_backup,
             is_manual=0,
             syntax_type=check_result.syntax_type,
+            engineer=user.username,
             engineer_display=user.display,
             group_name=group.group_name,
             audit_auth_groups=Audit.settings(
