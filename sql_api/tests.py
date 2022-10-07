@@ -465,7 +465,7 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/sqlcheck/", json_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch("sql_api.api_workflow.get_engine")
+    @patch("sql_api.api_views.sql_workflow.get_engine")
     def test_check_inception_Exception(self, _get_engine):
         """测试工单检测，inception报错"""
         json_data = {
@@ -478,7 +478,7 @@ class TestWorkflow(APITestCase):
         print(json.loads(r.content))
         self.assertDictEqual(json.loads(r.content), {"errors": "RuntimeError"})
 
-    @patch("sql_api.serializers.get_engine")
+    @patch("sql_api.serializers.serializers.get_engine")
     def test_check(self, _get_engine):
         """测试工单检测，正常返回"""
         json_data = {

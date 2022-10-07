@@ -1,7 +1,7 @@
 from rest_framework import views, generics, status, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from .serializers import (
+from sql_api.serializers.serializers import (
     UserSerializer,
     UserDetailSerializer,
     GroupSerializer,
@@ -12,9 +12,9 @@ from .serializers import (
     TwoFASaveSerializer,
     TwoFAStateSerializer,
 )
-from .pagination import CustomizedPagination
-from .permissions import IsOwner
-from .filters import UserFilter
+from sql_api.pagination import CustomizedPagination
+from sql_api.permissions.common import IsOwner
+from sql_api.filters import UserFilter
 from django_redis import get_redis_connection
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate, login

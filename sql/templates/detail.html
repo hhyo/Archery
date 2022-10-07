@@ -539,16 +539,16 @@
             $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'get',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow/detail_content/",
+                contentType: "application/json",
+                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
                 sortable: true,                     //是否启用排序
                 sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 500,                       //每页的记录行数（*）
-                pageList: [500, 1000, 5000],        //可供选择的每页的行数（*）
+                pageSize: 14,                       //每页的记录行数（*）
+                pageList: [14, 500, 1000, 5000],        //可供选择的每页的行数（*）
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
                 showColumns: true,                  //是否显示所有的列（选择显示的列）
@@ -588,14 +588,6 @@
                     });
                     return html.join('');
                 },
-                queryParamsType: 'limit',
-                //请求服务数据时所传参数
-                queryParams:
-                    function (params) {
-                        return {
-                            workflow_id: "{{ workflow_detail.id }}",
-                        }
-                    },
                 locale: 'zh-CN',                    //本地化
                 columns: [{
                     title: 'ID',
@@ -609,7 +601,7 @@
                     title: 'SQL内容',
                     field: 'sql',
                     formatter: function (value, row, index) {
-                        var sql=row.sql;
+                        var sql = row.sql;
                         if (sql.length > 80) {
                             return sql.substr(0, 80) + '...';
                         } else {
@@ -673,6 +665,10 @@
                         style = 'danger';
                     }
                     return {classes: style}
+                },
+                responseHandler: function (data) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return data.display_content;
                 },
                 onLoadSuccess: function () {
                 },

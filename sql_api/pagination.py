@@ -29,3 +29,16 @@ class CustomizedPagination(PageNumberPagination):
                 ]
             )
         )
+
+
+class BootStrapTablePagination(PageNumberPagination):
+    """
+    自定义分页器，返回bootstrap-table需要的格式
+    """
+
+    page_size = 14
+
+    def get_paginated_response(self, data):
+        return Response(
+            OrderedDict([("total", self.page.paginator.count), ("rows", data)])
+        )

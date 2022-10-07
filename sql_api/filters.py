@@ -1,5 +1,5 @@
-from django_filters import rest_framework as filters
-from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit
+from django_filters import rest_framework as filters, DateTimeFromToRangeFilter
+from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit, SqlWorkflow
 
 
 class UserFilter(filters.FilterSet):
@@ -44,3 +44,11 @@ class WorkflowAuditFilter(filters.FilterSet):
             "workflow_title": ["icontains"],
             "workflow_type": ["exact"],
         }
+
+
+class SqlWorkflowFilter(filters.FilterSet):
+    create_time = DateTimeFromToRangeFilter()
+
+    class Meta:
+        model = SqlWorkflow
+        fields = ["create_time", "status", "instance_id", "group_id"]

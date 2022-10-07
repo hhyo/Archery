@@ -7,193 +7,29 @@ import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
 
 from common.config import SysConfig
-from common.utils.const import Const, WorkflowDict
+from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.engines.models import ReviewResult, ReviewSet
 from sql.notify import notify_for_audit, notify_for_execute
-from sql.models import ResourceGroup
-from sql.utils.resource_group import user_groups, user_instances
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.sql_review import (
     can_timingtask,
     can_cancel,
     can_execute,
     on_correct_time_period,
-    can_view,
     can_rollback,
 )
 from sql.utils.workflow_audit import Audit
-from .models import SqlWorkflow, SqlWorkflowContent, Instance
+from .models import SqlWorkflow
 from django_q.tasks import async_task
 
 from sql.engines import get_engine
 
 logger = logging.getLogger("default")
-
-
-@permission_required("sql.menu_sqlworkflow", raise_exception=True)
-def sql_workflow_list(request):
-    return _sql_workflow_list(request)
-
-
-@permission_required("sql.audit_user", raise_exception=True)
-def sql_workflow_list_audit(request):
-    return _sql_workflow_list(request)
-
-
-def _sql_workflow_list(request):
-    """
-    获取审核列表
-    :param request:
-    :return:
-    """
-    nav_status = request.POST.get("navStatus")
-    instance_id = request.POST.get("instance_id")
-    resource_group_id = request.POST.get("group_id")
-    start_date = request.POST.get("start_date")
-    end_date = request.POST.get("end_date")
-    limit = int(request.POST.get("limit", 0))
-    offset = int(request.POST.get("offset", 0))
-    limit = offset + limit
-    limit = limit if limit else None
-    search = request.POST.get("search")
-    user = request.user
-
-    # 组合筛选项
-    filter_dict = dict()
-    # 工单状态
-    if nav_status:
-        filter_dict["status"] = nav_status
-    # 实例
-    if instance_id:
-        filter_dict["instance_id"] = instance_id
-    # 资源组
-    if resource_group_id:
-        filter_dict["group_id"] = resource_group_id
-    # 时间
-    if start_date and end_date:
-        end_date = datetime.datetime.strptime(
-            end_date, "%Y-%m-%d"
-        ) + datetime.timedelta(days=1)
-        filter_dict["create_time__range"] = (start_date, end_date)
-    # 管理员，审计员，可查看所有工单
-    if user.is_superuser or user.has_perm("sql.audit_user"):
-        pass
-    # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
-    elif user.has_perm("sql.sql_review") or user.has_perm(
-        "sql.sql_execute_for_resource_group"
-    ):
-        # 先获取用户所在资源组列表
-        group_list = user_groups(user)
-        group_ids = [group.group_id for group in group_list]
-        filter_dict["group_id__in"] = group_ids
-    # 其他人只能查看自己提交的工单
-    else:
-        filter_dict["engineer"] = user.username
-
-    # 过滤组合筛选项
-    workflow = SqlWorkflow.objects.filter(**filter_dict)
-
-    # 过滤搜索项，模糊检索项包括提交人名称、工单名
-    if search:
-        workflow = workflow.filter(
-            Q(engineer_display__icontains=search) | Q(workflow_name__icontains=search)
-        )
-
-    count = workflow.count()
-    workflow_list = workflow.order_by("-create_time")[offset:limit].values(
-        "id",
-        "workflow_name",
-        "engineer_display",
-        "status",
-        "is_backup",
-        "create_time",
-        "instance__instance_name",
-        "db_name",
-        "group_name",
-        "syntax_type",
-    )
-
-    # QuerySet 序列化
-    rows = [row for row in workflow_list]
-    result = {"total": count, "rows": rows}
-    # 返回查询结果
-    return HttpResponse(
-        json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
-        content_type="application/json",
-    )
-
-
-def detail_content(request):
-    """获取工单内容"""
-    workflow_id = request.GET.get("workflow_id")
-    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    if not can_view(request.user, workflow_id):
-        raise PermissionDenied
-    if workflow_detail.status in ["workflow_finish", "workflow_exception"]:
-        rows = workflow_detail.sqlworkflowcontent.execute_result
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
-
-    review_result = ReviewSet()
-    if rows:
-        try:
-            # 检验rows能不能正常解析
-            loaded_rows = json.loads(rows)
-            #  兼容旧数据'[[]]'格式，转换为新格式[{}]
-            if isinstance(loaded_rows[-1], list):
-                for r in loaded_rows:
-                    review_result.rows += [ReviewResult(inception_result=r)]
-                rows = review_result.json()
-        except IndexError:
-            review_result.rows += [
-                ReviewResult(
-                    id=1,
-                    sql=workflow_detail.sqlworkflowcontent.sql_content,
-                    errormessage="Json decode failed." "执行结果Json解析失败, 请联系管理员",
-                )
-            ]
-            rows = review_result.json()
-        except json.decoder.JSONDecodeError:
-            review_result.rows += [
-                ReviewResult(
-                    id=1,
-                    sql=workflow_detail.sqlworkflowcontent.sql_content,
-                    # 迫于无法单元测试这里加上英文报错信息
-                    errormessage="Json decode failed." "执行结果Json解析失败, 请联系管理员",
-                )
-            ]
-            rows = review_result.json()
-    else:
-        rows = workflow_detail.sqlworkflowcontent.review_content
-
-    result = {"rows": json.loads(rows)}
-    return HttpResponse(json.dumps(result), content_type="application/json")
-
-
-def backup_sql(request):
-    """获取回滚语句"""
-    workflow_id = request.GET.get("workflow_id")
-    if not can_rollback(request.user, workflow_id):
-        raise PermissionDenied
-    workflow = get_object_or_404(SqlWorkflow, pk=workflow_id)
-
-    try:
-        query_engine = get_engine(instance=workflow.instance)
-        list_backup_sql = query_engine.get_rollback(workflow=workflow)
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        return JsonResponse({"status": 1, "msg": f"{msg}", "rows": []})
-
-    result = {"status": 0, "msg": "", "rows": list_backup_sql}
-    return HttpResponse(json.dumps(result), content_type="application/json")
 
 
 @permission_required("sql.sql_review", raise_exception=True)

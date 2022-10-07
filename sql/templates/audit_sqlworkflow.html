@@ -125,9 +125,9 @@
             //初始化table
             $('#sqlaudit-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
-                method: 'post',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow_list_audit/",
+                method: 'get',
+                contentType: "application/json",
+                url: "/api/v2/workflow/sql/",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
@@ -140,7 +140,7 @@
                 showExport: true,                   //是否显示导出按钮
                 exportDataType: "all",
                 exportOptions: {
-                    fileName: "sqlworkflow_" + dateFormat("yyyyMMddhhmmss",new Date())
+                    fileName: "sqlworkflow_" + dateFormat("yyyyMMddhhmmss", new Date())
                 },
                 search: true,                      //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
@@ -154,7 +154,7 @@
                 detailView: false,                  //是否显示父子表
                 locale: 'zh-CN',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
-                queryParamsType: 'limit',
+                queryParamsType: '',
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
@@ -168,14 +168,14 @@
                             end_date = ''
                         }
                         return {
-                            limit: params.limit,
-                            offset: params.offset,
-                            navStatus: $("#navStatus").val(),
+                            page: params.pageNumber,
+                            page_size: params.pageSize,
+                            status: $("#navStatus").val(),
                             instance_id: $("#instance_id").val(),
                             group_id: $("#group_id").val(),
-                            start_date: start_date,
-                            end_date: end_date,
-                            search: params.search
+                            create_time_before: end_date,
+                            create_time_after: start_date,
+                            search: params.searchText
                         }
                     },
                 columns: [{
