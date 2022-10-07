@@ -320,16 +320,6 @@ class WorkflowSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"errors": f"不存在该资源组：{group_id}"})
         return group_id
 
-    def validate_engineer(self, engineer):
-        """仅管理员做engineer校验"""
-        user = self.context["request"].user
-        if user.is_superuser:
-            try:
-                Users.objects.get(username=engineer)
-            except Users.DoesNotExist:
-                raise serializers.ValidationError({"errors": f"不存在用户：{engineer}"})
-        return engineer
-
     class Meta:
         model = SqlWorkflow
         fields = "__all__"
@@ -361,8 +351,11 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         engineer = workflow_data.get("engineer")
 
         # 管理员可以指定提交人信息
-        if self.context["request"].user.is_superuser:
-            user = Users.objects.get(username=engineer)
+        if self.context["request"].user.is_superuser and engineer:
+            try:
+                user = Users.objects.get(username=engineer)
+            except Users.DoesNotExist:
+                raise serializers.ValidationError({"errors": f"不存在用户：{engineer}"})
         # 提交人只能是自己
         else:
             user = self.context["request"].user
