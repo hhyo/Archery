@@ -8,18 +8,33 @@
 __author__ = "hhyo"
 
 import logging
-
-logger = logging.getLogger("default")
-
 import traceback
 
 import simplejson as json
-from drf_spectacular.utils import extend_schema_field, inline_serializer
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from sql.engines import ReviewSet, get_engine
 from sql.engines.models import ReviewResult
 from sql.models import Instance, SqlWorkflow
+
+logger = logging.getLogger("default")
+
+
+class ReviewResultSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    stage = serializers.CharField(read_only=True)
+    errlevel = serializers.IntegerField(read_only=True)
+    stagestatus = serializers.CharField(read_only=True)
+    errormessage = serializers.CharField(read_only=True)
+    sql = serializers.CharField(read_only=True)
+    affected_rows = serializers.IntegerField(read_only=True)
+    sequence = serializers.CharField(read_only=True)
+    backup_dbname = serializers.CharField(read_only=True)
+    execute_time = serializers.CharField(read_only=True)
+    sqlsha1 = serializers.CharField(read_only=True)
+    backup_time = serializers.CharField(read_only=True)
+    actual_affected_rows = serializers.CharField(read_only=True)
 
 
 class ExecuteCheckSerializer(serializers.Serializer):
@@ -48,8 +63,8 @@ class ExecuteCheckResultSerializer(serializers.Serializer):
     error_count = serializers.IntegerField(read_only=True)
     is_critical = serializers.BooleanField(read_only=True, default=False)
     syntax_type = serializers.IntegerField(read_only=True)
-    rows = serializers.JSONField(read_only=True)
-    column_list = serializers.JSONField(read_only=True)
+    rows = serializers.ListField(child=ReviewResultSerializer(), read_only=True)
+    column_list = serializers.ListField(read_only=True)
     status = serializers.CharField(read_only=True)
     affected_rows = serializers.IntegerField(read_only=True)
 
@@ -59,6 +74,24 @@ class SqlWorkflowSerializer(serializers.ModelSerializer):
 
     instance_name = serializers.CharField(source="instance.instance_name")
 
+    def __init__(self, *args, **kwargs):
+        """
+        ``fields`` 需要保留的字段列表
+        ``exclude`` 需要排除的字段列表
+        """
+        fields = kwargs.pop("fields", None)
+        exclude = kwargs.pop("exclude", None)
+        super(SqlWorkflowSerializer, self).__init__(*args, **kwargs)
+
+        for field_name in set(self.fields.keys()):
+            if not any([fields, exclude]):
+                break
+            if fields and field_name in fields:
+                continue
+            if exclude and field_name not in exclude:
+                continue
+            self.fields.pop(field_name, None)
+
     @staticmethod
     def setup_eager_loading(queryset):
         """
@@ -67,6 +100,15 @@ class SqlWorkflowSerializer(serializers.ModelSerializer):
         """
         queryset = queryset.select_related("instance")
         return queryset
+
+    @staticmethod
+    def rollback_sql(obj):
+        try:
+            query_engine = get_engine(instance=obj.instance)
+            return query_engine.get_rollback(workflow=obj)
+        except Exception as msg:
+            logger.error(traceback.format_exc())
+            raise serializers.ValidationError({"errors": msg})
 
     class Meta:
         model = SqlWorkflow
@@ -78,14 +120,7 @@ class SqlWorkflowDetailSerializer(SqlWorkflowSerializer):
     sql_content = serializers.CharField(source="sqlworkflowcontent.sql_content")
     display_content = serializers.SerializerMethodField()
 
-    @extend_schema_field(
-        inline_serializer(
-            name="display_content",
-            fields={
-                "type": serializers.JSONField(),
-            },
-        )
-    )
+    @extend_schema_field(field=serializers.ListField(child=ReviewResultSerializer()))
     def get_display_content(self, obj):
         """获取工单详情用于列表展示的内容，区分不同的状态进行转换"""
         if obj.status in ["workflow_finish", "workflow_exception"]:
@@ -125,14 +160,6 @@ class SqlWorkflowDetailSerializer(SqlWorkflowSerializer):
         else:
             rows = obj.sqlworkflowcontent.review_content
         return json.loads(rows)
-
-    def rollback_sql(self, obj):
-        try:
-            query_engine = get_engine(instance=obj.instance)
-            return query_engine.get_rollback(workflow=obj)
-        except Exception as msg:
-            logger.error(traceback.format_exc())
-            raise serializers.ValidationError({"errors": msg})
 
     class Meta:
         model = SqlWorkflow

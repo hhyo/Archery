@@ -2,7 +2,7 @@
 """ 
 @author: hhyo
 @license: Apache Licence
-@file: api_sql_workflow.py
+@file: sql_workflow.py
 @time: 2022/10/07
 """
 __author__ = "hhyo"
@@ -10,7 +10,8 @@ __author__ = "hhyo"
 import django_filters
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from rest_framework import views, permissions, serializers, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -60,15 +61,27 @@ class ExecuteCheck(views.APIView):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="SQL工单列表",
+        summary="获取SQL工单列表",
         description="获取SQL工单列表，支持筛选、分页、检索等",
         request=SqlWorkflowSerializer,
         responses={200: SqlWorkflowSerializer},
     ),
     retrieve=extend_schema(
-        summary="SQL工单详情",
+        summary="获取SQL工单详情",
         description="通过工单ID获取工单详情",
         responses={200: SqlWorkflowDetailSerializer},
+    ),
+    rollback_sql=extend_schema(
+        summary="获取SQL工单回滚语句",
+        responses={200: serializers.Serializer(many=True)},
+        description="通过工单ID获取回滚语句",
+    ),
+    partial_update=extend_schema(exclude=True),
+    alter_run_date=extend_schema(
+        summary="修改SQL工单可执行时间范围",
+        request=SqlWorkflowSerializer(fields=["run_date_start", "run_date_end"]),
+        responses={200: SqlWorkflowSerializer},
+        description="通过工单ID修改SQL工单可执行时间范围",
     ),
 )
 class SqlWorkflowView(viewsets.ModelViewSet):
@@ -80,6 +93,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
     ]
     filterset_class = SqlWorkflowFilter
     search_fields = ["engineer_display", "workflow_name"]
+    http_method_names = ["get", "post", "patch"]
 
     def get_queryset(self):
         """
@@ -93,7 +107,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
             pass
         # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
         elif user.has_perm("sql.sql_review") or user.has_perm(
-            "sql.sql_execute_for_resource_group"
+                "sql.sql_execute_for_resource_group"
         ):
             filter_dict["group_id__in"] = [
                 group.group_id for group in user_groups(user)
@@ -105,12 +119,18 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         return self.get_serializer_class().setup_eager_loading(queryset)
 
     def get_serializer_class(self):
-        if self.action not in ["create"]:
+        if self.action == "retrieve":
             return SqlWorkflowDetailSerializer
         return SqlWorkflowSerializer
 
-    @action(methods=["get"], detail=True)
+    @action(methods=["get"], detail=True, pagination_class=None, filter_backends=[], search_fields=None)
     def rollback_sql(self, request, *args, **kwargs):
         obj = self.get_object()
         data = self.get_serializer().rollback_sql(obj)
         return Response(data)
+
+    @method_decorator(permission_required("sql.sql_review", raise_exception=True))
+    @action(methods=["patch"], detail=True)
+    def alter_run_date(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)

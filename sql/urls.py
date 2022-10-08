@@ -43,7 +43,6 @@ urlpatterns = [
     path("passed/", sql_workflow.passed),
     path("execute/", sql_workflow.execute),
     path("timingtask/", sql_workflow.timing_task),
-    path("alter_run_date/", sql_workflow.alter_run_date),
     path("cancel/", sql_workflow.cancel),
     path("rollback/", views.rollback),
     path("sqlanalyze/", views.sqlanalyze),
