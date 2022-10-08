@@ -21,7 +21,6 @@ from sql.utils.sql_review import (
     can_cancel,
     can_execute,
     on_correct_time_period,
-    can_rollback,
 )
 from sql.utils.workflow_audit import Audit
 from .models import SqlWorkflow
@@ -30,39 +29,6 @@ from django_q.tasks import async_task
 from sql.engines import get_engine
 
 logger = logging.getLogger("default")
-
-
-@permission_required("sql.sql_review", raise_exception=True)
-def alter_run_date(request):
-    """
-    审核人修改可执行时间
-    :param request:
-    :return:
-    """
-    workflow_id = int(request.POST.get("workflow_id", 0))
-    run_date_start = request.POST.get("run_date_start")
-    run_date_end = request.POST.get("run_date_end")
-    if workflow_id == 0:
-        context = {"errMsg": "workflow_id参数为空."}
-        return render(request, "error.html", context)
-
-    user = request.user
-    if Audit.can_review(user, workflow_id, 2) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
-        return render(request, "error.html", context)
-
-    try:
-        # 存进数据库里
-        SqlWorkflow(
-            id=workflow_id,
-            run_date_start=run_date_start or None,
-            run_date_end=run_date_end or None,
-        ).save(update_fields=["run_date_start", "run_date_end"])
-    except Exception as msg:
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
-
-    return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
 @permission_required("sql.sql_review", raise_exception=True)

@@ -317,7 +317,7 @@
         </div>
     </div>
     <!-- 修改可执行时间弹出框 -->
-    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+    <form id="from-alterexecutabletime" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -518,10 +518,33 @@
 
         // 修改可执行时间
         $("#btnalterExecutabletime").click(function () {
-            //获取form对象，判断输入，通过则提交
-            var formAlterexecutabletime = $("#from-alterexecutabletime");
-            loading(this);
-            formAlterexecutabletime.submit();
+            $.ajax({
+                type: "patch",
+                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/alter_run_date/",
+                dataType: "json",
+                contentType: 'application/json;',
+                data: JSON.stringify({
+                        run_date_start: $("#run_date_start").val(),
+                        run_date_end: $("#run_date_end").val(),
+                    }
+                ),
+                beforeSend: function (xhr) {
+                    $('#btnalterExecutabletime').button('loading')
+                },
+                complete: function () {
+                    $('#btnalterExecutabletime').button('reset')
+                },
+                success: function (data) {
+                    window.location.reload();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    if (XMLHttpRequest.responseJSON) {
+                        alert(XMLHttpRequest.responseText)
+                    } else {
+                        alert(errorThrown);
+                    }
+                }
+            });
         });
 
         // 按钮禁用

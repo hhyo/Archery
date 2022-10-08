@@ -1430,32 +1430,6 @@ class TestWorkflowView(TransactionTestCase):
         r_json = r.json()
         self.assertEqual(r_json["status"], "workflow_finish")
 
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def test_alter_run_date_no_perm(self, _can_review):
-        """测试修改可执行时间，无权限"""
-        sql_review = Permission.objects.get(codename="sql_review")
-        self.u1.user_permissions.add(sql_review)
-        _can_review.return_value = False
-        c = Client()
-        c.force_login(self.u1)
-        data = {"workflow_id": self.wf1.id}
-        r = c.post("/alter_run_date/", data=data)
-        self.assertContains(r, "你无权操作当前工单")
-
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def test_alter_run_date(self, _can_review):
-        """测试修改可执行时间，有权限"""
-        sql_review = Permission.objects.get(codename="sql_review")
-        self.u1.user_permissions.add(sql_review)
-        _can_review.return_value = True
-        c = Client()
-        c.force_login(self.u1)
-        data = {"workflow_id": self.wf1.id}
-        r = c.post("/alter_run_date/", data=data)
-        self.assertRedirects(
-            r, f"/detail/{self.wf1.id}/", fetch_redirect_response=False
-        )
-
     @patch("sql.utils.workflow_audit.Audit.logs")
     @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
     @patch("sql.utils.workflow_audit.Audit.review_info")
