@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-""" 
+"""
 @author: hhyo、yyukai
 @license: Apache Licence
 @file: pgsql.py
@@ -55,9 +55,7 @@ class PgSQLEngine(EngineBase):
         """
         result = self.query(sql=f"SELECT datname FROM pg_database;")
         db_list = [
-            row[0]
-            for row in result.rows
-            if row[0] not in ["postgres", "template0", "template1"]
+            row[0] for row in result.rows if row[0] not in ["template0", "template1"]
         ]
         result.rows = db_list
         return result
@@ -93,8 +91,8 @@ class PgSQLEngine(EngineBase):
         :return:
         """
         schema_name = kwargs.get("schema_name")
-        sql = f"""SELECT table_name 
-        FROM information_schema.tables 
+        sql = f"""SELECT table_name
+        FROM information_schema.tables
         where table_schema ='{schema_name}';"""
         result = self.query(db_name=db_name, sql=sql)
         tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
@@ -111,7 +109,7 @@ class PgSQLEngine(EngineBase):
         """
         schema_name = kwargs.get("schema_name")
         sql = f"""SELECT column_name
-        FROM information_schema.columns 
+        FROM information_schema.columns
         where table_name='{tb_name}'
         and table_schema ='{schema_name}';"""
         result = self.query(db_name=db_name, sql=sql)
