@@ -55,9 +55,7 @@ class PgSQLEngine(EngineBase):
         """
         result = self.query(sql=f"SELECT datname FROM pg_database;")
         db_list = [
-            row[0]
-            for row in result.rows
-            if row[0] not in ["template0", "template1"]
+            row[0] for row in result.rows if row[0] not in ["template0", "template1"]
         ]
         result.rows = db_list
         return result
