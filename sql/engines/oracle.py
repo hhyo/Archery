@@ -483,13 +483,15 @@ class OracleEngine(EngineBase):
 
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
+        schema_name = '"' + db_name + '"'
         object_name_list = object_name_list or set()
         if re.match(r"^create\s+index\s", sql):
             table_name = re.match(
                 r"^create\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M
             ).group(1)
             if "." not in table_name:
-                table_name = f"{db_name}.{table_name}"
+                table_name = f"{schema_name}.{table_name}"
+            table_name = table_name.upper()
             if table_name in object_name_list:
                 return True
             else:
@@ -499,7 +501,8 @@ class OracleEngine(EngineBase):
                 r"^create\s+unique\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M
             ).group(1)
             if "." not in table_name:
-                table_name = f"{db_name}.{table_name}"
+                table_name = f"{schema_name}.{table_name}"
+            table_name = table_name.upper()
             if table_name in object_name_list:
                 return True
             else:
@@ -509,11 +512,13 @@ class OracleEngine(EngineBase):
 
     @staticmethod
     def get_dml_table(sql="", object_name_list=None, db_name=""):
+        schema_name = '"' + db_name + '"'
         object_name_list = object_name_list or set()
         if re.match(r"^update", sql):
             table_name = re.match(r"^update\s(.+?)\s", sql, re.M).group(1)
             if "." not in table_name:
-                table_name = f"{db_name}.{table_name}"
+                table_name = f"{schema_name}.{table_name}"
+            table_name = table_name.upper()
             if table_name in object_name_list:
                 return True
             else:
@@ -521,7 +526,8 @@ class OracleEngine(EngineBase):
         elif re.match(r"^delete", sql):
             table_name = re.match(r"^delete\s+from\s+([\w-]+)\s*", sql, re.M).group(1)
             if "." not in table_name:
-                table_name = f"{db_name}.{table_name}"
+                table_name = f"{schema_name}.{table_name}"
+            table_name = table_name.upper()
             if table_name in object_name_list:
                 return True
             else:
@@ -533,7 +539,8 @@ class OracleEngine(EngineBase):
                 re.M,
             ).group(6)
             if "." not in table_name:
-                table_name = f"{db_name}.{table_name}"
+                table_name = f"{schema_name}.{table_name}"
+            table_name = table_name.upper()
             if table_name in object_name_list:
                 return True
             else:
