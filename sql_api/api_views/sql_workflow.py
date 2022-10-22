@@ -20,7 +20,7 @@ from sql.engines import get_engine
 from sql.models import SqlWorkflow
 from sql.utils.resource_group import user_groups
 from sql_api.filters import SqlWorkflowFilter
-from sql_api.pagination import BootStrapTablePagination
+from sql_api.pagination import CustomizedPaginationV2
 from sql_api.permissions.sql_workflow import SqlWorkFlowViewPermission
 from sql_api.serializers.sql_workflow import (
     ExecuteCheckSerializer,
@@ -93,7 +93,7 @@ class ExecuteCheck(views.APIView):
 class SqlWorkflowView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, SqlWorkFlowViewPermission]
     serializer_class = SqlWorkflowSerializer
-    pagination_class = BootStrapTablePagination
+    pagination_class = CustomizedPaginationV2
     filter_backends = [
         filters.SearchFilter,
         django_filters.rest_framework.DjangoFilterBackend,
@@ -114,7 +114,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
             pass
         # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
         elif user.has_perm("sql.sql_review") or user.has_perm(
-            "sql.sql_execute_for_resource_group"
+                "sql.sql_execute_for_resource_group"
         ):
             filter_dict["group_id__in"] = [
                 group.group_id for group in user_groups(user)
@@ -151,3 +151,9 @@ class SqlWorkflowView(viewsets.ModelViewSet):
     def alter_run_date(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
+
+    @action(methods=["post"], detail=True)
+    def execute(self, request, *args, **kwargs):
+        obj = self.get_object()
+        data = self.get_serializer().execute(obj)
+        return Response(data)

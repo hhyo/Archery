@@ -1,4 +1,4 @@
-from django_filters import rest_framework as filters, DateTimeFromToRangeFilter
+from django_filters import rest_framework as filters, DateFromToRangeFilter
 from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit, SqlWorkflow
 
 
@@ -47,7 +47,7 @@ class WorkflowAuditFilter(filters.FilterSet):
 
 
 class SqlWorkflowFilter(filters.FilterSet):
-    create_time = DateTimeFromToRangeFilter()
+    create_time = DateFromToRangeFilter()
 
     class Meta:
         model = SqlWorkflow

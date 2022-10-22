@@ -133,6 +133,16 @@ class SqlWorkflowSerializer(BaseModelSerializer):
             logger.error(traceback.format_exc())
             raise serializers.ValidationError({"errors": msg})
 
+    @staticmethod
+    def execute(obj):
+        """执行工单"""
+        try:
+            query_engine = get_engine(instance=obj.instance)
+            return query_engine.execute_workflow(workflow=obj)
+        except Exception as msg:
+            logger.error(traceback.format_exc())
+            raise serializers.ValidationError({"errors": msg})
+
     class Meta:
         model = SqlWorkflow
         fields = "__all__"
