@@ -160,6 +160,8 @@
                 detailView: false,                  //是否显示父子表
                 locale: 'zh-CN',                    //本地化
                 toolbar: "#toolbar",               //指明自定义的toolbar
+                totalField: "count",
+                dataField: "results",
                 queryParamsType: '',
                 //请求服务数据时所传参数
                 queryParams:
@@ -175,7 +177,7 @@
                         }
                         return {
                             page: params.pageNumber,
-                            page_size: params.pageSize,
+                            size: params.pageSize,
                             status: $("#navStatus").val(),
                             instance_id: $("#instance_id").val(),
                             group_id: $("#group_id").val(),

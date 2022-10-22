@@ -63,6 +63,13 @@ def can_execute(user, workflow_id):
     :param workflow_id:
     :return:
     """
+    if not any(
+        [
+            user.has_perm("sql.sql_execute"),
+            user.has_perm("sql.sql_execute_for_resource_group"),
+        ]
+    ):
+        return False
     result = False
     # 保证工单当前是可执行状态
     with transaction.atomic():
