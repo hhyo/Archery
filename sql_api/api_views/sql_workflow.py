@@ -10,8 +10,7 @@ __author__ = "hhyo"
 import django_filters
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import views, permissions, serializers, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -64,7 +63,9 @@ class ExecuteCheck(views.APIView):
         summary="获取SQL工单列表",
         description="获取SQL工单列表，支持筛选、分页、检索等",
         request=SqlWorkflowSerializer,
-        responses={200: SqlWorkflowSerializer},
+        responses={
+            200: SqlWorkflowSerializer(exclude=["sql_content", "display_content"])
+        },
     ),
     retrieve=extend_schema(
         summary="获取SQL工单详情",
@@ -73,9 +74,14 @@ class ExecuteCheck(views.APIView):
     ),
     rollback_sql=extend_schema(
         summary="获取SQL工单回滚语句",
-        responses={200: serializers.Serializer(many=True)},
+        responses={
+            200: serializers.ListSerializer(
+                child=serializers.ListField(default=["sql", "rollback_sql"])
+            )
+        },
         description="通过工单ID获取回滚语句",
     ),
+    create=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
     alter_run_date=extend_schema(
         summary="修改SQL工单可执行时间范围",
@@ -86,6 +92,7 @@ class ExecuteCheck(views.APIView):
 )
 class SqlWorkflowView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, SqlWorkFlowViewPermission]
+    serializer_class = SqlWorkflowSerializer
     pagination_class = BootStrapTablePagination
     filter_backends = [
         filters.SearchFilter,
@@ -107,7 +114,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
             pass
         # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
         elif user.has_perm("sql.sql_review") or user.has_perm(
-                "sql.sql_execute_for_resource_group"
+            "sql.sql_execute_for_resource_group"
         ):
             filter_dict["group_id__in"] = [
                 group.group_id for group in user_groups(user)
@@ -118,12 +125,22 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         queryset = SqlWorkflow.objects.filter(**filter_dict).order_by("-id")
         return self.get_serializer_class().setup_eager_loading(queryset)
 
-    def get_serializer_class(self):
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs.setdefault("context", self.get_serializer_context())
         if self.action == "retrieve":
-            return SqlWorkflowDetailSerializer
-        return SqlWorkflowSerializer
+            return serializer_class(*args, **kwargs)
+        return serializer_class(
+            *args, **kwargs, exclude=["sql_content", "display_content"]
+        )
 
-    @action(methods=["get"], detail=True, pagination_class=None, filter_backends=[], search_fields=None)
+    @action(
+        methods=["get"],
+        detail=True,
+        pagination_class=None,
+        filter_backends=[],
+        search_fields=None,
+    )
     def rollback_sql(self, request, *args, **kwargs):
         obj = self.get_object()
         data = self.get_serializer().rollback_sql(obj)
