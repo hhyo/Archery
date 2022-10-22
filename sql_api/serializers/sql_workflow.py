@@ -17,6 +17,7 @@ from rest_framework import serializers
 from sql.engines import ReviewSet, get_engine
 from sql.engines.models import ReviewResult
 from sql.models import Instance, SqlWorkflow
+from sql_api.serializers import BaseModelSerializer
 
 logger = logging.getLogger("default")
 
@@ -69,56 +70,17 @@ class ExecuteCheckResultSerializer(serializers.Serializer):
     affected_rows = serializers.IntegerField(read_only=True)
 
 
-class SqlWorkflowSerializer(serializers.ModelSerializer):
+class SqlWorkflowSerializer(BaseModelSerializer):
     """SQL工单"""
 
     instance_name = serializers.CharField(source="instance.instance_name")
-
-    def __init__(self, *args, **kwargs):
-        """
-        ``fields`` 需要保留的字段列表
-        ``exclude`` 需要排除的字段列表
-        """
-        fields = kwargs.pop("fields", None)
-        exclude = kwargs.pop("exclude", None)
-        super(SqlWorkflowSerializer, self).__init__(*args, **kwargs)
-
-        for field_name in set(self.fields.keys()):
-            if not any([fields, exclude]):
-                break
-            if fields and field_name in fields:
-                continue
-            if exclude and field_name not in exclude:
-                continue
-            self.fields.pop(field_name, None)
+    sql_content = serializers.CharField(source="sqlworkflowcontent.sql_content")
+    display_content = serializers.SerializerMethodField()
 
     @staticmethod
     def setup_eager_loading(queryset):
-        """
-        Perform necessary eager loading of data.
-        https://ses4j.github.io/2015/11/23/optimizing-slow-django-rest-framework-performance/
-        """
         queryset = queryset.select_related("instance")
         return queryset
-
-    @staticmethod
-    def rollback_sql(obj):
-        try:
-            query_engine = get_engine(instance=obj.instance)
-            return query_engine.get_rollback(workflow=obj)
-        except Exception as msg:
-            logger.error(traceback.format_exc())
-            raise serializers.ValidationError({"errors": msg})
-
-    class Meta:
-        model = SqlWorkflow
-        fields = "__all__"
-
-
-class SqlWorkflowDetailSerializer(SqlWorkflowSerializer):
-    instance_name = serializers.CharField(source="instance.instance_name")
-    sql_content = serializers.CharField(source="sqlworkflowcontent.sql_content")
-    display_content = serializers.SerializerMethodField()
 
     @extend_schema_field(field=serializers.ListField(child=ReviewResultSerializer()))
     def get_display_content(self, obj):
@@ -161,6 +123,20 @@ class SqlWorkflowDetailSerializer(SqlWorkflowSerializer):
             rows = obj.sqlworkflowcontent.review_content
         return json.loads(rows)
 
+    @staticmethod
+    def rollback_sql(obj):
+        """获取工单回滚语句"""
+        try:
+            query_engine = get_engine(instance=obj.instance)
+            return query_engine.get_rollback(workflow=obj)
+        except Exception as msg:
+            logger.error(traceback.format_exc())
+            raise serializers.ValidationError({"errors": msg})
+
     class Meta:
         model = SqlWorkflow
         fields = "__all__"
+
+
+class SqlWorkflowDetailSerializer(SqlWorkflowSerializer):
+    """仅用做文档生成，无实际意义"""
