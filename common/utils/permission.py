@@ -11,7 +11,8 @@ def superuser_required(func):
         user = request.user
 
         if user.is_superuser is False:
-            if request.is_ajax():
+            is_ajax = request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+            if is_ajax:
                 result = {"status": 1, "msg": "您无权操作，请联系管理员", "data": []}
                 return HttpResponse(json.dumps(result), content_type="application/json")
             else:
@@ -30,7 +31,8 @@ def role_required(roles=()):
             # 获取用户信息，权限验证
             user = request.user
             if user.role not in roles and user.is_superuser is False:
-                if request.is_ajax():
+                is_ajax = request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                if is_ajax:
                     result = {"status": 1, "msg": "您无权操作，请联系管理员", "data": []}
                     return HttpResponse(
                         json.dumps(result), content_type="application/json"

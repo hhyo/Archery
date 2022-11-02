@@ -883,7 +883,7 @@ class TestPgSQL(TestCase):
     def test_get_all_databases(self, query):
         new_engine = PgSQLEngine(instance=self.ins)
         dbs = new_engine.get_all_databases()
-        self.assertListEqual(dbs.rows, ["archery"])
+        self.assertListEqual(dbs.rows, ["postgres", "archery"])
 
     @patch(
         "sql.engines.pgsql.PgSQLEngine.query",

@@ -168,9 +168,9 @@ DATABASES = {
 # Django-Q
 Q_CLUSTER = {
     "name": "archery",
-    "workers": 4,
+    "workers": env("Q_CLUISTER_WORKERS", default=4),
     "recycle": 500,
-    "timeout": 60,
+    "timeout": env("Q_CLUISTER_TIMEOUT", default=60),
     "compress": True,
     "cpu_affinity": 1,
     "save_limit": 0,

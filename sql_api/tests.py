@@ -549,7 +549,6 @@ class TestWorkflow(APITestCase):
                 "demand_url": "test",
                 "group_id": 1,
                 "db_name": "test_db",
-                "engineer": self.user.username,
                 "instance": self.ins.id,
             },
             "sql_content": "alter table abc add column note varchar(64);",
@@ -557,6 +556,33 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/", json_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
+        self.assertEqual(r.json()["workflow"]["engineer"], self.user.username)
+        self.assertEqual(r.json()["workflow"]["engineer_display"], self.user.display)
+
+    def test_submit_workflow_super(self):
+        """测试管理员提交SQL上线工单，可以指定用户"""
+        User.objects.filter(id=self.user.id).update(is_superuser=1)
+        user2 = User.objects.create(
+            username="test_user2", display="测试用户2", is_active=True
+        )
+        user2.groups.add(self.group.id)
+        user2.resource_group.add(self.res_group.group_id)
+        json_data = {
+            "workflow": {
+                "workflow_name": "上线工单1",
+                "demand_url": "test",
+                "group_id": 1,
+                "db_name": "test_db",
+                "engineer": "test_user2",
+                "instance": self.ins.id,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+        r = self.client.post("/api/v1/workflow/", json_data, format="json")
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
+        self.assertEqual(r.json()["workflow"]["engineer"], user2.username)
+        self.assertEqual(r.json()["workflow"]["engineer_display"], user2.display)
 
     def test_submit_param_is_None(self):
         """测试SQL提交，参数内容为空"""
