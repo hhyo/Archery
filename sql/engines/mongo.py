@@ -934,6 +934,8 @@ class MongoEngine(EngineBase):
         if "condition" in query_dict:
             if method == "aggregate":
                 condition = query_dict["condition"]
+                # 给aggregate查询加limit行数限制，防止返回结果过多导致archery挂掉
+                condition.append({"$limit": limit_num})
             if method == "find":
                 condition = de.decode(query_dict["condition"])
             find_cmd += "(condition)"
