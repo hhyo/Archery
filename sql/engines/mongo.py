@@ -917,7 +917,6 @@ class MongoEngine(EngineBase):
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """执行查询"""
 
-        global method
         result_set = ResultSet(full_sql=sql)
         find_cmd = ""
 
@@ -936,7 +935,7 @@ class MongoEngine(EngineBase):
             if method == "aggregate":
                 condition = query_dict["condition"]
                 # 给aggregate查询加limit行数限制，防止返回结果过多导致archery挂掉
-                condition.append({'$limit': limit_num})
+                condition.append({"$limit": limit_num})
             if method == "find":
                 condition = de.decode(query_dict["condition"])
             find_cmd += "(condition)"
