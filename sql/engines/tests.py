@@ -1753,6 +1753,70 @@ class TestOracle(TestCase):
                 execute_result.rows[0].__dict__.keys(), row.__dict__.keys()
             )
 
+    @patch("cx_Oracle.connect.cursor.execute")
+    @patch("cx_Oracle.connect.cursor")
+    @patch("cx_Oracle.connect")
+    def test_execute(self, _connect, _cursor, _execute):
+        new_engine = OracleEngine(instance=self.ins)
+        sql = "update abc set count=1 where id=1;"
+        execute_result = new_engine.execute(sql)
+        self.assertIsInstance(execute_result, ResultSet)
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    def test_session_list(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value = ResultSet()
+        for command_type in ["All", "Active", "Others"]:
+            r = new_engine.session_list(command_type)
+            self.assertIsInstance(r, ResultSet)
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    def test_get_kill_command(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value.rows = (
+            ("alter system kill session '12,123';",),
+            ("alter system kill session '34,345';",),
+        )
+        r = new_engine.get_kill_command([[12, 123], [34, 345]])
+        self.assertEqual(
+            r, "alter system kill session '12,123';alter system kill session '34,345';"
+        )
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    @patch("cx_Oracle.connect.cursor.execute")
+    @patch("cx_Oracle.connect.cursor")
+    @patch("cx_Oracle.connect")
+    def test_kill_session(self, _query, _connect, _cursor, _execute):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value.rows = (
+            ("alter system kill session '12,123';",),
+            ("alter system kill session '34,345';",),
+        )
+        _execute.return_value = ResultSet()
+        r = new_engine.kill_session([[12, 123], [34, 345]])
+        self.assertIsInstance(r, ResultSet)
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    def test_tablespace(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value = ResultSet()
+        r = new_engine.tablespace()
+        self.assertIsInstance(r, ResultSet)
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    def test_tablespace_count(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value = ResultSet()
+        r = new_engine.tablespace_count()
+        self.assertIsInstance(r, ResultSet)
+
+    @patch("sql.engines.oracle.OracleEngine.query")
+    def test_lock_info(self, _query):
+        new_engine = OracleEngine(instance=self.ins)
+        _query.return_value = ResultSet()
+        r = new_engine.lock_info()
+        self.assertIsInstance(r, ResultSet)
+
 
 class MongoTest(TestCase):
     def setUp(self) -> None:
