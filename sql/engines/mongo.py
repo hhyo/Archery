@@ -917,6 +917,7 @@ class MongoEngine(EngineBase):
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """执行查询"""
 
+        global method
         result_set = ResultSet(full_sql=sql)
         find_cmd = ""
 
