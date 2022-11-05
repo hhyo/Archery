@@ -1422,7 +1422,7 @@ class OracleEngine(EngineBase):
         elif command_type == "Others":
             sql = "{} and s.status != 'ACTIVE';".format(base_sql)
         else:
-            sql = "{} and s.status = '{}';".format(base_sql, command_type)
+            sql = ""
 
         return self.query(sql=sql)
 
