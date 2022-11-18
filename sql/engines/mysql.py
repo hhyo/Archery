@@ -314,15 +314,30 @@ class MysqlEngine(EngineBase):
         """处理ResultSet，将binary处理成hex"""
         new_rows, hex_column_index = [], []
         for idx, _type in enumerate(result_set.column_type):
-            if _type in ["TINY_BLOB", "MEDIUM_BLOB", "LONG_BLOB", "BLOB"]:
+            # https://github.com/mysql/mysql-server/blob/a246bad76b9271cb4333634e954040a970222e0a/client/mysql.cc#L3535
+            if _type in [
+                "BIT",
+                "BLOB",
+                "LONG_BLOB",
+                "MEDIUM_BLOB",
+                "TINY_BLOB",
+                "VAR_STRING",
+                "STRING",
+                "VARCHAR",
+                "GEOMETRY"
+            ]:
                 hex_column_index.append(idx)
         if hex_column_index:
             for row in result_set.rows:
                 row = list(row)
                 for index in hex_column_index:
-                    row[index] = row[index].hex() if row[index] else row[index]
+                    try:
+                        row[index] = row[index].hex() if row[index] else row[index]
+                    except Exception as e:
+                      pass
+
                 new_rows.append(row)
-        result_set.rows = tuple(new_rows)
+            result_set.rows = tuple(new_rows)
         return result_set
 
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
@@ -351,7 +366,8 @@ class MysqlEngine(EngineBase):
             )
             result_set.rows = rows
             result_set.affected_rows = effect_row
-            if kwargs.get("binary_as_hex"):
+            # should skip explain and show query
+            if kwargs.get("binary_as_hex") and re.match(r"^select", sql, re.I):
                 result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
