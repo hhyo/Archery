@@ -324,7 +324,7 @@ class MysqlEngine(EngineBase):
                 "VAR_STRING",
                 "STRING",
                 "VARCHAR",
-                "GEOMETRY"
+                "GEOMETRY",
             ]:
                 hex_column_index.append(idx)
         if hex_column_index:
