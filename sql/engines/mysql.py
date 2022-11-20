@@ -334,7 +334,7 @@ class MysqlEngine(EngineBase):
                     try:
                         row[index] = row[index].hex() if row[index] else row[index]
                     except Exception as e:
-                      pass
+                        pass
 
                 new_rows.append(row)
             result_set.rows = tuple(new_rows)
