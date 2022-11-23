@@ -533,7 +533,7 @@ class MongoEngine(EngineBase):
                     "renameCollection",
                 ]
                 pattern = re.compile(
-                    r"""^db\.createCollection\(([\s\S]*)\)$|^db\.([\w\.-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w-]*)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)"""
+                    r"""^db\.createCollection\(([\s\S]*)\)$|^db\.([\w\.-]+)\.(?:[A-Za-z]+)(?:\([\s\S]*\)$)|^db\.getCollection\((?:\s*)(?:'|")([\w\.-]+)('|")(\s*)\)\.([A-Za-z]+)(\([\s\S]*\)$)"""
                 )
                 m = pattern.match(check_sql)
                 if (
@@ -571,10 +571,8 @@ class MongoEngine(EngineBase):
                                 check_result.rows += [result]
                                 continue
                         else:
-                            # method = sql_str.split('.')[2]
-                            # methodStr = method.split('(')[0].strip()
                             methodStr = (
-                                sql_str.split("(")[0].split(".")[-1].strip()
+                                sql_str.split(".")[-1].split("(")[0].strip()
                             )  # 最后一个.和括号(之间的字符串作为方法
                         if methodStr in is_exist_premise_method and not is_in:
                             check_result.error = "文档不存在"
