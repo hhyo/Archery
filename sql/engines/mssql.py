@@ -292,13 +292,24 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             result["msg"] = keyword_warning
         return result
 
-    def filter_sql(self, sql="", limit_num=0):
+    def filter_sql(self, sql='', limit_num=0):
         sql_lower = sql.lower()
+        sql_lower=sql_lower.replace("\n"," ")
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
-            if sql_lower.find(" top ") == -1:
-                return sql_lower.replace("select", "select top {}".format(limit_num))
+            if re.match(r"^select( *)top", sql_lower):
+                return sql.strip()
+            else:
+                if re.match(r"^select( *)distinct", sql_lower):
+                    if re.match(r"^select( *)distinct( *)top", sql_lower):
+                        return sql.strip()
+                    else:
+                        return sql_lower.replace('distinct', 'distinct top {}'.format(limit_num), 1)
+                else:
+                    return sql_lower.replace('select', 'select top {}'.format(limit_num), 1)
+
         return sql.strip()
+
 
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
