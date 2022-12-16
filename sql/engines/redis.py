@@ -13,6 +13,7 @@ import redis
 import logging
 import traceback
 
+from rediscluster import RedisCluster
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -26,7 +27,7 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == "cluster":
-            return redis.cluster.RedisCluster(
+            return RedisCluster(
                 host=self.host,
                 port=self.port,
                 password=self.password,
