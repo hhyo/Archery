@@ -63,6 +63,7 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
     dingding_webhook = kwargs.get("dingding_webhook")
     feishu_webhook = kwargs.get("feishu_webhook")
     qywx_webhook = kwargs.get("qywx_webhook")
+    group_webhook = kwargs.get("group_webhook")
     msg_to_email = [user.email for user in msg_to if user.email]
     msg_cc_email = [user.email for user in msg_cc if user.email]
     msg_to_ding_user = [
@@ -95,6 +96,8 @@ def __send(msg_title, msg_content, msg_to, msg_cc=None, **kwargs):
         msg_sender.send_feishu_user(msg_title, msg_content, open_id, user_mail)
     if sys_config.get("qywx_webhook") and qywx_webhook:
         msg_sender.send_qywx_webhook(qywx_webhook, msg_title + "\n" + msg_content)
+    if group_webhook:
+        msg_sender.send_ding(group_webhook, msg_title + "\n" + msg_content)
 
 
 def notify_for_audit(audit_id, **kwargs):
@@ -133,9 +136,8 @@ def notify_for_audit(audit_id, **kwargs):
         group_id=audit_detail.group_id
     ).qywx_webhook
     # 获取当前审批和审批流程
-    workflow_auditors, current_workflow_auditors = Audit.review_info(
-        audit_detail.workflow_id, audit_detail.workflow_type
-    )
+    workflow_auditors, current_workflow_auditors, group_webhook = Audit.review_info_with_notification(
+        audit_detail.workflow_id, audit_detail.workflow_type)
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type["query"]:
@@ -269,6 +271,7 @@ def notify_for_audit(audit_id, **kwargs):
         feishu_webhook=feishu_webhook,
         dingding_webhook=dingding_webhook,
         qywx_webhook=qywx_webhook,
+        group_webhook=group_webhook,
     )
 
 

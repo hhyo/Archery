@@ -29,6 +29,7 @@ from .models import (
     Tunnel,
     AuditEntry,
     TwoFactorAuthConfig,
+    GroupNotification,
 )
 
 from sql.form import TunnelForm, InstanceForm
@@ -528,3 +529,10 @@ class AuditEntryAdmin(admin.ModelAdmin):
         "action_time",
     )
     list_filter = ("user_id", "user_name", "user_display", "action", "extra_info")
+
+
+# 权限组通知
+@admin.register(GroupNotification)
+class GroupNotificationAdmin(admin.ModelAdmin):
+    list_display = ("group_id", "ding_webhook")
+    search_fields = ["authgroup__name", "ding_webhook"]
