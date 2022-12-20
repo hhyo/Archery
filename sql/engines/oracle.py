@@ -483,15 +483,13 @@ class OracleEngine(EngineBase):
 
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
-        schema_name = '"' + db_name + '"'
         object_name_list = object_name_list or set()
         if re.match(r"^create\s+index\s", sql):
             table_name = re.match(
                 r"^create\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M
             ).group(1)
             if "." not in table_name:
-                table_name = f"{schema_name}.{table_name}"
-            table_name = table_name.upper()
+                table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
@@ -501,8 +499,7 @@ class OracleEngine(EngineBase):
                 r"^create\s+unique\s+index\s+.+\s+on\s(.+?)(\(|\s\()", sql, re.M
             ).group(1)
             if "." not in table_name:
-                table_name = f"{schema_name}.{table_name}"
-            table_name = table_name.upper()
+                table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
@@ -512,13 +509,11 @@ class OracleEngine(EngineBase):
 
     @staticmethod
     def get_dml_table(sql="", object_name_list=None, db_name=""):
-        schema_name = '"' + db_name + '"'
         object_name_list = object_name_list or set()
         if re.match(r"^update", sql):
             table_name = re.match(r"^update\s(.+?)\s", sql, re.M).group(1)
             if "." not in table_name:
-                table_name = f"{schema_name}.{table_name}"
-            table_name = table_name.upper()
+                table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
@@ -526,8 +521,7 @@ class OracleEngine(EngineBase):
         elif re.match(r"^delete", sql):
             table_name = re.match(r"^delete\s+from\s+([\w-]+)\s*", sql, re.M).group(1)
             if "." not in table_name:
-                table_name = f"{schema_name}.{table_name}"
-            table_name = table_name.upper()
+                table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
@@ -539,8 +533,7 @@ class OracleEngine(EngineBase):
                 re.M,
             ).group(6)
             if "." not in table_name:
-                table_name = f"{schema_name}.{table_name}"
-            table_name = table_name.upper()
+                table_name = f"{db_name}.{table_name}"
             if table_name in object_name_list:
                 return True
             else:
@@ -612,14 +605,23 @@ class OracleEngine(EngineBase):
             sql = sqlparse.split(sql)[0]
             result["filtered_sql"] = re.sub(r";$", "", sql.strip())
             sql_lower = sql.lower()
+
         except IndexError:
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
             return result
+
+        if re.search(r"(?P<user_name>\s\w+)\.(?P<table_name>(\w+.*$))", sql_lower) is None \
+                and re.search(star_patter, sql_lower) is None:
+            result["bad_query"] = True
+            result["msg"] = "必须带上用户名!"
+            return result
+
         if re.match(r"^select|^with|^explain", sql_lower) is None:
             result["bad_query"] = True
             result["msg"] = "不支持语法!"
             return result
+
         if re.search(star_patter, sql_lower) is not None:
             keyword_warning += "禁止使用 * 关键词\n"
             result["has_star"] = True
@@ -631,8 +633,8 @@ class OracleEngine(EngineBase):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select|^with", sql_lower) and not (
-            re.match(r"^select\s+sql_audit.", sql_lower)
-            and sql_lower.find(" sql_audit where rownum <= ") != -1
+                re.match(r"^select\s+sql_audit.", sql_lower)
+                and sql_lower.find(" sql_audit where rownum <= ") != -1
         ):
             sql = f"select sql_audit.* from ({sql.rstrip(';')}) sql_audit where rownum <= {limit_num}"
         return sql.strip()
@@ -651,6 +653,7 @@ class OracleEngine(EngineBase):
                 cursor.execute(sql)
                 # 重置SQL文本，获取SQL执行计划
                 sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
+
             cursor.execute(sql)
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
@@ -659,7 +662,7 @@ class OracleEngine(EngineBase):
                     for r in cursor
                 ]
                 if int(limit_num) > 0:
-                    rows = rows[0 : int(limit_num)]
+                    rows = rows[0: int(limit_num)]
             else:
                 if int(limit_num) > 0:
                     rows = cursor.fetchmany(int(limit_num))
@@ -708,11 +711,13 @@ class OracleEngine(EngineBase):
                 sql_lower = sqlitem.statement.lower().rstrip(";")
                 sql_nolower = sqlitem.statement.rstrip(";")
                 object_name = self.get_sql_first_object_name(sql=sql_lower)
+
                 if "." in object_name:
                     object_name = object_name
                 else:
                     object_name = f"""{db_name}.{object_name}"""
                 object_name_list.add(object_name)
+
                 # 禁用语句
                 if re.match(r"^select|^with|^explain", sql_lower):
                     result = ReviewResult(
@@ -731,9 +736,18 @@ class OracleEngine(EngineBase):
                         errormessage="禁止提交匹配" + critical_ddl_regex + "条件的语句！",
                         sql=sqlitem.statement,
                     )
+                # 禁止不带用户名的语句提交
+                elif re.search(r"(?P<user_name>\s\w+)\.(?P<table_name>(\w+.*$))", sql_lower) is None:
+                    result = ReviewResult(
+                        id=line,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage="禁止不带用户名的语句提交！",
+                        sql=sqlitem.statement,
+                    )
                 # 驳回未带where数据修改语句，如确实需做全部删除或更新，显示的带上where 1=1
                 elif re.match(
-                    r"^update((?!where).)*$|^delete((?!where).)*$", sql_lower
+                        r"^update((?!where).)*$|^delete((?!where).)*$", sql_lower
                 ):
                     result = ReviewResult(
                         id=line,
@@ -755,9 +769,9 @@ class OracleEngine(EngineBase):
                 # 通过explain对SQL做语法语义检查
                 elif re.match(explain_re, sql_lower) and sqlitem.stmt_type == "SQL":
                     if self.check_create_index_table(
-                        db_name=db_name,
-                        sql=sql_lower,
-                        object_name_list=object_name_list,
+                            db_name=db_name,
+                            sql=sql_lower,
+                            object_name_list=object_name_list,
                     ):
                         result = ReviewResult(
                             id=line,
@@ -771,9 +785,9 @@ class OracleEngine(EngineBase):
                             sql=sqlitem.statement,
                         )
                     elif len(object_name_list) > 0 and self.get_dml_table(
-                        db_name=db_name,
-                        sql=sql_lower,
-                        object_name_list=object_name_list,
+                            db_name=db_name,
+                            sql=sql_lower,
+                            object_name_list=object_name_list,
                     ):
                         result = ReviewResult(
                             id=line,
@@ -801,8 +815,8 @@ class OracleEngine(EngineBase):
                         else:
                             # 对create table\create index\create unique index语法做对象存在性检测
                             if re.match(
-                                r"^create\s+table|^create\s+index|^create\s+unique\s+index",
-                                sql_lower,
+                                    r"^create\s+table|^create\s+index|^create\s+unique\s+index",
+                                    sql_lower,
                             ):
                                 object_name = self.get_sql_first_object_name(
                                     sql=sql_nolower
@@ -826,10 +840,10 @@ class OracleEngine(EngineBase):
 
                                 object_name = f"""{schema_name}.{object_name}"""
                                 if (
-                                    self.object_name_check(
-                                        db_name=db_name, object_name=object_name
-                                    )
-                                    or object_name in object_name_list
+                                        self.object_name_check(
+                                            db_name=db_name, object_name=object_name
+                                        )
+                                        or object_name in object_name_list
                                 ):
                                     result = ReviewResult(
                                         id=line,
@@ -920,10 +934,10 @@ class OracleEngine(EngineBase):
 
                         object_name = f"""{schema_name}.{object_name}"""
                         if (
-                            not self.object_name_check(
-                                db_name=db_name, object_name=object_name
-                            )
-                            and object_name not in object_name_list
+                                not self.object_name_check(
+                                    db_name=db_name, object_name=object_name
+                                )
+                                and object_name not in object_name_list
                         ):
                             result = ReviewResult(
                                 id=line,
@@ -967,10 +981,10 @@ class OracleEngine(EngineBase):
 
                         object_name = f"""{schema_name}.{object_name}"""
                         if (
-                            self.object_name_check(
-                                db_name=db_name, object_name=object_name
-                            )
-                            or object_name in object_name_list
+                                self.object_name_check(
+                                    db_name=db_name, object_name=object_name
+                                )
+                                or object_name in object_name_list
                         ):
                             result = ReviewResult(
                                 id=line,
@@ -1076,10 +1090,10 @@ class OracleEngine(EngineBase):
                 rowcount = cursor.rowcount
                 stagestatus = "Execute Successfully"
                 if (
-                    sqlitem.stmt_type == "PLSQL"
-                    and sqlitem.object_name
-                    and sqlitem.object_name != "ANONYMOUS"
-                    and sqlitem.object_name != ""
+                        sqlitem.stmt_type == "PLSQL"
+                        and sqlitem.object_name
+                        and sqlitem.object_name != "ANONYMOUS"
+                        and sqlitem.object_name != ""
                 ):
                     query_obj_sql = f"""SELECT OBJECT_NAME, STATUS, TO_CHAR(LAST_DDL_TIME, 'YYYY-MM-DD HH24:MI:SS') FROM ALL_OBJECTS
                                          WHERE OWNER = '{sqlitem.object_owner}'
@@ -1091,19 +1105,19 @@ class OracleEngine(EngineBase):
                         status = row[1]
                         if status and status == "INVALID":
                             stagestatus = (
+                                    "Compile Failed. Object "
+                                    + sqlitem.object_owner
+                                    + "."
+                                    + sqlitem.object_name
+                                    + " is invalid."
+                            )
+                    else:
+                        stagestatus = (
                                 "Compile Failed. Object "
                                 + sqlitem.object_owner
                                 + "."
                                 + sqlitem.object_name
-                                + " is invalid."
-                            )
-                    else:
-                        stagestatus = (
-                            "Compile Failed. Object "
-                            + sqlitem.object_owner
-                            + "."
-                            + sqlitem.object_name
-                            + " doesn't exist."
+                                + " doesn't exist."
                         )
 
                     if stagestatus != "Execute Successfully":
@@ -1141,7 +1155,7 @@ class OracleEngine(EngineBase):
             )
             line += 1
             # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for sqlitem in sqlitemList[line - 1 :]:
+            for sqlitem in sqlitemList[line - 1:]:
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
@@ -1382,143 +1396,6 @@ class OracleEngine(EngineBase):
             if close_conn:
                 self.close()
         return result_set
-
-    def execute(self, db_name=None, sql="", close_conn=True):
-        """原生执行语句"""
-        result = ResultSet(full_sql=sql)
-        conn = self.get_connection(db_name=db_name)
-        try:
-            cursor = conn.cursor()
-            for statement in sqlparse.split(sql):
-                statement = statement.rstrip(";")
-                cursor.execute(statement)
-        except Exception as e:
-            logger.warning(f"Oracle语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
-            result.error = str(e)
-        if close_conn:
-            self.close()
-        return result
-
-    def session_list(self, command_type):
-        """获取会话信息"""
-        base_sql = """select 
-                       s.sid,
-                       s.serial#,
-                       s.status,
-                       s.username,
-                       q.sql_text,
-                       q.sql_fulltext,
-                       s.machine,
-                       s.sql_exec_start
-                    from v$process p, v$session s, v$sqlarea q 
-                    where p.addr = s.paddr  
-                       and s.sql_hash_value = q.hash_value"""
-        if not command_type:
-            command_type = "Active"
-        if command_type == "All":
-            sql = base_sql + ";"
-        elif command_type == "Active":
-            sql = "{} and s.status = 'ACTIVE';".format(base_sql)
-        elif command_type == "Others":
-            sql = "{} and s.status != 'ACTIVE';".format(base_sql)
-        else:
-            sql = ""
-
-        return self.query(sql=sql)
-
-    def get_kill_command(self, thread_ids):
-        """由传入的sid+serial#列表生成kill命令"""
-        # 校验传参，thread_ids格式：[[sid, serial#], [sid, serial#]]
-        if [
-            k
-            for k in [[j for j in i if not isinstance(j, int)] for i in thread_ids]
-            if k
-        ]:
-            return None
-        sql = """select 'alter system kill session ' || '''' || s.sid || ',' || s.serial# || '''' || ' immediate' || ';'
-                 from v$process p, v$session s, v$sqlarea q
-                 where p.addr = s.paddr
-                 and s.sql_hash_value = q.hash_value
-                 and s.sid || ',' || s.serial# in ({});""".format(
-            ",".join(f"'{str(tid[0])},{str(tid[1])}'" for tid in thread_ids)
-        )
-        all_kill_sql = self.query(sql=sql)
-        kill_sql = ""
-        for row in all_kill_sql.rows:
-            kill_sql = kill_sql + row[0]
-
-        return kill_sql
-
-    def kill_session(self, thread_ids):
-        """kill会话"""
-        # 校验传参，thread_ids格式：[[sid, serial#], [sid, serial#]]
-        if [
-            k
-            for k in [[j for j in i if not isinstance(j, int)] for i in thread_ids]
-            if k
-        ]:
-            return ResultSet(full_sql="")
-        sql = """select 'alter system kill session ' || '''' || s.sid || ',' || s.serial# || '''' || ' immediate' || ';'
-                         from v$process p, v$session s, v$sqlarea q
-                         where p.addr = s.paddr
-                         and s.sql_hash_value = q.hash_value
-                         and s.sid || ',' || s.serial# in ({});""".format(
-            ",".join(f"'{str(tid[0])},{str(tid[1])}'" for tid in thread_ids)
-        )
-        all_kill_sql = self.query(sql=sql)
-        kill_sql = ""
-        for row in all_kill_sql.rows:
-            kill_sql = kill_sql + row[0]
-        return self.execute(sql=kill_sql)
-
-    def tablespace(self, offset=0, row_count=14):
-        """获取表空间信息"""
-        row_count = offset + row_count
-        sql = """
-        select f.* from (
-            select rownum rownumber, e.* from (
-                select a.tablespace_name,
-                d.contents tablespace_type,
-                d.status,
-                round(a.bytes/1024/1024,2) total_space,
-                round(b.bytes/1024/1024,2) used_space,
-                round((b.bytes * 100) / a.bytes,2) pct_used
-                from sys.sm$ts_avail a, sys.sm$ts_used b, sys.sm$ts_free c, dba_tablespaces d
-                where a.tablespace_name = b.tablespace_name
-                and a.tablespace_name = c.tablespace_name
-                and a.tablespace_name = d.tablespace_name
-                order by total_space desc ) e
-                where rownum <={}
-        ) f where f.rownumber >={};""".format(
-            row_count, offset
-        )
-        return self.query(sql=sql)
-
-    def tablespace_count(self):
-        """获取表空间数量"""
-        sql = """select count(*) from dba_tablespaces where contents != 'TEMPORARY'"""
-        return self.query(sql=sql)
-
-    def lock_info(self):
-        """获取锁信息"""
-        sql = """
-        select c.username,
-               b.owner object_owner,
-               a.object_id,
-               b.object_name,
-               a.locked_mode,
-               c.sid related_sid,
-               c.serial# related_serial#,
-               c.machine,
-               d.sql_text related_sql,
-               d.sql_fulltext related_sql_full,
-               c.sql_exec_start related_sql_exec_start
-        from v$locked_object a,dba_objects b, v$session c, v$sqlarea d
-        where b.object_id = a.object_id
-        and a.session_id = c.sid
-        and c.sql_hash_value = d.hash_value;"""
-
-        return self.query(sql=sql)
 
     def close(self):
         if self.conn:

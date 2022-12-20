@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-"""
+""" 
 @author: hhyo、yyukai
 @license: Apache Licence
 @file: redis.py
@@ -16,6 +16,7 @@ import traceback
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+# from rediscluster import RedisCluster
 
 __author__ = "hhyo"
 
@@ -63,6 +64,7 @@ class RedisEngine(EngineBase):
         """
         result = ResultSet(full_sql="CONFIG GET databases")
         conn = self.get_connection()
+
         try:
             rows = conn.config_get("databases")["databases"]
         except Exception as e:
@@ -72,7 +74,7 @@ class RedisEngine(EngineBase):
                 for i in conn.info("Keyspace").keys()
                 if len(i.split("db")) == 2
             ]
-            rows = max(dbs + [16])
+            rows = max(dbs, [16])
 
         db_list = [str(x) for x in range(int(rows))]
         result.rows = db_list
@@ -219,7 +221,7 @@ class RedisEngine(EngineBase):
             )
             line += 1
             # 报错语句后面的语句标记为审核通过、未执行，追加到执行结果中
-            for statement in split_sql[line - 1 :]:
+            for statement in split_sql[line - 1:]:
                 execute_result.rows.append(
                     ReviewResult(
                         id=line,
