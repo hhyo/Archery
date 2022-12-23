@@ -1,5 +1,4 @@
-#这里换成Dockerfile-base构建的基础镜像
-FROM archery_base:1.9
+FROM hhyo/archery-base:sha-e49f265
 
 WORKDIR /opt/archery
 
