@@ -1,19 +1,22 @@
-FROM hhyo/archery-base:sha-bc1191f
+#这里换成Dockerfile-base构建的基础镜像
+FROM archery_base:1.9
 
 WORKDIR /opt/archery
 
 COPY . /opt/archery/
+COPY soar /opt/archery/src/plugins/
+COPY my2sql /opt/archery/src/plugins/
 
 #archery
 RUN cd /opt \
     && yum -y install nginx \
     && source /opt/venv4archery/bin/activate \
-    && pip3 install -r /opt/archery/requirements.txt \
+    && pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /opt/archery/requirements.txt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
-    && mv /opt/soar /opt/archery/src/plugins/ \
-    && mv /opt/my2sql /opt/archery/src/plugins/
+    && yum clean all \
+    && rm -rf /var/cache/yum/*
 
 #port
 EXPOSE 9123

@@ -1,0 +1,12 @@
+- Installation Notes
+- Functionality Added or Changed
+    - 重新架构，将sqlparser与sqladvisor模块隔离，方便调试
+    - 重新架构多表join关系的find_join_elements()函数，思路更加清晰
+    - 修改选定驱动表的策略，确保驱动表为小结果集
+    - 添加where 条件中的like处理
+    - 优化order by 逻辑，忽略order by primary key情况
+    - 输出索引建议前，增加判断索引是否已存在
+- Bugs Fixed
+    - 修复SQL无法处理中文问题
+    - 修复字段多次出现在where条件中从而导致多次出现在索引列中问题
+    - 修复在find_best_index()函数中，对mysql api中的result对象提前free, 导致指针失效问题
