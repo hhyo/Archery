@@ -4,8 +4,8 @@ FROM archery_base:1.9
 WORKDIR /opt/archery
 
 COPY . /opt/archery/
-COPY soar /opt/archery/src/plugins/
-COPY my2sql /opt/archery/src/plugins/
+COPY ./src/docker/soar /opt/archery/src/plugins/
+COPY ./src/docker/my2sql /opt/archery/src/plugins/
 
 #archery
 RUN cd /opt \
