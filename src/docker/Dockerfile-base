@@ -53,8 +53,8 @@ ENV TZ=Asia/Shanghai
 COPY --from=compbasedeps /opt/SQLAdvisor/sqladvisor/sqladvisor /opt
 COPY --from=compbasedeps /usr/local/python3 /usr/local/python3
 COPY --from=compbasedeps /usr/local/sqlparser /usr/local/sqlparser
-COPY dockerize /usr/local/bin
-COPY mongo /usr/local/bin
+COPY ./dockerize /usr/local/bin
+COPY ./mongo /usr/local/bin
 
 WORKDIR /opt
 
