@@ -571,9 +571,9 @@ class MongoEngine(EngineBase):
                                 check_result.rows += [result]
                                 continue
                         else:
-                            methodStr = (
-                                sql_str.split(".")[-1].split("(")[0].strip()
-                            )  # 最后一个.和括号(之间的字符串作为方法
+                            methodStr = sql_str.split(").")[-1].split("(")[0].strip()
+                            if "." in methodStr:
+                                methodStr = methodStr.split(".")[-1]
                         if methodStr in is_exist_premise_method and not is_in:
                             check_result.error = "文档不存在"
                             result = ReviewResult(
