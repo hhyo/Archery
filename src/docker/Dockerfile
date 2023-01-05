@@ -3,8 +3,6 @@ FROM hhyo/archery-base:sha-6b7647f
 WORKDIR /opt/archery
 
 COPY . /opt/archery/
-COPY ./src/docker/soar /opt/archery/src/plugins/
-COPY ./src/docker/my2sql /opt/archery/src/plugins/
 
 #archery
 RUN cd /opt \
@@ -14,6 +12,8 @@ RUN cd /opt \
     && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
+    && mv /opt/soar /opt/archery/src/plugins/ \
+    && mv /opt/my2sql /opt/archery/src/plugins/ \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
