@@ -57,7 +57,6 @@ COPY --from=compbasedeps /opt/dockerize /usr/local/bin
 COPY --from=compbasedeps /opt/mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin
 COPY --from=compbasedeps /usr/local/python3 /usr/local/python3
 COPY --from=compbasedeps /usr/local/sqlparser /usr/local/sqlparser
-COPY --from=compbasedeps /etc/yum.repos.d/percona-*.repo /etc/yum.repos.d
 
 RUN cd /opt \
     && sed -e 's|^mirrorlist=|#mirrorlist=|g' -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' -i.bak /etc/yum.repos.d/CentOS-*.repo \
@@ -69,6 +68,8 @@ RUN cd /opt \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 unixODBC-devel \
 #oracle client
     && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
+    && yum -y install https://mirrors.ustc.edu.cn/percona/percona/yum/percona-release-latest.noarch.rpm \
+    && sed -e 's|http://repo.percona.com/|https://mirrors.ustc.edu.cn/percona/|g' -i.bak /etc/yum.repos.d/percona-*.repo \
     && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 percona-toolkit \
     && yum clean all \
     && rm -rf /var/cache/yum/* \
