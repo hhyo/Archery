@@ -428,7 +428,7 @@ class MongoEngine(EngineBase):
                     line += 1
                     logger.debug("执行结果：" + r)
                     # 如果执行中有错误
-                    rz = r.replace(" ", "").replace('"', "").lower()
+                    rz = r.replace(" ", "").replace('"', "")
                     tr = 1
                     if (
                         r.lower().find("syntaxerror") >= 0
@@ -437,7 +437,7 @@ class MongoEngine(EngineBase):
                         or rz.find("ReferenceError") >= 0
                         or rz.find("getErrorWithCode") >= 0
                         or rz.find("failedtoconnect") >= 0
-                        or rz.find("Error: field") >= 0
+                        or rz.find("Error:") >= 0
                     ):
                         tr = 0
                     if (rz.find("errmsg") >= 0 or tr == 0) and (
