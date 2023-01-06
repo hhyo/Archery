@@ -50,8 +50,8 @@ ENV TZ=Asia/Shanghai
 
 WORKDIR /opt
 
-COPY --from=compbasedeps /etc/yum.repos.d/percona-*.repo /etc/yum.repos.d/
-COPY --from=compbasedeps /etc/pki/rpm-gpg/PERCONA-* /etc/pki/rpm-gpg/
+COPY --from=compbasedeps /etc/yum.repos.d/percona-*.repo /opt/
+COPY --from=compbasedeps /etc/pki/rpm-gpg/PERCONA-* /opt/
 COPY --from=compbasedeps /etc/yum.repos.d/epel*.repo /etc/yum.repos.d/
 COPY --from=compbasedeps /opt/SQLAdvisor/sqladvisor/sqladvisor /opt/
 COPY --from=compbasedeps /opt/soar /opt/
@@ -69,6 +69,8 @@ RUN cd /opt \
     && ACCEPT_EULA=Y yum -y install msodbcsql17 unixODBC-devel \
 #oracle client
     && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
+    && mv /opt/percona-*.repo /etc/yum.repos.d/ \
+    && mv /opt/PERCONA-* /etc/pki/rpm-gpg/ \
     && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 percona-toolkit \
     && yum clean all \
     && rm -rf /var/cache/yum/* \
