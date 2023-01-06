@@ -13,7 +13,6 @@ from bson import json_util
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
-from datetime import datetime
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -454,14 +453,36 @@ class MongoEngine(EngineBase):
                             sql=exec_sql,
                         )
                     else:
+                        try:
+                            r = json.loads(r)
+                        except Exception as e:
+                            logger.info(str(e))
+                        finally:
+                            methodStr = exec_sql.split(").")[-1].split("(")[0].strip()
+                            if "." in methodStr:
+                                methodStr = methodStr.split(".")[-1]
+                            if methodStr == "insert":
+                                actual_affected_rows = r.get("nInserted", 0)
+                            elif methodStr in ("insertOne", "insertMany"):
+                                actual_affected_rows = r.count("ObjectId")
+                            elif methodStr == "update":
+                                actual_affected_rows = r.get("nModified", 0)
+                            elif methodStr in ("updateOne", "updateMany"):
+                                actual_affected_rows = r.get("modifiedCount", 0)
+                            elif methodStr in ("deleteOne", "deleteMany"):
+                                actual_affected_rows = r.get("deletedCount", 0)
+                            elif methodStr == "remove":
+                                actual_affected_rows = r.get("nRemoved", 0)
+                            else:
+                                actual_affected_rows = 0
                         # 把结果转换为ReviewSet
                         result = ReviewResult(
                             id=line,
                             errlevel=0,
                             stagestatus="执行结束",
-                            errormessage=r,
+                            errormessage=str(r),
                             execute_time=round(end - start, 6),
-                            actual_affected_rows=0,  # todo============这个值需要优化
+                            affected_rows=actual_affected_rows,
                             sql=exec_sql,
                         )
                     execute_result.rows += [result]
@@ -642,6 +663,75 @@ class MongoEngine(EngineBase):
                                     count = self.get_table_conut(
                                         table_name, db_name
                                     )  # 获得表的总条数
+                                result = ReviewResult(
+                                    id=line,
+                                    errlevel=0,
+                                    stagestatus="Audit completed",
+                                    errormessage="检测通过",
+                                    affected_rows=count,
+                                    sql=check_sql,
+                                    execute_time=0,
+                                )
+                            if methodStr == "insertOne":
+                                count = 1
+                            elif methodStr in ("insert", "insertMany"):
+                                insert_str = re.search(
+                                    rf"{methodStr}\((.*)\)", sql_str, re.S
+                                ).group(1)
+                                first_char = insert_str.replace(" ", "").replace(
+                                    "\n", ""
+                                )[0]
+                                if first_char == "{":
+                                    count = 1
+                                elif first_char == "[":
+                                    insert_values = re.search(
+                                        r"\[(.*?)\]", insert_str, re.S
+                                    ).group(0)
+                                    de = JsonDecoder()
+                                    insert_values = de.decode(insert_values)
+                                    count = len(insert_values)
+                                else:
+                                    count = 0
+                            elif methodStr in (
+                                "update",
+                                "updateOne",
+                                "updateMany",
+                                "deleteOne",
+                                "deleteMany",
+                                "remove",
+                            ):
+                                if sql_str.find("find(") > 0:
+                                    count_sql = sql_str.replace(methodStr, "count")
+                                else:
+                                    count_sql = (
+                                        sql_str.replace(methodStr, "find") + ".count()"
+                                    )
+                                query_dict = self.parse_query_sentence(count_sql)
+                                count_sql = f"""db.getCollection("{query_dict["collection"]}").find({query_dict["condition"]}).count()"""
+                                query_result = self.query(db_name, count_sql)
+                                count = json.loads(query_result.rows[0][0]).get(
+                                    "count", 0
+                                )
+                                if (
+                                    methodStr == "update"
+                                    and "multi:true"
+                                    not in sql_str.replace(" ", "")
+                                    .replace('"', "")
+                                    .replace("'", "")
+                                    .replace("\n", "")
+                                ) or methodStr in ("deleteOne", "updateOne"):
+                                    count = 1 if count > 0 else 0
+                            if methodStr in (
+                                "insertOne",
+                                "insert",
+                                "insertMany",
+                                "update",
+                                "updateOne",
+                                "updateMany",
+                                "deleteOne",
+                                "deleteMany",
+                                "remove",
+                            ):
                                 result = ReviewResult(
                                     id=line,
                                     errlevel=0,
@@ -1061,7 +1151,7 @@ class MongoEngine(EngineBase):
                     dd = re.findall(re_date, str(value))
                     for d in dd:
                         t = int(d.split(":")[1].strip()[:-1])
-                        e = datetime.fromtimestamp(t / 1000)
+                        e = datetime.datetime.fromtimestamp(t / 1000)
                         value = str(value).replace(
                             d, e.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
                         )
