@@ -11,7 +11,7 @@ RUN sed -e 's|^mirrorlist=|#mirrorlist=|g' -e 's|^#baseurl=http://mirror.centos.
     && sed -e 's!^metalink=!#metalink=!g' -e 's!^#baseurl=!baseurl=!g' -e 's!//download\.fedoraproject\.org/pub!//mirrors.tuna.tsinghua.edu.cn!g' -e 's!//download\.example/pub!//mirrors.tuna.tsinghua.edu.cn!g' -e 's!http://mirrors!https://mirrors!g' -i /etc/yum.repos.d/epel*.repo \
     && yum -y install cmake glibc-common bison gcc-c++ git mysql-devel libaio-devel glib2 glib2-devel libffi-devel gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel xz-devel wget \
 #python 3
-    cd /opt \
+    && cd /opt \
     && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
     && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
     && cd /opt/Python-$PYTHON_VERSION \
@@ -51,6 +51,7 @@ ENV TZ=Asia/Shanghai
 WORKDIR /opt
 
 COPY --from=compbasedeps /etc/yum.repos.d/percona-*.repo /etc/yum.repos.d/
+COPY --from=compbasedeps /etc/pki/rpm-gpg/PERCONA-* /etc/pki/rpm-gpg/
 COPY --from=compbasedeps /etc/yum.repos.d/epel*.repo /etc/yum.repos.d/
 COPY --from=compbasedeps /opt/SQLAdvisor/sqladvisor/sqladvisor /opt/
 COPY --from=compbasedeps /opt/soar /opt/
