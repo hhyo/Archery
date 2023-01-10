@@ -17,6 +17,7 @@ env = environ.Env(
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
     ENABLE_LDAP=(bool, False),
+    ENABLE_OIDC=(bool, False),
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
@@ -59,6 +60,7 @@ INSTALLED_APPS = (
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    "mozilla_django_oidc",
 )
 
 MIDDLEWARE = (
@@ -72,6 +74,7 @@ MIDDLEWARE = (
     "django.middleware.gzip.GZipMiddleware",
     "common.middleware.check_login_middleware.CheckLoginMiddleware",
     "common.middleware.exception_logging_middleware.ExceptionLoggingMiddleware",
+    "mozilla_django_oidc.middleware.SessionRefresh",
 )
 
 ROOT_URLCONF = "archery.urls"
@@ -228,6 +231,29 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# OIDC
+ENABLE_OIDC = env("ENABLE_OIDC", False)
+if ENABLE_OIDC:
+
+    AUTHENTICATION_BACKENDS = (
+        "oidc.auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+
+    OIDC_RP_ISSUER_URL = env("OIDC_RP_ISSUER_URL", default="https://keycloak.example.com/realms/<your realm>")
+    OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID", default="<your client id>")
+    OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET", default="<your client secret>")
+
+    # the following settings are good for keycloak
+    OIDC_OP_AUTHORIZATION_ENDPOINT = env("OIDC_OP_AUTHORIZATION_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/auth")
+    OIDC_OP_TOKEN_ENDPOINT = env("OIDC_OP_TOKEN_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/token")
+    OIDC_OP_USER_ENDPOINT = env("OIDC_OP_USER_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/userinfo")
+    OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/certs")
+    OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/logout")
+    OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
+
+    LOGIN_REDIRECT_URL = "/"
+
 # LDAP
 ENABLE_LDAP = env("ENABLE_LDAP", False)
 if ENABLE_LDAP:
@@ -304,6 +330,11 @@ LOGGING = {
             "propagate": False,
         },
         "django_auth_ldap": {  # django_auth_ldap模块相关日志
+            "handlers": ["console", "default"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "mozilla_django_oidc": {
             "handlers": ["console", "default"],
             "level": "WARNING",
             "propagate": False,
