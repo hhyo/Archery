@@ -246,6 +246,7 @@ if ENABLE_OIDC:
     OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
 
     response = requests.get(OIDC_RP_WELLKNOWN_URL)
+    response.raise_for_status()
     config = response.json()
     OIDC_OP_AUTHORIZATION_ENDPOINT = config["authorization_endpoint"]
     OIDC_OP_TOKEN_ENDPOINT = config["token_endpoint"]
