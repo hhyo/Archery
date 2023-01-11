@@ -25,6 +25,7 @@ parsedatetime==2.4
 sshtunnel==0.1.5
 pycryptodome==3.10.1
 pyodps==0.*
+pandas==1.5.*
 clickhouse-driver==0.2.3
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
