@@ -6,6 +6,7 @@ import os
 from typing import List
 from datetime import timedelta
 import environ
+import requests
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -240,16 +241,19 @@ if ENABLE_OIDC:
         "django.contrib.auth.backends.ModelBackend",
     )
 
-    OIDC_RP_ISSUER_URL = env("OIDC_RP_ISSUER_URL", default="https://keycloak.example.com/realms/<your realm>")
+    OIDC_RP_WELLKNOWN_URL = env("OIDC_RP_WELLKNOWN_URL", default="https://keycloak.example.com/realms/<your realm>/.well-known/openid-configuration")
     OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID", default="<your client id>")
     OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET", default="<your client secret>")
 
-    # the following settings are good for keycloak
-    OIDC_OP_AUTHORIZATION_ENDPOINT = env("OIDC_OP_AUTHORIZATION_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/auth")
-    OIDC_OP_TOKEN_ENDPOINT = env("OIDC_OP_TOKEN_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/token")
-    OIDC_OP_USER_ENDPOINT = env("OIDC_OP_USER_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/userinfo")
-    OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/certs")
-    OIDC_OP_LOGOUT_ENDPOINT = env("OIDC_OP_LOGOUT_ENDPOINT", default=OIDC_RP_ISSUER_URL + "/protocol/openid-connect/logout")
+    response = requests.get(OIDC_RP_WELLKNOWN_URL)
+    config = response.json()
+    OIDC_OP_AUTHORIZATION_ENDPOINT = config["authorization_endpoint"]
+    OIDC_OP_TOKEN_ENDPOINT = config["token_endpoint"]
+    OIDC_OP_USER_ENDPOINT = config["userinfo_endpoint"]
+    OIDC_OP_JWKS_ENDPOINT = config["jwks_uri"]
+    OIDC_OP_LOGOUT_ENDPOINT = config["end_session_endpoint"]
+
+    OIDC_RP_SCOPES = env("OIDC_RP_SCOPES", default="openid profile email")
     OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
 
     LOGIN_REDIRECT_URL = "/"
