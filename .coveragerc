@@ -7,4 +7,4 @@ omit =
     src*
     downloads*
     sql/migrations/*
-
+plugins = django_coverage_plugin
