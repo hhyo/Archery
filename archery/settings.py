@@ -241,9 +241,9 @@ if ENABLE_OIDC:
         "django.contrib.auth.backends.ModelBackend",
     )
 
-    OIDC_RP_WELLKNOWN_URL = env("OIDC_RP_WELLKNOWN_URL", default="https://keycloak.example.com/realms/<your realm>/.well-known/openid-configuration")
-    OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID", default="<your client id>")
-    OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET", default="<your client secret>")
+    OIDC_RP_WELLKNOWN_URL = env("OIDC_RP_WELLKNOWN_URL") # 例如 https://keycloak.example.com/realms/<your realm>/.well-known/openid-configuration
+    OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
 
     response = requests.get(OIDC_RP_WELLKNOWN_URL)
     config = response.json()
