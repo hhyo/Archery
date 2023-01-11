@@ -24,8 +24,7 @@ schema-sync==0.9.7
 parsedatetime==2.4
 sshtunnel==0.1.5
 pycryptodome==3.10.1
-pandas==1.1.5
-pyodps==0.10.7.1
+pyodps==0.*
 clickhouse-driver==0.2.3
 djangorestframework==3.13.1
 djangorestframework-simplejwt==5.2.0
