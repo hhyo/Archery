@@ -65,7 +65,7 @@ def login(request):
         "login.html",
         context={
             "sign_up_enabled": SysConfig().get("sign_up_enabled"),
-            "oidc_enabled": os.getenv("ENABLE_OIDC")
+            "oidc_enabled": os.getenv("ENABLE_OIDC"),
         },
     )
 
