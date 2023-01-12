@@ -75,7 +75,6 @@ MIDDLEWARE = (
     "django.middleware.gzip.GZipMiddleware",
     "common.middleware.check_login_middleware.CheckLoginMiddleware",
     "common.middleware.exception_logging_middleware.ExceptionLoggingMiddleware",
-    "mozilla_django_oidc.middleware.SessionRefresh",
 )
 
 ROOT_URLCONF = "archery.urls"
@@ -240,6 +239,7 @@ if ENABLE_OIDC:
         "oidc.auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
+    MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
     OIDC_RP_WELLKNOWN_URL = env(
         "OIDC_RP_WELLKNOWN_URL"
