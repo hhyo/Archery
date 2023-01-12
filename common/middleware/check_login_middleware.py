@@ -3,7 +3,16 @@ import re
 from django.http import HttpResponseRedirect
 from django.utils.deprecation import MiddlewareMixin
 
-IGNORE_URL = ["/login/", "/login/2fa/", "/authenticate/", "/signup/", "/api/info", "/oidc/callback/", "/oidc/authenticate/", "/oidc/logout/"]
+IGNORE_URL = [
+    "/login/",
+    "/login/2fa/",
+    "/authenticate/",
+    "/signup/",
+    "/api/info",
+    "/oidc/callback/",
+    "/oidc/authenticate/",
+    "/oidc/logout/",
+]
 
 IGNORE_URL_RE = r"/api/(v1|auth)/\w+"
 
