@@ -61,7 +61,6 @@ INSTALLED_APPS = (
     "rest_framework",
     "django_filters",
     "drf_spectacular",
-    "mozilla_django_oidc",
 )
 
 MIDDLEWARE = (
@@ -235,11 +234,12 @@ SIMPLE_JWT = {
 ENABLE_OIDC = env("ENABLE_OIDC", False)
 if ENABLE_OIDC:
 
+    INSTALLED_APPS += ("mozilla_django_oidc",)
+    MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
     AUTHENTICATION_BACKENDS = (
         "oidc.auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
-    MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
     OIDC_RP_WELLKNOWN_URL = env(
         "OIDC_RP_WELLKNOWN_URL"
