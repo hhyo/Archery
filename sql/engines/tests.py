@@ -1925,6 +1925,28 @@ class MongoTest(TestCase):
             check_result.rows[0].__dict__["errormessage"], row.__dict__["errormessage"]
         )
 
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_include_dot(self, mock_get_all_tables):
+        sql = """db.job.insert({
+                                    fileName: "现金明细20230103075728.xls",
+                                    contentType: ".xls",
+                                    createdTime: ISODate("2023-01-03T12:05:27.402Z"),
+                                    reportDate: ISODate("2023-01-03T12:05:27.402Z"),
+                                    updatedTime: ISODate("2023-01-03T12:09:30.88Z")
+                               });;"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(
+            check_result.rows[0].__dict__["stagestatus"], "Audit completed"
+        )
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_dml(self, mock_get_all_tables):
+        sql = """db.job.insert([{"orderCode":1001},{"orderCode":1002}]);"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 2)
+
     @patch("sql.engines.mongo.MongoEngine.exec_cmd")
     @patch("sql.engines.mongo.MongoEngine.get_master")
     def test_execute(self, mock_get_master, mock_exec_cmd):
@@ -1939,6 +1961,34 @@ class MongoTest(TestCase):
         check_result = self.engine.execute("some_db", sql)
         mock_get_master.assert_called_once()
         self.assertEqual(check_result.rows[0].__dict__["errlevel"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
+    @patch("sql.engines.mongo.MongoEngine.get_master")
+    def test_execute_on_dml(self, mock_get_master, mock_exec_cmd):
+        sql = """db.job.insertMany([{"title":"test1"},{"title":test2"},{"title":test3"}]);"""
+        mock_exec_cmd.return_value = """{
+                                            "acknowledged" : true,
+                                            "insertedIds" : [
+                                                ObjectId("63b77b53afab4917dfd48a20"),
+                                                ObjectId("63b77b53afab4917dfd48a21"),
+                                                ObjectId("63b77b53afab4917dfd48a22")
+                                            ]
+                                        }"""
+
+        check_result = self.engine.execute("some_db", sql)
+        mock_get_master.assert_called_once()
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 3)
+
+    @patch("sql.engines.mongo.MongoEngine.exec_cmd")
+    @patch("sql.engines.mongo.MongoEngine.get_master")
+    def test_execute_return_error(self, mock_get_master, mock_exec_cmd):
+        sql = """db.job.insertMany({"title":"test1"},{"title":test2"},{"title":test3"});"""
+        mock_exec_cmd.return_value = (
+            """uncaught exception: TypeError: documents.map is not a function"""
+        )
+        check_result = self.engine.execute("some_db", sql)
+        mock_get_master.assert_called_once()
+        self.assertEqual(check_result.rows[0].__dict__["stagestatus"], "异常终止")
 
     def test_fill_query_columns(self):
         columns = ["_id", "title", "tags", "likes"]
