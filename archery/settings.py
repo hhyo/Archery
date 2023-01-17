@@ -6,6 +6,7 @@ import os
 from typing import List
 from datetime import timedelta
 import environ
+import requests
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,6 +18,7 @@ env = environ.Env(
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
     ENABLE_LDAP=(bool, False),
+    ENABLE_OIDC=(bool, False),
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
@@ -228,6 +230,37 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# OIDC
+ENABLE_OIDC = env("ENABLE_OIDC", False)
+if ENABLE_OIDC:
+
+    INSTALLED_APPS += ("mozilla_django_oidc",)
+    MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
+    AUTHENTICATION_BACKENDS = (
+        "oidc.auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+
+    OIDC_RP_WELLKNOWN_URL = env(
+        "OIDC_RP_WELLKNOWN_URL"
+    )  # 例如 https://keycloak.example.com/realms/<your realm>/.well-known/openid-configuration
+    OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
+
+    response = requests.get(OIDC_RP_WELLKNOWN_URL)
+    response.raise_for_status()
+    config = response.json()
+    OIDC_OP_AUTHORIZATION_ENDPOINT = config["authorization_endpoint"]
+    OIDC_OP_TOKEN_ENDPOINT = config["token_endpoint"]
+    OIDC_OP_USER_ENDPOINT = config["userinfo_endpoint"]
+    OIDC_OP_JWKS_ENDPOINT = config["jwks_uri"]
+    OIDC_OP_LOGOUT_ENDPOINT = config["end_session_endpoint"]
+
+    OIDC_RP_SCOPES = env("OIDC_RP_SCOPES", default="openid profile email")
+    OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
+
+    LOGIN_REDIRECT_URL = "/"
+
 # LDAP
 ENABLE_LDAP = env("ENABLE_LDAP", False)
 if ENABLE_LDAP:
@@ -304,6 +337,11 @@ LOGGING = {
             "propagate": False,
         },
         "django_auth_ldap": {  # django_auth_ldap模块相关日志
+            "handlers": ["console", "default"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "mozilla_django_oidc": {
             "handlers": ["console", "default"],
             "level": "WARNING",
             "propagate": False,
