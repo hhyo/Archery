@@ -7,4 +7,3 @@ omit =
     src*
     downloads*
     sql/migrations/*
-

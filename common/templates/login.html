@@ -38,6 +38,11 @@
                     <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
                 </div>
             {% endif %}
+            {% if oidc_enabled %}
+                <div class="form-group">
+                    <a href="/oidc/authenticate/">以OIDC登录</a>
+                </div>
+            {% endif %}
         </form>
     </div>
 </div>
