@@ -2,13 +2,14 @@ FROM hhyo/archery-base:sha-b3a08ef
 
 WORKDIR /opt/archery
 
+ADD http://mirrors.ustc.edu.cn/epel/RPM-GPG-KEY-EPEL-7 /etc/pki/rpm-gpg/
 COPY . /opt/archery/
 
 #archery
 RUN cd /opt \
     && yum -y install nginx \
     && source /opt/venv4archery/bin/activate \
-    && pip3 install -r /opt/archery/requirements.txt \
+    && pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /opt/archery/requirements.txt \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp -f /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
