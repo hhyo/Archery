@@ -264,6 +264,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="ban_self_audit"
+                                       class="col-sm-4 control-label">BAN_SELF_AUDIT</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="ban_self_audit"
+                                                   key="ban_self_audit"
+                                                   value="{{ config.ban_self_audit }}"
+                                                   type="checkbox">
+                                            是否允许工单审批人与提出人相同
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
                         <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
