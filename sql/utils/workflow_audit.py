@@ -384,6 +384,27 @@ class Audit(object):
         )
         group_id = audit_info.group_id
         result = False
+
+        def get_workflow_applicant(workflow_id, workflow_type):
+            user = ""
+            if workflow_type == 1:
+                workflow = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
+                user = workflow.user_name
+            elif workflow_type == 2:
+                workflow = SqlWorkflow.objects.get(id=workflow_id)
+                user = workflow.engineer
+            elif workflow_type == 3:
+                workflow = ArchiveConfig.objects.get(id=workflow_id)
+                user = workflow.user_name
+            return user
+
+        applicant = get_workflow_applicant(workflow_id, workflow_type)
+        if (
+            user.username == applicant
+            and not user.is_superuser
+            and SysConfig().get("ban_self_audit")
+        ):
+            return result
         # 只有待审核状态数据才可以审核
         if audit_info.current_status == WorkflowDict.workflow_status["audit_wait"]:
             try:

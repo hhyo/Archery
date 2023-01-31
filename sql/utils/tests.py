@@ -862,6 +862,19 @@ class TestAudit(TestCase):
             db_name="some_db",
             syntax_type=1,
         )
+        self.own_wf = SqlWorkflow.objects.create(
+            workflow_name="some_name",
+            group_id=1,
+            group_name="g1",
+            engineer=self.user.username,
+            audit_auth_groups="some_audit_group",
+            create_time=datetime.datetime.now(),
+            status="workflow_timingtask",
+            is_backup=True,
+            instance=self.ins,
+            db_name="some_db",
+            syntax_type=1,
+        )
         SqlWorkflowContent.objects.create(
             workflow=self.wf, sql_content="some_sql", execute_result=""
         )
@@ -1233,6 +1246,26 @@ class TestAudit(TestCase):
             self.user, self.audit.workflow_id, self.audit.workflow_type
         )
         self.assertEqual(r, True)
+
+    @patch("sql.utils.workflow_audit.auth_group_users")
+    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
+    def test_cannot_review_self_sql_review(
+        self, _detail_by_workflow_id, _auth_group_users
+    ):
+        """测试确认用户不能审核自己提交的上线工单，非管理员拥有权限"""
+        self.sys_config.set("ban_self_audit", "true")
+        sql_review = Permission.objects.get(codename="sql_review")
+        self.user.user_permissions.add(sql_review)
+        aug = Group.objects.create(name="auth_group")
+        _detail_by_workflow_id.return_value.current_audit = aug.id
+        _auth_group_users.return_value.filter.exists = True
+        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_id = self.own_wf.id
+        self.audit.save()
+        r = Audit.can_review(
+            self.user, self.audit.workflow_id, self.audit.workflow_type
+        )
+        self.assertEqual(r, False)
 
     @patch("sql.utils.workflow_audit.auth_group_users")
     @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
