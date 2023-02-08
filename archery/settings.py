@@ -233,7 +233,6 @@ SIMPLE_JWT = {
 # OIDC
 ENABLE_OIDC = env("ENABLE_OIDC", False)
 if ENABLE_OIDC:
-
     INSTALLED_APPS += ("mozilla_django_oidc",)
     MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
     AUTHENTICATION_BACKENDS = (
