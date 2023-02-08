@@ -206,7 +206,6 @@ def get_full_sqlitem_list(full_sql, db_name):
                 # 情况2：plsql block 为匿名执行块
 
                 if search_result:
-
                     # 检索到关键字, 属于情况1
 
                     str_plsql_match = search_result.group()
