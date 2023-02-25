@@ -98,6 +98,10 @@ class MysqlEngine(EngineBase):
     def info(self):
         return "MySQL engine"
 
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return MySQLdb.escape_string(value).decode("utf-8")
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -167,7 +171,7 @@ class MysqlEngine(EngineBase):
 
     def get_group_tables_by_db(self, db_name):
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+        db_name = self.escape_string(db_name)
         data = {}
         sql = f"""SELECT TABLE_NAME,
                             TABLE_COMMENT
@@ -186,8 +190,8 @@ class MysqlEngine(EngineBase):
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
         """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
+        db_name = self.escape_string(db_name)
+        tb_name = self.escape_string(tb_name)
         sql = f"""SELECT
                         TABLE_NAME as table_name,
                         ENGINE as engine,
@@ -348,9 +352,9 @@ class MysqlEngine(EngineBase):
     def create_instance_user(self, **kwargs):
         """实例账号管理功能，创建实例账号"""
         # escape
-        user = MySQLdb.escape_string(kwargs.get("user", "")).decode("utf-8")
-        host = MySQLdb.escape_string(kwargs.get("host", "")).decode("utf-8")
-        password1 = MySQLdb.escape_string(kwargs.get("password1", "")).decode("utf-8")
+        user = self.escape_string(kwargs.get("user", ""))
+        host = self.escape_string(kwargs.get("host", ""))
+        password1 = self.escape_string(kwargs.get("password1", ""))
         remark = kwargs.get("remark", "")
         # 在一个事务内执行
         hosts = host.split("|")
@@ -376,14 +380,14 @@ class MysqlEngine(EngineBase):
     def drop_instance_user(self, user_host: str, **kwarg):
         """实例账号管理功能，删除实例账号"""
         # escape
-        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+        user_host = self.escape_string(user_host)
         return self.execute(db_name="mysql", sql=f"DROP USER {user_host};")
 
     def reset_instance_user_pwd(self, user_host: str, reset_pwd: str, **kwargs):
         """实例账号管理功能，重置实例账号密码"""
         # escape
-        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
-        reset_pwd = MySQLdb.escape_string(reset_pwd).decode("utf-8")
+        user_host = self.escape_string(user_host)
+        reset_pwd = self.escape_string(reset_pwd)
         return self.execute(
             db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd}';"
         )
@@ -679,7 +683,7 @@ class MysqlEngine(EngineBase):
         """获取连接信息"""
         base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
         # escape
-        command_type = MySQLdb.escape_string(command_type).decode("utf-8")
+        command_type = self.escape_string(command_type)
         if not command_type:
             command_type = "Query"
         if command_type == "All":
