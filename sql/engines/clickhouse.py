@@ -63,7 +63,7 @@ class ClickHouseEngine(EngineBase):
 
     def get_table_engine(self, tb_name):
         """获取某个table的engine type"""
-        [database, name] = tb_name.split('.')
+        [database, name] = tb_name.split(".")
         sql = f"""select engine 
                     from system.tables 
                    where database=%s
@@ -122,7 +122,15 @@ class ClickHouseEngine(EngineBase):
         )
         return result
 
-    def query(self, db_name=None, sql="", parameters=None, limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        parameters=None,
+        limit_num=0,
+        close_conn=True,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:

@@ -254,12 +254,12 @@ class MysqlEngine(EngineBase):
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
-        sql_tbs = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%s;"
-        )
+        sql_tbs = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%s;"
         tbs = self.query(
-            sql=sql_tbs, parameters=(db_name,),
-            cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+            sql=sql_tbs,
+            parameters=(db_name,),
+            cursorclass=MySQLdb.cursors.DictCursor,
+            close_conn=False,
         ).rows
         table_metas = []
         for tb in tbs:
@@ -278,8 +278,10 @@ class MysqlEngine(EngineBase):
             sql_cols = f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
                             WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s;"""
             _meta["COLUMNS"] = self.query(
-                sql=sql_cols, parameters=(tb['TABLE_SCHEMA'], tb['TABLE_NAME']),
-                cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+                sql=sql_cols,
+                parameters=(tb["TABLE_SCHEMA"], tb["TABLE_NAME"]),
+                cursorclass=MySQLdb.cursors.DictCursor,
+                close_conn=False,
             ).rows
             table_metas.append(_meta)
         return table_metas
@@ -327,7 +329,15 @@ class MysqlEngine(EngineBase):
         result_set.rows = tuple(new_rows)
         return result_set
 
-    def query(self, db_name=None, sql="", parameters=None, limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        parameters=None,
+        limit_num=0,
+        close_conn=True,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         max_execution_time = kwargs.get("max_execution_time", 0)
