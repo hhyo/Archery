@@ -174,8 +174,8 @@ class MysqlEngine(EngineBase):
                         FROM
                             information_schema.TABLES
                         WHERE
-                            TABLE_SCHEMA='{db_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+                            TABLE_SCHEMA=%s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters=(db_name,))
         for row in result.rows:
             table_name, table_cmt = row[0], row[1]
             if table_name[0] not in data:
@@ -208,9 +208,9 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.TABLES
                     WHERE
-                        TABLE_SCHEMA='{db_name}'
-                            AND TABLE_NAME='{tb_name}'"""
-        _meta_data = self.query(db_name, sql)
+                        TABLE_SCHEMA=%s
+                            AND TABLE_NAME=%s"""
+        _meta_data = self.query(db_name, sql, parameters=(db_name, tb_name))
         return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
@@ -227,10 +227,10 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.COLUMNS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                            AND TABLE_NAME = '{tb_name}'
+                        TABLE_SCHEMA = %s
+                            AND TABLE_NAME = %s
                     ORDER BY ORDINAL_POSITION;"""
-        _desc_data = self.query(db_name, sql)
+        _desc_data = self.query(db_name, sql, parameters=(db_name, tb_name))
         return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
@@ -247,18 +247,19 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.STATISTICS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                    AND TABLE_NAME = '{tb_name}';"""
-        _index_data = self.query(db_name, sql)
+                        TABLE_SCHEMA = %s
+                    AND TABLE_NAME = %s;"""
+        _index_data = self.query(db_name, sql, parameters=(db_name, tb_name))
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
         sql_tbs = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%s;"
         )
         tbs = self.query(
-            sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+            sql=sql_tbs, parameters=(db_name,),
+            cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
         ).rows
         table_metas = []
         for tb in tbs:
@@ -275,9 +276,10 @@ class MysqlEngine(EngineBase):
             _meta["ENGINE_KEYS"] = engine_keys
             _meta["TABLE_INFO"] = tb
             sql_cols = f"""SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
-                            WHERE TABLE_SCHEMA='{tb['TABLE_SCHEMA']}' AND TABLE_NAME='{tb['TABLE_NAME']}';"""
+                            WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s;"""
             _meta["COLUMNS"] = self.query(
-                sql=sql_cols, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+                sql=sql_cols, parameters=(tb['TABLE_SCHEMA'], tb['TABLE_NAME']),
+                cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
             ).rows
             table_metas.append(_meta)
         return table_metas
@@ -295,18 +297,18 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = '{db_name}'
-                AND TABLE_NAME = '{tb_name}'
+            TABLE_SCHEMA = %s
+                AND TABLE_NAME = %s
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(db_name=db_name, sql=sql)
+        result = self.query(db_name=db_name, sql=sql, parameters=(db_name, tb_name))
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
-        sql = f"show create table `{tb_name}`;"
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"show create table %s;"
+        result = self.query(db_name=db_name, sql=sql, parameters=(tb_name,))
         return result
 
     @staticmethod
@@ -325,7 +327,7 @@ class MysqlEngine(EngineBase):
         result_set.rows = tuple(new_rows)
         return result_set
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(self, db_name=None, sql="", parameters=None, limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         max_execution_time = kwargs.get("max_execution_time", 0)
@@ -338,7 +340,7 @@ class MysqlEngine(EngineBase):
                 cursor.execute(f"set session max_execution_time={max_execution_time};")
             except MySQLdb.OperationalError:
                 pass
-            effect_row = cursor.execute(sql)
+            effect_row = cursor.execute(sql, args=parameters)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
@@ -518,14 +520,14 @@ class MysqlEngine(EngineBase):
         # inception执行
         return self.inc_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql="", close_conn=True):
+    def execute(self, db_name=None, sql="", parameters=None, close_conn=True):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
-                cursor.execute(statement)
+                cursor.execute(statement, args=parameters)
             conn.commit()
             cursor.close()
         except Exception as e:
