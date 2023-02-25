@@ -461,11 +461,16 @@ class MysqlEngine(EngineBase):
 
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
+        ddl_dml_separation = self.config.get("ddl_dml_separation", False)
         p = re.compile(critical_ddl_regex)
+        # 获取语句类型：DDL或者DML
+        ddl_dml_flag = ""
         for row in check_result.rows:
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type="mysql")
+            # 获取提交类型
+            syntax_type = get_syntax_type(statement, parser=False, db_type="mysql")
             # 禁用语句
             if re.match(r"^select", statement.lower()):
                 check_result.error_count += 1
@@ -478,6 +483,14 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
+            elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
+                if ddl_dml_flag == "":
+                    ddl_dml_flag = syntax_type
+                elif ddl_dml_flag != syntax_type:
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回不支持语句"
+                    row.errlevel = 2
+                    row.errormessage = "DDL语句和DML语句不能同时执行！"
         return check_result
 
     def execute_workflow(self, workflow):
