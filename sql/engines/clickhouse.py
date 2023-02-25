@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from clickhouse_driver import connect
+from clickhouse_driver.util.escape import escape_chars_map
 from sql.utils.sql_utils import get_syntax_type
 from .models import ResultSet, ReviewResult, ReviewSet
 from common.utils.timer import FuncTimer
@@ -48,6 +49,10 @@ class ClickHouseEngine(EngineBase):
     @property
     def info(self):
         return "ClickHouse engine"
+
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return "'%s'" % "".join(escape_chars_map.get(c, c) for c in value)
 
     @property
     def auto_backup(self):

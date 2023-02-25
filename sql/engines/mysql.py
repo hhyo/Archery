@@ -98,6 +98,10 @@ class MysqlEngine(EngineBase):
     def info(self):
         return "MySQL engine"
 
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return MySQLdb.escape_string(value).decode("utf-8")
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -167,7 +171,7 @@ class MysqlEngine(EngineBase):
 
     def get_group_tables_by_db(self, db_name):
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+        db_name = self.escape_string(db_name)
         data = {}
         sql = f"""SELECT TABLE_NAME,
                             TABLE_COMMENT
@@ -186,8 +190,8 @@ class MysqlEngine(EngineBase):
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
         """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
         # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
+        db_name = self.escape_string(db_name)
+        tb_name = self.escape_string(tb_name)
         sql = f"""SELECT
                         TABLE_NAME as table_name,
                         ENGINE as engine,
