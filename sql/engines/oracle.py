@@ -457,25 +457,25 @@ class OracleEngine(EngineBase):
             object_name = re.match(
                 r"^alter\s+table\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+function\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+[or\s]+[replace\s]+function\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+                r"^create\s+[or\s]+[replace\s]+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+view\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+[or\s]+[replace\s]+view\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+view\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+[or\s]+[replace\s]+view\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+procedure\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+[or\s]+[replace\s]+procedure\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+[or\s]+[replace\s]+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+package\s+body", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+[or\s]+[replace\s]+package\s+body", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+[or\s]+[replace\s]+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+package\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+[or\s]+[replace\s]+package\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+package\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+[or\s]+[replace\s]+package\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
         else:
             return object_name.strip()
