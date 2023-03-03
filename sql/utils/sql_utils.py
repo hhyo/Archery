@@ -351,7 +351,7 @@ def get_full_sqlitem_list(full_sql, db_name):
             delimiter_flag = 0
         else:
             # 表示当前为以;结尾的正常sql
-			# 去除剩余SQL文本中可能多添加$$符号（创建表、视图、序列运行结尾加“/”符号，但不作为PLSQL块处理）
+	    # 去除剩余SQL文本中可能多添加$$符号（创建表、视图、序列运行结尾加“/”符号，但不作为PLSQL块处理）
             sql_area = sql_area.replace('/\n$$','')
             tmp_list = get_base_sqlitem_list(sql)
             list.extend(tmp_list)
