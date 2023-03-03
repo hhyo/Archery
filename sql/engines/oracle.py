@@ -457,25 +457,61 @@ class OracleEngine(EngineBase):
             object_name = re.match(
                 r"^alter\s+table\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+[or\s]+[replace\s]+function\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+function\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+[or\s]+[replace\s]+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+                r"^create\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+[or\s]+[replace\s]+view\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+view\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+[or\s]+[replace\s]+view\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+view\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+[or\s]+[replace\s]+procedure\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+procedure\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+[or\s]+[replace\s]+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+[or\s]+[replace\s]+package\s+body", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+package\s+body", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+[or\s]+[replace\s]+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
             ).group(1)
-        elif re.match(r"^create\s+[or\s]+[replace\s]+package\s", sql, re.M | re.IGNORECASE):
+        elif re.match(r"^create\s+package\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+[or\s]+[replace\s]+package\s(.+?)\s", sql, re.M | re.IGNORECASE
+                r"^create\s+package\s(.+?)\s", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+type\s+body", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+type\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
+            ).group(1)
+		elif re.match(r"^create\s+type\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+type\s(.+?)\s", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+function\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+view\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+view\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+procedure\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+procedure\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+package\s+body", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+package\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+package\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(1)	
+        elif re.match(r"^create\s+or\s+replace\s+type\s+body", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+type\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
+            ).group(1)
+        elif re.match(r"^create\s+or\s+replace\s+type\s", sql, re.M | re.IGNORECASE):
+            object_name = re.match(
+                r"^create\s+or\s+replace\s+type\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
             ).group(1)
         else:
             return object_name.strip()
@@ -966,7 +1002,19 @@ class OracleEngine(EngineBase):
                                 object_name = object_name.upper()
 
                         object_name = f"""{schema_name}.{object_name}"""
-                        if (
+                        if re.match(r"^create\sor\sreplace", sql_lower) and (self.object_name_check(db_name=db_name,
+                                                  object_name=object_name) or object_name in object_name_list):
+                            result = ReviewResult(id=line, errlevel=1,
+                                                  stagestatus=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                                  errormessage=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                                  sql=sqlitem.statement,
+                                                  stmt_type=sqlitem.stmt_type,
+                                                  object_owner=sqlitem.object_owner,
+                                                  object_type=sqlitem.object_type,
+                                                  object_name=sqlitem.object_name,
+                                                  affected_rows=0,
+                                                  execute_time=0, )
+                        elif (
                             self.object_name_check(
                                 db_name=db_name, object_name=object_name
                             )
