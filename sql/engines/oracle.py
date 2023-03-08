@@ -437,82 +437,14 @@ class OracleEngine(EngineBase):
     def get_sql_first_object_name(sql=""):
         """获取sql文本中的object_name"""
         object_name = ""
-        if re.match(r"^create\s+table\s", sql, re.M | re.IGNORECASE):
+        if re.match(r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+table\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+index\s", sql, re.M | re.IGNORECASE):
+                r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(3)
+        elif re.match(r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s", sql, re.M | re.IGNORECASE):
             object_name = re.match(
-                r"^create\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+unique\s+index\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+unique\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+sequence\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+sequence\s(.+?)(\s|$)", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^alter\s+table\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^alter\s+table\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+function\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+view\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+view\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+procedure\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+package\s+body", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+package\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+package\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+type\s+body", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+type\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-		elif re.match(r"^create\s+type\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+type\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+function\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+view\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+view\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+procedure\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+procedure\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+package\s+body", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+package\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+package\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)	
-        elif re.match(r"^create\s+or\s+replace\s+type\s+body", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+type\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+or\s+replace\s+type\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+or\s+replace\s+type\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
+                r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+            ).group(3)
         else:
             return object_name.strip()
         return object_name.strip()
