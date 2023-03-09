@@ -437,17 +437,25 @@ class OracleEngine(EngineBase):
     def get_sql_first_object_name(sql=""):
         """获取sql文本中的object_name"""
         object_name = ""
-        if re.match(r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s", sql, re.M | re.IGNORECASE):
+        # 匹配表、索引、序列
+        pattern=r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s"
+        groups = re.match(pattern, sql, re.M |  re.IGNORECASE)
+
+        if groups:
             object_name = re.match(
                 r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(3)
-        elif re.match(r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s", sql, re.M | re.IGNORECASE):
+            ).group(3).strip()
+            return object_name
+
+        # 匹配创建或者替换SQL块
+        pattern=r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s"
+        groups = re.match(pattern, sql, re.M |  re.IGNORECASE)
+
+        if groups:
             object_name = re.match(
                 r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(3)
-        else:
-            return object_name.strip()
-        return object_name.strip()
+            ).group(3).strip()
+            return object_name
 
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
