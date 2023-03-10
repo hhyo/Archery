@@ -453,10 +453,11 @@ class OracleEngine(EngineBase):
 
         if groups:
             object_name = re.match(
-                r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
+                r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()",
+                sql, re.M | re.IGNORECASE
             ).group(3).strip()
             return object_name
-
+        return object_name
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
         schema_name = '"' + db_name + '"'
