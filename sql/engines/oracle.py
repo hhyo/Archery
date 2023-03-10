@@ -438,26 +438,38 @@ class OracleEngine(EngineBase):
         """获取sql文本中的object_name"""
         object_name = ""
         # 匹配表、索引、序列
-        pattern=r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s"
-        groups = re.match(pattern, sql, re.M |  re.IGNORECASE)
+        pattern = r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s"
+        groups = re.match(pattern, sql, re.M | re.IGNORECASE)
 
         if groups:
-            object_name = re.match(
-                r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s+(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(3).strip()
+            object_name = (
+                re.match(
+                    r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s+(.+?)(\s|\()",
+                    sql,
+                    re.M | re.IGNORECASE,
+                )
+                .group(3)
+                .strip()
+            )
             return object_name
 
         # 匹配创建或者替换SQL块
-        pattern=r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s"
-        groups = re.match(pattern, sql, re.M |  re.IGNORECASE)
+        pattern = r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s"
+        groups = re.match(pattern, sql, re.M | re.IGNORECASE)
 
         if groups:
-            object_name = re.match(
-                r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()",
-                sql, re.M | re.IGNORECASE
-            ).group(3).strip()
+            object_name = (
+                re.match(
+                    r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()",
+                    sql,
+                    re.M | re.IGNORECASE,
+                )
+                .group(3)
+                .strip()
+            )
             return object_name
         return object_name
+		
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
         schema_name = '"' + db_name + '"'
@@ -943,18 +955,25 @@ class OracleEngine(EngineBase):
                                 object_name = object_name.upper()
 
                         object_name = f"""{schema_name}.{object_name}"""
-                        if re.match(r"^create\sor\sreplace", sql_lower) and (self.object_name_check(db_name=db_name,
-                                                  object_name=object_name) or object_name in object_name_list):
-                            result = ReviewResult(id=line, errlevel=1,
-                                                  stagestatus=f"""{object_name}对象已经存在，请确认是否替换！""",
-                                                  errormessage=f"""{object_name}对象已经存在，请确认是否替换！""",
-                                                  sql=sqlitem.statement,
-                                                  stmt_type=sqlitem.stmt_type,
-                                                  object_owner=sqlitem.object_owner,
-                                                  object_type=sqlitem.object_type,
-                                                  object_name=sqlitem.object_name,
-                                                  affected_rows=0,
-                                                  execute_time=0, )
+                        if re.match(r"^create\sor\sreplace", sql_lower) and (
+                            self.object_name_check(
+                                db_name=db_name, object_name=object_name
+                            )
+                            or object_name in object_name_list
+                        ):
+                            result = ReviewResult(
+                                id=line,
+                                errlevel=1,
+                                stagestatus=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                errormessage=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                sql=sqlitem.statement,
+                                stmt_type=sqlitem.stmt_type,
+                                object_owner=sqlitem.object_owner,
+                                object_type=sqlitem.object_type,
+                                object_name=sqlitem.object_name,
+                                affected_rows=0,
+                                execute_time=0,
+                            )
                         elif (
                             self.object_name_check(
                                 db_name=db_name, object_name=object_name
