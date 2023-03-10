@@ -469,7 +469,7 @@ class OracleEngine(EngineBase):
             )
             return object_name
         return object_name
-		
+
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
         schema_name = '"' + db_name + '"'
