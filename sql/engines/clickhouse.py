@@ -63,11 +63,12 @@ class ClickHouseEngine(EngineBase):
 
     def get_table_engine(self, tb_name):
         """获取某个table的engine type"""
+        [database, name] = tb_name.split(".")
         sql = f"""select engine 
                     from system.tables 
-                   where database='{tb_name.split('.')[0]}' 
-                     and name='{tb_name.split('.')[1]}'"""
-        query_result = self.query(sql=sql)
+                   where database=%s
+                     and name=%s"""
+        query_result = self.query(sql=sql, parameters=(database, name))
         if query_result.rows:
             result = {"status": 1, "engine": query_result.rows[0][0]}
         else:
@@ -104,30 +105,38 @@ class ClickHouseEngine(EngineBase):
         from
             system.columns
         where
-            database = '{db_name}'
-        and table = '{tb_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+            database = %s
+        and table = %s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters=(db_name, tb_name))
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
-        sql = f"show create table `{tb_name}`;"
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"show create table %s;"
+        result = self.query(db_name=db_name, sql=sql, parameters=(tb_name,))
 
         result.rows[0] = (tb_name,) + (
             result.rows[0][0].replace("(", "(\n ").replace(",", ",\n "),
         )
         return result
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        parameters=None,
+        limit_num=0,
+        close_conn=True,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection(db_name=db_name)
             cursor = conn.cursor()
-            cursor.execute(sql)
+            cursor.execute(sql, parameters=parameters)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
