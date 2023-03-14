@@ -244,8 +244,7 @@ def get_full_sqlitem_list(full_sql, db_name):
         if re.match(regex_delimiter, sql):
             delimiter_flag = 1
             continue
-            
-        tmp_list = []
+
         if delimiter_flag == 1:
             # 表示SQL块为delimiter $$标记之后的内容
 
@@ -355,6 +354,7 @@ def get_full_sqlitem_list(full_sql, db_name):
             # 创建视图、序列、表，语句作为SQL处理最后如果加了 / ，预处理中会在 / 后一行加$$，
             # 这里需要将SQL文本中 /\n$$ 去除后再传给get_base_sqlitem_list函数
             sql = sql.replace("/\n$$","")
+            tmp_list = get_base_sqlitem_list(sql)
             list.extend(tmp_list)
     return list
 
