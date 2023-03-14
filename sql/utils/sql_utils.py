@@ -196,7 +196,7 @@ def get_full_sqlitem_list(full_sql, db_name):
     for line in pre_sql_list:
         # 匹配到declare和begin开始的行，同时该行SQL不是处于PLSQL程序块内部的，前面添加delimiter $$标识符（独立一行）
         pattern = r"^(declare|begin)"
-        groups = re.match(pattern, line, re.IGNORECASE)
+        groups = re.match(pattern, line.lstrip(), re.IGNORECASE)
         if groups and is_inside_plsqlblock == 0:
             line = "delimiter $$" + "\n" + line
             # 修改is_inside_plsqlblock参数为1，标识文本进入PLSQL块内部
@@ -207,7 +207,7 @@ def get_full_sqlitem_list(full_sql, db_name):
         pattern = (
             r"^create\s+(or\s+replace\s+)?(function|procedure|trigger|package|type)\s"
         )
-        groups = re.match(pattern, line, re.IGNORECASE)
+        groups = re.match(pattern, line.lstrip(), re.IGNORECASE)
         if groups and is_inside_plsqlblock == 0:
             line = "delimiter $$" + "\n" + line
             # 修改is_inside_plsqlblock参数为1，标识文本进入PLSQL块内部
