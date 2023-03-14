@@ -244,7 +244,8 @@ def get_full_sqlitem_list(full_sql, db_name):
         if re.match(regex_delimiter, sql):
             delimiter_flag = 1
             continue
-
+            
+        tmp_list = []
         if delimiter_flag == 1:
             # 表示SQL块为delimiter $$标记之后的内容
 
