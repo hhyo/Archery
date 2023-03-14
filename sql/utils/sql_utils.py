@@ -204,7 +204,9 @@ def get_full_sqlitem_list(full_sql, db_name):
 
         # 匹配到create [or replace] function|procedure|trigger|package|type开始的行，同时该行SQL不是处于PLSQL程序块内部的，
         # 前面添加delimiter $$标识符（独立一行）
-        pattern = r"^create\s+(or\s+replace\s+)?(function|procedure|trigger|package|type)\s"
+        pattern = (
+            r"^create\s+(or\s+replace\s+)?(function|procedure|trigger|package|type)\s"
+        )
         groups = re.match(pattern, line, re.IGNORECASE)
         if groups and is_inside_plsqlblock == 0:
             line = "delimiter $$" + "\n" + line
@@ -214,7 +216,7 @@ def get_full_sqlitem_list(full_sql, db_name):
         # 匹配到内容为$$的行，修改is_inside_plsqlblock参数为0，标识文本跳出PLSQL块
         if line.strip() == "$$":
             is_inside_plsqlblock = 0
-        full_sql_new = full_sql_new + line + '\n'
+        full_sql_new = full_sql_new + line + "\n"
 
     list = []
 
@@ -337,7 +339,7 @@ def get_full_sqlitem_list(full_sql, db_name):
                     # 处理$$之后的那些语句, 默认为单条可执行SQL的集合
                     # 创建视图、序列、表，语句作为SQL处理最后如果加了 / ，预处理中会在 / 后一行加$$，
                     # 这里需要将SQL文本中 /\n$$ 去除后再传给get_base_sqlitem_list函数
-                    sql_area = sql[pos + 2:].replace("/\n$$","").strip()
+                    sql_area = sql[pos + 2 :].replace("/\n$$", "").strip()
                     if len(sql_area) > 0:
                         tmp_list = get_base_sqlitem_list(sql_area)
                         list.extend(tmp_list)
@@ -353,7 +355,7 @@ def get_full_sqlitem_list(full_sql, db_name):
             # 表示当前为以;结尾的正常sql
             # 创建视图、序列、表，语句作为SQL处理最后如果加了 / ，预处理中会在 / 后一行加$$，
             # 这里需要将SQL文本中 /\n$$ 去除后再传给get_base_sqlitem_list函数
-            sql = sql.replace("/\n$$","")
+            sql = sql.replace("/\n$$", "")
             tmp_list = get_base_sqlitem_list(sql)
             list.extend(tmp_list)
     return list
