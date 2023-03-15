@@ -10,6 +10,7 @@ from uuid import UUID
 from bson.objectid import ObjectId
 from bson.timestamp import Timestamp
 from bson.decimal128 import Decimal128
+from bson.regex import Regex
 
 
 @singledispatch
@@ -73,6 +74,11 @@ def _(o):
 
 
 @convert.register(Decimal128)
+def _(o):
+    return str(o)
+
+
+@convert.register(Regex)
 def _(o):
     return str(o)
 
