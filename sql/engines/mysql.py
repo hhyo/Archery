@@ -614,7 +614,7 @@ class MysqlEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute("information_schema", kill_sql)
 
-    def tablesapce(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """
         SELECT
@@ -635,7 +635,7 @@ class MysqlEngine(EngineBase):
         )
         return self.query("information_schema", sql)
 
-    def tablesapce_num(self):
+    def tablespace_count(self):
         """获取表空间数量"""
         sql = """
         SELECT count(*)

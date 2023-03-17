@@ -81,7 +81,7 @@ class AliyunRDS(MysqlEngine):
             result.error = str(e)
         return result
 
-    def tablesapce(self, offset, limit):
+    def tablespace(self, offset, limit):
         # 通过实例名称获取关联的rds实例id
         instance_info = AliyunRdsConfig.objects.get(
             instance__instance_name=self.instance_name
