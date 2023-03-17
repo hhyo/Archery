@@ -1659,6 +1659,84 @@ class TestOracle(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
+    def test_get_sql_first_object_name(self):
+        """
+        测试获取sql文本中的object_name
+        :return:
+        """
+        new_engine = OracleEngine(instance=self.ins)
+        sql = """create or replace procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);    
+end;""" 
+        object_name = new_engine.get_sql_first_object_name(sql)
+        self.assertEqual(object_name, "INSERTUSER")
+
+    @patch(
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name", return_value="INSERTUSER"
+    )
+    @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
+    def test_execute_check_replace_exist_plsql_object(
+        self, _get_sql_first_object_name, _object_name_check
+    ):
+        sql = """create or replace procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);    
+end;"""
+        row = ReviewResult(
+            id=1,
+            errlevel=1,
+            stagestatus=""""TRADE".INSERTUSER对象已经存在，请确认是否替换！""",
+            errormessage=""""TRADE".INSERTUSER对象已经存在，请确认是否替换！""",
+            sql=sqlparse.format(
+                sql, strip_comments=True, reindent=True, keyword_case="lower"
+            ),
+            affected_rows=0,
+            execute_time=0,
+            stmt_type="SQL",
+            object_owner="",
+            object_type="",
+            object_name="",
+        )
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="TRADE", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch(
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name", return_value="INSERTUSER"
+    )
+    @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
+    def test_execute_check_exist_plsql_object(
+        self, _get_sql_first_object_name, _object_name_check
+    ):
+        sql = """create procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);    
+end;"""
+        row = ReviewResult(
+            id=1,
+            errlevel=2,
+            stagestatus=""""TRADE".INSERTUSER对象已经存在！""",
+            errormessage=""""TRADE".INSERTUSER对象已经存在！""",
+            sql=sqlparse.format(
+                sql, strip_comments=True, reindent=True, keyword_case="lower"
+            ),
+        )
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="TRADE", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+        
     @patch("cx_Oracle.connect.cursor.execute")
     @patch("cx_Oracle.connect.cursor")
     @patch("cx_Oracle.connect")
