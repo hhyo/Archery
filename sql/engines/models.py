@@ -130,6 +130,7 @@ class ResultSet:
         status=None,
         affected_rows=0,
         column_list=None,
+        column_type=None,
         **kwargs
     ):
         self.full_sql = full_sql
@@ -145,6 +146,7 @@ class ResultSet:
         # rows 为普通列表
         self.rows = rows or []
         self.column_list = column_list if column_list else []
+        self.column_type = column_type if column_type else []
         self.status = status
         self.affected_rows = affected_rows
 

@@ -25,7 +25,8 @@
                         title="请选择实例:"
                         data-live-search="true">
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
-                        <optgroup id="optgroup-mongo" label="mongo"></optgroup>
+                        <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
+                        <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -95,7 +96,10 @@
     <script>
 
         var processListColumns  = NaN;
+        var tablespaceListColumns = NaN;
+        var lockListColumns = NaN;
         var processListDetailFormatCallback = NaN;
+        var lockListDetailFormatCallback = NaN;
 
         // get_process_list函数表格的格式化信息
         // 0.数据库类型； 1.类型过滤； 2.字段映射；  3.详细信息的处理函数
@@ -257,6 +261,71 @@
                     return "<pre>"+jsonHighLight(JSON.stringify(row, null, 2))+"</pre>";
                 }
             ],
+            [
+                'oracle',
+                ["All","Active","Others"],
+                [{
+                    title: '',
+                    field: 'checkbox',
+                    checkbox: true
+                }, {
+                    title: 'SESSION ID',
+                    field: 'SID',
+                    sortable: true
+                }, {
+                    title: 'SERIAL#',
+                    field: 'SERIAL#',
+                    sortable: true
+                }, {
+                    title: 'STATUS',
+                    field: 'STATUS',
+                    sortable: true
+                }, {
+                    title: 'USER',
+                    field: 'USERNAME',
+                    sortable: true
+                }, {
+                    title: 'MACHINE',
+                    field: 'MACHINE',
+                    sortable: true
+                }, {
+                    title: 'SQL',
+                    field: 'SQL_TEXT',
+                    sortable: true,
+                    formatter: function (value, row, index) {
+                        if (row.SQL_TEXT.length > 60) {
+                            let sql = row.SQL_TEXT.substr(0, 60) + '...';
+                            return sql;
+                        } else {
+                            return value
+                        }
+                    }
+                }, {
+                    title: 'FULL SQL',
+                    field: 'SQL_FULLTEXT',
+                    visible: false,
+                    sortable: true
+                }, {
+                    title: 'START TIME',
+                    field: 'SQL_EXEC_START',
+                    sortable: true
+                }],
+                function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'SQL_FULLTEXT') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                }
+            ]
         ]
 
 
@@ -323,6 +392,64 @@
             }
         }
 
+        // get_space_list函数表格的格式化信息
+        // 0.数据库类型； 1.字段映射
+        let tablespaceListTableInfos = [
+            [
+                'mysql',
+                [{
+                     title: '数据库',
+                     field: 'table_schema'
+                 }, {
+                     title: '表名',
+                     field: 'table_name'
+                 }, {
+                     title: '存储引擎',
+                     field: 'engine'
+                 }, {
+                     title: '总空间(MB)',
+                     field: 'total_size'
+                 }, {
+                     title: '行数',
+                     field: 'table_rows'
+                 }, {
+                     title: '数据空间(MB)',
+                     field: 'data_size'
+                 }, {
+                     title: '索引空间(MB)',
+                     field: 'index_size'
+                 }, {
+                     title: '碎片空间(MB)',
+                     field: 'data_free'
+                 }, {
+                     title: '碎片率(%)',
+                     field: 'pct_free'
+                 }]
+            ],
+            [
+                'oracle',
+                [{
+                    title: '表空间名',
+                    field: 'TABLESPACE_NAME'
+                }, {
+                    title: '表空间类型',
+                    field: 'TABLESPACE_TYPE'
+                }, {
+                    title: '状态',
+                    field: 'STATUS'
+                }, {
+                    title: '总空间(MB)',
+                    field: 'TOTAL_SPACE'
+                }, {
+                    title: '已使用空间(MB)',
+                    field: 'USED_SPACE'
+                }, {
+                    title: '使用率(%)',
+                    field: 'PCT_USED'
+                }]
+            ]
+        ]
+
         // 问题诊断--表空间列表
         function get_space_list() {
             $("#command-div").hide();
@@ -367,40 +494,7 @@
                             instance_name: $("#instance_name").val()
                         }
                     },
-                    columns: [{
-                        title: '数据库',
-                        field: 'table_schema'
-                    }, {
-                        title: '表名',
-                        field: 'table_name'
-                    }, {
-                        title: '存储引擎',
-                        field: 'engine'
-                    }, {
-                        title: '总空间(MB)',
-                        field: 'total_size',
-                        sortable: true
-                    }, {
-                        title: '行数',
-                        field: 'table_rows',
-                        sortable: true
-                    }, {
-                        title: '数据空间(MB)',
-                        field: 'data_size',
-                        sortable: true
-                    }, {
-                        title: '索引空间(MB)',
-                        field: 'index_size',
-                        sortable: true
-                    }, {
-                        title: '碎片空间(MB)',
-                        field: 'data_free',
-                        sortable: true
-                    }, {
-                        title: '碎片率(%)',
-                        field: 'pct_free',
-                        sortable: true
-                    }],
+                    columns: tablespaceListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
                             alert("数据加载失败！" + data.msg);
@@ -551,6 +645,132 @@
             }
         }
 
+        // get_trxandlocks_list函数表格的格式化信息
+        // 0.数据库类型； 1.字段映射，2.详细信息的处理函数
+        let lockListTableInfos = [
+            [
+                'mysql',
+                [{
+                    title: '等待的状态',
+                    field: '等待的状态'
+                }, {
+                    title: '等待事务开始时间',
+                    field: '等待事务开始时间',
+                    sortable: true
+                }, {
+                    title: '等待事务等待开始时间',
+                    field: '等待事务等待开始时间'
+                }, {
+                    title: '等待事务ID',
+                    field: '等待事务ID',
+                }, {
+                    title: '等待事务线程ID',
+                    field: '等待事务线程ID',
+                }, {
+                    title: '等待事务的sql',
+                    field: '等待事务的sql',
+                }, {
+                    title: '等待的表信息',
+                    field: '等待的表信息',
+                }, {
+                    title: '等待的锁id',
+                    field: '等待的锁id'
+                }, {
+                    title: '运行的事务id',
+                    field: '运行的事务id'
+                }, {
+                    title: '运行的事务线程id',
+                    field: '运行的事务线程id',
+                }, {
+                    title: '运行的表信息',
+                    field: '运行的表信息'
+                }, {
+                    title: '运行的锁id',
+                    field: '运行的锁id'
+                }, {
+                    title: '运行事务的状态',
+                    field: '运行事务的状态'
+                }, {
+                    title: '运行事务的时间',
+                    field: '运行事务的时间',
+                }, {
+                    title: '运行事务的等待开始时间',
+                    field: '运行事务的等待开始时间',
+                }, {
+                    title: '运行事务的sql',
+                    field: '运行事务的sql',
+                }],
+                 function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === '等待事务的sql') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                }
+            ],
+            [
+                'oracle',
+                [{
+                    title: 'USERNAME',
+                    field: 'USERNAME'
+                }, {
+                    title: 'OBJECT_OWNER',
+                    field: 'OBJECT_OWNER'
+                }, {
+                    title: 'OBJECT_ID',
+                    field: 'OBJECT_ID'
+                }, {
+                    title: 'OBJECT_NAME',
+                    field: 'OBJECT_NAME'
+                }, {
+                    title: 'LOCKED_MODE',
+                    field: 'LOCKED_MODE'
+                }, {
+                    title: 'RELATED_SID',
+                    field: 'RELATED_SID'
+                }, {
+                    title: 'RELATED_SERIAL#',
+                    field: 'RELATED_SERIAL#'
+                }, {
+                    title: 'MACHINE',
+                    field: 'MACHINE'
+                }, {
+                    title: 'RELATED_SQL',
+                    field: 'RELATED_SQL'
+                }, {
+                    title: 'RELATED_SQL_FULL',
+                    field: 'RELATED_SQL_FULL',
+                    visible: false
+                }, {
+                    title: 'RELATED_SQL_EXEC_START',
+                    field: 'RELATED_SQL_EXEC_START'
+                }],
+                 function (index, row) {
+                    var html = [];
+                    $.each(row, function (key, value) {
+                        if (key === 'RELATED_SQL_FULL') {
+                            var sql = window.sqlFormatter.format(value);
+                            //替换所有的换行符
+                            sql = sql.replace(/\r\n/g, "<br>");
+                            sql = sql.replace(/\n/g, "<br>");
+                            //替换所有的空格
+                            sql = sql.replace(/\s/g, "&nbsp;");
+                            html.push('<span>' + sql + '</span>');
+                        }
+                    });
+                    return html.join('');
+                }
+            ]
+        ]
+
         // 问题诊断--锁等待列表
         function get_trxandlocks_list() {
             $("#command-div").hide();
@@ -583,7 +803,8 @@
                     showExport: true,
                     exportDataType: "all",
                     cardView: false,                    //是否显示详细视图
-                    detailView: false,                  //是否显示父子表
+                    detailView: true,                  //是否显示父子表
+                    detailFormatter: lockListDetailFormatCallback,
                     locale: 'zh-CN',                    //本地化
                     toolbar: "#toolbar",               //指明自定义的toolbar
                     queryParamsType: 'limit',
@@ -593,56 +814,7 @@
                             instance_name: $("#instance_name").val()
                         }
                     },
-                    columns: [{
-                        title: '等待的状态',
-                        field: '等待的状态'
-                    }, {
-                        title: '等待事务开始时间',
-                        field: '等待事务开始时间',
-                        sortable: true
-                    }, {
-                        title: '等待事务等待开始时间',
-                        field: '等待事务等待开始时间'
-                    }, {
-                        title: '等待事务ID',
-                        field: '等待事务ID',
-                    }, {
-                        title: '等待事务线程ID',
-                        field: '等待事务线程ID',
-                    }, {
-                        title: '等待事务的sql',
-                        field: '等待事务的sql',
-                    }, {
-                        title: '等待的表信息',
-                        field: '等待的表信息',
-                    }, {
-                        title: '等待的锁id',
-                        field: '等待的锁id'
-                    }, {
-                        title: '运行的事务id',
-                        field: '运行的事务id'
-                    }, {
-                        title: '运行的事务线程id',
-                        field: '运行的事务线程id',
-                    }, {
-                        title: '运行的表信息',
-                        field: '运行的表信息'
-                    }, {
-                        title: '运行的锁id',
-                        field: '运行的锁id'
-                    }, {
-                        title: '运行事务的状态',
-                        field: '运行事务的状态'
-                    }, {
-                        title: '运行事务的时间',
-                        field: '运行事务的时间',
-                    }, {
-                        title: '运行事务的等待开始时间',
-                        field: '运行事务的等待开始时间',
-                    }, {
-                        title: '运行事务的sql',
-                        field: '运行事务的sql',
-                    }],
+                    columns: lockListColumns,
                     onLoadSuccess: function (data) {
                         if (data.status !== 0) {
                             alert("数据加载失败！" + data.msg);
@@ -670,6 +842,8 @@
                             AllSelectionIds.push(AllSelections[i]['id'])    // mysql
                         } else if (AllSelections[i]['opid']) {
                             AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
+                        } else if (AllSelections[i]['SID']) {
+                            AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
                         }
                     }
                     var instance_name = $("#instance_name").val();
@@ -717,6 +891,8 @@
                         AllSelectionIds.push(AllSelections[i]['id'])    // mysql
                     } else if (AllSelections[i]['opid']) {
                         AllSelectionIds.push(AllSelections[i]['opid'])  // mongo
+                    } else if (AllSelections[i]['SID']) {
+                        AllSelectionIds.push([AllSelections[i]['SID'],AllSelections[i]['SERIAL#']])  // oracle
                     }
                 }
                 var instance_name = $("#instance_name").val();
@@ -760,7 +936,7 @@
                         url: "/group/user_all_instances/",
                         dataType: "json",
                         data: {
-                            db_type: ['mysql','mongo']
+                            db_type: ['mysql','mongo', 'oracle']
                         },
                         complete: function () {
                             //如果已选择instance_name，进入页面自动填充，并且重置激活id
@@ -778,6 +954,7 @@
                                 // $("#instance_name").empty();
                                 $("#optgroup-mysql").empty();
                                 $("#optgroup-mongo").empty();
+                                $("#optgroup-oracle").empty();
                                 for (let i = 0; i < result.length; i++) {
                                     let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
                                     // $("#instance_name").append(instance);
@@ -785,7 +962,9 @@
                                         $("#optgroup-mysql").append(instance);
                                     } else if (result[i]['db_type'] === 'mongo') {
                                         $("#optgroup-mongo").append(instance);
-                                    } 
+                                    } else if (result[i]['db_type'] === 'oracle') {
+                                        $("#optgroup-oracle").append(instance);
+                                    }
                                 }
                                 $('#instance_name').selectpicker('render');
                                 $('#instance_name').selectpicker('refresh');
@@ -837,6 +1016,17 @@
                     command_types = processListTableInfo[1];
                     processListColumns = processListTableInfo[2];
                     processListDetailFormatCallback = processListTableInfo[3];
+                }
+            })
+            tablespaceListTableInfos.forEach((tablespaceListTableInfo,i) =>{
+                if (tablespaceListTableInfo[0] === db_type) {
+                    tablespaceListColumns = tablespaceListTableInfo[1];
+                }
+            })
+            lockListTableInfos.forEach((lockListTableInfo,i) =>{
+                if (lockListTableInfo[0] === db_type) {
+                    lockListColumns = lockListTableInfo[1];
+                    lockListDetailFormatCallback = lockListTableInfo[2];
                 }
             })
             

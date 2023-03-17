@@ -201,12 +201,14 @@ class GoInceptionEngine(EngineBase):
             raise RuntimeError(f"Inception Error: {query_result.error}")
         if not query_result.rows:
             raise RuntimeError(f"Inception Error: 未获取到语法信息")
-        # 兼容语法错误时errlevel=0的场景
+        # 兼容某些异常场景下返回内容为审核结果的问题 https://github.com/hhyo/Archery/issues/1826
         print_info = query_result.to_dict()[0]
-        if print_info["errlevel"] == 0 and print_info["errmsg"] is None:
+        if "error_level" in print_info:
+            raise RuntimeError(f'Inception Error: {print_info.get("error_message")}')
+        if print_info.get("errlevel") == 0 and print_info.get("errmsg") is None:
             return json.loads(print_info["query_tree"])
         else:
-            raise RuntimeError(f"Inception Error: {print_info['errmsg']}")
+            raise RuntimeError(f'Inception Error: print_info.get("errmsg")')
 
     def get_rollback(self, workflow):
         """
@@ -280,8 +282,8 @@ class GoInceptionEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""
-        sqlsha1 = kwargs.get("sqlsha1")
-        command = kwargs.get("command")
+        sqlsha1 = MySQLdb.escape_string(kwargs.get("sqlsha1")).decode("utf-8")
+        command = MySQLdb.escape_string(kwargs.get("command")).decode("utf-8")
         if command == "get":
             sql = f"inception get osc_percent '{sqlsha1}';"
         else:

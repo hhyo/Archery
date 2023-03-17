@@ -18,6 +18,7 @@ from .models import AliyunRdsConfig, Instance
 
 logger = logging.getLogger("default")
 
+
 # 问题诊断--进程列表
 @permission_required("sql.process_view", raise_exception=True)
 def process(request):
@@ -41,6 +42,8 @@ def process(request):
 
     elif instance.db_type == "mongo":
         query_result = query_engine.current_op(command_type)
+    elif instance.db_type == "oracle":
+        query_result = query_engine.session_list(command_type)
     else:
         result = {
             "status": 1,
@@ -86,6 +89,8 @@ def create_kill_session(request):
     elif instance.db_type == "mongo":
         kill_command = query_engine.get_kill_command(json.loads(thread_ids))
         result["data"] = kill_command
+    elif instance.db_type == "oracle":
+        result["data"] = query_engine.get_kill_command(json.loads(thread_ids))
     else:
         result = {
             "status": 1,
@@ -124,6 +129,8 @@ def kill_session(request):
         r = engine.kill(json.loads(thread_ids), request_params=request_params)
     elif instance.db_type == "mongo":
         r = engine.kill_op(json.loads(thread_ids))
+    elif instance.db_type == "oracle":
+        r = engine.kill_session(json.loads(thread_ids))
     else:
         result = {
             "status": 1,
@@ -143,7 +150,7 @@ def kill_session(request):
 
 # 问题诊断--表空间信息
 @permission_required("sql.tablespace_view", raise_exception=True)
-def tablesapce(request):
+def tablespace(request):
     instance_name = request.POST.get("instance_name")
     offset = int(request.POST.get("offset", 0))
     limit = int(request.POST.get("limit", 14))
@@ -159,7 +166,9 @@ def tablesapce(request):
         # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
         #    result = aliyun_sapce_status(request)
         # else:
-        query_result = query_engine.tablesapce(offset, limit)
+        query_result = query_engine.tablespace(offset, limit)
+    elif instance.db_type == "oracle":
+        query_result = query_engine.tablespace(offset, limit)
     else:
         result = {
             "status": 1,
@@ -171,7 +180,7 @@ def tablesapce(request):
     if query_result:
         if not query_result.error:
             table_space = query_result.to_dict()
-            r = query_engine.tablesapce_num()
+            r = query_engine.tablespace_count()
             total = r[0][0]
             result = {"status": 0, "msg": "ok", "rows": table_space, "total": total}
         else:
@@ -197,7 +206,8 @@ def trxandlocks(request):
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
         query_result = query_engine.trxandlocks()
-
+    elif instance.db_type == "oracle":
+        query_result = query_engine.lock_info()
     else:
         result = {
             "status": 1,

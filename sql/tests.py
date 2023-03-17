@@ -1430,165 +1430,6 @@ class TestWorkflowView(TransactionTestCase):
         r_json = r.json()
         self.assertEqual(r_json["status"], "workflow_finish")
 
-    def test_check_param_is_None(self):
-        """测试工单检测，参数内容为空"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {"instance_name": self.master1.instance_name}
-        r = c.post("/simplecheck/", data=data)
-        self.assertDictEqual(
-            json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": {}}
-        )
-
-    @patch("sql.sql_workflow.get_engine")
-    def test_check_inception_Exception(self, _get_engine):
-        """测试工单检测，inception报错"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "sql_content": "update sql_users set email = ''where id > 0;",
-            "instance_name": self.master1.instance_name,
-            "db_name": "archery",
-        }
-        _get_engine.side_effect = RuntimeError("RuntimeError")
-        r = c.post("/simplecheck/", data=data)
-        self.assertDictEqual(
-            json.loads(r.content), {"status": 1, "msg": "RuntimeError", "data": {}}
-        )
-
-    @patch("sql.sql_workflow.get_engine")
-    def test_check(self, _get_engine):
-        """测试工单检测，正常返回"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "sql_content": "update sql_users set email = ''where id > 0;",  #
-            "instance_name": self.master1.instance_name,
-            "db_name": "archery",
-        }
-        column_list = [
-            "id",
-            "stage",
-            "errlevel",
-            "stagestatus",
-            "errormessage",
-            "sql",
-            "affected_rows",
-            "sequence",
-            "backup_dbname",
-            "execute_time",
-            "sqlsha1",
-            "backup_time",
-            "actual_affected_rows",
-        ]
-
-        rows = [
-            ReviewResult(
-                id=1,
-                stage="CHECKED",
-                errlevel=0,
-                stagestatus="Audit Completed",
-                errormessage="",
-                sql="use `archer`",
-                affected_rows=0,
-                actual_affected_rows=0,
-                sequence="0_0_00000000",
-                backup_dbname="",
-                execute_time="0",
-                sqlsha1="",
-            )
-        ]
-        _get_engine.return_value.execute_check.return_value = ReviewSet(
-            warning_count=0, error_count=0, column_list=column_list, rows=rows
-        )
-        r = c.post("/simplecheck/", data=data)
-        self.assertListEqual(
-            list(json.loads(r.content)["data"].keys()),
-            ["rows", "CheckWarningCount", "CheckErrorCount"],
-        )
-        self.assertListEqual(
-            list(json.loads(r.content)["data"]["rows"][0].keys()), column_list
-        )
-
-    def test_submit_param_is_None(self):
-        """测试SQL提交，参数内容为空"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "sql_content": "update sql_users set email='' where id>0;",
-            "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
-            "group_name": self.resource_group1.group_name,
-            "instance_name": self.master1.instance_name,
-            "run_date_start": "",
-            "run_date_end": "",
-            "workflow_auditors": "11",
-        }
-        r = c.post("/autoreview/", data=data)
-        self.assertContains(r, "页面提交参数可能为空")
-
-    @patch("sql.sql_workflow.async_task")
-    @patch("sql.sql_workflow.Audit")
-    @patch("sql.sql_workflow.get_engine")
-    @patch("sql.sql_workflow.user_instances")
-    def test_submit_audit_wrong(
-        self, _user_instances, _get_engine, _audit, _async_task
-    ):
-        """测试SQL提交，获取审核信息报错"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "sql_content": "update sql_users set email='' where id>0;",
-            "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
-            "group_name": self.resource_group1.group_name,
-            "instance_name": self.master1.instance_name,
-            "db_name": "archery",
-            "demand_url": "test_url",
-            "run_date_start": "",
-            "run_date_end": "",
-            "workflow_auditors": "11",
-        }
-        _user_instances.return_value.get.return_value = self.master1
-        _get_engine.return_value.execute_check.return_value = ReviewSet(
-            syntax_type=1, warning_count=1, error_count=1
-        )
-        _audit.settings = ValueError("error")
-        _audit.add.return_value = None
-        _async_task.return_value = None
-        r = c.post("/autoreview/", data=data)
-        self.assertContains(r, "ValueError")
-
-    @patch("sql.sql_workflow.async_task")
-    @patch("sql.sql_workflow.Audit")
-    @patch("sql.sql_workflow.get_engine")
-    @patch("sql.sql_workflow.user_instances")
-    def test_submit(self, _user_instances, _get_engine, _audit, _async_task):
-        """测试SQL提交，正常提交"""
-        c = Client()
-        c.force_login(self.superuser1)
-        data = {
-            "sql_content": "update sql_users set email='' where id>0;",
-            "workflow_name": "【回滚工单】原工单Id:163+,3434434343",
-            "group_name": self.resource_group1.group_name,
-            "instance_name": self.master1.instance_name,
-            "db_name": "archery",
-            "demand_url": "test_url",
-            "run_date_start": "",
-            "run_date_end": "",
-            "workflow_auditors": "11",
-        }
-        _user_instances.return_value.get.return_value = self.master1
-        _get_engine.return_value.execute_check.return_value = ReviewSet(
-            syntax_type=1, warning_count=1, error_count=1
-        )
-        _audit.settings.return_value = "some_group,another_group"
-        _audit.add.return_value = None
-        _async_task.return_value = None
-        r = c.post("/autoreview/", data=data)
-        workflow_id = SqlWorkflow.objects.order_by("-id").first().id
-        self.assertRedirects(
-            r, f"/detail/{workflow_id}/", fetch_redirect_response=False
-        )
-
     @patch("sql.utils.workflow_audit.Audit.can_review")
     def test_alter_run_date_no_perm(self, _can_review):
         """测试修改可执行时间，无权限"""
@@ -1802,93 +1643,6 @@ class TestWorkflowView(TransactionTestCase):
         self.wf2.refresh_from_db()
         self.assertEqual("workflow_abort", self.wf2.status)
 
-    @patch("sql.sql_workflow.async_task")
-    @patch("sql.sql_workflow.Audit")
-    @patch("sql.sql_workflow.get_engine")
-    @patch("sql.sql_workflow.user_instances")
-    def test_workflow_auto_review_view(
-        self, mock_user_instances, mock_get_engine, mock_audit, mock_async_task
-    ):
-        """测试 autoreview/submit view"""
-        c = Client()
-        c.force_login(self.superuser1)
-        request_data = {
-            "sql_content": "update some_db set some_key='some value';",
-            "workflow_name": "some_title",
-            "group_name": self.resource_group1.group_name,
-            "group_id": self.resource_group1.group_id,
-            "instance_name": self.master1.instance_name,
-            "demand_url": "test_url",
-            "db_name": "some_db",
-            "is_backup": True,
-            "notify_users": "",
-        }
-        mock_user_instances.return_value.get.return_value = None
-        mock_get_engine.return_value.execute_check.return_value.warning_count = 0
-        mock_get_engine.return_value.execute_check.return_value.error_count = 0
-        mock_get_engine.return_value.execute_check.return_value.syntax_type = 0
-        mock_get_engine.return_value.execute_check.return_value.rows = []
-        mock_get_engine.return_value.execute_check.return_value.json.return_value = (
-            json.dumps(
-                [
-                    {
-                        "id": 1,
-                        "stage": "CHECKED",
-                        "errlevel": 0,
-                        "stagestatus": "Audit completed",
-                        "errormessage": "None",
-                        "sql": "use thirdservice_db",
-                        "affected_rows": 0,
-                        "sequence": "'0_0_0'",
-                        "backup_dbname": "None",
-                        "execute_time": "0",
-                        "sqlsha1": "",
-                        "actual_affected_rows": None,
-                    }
-                ]
-            )
-        )
-        mock_audit.settings.return_value = "some_group,another_group"
-        mock_audit.add.return_value = None
-        mock_async_task.return_value = None
-        r = c.post("/autoreview/", data=request_data, follow=False)
-        self.assertIn("detail", r.url)
-        workflow_id = int(re.search(r"\/detail\/(\d+)\/", r.url).groups()[0])
-        self.assertEqual(
-            request_data["workflow_name"],
-            SqlWorkflow.objects.get(id=workflow_id).workflow_name,
-        )
-
-        # 强制备份测试
-        # 打开备份开关, 对备份不要求
-        request_data_without_backup = {
-            "sql_content": "update some_db set some_key='some value';",
-            "workflow_name": "some_title_2",
-            "group_name": self.resource_group1.group_name,
-            "group_id": self.resource_group1.group_id,
-            "instance_name": self.master1.instance_name,
-            "db_name": "some_db",
-            "demand_url": "test_url",
-            "is_backup": False,
-            "notify_users": "",
-        }
-        archer_config = SysConfig()
-        archer_config.set("enable_backup_switch", "true")
-        r = c.post("/autoreview/", data=request_data_without_backup, follow=False)
-        self.assertIn("detail", r.url)
-        workflow_id = int(re.search(r"\/detail\/(\d+)\/", r.url).groups()[0])
-        self.assertEqual(
-            request_data_without_backup["workflow_name"],
-            SqlWorkflow.objects.get(id=workflow_id).workflow_name,
-        )
-
-        # 关闭备份选项, 不允许不备份
-        archer_config.set("enable_backup_switch", "false")
-        r = c.post("/autoreview/", data=request_data_without_backup, follow=False)
-        self.assertIn("detail", r.url)
-        workflow_id = int(re.search(r"\/detail\/(\d+)\/", r.url).groups()[0])
-        self.assertEqual(SqlWorkflow.objects.get(id=workflow_id).is_backup, True)
-
     @patch("sql.sql_workflow.get_engine")
     def test_osc_control(self, _get_engine):
         """测试MySQL工单osc控制"""
@@ -1950,11 +1704,16 @@ class TestOptimize(TestCase):
         self.master.delete()
         self.sys_config.replace(json.dumps({}))
 
-    def test_sqladvisor(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_sqladvisor(self, _subprocess):
         """
         测试SQLAdvisor报告
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
         r = self.client.post(path="/slowquery/optimize_sqladvisor/")
         self.assertEqual(
             json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
@@ -1974,11 +1733,16 @@ class TestOptimize(TestCase):
         )
         self.assertEqual(json.loads(r.content)["status"], 0)
 
-    def test_soar(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_soar(self, _subprocess):
         """
         测试SOAR报告
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
         r = self.client.post(path="/slowquery/optimize_soar/")
         self.assertEqual(
             json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
@@ -2443,6 +2207,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         r = self.client.post(path="/sql_analyze/generate/", data={})
         self.assertEqual(json.loads(r.content), {"rows": [], "total": 0})
 
@@ -2451,6 +2216,7 @@ class TestSQLAnalyze(TestCase):
         测试解析SQL，text不为空
         :return:
         """
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         r = self.client.post(path="/sql_analyze/generate/", data={"text": text})
         self.assertEqual(
@@ -2472,11 +2238,17 @@ class TestSQLAnalyze(TestCase):
         r = self.client.post(path="/sql_analyze/analyze/", data={})
         self.assertEqual(json.loads(r.content), {"rows": [], "total": 0})
 
-    def test_analyze_text_not_None(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_analyze_text_not_None(self, _subprocess):
         """
         测试分析SQL，text不为空
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         text = "select * from sql_user;select * from sql_workflow;"
         instance_name = self.master.instance_name
         db_name = settings.DATABASES["default"]["TEST"]["NAME"]
@@ -2574,7 +2346,7 @@ class TestBinLog(TestCase):
         :param _subprocess:
         :return:
         """
-        self.sys_config.set("my2sql", "/opt/my2sql")
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         self.sys_config.get_all_config()
         data = {
             "instance_name": "test_instance",
@@ -2600,12 +2372,18 @@ class TestBinLog(TestCase):
         self.assertEqual(json.loads(r.content), {"status": 0, "msg": "ok", "data": []})
 
     @patch("builtins.open")
-    def test_my2sql_file(self, _open):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_my2sql_file(self, _open, _subprocess):
         """
         测试保存文件
         :param _subprocess:
         :return:
         """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
+        self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         args = {
             "instance_name": "test_instance",
             "save_sql": "1",

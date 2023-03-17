@@ -30,10 +30,17 @@ logger = logging.getLogger("default")
 
 class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
-        user = Users(**validated_data)
-        user.set_password(validated_data["password"])
-        user.save()
-        return user
+        with transaction.atomic():
+            extra_data = dict()
+            for field in ("groups", "user_permissions", "resource_group"):
+                if field in validated_data.keys():
+                    extra_data[field] = validated_data.pop(field)
+            user = Users(**validated_data)
+            user.set_password(validated_data["password"])
+            user.save()
+            for field in extra_data.keys():
+                getattr(user, field).set(extra_data[field])
+            return user
 
     def validate_password(self, password):
         try:
@@ -53,6 +60,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             if attr == "password":
                 instance.set_password(value)
+            elif attr in ("groups", "user_permissions", "resource_group"):
+                getattr(instance, attr).set(value)
             else:
                 setattr(instance, attr, value)
         instance.save()
@@ -276,6 +285,9 @@ class ExecuteCheckSerializer(serializers.Serializer):
             raise serializers.ValidationError({"errors": f"不存在该实例：{instance_id}"})
         return instance_id
 
+    def get_instance(self):
+        return Instance.objects.get(pk=self.validated_data["instance_id"])
+
 
 class ExecuteCheckResultSerializer(serializers.Serializer):
     is_execute = serializers.BooleanField(read_only=True, default=False)
@@ -293,28 +305,26 @@ class ExecuteCheckResultSerializer(serializers.Serializer):
 
 
 class WorkflowSerializer(serializers.ModelSerializer):
-    def validate(self, attrs):
-        engineer = attrs.get("engineer")
-        group_id = attrs.get("group_id")
+    def to_internal_value(self, data):
+        if data.get("run_date_start") == "":
+            data["run_date_start"] = None
+        if data.get("run_date_end") == "":
+            data["run_date_end"] = None
+        return super().to_internal_value(data)
 
-        try:
-            Users.objects.get(username=engineer)
-        except Users.DoesNotExist:
-            raise serializers.ValidationError(f"不存在该用户：{engineer}")
-
+    @staticmethod
+    def validate_group_id(group_id):
         try:
             ResourceGroup.objects.get(pk=group_id)
         except ResourceGroup.DoesNotExist:
-            raise serializers.ValidationError(f"不存在该资源组：{group_id}")
-
-        return attrs
+            raise serializers.ValidationError({"errors": f"不存在该资源组：{group_id}"})
+        return group_id
 
     class Meta:
         model = SqlWorkflow
         fields = "__all__"
         read_only_fields = [
             "status",
-            "is_backup",
             "syntax_type",
             "audit_auth_groups",
             "engineer_display",
@@ -322,7 +332,11 @@ class WorkflowSerializer(serializers.ModelSerializer):
             "finish_time",
             "is_manual",
         ]
-        extra_kwargs = {"demand_url": {"required": False}}
+        extra_kwargs = {
+            "demand_url": {"required": False},
+            "is_backup": {"required": False},
+            "engineer": {"required": False},
+        }
 
 
 class WorkflowContentSerializer(serializers.ModelSerializer):
@@ -333,11 +347,20 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         workflow_data = validated_data.pop("workflow")
         instance = workflow_data["instance"]
         sql_content = validated_data["sql_content"].strip()
-        user = Users.objects.get(username=workflow_data["engineer"])
         group = ResourceGroup.objects.get(pk=workflow_data["group_id"])
-        active_user = Users.objects.filter(is_active=1)
+        engineer = workflow_data.get("engineer")
 
-        # 验证组权限（用户是否在该组、该组是否有指定实例）
+        # 管理员可以指定提交人信息
+        if self.context["request"].user.is_superuser and engineer:
+            try:
+                user = Users.objects.get(username=engineer)
+            except Users.DoesNotExist:
+                raise serializers.ValidationError({"errors": f"不存在用户：{engineer}"})
+        # 提交人只能是自己
+        else:
+            user = self.context["request"].user
+
+        # 验证提交用户的组权限（用户是否在该组、该组是否有指定实例）
         try:
             user_instances(user, tag_codes=["can_write"]).get(id=instance.id)
         except instance.DoesNotExist:
@@ -375,6 +398,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             is_backup=is_backup,
             is_manual=0,
             syntax_type=check_result.syntax_type,
+            engineer=user.username,
             engineer_display=user.display,
             group_name=group.group_name,
             audit_auth_groups=Audit.settings(
@@ -411,7 +435,6 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 async_task(
                     notify_for_audit,
                     audit_id=audit_id,
-                    cc_users=active_user,
                     timeout=60,
                     task_name=f"sqlreview-submit-{workflow.id}",
                 )
@@ -488,6 +511,19 @@ class WorkflowLogSerializer(serializers.Serializer):
     workflow_type = serializers.ChoiceField(
         choices=[1, 2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
     )
+
+    def validate(self, attrs):
+        workflow_id = attrs.get("workflow_id")
+        workflow_type = attrs.get("workflow_type")
+
+        try:
+            WorkflowAudit.objects.get(
+                workflow_id=workflow_id, workflow_type=workflow_type
+            )
+        except WorkflowAudit.DoesNotExist:
+            raise serializers.ValidationError({"errors": "不存在该工单"})
+
+        return attrs
 
 
 class WorkflowLogListSerializer(serializers.ModelSerializer):

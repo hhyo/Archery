@@ -1,12 +1,14 @@
 var onLoadErrorCallback = function (status, jqXHR) {
     if (status === 403) {
         alert("权限错误，您没有权限查看该数据！");
+    } else if (jqXHR.statusText === "abort" || jqXHR.statusText === "canceled"){
+        return 0
     } else {
         alert("未知错误，请联系管理员处理！");
     }
 };
 
-var dateFormat = function(fmt, date) { 
+var dateFormat = function(fmt, date) {
     var o = {
         "M+": date.getMonth() + 1,                   //月份
         "d+": date.getDate(),                        //日

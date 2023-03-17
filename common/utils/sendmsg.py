@@ -194,7 +194,6 @@ class MsgSender(object):
             logger.error(f"企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}")
 
     def send_qywx_webhook(self, qywx_webhook, msg):
-
         send_url = qywx_webhook
 
         # 对链接进行转换

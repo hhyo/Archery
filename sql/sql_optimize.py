@@ -74,10 +74,10 @@ def optimize_sqladvisor(request):
             json.dumps(args_check_result), content_type="application/json"
         )
     # 参数转换
-    cmd_args = sqladvisor.generate_args2cmd(args, shell=True)
+    cmd_args = sqladvisor.generate_args2cmd(args)
     # 执行命令
     try:
-        stdout, stderr = sqladvisor.execute_cmd(cmd_args, shell=True).communicate()
+        stdout, stderr = sqladvisor.execute_cmd(cmd_args).communicate()
         result["data"] = f"{stdout}{stderr}"
     except RuntimeError as e:
         result["status"] = 1
@@ -98,7 +98,7 @@ def optimize_soar(request):
         result["msg"] = "页面提交参数可能为空"
         return HttpResponse(json.dumps(result), content_type="application/json")
     try:
-        instance_info = user_instances(request.user, db_type=["mysql"]).get(
+        instance = user_instances(request.user, db_type=["mysql"]).get(
             instance_name=instance_name
         )
     except Exception:
@@ -115,12 +115,8 @@ def optimize_soar(request):
         return HttpResponse(json.dumps(result), content_type="application/json")
 
     # 目标实例的连接信息
-    online_dsn = '{user}:"{pwd}"@{host}:{port}/{db}'.format(
-        user=instance_info.user,
-        pwd=instance_info.password,
-        host=instance_info.host,
-        port=instance_info.port,
-        db=db_name,
+    online_dsn = (
+        f"{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}"
     )
 
     # 提交给soar获取分析报告
@@ -129,7 +125,7 @@ def optimize_soar(request):
     args = {
         "online-dsn": online_dsn,
         "test-dsn": soar_test_dsn,
-        "allow-online-as-test": "false",
+        "allow-online-as-test": False,
         "report-type": "markdown",
         "query": sql.strip(),
     }
@@ -140,10 +136,10 @@ def optimize_soar(request):
             json.dumps(args_check_result), content_type="application/json"
         )
     # 参数转换
-    cmd_args = soar.generate_args2cmd(args, shell=True)
+    cmd_args = soar.generate_args2cmd(args)
     # 执行命令
     try:
-        stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
+        stdout, stderr = soar.execute_cmd(cmd_args).communicate()
         result["data"] = stdout if stdout else stderr
     except RuntimeError as e:
         result["status"] = 1

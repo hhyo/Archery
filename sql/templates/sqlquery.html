@@ -670,13 +670,13 @@
             var active_li_id = sessionStorage.getItem('active_li_id');
             var active_li_title = sessionStorage.getItem('active_li_title');
             if (active_li_title.match(/^执行结果\d$/)){
-              //当前激活的执行结果页
-              var n = active_li_id.split("execute_result_tab")[1];
-              //填入sql
+                //当前激活的执行结果页
+                var n = active_li_id.split("execute_result_tab")[1];
+                //填入sql
               var inputs = $("#execute_result_tab"+n + " input");
               if(inputs.length > 0){
-                inputs[0].setAttribute("sql_cache", sqlContent)
-              }
+                    inputs[0].setAttribute("sql_cache", sqlContent)
+                }
             }
 
         });
@@ -731,7 +731,7 @@
                 }
                 // 因为一个tab可能对应多个执行，因此移除所有的p元素，新增一个隐藏的p元素
                 for (let i=0; i<$("#execute_result_tab"+n+" p").length; i++) {
-                    $("#execute_result_tab"+n+" p").remove(); 
+                    $("#execute_result_tab"+n+" p").remove();
                 }
                 $("#execute_result_tab"+n).append("<p style=\"display:none\">"+query_str+"</p>");
 
@@ -763,12 +763,11 @@
                                 }
                             },
                             formatter: function (value, row, index, field) {
-                                if (typeof (value) == "object" && Object.prototype.toString.call(value).toLowerCase() == "[object object]" && !value.length) {
+                                if (value instanceof Array || value instanceof Object){
                                     return JSON.stringify(value);
                                 }
                                 return value
                             }
-
                         });
                     });
                     if (result['full_sql'].match(/^show\s+create\s+table/)) {
@@ -1265,10 +1264,10 @@
                 //回填sql
                 let li_sql = $(e.target).parent().children("input");
                 if(li_sql.length>0){
-                  var sql = li_sql[0].getAttribute('sql_cache');
-                  if(sql){
-                    editor.setValue(sql);
-                  }
+                    var sql = li_sql[0].getAttribute('sql_cache');
+                  if(sql && !editor.getValue()){
+                        editor.setValue(sql);
+                    }
 
                 }
 
@@ -1312,42 +1311,17 @@
                     },
                     success: function (data) {
                         if (data.status === 0) {
-                            var result = data['data'];
-                            $("#optgroup-mysql").empty();
-                            $("#optgroup-mssql").empty();
-                            $("#optgroup-redis").empty();
-                            $("#optgroup-pgsql").empty();
-                            $("#optgroup-mongo").empty();
-                            $("#optgroup-phoenix").empty();
-                            $("#optgroup-odps").empty();
-                            $("#optgroup-clickhouse").empty();
-                            for (let i = 0; i < result.length; i++) {
-                                let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                if (result[i]['db_type'] === 'mysql') {
-                                    $("#optgroup-mysql").append(instance);
-                                } else if (result[i]['db_type'] === 'mssql') {
-                                    $("#optgroup-mssql").append(instance);
-                                } else if (result[i]['db_type'] === 'redis') {
-                                    $("#optgroup-redis").append(instance);
-                                } else if (result[i]['db_type'] === 'pgsql') {
-                                    $("#optgroup-pgsql").append(instance);
-                                } else if (result[i]['db_type'] === 'oracle') {
-                                    $("#optgroup-oracle").append(instance);
-                                } else if (result[i]['db_type'] === 'mongo') {
-                                    $("#optgroup-mongo").append(instance);
-                                } else if (result[i]['db_type'] === 'phoenix') {
-                                    $("#optgroup-phoenix").append(instance);
-                                } else if (result[i]['db_type'] === 'odps') {
-                                    $("#optgroup-odps").append(instance);
-                                } else if (result[i]['db_type'] === 'clickhouse') {
-                                    $("#optgroup-clickhouse").append(instance);
+                            $("optgroup[id^='optgroup']").empty();
+                            let result = data['data']
+                            const supportDb = ['mysql', 'mssql', 'redis', 'pgsql', 'oracle', 'mongo', 'phoenix', 'odps', 'clickhouse']
+                            for (let i of result) {
+                                let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
+                                if (supportDb.indexOf(i.db_type) !== -1) {
+                                    $("#optgroup-" + i.db_type).append(instance);
                                 }
                             }
-                            $('#instance_name').selectpicker('render');
-                            $('#instance_name').selectpicker('refresh');
-                            $("#db_name").empty();
-                            $('#db_name').selectpicker('render');
-                            $('#db_name').selectpicker('refresh');
+                            $('#instance_name').selectpicker('render').selectpicker('refresh');
+                            $("#db_name").empty().selectpicker('render').selectpicker('refresh');
                         } else {
                             alert(data.msg);
                         }

@@ -18,6 +18,38 @@ from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
+# https://github.com/mysql/mysql-connector-python/blob/master/lib/mysql/connector/constants.py#L168
+column_types_map = {
+    0: "DECIMAL",
+    1: "TINY",
+    2: "SHORT",
+    3: "LONG",
+    4: "FLOAT",
+    5: "DOUBLE",
+    6: "NULL",
+    7: "TIMESTAMP",
+    8: "LONGLONG",
+    9: "INT24",
+    10: "DATE",
+    11: "TIME",
+    12: "DATETIME",
+    13: "YEAR",
+    14: "NEWDATE",
+    15: "VARCHAR",
+    16: "BIT",
+    245: "JSON",
+    246: "NEWDECIMAL",
+    247: "ENUM",
+    248: "SET",
+    249: "TINY_BLOB",
+    250: "MEDIUM_BLOB",
+    251: "LONG_BLOB",
+    252: "BLOB",
+    253: "VAR_STRING",
+    254: "STRING",
+    255: "GEOMETRY",
+}
+
 
 class MysqlEngine(EngineBase):
     test_query = "SELECT 1"
@@ -277,6 +309,22 @@ class MysqlEngine(EngineBase):
         result = self.query(db_name=db_name, sql=sql)
         return result
 
+    @staticmethod
+    def result_set_binary_as_hex(result_set):
+        """处理ResultSet，将binary处理成hex"""
+        new_rows, hex_column_index = [], []
+        for idx, _type in enumerate(result_set.column_type):
+            if _type in ["TINY_BLOB", "MEDIUM_BLOB", "LONG_BLOB", "BLOB"]:
+                hex_column_index.append(idx)
+        if hex_column_index:
+            for row in result_set.rows:
+                row = list(row)
+                for index in hex_column_index:
+                    row[index] = row[index].hex() if row[index] else row[index]
+                new_rows.append(row)
+        result_set.rows = tuple(new_rows)
+        return result_set
+
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
@@ -298,8 +346,13 @@ class MysqlEngine(EngineBase):
             fields = cursor.description
 
             result_set.column_list = [i[0] for i in fields] if fields else []
+            result_set.column_type = (
+                [column_types_map.get(i[1], "") for i in fields] if fields else []
+            )
             result_set.rows = rows
             result_set.affected_rows = effect_row
+            if kwargs.get("binary_as_hex"):
+                result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
             logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
@@ -408,11 +461,16 @@ class MysqlEngine(EngineBase):
 
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
+        ddl_dml_separation = self.config.get("ddl_dml_separation", False)
         p = re.compile(critical_ddl_regex)
+        # 获取语句类型：DDL或者DML
+        ddl_dml_flag = ""
         for row in check_result.rows:
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type="mysql")
+            # 获取提交类型
+            syntax_type = get_syntax_type(statement, parser=False, db_type="mysql")
             # 禁用语句
             if re.match(r"^select", statement.lower()):
                 check_result.error_count += 1
@@ -425,6 +483,14 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
+            elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
+                if ddl_dml_flag == "":
+                    ddl_dml_flag = syntax_type
+                elif ddl_dml_flag != syntax_type:
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回不支持语句"
+                    row.errlevel = 2
+                    row.errormessage = "DDL语句和DML语句不能同时执行！"
         return check_result
 
     def execute_workflow(self, workflow):
@@ -521,6 +587,9 @@ class MysqlEngine(EngineBase):
 
     def get_kill_command(self, thread_ids):
         """由传入的线程列表生成kill命令"""
+        # 校验传参
+        if [i for i in thread_ids if not isinstance(i, int)]:
+            return None
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )
@@ -533,6 +602,9 @@ class MysqlEngine(EngineBase):
 
     def kill(self, thread_ids):
         """kill线程"""
+        # 校验传参
+        if [i for i in thread_ids if not isinstance(i, int)]:
+            return ResultSet(full_sql="")
         sql = "select concat('kill ', id, ';') from information_schema.processlist where id in ({});".format(
             ",".join(str(tid) for tid in thread_ids)
         )

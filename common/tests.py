@@ -541,3 +541,25 @@ class AuthTest(TestCase):
         # init 需要是无状态的, 可以重复执行, 执行一次和执行n次结果一样
         init_user(self.u1)
         self.assertEqual(self.u1, self.resource_group1.users_set.get(pk=self.u1.pk))
+
+
+class PermissionTest(TestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create(
+            username="test_user", display="中文显示", is_active=True, email="XXX@xxx.com"
+        )
+        self.client.force_login(self.user)
+
+    def tearDown(self) -> None:
+        self.user.delete()
+
+    def test_superuser_required_false(self):
+        """测试超管权限校验"""
+        r = self.client.get("/config/")
+        self.assertContains(r, "您无权操作，请联系管理员")
+
+    def test_superuser_required_true(self):
+        """测试超管权限校验"""
+        User.objects.filter(username=self.user.username).update(is_superuser=1)
+        r = self.client.get("/config/")
+        self.assertNotContains(r, "您无权操作，请联系管理员")

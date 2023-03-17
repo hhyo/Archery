@@ -336,7 +336,7 @@ def archive(archive_id):
     pt_archiver = PtArchiver()
     # 准备参数
     source = (
-        rf"h={s_ins.host},u={s_ins.user},p='{s_ins.password}',"
+        rf"h={s_ins.host},u={s_ins.user},p={s_ins.password},"
         rf"P={s_ins.port},D={src_db_name},t={src_table_name},A={s_charset}"
     )
     args = {
@@ -357,12 +357,13 @@ def archive(archive_id):
         dest_db_name = archive_info.dest_db_name
         dest_table_name = archive_info.dest_table_name
         # 目标表的字符集信息
-        d_engine = get_engine(d_ins)
-        d_db = d_engine.schema_object.databases[dest_db_name]
+        schema_object = get_engine(d_ins).schema_object
+        d_db = schema_object.databases[dest_db_name]
         d_tb = d_db.tables[dest_table_name]
         d_charset = d_tb.options["charset"].value
         if d_charset is None:
             d_charset = d_db.options["charset"].value
+        schema_object.connection.close()
         # dest
         dest = (
             rf"h={d_ins.host},u={d_ins.user},p={d_ins.password},P={d_ins.port},"
@@ -387,13 +388,13 @@ def archive(archive_id):
     if args_check_result["status"] == 1:
         return JsonResponse(args_check_result)
     # 参数转换
-    cmd_args = pt_archiver.generate_args2cmd(args, shell=True)
+    cmd_args = pt_archiver.generate_args2cmd(args)
     # 执行命令，获取结果
     select_cnt = 0
     insert_cnt = 0
     delete_cnt = 0
     with FuncTimer() as t:
-        p = pt_archiver.execute_cmd(cmd_args, shell=True)
+        p = pt_archiver.execute_cmd(cmd_args)
         stdout = ""
         for line in iter(p.stdout.readline, ""):
             if re.match(r"^SELECT\s(\d+)$", line, re.I):
@@ -442,11 +443,12 @@ def archive(archive_id):
         update_fields=["last_archive_time"]
     )
     # 替换密码信息后保存
+    shell_cmd = " ".join(cmd_args)
     ArchiveLog.objects.create(
         archive=archive_info,
-        cmd=cmd_args.replace(s_ins.password, "***").replace(d_ins.password, "***")
+        cmd=shell_cmd.replace(s_ins.password, "***").replace(d_ins.password, "***")
         if mode == "dest"
-        else cmd_args.replace(s_ins.password, "***"),
+        else shell_cmd.replace(s_ins.password, "***"),
         condition=condition,
         mode=mode,
         no_delete=no_delete,

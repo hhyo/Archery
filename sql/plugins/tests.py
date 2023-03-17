@@ -129,10 +129,8 @@ class TestPlugin(TestCase):
         self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
-        cmd_args = soar.generate_args2cmd(args, False)
+        cmd_args = soar.generate_args2cmd(args)
         self.assertIsInstance(cmd_args, list)
-        cmd_args = soar.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
 
     def test_sql_advisor_generate_args2cmd(self):
         """
@@ -151,10 +149,8 @@ class TestPlugin(TestCase):
         self.sys_config.set("sqladvisor", "/opt/archery/src/plugins/SQLAdvisor")
         self.sys_config.get_all_config()
         sql_advisor = SQLAdvisor()
-        cmd_args = sql_advisor.generate_args2cmd(args, False)
+        cmd_args = sql_advisor.generate_args2cmd(args)
         self.assertIsInstance(cmd_args, list)
-        cmd_args = sql_advisor.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
 
     def test_schema_sync_generate_args2cmd(self):
         """
@@ -176,10 +172,8 @@ class TestPlugin(TestCase):
         self.sys_config.set("schemasync", "/opt/venv4schemasync/bin/schemasync")
         self.sys_config.get_all_config()
         schema_sync = SchemaSync()
-        cmd_args = schema_sync.generate_args2cmd(args, False)
+        cmd_args = schema_sync.generate_args2cmd(args)
         self.assertIsInstance(cmd_args, list)
-        cmd_args = schema_sync.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
 
     def test_my2sql_generate_args2cmd(self):
         """
@@ -208,10 +202,8 @@ class TestPlugin(TestCase):
         self.sys_config.set("my2sql", "/opt/archery/src/plugins/my2sql")
         self.sys_config.get_all_config()
         my2sql = My2SQL()
-        cmd_args = my2sql.generate_args2cmd(args, False)
+        cmd_args = my2sql.generate_args2cmd(args)
         self.assertIsInstance(cmd_args, list)
-        cmd_args = my2sql.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
 
     def test_pt_archiver_generate_args2cmd(self):
         """
@@ -230,10 +222,8 @@ class TestPlugin(TestCase):
             "sleep": 1,
         }
         pt_archiver = PtArchiver()
-        cmd_args = pt_archiver.generate_args2cmd(args, False)
+        cmd_args = pt_archiver.generate_args2cmd(args)
         self.assertIsInstance(cmd_args, list)
-        cmd_args = pt_archiver.generate_args2cmd(args, True)
-        self.assertIsInstance(cmd_args, str)
 
     @patch("sql.plugins.plugin.subprocess")
     def test_execute_cmd(self, mock_subprocess):
@@ -247,22 +237,22 @@ class TestPlugin(TestCase):
         self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
         self.sys_config.get_all_config()
         soar = Soar()
-        cmd_args = soar.generate_args2cmd(args, True)
+        cmd_args = soar.generate_args2cmd(args)
 
         mock_subprocess.Popen.return_value.communicate.return_value = (
             "some_stdout",
             "some_stderr",
         )
-        stdout, stderr = soar.execute_cmd(cmd_args, True).communicate()
+        stdout, stderr = soar.execute_cmd(cmd_args).communicate()
         mock_subprocess.Popen.assert_called_once_with(
-            cmd_args, shell=True, stdout=ANY, stderr=ANY, universal_newlines=ANY
+            cmd_args, shell=False, stdout=ANY, stderr=ANY, universal_newlines=ANY
         )
         self.assertIn("some_stdout", stdout)
         # 异常
 
         mock_subprocess.Popen.side_effect = Exception("Boom! some exception!")
         with self.assertRaises(RuntimeError):
-            soar.execute_cmd(cmd_args, False)
+            soar.execute_cmd(cmd_args)
 
 
 class TestSoar(TestCase):
@@ -287,16 +277,17 @@ class TestSoar(TestCase):
         cls.superuser.delete()
         cls.sys_config.replace(json.dumps({}))
 
-    def test_fingerprint(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_fingerprint(self, _subprocess):
         """
         测试SQL指纹打印，未断言
         :return:
         """
         sql = """select * from sql_users where id>0 and email<>'';"""
-        finger = self.soar.fingerprint(sql)
-        # self.assertEqual(finger, 'select * from sql_users where id>? and email<>?\n')
+        self.soar.fingerprint(sql)
 
-    def test_compress(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_compress(self, _subprocess):
         """
         测试SQL压缩，未断言
         :return:
@@ -306,10 +297,10 @@ class TestSoar(TestCase):
         from sql_users
         where id>0 and email<>'';
         """
-        compress_sql = self.soar.compress(sql)
-        # self.assertEqual(compress_sql, "select * from sql_users where id>0 and email<>'';\n")
+        self.soar.compress(sql)
 
-    def test_pretty(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_pretty(self, _subprocess):
         """
         测试SQL美化，未断言
         :return:
@@ -317,7 +308,8 @@ class TestSoar(TestCase):
         sql = """select * from sql_users where id>0 and email<>'';"""
         self.soar.pretty(sql)
 
-    def test_remove_comment(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_remove_comment(self, _subprocess):
         """
         测试去除注释，未断言
         :return:
@@ -330,7 +322,8 @@ class TestSoar(TestCase):
                 # and ;"""
         self.soar.remove_comment(sql)
 
-    def test_rewrite(self):
+    @patch("sql.plugins.plugin.subprocess")
+    def test_rewrite(self, _subprocess):
         """
         测试SQL改写
         :return:

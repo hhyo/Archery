@@ -138,21 +138,21 @@ def my2sql(request):
     my2sql = My2SQL()
 
     # 准备参数
-    instance_password = shlex.quote(str(instance.password))
     args = {
-        "conn_options": rf"-host {shlex.quote(str(instance.host))} -user {shlex.quote(str(instance.user))} \
-                -password ''{instance_password}'' -port {shlex.quote(str(instance.port))} ",
+        "host": instance.host,
+        "user": instance.user,
+        "password": instance.password,
+        "port": instance.port,
         "work-type": work_type,
         "start-file": start_file,
         "start-pos": start_pos,
         "stop-file": end_file,
         "stop-pos": end_pos,
-        "start-datetime": '"' + start_time + '"',
-        "stop-datetime": '"' + stop_time + '"',
+        "start-datetime": start_time,
+        "stop-datetime": stop_time,
         "databases": " ".join(only_schemas),
         "tables": ",".join(only_tables),
         "sql": ",".join(sql_type),
-        "instance": instance,
         "threads": threads,
         "add-extraInfo": extra_info,
         "ignore-primaryKey-forInsert": ignore_primary_key,
@@ -169,11 +169,11 @@ def my2sql(request):
             json.dumps(args_check_result), content_type="application/json"
         )
     # 参数转换
-    cmd_args = my2sql.generate_args2cmd(args, shell=True)
+    cmd_args = my2sql.generate_args2cmd(args)
 
     # 执行命令
     try:
-        p = my2sql.execute_cmd(cmd_args, shell=True)
+        p = my2sql.execute_cmd(cmd_args)
         # 读取前num行后结束
         rows = []
         n = 1
@@ -207,7 +207,8 @@ def my2sql(request):
 
     # 异步保存到文件
     if save_sql:
-        args.pop("conn_options")
+        args.update({"instance": instance})
+        args.pop("password")
         args.pop("output-toScreen")
         async_task(
             my2sql_file,
@@ -233,17 +234,21 @@ def my2sql_file(args, user):
     :return:
     """
     my2sql = My2SQL()
-    instance = args.get("instance")
-    instance_password = shlex.quote(f'"{str(instance.password)}"')
-    conn_options = rf"-host {shlex.quote(str(instance.host))} -user {shlex.quote(str(instance.user))} \
-        -password '{instance_password}' -port {shlex.quote(str(instance.port))} "
-    args["conn_options"] = conn_options
+    instance = args.pop("instance")
+    args.update(
+        {
+            "host": instance.host,
+            "user": instance.user,
+            "password": instance.password,
+            "port": instance.port,
+        }
+    )
     path = os.path.join(settings.BASE_DIR, "downloads/my2sql/")
     os.makedirs(path, exist_ok=True)
 
     # 参数转换
     args["output-dir"] = path
-    cmd_args = my2sql.generate_args2cmd(args, shell=True)
+    cmd_args = my2sql.generate_args2cmd(args)
     # 使用output-dir参数执行命令保存sql
-    my2sql.execute_cmd(cmd_args, shell=True)
+    my2sql.execute_cmd(cmd_args)
     return user, path

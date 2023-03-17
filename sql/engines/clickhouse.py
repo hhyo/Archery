@@ -156,7 +156,7 @@ class ClickHouseEngine(EngineBase):
         except IndexError:
             result["bad_query"] = True
             result["msg"] = "没有有效的SQL语句"
-        if re.match(r"^select|^show|^explain", sql, re.I) is None:
+        if re.match(r"^select|^show|^explain|^with", sql, re.I) is None:
             result["bad_query"] = True
             result["msg"] = "不支持的查询语法类型!"
         if "*" in sql:
@@ -349,11 +349,11 @@ class ClickHouseEngine(EngineBase):
             # insert语句，explain无法正确判断，暂时只做表存在性检查与简单关键字匹配
             elif re.match(r"^insert", statement.lower()):
                 if re.match(
-                    r"^insert\s+into\s+(.+?)(\s+|\s*\(.+?)(values|format|select)(\s+|\()",
+                    r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
                     statement.lower(),
                 ):
                     table_name = re.match(
-                        r"^insert\s+into\s+(.+?)(\s+|\s*\(.+?)(values|format|select)(\s+|\()",
+                        r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
                         statement.lower(),
                         re.M,
                     ).group(1)

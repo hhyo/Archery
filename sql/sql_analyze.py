@@ -54,20 +54,14 @@ def analyze(request):
         soar = Soar()
         if instance_name != "" and db_name != "":
             try:
-                instance_info = user_instances(request.user, db_type=["mysql"]).get(
+                instance = user_instances(request.user, db_type=["mysql"]).get(
                     instance_name=instance_name
                 )
             except Instance.DoesNotExist:
                 return JsonResponse({"status": 1, "msg": "你所在组未关联该实例！", "data": []})
             soar_test_dsn = SysConfig().get("soar_test_dsn")
             # 获取实例连接信息
-            online_dsn = "{user}:{pwd}@{host}:{port}/{db}".format(
-                user=instance_info.user,
-                pwd=instance_info.password,
-                host=instance_info.host,
-                port=instance_info.port,
-                db=db_name,
-            )
+            online_dsn = f"{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}"
         else:
             online_dsn = ""
             soar_test_dsn = ""
@@ -76,13 +70,13 @@ def analyze(request):
             "query": "",
             "online-dsn": online_dsn,
             "test-dsn": soar_test_dsn,
-            "allow-online-as-test": "false",
+            "allow-online-as-test": False,
         }
         rows = generate_sql(text)
         for row in rows:
             args["query"] = row["sql"]
-            cmd_args = soar.generate_args2cmd(args=args, shell=True)
-            stdout, stderr = soar.execute_cmd(cmd_args, shell=True).communicate()
+            cmd_args = soar.generate_args2cmd(args=args)
+            stdout, stderr = soar.execute_cmd(cmd_args).communicate()
             row["report"] = stdout if stdout else stderr
         result = {"total": len(rows), "rows": rows}
     return HttpResponse(
