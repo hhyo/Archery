@@ -11,10 +11,8 @@ from django.http import HttpResponse
 from sql.engines import get_engine
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderBytes
 from sql.utils.resource_group import user_instances
-from .models import AliyunRdsConfig, Instance
+from .models import Instance
 
-# from .aliyun_rds import process_status as aliyun_process_status, create_kill_session as aliyun_create_kill_session, \
-#    kill_session as aliyun_kill_session, sapce_status as aliyun_sapce_status
 
 logger = logging.getLogger("default")
 
@@ -34,10 +32,6 @@ def process(request):
     query_engine = get_engine(instance=instance)
     query_result = None
     if instance.db_type == "mysql":
-        # 判断是RDS还是其他实例
-        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-        #    result = aliyun_process_status(request)
-        # else:
         query_result = query_engine.processlist(command_type)
 
     elif instance.db_type == "mongo":
@@ -81,10 +75,6 @@ def create_kill_session(request):
     result = {"status": 0, "msg": "ok", "data": []}
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
-        # 判断是RDS还是其他实例
-        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-        #    result = aliyun_create_kill_session(request)
-        # else:
         result["data"] = query_engine.get_kill_command(json.loads(thread_ids))
     elif instance.db_type == "mongo":
         kill_command = query_engine.get_kill_command(json.loads(thread_ids))
@@ -110,7 +100,6 @@ def create_kill_session(request):
 def kill_session(request):
     instance_name = request.POST.get("instance_name")
     thread_ids = request.POST.get("ThreadIDs")
-    request_params = request.POST.get("request_params", "{}")
     result = {"status": 0, "msg": "ok", "data": []}
 
     try:
@@ -122,11 +111,7 @@ def kill_session(request):
     engine = get_engine(instance=instance)
     r = None
     if instance.db_type == "mysql":
-        # 判断是RDS还是其他实例
-        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-        #    result = aliyun_kill_session(request)
-        # else:
-        r = engine.kill(json.loads(thread_ids), request_params=request_params)
+        r = engine.kill(json.loads(thread_ids))
     elif instance.db_type == "mongo":
         r = engine.kill_op(json.loads(thread_ids))
     elif instance.db_type == "oracle":
@@ -162,10 +147,6 @@ def tablespace(request):
 
     query_engine = get_engine(instance=instance)
     if instance.db_type == "mysql":
-        # 判断是RDS还是其他实例
-        # if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
-        #    result = aliyun_sapce_status(request)
-        # else:
         query_result = query_engine.tablespace(offset, limit)
     elif instance.db_type == "oracle":
         query_result = query_engine.tablespace(offset, limit)

@@ -15,8 +15,6 @@ from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
 
-# from .aliyun_rds import slowquery_review as aliyun_rds_slowquery_review, \
-#    slowquery_review_history as aliyun_rds_slowquery_review_history
 
 import logging
 
@@ -43,7 +41,6 @@ def slowquery_review(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
         # 调用阿里云慢日志接口
-        # result = aliyun_rds_slowquery_review(request)
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review(
             self, start_time, end_time, db_name, limit, offset
@@ -134,7 +131,6 @@ def slowquery_review_history(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
         # 调用阿里云慢日志接口
-        # result = aliyun_rds_slowquery_review_history(request)
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review_history(
             start_time, end_time, db_name, sql_id, limit, offset

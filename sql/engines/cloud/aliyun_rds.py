@@ -52,8 +52,7 @@ class AliyunRDS(MysqlEngine):
 
         return kill_sql
 
-    def kill(self, thread_ids, request_params):
-        # request_params = request.POST.get('request_params')
+    def kill(self, thread_ids):
         kill_sql = ""
         for i in thread_ids:
             kill_sql = kill_sql + f"kill {i};"
@@ -64,8 +63,7 @@ class AliyunRDS(MysqlEngine):
                 instance__instance_name=self.instance_name
             )
             # 调用aliyun接口获取终止进程
-            request_params = json.loads(request_params)
-            service_request_param = dict({"Language": "zh"}, **request_params)
+            service_request_param = {"Language": "zh"}
             kill_result = Aliyun(rds=instance_info).RequestServiceOfCloudDBA(
                 "ConfirmKillSessionRequest", service_request_param
             )
