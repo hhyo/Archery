@@ -10,7 +10,8 @@ __author__ = "hhyo"
 import django_filters
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import views, permissions, serializers, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -27,6 +28,8 @@ from sql_api.serializers.sql_workflow import (
     ExecuteCheckResultSerializer,
     SqlWorkflowSerializer,
     SqlWorkflowDetailSerializer,
+    SqlWorkflowExecuteSerializer,
+    SqlWorkflowTimingTaskSerializer,
 )
 
 
@@ -59,6 +62,8 @@ class ExecuteCheck(views.APIView):
 
 
 @extend_schema_view(
+    create=extend_schema(exclude=True),
+    partial_update=extend_schema(exclude=True),
     list=extend_schema(
         summary="获取SQL工单列表",
         description="获取SQL工单列表，支持筛选、分页、检索等",
@@ -81,13 +86,23 @@ class ExecuteCheck(views.APIView):
         },
         description="通过工单ID获取回滚语句",
     ),
-    create=extend_schema(exclude=True),
-    partial_update=extend_schema(exclude=True),
     alter_run_date=extend_schema(
         summary="修改SQL工单可执行时间范围",
         request=SqlWorkflowSerializer(fields=["run_date_start", "run_date_end"]),
         responses={200: SqlWorkflowSerializer},
         description="通过工单ID修改SQL工单可执行时间范围",
+    ),
+    execute=extend_schema(
+        summary="立即执行工单",
+        request=SqlWorkflowExecuteSerializer,
+        responses={200: OpenApiTypes.NUMBER},
+        description="通过工单ID执行工单",
+    ),
+    timing_task=extend_schema(
+        summary="设置定时执行工单",
+        request=SqlWorkflowTimingTaskSerializer,
+        responses={200: OpenApiTypes.DATETIME},
+        description="通过工单ID执行工单",
     ),
 )
 class SqlWorkflowView(viewsets.ModelViewSet):
@@ -114,7 +129,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
             pass
         # 非管理员，拥有审核权限、资源组粒度执行权限的，可以查看组内所有工单
         elif user.has_perm("sql.sql_review") or user.has_perm(
-                "sql.sql_execute_for_resource_group"
+            "sql.sql_execute_for_resource_group"
         ):
             filter_dict["group_id__in"] = [
                 group.group_id for group in user_groups(user)
@@ -155,5 +170,19 @@ class SqlWorkflowView(viewsets.ModelViewSet):
     @action(methods=["post"], detail=True)
     def execute(self, request, *args, **kwargs):
         obj = self.get_object()
-        data = self.get_serializer().execute(obj)
-        return Response(data)
+        SqlWorkflowExecuteSerializer(data=request.data).is_valid(raise_exception=True)
+        mode = request.data.get("mode")
+        serializer = self.get_serializer()
+        serializer.execute(obj, mode=mode, username=request.user.username)
+        return Response(obj.id)
+
+    @action(methods=["post"], detail=True)
+    def timing_task(self, request, *args, **kwargs):
+        obj = self.get_object()
+        SqlWorkflowTimingTaskSerializer(data=request.data).is_valid(
+            raise_exception=True
+        )
+        run_date = request.data.get("run_date")
+        serializer = self.get_serializer()
+        serializer.timing_task(obj, run_date=run_date, username=request.user.username)
+        return Response(run_date)

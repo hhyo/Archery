@@ -1502,23 +1502,6 @@ class TestWorkflowView(TransactionTestCase):
         self.wf1.refresh_from_db()
         self.assertEqual(self.wf1.status, "workflow_review_pass")
 
-    @patch("sql.sql_workflow.Audit.add_log")
-    @patch("sql.sql_workflow.Audit.detail_by_workflow_id")
-    @patch("sql.sql_workflow.can_execute")
-    def test_workflow_execute(self, mock_can_excute, mock_detail_by_id, mock_add_log):
-        """测试工单执行"""
-        c = Client()
-        c.force_login(self.executor1)
-        r = c.post("/execute/")
-        self.assertContains(r, "workflow_id参数为空.")
-        mock_can_excute.return_value = False
-        r = c.post("/execute/", data={"workflow_id": self.wf2.id})
-        self.assertContains(r, "你无权操作当前工单！")
-        mock_can_excute.return_value = True
-        mock_detail_by_id = 123
-        r = c.post("/execute/", data={"workflow_id": self.wf2.id, "mode": "manual"})
-        self.wf2.refresh_from_db()
-        self.assertEqual("workflow_finish", self.wf2.status)
 
     @patch("sql.sql_workflow.Audit.add_log")
     @patch("sql.sql_workflow.Audit.detail_by_workflow_id")

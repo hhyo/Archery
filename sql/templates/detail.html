@@ -9,10 +9,12 @@
         </h4>
         <!--只允许发起人提交其他实例-->
         {% if user.username == workflow_detail.engineer %}
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning'
+               href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)"
+               href="/editsql/">查看提交信息</a>
         {% endif %}
     </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -194,21 +196,9 @@
     {% endif %}
     <!--立即执行按钮-->
     {% if is_can_execute %}
-        <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
-            {% csrf_token %}
-            <input type="hidden" name="mode" value="auto">
-            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-            <input type="button" id="btnExecuteOnly" class="btn btn-danger"
-                   value="立即执行"/>
-        </form>
+        <input type="button" id="btnExecuteOnly" class="btn btn-danger" value="立即执行"/>
         {% if manual %}
-            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
-                {% csrf_token %}
-                <input type="hidden" name="mode" value="manual">
-                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
-                       value="已手动完成"/>
-            </form>
+            <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning" value="已手动完成"/>
         {% endif %}
     {% endif %}
     <!--定时执行按钮-->
@@ -216,7 +206,8 @@
         {% if workflow_detail.status == 'workflow_review_pass' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
         {% elif workflow_detail.status == 'workflow_timingtask' %}
-            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm"
+                   value="执行时间变更"/>
         {% endif %}
     {% endif %}
     <!--终止执行按钮-->
@@ -279,8 +270,6 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-
-                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                         <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="确认提交"/>
                     </div>
 
@@ -465,20 +454,22 @@
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
             }
-            var formExecuteOnly = $("#from-execute");
             if (isContinue) {
-                formExecuteOnly.submit();
-                loading(this)
+                sqlWorkflowAction('post', 'execute', JSON.stringify({
+                        "mode": "auto",
+                    }, $(this).attr('id')
+                ))
             }
         });
 
         // 执行确认手工执行
         $("#btnExecuteOnly-manual").click(function () {
             var isContinue = confirm("请确认是否已经手工执行结束？");
-            var formExecuteOnly = $("#from-execute-manual");
             if (isContinue) {
-                formExecuteOnly.submit();
-                loading(this)
+                sqlWorkflowAction('post', 'execute', JSON.stringify({
+                        "mode": "manual",
+                    }, $(this).attr('id')
+                ))
             }
         });
 
@@ -506,11 +497,12 @@
 
         // 定时时间校验
         $("#btnAddsqlcronjob").click(function () {
-            //获取form对象，判断输入，通过则提交
-            var formAddsqlcronjo = $("#from-addsqlcronjob");
-            if ($("#run_date").val()) {
-                loading(this);
-                formAddsqlcronjo.submit();
+            let run_date = $("#run_date").val()
+            if (run_date) {
+                sqlWorkflowAction('post', 'timing_task', JSON.stringify({
+                        "run_date": run_date,
+                    }, $(this).attr('id')
+                ))
             } else {
                 alert('请填写定时执行时间')
             }
@@ -518,21 +510,34 @@
 
         // 修改可执行时间
         $("#btnalterExecutabletime").click(function () {
+            sqlWorkflowAction('patch', 'alter_run_date', JSON.stringify({
+                    run_date_start: $("#run_date_start").val(),
+                    run_date_end: $("#run_date_end").val(),
+                }, $(this).attr('id')
+            ))
+        });
+
+        // 按钮禁用
+        function loading(obj) {
+            $(obj).button('loading').delay(2500).queue(function () {
+                $(obj).button('reset');
+                $(obj).dequeue();
+            });
+        }
+
+        // 工单操作
+        function sqlWorkflowAction(http_method ,action, data, btnAttrId) {
             $.ajax({
-                type: "patch",
-                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/alter_run_date/",
+                type: http_method,
+                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/" + action + "/",
                 dataType: "json",
                 contentType: 'application/json;',
-                data: JSON.stringify({
-                        run_date_start: $("#run_date_start").val(),
-                        run_date_end: $("#run_date_end").val(),
-                    }
-                ),
+                data: data,
                 beforeSend: function (xhr) {
-                    $('#btnalterExecutabletime').button('loading')
+                    $('#' + btnAttrId).button('loading')
                 },
                 complete: function () {
-                    $('#btnalterExecutabletime').button('reset')
+                    $('#' + btnAttrId).button('reset')
                 },
                 success: function (data) {
                     window.location.reload();
@@ -545,15 +550,8 @@
                     }
                 }
             });
-        });
-
-        // 按钮禁用
-        function loading(obj) {
-            $(obj).button('loading').delay(2500).queue(function () {
-                $(obj).button('reset');
-                $(obj).dequeue();
-            });
         }
+
     </script>
     <!--表格初始化 -->
     <script>

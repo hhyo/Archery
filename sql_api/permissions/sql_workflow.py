@@ -9,7 +9,13 @@ __author__ = "hhyo"
 
 from rest_framework import permissions
 
-from sql.utils.sql_review import can_view, can_rollback, can_execute, on_correct_time_period
+from sql.utils.sql_review import (
+    can_view,
+    can_rollback,
+    can_execute,
+    on_correct_time_period,
+    can_timingtask,
+)
 from sql.utils.workflow_audit import Audit
 
 
@@ -45,13 +51,24 @@ class SqlWorkFlowViewPermission(permissions.BasePermission):
         return Audit.can_review(request.user, obj.id, 2)
 
     def has_execute_permission(self, request, view, obj):
-        """执行语句权限"""
+        """执行工单权限"""
         self.message = self.obj_message
         if not can_execute(request.user, obj.id):
             return False
         if not on_correct_time_period(obj.id):
             self.message = "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
             return False
+        return True
+
+    def has_timing_task_permission(self, request, view, obj):
+        """定时执行工单权限"""
+        self.message = self.obj_message
+        if not can_timingtask(request.user, obj.id):
+            return False
+        if not on_correct_time_period(obj.id):
+            self.message = "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+            return False
+        return True
 
     def has_object_permission(self, request, view, obj):
         return getattr(self, f"has_{view.action}_permission")(request, view, obj)
