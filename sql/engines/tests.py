@@ -1670,13 +1670,14 @@ class TestOracle(TestCase):
 name IN VARCHAR2)    
 is    
 begin    
-    insert into user1 values(id,name);    
-end;""" 
+    insert into user1 values(id,name);
+end;"""
         object_name = new_engine.get_sql_first_object_name(sql)
         self.assertEqual(object_name, "INSERTUSER")
 
     @patch(
-        "sql.engines.oracle.OracleEngine.get_sql_first_object_name", return_value="INSERTUSER"
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name",
+        return_value="INSERTUSER",
     )
     @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
     def test_execute_check_replace_exist_plsql_object(
@@ -1710,7 +1711,8 @@ end;"""
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
     @patch(
-        "sql.engines.oracle.OracleEngine.get_sql_first_object_name", return_value="INSERTUSER"
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name",
+        return_value="INSERTUSER",
     )
     @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
     def test_execute_check_exist_plsql_object(
