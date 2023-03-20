@@ -1738,7 +1738,7 @@ end;"""
         check_result = new_engine.execute_check(db_name="TRADE", sql=sql)
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
-        
+
     @patch("cx_Oracle.connect.cursor.execute")
     @patch("cx_Oracle.connect.cursor")
     @patch("cx_Oracle.connect")
