@@ -343,7 +343,7 @@ create table user(
                 object_owner="",
                 object_type="",
                 object_name="",
-            )
+            ),
         ]
         self.assertIsInstance(lists[1], SqlItem)
         self.assertIsInstance(lists[2], SqlItem)
@@ -390,7 +390,7 @@ create table user(
                 object_owner="",
                 object_type="",
                 object_name="",
-            )
+            ),
         ]
         self.assertIsInstance(lists[0], SqlItem)
         self.assertIsInstance(lists[1], SqlItem)
