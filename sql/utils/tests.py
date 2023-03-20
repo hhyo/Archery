@@ -193,7 +193,7 @@ END;
 """
         lists = get_full_sqlitem_list(text, "db")
         rows = [
-		    SqlItem(
+	    SqlItem(
                 id=0,
                 statement="""declare
     v_rowcount integer;
@@ -333,7 +333,7 @@ create table user(
                 object_owner="",
                 object_type="",
                 object_name="",
-			),
+	    ),
             SqlItem(
                 id=0,
                 statement=sqlparse.format(
@@ -343,8 +343,8 @@ create table user(
                 object_owner="",
                 object_type="",
                 object_name="",
-			)
-		]
+	    )
+	]
         self.assertIsInstance(lists[1], SqlItem)
         self.assertIsInstance(lists[2], SqlItem)
         self.assertEqual(lists[1].__dict__, rows[0].__dict__)
@@ -391,7 +391,7 @@ create table user(
                 object_type="",
                 object_name="",
             )
-		]
+	]
         self.assertIsInstance(lists[0], SqlItem)
         self.assertIsInstance(lists[1], SqlItem)
         self.assertEqual(lists[0].__dict__, rows[0].__dict__)
