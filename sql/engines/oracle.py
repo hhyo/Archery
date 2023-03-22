@@ -691,6 +691,7 @@ class OracleEngine(EngineBase):
         critical_ddl_regex = config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
+        sqlitem = None
         try:
             sqlitemList = get_full_sqlitem_list(sql, db_name)
             for sqlitem in sqlitemList:
