@@ -130,6 +130,7 @@ class ResourceGroupAdmin(admin.ModelAdmin):
         "ding_webhook",
         "feishu_webhook",
         "qywx_webhook",
+        "group_checklist",
         "is_deleted",
     )
     exclude = (
