@@ -45,6 +45,7 @@
                                         data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
                                     {% for group in group_list %}
                                         <option value="{{ group.group_name }}"
+                                                group-cklist="{{ group.group_checklist }}"
                                                 group-id="{{ group.group_id }}">{{ group.group_name }}</option>
                                     {% endfor %}
                                 </select>
@@ -147,7 +148,27 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    <!-- button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    </button -->
+                </div>
+            </div>
+        </div>
+    </div>
+   <!-- 上线checklist确认  -->
+    <div class="modal fade" id="checklistConfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">上线checklist确认</h4>
+                </div>
+                <div class="modal-body">
+                    <p>请确认完成以下上线check<pre id="CheckList" style="background-color: white; color: red;font-size: 20px"></pre></font><br>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button id="submitcheckconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
                     </button>
                 </div>
             </div>
@@ -401,16 +422,24 @@
                 //判断是否需要弹出提示
                 var CheckWarningCount = sessionStorage.getItem('CheckWarningCount');
                 var CheckErrorCount = sessionStorage.getItem('CheckErrorCount');
+                $("#CheckList").text($("#group_name option:selected").attr("group-cklist"));
                 $("#CheckWarningCount").text(CheckWarningCount);
                 $("#CheckErrorCount").text(CheckErrorCount);
                 if (CheckWarningCount > 0 || CheckErrorCount > 0) {
                     $('#submitConfirm').modal('show');
-                } else {
+                } else if ($("#group_name option:selected").attr("group-cklist").length > 0) {
+                    $('#checklistConfirm').modal('show');
+                } 
+                else {
                     sqlSubmit()
                 }
             }
         });
 
+        // 上线check确认
+        $("#submitcheckconfirm").click(function () {
+            sqlSubmit()
+        });
         //提交二次确认
         $("#submitsqlconfirm").click(function () {
             sqlSubmit()
