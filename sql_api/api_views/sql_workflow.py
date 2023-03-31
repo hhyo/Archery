@@ -77,33 +77,6 @@ class ExecuteCheck(views.APIView):
         description="通过工单ID获取工单详情",
         responses={200: SqlWorkflowDetailSerializer},
     ),
-    rollback_sql=extend_schema(
-        summary="获取SQL工单回滚语句",
-        responses={
-            200: serializers.ListSerializer(
-                child=serializers.ListField(default=["sql", "rollback_sql"])
-            )
-        },
-        description="通过工单ID获取回滚语句",
-    ),
-    alter_run_date=extend_schema(
-        summary="修改SQL工单可执行时间范围",
-        request=SqlWorkflowSerializer(fields=["run_date_start", "run_date_end"]),
-        responses={200: SqlWorkflowSerializer},
-        description="通过工单ID修改SQL工单可执行时间范围",
-    ),
-    execute=extend_schema(
-        summary="立即执行工单",
-        request=SqlWorkflowExecuteSerializer,
-        responses={200: OpenApiTypes.NUMBER},
-        description="通过工单ID执行工单",
-    ),
-    timing_task=extend_schema(
-        summary="设置定时执行工单",
-        request=SqlWorkflowTimingTaskSerializer,
-        responses={200: OpenApiTypes.DATETIME},
-        description="通过工单ID执行工单",
-    ),
 )
 class SqlWorkflowView(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, SqlWorkFlowViewPermission]
@@ -149,6 +122,28 @@ class SqlWorkflowView(viewsets.ModelViewSet):
             *args, **kwargs, exclude=["sql_content", "display_content"]
         )
 
+    @extend_schema(
+        summary="获取SQL工单执行进度",
+        responses={
+            200: SqlWorkflowSerializer(exclude=["sql_content", "display_content"])
+        },
+        description="通过工单ID获取工单执行进度，MySQL也包括正在执行的DDL信息",
+    )
+    @action(methods=["get"], detail=True)
+    def progress(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="获取SQL工单回滚语句",
+        responses={
+            200: serializers.ListSerializer(
+                child=serializers.ListField(default=["sql", "rollback_sql"])
+            )
+        },
+        description="通过工单ID获取回滚语句",
+    )
     @action(
         methods=["get"],
         detail=True,
@@ -161,12 +156,24 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         data = self.get_serializer().rollback_sql(obj)
         return Response(data)
 
+    @extend_schema(
+        summary="修改SQL工单可执行时间范围",
+        request=SqlWorkflowSerializer(fields=["run_date_start", "run_date_end"]),
+        responses={200: SqlWorkflowSerializer},
+        description="通过工单ID修改SQL工单可执行时间范围",
+    )
     @method_decorator(permission_required("sql.sql_review", raise_exception=True))
     @action(methods=["patch"], detail=True)
     def alter_run_date(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="立即执行工单",
+        request=SqlWorkflowExecuteSerializer,
+        responses={200: OpenApiTypes.NUMBER},
+        description="通过工单ID执行工单",
+    )
     @action(methods=["post"], detail=True)
     def execute(self, request, *args, **kwargs):
         obj = self.get_object()
@@ -176,6 +183,12 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         serializer.execute(obj, mode=mode, username=request.user.username)
         return Response(obj.id)
 
+    @extend_schema(
+        summary="设置定时执行工单",
+        request=SqlWorkflowTimingTaskSerializer,
+        responses={200: OpenApiTypes.DATETIME},
+        description="通过工单ID执行工单",
+    )
     @action(methods=["post"], detail=True)
     def timing_task(self, request, *args, **kwargs):
         obj = self.get_object()
