@@ -11,7 +11,7 @@ pymysql==0.9.3
 mysql-replication==0.22
 django-q==1.3.9
 django-redis==5.2.0
-redis==3.5.3
+redis==4.4.4
 pyodbc==4.0.30
 gunicorn==20.0.4
 pyecharts==1.9.1
