@@ -282,6 +282,108 @@ class MysqlEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
+    def get_all_databases_summary(self):
+        """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        # 获取所有数据库
+        sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+        FROM information_schema.SCHEMATA
+        WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
+        query_result = self.query(
+            "information_schema", sql_get_db, close_conn=False
+        )
+        if not query_result.error:
+            dbs = query_result.rows
+            # 获取数据库关联用户信息
+            rows = []
+            for db in dbs:
+                db_name = db[0]
+                sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
+        from information_schema.SCHEMA_PRIVILEGES
+        where TABLE_SCHEMA='{db_name}'
+        group by TABLE_SCHEMA;"""
+                bind_users = self.query(
+                    "information_schema", sql_get_bind_users, close_conn=False
+                ).rows
+                row = {
+                    "db_name": db_name,
+                    "charset": db[1],
+                    "collation": db[2],
+                    "grantees": bind_users[0][0].split(",") if bind_users else [],
+                    "saved": False,
+                }
+                rows.append(row)
+            query_result.rows = rows
+        return query_result
+
+    def get_instance_users_summary(self):
+        """实例账号管理功能，获取实例所有账号信息"""
+        server_version = self.server_version
+        # MySQL 5.7.6版本起支持ACCOUNT LOCK
+        if server_version >= (5, 7, 6):
+            sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
+        else:
+            sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
+        query_result = self.query("mysql", sql_get_user)
+        if not query_result.error:
+            db_users = query_result.rows
+            # 获取用户权限信息
+            rows = []
+            for db_user in db_users:
+                user_host = db_user[0]
+                user_priv = self.query(
+                    "mysql", "show grants for {};".format(user_host), close_conn=False
+                ).rows
+                row = {
+                    "user_host": user_host,
+                    "user": db_user[1],
+                    "host": db_user[2],
+                    "privileges": user_priv,
+                    "saved": False,
+                    "is_locked": db_user[3] if server_version >= (5, 7, 6) else None,
+                }
+                rows.append(row)
+            query_result.rows = rows
+        return query_result
+
+    def create_instance_user(self, **kwargs):
+        """实例账号管理功能，创建实例账号"""
+        # escape
+        user = MySQLdb.escape_string(kwargs.get("user", "")).decode("utf-8")
+        host = MySQLdb.escape_string(kwargs.get("host", "")).decode("utf-8")
+        password1 = MySQLdb.escape_string(kwargs.get("password1", "")).decode("utf-8")
+        remark = kwargs.get("remark", "")
+        # 在一个事务内执行
+        hosts = host.split("|")
+        create_user_cmd = ""
+        accounts = []
+        for host in hosts:
+            create_user_cmd += f"create user '{user}'@'{host}' identified by '{password1}';"
+            accounts.append({
+                "instance": self.instance,
+                "user": user,
+                "host": host,
+                "password": password1,
+                "remark": remark
+            })
+        exec_result = self.execute(db_name="mysql", sql=create_user_cmd)
+        exec_result.rows = accounts
+        return exec_result
+
+    def drop_instance_user(self, user_host: str, **kwarg):
+        """实例账号管理功能，删除实例账号"""
+        # escape
+        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+        return self.execute(db_name="mysql", sql=f"DROP USER {user_host};")
+
+    def reset_instance_user_pwd(self, user_host: str, reset_pwd: str, **kwargs):
+        """实例账号管理功能，重置实例账号密码"""
+        # escape
+        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+        reset_pwd = MySQLdb.escape_string(reset_pwd).decode("utf-8")
+        return self.execute(
+            db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd}';"
+        )
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         sql = f"""SELECT

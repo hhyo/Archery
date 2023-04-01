@@ -13,7 +13,7 @@ from django.http import JsonResponse, HttpResponse
 from django_redis import get_redis_connection
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
-from sql.engines import get_engine
+from sql.engines import get_engine, ResultSet
 from sql.models import Instance, InstanceDatabase, Users
 from sql.utils.resource_group import user_instances
 
@@ -30,7 +30,7 @@ def databases(request):
         return JsonResponse({"status": 0, "msg": "", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
@@ -42,42 +42,17 @@ def databases(request):
         db["saved"] = True
         cnf_dbs[f"{db['db_name']}"] = db
 
-    # 获取所有数据库
-    sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
-FROM information_schema.SCHEMATA
-WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
     query_engine = get_engine(instance=instance)
-    query_result = query_engine.query(
-        "information_schema", sql_get_db, close_conn=False
-    )
+    query_result = query_engine.get_all_databases_summary()
     if not query_result.error:
-        dbs = query_result.rows
         # 获取数据库关联用户信息
         rows = []
-        for db in dbs:
-            db_name = db[0]
-            sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
-from information_schema.SCHEMA_PRIVILEGES
-where TABLE_SCHEMA='{db_name}'
-group by TABLE_SCHEMA;"""
-            bind_users = query_engine.query(
-                "information_schema", sql_get_bind_users, close_conn=False
-            ).rows
-            row = {
-                "db_name": db_name,
-                "charset": db[1],
-                "collation": db[2],
-                "grantees": bind_users[0][0].split(",") if bind_users else [],
-                "saved": False,
-            }
-            # 合并数据
-            if db_name in cnf_dbs.keys():
-                row = dict(row, **cnf_dbs[db_name])
+        for row in query_result.rows:
+            if row["db_name"] in cnf_dbs.keys():
+                row = dict(row, **cnf_dbs[row["db_name"]])
             rows.append(row)
-        # 过滤参数
         if saved:
             rows = [row for row in rows if row["saved"]]
-
         result = {"status": 0, "msg": "ok", "rows": rows}
     else:
         result = {"status": 1, "msg": query_result.error}
@@ -102,7 +77,7 @@ def create(request):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
@@ -111,13 +86,22 @@ def create(request):
     except Users.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "负责人不存在", "data": []})
 
-    # escape
-    db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-
     engine = get_engine(instance=instance)
-    exec_result = engine.execute(
-        db_name="information_schema", sql=f"create database {db_name};"
-    )
+    if instance.db_type == 'mysql':
+        # escape
+        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+        exec_result = engine.execute(db_name="information_schema", sql=f"create database {db_name};")
+    elif instance.db_type == 'mongo':
+        exec_result = ResultSet()
+        try:
+            conn = engine.get_connection()
+            db = conn[db_name]
+            db.create_collection(name=f'archery-{db_name}')  # mongo创建数据库，需要数据库存在数据才会显示数据库名称，这里创建一个archery-{db_name}的集合
+        except Exception as e:
+            exec_result.error = f'创建数据库失败, 错误信息：{str(e)}'
+
+    # 关闭连接
+    engine.close()
     if exec_result.error:
         return JsonResponse({"status": 1, "msg": exec_result.error})
     # 保存到数据库
@@ -133,6 +117,7 @@ def create(request):
         r = get_redis_connection("default")
         for key in r.scan_iter(match="*insRes*", count=2000):
             r.delete(key)
+
     return JsonResponse({"status": 0, "msg": "", "data": []})
 
 
@@ -148,7 +133,7 @@ def edit(request):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
