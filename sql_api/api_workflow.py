@@ -1,4 +1,3 @@
-import MySQLdb
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
 from rest_framework import views, generics, status, serializers, permissions
@@ -61,11 +60,9 @@ class ExecuteCheck(views.APIView):
         instance = serializer.get_instance()
         # 交给engine进行检测
         try:
-            db_name = request.data["db_name"]
             check_engine = get_engine(instance=instance)
-            db_name = check_engine.escape_string(db_name)
             check_result = check_engine.execute_check(
-                db_name=db_name, sql=request.data["full_sql"].strip()
+                db_name=request.data["db_name"], sql=request.data["full_sql"].strip()
             )
         except Exception as e:
             raise serializers.ValidationError({"errors": f"{e}"})
