@@ -22,6 +22,8 @@ from django.conf import settings
 from django.http import Http404
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
 from common.twofa import TwoFactorAuthBase, get_authenticator
+from common.config import SysConfig
+from common.utils.ding_api import get_ding_user_id
 import random
 import json
 import time
@@ -420,5 +422,9 @@ class TwoFAVerify(views.APIView):
         if result["status"] == 0 and not request.user.is_authenticated:
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
+
+            # 更新用户ding_user_id
+            if SysConfig().get("ding_to_person") is True and "admin" not in engineer:
+                get_ding_user_id(engineer)
 
         return Response(result)
