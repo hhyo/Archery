@@ -29,7 +29,6 @@ def table_list(request):
                 instance_name=instance_name, db_type=db_type
             )
             query_engine = get_engine(instance=instance)
-            db_name = query_engine.escape_string(db_name)
             data = query_engine.get_group_tables_by_db(db_name=db_name)
             res = {"status": 0, "data": data}
         except Instance.DoesNotExist:
@@ -51,7 +50,6 @@ def table_info(request):
     db_name = request.GET.get("db_name", "")
     tb_name = request.GET.get("tb_name", "")
     db_type = request.GET.get("db_type", "")
-
     if instance_name and db_name and tb_name:
         data = {}
         try:
@@ -59,8 +57,6 @@ def table_info(request):
                 instance_name=instance_name, db_type=db_type
             )
             query_engine = get_engine(instance=instance)
-            db_name = query_engine.escape_string(db_name)
-            tb_name = query_engine.escape_string(tb_name)
             data["meta_data"] = query_engine.get_table_meta_data(
                 db_name=db_name, tb_name=tb_name
             )
@@ -95,6 +91,8 @@ def export(request):
     """导出数据字典"""
     instance_name = request.GET.get("instance_name", "")
     db_name = request.GET.get("db_name", "")
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode("utf-8")
 
     try:
         instance = user_instances(
@@ -106,7 +104,7 @@ def export(request):
 
     # 普通用户仅可以获取指定数据库的字典信息
     if db_name:
-        dbs = [query_engine.escape_string(db_name)]
+        dbs = [db_name]
     # 管理员可以导出整个实例的字典信息
     elif request.user.is_superuser:
         dbs = query_engine.get_all_databases().rows

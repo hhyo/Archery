@@ -187,10 +187,12 @@ class InstanceResource(views.APIView):
         instance = Instance.objects.get(pk=instance_id)
 
         try:
+            # escape
+            db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+            schema_name = MySQLdb.escape_string(schema_name).decode("utf-8")
+            tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
+
             query_engine = get_engine(instance=instance)
-            db_name = query_engine.escape_string(db_name)
-            schema_name = query_engine.escape_string(schema_name)
-            tb_name = query_engine.escape_string(tb_name)
             if resource_type == "database":
                 resource = query_engine.get_all_databases()
             elif resource_type == "schema" and db_name:

@@ -86,10 +86,6 @@ class EngineBase:
         """返回引擎简介"""
         return "Base engine"
 
-    def escape_string(self, value: str) -> str:
-        """参数转义"""
-        return value
-
     @property
     def auto_backup(self):
         """是否支持备份"""

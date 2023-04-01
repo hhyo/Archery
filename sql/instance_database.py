@@ -111,8 +111,10 @@ def create(request):
     except Users.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "负责人不存在", "data": []})
 
+    # escape
+    db_name = MySQLdb.escape_string(db_name).decode("utf-8")
+
     engine = get_engine(instance=instance)
-    db_name = engine.escape_string(db_name)
     exec_result = engine.execute(
         db_name="information_schema", sql=f"create database {db_name};"
     )
