@@ -1282,13 +1282,12 @@ class MongoEngine(EngineBase):
             rows = []
             for db_name in dbs:
                 # 执行语句
-                listing = conn[db_name].command(command='usersInfo')
+                listing = conn[db_name].command(command="usersInfo")
                 grantees = []
-                for user_obj in listing['users']:
-                    grantees.append({
-                        'user': user_obj['user'],
-                        'roles': user_obj['roles']
-                    }.__str__())
+                for user_obj in listing["users"]:
+                    grantees.append(
+                        {"user": user_obj["user"], "roles": user_obj["roles"]}.__str__()
+                    )
                 row = {
                     "db_name": db_name,
                     "grantees": grantees,
@@ -1309,15 +1308,17 @@ class MongoEngine(EngineBase):
             rows = []
             for db_name in dbs:
                 # 执行语句
-                listing = conn[db_name].command(command='usersInfo')
-                for user_obj in listing['users']:
-                    rows.append({
-                        "db_name_user": f"{db_name}.{user_obj['user']}",
-                        "db_name": db_name,
-                        "user": user_obj['user'],
-                        "roles": [role['role'] for role in user_obj['roles']],
-                        "saved": False,
-                    })
+                listing = conn[db_name].command(command="usersInfo")
+                for user_obj in listing["users"]:
+                    rows.append(
+                        {
+                            "db_name_user": f"{db_name}.{user_obj['user']}",
+                            "db_name": db_name,
+                            "user": user_obj["user"],
+                            "roles": [role["role"] for role in user_obj["roles"]],
+                            "saved": False,
+                        }
+                    )
             query_result.rows = rows
         return query_result
 
@@ -1331,13 +1332,15 @@ class MongoEngine(EngineBase):
         try:
             conn = self.get_connection()
             conn[db_name].command("createUser", user, pwd=password1, roles=[])
-            exec_result.rows = [{
-                "instance": self.instance,
-                "db_name": db_name,
-                "user": user,
-                "password": password1,
-                "remark": remark
-            }]
+            exec_result.rows = [
+                {
+                    "instance": self.instance,
+                    "db_name": db_name,
+                    "user": user,
+                    "password": password1,
+                    "remark": remark,
+                }
+            ]
         except Exception as e:
             exec_result.error = str(e)
         return exec_result

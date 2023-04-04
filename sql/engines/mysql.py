@@ -288,9 +288,7 @@ class MysqlEngine(EngineBase):
         sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
         FROM information_schema.SCHEMATA
         WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
-        query_result = self.query(
-            "information_schema", sql_get_db, close_conn=False
-        )
+        query_result = self.query("information_schema", sql_get_db, close_conn=False)
         if not query_result.error:
             dbs = query_result.rows
             # 获取数据库关联用户信息
@@ -357,14 +355,18 @@ class MysqlEngine(EngineBase):
         create_user_cmd = ""
         accounts = []
         for host in hosts:
-            create_user_cmd += f"create user '{user}'@'{host}' identified by '{password1}';"
-            accounts.append({
-                "instance": self.instance,
-                "user": user,
-                "host": host,
-                "password": password1,
-                "remark": remark
-            })
+            create_user_cmd += (
+                f"create user '{user}'@'{host}' identified by '{password1}';"
+            )
+            accounts.append(
+                {
+                    "instance": self.instance,
+                    "user": user,
+                    "host": host,
+                    "password": password1,
+                    "remark": remark,
+                }
+            )
         exec_result = self.execute(db_name="mysql", sql=create_user_cmd)
         exec_result.rows = accounts
         return exec_result

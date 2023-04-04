@@ -6,8 +6,11 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.http import HttpResponse, JsonResponse
-from sql.utils.instance_management import SUPPORTED_MANAGEMENT_DB_TYPE, \
-    get_instanceaccount_unique_value, get_instanceaccount_unique_key
+from sql.utils.instance_management import (
+    SUPPORTED_MANAGEMENT_DB_TYPE,
+    get_instanceaccount_unique_value,
+    get_instanceaccount_unique_key,
+)
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine, ResultSet
 from sql.utils.resource_group import user_instances
@@ -23,7 +26,9 @@ def users(request):
     if not instance_id:
         return JsonResponse({"status": 0, "msg": "", "data": []})
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
@@ -73,12 +78,17 @@ def create(request):
     remark = request.POST.get("remark", "")
 
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == 'mysql' and not all([user, host, password1, password2])) or \
-            (instance.db_type == 'mongo' and not all([db_name, user, password1, password2])):
+    if (
+        instance.db_type == "mysql" and not all([user, host, password1, password2])
+    ) or (
+        instance.db_type == "mongo" and not all([db_name, user, password1, password2])
+    ):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     if password1 != password2:
@@ -91,7 +101,9 @@ def create(request):
         return JsonResponse({"status": 1, "msg": f"{msg}", "data": []})
 
     engine = get_engine(instance=instance)
-    exec_result = engine.create_instance_user(db_name=db_name, user=user, host=host, password1=password1, remark=remark)
+    exec_result = engine.create_instance_user(
+        db_name=db_name, user=user, host=host, password1=password1, remark=remark
+    )
     # 关闭连接
     engine.close()
     if exec_result.error:
@@ -116,12 +128,15 @@ def edit(request):
     remark = request.POST.get("remark", "")
 
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == 'mysql' and not all([user, host])) or \
-            (instance.db_type == 'mongo' and not all([db_name, user])):
+    if (instance.db_type == "mysql" and not all([user, host])) or (
+        instance.db_type == "mongo" and not all([db_name, user])
+    ):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     # 保存到数据库
@@ -135,7 +150,11 @@ def edit(request):
         )
     else:
         InstanceAccount.objects.update_or_create(
-            instance=instance, user=user, host=host, db_name=db_name, defaults={"remark": remark}
+            instance=instance,
+            user=user,
+            host=host,
+            db_name=db_name,
+            defaults={"remark": remark},
         )
     return JsonResponse({"status": 0, "msg": "", "data": []})
 
@@ -147,12 +166,14 @@ def grant(request):
     grant_sql = ""
 
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
     engine = get_engine(instance=instance)
-    if instance.db_type == 'mysql':
+    if instance.db_type == "mysql":
         user_host = request.POST.get("user_host")
         op_type = int(request.POST.get("op_type"))
         priv_type = int(request.POST.get("priv_type"))
@@ -181,7 +202,9 @@ def grant(request):
             for db in db_name:
                 db_privs = ["GRANT OPTION" if d == "GRANT" else d for d in db_privs]
                 if op_type == 0:
-                    grant_sql += f"GRANT {','.join(db_privs)} ON `{db}`.* TO {user_host};"
+                    grant_sql += (
+                        f"GRANT {','.join(db_privs)} ON `{db}`.* TO {user_host};"
+                    )
                 elif op_type == 1:
                     grant_sql += (
                         f"REVOKE {','.join(db_privs)} ON `{db}`.* FROM {user_host};"
@@ -196,9 +219,7 @@ def grant(request):
             for tb in tb_name:
                 tb_privs = ["GRANT OPTION" if t == "GRANT" else t for t in tb_privs]
                 if op_type == 0:
-                    grant_sql += (
-                        f"GRANT {','.join(tb_privs)} ON `{db_name}`.`{tb}` TO {user_host};"
-                    )
+                    grant_sql += f"GRANT {','.join(tb_privs)} ON `{db_name}`.`{tb}` TO {user_host};"
                 elif op_type == 1:
                     grant_sql += f"REVOKE {','.join(tb_privs)} ON `{db_name}`.`{tb}` FROM {user_host};"
         # 列权限
@@ -216,7 +237,7 @@ def grant(request):
                     grant_sql += f"REVOKE {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` FROM {user_host};"
         # 执行变更语句
         exec_result = engine.execute(db_name="mysql", sql=grant_sql)
-    elif instance.db_type == 'mongo':
+    elif instance.db_type == "mongo":
         db_name_user = request.POST.get("db_name_user")
         roles = request.POST.getlist("roles[]")
         arr = db_name_user.split(".")
@@ -249,12 +270,17 @@ def reset_pwd(request):
     reset_pwd2 = request.POST.get("reset_pwd2")
 
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == 'mysql' and not all([user, host, reset_pwd1, reset_pwd2])) or \
-            (instance.db_type == 'mongo' and not all([db_name, user, reset_pwd1, reset_pwd2])):
+    if (
+        instance.db_type == "mysql" and not all([user, host, reset_pwd1, reset_pwd2])
+    ) or (
+        instance.db_type == "mongo" and not all([db_name, user, reset_pwd1, reset_pwd2])
+    ):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     if reset_pwd1 != reset_pwd2:
@@ -267,7 +293,9 @@ def reset_pwd(request):
         return JsonResponse({"status": 1, "msg": f"{msg}", "data": []})
 
     engine = get_engine(instance=instance)
-    exec_result = engine.reset_instance_user_pwd(user_host=user_host, db_name_user=db_name_user, reset_pwd=reset_pwd1)
+    exec_result = engine.reset_instance_user_pwd(
+        user_host=user_host, db_name_user=db_name_user, reset_pwd=reset_pwd1
+    )
     # 关闭连接
     engine.close()
     if exec_result.error:
@@ -276,7 +304,11 @@ def reset_pwd(request):
     # 保存到数据库
     else:
         InstanceAccount.objects.update_or_create(
-            instance=instance, user=user, host=host, db_name=db_name, defaults={"password": reset_pwd1}
+            instance=instance,
+            user=user,
+            host=host,
+            db_name=db_name,
+            defaults={"password": reset_pwd1},
         )
 
     return JsonResponse({"status": 0, "msg": "", "data": []})
@@ -324,22 +356,29 @@ def delete(request):
     host = request.POST.get("host")
 
     try:
-        instance = user_instances(request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE).get(id=instance_id)
+        instance = user_instances(
+            request.user, db_type=SUPPORTED_MANAGEMENT_DB_TYPE
+        ).get(id=instance_id)
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
-    if (instance.db_type == 'mysql' and not all([user_host])) or \
-            (instance.db_type == 'mongo' and not all([db_name_user])):
+    if (instance.db_type == "mysql" and not all([user_host])) or (
+        instance.db_type == "mongo" and not all([db_name_user])
+    ):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     engine = get_engine(instance=instance)
-    exec_result = engine.drop_instance_user(user_host=user_host, db_name_user=db_name_user)
+    exec_result = engine.drop_instance_user(
+        user_host=user_host, db_name_user=db_name_user
+    )
     # 关闭连接
     engine.close()
     if exec_result.error:
         return JsonResponse({"status": 1, "msg": exec_result.error})
     # 删除数据库对应记录
     else:
-        InstanceAccount.objects.filter(instance=instance, user=user, host=host, db_name=db_name).delete()
+        InstanceAccount.objects.filter(
+            instance=instance, user=user, host=host, db_name=db_name
+        ).delete()
 
     return JsonResponse({"status": 0, "msg": "", "data": []})

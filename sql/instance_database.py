@@ -30,7 +30,9 @@ def databases(request):
         return JsonResponse({"status": 0, "msg": "", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(
+            id=instance_id
+        )
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
@@ -77,7 +79,9 @@ def create(request):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(
+            id=instance_id
+        )
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
@@ -87,18 +91,22 @@ def create(request):
         return JsonResponse({"status": 1, "msg": "负责人不存在", "data": []})
 
     engine = get_engine(instance=instance)
-    if instance.db_type == 'mysql':
+    if instance.db_type == "mysql":
         # escape
         db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        exec_result = engine.execute(db_name="information_schema", sql=f"create database {db_name};")
-    elif instance.db_type == 'mongo':
+        exec_result = engine.execute(
+            db_name="information_schema", sql=f"create database {db_name};"
+        )
+    elif instance.db_type == "mongo":
         exec_result = ResultSet()
         try:
             conn = engine.get_connection()
             db = conn[db_name]
-            db.create_collection(name=f'archery-{db_name}')  # mongo创建数据库，需要数据库存在数据才会显示数据库名称，这里创建一个archery-{db_name}的集合
+            db.create_collection(
+                name=f"archery-{db_name}"
+            )  # mongo创建数据库，需要数据库存在数据才会显示数据库名称，这里创建一个archery-{db_name}的集合
         except Exception as e:
-            exec_result.error = f'创建数据库失败, 错误信息：{str(e)}'
+            exec_result.error = f"创建数据库失败, 错误信息：{str(e)}"
 
     # 关闭连接
     engine.close()
@@ -133,7 +141,9 @@ def edit(request):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
 
     try:
-        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(id=instance_id)
+        instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(
+            id=instance_id
+        )
     except Instance.DoesNotExist:
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
