@@ -282,6 +282,15 @@ class MysqlEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
+    def get_bind_users(self, db_name: str):
+        sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
+                from information_schema.SCHEMA_PRIVILEGES
+                where TABLE_SCHEMA='{db_name}'
+                group by TABLE_SCHEMA;"""
+        return self.query(
+            "information_schema", sql_get_bind_users, close_conn=False
+        ).rows
+
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""
         # 获取所有数据库
@@ -294,16 +303,9 @@ class MysqlEngine(EngineBase):
             # 获取数据库关联用户信息
             rows = []
             for db in dbs:
-                db_name = db[0]
-                sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
-        from information_schema.SCHEMA_PRIVILEGES
-        where TABLE_SCHEMA='{db_name}'
-        group by TABLE_SCHEMA;"""
-                bind_users = self.query(
-                    "information_schema", sql_get_bind_users, close_conn=False
-                ).rows
+                bind_users = self.get_bind_users(db_name=db[0])
                 row = {
-                    "db_name": db_name,
+                    "db_name": db[0],
                     "charset": db[1],
                     "collation": db[2],
                     "grantees": bind_users[0][0].split(",") if bind_users else [],
