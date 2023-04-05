@@ -132,6 +132,26 @@ class EngineBase:
         """获取数据库所有表格信息，用作数据字典导出接口"""
         return list()
 
+    def get_all_databases_summary(self):
+        """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        return ResultSet()
+
+    def get_instance_users_summary(self):
+        """实例账号管理功能，获取实例所有账号信息"""
+        return ResultSet()
+
+    def create_instance_user(self, **kwargs):
+        """实例账号管理功能，创建实例账号"""
+        return ResultSet()
+
+    def drop_instance_user(self, **kwargs):
+        """实例账号管理功能，删除实例账号"""
+        return ResultSet()
+
+    def reset_instance_user_pwd(self, **kwargs):
+        """实例账号管理功能，重置实例账号密码"""
+        return ResultSet()
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet，rows=list"""
         return ResultSet()

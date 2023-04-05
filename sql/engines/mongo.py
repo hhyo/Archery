@@ -1270,3 +1270,103 @@ class MongoEngine(EngineBase):
                 f"mongodb语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
             )
             result.error = str(e)
+
+    def get_all_databases_summary(self):
+        """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        query_result = self.get_all_databases()
+        if not query_result.error:
+            dbs = query_result.rows
+            conn = self.get_connection()
+
+            # 获取数据库用户信息
+            rows = []
+            for db_name in dbs:
+                # 执行语句
+                listing = conn[db_name].command(command="usersInfo")
+                grantees = []
+                for user_obj in listing["users"]:
+                    grantees.append(
+                        {"user": user_obj["user"], "roles": user_obj["roles"]}.__str__()
+                    )
+                row = {
+                    "db_name": db_name,
+                    "grantees": grantees,
+                    "saved": False,
+                }
+                rows.append(row)
+            query_result.rows = rows
+        return query_result
+
+    def get_instance_users_summary(self):
+        """实例账号管理功能，获取实例所有账号信息"""
+        query_result = self.get_all_databases()
+        if not query_result.error:
+            dbs = query_result.rows
+            conn = self.get_connection()
+
+            # 获取数据库用户信息
+            rows = []
+            for db_name in dbs:
+                # 执行语句
+                listing = conn[db_name].command(command="usersInfo")
+                for user_obj in listing["users"]:
+                    rows.append(
+                        {
+                            "db_name_user": f"{db_name}.{user_obj['user']}",
+                            "db_name": db_name,
+                            "user": user_obj["user"],
+                            "roles": [role["role"] for role in user_obj["roles"]],
+                            "saved": False,
+                        }
+                    )
+            query_result.rows = rows
+        return query_result
+
+    def create_instance_user(self, **kwargs):
+        """实例账号管理功能，创建实例账号"""
+        exec_result = ResultSet()
+        db_name = kwargs.get("db_name", "")
+        user = kwargs.get("user", "")
+        password1 = kwargs.get("password1", "")
+        remark = kwargs.get("remark", "")
+        try:
+            conn = self.get_connection()
+            conn[db_name].command("createUser", user, pwd=password1, roles=[])
+            exec_result.rows = [
+                {
+                    "instance": self.instance,
+                    "db_name": db_name,
+                    "user": user,
+                    "password": password1,
+                    "remark": remark,
+                }
+            ]
+        except Exception as e:
+            exec_result.error = str(e)
+        return exec_result
+
+    def drop_instance_user(self, db_name_user: str, **kwarg):
+        """实例账号管理功能，删除实例账号"""
+        arr = db_name_user.split(".")
+        db_name = arr[0]
+        user = arr[1]
+        exec_result = ResultSet()
+        try:
+            conn = self.get_connection()
+            conn[db_name].command("dropUser", user)
+        except Exception as e:
+            exec_result.error = str(e)
+        return exec_result
+
+    def reset_instance_user_pwd(self, db_name_user: str, reset_pwd: str, **kwargs):
+        """实例账号管理功能，重置实例账号密码"""
+        arr = db_name_user.split(".")
+        db_name = arr[0]
+        user = arr[1]
+        exec_result = ResultSet()
+        try:
+            conn = self.get_connection()
+            conn[db_name].command("updateUser", user, pwd=reset_pwd)
+        except Exception as e:
+            exec_result.error = str(e)
+        return exec_result
