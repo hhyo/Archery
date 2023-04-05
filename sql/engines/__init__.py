@@ -171,7 +171,15 @@ class EngineBase:
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs
+    ):
         """实际查询 返回一个ResultSet"""
         return ResultSet()
 
@@ -184,7 +192,7 @@ class EngineBase:
         """执行语句的检查 返回一个ReviewSet"""
         return ReviewSet()
 
-    def execute(self):
+    def execute(self, **kwargs):
         """执行语句 返回一个ReviewSet"""
         return ReviewSet()
 
