@@ -593,7 +593,10 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
+                cursor.execute(
+                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
+                    {"db_name": db_name},
+                )
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -667,7 +670,10 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
+                cursor.execute(
+                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
+                    {"db_name": db_name},
+                )
             sql = sql.rstrip(";")
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
@@ -1383,23 +1389,26 @@ class OracleEngine(EngineBase):
                                   my_task_name VARCHAR2(30);
                                   my_sqltext  CLOB;
                                   BEGIN
-                                  my_sqltext := '{sql}';
+                                  my_sqltext := :sql;
                                   my_task_name := DBMS_SQLTUNE.CREATE_TUNING_TASK(
                                   sql_text    => my_sqltext,
-                                  user_name   => '{db_name}',
+                                  user_name   => :db_name,
                                   scope       => 'COMPREHENSIVE',
                                   time_limit  => 30,
-                                  task_name   => '{task_name}',
+                                  task_name   => :task_name,
                                   description => 'tuning');
-                                  DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => '{task_name}');
+                                  DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => :task_name);
                                   END;"""
             task_begin = 1
-            cursor.execute(create_task_sql)
+            cursor.execute(
+                create_task_sql,
+                {"sql": sql, "db_name": db_name, "task_name": task_name},
+            )
             # 获取分析报告
             get_task_sql = (
-                f"""select DBMS_SQLTUNE.REPORT_TUNING_TASK( '{task_name}') from dual"""
+                f"""select DBMS_SQLTUNE.REPORT_TUNING_TASK(:task_name) from dual"""
             )
-            cursor.execute(get_task_sql)
+            cursor.execute(get_task_sql, {"task_name": task_name})
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
                 rows = [
