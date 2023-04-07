@@ -53,7 +53,7 @@ urlpatterns = [
     path("v1/instance/tunnel/", api_instance.TunnelList.as_view()),
     path("v1/instance/rds/", api_instance.AliyunRdsList.as_view()),
     path("v1/workflow/", api_workflow.WorkflowList.as_view()),
-    path("v1/workflow/sqlcheck/", api_sql_workflow.ExecuteCheck.as_view()),
+    path("v1/workflow/sqlcheck/", api_sql_workflow.SqlWorkflowView.as_view({'post': 'check'})),
     path("v1/workflow/audit/", api_workflow.AuditWorkflow.as_view()),
     path("v1/workflow/auditlist/", api_workflow.WorkflowAuditList.as_view()),
     path("v1/workflow/execute/", api_workflow.ExecuteWorkflow.as_view()),

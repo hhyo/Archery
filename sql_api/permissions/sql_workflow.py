@@ -22,7 +22,7 @@ from sql.utils.workflow_audit import Audit
 class SqlWorkFlowViewPermission(permissions.BasePermission):
     """SQL工单权限校验"""
 
-    message = "你没有获取工单列表的权限"
+    message = "你没有该操作权限"
     obj_message = "工单状态不正确或者你没有该工单的权限"
 
     def has_permission(self, request, view):
@@ -32,11 +32,17 @@ class SqlWorkFlowViewPermission(permissions.BasePermission):
             [
                 request.user.has_perm("sql.menu_sqlworkflow"),
                 request.user.has_perm("sql.audit_user"),
+                request.user.has_perm("sql.sql_submit")
             ]
         )
 
     def has_retrieve_permission(self, request, view, obj):
         """详情权限"""
+        self.message = self.obj_message
+        return can_view(request.user, obj.id)
+
+    def has_progress_permission(self, request, view, obj):
+        """执行进度权限"""
         self.message = self.obj_message
         return can_view(request.user, obj.id)
 
