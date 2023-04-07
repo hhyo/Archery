@@ -425,7 +425,7 @@
             //将数据通过ajax提交给后端进行检查
             $.ajax({
                 type: "post",
-                url: "/api/v1/workflow/sqlcheck/",
+                url: "/api/v2/workflow/sql/check/",
                 dataType: "json",
                 contentType: 'application/json;',
                 data: JSON.stringify({
