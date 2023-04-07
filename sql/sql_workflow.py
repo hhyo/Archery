@@ -204,20 +204,6 @@ def cancel(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def get_workflow_status(request):
-    """
-    获取某个工单的当前状态
-    """
-    workflow_id = request.POST["workflow_id"]
-    if workflow_id == "" or workflow_id is None:
-        context = {"status": -1, "msg": "workflow_id参数为空.", "data": ""}
-        return HttpResponse(json.dumps(context), content_type="application/json")
-
-    workflow_id = int(workflow_id)
-    workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
-    result = {"status": workflow_detail.status, "msg": "", "data": ""}
-    return JsonResponse(result)
-
 
 def osc_control(request):
     """用于mysql控制osc执行"""

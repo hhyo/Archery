@@ -526,7 +526,7 @@
         }
 
         // 工单操作
-        function sqlWorkflowAction(http_method ,action, data, btnAttrId) {
+        function sqlWorkflowAction(http_method, action, data, btnAttrId) {
             $.ajax({
                 type: http_method,
                 url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/" + action + "/",
@@ -941,13 +941,11 @@
             if (workflow_id > 0) {
                 // console.log('get workflow status');
                 $.ajax({
-                    type: "post",
+                    type: "get",
                     async: false,
-                    url: "/getWorkflowStatus/",
+                    contentType: "application/json",
+                    url: "/api/v2/workflow/sql/" + workflow_id + "/progress/",
                     dataType: "json",
-                    data: {
-                        workflow_id: workflow_id
-                    },
                     complete: function () {
                         if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
                             window.location.reload(true);
