@@ -1422,7 +1422,6 @@ class TestWorkflowView(TransactionTestCase):
         self.resource_group1.delete()
         SysConfig().purge()
 
-
     @patch("sql.utils.workflow_audit.Audit.logs")
     @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
     @patch("sql.utils.workflow_audit.Audit.review_info")
@@ -1494,7 +1493,6 @@ class TestWorkflowView(TransactionTestCase):
         )
         self.wf1.refresh_from_db()
         self.assertEqual(self.wf1.status, "workflow_review_pass")
-
 
     @patch("sql.sql_workflow.Audit.add_log")
     @patch("sql.sql_workflow.Audit.detail_by_workflow_id")

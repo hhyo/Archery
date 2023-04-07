@@ -32,7 +32,7 @@ class SqlWorkFlowViewPermission(permissions.BasePermission):
             [
                 request.user.has_perm("sql.menu_sqlworkflow"),
                 request.user.has_perm("sql.audit_user"),
-                request.user.has_perm("sql.sql_submit")
+                request.user.has_perm("sql.sql_submit"),
             ]
         )
 

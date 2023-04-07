@@ -204,7 +204,6 @@ def cancel(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-
 def osc_control(request):
     """用于mysql控制osc执行"""
     workflow_id = request.POST.get("workflow_id")
