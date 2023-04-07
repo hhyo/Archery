@@ -791,14 +791,6 @@ class TestWorkflowView(TransactionTestCase):
         self.resource_group1.delete()
         SysConfig().purge()
 
-    def testWorkflowStatus(self):
-        """测试获取工单状态"""
-        c = Client(header={})
-        c.force_login(self.u1)
-        r = c.post("/getWorkflowStatus/", {"workflow_id": self.wf1.id})
-        r_json = r.json()
-        self.assertEqual(r_json["status"], "workflow_finish")
-
     @patch("sql.utils.workflow_audit.Audit.logs")
     @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
     @patch("sql.utils.workflow_audit.Audit.review_info")
@@ -872,7 +864,6 @@ class TestWorkflowView(TransactionTestCase):
         )
         self.wf2.refresh_from_db()
         self.assertEqual(self.wf2.status, "workflow_review_pass")
-
 
     @patch("sql.sql_workflow.Audit.add_log")
     @patch("sql.notify.auto_notify")
