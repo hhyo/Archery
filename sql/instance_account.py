@@ -180,7 +180,7 @@ def grant(request):
         privs = json.loads(request.POST.get("privs"))
 
         # escape
-        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+        user_host = engine.escape_string(user_host)
 
         # 全局权限
         if priv_type == 0:
@@ -331,14 +331,14 @@ def lock(request):
         return JsonResponse({"status": 1, "msg": "你所在组未关联该实例", "data": []})
 
     # escape
-    user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+    engine = get_engine(instance=instance)
+    user_host = engine.escape_string(user_host)
 
     if is_locked == "N":
         lock_sql = f"ALTER USER {user_host} ACCOUNT LOCK;"
     elif is_locked == "Y":
         lock_sql = f"ALTER USER {user_host} ACCOUNT UNLOCK;"
 
-    engine = get_engine(instance=instance)
     exec_result = engine.execute(db_name="mysql", sql=lock_sql)
     if exec_result.error:
         return JsonResponse({"status": 1, "msg": exec_result.error})

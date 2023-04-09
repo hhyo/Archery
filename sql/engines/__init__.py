@@ -86,6 +86,10 @@ class EngineBase:
         """返回引擎简介"""
         return "Base engine"
 
+    def escape_string(self, value: str) -> str:
+        """参数转义"""
+        return value
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -167,7 +171,15 @@ class EngineBase:
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs
+    ):
         """实际查询 返回一个ResultSet"""
         return ResultSet()
 
@@ -180,7 +192,7 @@ class EngineBase:
         """执行语句的检查 返回一个ReviewSet"""
         return ReviewSet()
 
-    def execute(self):
+    def execute(self, **kwargs):
         """执行语句 返回一个ReviewSet"""
         return ReviewSet()
 

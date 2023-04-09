@@ -13,7 +13,7 @@ class SqlTuning(object):
         instance = Instance.objects.get(instance_name=instance_name)
         query_engine = get_engine(instance=instance)
         self.engine = query_engine
-        self.db_name = db_name
+        self.db_name = self.engine.escape_string(db_name)
         self.sqltext = sqltext
         self.sql_variable = """
     select

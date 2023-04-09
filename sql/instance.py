@@ -163,7 +163,6 @@ def param_edit(request):
     instance_id = request.POST.get("instance_id")
     variable_name = request.POST.get("variable_name")
     variable_value = request.POST.get("runtime_value")
-
     try:
         ins = Instance.objects.get(id=instance_id)
     except Instance.DoesNotExist:
@@ -172,6 +171,8 @@ def param_edit(request):
 
     # 修改参数
     engine = get_engine(instance=ins)
+    variable_name = engine.escape_string(variable_name)
+    variable_value = engine.escape_string(variable_value)
     # 校验是否配置模板
     if not ParamTemplate.objects.filter(variable_name=variable_name).exists():
         result = {"status": 1, "msg": "请先在参数模板中配置该参数！", "data": []}
@@ -320,12 +321,10 @@ def instance_resource(request):
     result = {"status": 0, "msg": "ok", "data": []}
 
     try:
-        # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        schema_name = MySQLdb.escape_string(schema_name).decode("utf-8")
-        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
-
         query_engine = get_engine(instance=instance)
+        db_name = query_engine.escape_string(db_name)
+        schema_name = query_engine.escape_string(schema_name)
+        tb_name = query_engine.escape_string(tb_name)
         if resource_type == "database":
             resource = query_engine.get_all_databases()
         elif resource_type == "schema" and db_name:
@@ -363,10 +362,14 @@ def describe(request):
     db_name = request.POST.get("db_name")
     schema_name = request.POST.get("schema_name")
     tb_name = request.POST.get("tb_name")
+
     result = {"status": 0, "msg": "ok", "data": []}
 
     try:
         query_engine = get_engine(instance=instance)
+        db_name = query_engine.escape_string(db_name)
+        schema_name = query_engine.escape_string(schema_name)
+        tb_name = query_engine.escape_string(tb_name)
         query_result = query_engine.describe_table(
             db_name, tb_name, schema_name=schema_name
         )
