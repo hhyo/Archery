@@ -10,7 +10,6 @@ __author__ = "hhyo"
 import django_filters
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import serializers, viewsets, filters
 from rest_framework.decorators import action
@@ -30,6 +29,7 @@ from sql_api.serializers.sql_workflow import (
     SqlWorkflowDetailSerializer,
     SqlWorkflowExecuteSerializer,
     SqlWorkflowTimingTaskSerializer,
+    SqlWorkflowMySQLOscControlSerializer,
 )
 
 
@@ -169,7 +169,7 @@ class SqlWorkflowView(viewsets.ModelViewSet):
     @extend_schema(
         summary="立即执行工单",
         request=SqlWorkflowExecuteSerializer,
-        responses={200: OpenApiTypes.NUMBER},
+        responses={200: SqlWorkflowSerializer},
         description="通过工单ID执行工单",
     )
     @action(methods=["post"], detail=True)
@@ -179,12 +179,12 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         mode = request.data.get("mode")
         serializer = self.get_serializer()
         serializer.execute(obj, mode=mode, username=request.user.username)
-        return Response(obj.id)
+        return Response(serializer.data)
 
     @extend_schema(
         summary="设置定时执行工单",
         request=SqlWorkflowTimingTaskSerializer,
-        responses={200: OpenApiTypes.DATETIME},
+        responses={200: SqlWorkflowSerializer},
         description="通过工单ID执行工单",
     )
     @action(methods=["post"], detail=True)
@@ -196,4 +196,24 @@ class SqlWorkflowView(viewsets.ModelViewSet):
         run_date = request.data.get("run_date")
         serializer = self.get_serializer()
         serializer.timing_task(obj, run_date=run_date, username=request.user.username)
-        return Response(run_date)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="用于MySQL的大表DDL控制",
+        request=SqlWorkflowMySQLOscControlSerializer,
+        responses={200: SqlWorkflowSerializer},
+        description="控制pt-osc、gh-ost任务，用于执行进度获取，暂停、恢复、终止执行等",
+    )
+    @action(methods=["post"], detail=True)
+    def mysql_osc_control(self, request, *args, **kwargs):
+        obj = self.get_object()
+        SqlWorkflowMySQLOscControlSerializer(data=request.data).is_valid(
+            raise_exception=True
+        )
+        sqlsha1 = request.data.get("sqlsha1")
+        command = request.data.get("command")
+        serializer = self.get_serializer()
+        serializer.mysql_osc_control(
+            obj, sqlsha1=sqlsha1, command=command, username=request.user.username
+        )
+        return Response(serializer.data)

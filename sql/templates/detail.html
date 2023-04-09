@@ -764,8 +764,9 @@
             $('#osc_percent_list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/inception/osc_control/",
+                contentType: "application/json",
+                url: "/api/v2/workflow/sql/" + workflow_id + "/mysql_osc_control/",
+                dataType: "json",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: false,                   //是否显示分页（*）
@@ -808,11 +809,11 @@
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
-                        return {
+                        return JSON.stringify({
                             sqlsha1: $(obj).attr("sqlsha1"),
                             workflow_id: "{{ workflow_detail.id }}",
                             command: "get"
-                        }
+                        })
                     },
                 columns: [{
                     title: '',
@@ -887,11 +888,11 @@
                     //发送请求
                     $.ajax({
                         type: "post",
-                        url: "/inception/osc_control/",
+                        contentType: "application/json",
+                        url: "/api/v2/workflow/sql/" + workflow_id + "/mysql_osc_control/",
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: command
                         },
                         complete: function () {

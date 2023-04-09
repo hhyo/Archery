@@ -251,6 +251,19 @@ class SqlWorkflowSerializer(BaseModelSerializer):
                 operator_display=user.display,
             )
 
+    @staticmethod
+    def mysql_osc_control(obj, sqlsha1, command):
+        """用于MySQL的大表DDL控制"""
+        execute_engine = get_engine(instance=obj.instance)
+        try:
+            execute_result = execute_engine.osc_control(command=command, sqlsha1=sqlsha1)
+            rows = execute_result.to_dict()
+            error = execute_result.error
+        except Exception as e:
+            rows = []
+            error = str(e)
+        return {"total": len(rows), "rows": rows, "msg": error}
+
     class Meta:
         model = SqlWorkflow
         fields = "__all__"
@@ -273,4 +286,15 @@ class SqlWorkflowTimingTaskSerializer(serializers.Serializer):
 
     run_date = serializers.DateTimeField(
         label="定时执行时间",
+    )
+
+
+class SqlWorkflowMySQLOscControlSerializer(serializers.Serializer):
+    """用于MySQL的大表DDL控制"""
+
+    sqlsha1 = serializers.CharField(
+        label="SQL审核返回的sqlsha1信息",
+    )
+    command = serializers.ChoiceField(
+        choices=["get", "pause", "resume", "kill"], label="命令：get-获取详情，pause-暂停，resume-恢复，kill-终止"
     )

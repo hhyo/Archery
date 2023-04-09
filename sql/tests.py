@@ -898,38 +898,6 @@ class TestWorkflowView(TransactionTestCase):
         self.wf2.refresh_from_db()
         self.assertEqual("workflow_abort", self.wf2.status)
 
-    @patch("sql.sql_workflow.get_engine")
-    def test_osc_control(self, _get_engine):
-        """测试MySQL工单osc控制"""
-        c = Client()
-        c.force_login(self.superuser1)
-        request_data = {
-            "workflow_id": self.wf1.id,
-            "sqlsha1": "sqlsha1",
-            "command": "get",
-        }
-        _get_engine.return_value.osc_control.return_value = ResultSet()
-        r = c.post("/inception/osc_control/", data=request_data, follow=False)
-        self.assertDictEqual(
-            json.loads(r.content), {"total": 0, "rows": [], "msg": None}
-        )
-
-    @patch("sql.sql_workflow.get_engine")
-    def test_osc_control_exception(self, _get_engine):
-        """测试MySQL工单OSC控制异常"""
-        c = Client()
-        c.force_login(self.superuser1)
-        request_data = {
-            "workflow_id": self.wf1.id,
-            "sqlsha1": "sqlsha1",
-            "command": "get",
-        }
-        _get_engine.return_value.osc_control.side_effect = RuntimeError("RuntimeError")
-        r = c.post("/inception/osc_control/", data=request_data, follow=False)
-        self.assertDictEqual(
-            json.loads(r.content), {"total": 0, "rows": [], "msg": "RuntimeError"}
-        )
-
 
 class TestOptimize(TestCase):
     """

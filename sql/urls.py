@@ -76,7 +76,6 @@ urlpatterns = [
     path("audit_sqlworkflow/", views.audit_sqlworkflow),
     path("authenticate/", auth.authenticate_entry),
     path("del_sqlcronjob/", tasks.del_schedule),
-    path("inception/osc_control/", sql_workflow.osc_control),
     path("sql_analyze/generate/", sql_analyze.generate),
     path("sql_analyze/analyze/", sql_analyze.analyze),
     path("workflow/list/", workflow.lists),
