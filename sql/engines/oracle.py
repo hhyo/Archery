@@ -605,7 +605,7 @@ class OracleEngine(EngineBase):
             cursor.execute(sql)
             # 获取影响行数
             cursor.execute(
-                f"select CARDINALITY from (select CARDINALITY from PLAN_TABLE t where id = 0 order by t.timestamp desc) where rownum = 1"
+                "select CARDINALITY from (select CARDINALITY from PLAN_TABLE t where id = 0 order by t.timestamp desc) where rownum = 1"
             )
             rows = cursor.fetchone()
             conn.rollback()
