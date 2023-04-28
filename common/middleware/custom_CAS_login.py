@@ -35,6 +35,6 @@ class CustomCASBackend(CASBackend):
                 if sys_config.get("feishu_appid"):
                     user.feishu_open_id = fs.get_user_id(email)
                 user.save()
-            except  Exception as e:
+            except Exception:
                 #  当飞书请求失败时，返回  None
                 return None
