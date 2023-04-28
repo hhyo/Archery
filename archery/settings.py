@@ -7,6 +7,8 @@ from typing import List
 from datetime import timedelta
 import environ
 import requests
+import ldap
+from django_auth_ldap.config import LDAPSearch
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -260,38 +262,85 @@ if ENABLE_OIDC:
 
     LOGIN_REDIRECT_URL = "/"
 
-# LDAP
-ENABLE_LDAP = env("ENABLE_LDAP", False)
-if ENABLE_LDAP:
-    import ldap
-    from django_auth_ldap.config import LDAPSearch
-
-    AUTHENTICATION_BACKENDS = (
-        "django_auth_ldap.backend.LDAPBackend",  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
-        "django.contrib.auth.backends.ModelBackend",  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
+# LDAP认证
+ENABLE_LDAP_DATA_COMPLETION = env("ENABLE_LDAP_DATA_COMPLETION", default=False)
+ENABLE_LDAP = env("ENABLE_LDAP", default=False)
+if ENABLE_LDAP_DATA_COMPLETION or ENABLE_LDAP:
+    AUTH_LDAP_SERVER_URI = env("AUTH_LDAP_SERVER_URI", default="ldap://127.0.0.1:389")
+    AUTH_LDAP_BIND_DN = env(
+        "AUTH_LDAP_BIND_DN", default="uid=xxxx,ou=users,dc=xxxx,dc=com"
     )
+    AUTH_LDAP_BIND_PASSWORD = env("AUTH_LDAP_BIND_PASSWORD", default="xxxx")
+    AUTH_LDAP_USER_SEARCH_BASE = env(
+        "AUTH_LDAP_USER_SEARCH_BASE", default="xxxx"
+    )
+    AUTH_LDAP_USER_SEARCH_FILTER = env(
+        "AUTH_LDAP_USER_SEARCH_FILTER", default="(cn=%(user)s)"
+    )
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        AUTH_LDAP_USER_SEARCH_BASE, ldap.SCOPE_SUBTREE, AUTH_LDAP_USER_SEARCH_FILTER
+    )
+    if ENABLE_LDAP:
+        AUTH_LDAP_USER_ATTR_MAP_STRING = env(
+            "AUTH_LDAP_USER_ATTR",
+            default={
+                "username": "uid",
+                "display": "uid",
+                "email": "mail"
+            }
+        )
+        result = {}
+        pairs = AUTH_LDAP_USER_ATTR_MAP_STRING.split(",")
+        for pair in pairs:
+            key, value = pair.split("=")
+            # 根据键名映射为新的键名
+            if key == "username":
+                new_key = "username"
+            elif key == "display":
+                new_key = "display"
+            elif key == "email":
+                new_key = "email"
+            else:
+                new_key = key
+            # 将键值对添加到结果字典中
+            if new_key == "username":
+                result[new_key] = "uid"
+            elif new_key == "display":
+                result[new_key] = "uid"
+            elif new_key == "email":
+                result[new_key] = "mail"
+            else:
+                result[new_key] = value
 
-    AUTH_LDAP_SERVER_URI = env("AUTH_LDAP_SERVER_URI", default="ldap://xxx")
-    AUTH_LDAP_USER_DN_TEMPLATE = env("AUTH_LDAP_USER_DN_TEMPLATE", default=None)
-    if not AUTH_LDAP_USER_DN_TEMPLATE:
+        AUTHENTICATION_BACKENDS = (
+            "django_auth_ldap.backend.LDAPBackend",  # 配置为先使用LDAP认证，如通过认证则不再使用后面的认证方式
+            "django.contrib.auth.backends.ModelBackend",  # django系统中手动创建的用户也可使用，优先级靠后。注意这2行的顺序
+        )
+        AUTH_LDAP_USER_DN_TEMPLATE = env("AUTH_LDAP_USER_DN_TEMPLATE", default=None)
         del AUTH_LDAP_USER_DN_TEMPLATE
-        AUTH_LDAP_BIND_DN = env(
-            "AUTH_LDAP_BIND_DN", default="cn=xxx,ou=xxx,dc=xxx,dc=xxx"
-        )
-        AUTH_LDAP_BIND_PASSWORD = env("AUTH_LDAP_BIND_PASSWORD", default="***********")
-        AUTH_LDAP_USER_SEARCH_BASE = env(
-            "AUTH_LDAP_USER_SEARCH_BASE", default="ou=xxx,dc=xxx,dc=xxx"
-        )
-        AUTH_LDAP_USER_SEARCH_FILTER = env(
-            "AUTH_LDAP_USER_SEARCH_FILTER", default="(cn=%(user)s)"
-        )
-        AUTH_LDAP_USER_SEARCH = LDAPSearch(
-            AUTH_LDAP_USER_SEARCH_BASE, ldap.SCOPE_SUBTREE, AUTH_LDAP_USER_SEARCH_FILTER
-        )
-    AUTH_LDAP_ALWAYS_UPDATE_USER = env(
-        "AUTH_LDAP_ALWAYS_UPDATE_USER", default=True
-    )  # 每次登录从ldap同步用户信息
-    AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
+        AUTH_LDAP_USER_ATTR_MAP = AUTH_LDAP_USER_ATTR_MAP_STRING
+        AUTH_LDAP_ALWAYS_UPDATE_USER = True
+
+
+# CAS认证
+ENABLE_CAS = env("ENABLE_CAS", default=False)
+if ENABLE_CAS:
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        "common.middleware.custom_CAS_login.CustomCASBackend",
+    )
+    # CAS 的地址
+    CAS_SERVER_URL = env("CAS_SERVER_URL", default="https://sso.chinawayltd.com")
+    # CAS 版本
+    CAS_VERSION = env("CAS_VERSION", default="2")
+    # 存入所有 CAS 服务端返回的 User 数据。
+    CAS_APPLY_ATTRIBUTES_TO_USER = True
+    # 关闭浏览器退出登录
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    #  忽略  SSL  证书校验
+    CAS_VERIFY_SSL_CERTIFICATE = False
+    #  忽略来源验证
+    CAS_IGNORE_REFERER = True
 
 # LOG配置
 LOGGING = {

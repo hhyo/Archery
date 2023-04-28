@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 
+import django_cas_ng.views
+from django.conf import settings
 from django.urls import path
 from django.views.i18n import JavaScriptCatalog
 
@@ -8,6 +10,7 @@ import sql.query_privileges
 import sql.sql_optimize
 from common import auth, config, workflow, dashboard, check
 from common.twofa import totp
+from common.utils import ding_api
 from sql import (
     views,
     sql_workflow,
@@ -25,15 +28,12 @@ from sql import (
     user,
 )
 from sql.utils import tasks
-from common.utils import ding_api
 
 urlpatterns = [
     path("", views.index),
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
     path("index/", views.index),
-    path("login/", views.login, name="login"),
     path("login/2fa/", views.twofa, name="twofa"),
-    path("logout/", auth.sign_out),
     path("signup/", auth.sign_up),
     path("sqlworkflow/", views.sqlworkflow),
     path("submitsql/", views.submit_sql),
@@ -163,3 +163,13 @@ urlpatterns = [
     path("user/list/", user.lists),
     path("user/qrcode/<str:data>/", totp.generate_qrcode),
 ]
+if settings.ENABLE_CAS:
+    urlpatterns += [
+        path('login/', django_cas_ng.views.LoginView.as_view(), name='cas-login'),
+        path('logout/', django_cas_ng.views.LogoutView.as_view(), name='cas-logout'),
+    ]
+else:
+    urlpatterns += [
+        path('login/', views.login, name='login'),
+        path('logout/', auth.sign_out),
+    ]
