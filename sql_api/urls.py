@@ -37,6 +37,7 @@ urlpatterns = [
         "redoc/", SpectacularRedocView.as_view(url_name="sql_api:schema"), name="redoc"
     ),
     path("v1/user/", api_user.UserList.as_view()),
+    path("v1/userinfo/", api_user.UserInfo.as_view()),
     path("v1/user/<int:pk>/", api_user.UserDetail.as_view()),
     path("v1/user/group/", api_user.GroupList.as_view()),
     path("v1/user/group/<int:pk>/", api_user.GroupDetail.as_view()),

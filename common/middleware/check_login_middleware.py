@@ -12,9 +12,11 @@ IGNORE_URL = [
     "/oidc/callback/",
     "/oidc/authenticate/",
     "/oidc/logout/",
+    "/api/auth/token/",
+    "/api/auth/token/refresh/",
 ]
 
-IGNORE_URL_RE = r"/api/(v1|auth)/\w+"
+IGNORE_URL_RE = r"/api/(v1|v2|auth)/\w+"
 
 
 class CheckLoginMiddleware(MiddlewareMixin):

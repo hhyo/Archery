@@ -11,7 +11,8 @@ class IsInUserWhitelist(permissions.BasePermission):
         config = SysConfig().get("api_user_whitelist")
         user_list = config.split(",") if config else []
         api_user_whitelist = [int(uid) for uid in user_list]
-
+        if request.user.is_authenticated:
+            return True
         # 只有在api_user_whitelist参数中的用户才有权限
         return request.user.id in api_user_whitelist
 

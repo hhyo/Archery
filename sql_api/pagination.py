@@ -14,7 +14,7 @@ class CustomizedPagination(PageNumberPagination):
         if "PAGE_SIZE" in settings.REST_FRAMEWORK.keys()
         else 20
     )
-    page_query_param = "page"
+    page_query_param = "current"
     page_size_query_param = "size"
     max_page_size = None
 

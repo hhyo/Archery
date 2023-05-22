@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters, DateFromToRangeFilter
-from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit, SqlWorkflow
+from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit, SqlWorkflow,ResourceGroup
 
 
 class UserFilter(filters.FilterSet):
@@ -19,6 +19,16 @@ class InstanceFilter(filters.FilterSet):
             "instance_name": ["icontains"],
             "db_type": ["exact"],
             "host": ["exact"],
+            "resource_group__group_name": ["exact"],
+        }
+
+
+class ResourceGroupFilter(filters.FilterSet):
+    class Meta:
+        model = ResourceGroup
+        fields = {
+            "group_id": ["exact"],
+            "group_name": ["icontains"],
         }
 
 
@@ -28,8 +38,10 @@ class WorkflowFilter(filters.FilterSet):
         fields = {
             "id": ["exact"],
             "workflow_id": ["exact"],
+            "workflow__instance__instance_name": ["exact"],
             "workflow__workflow_name": ["icontains"],
             "workflow__instance_id": ["exact"],
+            "workflow__group_name": ["exact"],
             "workflow__db_name": ["exact"],
             "workflow__engineer": ["exact"],
             "workflow__status": ["exact"],

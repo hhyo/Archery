@@ -31,7 +31,7 @@ from sql_api.serializers.sql_workflow import (
     SqlWorkflowExecuteSerializer,
     SqlWorkflowTimingTaskSerializer,
 )
-
+from rest_framework_simplejwt import authentication
 
 @extend_schema_view(
     create=extend_schema(exclude=True),

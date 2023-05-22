@@ -85,6 +85,9 @@ class SqlWorkflowSerializer(BaseModelSerializer):
     instance_name = serializers.CharField(source="instance.instance_name")
     sql_content = serializers.CharField(source="sqlworkflowcontent.sql_content")
     display_content = serializers.SerializerMethodField()
+    create_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
+    run_date_start = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
+    run_date_end = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
 
     @staticmethod
     def setup_eager_loading(queryset):
