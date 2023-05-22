@@ -1,5 +1,12 @@
 from django_filters import rest_framework as filters, DateFromToRangeFilter
-from sql.models import Users, Instance, SqlWorkflowContent, WorkflowAudit, SqlWorkflow,ResourceGroup
+from sql.models import (
+    Users,
+    Instance,
+    SqlWorkflowContent,
+    WorkflowAudit,
+    SqlWorkflow,
+    ResourceGroup,
+)
 
 
 class UserFilter(filters.FilterSet):

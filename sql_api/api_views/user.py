@@ -14,7 +14,7 @@ from sql_api.serializers.serializers import (
 )
 from sql_api.pagination import CustomizedPagination
 from sql_api.permissions.common import IsOwner
-from sql_api.filters import UserFilter,ResourceGroupFilter
+from sql_api.filters import UserFilter, ResourceGroupFilter
 from django_redis import get_redis_connection
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate, login
@@ -175,6 +175,7 @@ class ResourceGroupList(generics.ListAPIView):
     """
     列出所有的resourcegroup或者创建一个新的resourcegroup
     """
+
     filterset_class = ResourceGroupFilter
     pagination_class = CustomizedPagination
     serializer_class = ResourceGroupSerializer

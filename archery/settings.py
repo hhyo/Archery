@@ -194,11 +194,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-    'DEFAULT_RENDERER_CLASSES': (
-        'common.middleware.custom_renderer.CustomRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+    "DEFAULT_RENDERER_CLASSES": (
+        "common.middleware.custom_renderer.CustomRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     ),
-    'EXCEPTION_HANDLER': 'common.middleware.custom_renderer.custom_exception_handler',
+    "EXCEPTION_HANDLER": "common.middleware.custom_renderer.custom_exception_handler",
     # 鉴权
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",

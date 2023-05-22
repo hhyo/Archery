@@ -33,6 +33,7 @@ from sql_api.serializers.sql_workflow import (
 )
 from rest_framework_simplejwt import authentication
 
+
 @extend_schema_view(
     create=extend_schema(exclude=True),
     partial_update=extend_schema(exclude=True),
