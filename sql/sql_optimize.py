@@ -163,8 +163,6 @@ def optimize_sqltuning(request):
     except Instance.DoesNotExist:
         result = {"status": 1, "msg": "你所在组未关联该实例！", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
-    # escape
-    db_name = MySQLdb.escape_string(db_name).decode("utf-8")
 
     sql_tunning = SqlTuning(
         instance_name=instance_name, db_name=db_name, sqltext=sqltext
@@ -235,6 +233,7 @@ def explain(request):
 
     # 执行获取执行计划语句
     query_engine = get_engine(instance=instance)
+    db_name = query_engine.escape_string(db_name)
     sql_result = query_engine.query(str(db_name), sql_content).to_sep_dict()
     result["data"] = sql_result
 
@@ -287,6 +286,7 @@ def optimize_sqltuningadvisor(request):
 
     # 执行获取优化报告
     query_engine = get_engine(instance=instance)
+    db_name = query_engine.escape_string(db_name)
     sql_result = query_engine.sqltuningadvisor(str(db_name), sql_content).to_sep_dict()
     result["data"] = sql_result
 

@@ -66,11 +66,9 @@ def del_binlog(request):
         result = {"status": 1, "msg": "实例不存在", "data": []}
         return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # escape
-    binlog = MySQLdb.escape_string(binlog).decode("utf-8")
-
     if binlog:
         query_engine = get_engine(instance=instance)
+        binlog = query_engine.escape_string(binlog)
         query_result = query_engine.query(sql=rf"purge master logs to '{binlog}';")
         if query_result.error is None:
             result = {"status": 0, "msg": "清理成功", "data": ""}

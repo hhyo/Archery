@@ -98,6 +98,10 @@ class MysqlEngine(EngineBase):
     def info(self):
         return "MySQL engine"
 
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return MySQLdb.escape_string(value).decode("utf-8")
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -166,16 +170,14 @@ class MysqlEngine(EngineBase):
         return result
 
     def get_group_tables_by_db(self, db_name):
-        # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
         data = {}
         sql = f"""SELECT TABLE_NAME,
                             TABLE_COMMENT
                         FROM
                             information_schema.TABLES
                         WHERE
-                            TABLE_SCHEMA='{db_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+                            TABLE_SCHEMA=%(db_name)s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
         for row in result.rows:
             table_name, table_cmt = row[0], row[1]
             if table_name[0] not in data:
@@ -185,9 +187,6 @@ class MysqlEngine(EngineBase):
 
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
         """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
-        # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
         sql = f"""SELECT
                         TABLE_NAME as table_name,
                         ENGINE as engine,
@@ -208,9 +207,11 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.TABLES
                     WHERE
-                        TABLE_SCHEMA='{db_name}'
-                            AND TABLE_NAME='{tb_name}'"""
-        _meta_data = self.query(db_name, sql)
+                        TABLE_SCHEMA=%(db_name)s
+                            AND TABLE_NAME=%(tb_name)s"""
+        _meta_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
@@ -227,10 +228,12 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.COLUMNS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                            AND TABLE_NAME = '{tb_name}'
+                        TABLE_SCHEMA = %(db_name)s
+                            AND TABLE_NAME = %(tb_name)s
                     ORDER BY ORDINAL_POSITION;"""
-        _desc_data = self.query(db_name, sql)
+        _desc_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
@@ -247,18 +250,23 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.STATISTICS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                    AND TABLE_NAME = '{tb_name}';"""
-        _index_data = self.query(db_name, sql)
+                        TABLE_SCHEMA = %(db_name)s
+                    AND TABLE_NAME = %(tb_name)s;"""
+        _index_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
         sql_tbs = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%(db_name)s;"
         )
         tbs = self.query(
-            sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+            sql=sql_tbs,
+            cursorclass=MySQLdb.cursors.DictCursor,
+            close_conn=False,
+            parameters={"db_name": db_name},
         ).rows
         table_metas = []
         for tb in tbs:
@@ -285,10 +293,13 @@ class MysqlEngine(EngineBase):
     def get_bind_users(self, db_name: str):
         sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
                 from information_schema.SCHEMA_PRIVILEGES
-                where TABLE_SCHEMA='{db_name}'
+                where TABLE_SCHEMA=%(db_name)s
                 group by TABLE_SCHEMA;"""
         return self.query(
-            "information_schema", sql_get_bind_users, close_conn=False
+            "information_schema",
+            sql_get_bind_users,
+            close_conn=False,
+            parameters={"db_name": db_name},
         ).rows
 
     def get_all_databases_summary(self):
@@ -348,9 +359,9 @@ class MysqlEngine(EngineBase):
     def create_instance_user(self, **kwargs):
         """实例账号管理功能，创建实例账号"""
         # escape
-        user = MySQLdb.escape_string(kwargs.get("user", "")).decode("utf-8")
-        host = MySQLdb.escape_string(kwargs.get("host", "")).decode("utf-8")
-        password1 = MySQLdb.escape_string(kwargs.get("password1", "")).decode("utf-8")
+        user = self.escape_string(kwargs.get("user", ""))
+        host = self.escape_string(kwargs.get("host", ""))
+        password1 = self.escape_string(kwargs.get("password1", ""))
         remark = kwargs.get("remark", "")
         # 在一个事务内执行
         hosts = host.split("|")
@@ -376,14 +387,14 @@ class MysqlEngine(EngineBase):
     def drop_instance_user(self, user_host: str, **kwarg):
         """实例账号管理功能，删除实例账号"""
         # escape
-        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
+        user_host = self.escape_string(user_host)
         return self.execute(db_name="mysql", sql=f"DROP USER {user_host};")
 
     def reset_instance_user_pwd(self, user_host: str, reset_pwd: str, **kwargs):
         """实例账号管理功能，重置实例账号密码"""
         # escape
-        user_host = MySQLdb.escape_string(user_host).decode("utf-8")
-        reset_pwd = MySQLdb.escape_string(reset_pwd).decode("utf-8")
+        user_host = self.escape_string(user_host)
+        reset_pwd = self.escape_string(reset_pwd)
         return self.execute(
             db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd}';"
         )
@@ -401,16 +412,21 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = '{db_name}'
-                AND TABLE_NAME = '{tb_name}'
+            TABLE_SCHEMA = %(db_name)s
+                AND TABLE_NAME = %(tb_name)s
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(db_name=db_name, sql=sql)
+        result = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters=({"db_name": db_name, "tb_name": tb_name}),
+        )
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
+        tb_name = self.escape_string(tb_name)
         sql = f"show create table `{tb_name}`;"
         result = self.query(db_name=db_name, sql=sql)
         return result
@@ -431,7 +447,15 @@ class MysqlEngine(EngineBase):
         result_set.rows = tuple(new_rows)
         return result_set
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         max_execution_time = kwargs.get("max_execution_time", 0)
@@ -444,7 +468,7 @@ class MysqlEngine(EngineBase):
                 cursor.execute(f"set session max_execution_time={max_execution_time};")
             except MySQLdb.OperationalError:
                 pass
-            effect_row = cursor.execute(sql)
+            effect_row = cursor.execute(sql, parameters)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
@@ -624,14 +648,14 @@ class MysqlEngine(EngineBase):
         # inception执行
         return self.inc_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql="", close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
-                cursor.execute(statement)
+                cursor.execute(statement, parameters)
             conn.commit()
             cursor.close()
         except Exception as e:
@@ -679,7 +703,7 @@ class MysqlEngine(EngineBase):
         """获取连接信息"""
         base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
         # escape
-        command_type = MySQLdb.escape_string(command_type).decode("utf-8")
+        command_type = self.escape_string(command_type)
         if not command_type:
             command_type = "Query"
         if command_type == "All":

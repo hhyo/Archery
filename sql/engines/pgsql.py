@@ -93,8 +93,10 @@ class PgSQLEngine(EngineBase):
         schema_name = kwargs.get("schema_name")
         sql = f"""SELECT table_name
         FROM information_schema.tables
-        where table_schema ='{schema_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+        where table_schema =%(schema_name)s;"""
+        result = self.query(
+            db_name=db_name, sql=sql, parameters={"schema_name": schema_name}
+        )
         tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
         result.rows = tb_list
         return result
@@ -110,9 +112,13 @@ class PgSQLEngine(EngineBase):
         schema_name = kwargs.get("schema_name")
         sql = f"""SELECT column_name
         FROM information_schema.columns
-        where table_name='{tb_name}'
-        and table_schema ='{schema_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+        where table_name=%(tb_name)s
+        and table_schema=%(schema_name)s;"""
+        result = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters={"schema_name": schema_name, "tb_name": tb_name},
+        )
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
@@ -139,10 +145,15 @@ class PgSQLEngine(EngineBase):
         information_schema.columns col left join pg_description des on
         col.table_name::regclass = des.objoid
         and col.ordinal_position = des.objsubid
-        where table_name = '{tb_name}'
-        and col.table_schema = '{schema_name}'
+        where table_name = %(tb_name)s
+        and col.table_schema = %(schema_name)s
         order by ordinal_position;"""
-        result = self.query(db_name=db_name, schema_name=schema_name, sql=sql)
+        result = self.query(
+            db_name=db_name,
+            schema_name=schema_name,
+            sql=sql,
+            parameters={"schema_name": schema_name, "tb_name": tb_name},
+        )
         return result
 
     def query_check(self, db_name=None, sql=""):
@@ -164,7 +175,15 @@ class PgSQLEngine(EngineBase):
             result["msg"] = "SQL语句中含有 * "
         return result
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         schema_name = kwargs.get("schema_name")
         result_set = ResultSet(full_sql=sql)
@@ -177,8 +196,10 @@ class PgSQLEngine(EngineBase):
             except:
                 pass
             if schema_name:
-                cursor.execute(f"SET search_path TO {schema_name};")
-            cursor.execute(sql)
+                cursor.execute(
+                    f"SET search_path TO %(schema_name)s;", {"schema_name": schema_name}
+                )
+            cursor.execute(sql, parameters)
             effect_row = cursor.rowcount
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))

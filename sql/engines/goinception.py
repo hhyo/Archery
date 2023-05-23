@@ -63,6 +63,10 @@ class GoInceptionEngine(EngineBase):
             autocommit=True,
         )
 
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return MySQLdb.escape_string(value).decode("utf-8")
+
     def execute_check(self, instance=None, db_name=None, sql=""):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
@@ -282,8 +286,8 @@ class GoInceptionEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""
-        sqlsha1 = MySQLdb.escape_string(kwargs.get("sqlsha1")).decode("utf-8")
-        command = MySQLdb.escape_string(kwargs.get("command")).decode("utf-8")
+        sqlsha1 = self.escape_string(kwargs.get("sqlsha1", ""))
+        command = self.escape_string(kwargs.get("command", ""))
         if command == "get":
             sql = f"inception get osc_percent '{sqlsha1}';"
         else:
