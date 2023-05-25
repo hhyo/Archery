@@ -19,6 +19,7 @@ env = environ.Env(
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
     ENABLE_LDAP=(bool, False),
     ENABLE_OIDC=(bool, False),
+    ENABLE_DINGDING=(bool, False),
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
@@ -236,7 +237,7 @@ if ENABLE_OIDC:
     INSTALLED_APPS += ("mozilla_django_oidc",)
     MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
     AUTHENTICATION_BACKENDS = (
-        "oidc.auth.OIDCAuthenticationBackend",
+        "common.authenticate.oidc_auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
 
@@ -259,6 +260,20 @@ if ENABLE_OIDC:
     OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
 
     LOGIN_REDIRECT_URL = "/"
+
+# Dingding
+ENABLE_DINGDING = env("ENABLE_DINGDING", False)
+if ENABLE_DINGDING:
+    INSTALLED_APPS += ("django_auth_dingding",)
+    AUTHENTICATION_BACKENDS = (
+        "common.authenticate.dingding_auth.DingdingAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+    AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL = env(
+        "AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL"
+    )
+    AUTH_DINGDING_APP_KEY = env("AUTH_DINGDING_APP_KEY")
+    AUTH_DINGDING_APP_SECRET = env("AUTH_DINGDING_APP_SECRET")
 
 # LDAP
 ENABLE_LDAP = env("ENABLE_LDAP", False)
