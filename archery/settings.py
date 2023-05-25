@@ -17,9 +17,13 @@ env = environ.Env(
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    # 系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC
     ENABLE_LDAP=(bool, False),
     ENABLE_OIDC=(bool, False),
-    ENABLE_DINGDING=(bool, False),
+    ENABLE_DINGDING=(
+        bool,
+        False,
+    ),  # 钉钉认证方式参考文档：https://open.dingtalk.com/document/orgapp/tutorial-obtaining-user-personal-information
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
