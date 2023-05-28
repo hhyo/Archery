@@ -7,6 +7,12 @@ from typing import List
 from datetime import timedelta
 import environ
 import requests
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -311,6 +317,18 @@ if ENABLE_LDAP:
         "AUTH_LDAP_ALWAYS_UPDATE_USER", default=True
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
+
+if ENABLE_LDAP or ENABLE_DINGDING or ENABLE_LDAP:
+    logger.info(
+        "系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
+    )
+    authentication = (
+        "LDAP"
+        if ENABLE_LDAP
+        else ("DINGDING" if ENABLE_DINGDING else ("OIDC" if ENABLE_OIDC else ""))
+    )
+    logger.info("当前生效的认证方式：" + authentication)
+    logger.info("认证后端：" + AUTHENTICATION_BACKENDS.__str__())
 
 # LOG配置
 LOGGING = {
