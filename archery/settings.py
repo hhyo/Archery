@@ -318,16 +318,26 @@ if ENABLE_LDAP:
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
 
-if ENABLE_LDAP or ENABLE_DINGDING or ENABLE_OIDC:
-    logger.info(
-        "系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
-    )
-    authentication = (
-        "LDAP"
-        if ENABLE_LDAP
-        else ("DINGDING" if ENABLE_DINGDING else ("OIDC" if ENABLE_OIDC else ""))
-    )
-    logger.info("当前生效的认证方式：" + authentication)
+SUPPORTED_AUTHENTICATION = [
+    ("LDAP", ENABLE_LDAP),
+    ("DINGDING", ENABLE_DINGDING),
+    ("OIDC", ENABLE_OIDC),
+]
+# 计算当前启用的外部认证方式数量
+ENABLE_AUTHENTICATION_COUNT = len(
+    [enabled for (name, enabled) in SUPPORTED_AUTHENTICATION if enabled]
+)
+if ENABLE_AUTHENTICATION_COUNT > 0:
+    if ENABLE_AUTHENTICATION_COUNT > 1:
+        logger.warning(
+            "系统外部认证目前支持LDAP、DINGDING、OIDC三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
+        )
+    authentication = ""  # 默认为空
+    for name, enabled in SUPPORTED_AUTHENTICATION:
+        if enabled:
+            authentication = name
+            break
+    logger.info("当前生效的外部认证方式：" + authentication)
     logger.info("认证后端：" + AUTHENTICATION_BACKENDS.__str__())
 
 # LOG配置
