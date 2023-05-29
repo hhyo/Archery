@@ -318,7 +318,7 @@ if ENABLE_LDAP:
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
 
-if ENABLE_LDAP or ENABLE_DINGDING or ENABLE_LDAP:
+if ENABLE_LDAP or ENABLE_DINGDING or ENABLE_OIDC:
     logger.info(
         "系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
     )
