@@ -63,8 +63,10 @@ def login(request):
         "login.html",
         context={
             "sign_up_enabled": SysConfig().get("sign_up_enabled"),
-            "oidc_enabled": settings.ENABLE_OIDC,
-            "dingding_enabled": settings.ENABLE_DINGDING,
+            "oidc_enabled": settings.ENABLE_OIDC if not settings.ENABLE_LDAP else False,
+            "dingding_enabled": settings.ENABLE_DINGDING
+            if not settings.ENABLE_LDAP
+            else False,
         },
     )
 
