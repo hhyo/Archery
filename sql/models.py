@@ -616,7 +616,7 @@ class InstanceAccount(models.Model):
     class Meta:
         managed = True
         db_table = "instance_account"
-        unique_together = ("instance", "user", "host")
+        unique_together = ("instance", "user", "host", "db_name")
         verbose_name = "实例账号列表"
         verbose_name_plural = "实例账号列表"
 
