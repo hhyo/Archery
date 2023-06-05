@@ -103,7 +103,6 @@ class AliyunRDS(MysqlEngine):
 
     # 获取SQL慢日志统计
     def slowquery_review(self, start_time, end_time, db_name, limit, offset):
-
         # 计算页数
         page_number = (int(offset) + int(limit)) / int(limit)
         values = {"PageSize": int(limit), "PageNumber": int(page_number)}
