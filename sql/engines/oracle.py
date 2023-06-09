@@ -606,7 +606,7 @@ class OracleEngine(EngineBase):
             )
             rows = cursor.fetchone()
             conn.rollback()
-            if rows[0] is None or not rows:
+            if not rows or not isinstance(rows, list) or not rows[0]:
                 result["rows"] = 0
             else:
                 result["rows"] = rows[0]
