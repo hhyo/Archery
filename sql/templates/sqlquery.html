@@ -813,7 +813,26 @@
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
-                                fileName: 'export_result'  //文件名称设置
+                                fileName: function () {
+                                var userInput = prompt('请输入文件名：');  // 弹出对话框让用户输入文件名
+                                return userInput || 'export_result';  // 若用户未输入文件名，则使用默认文件名
+                                },
+                                onFileSave: function (e) {
+                                    var url = e.currentTarget.href;
+                                    var xhr = new XMLHttpRequest();
+                                    xhr.open('GET', url, true);
+                                    xhr.responseType = 'blob';
+                                    xhr.onload = function () {
+                                        if (xhr.status === 200) {
+                                            var blob = xhr.response;
+                                            var downloadLink = document.createElement('a');
+                                            downloadLink.href = window.URL.createObjectURL(blob);                                            
+                                            downloadLink.click();
+                                        }
+                                    };
+                                    xhr.send();
+                                    return false;
+                                }
                             },
                             undefinedText: '(null)',
                             detailView: isdetail, //开启显示行首"+"
