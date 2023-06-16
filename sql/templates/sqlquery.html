@@ -826,8 +826,7 @@
                                         if (xhr.status === 200) {
                                             var blob = xhr.response;
                                             var downloadLink = document.createElement('a');
-                                            downloadLink.href = window.URL.createObjectURL(blob);
-                                            downloadLink.download = 'custom_filename';  // 替换为您希望的默认文件名
+                                            downloadLink.href = window.URL.createObjectURL(blob);                                            
                                             downloadLink.click();
                                         }
                                     };
