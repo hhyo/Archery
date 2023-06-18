@@ -605,7 +605,8 @@ class InstanceAccount(models.Model):
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     user = fields.EncryptedCharField(verbose_name="账号", max_length=128)
-    host = models.CharField(verbose_name="主机", max_length=64)
+    host = models.CharField(verbose_name="主机", max_length=64)  # mysql数据库存储主机信息
+    db_name = models.CharField(verbose_name="数据库名称", max_length=128)  # mongo数据库存储数据库名称
     password = fields.EncryptedCharField(
         verbose_name="密码", max_length=128, default="", blank=True
     )
@@ -615,7 +616,7 @@ class InstanceAccount(models.Model):
     class Meta:
         managed = True
         db_table = "instance_account"
-        unique_together = ("instance", "user", "host")
+        unique_together = ("instance", "user", "host", "db_name")
         verbose_name = "实例账号列表"
         verbose_name_plural = "实例账号列表"
 

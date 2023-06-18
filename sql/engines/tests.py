@@ -661,6 +661,59 @@ class TestMysql(TestCase):
         r = new_engine.get_long_transaction()
         self.assertIsInstance(r, ResultSet)
 
+    @patch.object(MysqlEngine, "get_bind_users")
+    @patch.object(MysqlEngine, "query")
+    def test_get_all_databases_summary(self, _query, _get_bind_users):
+        db_result1 = ResultSet()
+        db_result1.rows = [("some_db", "utf8mb4", "utf8mb4_general_ci")]
+        _query.return_value = db_result1
+        _get_bind_users.return_value = [("'some_user'@'%'", "cooperate_sign")]
+        new_engine = MysqlEngine(instance=self.ins1)
+        dbs = new_engine.get_all_databases_summary()
+        self.assertEqual(
+            dbs.rows,
+            [
+                {
+                    "db_name": "some_db",
+                    "charset": "utf8mb4",
+                    "collation": "utf8mb4_general_ci",
+                    "grantees": ["'some_user'@'%'"],
+                    "saved": False,
+                }
+            ],
+        )
+
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "query")
+    def test_get_instance_users_summary(self, _query, _connect):
+        result = ResultSet()
+        result.error = "query error"
+        _query.return_value = result
+        new_engine = MysqlEngine(instance=self.ins1)
+        user_summary = new_engine.get_instance_users_summary()
+        self.assertEqual(user_summary.error, "query error")
+
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "execute")
+    def test_create_instance_user(self, _execute, _connect):
+        _execute.return_value = ResultSet()
+        new_engine = MysqlEngine(instance=self.ins1)
+        result = new_engine.create_instance_user(
+            user="some_user", host="%", password1="123456", remark=""
+        )
+        self.assertEqual(
+            result.rows,
+            [
+                {
+                    "instance": self.ins1,
+                    "user": "some_user",
+                    "host": "%",
+                    "password": "123456",
+                    "remark": "",
+                }
+            ],
+        )
+
 
 class TestRedis(TestCase):
     @classmethod
@@ -1659,6 +1712,86 @@ class TestOracle(TestCase):
         self.assertIsInstance(check_result, ReviewSet)
         self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
 
+    def test_get_sql_first_object_name(self):
+        """
+        测试获取sql文本中的object_name
+        :return:
+        """
+        new_engine = OracleEngine(instance=self.ins)
+        sql = """create or replace procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);
+end;"""
+        object_name = new_engine.get_sql_first_object_name(sql)
+        self.assertEqual(object_name, "INSERTUSER")
+
+    @patch(
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name",
+        return_value="INSERTUSER",
+    )
+    @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
+    def test_execute_check_replace_exist_plsql_object(
+        self, _get_sql_first_object_name, _object_name_check
+    ):
+        sql = """create or replace procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);    
+end;"""
+        row = ReviewResult(
+            id=1,
+            errlevel=1,
+            stagestatus=""""TRADE".INSERTUSER对象已经存在，请确认是否替换！""",
+            errormessage=""""TRADE".INSERTUSER对象已经存在，请确认是否替换！""",
+            sql=sqlparse.format(
+                sql, strip_comments=True, reindent=True, keyword_case="lower"
+            ),
+            affected_rows=0,
+            execute_time=0,
+            stmt_type="SQL",
+            object_owner="",
+            object_type="",
+            object_name="",
+        )
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="TRADE", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
+    @patch(
+        "sql.engines.oracle.OracleEngine.get_sql_first_object_name",
+        return_value="INSERTUSER",
+    )
+    @patch("sql.engines.oracle.OracleEngine.object_name_check", return_value=True)
+    def test_execute_check_exist_plsql_object(
+        self, _get_sql_first_object_name, _object_name_check
+    ):
+        sql = """create procedure INSERTUSER
+(id IN NUMBER,    
+name IN VARCHAR2)    
+is    
+begin    
+    insert into user1 values(id,name);    
+end;"""
+        row = ReviewResult(
+            id=1,
+            errlevel=2,
+            stagestatus=""""TRADE".INSERTUSER对象已经存在！""",
+            errormessage=""""TRADE".INSERTUSER对象已经存在！""",
+            sql=sqlparse.format(
+                sql, strip_comments=True, reindent=True, keyword_case="lower"
+            ),
+        )
+        new_engine = OracleEngine(instance=self.ins)
+        check_result = new_engine.execute_check(db_name="TRADE", sql=sql)
+        self.assertIsInstance(check_result, ReviewSet)
+        self.assertEqual(check_result.rows[0].__dict__, row.__dict__)
+
     @patch("cx_Oracle.connect.cursor.execute")
     @patch("cx_Oracle.connect.cursor")
     @patch("cx_Oracle.connect")
@@ -2051,6 +2184,88 @@ class MongoTest(TestCase):
         self.engine.kill_op([111, 222])
         self.engine.kill_op(["shards: 111", "shards: 222"])
         mock_conn.admin.command.assert_called()
+
+    @patch("pymongo.database.Database.command")
+    @patch("sql.engines.mongo.MongoEngine.get_all_databases")
+    def test_get_all_databases_summary(self, _mock_all_databases, _mock_command):
+        db_result = ResultSet()
+        db_result.rows = ["admin"]
+        _mock_all_databases.return_value = db_result
+        _mock_command.return_value = {
+            "users": [
+                {
+                    "_id": "admin.root",
+                    "user": "root",
+                    "db": "admin",
+                    "roles": [{"role": "root", "db": "admin"}],
+                    "mechanisms": ["SCRAM-SHA-1", "SCRAM-SHA-256"],
+                }
+            ],
+            "ok": 1.0,
+        }
+        database_summary = self.engine.get_all_databases_summary()
+        self.assertEqual(
+            database_summary.rows,
+            [
+                {
+                    "db_name": "admin",
+                    "grantees": [
+                        "{'user': 'root', 'roles': [{'role': 'root', 'db': 'admin'}]}"
+                    ],
+                    "saved": False,
+                }
+            ],
+        )
+
+    @patch("pymongo.database.Database.command")
+    @patch("sql.engines.mongo.MongoEngine.get_all_databases")
+    def test_get_instance_users_summary(self, _mock_all_databases, _mock_command):
+        db_result = ResultSet()
+        db_result.rows = ["admin"]
+        _mock_all_databases.return_value = db_result
+        _mock_command.return_value = {
+            "users": [
+                {
+                    "_id": "admin.root",
+                    "user": "root",
+                    "db": "admin",
+                    "roles": [{"role": "root", "db": "admin"}],
+                    "mechanisms": ["SCRAM-SHA-1", "SCRAM-SHA-256"],
+                }
+            ],
+            "ok": 1.0,
+        }
+        database_summary = self.engine.get_instance_users_summary()
+        self.assertEqual(
+            database_summary.rows,
+            [
+                {
+                    "db_name_user": "admin.root",
+                    "db_name": "admin",
+                    "user": "root",
+                    "roles": ["root"],
+                    "saved": False,
+                }
+            ],
+        )
+
+    @patch("pymongo.database.Database.command")
+    def test_create_instance_user(self, _mock_command):
+        result = self.engine.create_instance_user(
+            db_name="test", user="some_user", password1="123456", remark=""
+        )
+        self.assertEqual(
+            result.rows,
+            [
+                {
+                    "instance": self.ins,
+                    "db_name": "test",
+                    "user": "some_user",
+                    "password": "123456",
+                    "remark": "",
+                }
+            ],
+        )
 
 
 class TestClickHouse(TestCase):

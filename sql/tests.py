@@ -2539,7 +2539,7 @@ class TestParam(TestCase):
         data = {
             "instance_id": self.master.id,
             "variable_name": "1",
-            "variable_value": "false",
+            "runtime_value": "false",
         }
         r = self.client.post(path="/param/edit/", data=data)
         self.assertEqual(

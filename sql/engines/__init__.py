@@ -86,6 +86,10 @@ class EngineBase:
         """返回引擎简介"""
         return "Base engine"
 
+    def escape_string(self, value: str) -> str:
+        """参数转义"""
+        return value
+
     @property
     def auto_backup(self):
         """是否支持备份"""
@@ -132,6 +136,26 @@ class EngineBase:
         """获取数据库所有表格信息，用作数据字典导出接口"""
         return list()
 
+    def get_all_databases_summary(self):
+        """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        return ResultSet()
+
+    def get_instance_users_summary(self):
+        """实例账号管理功能，获取实例所有账号信息"""
+        return ResultSet()
+
+    def create_instance_user(self, **kwargs):
+        """实例账号管理功能，创建实例账号"""
+        return ResultSet()
+
+    def drop_instance_user(self, **kwargs):
+        """实例账号管理功能，删除实例账号"""
+        return ResultSet()
+
+    def reset_instance_user_pwd(self, **kwargs):
+        """实例账号管理功能，重置实例账号密码"""
+        return ResultSet()
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet，rows=list"""
         return ResultSet()
@@ -147,7 +171,15 @@ class EngineBase:
         """给查询语句增加结果级限制或者改写语句, 返回修改后的语句"""
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs
+    ):
         """实际查询 返回一个ResultSet"""
         return ResultSet()
 
@@ -160,7 +192,7 @@ class EngineBase:
         """执行语句的检查 返回一个ReviewSet"""
         return ReviewSet()
 
-    def execute(self):
+    def execute(self, **kwargs):
         """执行语句 返回一个ReviewSet"""
         return ReviewSet()
 

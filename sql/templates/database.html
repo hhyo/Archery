@@ -7,6 +7,8 @@
             <select id=instance class="form-control selectpicker" name="instance_list"
                     title="请选择实例"
                     data-live-search="true">
+                <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
             </select>
         </div>
         <div class="form-group">
@@ -141,8 +143,81 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        // 根据数据库类型获取显示的字段
+        function get_db_columns(db_type) {
+            switch (db_type) {
+                case 'mysql':
+                    return [
+                        {
+                            title: '数据库名',
+                            field: 'db_name'
+                        }, {
+                            title: '字符集',
+                            field: 'charset'
+                        }, {
+                            title: '排序规则',
+                            field: 'collation'
+                        }, {
+                            title: '授权账号',
+                            field: 'grantees',
+                            formatter: function (value, row, index) {
+                                let grantee = '';
+                                for (let i = 0; i < value.length; i++) {
+                                    grantee = grantee + value[i] + '</br>'
+                                }
+                                return grantee
+                            }
+                        }, {
+                            title: '负责人',
+                            field: 'owner',
+                            visible: false,
+                        }, {
+                            title: '负责人',
+                            field: 'owner_display'
+                        }, {
+                            title: '备注',
+                            field: 'remark'
+                        }
+                    ]
+                case 'mongo':
+                    return [
+                        {
+                            title: '数据库名',
+                            field: 'db_name'
+                        }, {
+                            title: '授权账号',
+                            field: 'grantees',
+                            formatter: function (value, row, index) {
+                                let grantee = '';
+                                for (let i = 0; i < value.length; i++) {
+                                    grantee = grantee + value[i] + '</br>'
+                                }
+                                return grantee
+                            }
+                        }, {
+                            title: '负责人',
+                            field: 'owner',
+                            visible: false,
+                        }, {
+                            title: '负责人',
+                            field: 'owner_display'
+                        }, {
+                            title: '备注',
+                            field: 'remark'
+                        }
+                    ]
+                default:
+                    return []
+            }
+        }
+
         //获取列表
         function database_list() {
+            // 获取选中的数据库实例的类型
+            let db_type = "";
+            if ($("#instance").val()) {
+                db_type = $("#instance")[0].options[$("#instance")[0].selectedIndex].getAttribute("instance-type");
+            }
             //初始化table
             $('#database-list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
@@ -187,36 +262,8 @@
                         }
                     },
                 columns: [
+                    ...get_db_columns(db_type),
                     {
-                        title: '数据库名',
-                        field: 'db_name'
-                    }, {
-                        title: '字符集',
-                        field: 'charset'
-                    }, {
-                        title: '排序规则',
-                        field: 'collation'
-                    }, {
-                        title: '授权账号',
-                        field: 'grantees',
-                        formatter: function (value, row, index) {
-                            let grantee = '';
-                            for (let i = 0; i < value.length; i++) {
-                                grantee = grantee + value[i] + '</br>'
-                            }
-                            return grantee
-                        }
-                    }, {
-                        title: '负责人',
-                        field: 'owner',
-                        visible: false,
-                    }, {
-                        title: '负责人',
-                        field: 'owner_display'
-                    }, {
-                        title: '备注',
-                        field: 'remark'
-                    }, {
                         title: '操作',
                         field: '',
                         formatter: function (value, row, index) {
@@ -343,20 +390,22 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: ['mysql', 'mongo']
                     },
                     complete: function () {
                     },
                     success: function (data) {
                         if (data.status === 0) {
                             let result = data['data'];
-                            $("#instance").empty();
-                            for (let i = 0; i < result.length; i++) {
-                                let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
-                                $("#instance").append(instance);
+                            $("optgroup[id^='optgroup']").empty();
+                            const supportDb = ['mysql', 'mongo']
+                            for (let i of result) {
+                                let instance = "<option value=\"" + i.id + "\" instance-id=" + i.id + " instance-type=" + i.db_type + ">" + i.instance_name + "</option>";
+                                if (supportDb.indexOf(i.db_type) !== -1) {
+                                    $("#optgroup-" + i.db_type).append(instance);
+                                }
                             }
-                            $('#instance').selectpicker('render');
-                            $('#instance').selectpicker('refresh');
+                            $('#instance').selectpicker('render').selectpicker('refresh');
                         } else {
                             alert(data.msg);
                         }

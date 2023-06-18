@@ -12,6 +12,8 @@ IGNORE_URL = [
     "/oidc/callback/",
     "/oidc/authenticate/",
     "/oidc/logout/",
+    "/dingding/callback/",
+    "/dingding/authenticate/",
 ]
 
 IGNORE_URL_RE = r"/api/(v1|auth)/\w+"
