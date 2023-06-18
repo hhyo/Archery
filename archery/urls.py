@@ -6,6 +6,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(("sql_api.urls", "sql_api"), namespace="sql_api")),
     path("oidc/", include("mozilla_django_oidc.urls")),
+    path("dingding/", include("django_auth_dingding.urls")),
     path("", include(("sql.urls", "sql"), namespace="sql")),
 ]
 

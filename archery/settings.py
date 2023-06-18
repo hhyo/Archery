@@ -7,6 +7,12 @@ from typing import List
 from datetime import timedelta
 import environ
 import requests
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,8 +23,13 @@ env = environ.Env(
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    # 系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC
     ENABLE_LDAP=(bool, False),
     ENABLE_OIDC=(bool, False),
+    ENABLE_DINGDING=(
+        bool,
+        False,
+    ),  # 钉钉认证方式参考文档：https://open.dingtalk.com/document/orgapp/tutorial-obtaining-user-personal-information
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
@@ -236,7 +247,7 @@ if ENABLE_OIDC:
     INSTALLED_APPS += ("mozilla_django_oidc",)
     MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
     AUTHENTICATION_BACKENDS = (
-        "oidc.auth.OIDCAuthenticationBackend",
+        "common.authenticate.oidc_auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
 
@@ -259,6 +270,20 @@ if ENABLE_OIDC:
     OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
 
     LOGIN_REDIRECT_URL = "/"
+
+# Dingding
+ENABLE_DINGDING = env("ENABLE_DINGDING", False)
+if ENABLE_DINGDING:
+    INSTALLED_APPS += ("django_auth_dingding",)
+    AUTHENTICATION_BACKENDS = (
+        "common.authenticate.dingding_auth.DingdingAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+    AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL = env(
+        "AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL"
+    )
+    AUTH_DINGDING_APP_KEY = env("AUTH_DINGDING_APP_KEY")
+    AUTH_DINGDING_APP_SECRET = env("AUTH_DINGDING_APP_SECRET")
 
 # LDAP
 ENABLE_LDAP = env("ENABLE_LDAP", False)
@@ -292,6 +317,28 @@ if ENABLE_LDAP:
         "AUTH_LDAP_ALWAYS_UPDATE_USER", default=True
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
+
+SUPPORTED_AUTHENTICATION = [
+    ("LDAP", ENABLE_LDAP),
+    ("DINGDING", ENABLE_DINGDING),
+    ("OIDC", ENABLE_OIDC),
+]
+# 计算当前启用的外部认证方式数量
+ENABLE_AUTHENTICATION_COUNT = len(
+    [enabled for (name, enabled) in SUPPORTED_AUTHENTICATION if enabled]
+)
+if ENABLE_AUTHENTICATION_COUNT > 0:
+    if ENABLE_AUTHENTICATION_COUNT > 1:
+        logger.warning(
+            "系统外部认证目前支持LDAP、DINGDING、OIDC三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
+        )
+    authentication = ""  # 默认为空
+    for name, enabled in SUPPORTED_AUTHENTICATION:
+        if enabled:
+            authentication = name
+            break
+    logger.info("当前生效的外部认证方式：" + authentication)
+    logger.info("认证后端：" + AUTHENTICATION_BACKENDS.__str__())
 
 # LOG配置
 LOGGING = {

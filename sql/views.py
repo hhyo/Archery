@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
 import traceback
-
-import simplejson as json
 from django.conf import settings
 
 from django.contrib.auth.decorators import permission_required
@@ -65,7 +63,8 @@ def login(request):
         "login.html",
         context={
             "sign_up_enabled": SysConfig().get("sign_up_enabled"),
-            "oidc_enabled": os.getenv("ENABLE_OIDC"),
+            "oidc_enabled": settings.ENABLE_OIDC,
+            "dingding_enabled": settings.ENABLE_DINGDING,
         },
     )
 
