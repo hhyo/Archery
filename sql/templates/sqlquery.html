@@ -873,7 +873,9 @@
                                 for(let i=0;i<tabs.length;i++){
                                     if(tabs[i].getAttribute("class") === "active") {
                                         // sql内容固定隐藏绑定在第二个子元素
-                                        var extraInfo = tabs[i].children[1].innerHTML+"|"+e.length;
+                                        var instance_name = $("#instance_name").val()
+                                        var db_name =$("#db_name").val()
+                                        var extraInfo = instance_name+"/"+db_name+"|"+$(tabs[i].children[1]).attr('sql_cache')+"|"+e.length;
                                         $.ajax({
                                             type: "post",
                                             url: "/audit/input/",
