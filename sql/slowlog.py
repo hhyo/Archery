@@ -15,10 +15,6 @@ from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
 
-from .aliyun_rds import (
-    slowquery_review as aliyun_rds_slowquery_review,
-    slowquery_review_history as aliyun_rds_slowquery_review_history,
-)
 
 import logging
 
@@ -29,6 +25,11 @@ logger = logging.getLogger("default")
 @permission_required("sql.menu_slowquery", raise_exception=True)
 def slowquery_review(request):
     instance_name = request.POST.get("instance_name")
+    start_time = request.POST.get("StartTime")
+    end_time = request.POST.get("EndTime")
+    db_name = request.POST.get("db_name")
+    limit = request.POST.get("limit")
+    offset = request.POST.get("offset")
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
@@ -40,13 +41,11 @@ def slowquery_review(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
         # 调用阿里云慢日志接口
-        result = aliyun_rds_slowquery_review(request)
+        query_engine = get_engine(instance=instance_info)
+        result = query_engine.slowquery_review(
+            self, start_time, end_time, db_name, limit, offset
+        )
     else:
-        start_time = request.POST.get("StartTime")
-        end_time = request.POST.get("EndTime")
-        db_name = request.POST.get("db_name")
-        limit = int(request.POST.get("limit"))
-        offset = int(request.POST.get("offset"))
         limit = offset + limit
         search = request.POST.get("search")
         sortName = str(request.POST.get("sortName"))
@@ -115,6 +114,12 @@ def slowquery_review(request):
 @permission_required("sql.menu_slowquery", raise_exception=True)
 def slowquery_review_history(request):
     instance_name = request.POST.get("instance_name")
+    start_time = request.POST.get("StartTime")
+    end_time = request.POST.get("EndTime")
+    db_name = request.POST.get("db_name")
+    sql_id = request.POST.get("SQLId")
+    limit = request.POST.get("limit")
+    offset = request.POST.get("offset")
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
@@ -126,14 +131,11 @@ def slowquery_review_history(request):
     instance_info = Instance.objects.get(instance_name=instance_name)
     if AliyunRdsConfig.objects.filter(instance=instance_info, is_enable=True).exists():
         # 调用阿里云慢日志接口
-        result = aliyun_rds_slowquery_review_history(request)
+        query_engine = get_engine(instance=instance_info)
+        result = query_engine.slowquery_review_history(
+            start_time, end_time, db_name, sql_id, limit, offset
+        )
     else:
-        start_time = request.POST.get("StartTime")
-        end_time = request.POST.get("EndTime")
-        db_name = request.POST.get("db_name")
-        sql_id = request.POST.get("SQLId")
-        limit = int(request.POST.get("limit"))
-        offset = int(request.POST.get("offset"))
         search = request.POST.get("search")
         sortName = str(request.POST.get("sortName"))
         sortOrder = str(request.POST.get("sortOrder")).lower()
