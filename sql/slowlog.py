@@ -28,8 +28,8 @@ def slowquery_review(request):
     start_time = request.POST.get("StartTime")
     end_time = request.POST.get("EndTime")
     db_name = request.POST.get("db_name")
-    limit = request.POST.get("limit")
-    offset = request.POST.get("offset")
+    limit = int(request.POST.get("limit"))
+    offset = int(request.POST.get("offset"))
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
@@ -118,8 +118,8 @@ def slowquery_review_history(request):
     end_time = request.POST.get("EndTime")
     db_name = request.POST.get("db_name")
     sql_id = request.POST.get("SQLId")
-    limit = request.POST.get("limit")
-    offset = request.POST.get("offset")
+    limit = int(request.POST.get("limit"))
+    offset = int(request.POST.get("offset"))
     # 服务端权限校验
     try:
         user_instances(request.user, db_type=["mysql"]).get(instance_name=instance_name)
