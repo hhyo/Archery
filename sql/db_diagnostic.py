@@ -162,7 +162,7 @@ def tablespace(request):
         if not query_result.error:
             table_space = query_result.to_dict()
             r = query_engine.tablespace_count()
-            total = r[0][0]
+            total = r.rows[0][0]
             result = {"status": 0, "msg": "ok", "rows": table_space, "total": total}
         else:
             result = {"status": 1, "msg": query_result.error}
