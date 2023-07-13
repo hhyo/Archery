@@ -8,6 +8,9 @@ archery/settings.py.github
 archery/settings.py.dev
 archery/settings_dev.py
 sql/migrations/
+static/
+nohup.out
+supervisord.pid
 venv
 env
 sonar-project.properties

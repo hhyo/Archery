@@ -39,3 +39,4 @@ alibabacloud_dysmsapi20170525==2.0.9
 tencentcloud-sdk-python==3.0.656
 mozilla-django-oidc==3.0.0
 django-auth-dingding==0.0.2
+boto3==1.26.103
