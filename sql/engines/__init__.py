@@ -23,7 +23,7 @@ class EngineBase:
             self.mode = instance.mode
             self.awsSecretId = instance.awsSecretId
                     
-            if self.awsSecretId.strip():
+            if not self.awsSecretId == None and self.awsSecretId.strip():
                 client = boto3.client('secretsmanager')
                 response = client.get_secret_value(
                     SecretId=self.awsSecretId
