@@ -182,6 +182,7 @@ class GoInceptionEngine(EngineBase):
                           use `{db_name}`;
                           {sql.rstrip(';')};
                           inception_magic_commit;"""
+        logger.info(f"执行goInception语法树打印语句：{sql}")
         print_info = self.query(db_name=db_name, sql=sql).to_dict()[1]
         if print_info.get("errmsg"):
             raise RuntimeError(print_info.get("errmsg"))
