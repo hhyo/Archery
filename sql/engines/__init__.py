@@ -73,6 +73,16 @@ class EngineBase:
             self.remote_port = instance.port
             self.remote_user = instance.user
             self.remote_password = instance.password
+            
+        if not instance.awsSecretId == None and instance.awsSecretId.strip():
+            client = boto3.client('secretsmanager')
+            response = client.get_secret_value(
+                SecretId=instance.awsSecretId
+            )
+            secret = json.loads(response['SecretString'])
+            self.remote_user = secret["username"]
+            self.remote_password = secret["password"]
+
         return (
             self.remote_host,
             self.remote_port,
