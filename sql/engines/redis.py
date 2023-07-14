@@ -33,6 +33,7 @@ class RedisEngine(EngineBase):
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
         else:
             return redis.Redis(
@@ -43,6 +44,7 @@ class RedisEngine(EngineBase):
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
 
     @property
