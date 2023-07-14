@@ -22,6 +22,7 @@ class EngineBase:
             self.db_name = instance.db_name
             self.mode = instance.mode
             self.awsSecretId = instance.awsSecretId
+            self.is_ssl = instance.is_ssl
                     
             if not self.awsSecretId == None and self.awsSecretId.strip():
                 client = boto3.client('secretsmanager')
