@@ -202,7 +202,9 @@ class Instance(models.Model):
         "Oracle service name", max_length=50, null=True, blank=True
     )
     sid = models.CharField("Oracle sid", max_length=50, null=True, blank=True)
-    awsSecretId = models.CharField("AWS Secret Id", max_length=50, null=True, blank=True)
+    awsSecretId = models.CharField(
+        "AWS Secret Id", max_length=50, null=True, blank=True
+    )
     resource_group = models.ManyToManyField(
         ResourceGroup, verbose_name="资源组", blank=True
     )

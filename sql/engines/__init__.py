@@ -23,16 +23,14 @@ class EngineBase:
             self.mode = instance.mode
             self.awsSecretId = instance.awsSecretId
             self.is_ssl = instance.is_ssl
-                    
+
             if not self.awsSecretId == None and self.awsSecretId.strip():
-                client = boto3.client('secretsmanager')
-                response = client.get_secret_value(
-                    SecretId=self.awsSecretId
-                )
-                secret = json.loads(response['SecretString'])
+                client = boto3.client("secretsmanager")
+                response = client.get_secret_value(SecretId=instance.awsSecretId)
+                secret = json.loads(response["SecretString"])
                 self.user = secret["username"]
                 self.password = secret["password"]
-            
+
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
             if self.instance.tunnel:
                 self.ssh = SSHConnection(
@@ -74,13 +72,11 @@ class EngineBase:
             self.remote_port = instance.port
             self.remote_user = instance.user
             self.remote_password = instance.password
-            
+
         if not instance.awsSecretId == None and instance.awsSecretId.strip():
-            client = boto3.client('secretsmanager')
-            response = client.get_secret_value(
-                SecretId=instance.awsSecretId
-            )
-            secret = json.loads(response['SecretString'])
+            client = boto3.client("secretsmanager")
+            response = client.get_secret_value(SecretId=instance.awsSecretId)
+            secret = json.loads(response["SecretString"])
             self.remote_user = secret["username"]
             self.remote_password = secret["password"]
 

@@ -1,4 +1,5 @@
 *.pyc
+.venv/
 *.swp
 *.lock
 *.log
