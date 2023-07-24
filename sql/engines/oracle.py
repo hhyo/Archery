@@ -593,10 +593,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(
-                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
-                    {"db_name": db_name},
-                )
+                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -609,7 +606,7 @@ class OracleEngine(EngineBase):
             )
             rows = cursor.fetchone()
             conn.rollback()
-            if not rows:
+            if not rows or not isinstance(rows, list) or not rows[0]:
                 result["rows"] = 0
             else:
                 result["rows"] = rows[0]
@@ -672,10 +669,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(
-                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
-                    {"db_name": db_name},
-                )
+                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
             sql = sql.rstrip(";")
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
