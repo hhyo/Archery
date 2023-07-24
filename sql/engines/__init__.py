@@ -20,6 +20,7 @@ class EngineBase:
             self.password = instance.password
             self.db_name = instance.db_name
             self.mode = instance.mode
+            self.is_ssl = instance.is_ssl
 
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
             if self.instance.tunnel:
@@ -215,6 +216,12 @@ class EngineBase:
 def get_engine(instance=None):  # pragma: no cover
     """获取数据库操作engine"""
     if instance.db_type == "mysql":
+        from sql.models import AliyunRdsConfig
+
+        if AliyunRdsConfig.objects.filter(instance=instance, is_enable=True).exists():
+            from .cloud.aliyun_rds import AliyunRDS
+
+            return AliyunRDS(instance=instance)
         from .mysql import MysqlEngine
 
         return MysqlEngine(instance=instance)
