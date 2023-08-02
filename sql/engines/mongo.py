@@ -13,6 +13,7 @@ from bson import json_util
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
+from bson.int64 import Int64
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -197,6 +198,7 @@ class JsonDecoder:
                     "newDate",
                     "ISODate",
                     "newISODate",
+                    "NumberLong",
                 ):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
@@ -230,6 +232,12 @@ class JsonDecoder:
                 date_content = date_regex.findall(outstr)
                 if len(date_content) > 0:
                     return parse(date_content[0], yearfirst=True)
+            elif data_type.replace(" ", "") in ("NumberLong"):
+                nuStr = re.findall(r"NumberLong\(.*?\)", outstr)  # 单独处理NumberLong
+                if len(nuStr) > 0:
+                    id_str = re.findall(r"\(.*?\)", nuStr[0])
+                    nlong = id_str[0].replace(" ", "")[2:-2]
+                    return Int64(nlong)
             elif outstr:
                 return outstr
             raise Exception('Invalid symbol "%s"' % outstr)
