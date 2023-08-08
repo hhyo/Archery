@@ -40,13 +40,9 @@ class PgSQLEngine(EngineBase):
         )
         return self.conn
 
-    @property
-    def name(self):
-        return "PgSQL"
+    name = "PgSQL"
 
-    @property
-    def info(self):
-        return "PgSQL engine"
+    info = "PgSQL engine"
 
     def get_all_databases(self):
         """

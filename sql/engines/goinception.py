@@ -18,13 +18,9 @@ logger = logging.getLogger("default")
 class GoInceptionEngine(EngineBase):
     test_query = "INCEPTION GET VARIABLES"
 
-    @property
-    def name(self):
-        return "GoInception"
+    name = "GoInception"
 
-    @property
-    def info(self):
-        return "GoInception engine"
+    info = "GoInception engine"
 
     def get_connection(self, db_name=None):
         if self.conn:

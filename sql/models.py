@@ -127,6 +127,7 @@ DB_TYPE_CHOICES = (
     ("odps", "ODPS"),
     ("clickhouse", "ClickHouse"),
     ("goinception", "goInception"),
+    ("cassandra", "Cassandra"),
 )
 
 

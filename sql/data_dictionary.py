@@ -90,6 +90,16 @@ def table_info(request):
     )
 
 
+def get_export_full_path(base_dir: str, instance_name: str, db_name: str) -> str:
+    """validate if the instance_name and db_name provided is secure"""
+    fullpath = os.path.normpath(
+        os.path.join(base_dir, f"{instance_name}_{db_name}.html")
+    )
+    if not fullpath.startswith(base_dir):
+        return ""
+    return fullpath
+
+
 @permission_required("sql.data_dictionary_export", raise_exception=True)
 def export(request):
     """导出数据字典"""
@@ -111,7 +121,7 @@ def export(request):
     elif request.user.is_superuser:
         dbs = query_engine.get_all_databases().rows
     else:
-        return JsonResponse({"status": 1, "msg": f"仅管理员可以导出整个实例的字典信息！", "data": []})
+        return JsonResponse({"status": 1, "msg": "仅管理员可以导出整个实例的字典信息！", "data": []})
 
     # 获取数据，存入目录
     path = os.path.join(settings.BASE_DIR, "downloads/dictionary")
@@ -126,12 +136,18 @@ def export(request):
         data = loader.render_to_string(
             template_name="dictionaryexport.html", context=context, request=request
         )
-        with open(f"{path}/{instance_name}_{db}.html", "w") as f:
-            f.write(data)
+        fullpath = get_export_full_path(path, instance_name, db)
+        if not fullpath:
+            return JsonResponse({"status": 1, "msg": "实例名或db名不合法", "data": []})
+        with open(fullpath, "w", encoding="utf-8") as fp:
+            fp.write(data)
     # 关闭连接
     query_engine.close()
     if db_name:
-        response = FileResponse(open(f"{path}/{instance_name}_{db_name}.html", "rb"))
+        fullpath = get_export_full_path(path, instance_name, db)
+        if not fullpath:
+            return JsonResponse({"status": 1, "msg": "实例名或db名不合法", "data": []})
+        response = FileResponse(open(fullpath, "rb"))
         response["Content-Type"] = "application/octet-stream"
         response[
             "Content-Disposition"

@@ -1,5 +1,5 @@
 import json
-import re
+import unittest
 from datetime import timedelta, datetime, date
 from unittest.mock import MagicMock, patch, ANY
 from django.conf import settings
@@ -31,6 +31,7 @@ from sql.models import (
     WorkflowAuditSetting,
     ArchiveConfig,
 )
+from common.dashboard import ChartDao
 
 User = Users
 
@@ -3180,6 +3181,11 @@ class TestDataDictionary(TestCase):
         测试导出
         :return:
         """
+
+        def dummy(s):
+            return s
+
+        _get_engine.return_value.escape_string = dummy
         _get_engine.return_value.get_all_databases.return_value.rows.return_value = (
             ResultSet(rows=(("test1",), ("test2",)))
         )

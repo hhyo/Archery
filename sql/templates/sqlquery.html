@@ -71,15 +71,9 @@
                                         data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
-                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
-                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
-                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
-                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
-                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
-                                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
-                                    <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
-                                    <optgroup id="optgroup-odps" label="ODPS"></optgroup>
-                                    <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                                {% for name,engine in engines.items %}
+                                    <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
+                                {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -707,15 +701,19 @@
             var query_str = target+'|'+result['full_sql'];
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
-            var active_li_title = sessionStorage.getItem('active_li_title');
-
+            let active_li_title = sessionStorage.getItem('active_li_title');
+            let tb_name
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
-                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
-                    if (data.is_describe) {
-                        var tb_name = $("#table_name").val();
-                    } else {
-                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
+                if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
+                    if (data.is_describe===undefined || !data.is_describe) {
+                        data.is_describe = true
+                        tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
+                    }
+                }
+                if (data.is_describe) {
+                    if (tb_name === undefined) {
+                        tb_name = $("#table_name").val();
                     }
                     if (tb_name !== active_li_title) {
                         tab_add(tb_name);
@@ -724,7 +722,7 @@
                 }
                 // 执行结果页默认不新增
                 else if (active_li_title.match(/^执行结果\d$/)) {
-                    var n = active_li_id.split("execute_result_tab")[1];
+                    let n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
@@ -738,7 +736,7 @@
                 //显示查询结果
                 if (result['column_list']) {
                     //异步获取要动态生成的列
-                    var columns = [];
+                    let columns = [];
                     $.each(result['column_list'], function (i, column) {
                         var iswholeCol = true;
                         if (column == "mongodballdata") {
@@ -770,7 +768,7 @@
                             }
                         });
                     });
-                    if (result['full_sql'].match(/^show\s+create\s+table/)) {
+                    if (data.is_describe) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
                                 escape: false,
@@ -1018,70 +1016,16 @@
         //控制按钮和选择器显示
         function optgroup_control(change) {
             var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (optgroup === "MySQL") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "MsSQL") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "Redis") {
-                if (change) {
-                    $("#div-table_name").hide();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_add();
-                }
-                $("#btn-format").attr('disabled', true);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "PgSQL") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").show();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "Oracle") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "Mongo") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', true);
-                $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "Phoenix") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "ClickHouse") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
+            if (change) {
+                $("#div-table_name").show();
+                $("#div-schema_name").hide();
+            }
+            $("#btn-format").attr('disabled', false);
+            $("#btn-explain").attr('disabled', false);
+            if (optgroup === "Redis") {
+                redis_help_tab_add();
+            } else {
+                redis_help_tab_remove();
             }
         }
 
@@ -1334,10 +1278,12 @@
                         if (data.status === 0) {
                             $("optgroup[id^='optgroup']").empty();
                             let result = data['data']
-                            const supportDb = ['mysql', 'mssql', 'redis', 'pgsql', 'oracle', 'mongo', 'phoenix', 'odps', 'clickhouse']
+                            const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
                             for (let i of result) {
                                 let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
                                 if (supportDb.indexOf(i.db_type) !== -1) {
+                                    console.log("get supported db")
+                                    console.log(i)
                                     $("#optgroup-" + i.db_type).append(instance);
                                 }
                             }

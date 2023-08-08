@@ -42,13 +42,8 @@ class ClickHouseEngine(EngineBase):
             )
         return self.conn
 
-    @property
-    def name(self):
-        return "ClickHouse"
-
-    @property
-    def info(self):
-        return "ClickHouse engine"
+    name = "ClickHouse"
+    info = "ClickHouse engine"
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""

@@ -47,13 +47,9 @@ class RedisEngine(EngineBase):
                 ssl=self.is_ssl,
             )
 
-    @property
-    def name(self):
-        return "Redis"
+    name = "Redis"
 
-    @property
-    def info(self):
-        return "Redis engine"
+    info = "Redis engine"
 
     def test_connection(self):
         return self.get_all_databases()
