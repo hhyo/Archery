@@ -1736,15 +1736,22 @@ class TestOptimize(TestCase):
         # test db_name
         r = self.client.post(
             path="/slowquery/optimize_sqladvisor/",
-            data={"sql_content": "select 1;", "instance_name": "test_instance", "db_name": "--help"},
+            data={
+                "sql_content": "select 1;",
+                "instance_name": "test_instance",
+                "db_name": "--help",
+            },
         )
         self.assertEqual(json.loads(r.content)["status"], 1)
         r = self.client.post(
             path="/slowquery/optimize_sqladvisor/",
-            data={"sql_content": "select 1;", "instance_name": "test_instance", "db_name": ";drop table"},
+            data={
+                "sql_content": "select 1;",
+                "instance_name": "test_instance",
+                "db_name": ";drop table",
+            },
         )
         self.assertEqual(json.loads(r.content)["status"], 1)
-
 
     @patch("sql.plugins.plugin.subprocess")
     def test_soar(self, _subprocess):
