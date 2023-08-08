@@ -27,7 +27,15 @@ class SQLAdvisor(Plugin):
         db_name = args.get("d", "")
         db_pattern = r"[a-zA-Z0-9-_]+"
         if not re.match(db_pattern, db_name):
-            return {"status": 1, "msg": f"illegal db_name, only {db_pattern} is allowed", "data": {}}
+            return {
+                "status": 1,
+                "msg": f"illegal db_name, only {db_pattern} is allowed",
+                "data": {},
+            }
         if db_name.startswith("-"):
-            return {"status": 1, "msg": f"illegal db_name, leading character - is not allowed", "data": {}}
+            return {
+                "status": 1,
+                "msg": f"illegal db_name, leading character - is not allowed",
+                "data": {},
+            }
         return result
