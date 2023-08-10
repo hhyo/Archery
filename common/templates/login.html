@@ -18,8 +18,20 @@
 <body style="background-color:#edeff1;">
 <div class="row lsb-login">
     <div class="col-sm-4 mypanalbox">
+        <h3 class="text-center">用户登录
+        </h3>
         <form class="login-form fade-in-effect" id="login" method="post" role="form">
             {% csrf_token %}
+            {% if dingding_enabled %}
+                <div class="form-group">
+                    <a class="btn btn-primary btn-block" role="button" href="/dingding/authenticate/">以钉钉登录</a>
+                </div>
+            {% elif oidc_enabled %}
+                <div class="form-group">
+                    <a class="btn btn-primary btn-block" role="button" href="/oidc/authenticate/">以OIDC登录</a>
+                </div>
+            {% endif %}
+            <h4 class="text-center">传统登录</h4>
             <div class="form-group is-focused">
                 <label class="control-label" for="inputUsername">Username</label>
                 <input class="form-control ng-valid ng-dirty ng-touched" id="inputUsername" name="username" type="text"
@@ -36,15 +48,6 @@
             {% if sign_up_enabled %}
                 <div class="form-group">
                     <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
-                </div>
-            {% endif %}
-            {% if dingding_enabled %}
-                <div class="form-group">
-                    <a href="/dingding/authenticate/">以钉钉登录</a>
-                </div>
-            {% elif oidc_enabled %}
-                <div class="form-group">
-                    <a href="/oidc/authenticate/">以OIDC登录</a>
                 </div>
             {% endif %}
         </form>
