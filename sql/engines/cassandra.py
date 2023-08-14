@@ -17,12 +17,8 @@ from sql.models import SqlWorkflow
 logger = logging.getLogger("default")
 
 
-def row_to_set(row) -> set:
-    pass
-
-
 def split_sql(db_name=None, sql=""):
-    # 切分语句，追加到检测结果中，默认全部检测通过
+    """切分语句，追加到检测结果中，默认全部检测通过"""
     sql = sql.split("\n")
     sql = filter(None, sql)
     sql_result = []

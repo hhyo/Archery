@@ -3,7 +3,7 @@ from unittest.mock import patch, Mock
 
 from django.test import TestCase
 from sql.models import Instance
-from sql.engines.cassandra import CassandraEngine
+from sql.engines.cassandra import CassandraEngine, split_sql
 from sql.engines.models import ResultSet
 
 # 启用后, 会运行全部测试, 包括一些集成测试
@@ -95,6 +95,17 @@ class CassandraEngineTest(TestCase):
         result = self.engine.get_all_columns_by_tb("some_db", "some_table")
         self.assertEqual(result.rows, [("name", "text")])
         self.assertEqual(result.column_list, ["column_name", "type"])
+
+    def test_split(self):
+        sql = """CREATE TABLE emp(
+   emp_id int PRIMARY KEY,
+   emp_name text,
+   emp_city text,
+   emp_sal varint,
+   emp_phone varint
+   );"""
+        sql_result = split_sql(db_name="test_db", sql=sql)
+        self.assertEqual(sql_result[0], "USE test_db")
 
 
 @unittest.skipIf(
