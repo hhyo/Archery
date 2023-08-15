@@ -27,8 +27,6 @@ class CassandraEngineTest(TestCase):
 
     def tearDown(self) -> None:
         self.ins.delete()
-        if integration_test_enabled:
-            self.engine.execute(sql="drop keyspace test;")
 
     @patch("sql.engines.cassandra.Cluster.connect")
     def test_get_connection(self, mock_connect):
@@ -98,14 +96,68 @@ class CassandraEngineTest(TestCase):
 
     def test_split(self):
         sql = """CREATE TABLE emp(
-   emp_id int PRIMARY KEY,
-   emp_name text,
-   emp_city text,
-   emp_sal varint,
-   emp_phone varint
-   );"""
+           emp_id int PRIMARY KEY,
+           emp_name text,
+           emp_city text,
+           emp_sal varint,
+           emp_phone varint
+           );"""
         sql_result = split_sql(db_name="test_db", sql=sql)
         self.assertEqual(sql_result[0], "USE test_db")
+
+    def test_execute_check(self):
+        sql = """CREATE TABLE emp(
+           emp_id int PRIMARY KEY,
+           emp_name text,
+           emp_city text,
+           emp_sal varint,
+           emp_phone varint
+           );"""
+        check_result = self.engine.execute_check(db_name="test_db", sql=sql)
+        self.assertEqual(check_result.full_sql, sql)
+        self.assertEqual(check_result.rows[1].stagestatus, "Audit completed")
+
+    @patch("sql.engines.cassandra.CassandraEngine.get_connection")
+    def test_execute(self, mock_connection):
+        mock_execute = Mock()
+        mock_connection.return_value.execute = mock_execute
+        sql = """CREATE TABLE emp(
+           emp_id int PRIMARY KEY,
+           emp_name text,
+           emp_city text,
+           emp_sal varint,
+           emp_phone varint
+           );"""
+        execute_result = self.engine.execute(db_name="test_db", sql=sql)
+        self.assertEqual(execute_result.rows[1].stagestatus, "Execute Successfully")
+        mock_execute.assert_called()
+
+        # exception
+        mock_execute.side_effect = ValueError("foo")
+        mock_execute.reset_mock(return_value=True)
+        execute_result = self.engine.execute(db_name="test_db", sql=sql)
+        self.assertEqual(execute_result.rows[0].stagestatus, "Execute Failed")
+        self.assertEqual(execute_result.rows[1].stagestatus, "Execute Failed")
+        self.assertEqual(execute_result.rows[0].errormessage, "异常信息：foo")
+        self.assertEqual(execute_result.rows[1].errormessage, "前序语句失败, 未执行")
+        mock_execute.assert_called()
+
+    def test_filter_sql(self):
+        sql_without_limit = "select name from user_info;"
+        self.assertEqual(
+            self.engine.filter_sql(sql_without_limit, limit_num=100),
+            "select name from user_info limit 100;",
+        )
+        sql_with_normal_limit = "select name from user_info limit 1;"
+        self.assertEqual(
+            self.engine.filter_sql(sql_with_normal_limit, limit_num=100),
+            "select name from user_info limit 1;",
+        )
+        sql_with_high_limit = "select name from user_info limit 1000;"
+        self.assertEqual(
+            self.engine.filter_sql(sql_with_high_limit, limit_num=100),
+            "select name from user_info limit 100;",
+        )
 
 
 @unittest.skipIf(

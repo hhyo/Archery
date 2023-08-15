@@ -6,6 +6,7 @@ import traceback
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.query import tuple_factory
+from cassandra.policies import RoundRobinPolicy
 
 import sqlparse
 
@@ -19,13 +20,31 @@ logger = logging.getLogger("default")
 
 def split_sql(db_name=None, sql=""):
     """切分语句，追加到检测结果中，默认全部检测通过"""
-    sql = sql.split("\n")
-    sql = filter(None, sql)
+    sql = sqlparse.format(sql, strip_comments=True)
     sql_result = []
     if db_name:
         sql_result += [f"""USE {db_name}"""]
-    sql_result += sql
+    sql_result += sqlparse.split(sql)
     return sql_result
+
+
+def dummy_audit(full_sql: str, sql_list) -> ReviewSet:
+    check_result = ReviewSet(full_sql=full_sql)
+    rowid = 1
+    for statement in sql_list:
+        check_result.rows.append(
+            ReviewResult(
+                id=rowid,
+                errlevel=0,
+                stagestatus="Audit completed",
+                errormessage="None",
+                sql=statement,
+                affected_rows=0,
+                execute_time=0,
+            )
+        )
+        rowid += 1
+    return check_result
 
 
 class CassandraEngine(EngineBase):
@@ -41,7 +60,14 @@ class CassandraEngine(EngineBase):
         auth_provider = PlainTextAuthProvider(
             username=self.user, password=self.password
         )
-        cluster = Cluster([self.host], port=self.port, auth_provider=auth_provider)
+        hosts = self.host.split(",")
+        cluster = Cluster(
+            hosts,
+            port=self.port,
+            auth_provider=auth_provider,
+            load_balancing_policy=RoundRobinPolicy(),
+            protocol_version=5,
+        )
         self.conn = cluster.connect(keyspace=db_name)
         self.conn.row_factory = tuple_factory
         return self.conn
@@ -86,7 +112,7 @@ class CassandraEngine(EngineBase):
         result.rows = filtered_rows
         return result
 
-    def query_check(self, db_name=None, sql="", limit_num=0):
+    def query_check(self, db_name=None, sql="", limit_num: int = 100):
         """提交查询前的检查"""
         # 查询语句的检查、注释去除、切分
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
@@ -105,6 +131,22 @@ class CassandraEngine(EngineBase):
             result["has_star"] = True
             result["msg"] = "SQL语句中含有 * "
         return result
+
+    def filter_sql(self, sql="", limit_num=0) -> str:
+        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
+        sql = sql.rstrip(";").strip()
+        if re.match(r"^select", sql, re.I):
+            # LIMIT N
+            limit_n = re.compile(r"limit\s+(\d+)\s*$", re.I)
+            if limit_n.search(sql):
+                sql_limit = limit_n.search(sql).group(1)
+                limit_num = min(int(limit_num), int(sql_limit))
+                sql = limit_n.sub(f"limit {limit_num};", sql)
+            else:
+                sql = f"{sql} limit {limit_num};"
+        else:
+            sql = f"{sql};"
+        return sql
 
     def query(
         self,
@@ -131,6 +173,8 @@ class CassandraEngine(EngineBase):
                 f"{self.name} query 错误，语句：{sql}， 错误信息：{traceback.format_exc()}"
             )
             result_set.error = str(e)
+        if close_conn:
+            self.close()
         return result_set
 
     def get_all_tables(self, db_name, **kwargs):
@@ -141,33 +185,14 @@ class CassandraEngine(EngineBase):
         result.rows = tb_list
         return result
 
-    def filter_sql(self, sql="", limit_num=0):
-        return sql.strip()
-
     def query_masking(self, db_name=None, sql="", resultset=None):
         """不做脱敏"""
         return resultset
 
     def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
-        check_result = ReviewSet(full_sql=sql)
-        # 切分语句，追加到检测结果中，默认全部检测通过
         sql_result = split_sql(db_name, sql)
-        rowid = 1
-        for statement in sql_result:
-            check_result.rows.append(
-                ReviewResult(
-                    id=rowid,
-                    errlevel=0,
-                    stagestatus="Audit completed",
-                    errormessage="None",
-                    sql=statement,
-                    affected_rows=0,
-                    execute_time=0,
-                )
-            )
-            rowid += 1
-        return check_result
+        return dummy_audit(sql, sql_result)
 
     def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """执行sql语句 返回 Review set"""
@@ -208,13 +233,13 @@ class CassandraEngine(EngineBase):
                 break
             rowid += 1
         if execute_result.error:
-            for statement in split_sql[rowid:]:
+            for statement in sql_result[rowid:]:
                 execute_result.rows.append(
                     ReviewResult(
                         id=rowid,
                         errlevel=2,
                         stagestatus="Execute Failed",
-                        errormessage=f"前序语句失败, 未执行",
+                        errormessage="前序语句失败, 未执行",
                         sql=statement,
                         affected_rows=0,
                         execute_time=0,
