@@ -124,7 +124,7 @@ def export(request):
         return JsonResponse({"status": 1, "msg": "仅管理员可以导出整个实例的字典信息！", "data": []})
 
     # 获取数据，存入目录
-    path = os.path.join(settings.BASE_DIR, "downloads/dictionary")
+    path = os.path.join(settings.BASE_DIR, "downloads", "dictionary")
     os.makedirs(path, exist_ok=True)
     for db in dbs:
         table_metas = query_engine.get_tables_metas_data(db_name=db)

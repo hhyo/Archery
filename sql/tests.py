@@ -3247,6 +3247,15 @@ class TestDataDictionary(TestCase):
         r = self.client.get(path="/data_dictionary/export/", data=data)
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.streaming)
+        
+        # 测试恶意请求
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": "/../../../etc/passwd",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/export/", data=data)
+        self.assertEqual(r.json()['status'], 1)
 
     @patch("sql.data_dictionary.get_engine")
     def oracle_test_export_db(self, _get_engine):
@@ -3297,6 +3306,10 @@ class TestDataDictionary(TestCase):
         测试导出
         :return:
         """
+        def dummy(s):
+            return s
+
+        _get_engine.return_value.escape_string = dummy
         _get_engine.return_value.get_all_databases.return_value.rows.return_value = (
             ResultSet(rows=(("test1",), ("test2",)))
         )
@@ -3361,6 +3374,14 @@ class TestDataDictionary(TestCase):
                 "status": 0,
             },
         )
+        # 测试恶意请求
+        data = {
+            "instance_name": self.ins.instance_name,
+            "db_name": "/../../../etc/passwd",
+            "db_type": "mysql",
+        }
+        r = self.client.get(path="/data_dictionary/export/", data=data)
+        self.assertEqual(r.json()['status'], 1)
 
     @patch("sql.data_dictionary.get_engine")
     def oracle_test_export_instance(self, _get_engine):
