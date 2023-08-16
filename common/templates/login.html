@@ -31,24 +31,17 @@
                     <a class="btn btn-primary btn-block" role="button" href="/oidc/authenticate/">以OIDC登录</a>
                 </div>
             {% endif %}
-            <h4 class="text-center">传统登录</h4>
-            <div class="form-group is-focused">
-                <label class="control-label" for="inputUsername">Username</label>
-                <input class="form-control ng-valid ng-dirty ng-touched" id="inputUsername" name="username" type="text"
-                       required>
-            </div>
-            <div class="form-group is-focused">
-                <label class="control-label" for="inputPassword">Password</label>
-                <input class="form-control ng-valid ng-dirty ng-touched" id="inputPassword" name="password"
-                       type="password" required>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>登录</button>
-            </div>
-            {% if sign_up_enabled %}
-                <div class="form-group">
-                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
+            {% if dingding_enabled or oidc_enabled %}
+                <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                  显示传统登录
+                </a>
+                <div class="collapse" id="collapseExample">
+                  <div>
+                    {% include 'legacy_login_form.html' %}
+                  </div>
                 </div>
+            {% else %}
+                {% include 'legacy_login_form.html' %}
             {% endif %}
         </form>
     </div>
