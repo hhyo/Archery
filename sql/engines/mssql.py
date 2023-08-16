@@ -31,13 +31,9 @@ client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(
         self.conn = pyodbc.connect(connstr)
         return self.conn
 
-    @property
-    def name(self):
-        return "MsSQL"
+    name = "MsSQL"
 
-    @property
-    def info(self):
-        return "MsSQL engine"
+    info = "MsSQL engine"
 
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""

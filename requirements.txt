@@ -18,7 +18,7 @@ pyecharts==1.9.1
 aliyun-python-sdk-rds==2.1.1
 cx-Oracle==7.3.0
 supervisor==4.1.0
-phoenixdb==0.7
+phoenixdb==1.2.1
 django-mirage-field==1.4.0
 schema-sync==0.9.7
 parsedatetime==2.4
@@ -39,3 +39,4 @@ alibabacloud_dysmsapi20170525==2.0.9
 tencentcloud-sdk-python==3.0.656
 mozilla-django-oidc==3.0.0
 django-auth-dingding==0.0.2
+cassandra-driver

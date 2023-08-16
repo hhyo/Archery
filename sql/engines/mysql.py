@@ -91,13 +91,9 @@ class MysqlEngine(EngineBase):
         self.thread_id = self.conn.thread_id()
         return self.conn
 
-    @property
-    def name(self):
-        return "MySQL"
+    name = "MySQL"
 
-    @property
-    def info(self):
-        return "MySQL engine"
+    info = "MySQL engine"
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""

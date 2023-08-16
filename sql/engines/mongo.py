@@ -3,7 +3,6 @@ import re, time
 import pymongo
 import logging
 import traceback
-import json
 import subprocess
 import simplejson as json
 import datetime
@@ -800,13 +799,9 @@ class MongoEngine(EngineBase):
             self.conn.close()
             self.conn = None
 
-    @property
-    def name(self):  # pragma: no cover
-        return "Mongo"
+    name = "Mongo"
 
-    @property
-    def info(self):  # pragma: no cover
-        return "Mongo engine"
+    info = "Mongo engine"
 
     def get_roles(self):
         sql_get_roles = "db.system.roles.find({},{_id:1})"
@@ -1266,18 +1261,20 @@ class MongoEngine(EngineBase):
         result = ResultSet()
         try:
             conn = self.get_connection()
-            db = conn.admin
-            for opid in opids:
-                conn.admin.command({"killOp": 1, "op": opid})
         except Exception as e:
-            try:
-                sql = {"killOp": 1, "op": _opid}
-            except:
-                sql = {"killOp": 1, "op": ""}
-            logger.warning(
-                f"mongodb语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
-            )
+            logger.error(f"{self.name} 连接失败, error: {str(e)}")
             result.error = str(e)
+            return result
+        for opid in opids:
+            try:
+                conn.admin.command({"killOp": 1, "op": opid})
+            except Exception as e:
+                sql = {"killOp": 1, "op": opid}
+                logger.warning(
+                    f"{self.name}语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
+                )
+                result.error = str(e)
+        return result
 
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""
