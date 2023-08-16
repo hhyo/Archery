@@ -360,7 +360,8 @@ class MongoEngine(EngineBase):
                     _re_msg.append(_line)
 
                 msg = "\n".join(_re_msg)
-                msg = msg.replace('true\n','') #替换掉当语句长度超过4000使用load命令执行js 后多余返回的true
+                # 替换掉当语句长度超过4000使用load命令执行js 后多余返回的true
+                msg = msg.replace('true\n','')
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
             finally:
