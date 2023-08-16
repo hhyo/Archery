@@ -87,7 +87,7 @@ class CassandraEngineTest(TestCase):
     @patch("sql.engines.cassandra.CassandraEngine.query")
     def test_get_all_columns_by_tb(self, mock_query):
         mock_query.return_value = ResultSet(
-            rows=[("name")], column_list=["column_name"]
+            rows=[("name",)], column_list=["column_name"]
         )
 
         result = self.engine.get_all_columns_by_tb("some_db", "some_table")
