@@ -51,6 +51,7 @@ env = environ.Env(
             "mongo",
             "phoenix",
             "odps",
+            "cassandra",
         ],
     ),
 )

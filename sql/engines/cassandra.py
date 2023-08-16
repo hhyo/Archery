@@ -96,10 +96,11 @@ class CassandraEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有列, 返回一个ResultSet"""
-        sql = "select column_name, type from columns where keyspace_name=%s and table_name=%s"
+        sql = "select column_name from columns where keyspace_name=%s and table_name=%s"
         result = self.query(
             db_name="system_schema", sql=sql, parameters=(db_name, tb_name)
         )
+        result.rows = [x[0] for x in result.rows]
         return result
 
     def describe_table(self, db_name, tb_name, **kwargs):

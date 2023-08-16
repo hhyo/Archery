@@ -87,12 +87,12 @@ class CassandraEngineTest(TestCase):
     @patch("sql.engines.cassandra.CassandraEngine.query")
     def test_get_all_columns_by_tb(self, mock_query):
         mock_query.return_value = ResultSet(
-            rows=[("name", "text")], column_list=["column_name", "type"]
+            rows=[("name",)], column_list=["column_name"]
         )
 
         result = self.engine.get_all_columns_by_tb("some_db", "some_table")
-        self.assertEqual(result.rows, [("name", "text")])
-        self.assertEqual(result.column_list, ["column_name", "type"])
+        self.assertEqual(result.rows, ["name"])
+        self.assertEqual(result.column_list, ["column_name"])
 
     def test_split(self):
         sql = """CREATE TABLE emp(
