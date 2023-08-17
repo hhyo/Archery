@@ -33,6 +33,7 @@ class RedisEngine(EngineBase):
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
         else:
             return redis.Redis(
@@ -43,15 +44,12 @@ class RedisEngine(EngineBase):
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
 
-    @property
-    def name(self):
-        return "Redis"
+    name = "Redis"
 
-    @property
-    def info(self):
-        return "Redis engine"
+    info = "Redis engine"
 
     def test_connection(self):
         return self.get_all_databases()

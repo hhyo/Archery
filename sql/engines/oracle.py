@@ -28,8 +28,9 @@ class OracleEngine(EngineBase):
 
     def __init__(self, instance=None):
         super(OracleEngine, self).__init__(instance=instance)
-        self.service_name = instance.service_name
-        self.sid = instance.sid
+        if instance:
+            self.service_name = instance.service_name
+            self.sid = instance.sid
 
     def get_connection(self, db_name=None):
         if self.conn:
@@ -50,13 +51,9 @@ class OracleEngine(EngineBase):
             raise ValueError("sid 和 dsn 均未填写, 请联系管理页补充该实例配置.")
         return self.conn
 
-    @property
-    def name(self):
-        return "Oracle"
+    name = "Oracle"
 
-    @property
-    def info(self):
-        return "Oracle engine"
+    info = "Oracle engine"
 
     @property
     def auto_backup(self):

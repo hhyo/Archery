@@ -3,6 +3,7 @@ import logging
 import re
 import traceback
 import MySQLdb
+import pymysql
 import simplejson as json
 
 from common.config import SysConfig
@@ -17,13 +18,9 @@ logger = logging.getLogger("default")
 class GoInceptionEngine(EngineBase):
     test_query = "INCEPTION GET VARIABLES"
 
-    @property
-    def name(self):
-        return "GoInception"
+    name = "GoInception"
 
-    @property
-    def info(self):
-        return "GoInception engine"
+    info = "GoInception engine"
 
     def get_connection(self, db_name=None):
         if self.conn:
@@ -65,7 +62,7 @@ class GoInceptionEngine(EngineBase):
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""
-        return MySQLdb.escape_string(value).decode("utf-8")
+        return pymysql.escape_string(value)
 
     def execute_check(self, instance=None, db_name=None, sql=""):
         """inception check"""

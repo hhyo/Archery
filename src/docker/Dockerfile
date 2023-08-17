@@ -7,7 +7,7 @@ COPY . /opt/archery/
 
 #archery
 RUN cd /opt \
-    && yum -y install nginx \
+    && yum -y install nginx krb5-devel \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \

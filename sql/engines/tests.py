@@ -630,17 +630,17 @@ class TestMysql(TestCase):
         self.assertIsInstance(r, ResultSet)
 
     @patch.object(MysqlEngine, "query")
-    def test_tablesapce(self, _query):
+    def test_tablespace(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         _query.return_value = ResultSet()
-        r = new_engine.tablesapce()
+        r = new_engine.tablespace()
         self.assertIsInstance(r, ResultSet)
 
     @patch.object(MysqlEngine, "query")
-    def test_tablesapce_num(self, _query):
+    def test_tablespace_count(self, _query):
         new_engine = MysqlEngine(instance=self.ins1)
         _query.return_value = ResultSet()
-        r = new_engine.tablesapce_num()
+        r = new_engine.tablespace_count()
         self.assertIsInstance(r, ResultSet)
 
     @patch.object(MysqlEngine, "query")

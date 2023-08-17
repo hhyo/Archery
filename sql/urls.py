@@ -148,7 +148,7 @@ urlpatterns = [
     path("db_diagnostic/process/", db_diagnostic.process),
     path("db_diagnostic/create_kill_session/", db_diagnostic.create_kill_session),
     path("db_diagnostic/kill_session/", db_diagnostic.kill_session),
-    path("db_diagnostic/tablesapce/", db_diagnostic.tablesapce),
+    path("db_diagnostic/tablespace/", db_diagnostic.tablespace),
     path("db_diagnostic/trxandlocks/", db_diagnostic.trxandlocks),
     path("db_diagnostic/innodb_trx/", db_diagnostic.innodb_trx),
     path("archive/list/", archiver.archive_list),

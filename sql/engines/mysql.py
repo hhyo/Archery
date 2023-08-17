@@ -2,6 +2,7 @@
 import logging
 import traceback
 import MySQLdb
+import pymysql
 import re
 
 import schemaobject
@@ -90,17 +91,13 @@ class MysqlEngine(EngineBase):
         self.thread_id = self.conn.thread_id()
         return self.conn
 
-    @property
-    def name(self):
-        return "MySQL"
+    name = "MySQL"
 
-    @property
-    def info(self):
-        return "MySQL engine"
+    info = "MySQL engine"
 
     def escape_string(self, value: str) -> str:
         """字符串参数转义"""
-        return MySQLdb.escape_string(value).decode("utf-8")
+        return pymysql.escape_string(value)
 
     @property
     def auto_backup(self):
@@ -744,7 +741,7 @@ class MysqlEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute("information_schema", kill_sql)
 
-    def tablesapce(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """
         SELECT
@@ -765,7 +762,7 @@ class MysqlEngine(EngineBase):
         )
         return self.query("information_schema", sql)
 
-    def tablesapce_num(self):
+    def tablespace_count(self):
         """获取表空间数量"""
         sql = """
         SELECT count(*)

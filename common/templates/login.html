@@ -18,34 +18,30 @@
 <body style="background-color:#edeff1;">
 <div class="row lsb-login">
     <div class="col-sm-4 mypanalbox">
+        <h3 class="text-center">用户登录
+        </h3>
         <form class="login-form fade-in-effect" id="login" method="post" role="form">
             {% csrf_token %}
-            <div class="form-group is-focused">
-                <label class="control-label" for="inputUsername">Username</label>
-                <input class="form-control ng-valid ng-dirty ng-touched" id="inputUsername" name="username" type="text"
-                       required>
-            </div>
-            <div class="form-group is-focused">
-                <label class="control-label" for="inputPassword">Password</label>
-                <input class="form-control ng-valid ng-dirty ng-touched" id="inputPassword" name="password"
-                       type="password" required>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-primary btn-block" id="btnLogin" type="button"><i class="fa-lock"></i>登录</button>
-            </div>
-            {% if sign_up_enabled %}
-                <div class="form-group">
-                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
-                </div>
-            {% endif %}
             {% if dingding_enabled %}
                 <div class="form-group">
-                    <a href="/dingding/authenticate/">以钉钉登录</a>
+                    <a class="btn btn-primary btn-block" role="button" href="/dingding/authenticate/">以钉钉登录</a>
                 </div>
             {% elif oidc_enabled %}
                 <div class="form-group">
-                    <a href="/oidc/authenticate/">以OIDC登录</a>
+                    <a class="btn btn-primary btn-block" role="button" href="/oidc/authenticate/">以OIDC登录</a>
                 </div>
+            {% endif %}
+            {% if dingding_enabled or oidc_enabled %}
+                <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                  显示传统登录
+                </a>
+                <div class="collapse" id="collapseExample">
+                  <div>
+                    {% include 'legacy_login_form.html' %}
+                  </div>
+                </div>
+            {% else %}
+                {% include 'legacy_login_form.html' %}
             {% endif %}
         </form>
     </div>

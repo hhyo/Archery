@@ -3,7 +3,6 @@ import re, time
 import pymongo
 import logging
 import traceback
-import json
 import subprocess
 import simplejson as json
 import datetime
@@ -13,6 +12,7 @@ from bson import json_util
 from pymongo.errors import OperationFailure
 from dateutil.parser import parse
 from bson.objectid import ObjectId
+from bson.int64 import Int64
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -197,6 +197,7 @@ class JsonDecoder:
                     "newDate",
                     "ISODate",
                     "newISODate",
+                    "NumberLong",
                 ):  # ======类似的类型比较多还需单独处理，如int()等
                     data_type = outstr
                     for c in self.__remain_str():
@@ -230,6 +231,12 @@ class JsonDecoder:
                 date_content = date_regex.findall(outstr)
                 if len(date_content) > 0:
                     return parse(date_content[0], yearfirst=True)
+            elif data_type.replace(" ", "") in ("NumberLong"):
+                nuStr = re.findall(r"NumberLong\(.*?\)", outstr)  # 单独处理NumberLong
+                if len(nuStr) > 0:
+                    id_str = re.findall(r"\(.*?\)", nuStr[0])
+                    nlong = id_str[0].replace(" ", "")[2:-2]
+                    return Int64(nlong)
             elif outstr:
                 return outstr
             raise Exception('Invalid symbol "%s"' % outstr)
@@ -794,13 +801,9 @@ class MongoEngine(EngineBase):
             self.conn.close()
             self.conn = None
 
-    @property
-    def name(self):  # pragma: no cover
-        return "Mongo"
+    name = "Mongo"
 
-    @property
-    def info(self):  # pragma: no cover
-        return "Mongo engine"
+    info = "Mongo engine"
 
     def get_roles(self):
         sql_get_roles = "db.system.roles.find({},{_id:1})"
@@ -1260,18 +1263,20 @@ class MongoEngine(EngineBase):
         result = ResultSet()
         try:
             conn = self.get_connection()
-            db = conn.admin
-            for opid in opids:
-                conn.admin.command({"killOp": 1, "op": opid})
         except Exception as e:
-            try:
-                sql = {"killOp": 1, "op": _opid}
-            except:
-                sql = {"killOp": 1, "op": ""}
-            logger.warning(
-                f"mongodb语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
-            )
+            logger.error(f"{self.name} 连接失败, error: {str(e)}")
             result.error = str(e)
+            return result
+        for opid in opids:
+            try:
+                conn.admin.command({"killOp": 1, "op": opid})
+            except Exception as e:
+                sql = {"killOp": 1, "op": opid}
+                logger.warning(
+                    f"{self.name}语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
+                )
+                result.error = str(e)
+        return result
 
     def get_all_databases_summary(self):
         """实例数据库管理功能，获取实例所有的数据库描述信息"""

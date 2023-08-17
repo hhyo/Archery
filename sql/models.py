@@ -127,6 +127,7 @@ DB_TYPE_CHOICES = (
     ("odps", "ODPS"),
     ("clickhouse", "ClickHouse"),
     ("goinception", "goInception"),
+    ("cassandra", "Cassandra"),
 )
 
 
@@ -195,6 +196,7 @@ class Instance(models.Model):
     password = fields.EncryptedCharField(
         verbose_name="密码", max_length=300, default="", blank=True
     )
+    is_ssl = models.BooleanField("是否启用SSL", default=False)
     db_name = models.CharField("数据库", max_length=64, default="", blank=True)
     charset = models.CharField("字符集", max_length=20, default="", blank=True)
     service_name = models.CharField(
@@ -616,7 +618,7 @@ class InstanceAccount(models.Model):
     class Meta:
         managed = True
         db_table = "instance_account"
-        unique_together = ("instance", "user", "host")
+        unique_together = ("instance", "user", "host", "db_name")
         verbose_name = "实例账号列表"
         verbose_name_plural = "实例账号列表"
 

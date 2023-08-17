@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from archery import settings
 from common.config import SysConfig
-from sql.engines import get_engine
+from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
 from sql.utils.tasks import task_info
@@ -175,6 +175,7 @@ def submit_sql(request):
     context = {
         "group_list": group_list,
         "enable_backup_switch": archer_config.get("enable_backup_switch"),
+        "engines": engine_map,
     }
     return render(request, "sqlsubmit.html", context)
 
@@ -328,7 +329,9 @@ def sqlquery(request):
     )
     can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
     return render(
-        request, "sqlquery.html", {"favorites": favorites, "can_download": can_download}
+        request,
+        "sqlquery.html",
+        {"favorites": favorites, "can_download": can_download, "engines": engine_map},
     )
 
 
@@ -339,7 +342,7 @@ def queryapplylist(request):
     # 获取资源组
     group_list = user_groups(user)
 
-    context = {"group_list": group_list}
+    context = {"group_list": group_list, "engines": engine_map}
     return render(request, "queryapplylist.html", context)
 
 
@@ -403,7 +406,7 @@ def instance(request):
     """实例管理页面"""
     # 获取实例标签
     tags = InstanceTag.objects.filter(active=True)
-    return render(request, "instance.html", {"tags": tags})
+    return render(request, "instance.html", {"tags": tags, "engines": engine_map})
 
 
 @permission_required("sql.menu_instance_account", raise_exception=True)

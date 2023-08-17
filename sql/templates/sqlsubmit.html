@@ -55,14 +55,9 @@
                                         data-name="实例" data-placeholder="请选择实例！"
                                         title="请选择实例"
                                         data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
-                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
-                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
-                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
-                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
-                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
-                                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
-                                    <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
-                                    <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                                {% for name, engine in engines.items %}
+                                    <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
+                                {%  endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -634,7 +629,7 @@
                     if (data.status === 0) {
                         $("optgroup[id^='optgroup']").empty();
                         let result = data['data']
-                        const supportDb = ['mysql', 'mssql', 'redis', 'pgsql', 'oracle', 'mongo', 'phoenix', 'clickhouse']
+                        const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
                         for (let i of result) {
                             let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
                             if (supportDb.indexOf(i.db_type) !== -1) {

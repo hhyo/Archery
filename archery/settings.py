@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(List[str], ["*"]),
+    ALLOWED_HOSTS=(list, ["*"]),
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
@@ -38,6 +38,22 @@ env = environ.Env(
     Q_CLUISTER_SYNC=(bool, False),  # qcluster 同步模式, debug 时可以调整为 True
     # CSRF_TRUSTED_ORIGINS=subdomain.example.com,subdomain.example2.com subdomain.example.com
     CSRF_TRUSTED_ORIGINS=(list, []),
+    ENABLED_ENGINES=(
+        list,
+        [
+            "mysql",
+            "clickhouse",
+            "goinception",
+            "mssql",
+            "redis",
+            "pqsql",
+            "oracle",
+            "mongo",
+            "phoenix",
+            "odps",
+            "cassandra",
+        ],
+    ),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -56,6 +72,21 @@ USE_X_FORWARDED_HOST = True
 
 # 请求限制
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+
+AVAILABLE_ENGINES = {
+    "mysql": {"path": "sql.engines.mysql:MysqlEngine"},
+    "cassandra": {"path": "sql.engines.cassandra:CassandraEngine"},
+    "clickhouse": {"path": "sql.engines.clickhouse:ClickHouseEngine"},
+    "goinception": {"path": "sql.engines.goinception:GoInceptionEngine"},
+    "mssql": {"path": "sql.engines.mssql:MssqlEngine"},
+    "redis": {"path": "sql.engines.redis:RedisEngine"},
+    "pqsql": {"path": "sql.engines.pgsql:PgSQLEngine"},
+    "oracle": {"path": "sql.engines.oracle:OracleEngine"},
+    "mongo": {"path": "sql.engines.mongo:MongoEngine"},
+    "phoenix": {"path": "sql.engines.phoenix:PhoenixEngine"},
+    "odps": {"path": "sql.engines.odps:ODPSEngine"},
+}
+ENABLED_ENGINES = env("ENABLED_ENGINES")
 
 # Application definition
 INSTALLED_APPS = (
@@ -245,7 +276,6 @@ SIMPLE_JWT = {
 ENABLE_OIDC = env("ENABLE_OIDC", False)
 if ENABLE_OIDC:
     INSTALLED_APPS += ("mozilla_django_oidc",)
-    MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
     AUTHENTICATION_BACKENDS = (
         "common.authenticate.oidc_auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
