@@ -360,6 +360,7 @@ class MongoEngine(EngineBase):
                     _re_msg.append(_line)
 
                 msg = "\n".join(_re_msg)
+                msg = msg.replace("true\n","")
             except Exception as e:
                 logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
             finally:
