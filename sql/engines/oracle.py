@@ -1089,6 +1089,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            conn.current_schema =  workflow.db_name
             # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
             cursor.execute(f"select sysdate from dual")
