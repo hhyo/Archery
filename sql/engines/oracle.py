@@ -863,7 +863,7 @@ class OracleEngine(EngineBase):
                                     )
                                 else:
                                     object_name_list.add(object_name)
-                                    if result_set["rows"] > 1000:
+                                    if result_set["rows"] is not None and result_set["rows"] > 1000:
                                         result = ReviewResult(
                                             id=line,
                                             errlevel=1,
@@ -892,7 +892,7 @@ class OracleEngine(EngineBase):
                                             execute_time=0,
                                         )
                             else:
-                                if result_set["rows"] > 1000:
+                                if result_set["rows"] is not None and result_set["rows"] > 1000:
                                     result = ReviewResult(
                                         id=line,
                                         errlevel=1,
