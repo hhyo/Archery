@@ -368,6 +368,7 @@ def get_exec_sqlitem_list(reviewResult, db_name):
     :return:
     """
     list = []
+
     
     for item in reviewResult:
         list.append(
