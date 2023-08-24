@@ -590,7 +590,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                conn.current_schema=db_name
+                conn.current_schema = db_name
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -666,7 +666,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                conn.current_schema=db_name
+                conn.current_schema = db_name
             sql = sql.rstrip(";")
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
