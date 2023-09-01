@@ -250,6 +250,34 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="dml_audit"
+                                       class="col-sm-4 control-label">DML_AUDIT</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="dml_audit"
+                                                   key="dml_audit"
+                                                   value="{{ config.dml_audit }}"
+                                                   type="checkbox">
+                                            是否开启DML审批分流
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="div-dml-audit-config" style="display: none">
+                                <div class="form-group">
+                                    <label for="auto_dml_max_update_rows"
+                                        class="col-sm-4 control-label">MAX_UPDATE_ROWS</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control"
+                                            id="auto_dml_max_update_rows"
+                                            key="auto_dml_max_update_rows"
+                                            value="{{ config.auto_dml_max_update_rows }}"
+                                            placeholder="自动审批允许工单最大更新行数">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="manual"
                                        class="col-sm-4 control-label">MANNUAL</label>
                                 <div class="col-sm-8">
@@ -1175,6 +1203,8 @@
                     $("#div-ding-config").show();
                 } else if (id === 'auto_review') {
                     $("#div-auto-review-config").show();
+                } else if (id === 'dml_audit') {
+                    $("#div-dml-audit-config").show();
                 } else if (id === 'wx') {
                     $("#div-wx-config").show();
                 } else if (id === 'feishu') {
@@ -1191,6 +1221,8 @@
                     $("#div-ding-config").hide();
                 } else if (id === 'auto_review') {
                     $("#div-auto-review-config").hide();
+                } else if (id === 'dml_audit') {
+                    $("#div-dml-audit-config").hide();
                 } else if (id === 'wx') {
                     $("#div-wx-config").hide();
                 } else if (id === 'feishu') {

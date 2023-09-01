@@ -17,6 +17,7 @@ from sql.models import (
     ArchiveConfig,
 )
 from common.config import SysConfig
+import json
 
 
 class Audit(object):
@@ -54,6 +55,11 @@ class Audit(object):
             create_user_display = workflow_detail.engineer_display
             audit_auth_groups = workflow_detail.audit_auth_groups
             workflow_remark = ""
+            syntax_type = workflow_detail.syntax_type
+            all_affected_rows = 0
+            review_content = workflow_detail.sqlworkflowcontent.review_content
+            for review_row in json.loads(review_content):
+                all_affected_rows += int(review_row["affected_rows"])
         elif workflow_type == WorkflowDict.workflow_type["archive"]:
             workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
             workflow_title = workflow_detail.title
@@ -73,6 +79,11 @@ class Audit(object):
             raise Exception(result["msg"])
         else:
             audit_auth_groups_list = audit_auth_groups.split(",")
+            if SysConfig().get("dml_audit"):
+                dml_max_rows = int(SysConfig().get("auto_dml_max_update_rows"))
+                if syntax_type == 2 and all_affected_rows < dml_max_rows:
+                    group_dba_id = Group.objects.get(name="DBA").id
+                    audit_auth_groups_list.remove(str(group_dba_id))
 
         # 判断是否无需审核,并且修改审批人为空
         if SysConfig().get("auto_review", False):
