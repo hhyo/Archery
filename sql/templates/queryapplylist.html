@@ -48,7 +48,7 @@
                                 data-live-search="true" required>
                             // TODO 使用models中的choices 渲染
                             {% for name, engine in engines.items %}
-                                <optgroup id="optgroup-{{ name }}" label="{{ engine.engine.name }}"></optgroup>
+                                <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
                             {%  endfor %}
                         </select>
                     </div>
