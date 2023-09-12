@@ -590,10 +590,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(
-                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
-                    {"db_name": db_name},
-                )
+                conn.current_schema = db_name
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -669,10 +666,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(
-                    f" ALTER SESSION SET CURRENT_SCHEMA = :db_name ",
-                    {"db_name": db_name},
-                )
+                conn.current_schema = db_name
             sql = sql.rstrip(";")
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
@@ -869,7 +863,10 @@ class OracleEngine(EngineBase):
                                     )
                                 else:
                                     object_name_list.add(object_name)
-                                    if result_set["rows"] > 1000:
+                                    if (
+                                        result_set.get("rows", None)
+                                        and result_set["rows"] > 1000
+                                    ):
                                         result = ReviewResult(
                                             id=line,
                                             errlevel=1,
@@ -898,7 +895,10 @@ class OracleEngine(EngineBase):
                                             execute_time=0,
                                         )
                             else:
-                                if result_set["rows"] > 1000:
+                                if (
+                                    result_set.get("rows", None)
+                                    and result_set["rows"] > 1000
+                                ):
                                     result = ReviewResult(
                                         id=line,
                                         errlevel=1,
@@ -1095,6 +1095,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            conn.current_schema = workflow.db_name
             # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
             cursor.execute(f"select sysdate from dual")

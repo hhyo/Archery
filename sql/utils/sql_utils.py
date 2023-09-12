@@ -368,7 +368,6 @@ def get_exec_sqlitem_list(reviewResult, db_name):
     :return:
     """
     list = []
-    list.append(SqlItem(statement=f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" '))
 
     for item in reviewResult:
         list.append(

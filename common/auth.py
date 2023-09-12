@@ -11,6 +11,7 @@ from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
+from archery import settings
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig
@@ -201,5 +202,11 @@ def sign_up(request):
 
 # 退出登录
 def sign_out(request):
+    user = request.user
     logout(request)
+    # 如果开启了钉钉认证，重定向到钉钉退出登录页面
+    if user.ding_user_id and settings.ENABLE_DINGDING:
+        return HttpResponseRedirect(
+            redirect_to="https://login.dingtalk.com/oauth2/logout"
+        )
     return HttpResponseRedirect(reverse("sql:login"))
