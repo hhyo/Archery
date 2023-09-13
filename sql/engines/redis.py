@@ -25,6 +25,10 @@ logger = logging.getLogger("default")
 class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
+        if self.password:
+            password = self.password
+        else:
+            password = None
         if self.mode == "cluster":
             return redis.cluster.RedisCluster(
                 host=self.host,
@@ -40,7 +44,7 @@ class RedisEngine(EngineBase):
                 host=self.host,
                 port=self.port,
                 db=db_name,
-                password=self.password,
+                password=password,
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
