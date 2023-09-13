@@ -236,6 +236,7 @@ def schemasync(request):
     args = {
         "sync-auto-inc": sync_auto_inc,
         "sync-comments": sync_comments,
+        "charset": "utf8mb4",
         "tag": tag,
         "output-directory": output_directory,
         "source": f"mysql://{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}",
