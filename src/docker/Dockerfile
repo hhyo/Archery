@@ -10,7 +10,7 @@ RUN cd /opt \
     && yum -y install nginx \
     && source /opt/venv4archery/bin/activate \
     && pip3 install -r /opt/archery/requirements.txt \
-    && pip3 install redis==4.1.0 \
+    && pip3 install "redis>=4.1.0" \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp -f /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
