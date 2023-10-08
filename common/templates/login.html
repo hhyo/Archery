@@ -43,6 +43,11 @@
             {% else %}
                 {% include 'legacy_login_form.html' %}
             {% endif %}
+            {% if sign_up_enabled %}
+                <div class="form-group">
+                    <a href="#" data-toggle="modal" data-target="#sign-up">注册用户</a>
+                </div>
+            {% endif %}
         </form>
     </div>
 </div>
