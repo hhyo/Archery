@@ -14,3 +14,4 @@ sonar-project.properties
 .scannerwork
 .env
 local_settings.py
+src/docker-compose-dev
