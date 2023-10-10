@@ -100,7 +100,7 @@
                     {% if perms.sql.menu_sqlcheck %}
                         <li>
                             <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlworkflow %}
                                     <li>
                                         <a href="/sqlworkflow/">SQL上线</a>
@@ -118,7 +118,7 @@
                     {% if perms.sql.menu_query %}
                         <li>
                             <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
                                         <a href="/sqlquery/">在线查询</a>
@@ -142,7 +142,7 @@
                     {% if perms.sql.menu_sqloptimize %}
                         <li>
                             <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqladvisor %}
                                     <li>
                                         <a href="/sqladvisor/">优化工具</a>
@@ -160,7 +160,7 @@
                     {% if perms.sql.menu_instance %}
                         <li>
                             <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_instance_list %}
                                     <li>
                                         <a href="/instance/">实例列表</a>
@@ -194,7 +194,7 @@
                     {% if perms.sql.menu_tools %}
                         <li>
                             <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_archive %}
                                     <li>
                                         <a href="/archive/">PTArchiver</a>
@@ -217,7 +217,7 @@
                     {% if perms.sql.menu_system %}
                         <li>
                             <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 <li>
                                     <a href="/config/">配置项管理</a>
                                 </li>
@@ -246,7 +246,7 @@
                     {% if perms.sql.audit_user %}
                         <li>
                             <a href="#"><i class="fa fa-eye fa-fw"></i> 系统审计<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
+                            <ul class="nav nav-second-level collapse">
                                 <li>
                                     <a href="/audit/">通用审计</a>
                                 </li>
