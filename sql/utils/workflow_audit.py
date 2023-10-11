@@ -479,10 +479,10 @@ class Audit(object):
                 )
             except Exception:
                 audit_auth_group = audit_info.audit_auth_groups
-        if audit_info.current_audit == "-1":
-            current_audit_auth_group = None
-            current_audit_auth_group_notification = ""
-        else:
+
+        current_audit_auth_group = None
+        current_audit_auth_group_notification = ""
+        if audit_info.current_audit != "-1":
             try:
                 current_audit_auth_group = Group.objects.get(
                     id=audit_info.current_audit
