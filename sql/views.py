@@ -65,6 +65,7 @@ def login(request):
             "sign_up_enabled": SysConfig().get("sign_up_enabled"),
             "oidc_enabled": settings.ENABLE_OIDC,
             "dingding_enabled": settings.ENABLE_DINGDING,
+            "oidc_btn_name":  SysConfig().get("oidc_btn_name", "以OIDC登录")
         },
     )
 
