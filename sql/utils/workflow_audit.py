@@ -464,25 +464,39 @@ class Audit(object):
     # 获取当前工单审批流程,当前审核组和审核组dingding通知
     @staticmethod
     def review_info_with_notification(workflow_id, workflow_type):
-        audit_info = WorkflowAudit.objects.get(workflow_id=workflow_id, workflow_type=workflow_type)
-        if audit_info.audit_auth_groups == '':
-            audit_auth_group = '无需审批'
+        audit_info = WorkflowAudit.objects.get(
+            workflow_id=workflow_id, workflow_type=workflow_type
+        )
+        if audit_info.audit_auth_groups == "":
+            audit_auth_group = "无需审批"
         else:
             try:
-                audit_auth_group = '->'.join([Group.objects.get(id=auth_group_id).name for auth_group_id in
-                                              audit_info.audit_auth_groups.split(',')])
+                audit_auth_group = "->".join(
+                    [
+                        Group.objects.get(id=auth_group_id).name
+                        for auth_group_id in audit_info.audit_auth_groups.split(",")
+                    ]
+                )
             except Exception:
                 audit_auth_group = audit_info.audit_auth_groups
-        if audit_info.current_audit == '-1':
+        if audit_info.current_audit == "-1":
             current_audit_auth_group = None
-            current_audit_auth_group_notification = ''
+            current_audit_auth_group_notification = ""
         else:
             try:
-                current_audit_auth_group = Group.objects.get(id=audit_info.current_audit).name
-                current_audit_auth_group_notification = GroupNotification.objects.get(group=audit_info.current_audit).ding_webhook
+                current_audit_auth_group = Group.objects.get(
+                    id=audit_info.current_audit
+                ).name
+                current_audit_auth_group_notification = GroupNotification.objects.get(
+                    group=audit_info.current_audit
+                ).ding_webhook
             except Exception:
                 current_audit_auth_group = audit_info.current_audit
-        return audit_auth_group, current_audit_auth_group, current_audit_auth_group_notification
+        return (
+            audit_auth_group,
+            current_audit_auth_group,
+            current_audit_auth_group_notification,
+        )
 
     # 新增工单日志
     @staticmethod

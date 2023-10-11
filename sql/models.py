@@ -1208,10 +1208,12 @@ class AuditEntry(models.Model):
             self.user_id, self.user_name, self.extra_info, self.action, self.action_time
         )
 
+
 class GroupNotification(models.Model):
     """
     权限组通知
     """
+
     id = models.AutoField("ID", primary_key=True)
     group = models.ForeignKey(Group, unique=True, on_delete=models.CASCADE)
     ding_webhook = models.CharField("钉钉webhook地址", max_length=255, blank=True)
@@ -1219,5 +1221,5 @@ class GroupNotification(models.Model):
     class Meta:
         managed = True
         db_table = "auth_group_notification"
-        verbose_name = u"权限组通知"
-        verbose_name_plural = u"权限组通知"
+        verbose_name = "权限组通知"
+        verbose_name_plural = "权限组通知"

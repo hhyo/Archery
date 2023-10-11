@@ -136,8 +136,13 @@ def notify_for_audit(audit_id, **kwargs):
         group_id=audit_detail.group_id
     ).qywx_webhook
     # 获取当前审批和审批流程
-    workflow_auditors, current_workflow_auditors, group_webhook = Audit.review_info_with_notification(
-        audit_detail.workflow_id, audit_detail.workflow_type)
+    (
+        workflow_auditors,
+        current_workflow_auditors,
+        group_webhook,
+    ) = Audit.review_info_with_notification(
+        audit_detail.workflow_id, audit_detail.workflow_type
+    )
 
     # 准备消息内容
     if workflow_type == WorkflowDict.workflow_type["query"]:
