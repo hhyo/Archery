@@ -36,6 +36,7 @@ services:
     container_name: archery
     restart: always
     ports:
+      - "443:443"
       - "9123:9123"
     volumes:
       - "./archery/settings.py:/opt/archery/local_settings.py"
@@ -45,6 +46,8 @@ services:
       - "./archery/sql/migrations:/opt/archery/sql/migrations"
       - "./archery/logs:/opt/archery/logs"
       - "./archery/keys:/opt/archery/keys"
+      - "./nginx/https.conf:/etc/nginx/conf.d/https.conf"
+      - "./nginx/ssl:/etc/nginx/ssl"
     entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
     env_file:
       - .env

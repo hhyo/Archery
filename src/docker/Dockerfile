@@ -12,6 +12,7 @@ RUN cd /opt \
     && pip3 install -r /opt/archery/requirements.txt \
     && pip3 install "redis>=4.1.0" \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \
+    && cp -f /opt/archery/src/docker/http.conf /etc/nginx/conf.d/ \
     && cp -f /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \
     && mv /opt/soar /opt/archery/src/plugins/ \
@@ -21,7 +22,7 @@ RUN cd /opt \
     && rm -rf ~/.cache
 
 #port
-EXPOSE 9123
+EXPOSE 443 9123 8888
 
 #start service
 ENTRYPOINT bash /opt/archery/src/docker/startup.sh && bash
