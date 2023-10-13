@@ -14,12 +14,15 @@
     justify-content: center;
     align-items: center;
     height: 90vh;
+    margin: 0;
 }
 
-.mypanalbox {
+.login-form-wrapper {
     background-color: #FFF;
-    border-radius: 8px;
-    box-shadow: 3px 3px 3px;
+    border-radius: 4px;
+    box-shadow: rgba(0,0,0,0.1) 0 3px 5px;
+    padding: 30px 10px;
+    border-top: 5px solid #337ab7;
 }
 
 .login-form {
