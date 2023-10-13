@@ -572,7 +572,7 @@ class DataMaskingColumns(models.Model):
     table_name = models.CharField("字段所在表名", max_length=64)
     column_name = models.CharField("字段名", max_length=64)
     case_sensitive = models.BooleanField(
-        "字段区分大小写", default=False,choices=((False, "不区分"), (True, "区分"))
+        "字段区分大小写", default=False, choices=((False, "不区分"), (True, "区分"))
     )
     column_comment = models.CharField("字段描述", max_length=1024, default="", blank=True)
     create_time = models.DateTimeField(auto_now_add=True)
