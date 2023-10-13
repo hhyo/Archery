@@ -11,5 +11,5 @@ alter table instance_account add unique index uidx_instanceid_user_host_dbname(`
 --- 增加 ssl 支持
 ALTER TABLE sql_instance ADD is_ssl tinyint(1) DEFAULT 0  COMMENT '是否启用SSL';
 -- 脱敏区分大小写支持，添加唯一键，避免同时配置同库同表同列添加两条脱敏规则
-ALTER TABLE  data_masking_columns ADD COLUMN  case_sensitive TINYINT(1) NOT NULL  comment '字段是否区分大小写' AFTER  column_name;
+ALTER TABLE  data_masking_columns ADD COLUMN  case_sensitive TINYINT(1) NOT NULL default 0  comment '字段是否区分大小写' AFTER  column_name;
 ALTER TABLE data_masking_columns ADD UNIQUE INDEX (instance_id,table_schema,table_name,column_name);
