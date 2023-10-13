@@ -10,6 +10,8 @@ from sql.models import (
     ResourceGroup,
     WorkflowAudit,
     WorkflowLog,
+    QueryPrivilegesApply,
+    ArchiveConfig
 )
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
@@ -246,6 +248,18 @@ class AliyunRdsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AliyunRdsConfig
         fields = ("id", "rds_dbinstanceid", "is_enable", "instance", "ak")
+
+
+class QueryPrivilegesApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QueryPrivilegesApply
+        fields = "__all__"
+
+
+class ArchiveConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArchiveConfig
+        fields = "__all__"
 
 
 class InstanceResourceSerializer(serializers.Serializer):

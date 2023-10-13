@@ -736,6 +736,17 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="generic_webhook_url"
+                                       class="col-sm-4 control-label">通用Webhook地址</label>
+                                <div class="col-sm-5">
+                                    <input class="form-control"
+                                           id="generic_webhook_url"
+                                           key="generic_webhook_url"
+                                           value="{{ config.generic_webhook_url }}"
+                                           placeholder="通用 webhook 地址, 每个工单的每个状态转变均会调用" />
+                                </div>
+                            </div>
                             <h5 style="color: darkgrey"><b>短信服务</b></h5>
                             <hr/>
                             <div class="form-group">

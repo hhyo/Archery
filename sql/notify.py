@@ -1,8 +1,12 @@
 # -*- coding: UTF-8 -*-
 import datetime
+from enum import Enum
 import re
 from itertools import chain
+from typing import Union, List
+from dataclasses import dataclass
 
+import requests
 from django.contrib.auth.models import Group
 from common.config import SysConfig
 from sql.models import (
@@ -10,7 +14,14 @@ from sql.models import (
     Users,
     SqlWorkflow,
     ResourceGroup,
-    ArchiveConfig,
+    ArchiveConfig, WorkflowAudit,
+)
+from sql_api.serializers import (
+    UserSerializer,
+    WorkflowSerializer,
+    AuditWorkflowSerializer,
+    QueryPrivilegesApplySerializer,
+    ArchiveConfigSerializer
 )
 from sql.utils.resource_group import auth_group_users
 from common.utils.sendmsg import MsgSender
@@ -20,6 +31,12 @@ from sql.utils.workflow_audit import Audit
 import logging
 
 logger = logging.getLogger("default")
+
+
+class EventType(Enum):
+    EXECUTE = "execute"
+    AUDIT = "audit"
+    M2SQL = "m2sql"
 
 
 def __notify_cnf_status():
@@ -32,16 +49,18 @@ def __notify_cnf_status():
     qywx_webhook_status = sys_config.get("qywx_webhook")
     feishu_webhook_status = sys_config.get("feishu_webhook")
     feishu_status = sys_config.get("feishu")
+    generic_webhook = sys_config.get("generic_webhook")
     if not any(
-        [
-            mail_status,
-            ding_status,
-            ding_webhook_status,
-            wx_status,
-            feishu_status,
-            feishu_webhook_status,
-            qywx_webhook_status,
-        ]
+            [
+                mail_status,
+                ding_status,
+                ding_webhook_status,
+                wx_status,
+                feishu_status,
+                feishu_webhook_status,
+                qywx_webhook_status,
+                generic_webhook,
+            ]
     ):
         logger.info("未开启任何消息通知，可在系统设置中开启")
         return False
@@ -110,6 +129,7 @@ def notify_for_audit(audit_id, **kwargs):
     sys_config = SysConfig()
 
     # 获取审核信息
+    audit_data = AuditWorkflowSerializer(Audit).data
     audit_detail = Audit.detail(audit_id=audit_id)
     audit_id = audit_detail.audit_id
     workflow_audit_remark = kwargs.get("audit_remark", "")
@@ -141,6 +161,7 @@ def notify_for_audit(audit_id, **kwargs):
     if workflow_type == WorkflowDict.workflow_type["query"]:
         workflow_type_display = WorkflowDict.workflow_type["query_display"]
         workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
+        workflow_dict = QueryPrivilegesApplySerializer(workflow_detail).data
         instance = workflow_detail.instance.instance_name
         db_name = " "
         if workflow_detail.priv_type == 1:
@@ -166,6 +187,7 @@ def notify_for_audit(audit_id, **kwargs):
     elif workflow_type == WorkflowDict.workflow_type["sqlreview"]:
         workflow_type_display = WorkflowDict.workflow_type["sqlreview_display"]
         workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
+        workflow_dict = WorkflowSerializer(workflow_detail).data
         instance = workflow_detail.instance.instance_name
         db_name = workflow_detail.db_name
         workflow_content = re.sub(
@@ -176,6 +198,7 @@ def notify_for_audit(audit_id, **kwargs):
     elif workflow_type == WorkflowDict.workflow_type["archive"]:
         workflow_type_display = WorkflowDict.workflow_type["archive_display"]
         workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
+        workflow_dict = ArchiveConfigSerializer(workflow_detail).data
         instance = workflow_detail.src_instance.instance_name
         db_name = workflow_detail.src_db_name
         workflow_content = """归档表：{}\n归档模式：{}\n归档条件：{}\n""".format(
@@ -272,89 +295,6 @@ def notify_for_audit(audit_id, **kwargs):
     )
 
 
-def notify_for_execute(workflow):
-    """
-    工单执行结束的通知
-    :param workflow:
-    :return:
-    """
-    # 判断是否开启消息通知，未开启直接返回
-    if not __notify_cnf_status():
-        return None
-    sys_config = SysConfig()
-
-    # 获取当前审批和审批流程
-    base_url = sys_config.get("archery_base_url", "http://127.0.0.1:8000").rstrip("/")
-    audit_auth_group, current_audit_auth_group = Audit.review_info(workflow.id, 2)
-    audit_id = Audit.detail_by_workflow_id(workflow.id, 2).audit_id
-    url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_id)
-    msg_title = "[{}]工单{}#{}".format(
-        WorkflowDict.workflow_type["sqlreview_display"],
-        workflow.get_status_display(),
-        audit_id,
-    )
-    msg_content = """发起时间：{}\n发起人：{}\n组：{}\n目标实例：{}\n数据库：{}\n审批流程：{}\n工单名称：{}\n工单地址：{}\n工单详情预览：{}\n""".format(
-        workflow.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-        workflow.engineer_display,
-        workflow.group_name,
-        workflow.instance.instance_name,
-        workflow.db_name,
-        audit_auth_group,
-        workflow.workflow_name,
-        url,
-        re.sub(
-            "[\r\n\f]{2,}",
-            "\n",
-            workflow.sqlworkflowcontent.sql_content[0:500].replace("\r", ""),
-        ),
-    )
-    # 邮件通知申请人，抄送DBA
-    msg_to = Users.objects.filter(username=workflow.engineer)
-    msg_cc = auth_group_users(auth_group_names=["DBA"], group_id=workflow.group_id)
-
-    # 处理接收人
-    dingding_webhook = ResourceGroup.objects.get(
-        group_id=workflow.group_id
-    ).ding_webhook
-    feishu_webhook = ResourceGroup.objects.get(
-        group_id=workflow.group_id
-    ).feishu_webhook
-    qywx_webhook = ResourceGroup.objects.get(group_id=workflow.group_id).qywx_webhook
-    # 发送通知
-    __send(
-        msg_title,
-        msg_content,
-        msg_to,
-        msg_cc,
-        dingding_webhook=dingding_webhook,
-        feishu_webhook=feishu_webhook,
-        qywx_webhook=qywx_webhook,
-    )
-
-    # DDL通知
-    if sys_config.get("ddl_notify_auth_group") and workflow.status == "workflow_finish":
-        # 判断上线语句是否存在DDL，存在则通知相关人员
-        if workflow.syntax_type == 1:
-            # 消息内容通知
-            msg_title = "[Archery]有新的DDL语句执行完成#{}".format(audit_id)
-            msg_content = """发起人：{}\n变更组：{}\n变更实例：{}\n变更数据库：{}\n工单名称：{}\n工单地址：{}\n工单预览：{}\n""".format(
-                Users.objects.get(username=workflow.engineer).display,
-                workflow.group_name,
-                workflow.instance.instance_name,
-                workflow.db_name,
-                workflow.workflow_name,
-                url,
-                workflow.sqlworkflowcontent.sql_content[0:500],
-            )
-            # 获取通知成员ddl_notify_auth_group
-            ddl_notify_auth_group = sys_config.get("ddl_notify_auth_group", "").split(
-                ","
-            )
-            msg_to = Users.objects.filter(groups__name__in=ddl_notify_auth_group)
-            # 发送通知
-            __send(msg_title, msg_content, msg_to, msg_cc)
-
-
 def notify_for_my2sql(task):
     """
     my2sql执行结束的通知
@@ -373,3 +313,142 @@ def notify_for_my2sql(task):
     # 发送
     msg_to = [task.kwargs["user"]]
     __send(msg_title, msg_content, msg_to)
+
+
+class Notifier:
+    name = "base"
+
+    def __init__(self,
+                 workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply],
+                 audit: WorkflowAudit,
+                 event_type: EventType,
+                 sys_config: SysConfig):
+        self.workflow = workflow
+        self.audit = audit
+        self.event_type = event_type
+        self.sys_config = sys_config
+
+    def render(self):
+        raise NotImplemented
+
+    def send(self):
+        raise NotImplemented
+
+
+class GenericWebhookNotifier(Notifier):
+    name = "generic_webhook"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request_data = None
+
+    def render(self):
+        if isinstance(self.workflow, SqlWorkflow):
+            workflow_dict = WorkflowSerializer(self.workflow).data
+        elif isinstance(self.workflow, ArchiveConfig):
+            workflow_dict = ArchiveConfigSerializer(self.workflow).data
+        elif isinstance(self.workflow, QueryPrivilegesApply):
+            workflow_dict = QueryPrivilegesApplySerializer(self.workflow).data
+        else:
+            raise ValueError(f"workflow type `{type(self.workflow)}` not supported yet")
+
+        audit_dict = AuditWorkflowSerializer(self.audit).data
+        self.request_data = {
+            "audit": audit_dict,
+            "workflow": workflow_dict,
+        }
+
+    def send(self):
+        url = self.sys_config.get("generic_webhook")
+        requests.post(url, json=self.request_data)
+
+
+@dataclass
+class LegacyMessage:
+    msg_title: str
+    msg_content: str
+    msg_to: List[Users] = None
+    msg_cc: List[Users] = None
+
+
+class LegacyRender(Notifier):
+    messages: List[LegacyMessage]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def render_execute(self):
+        base_url = self.sys_config.get("archery_base_url", "http://127.0.0.1:8000").rstrip("/")
+        audit_auth_group, current_audit_auth_group = Audit.review_info(self.workflow.id, 2)
+        audit_id = Audit.detail_by_workflow_id(self.workflow.id, 2).audit_id
+        url = "{base_url}/workflow/{audit_id}".format(base_url=base_url, audit_id=audit_id)
+        msg_title = (f"[{WorkflowDict.workflow_type['sqlreview_display']}]工单"
+                     f"{self.workflow.get_status_display()}#{audit_id}")
+        preview = re.sub(
+            '[\r\n\f]{2,}',
+            '\n',
+            self.workflow.sqlworkflowcontent.sql_content[0:500].replace("\r", ""), )
+        msg_content = f"""发起时间：{self.workflow.create_time.strftime("%Y-%m-%d %H:%M:%S")}
+发起人：{self.workflow.engineer_display}
+组：{self.workflow.group_name}
+目标实例：{self.workflow.instance.instance_name}
+数据库：{self.workflow.db_name}
+审批流程：{audit_auth_group}
+工单名称：{self.workflow.workflow_name}
+工单地址：{url}
+工单详情预览：{preview}"""
+        # 邮件通知申请人，抄送DBA
+        msg_to = Users.objects.filter(username=self.workflow.engineer)
+        msg_cc = auth_group_users(auth_group_names=["DBA"], group_id=self.workflow.group_id)
+        self.messages.append(LegacyMessage(
+            msg_title, msg_content, msg_to, msg_cc
+        ))
+        # DDL通知
+        if self.sys_config.get("ddl_notify_auth_group") and self.workflow.status == "workflow_finish":
+            # 判断上线语句是否存在DDL，存在则通知相关人员
+            if self.workflow.syntax_type == 1:
+                # 消息内容通知
+                msg_title = "[Archery]有新的DDL语句执行完成#{}".format(audit_id)
+                msg_content = f"""发起人：{Users.objects.get(username=self.workflow.engineer).display}
+变更组：{self.workflow.group_name}
+变更实例：{self.workflow.instance.instance_name}
+变更数据库：{self.workflow.db_name}
+工单名称：{self.workflow.workflow_name}
+工单地址：{url}
+工单预览：{preview}"""
+                # 获取通知成员ddl_notify_auth_group
+                ddl_notify_auth_group = self.sys_config.get("ddl_notify_auth_group", "").split(
+                    ","
+                )
+                msg_to = Users.objects.filter(groups__name__in=ddl_notify_auth_group)
+                self.messages.append(LegacyMessage(
+                    msg_title, msg_content, msg_to
+                ))
+
+    def render(self):
+        """渲染消息, 存储到 self.messages"""
+        if self.event_type == EventType.EXECUTE:
+            self.render_execute()
+
+
+class DingdingWebhookNotifier(LegacyRender):
+    name = "dingding_webhook"
+
+    def send(self):
+        dingding_webhook = ResourceGroup.objects.get(
+            group_id=self.audit.group_id
+        ).ding_webhook
+        msg_sender = MsgSender()
+        for m in self.messages:
+            msg_sender.send_ding(dingding_webhook, f"{m.msg_title}\n{m.msg_content}")
+
+
+class FeishuWebhookNotifier(LegacyRender):
+    name = "feishu_webhook"
+
+    def send(self):
+        feishu_webhook = ResourceGroup.objects.get(group_id=self.audit.group_id).feishu_webhook
+        msg_sender = MsgSender()
+        for m in self.messages:
+            msg_sender.send_feishu_webhook(feishu_webhook, m.msg_title, m.msg_content)
+
