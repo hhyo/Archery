@@ -89,7 +89,7 @@ def analyze_query_tree(select_list, instance):
     """解析select list, 返回命中脱敏规则的列信息"""
     # 获取实例全部激活的脱敏字段信息，减少循环查询，提升效率
     masking_columns = {
-        f"{i.instance}-{i.table_schema}-{i.table_name}-{i.column_name}": model_to_dict(
+        f"{i.instance}-{i.table_schema}-{i.table_name}-{i.column_name}-{i.case_sensitive}": model_to_dict(
             i
         )
         for i in DataMaskingColumns.objects.filter(instance=instance, active=True)
@@ -103,7 +103,7 @@ def analyze_query_tree(select_list, instance):
             column.get("field"),
         )
         masking_column = masking_columns.get(
-            f"{instance}-{table_schema}-{table}-{field}"
+            f"{instance}-{table_schema}-{table}-{field}-{'True'}"
         )
         if masking_column:
             hit_columns.append(
@@ -112,6 +112,22 @@ def analyze_query_tree(select_list, instance):
                     "table_schema": table_schema,
                     "table_name": table,
                     "column_name": field,
+                    "rule_type": masking_column["rule_type"],
+                    "is_hit": True,
+                    "index": column["index"],
+                }
+            )
+        field_0 = field.lower()
+        masking_column = masking_columns.get(
+            f"{instance}-{table_schema}-{table}-{field_0}-{'False'}"
+        )
+        if masking_column:
+            hit_columns.append(
+                {
+                    "instance_name": instance.instance_name,
+                    "table_schema": table_schema,
+                    "table_name": table,
+                    "column_name": field_0,
                     "rule_type": masking_column["rule_type"],
                     "is_hit": True,
                     "index": column["index"],

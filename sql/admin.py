@@ -352,6 +352,7 @@ class DataMaskingColumnsAdmin(admin.ModelAdmin):
         "table_schema",
         "table_name",
         "column_name",
+        "case_sensitive",
         "column_comment",
         "create_time",
     )
