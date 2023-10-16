@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import datetime
+import importlib
 from enum import Enum
 import re
 from itertools import chain
@@ -8,6 +9,8 @@ from dataclasses import dataclass
 
 import requests
 from django.contrib.auth.models import Group
+from django.conf import settings
+
 from common.config import SysConfig
 from sql.models import (
     QueryPrivilegesApply,
@@ -320,9 +323,9 @@ class Notifier:
 
     def __init__(self,
                  workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply],
-                 audit: WorkflowAudit,
-                 event_type: EventType,
-                 sys_config: SysConfig):
+                 sys_config: SysConfig,
+                 audit: WorkflowAudit = None,
+                 event_type: EventType = EventType.AUDIT):
         self.workflow = workflow
         self.audit = audit
         self.event_type = event_type
@@ -452,3 +455,15 @@ class FeishuWebhookNotifier(LegacyRender):
         for m in self.messages:
             msg_sender.send_feishu_webhook(feishu_webhook, m.msg_title, m.msg_content)
 
+
+def auto_notify(workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply],
+                sys_config: SysConfig,
+                audit: WorkflowAudit = None,
+                event_type: EventType = EventType.AUDIT):
+    for notifier in settings.ENABLED_NOTIFIERS:
+        file, _class = notifier.split(":")
+        notify_module = importlib.import_module(file)
+        notifier = getattr(notify_module, _class)
+        notifier = notifier(workflow=workflow, audit=audit, event_type=event_type, sys_config=sys_config)
+        notifier.render()
+        notifier.send()

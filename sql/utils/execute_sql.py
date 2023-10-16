@@ -8,7 +8,7 @@ from common.utils.const import WorkflowDict
 from common.config import SysConfig
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
-from sql.notify import notify_for_execute
+from sql.notify import auto_notify, EventType
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
 
@@ -120,4 +120,4 @@ def execute_callback(task):
         else True
     )
     if is_notified:
-        notify_for_execute(workflow)
+        auto_notify(workflow=workflow, sys_config=sys_config, event_type=EventType.EXECUTE)

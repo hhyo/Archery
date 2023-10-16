@@ -29,7 +29,7 @@ from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
 from sql.utils.resource_group import user_groups
 from sql.utils.workflow_audit import Audit
 from sql.utils.tasks import del_schedule
-from sql.notify import notify_for_audit, notify_for_execute
+from sql.notify import notify_for_audit, auto_notify, EventType
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.engines import get_engine
 from common.utils.const import WorkflowDict
@@ -135,6 +135,24 @@ class WorkflowList(generics.ListAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        sys_config = SysConfig()
+        is_notified = (
+            "Apply" in sys_config.get("notify_phase_control").split(",")
+            if sys_config.get("notify_phase_control")
+            else True
+        )
+        if serializer.workflow.workflow_status == "workflow_manreviewing" and is_notified:
+            # 获取审核信息
+            audit_id = Audit.detail_by_workflow_id(
+                workflow_id=serializer.workflow.id,
+                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+            ).audit_id
+            async_task(
+                notify_for_audit,
+                audit_id=audit_id,
+                timeout=60,
+                task_name=f"sqlreview-submit-{serializer.workflow.id}",
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -554,7 +572,9 @@ class ExecuteWorkflow(views.APIView):
                     else True
                 )
                 if is_notified:
-                    notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+                    auto_notify(worflow=SqlWorkflow.objects.get(id=workflow_id),
+                                sys_config=sys_config,
+                                event_type=EventType.EXECUTE)
         # 执行数据归档工单
         elif workflow_type == 3:
             async_task(

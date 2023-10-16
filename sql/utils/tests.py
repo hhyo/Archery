@@ -946,7 +946,7 @@ class TestExecuteSql(TestCase):
             operator_display="系统",
         )
 
-    @patch("sql.utils.execute_sql.notify_for_execute")
+    @patch("sql.utils.execute_sql.auto_notify")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_success(self, _audit, _notify):
         # 初始化工单执行返回对象
@@ -978,7 +978,7 @@ class TestExecuteSql(TestCase):
         )
         _notify.assert_called_once()
 
-    @patch("sql.utils.execute_sql.notify_for_execute")
+    @patch("sql.utils.execute_sql.auto_notify")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_failure(self, _audit, _notify):
         # 初始化工单执行返回对象
@@ -1006,7 +1006,7 @@ class TestExecuteSql(TestCase):
         )
         _notify.assert_called_once()
 
-    @patch("sql.utils.execute_sql.notify_for_execute")
+    @patch("sql.utils.execute_sql.auto_notify")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_failure_no_execute_result(self, _audit, _notify):
         # 初始化工单执行返回对象

@@ -11,16 +11,15 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
+from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import Const, WorkflowDict
+from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines import get_engine
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.notify import notify_for_audit, notify_for_execute
-from sql.models import ResourceGroup
-from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.tasks import add_sql_schedule, del_schedule
+from sql.notify import notify_for_audit, EventType, auto_notify
+from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import (
     can_timingtask,
     can_cancel,
@@ -29,11 +28,9 @@ from sql.utils.sql_review import (
     can_view,
     can_rollback,
 )
+from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit
-from .models import SqlWorkflow, SqlWorkflowContent, Instance
-from django_q.tasks import async_task
-
-from sql.engines import get_engine
+from .models import SqlWorkflow
 
 logger = logging.getLogger("default")
 
@@ -378,7 +375,9 @@ def execute(request):
             else True
         )
         if is_notified:
-            notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+            auto_notify(workflow=SqlWorkflow.objects.get(id=workflow_id),
+                        sys_config=sys_config,
+                        event_type=EventType.EXECUTE)
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 

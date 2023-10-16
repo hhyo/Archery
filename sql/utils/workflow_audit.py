@@ -470,14 +470,16 @@ class Audit(object):
         operator,
         operator_display,
     ):
-        WorkflowLog(
+        log = WorkflowLog(
             audit_id=audit_id,
             operation_type=operation_type,
             operation_type_desc=operation_type_desc,
             operation_info=operation_info,
             operator=operator,
             operator_display=operator_display,
-        ).save()
+        )
+        log.save()
+        return log
 
     # 获取工单日志
     @staticmethod
