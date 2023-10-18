@@ -11,7 +11,7 @@ from sql.models import (
     WorkflowAudit,
     WorkflowLog,
     QueryPrivilegesApply,
-    ArchiveConfig
+    ArchiveConfig,
 )
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password

@@ -573,9 +573,11 @@ class ExecuteWorkflow(views.APIView):
                     else True
                 )
                 if is_notified:
-                    auto_notify(worflow=SqlWorkflow.objects.get(id=workflow_id),
-                                sys_config=sys_config,
-                                event_type=EventType.EXECUTE)
+                    auto_notify(
+                        worflow=SqlWorkflow.objects.get(id=workflow_id),
+                        sys_config=sys_config,
+                        event_type=EventType.EXECUTE,
+                    )
         # 执行数据归档工单
         elif workflow_type == 3:
             async_task(

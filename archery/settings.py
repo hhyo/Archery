@@ -86,9 +86,7 @@ AVAILABLE_ENGINES = {
     "phoenix": {"path": "sql.engines.phoenix:PhoenixEngine"},
     "odps": {"path": "sql.engines.odps:ODPSEngine"},
 }
-ENABLED_NOTIFIERS = (
-    "sql.notify:FeishuWebhookNotifier",
-)
+ENABLED_NOTIFIERS = ("sql.notify:FeishuWebhookNotifier",)
 ENABLED_ENGINES = env("ENABLED_ENGINES")
 
 # Application definition

@@ -159,7 +159,9 @@ class Audit(object):
 
     # 工单审核
     @staticmethod
-    def audit(audit_id, audit_status, audit_user, audit_remark) -> (dict, WorkflowAuditDetail):
+    def audit(
+        audit_id, audit_status, audit_user, audit_remark
+    ) -> (dict, WorkflowAuditDetail):
         result = {"status": 0, "msg": "ok", "data": 0}
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
 

@@ -121,7 +121,9 @@ class TestView(TransactionTestCase):
         QueryPrivilegesApply.objects.all().delete()
         ResourceGroup.objects.all().delete()
         with connection.cursor() as cursor:
-            cursor.execute("DROP table mysql_slow_query_review,mysql_slow_query_review_history")
+            cursor.execute(
+                "DROP table mysql_slow_query_review,mysql_slow_query_review_history"
+            )
 
     def test_index(self):
         """测试index页面"""
@@ -1597,7 +1599,10 @@ class TestWorkflowView(TransactionTestCase):
         mock_audit_detail = PickableMock()
         mock_audit_detail.audit_id = 123
         _detail_by_id.return_value = mock_audit_detail
-        _audit.return_value = ({"data": {"workflow_status": 1}},{"foo": "bar"})  # TODO 改为audit_success
+        _audit.return_value = (
+            {"data": {"workflow_status": 1}},
+            {"foo": "bar"},
+        )  # TODO 改为audit_success
         r = c.post(
             "/passed/",
             data={"workflow_id": self.wf1.id, "audit_remark": "some_audit"},
@@ -2092,11 +2097,14 @@ class TestArchiver(TestCase):
         :return:
         """
         _audit.detail_by_workflow_id.return_value.audit_id = 1
-        _audit.audit.return_value = ({
-            "status": 0,
-            "msg": "ok",
-            "data": {"workflow_status": 1},
-        }, None)
+        _audit.audit.return_value = (
+            {
+                "status": 0,
+                "msg": "ok",
+                "data": {"workflow_status": 1},
+            },
+            None,
+        )
         data = {
             "archive_id": self.archive_apply.id,
             "audit_status": WorkflowDict.workflow_status["audit_success"],

@@ -4,8 +4,15 @@ from django.contrib.auth.models import Group
 from django.test import TestCase
 
 from common.config import SysConfig
-from sql.models import (Instance, SqlWorkflow, SqlWorkflowContent,
-                        QueryPrivilegesApply, WorkflowAudit, WorkflowAuditDetail, ResourceGroup)
+from sql.models import (
+    Instance,
+    SqlWorkflow,
+    SqlWorkflowContent,
+    QueryPrivilegesApply,
+    WorkflowAudit,
+    WorkflowAuditDetail,
+    ResourceGroup,
+)
 from sql.notify import auto_notify, EventType, LegacyRender, GenericWebhookNotifier
 from sql.tests import User
 
@@ -110,16 +117,18 @@ class TestNotify(TestCase):
 
     def test_empty_notifiers(self):
         with self.settings(ENABLED_NOTIFIERS=()):
-            auto_notify(workflow=self.wf, event_type=EventType.EXECUTE, sys_config=self.sys_config)
+            auto_notify(
+                workflow=self.wf,
+                event_type=EventType.EXECUTE,
+                sys_config=self.sys_config,
+            )
 
     # 测试该调用 auto_notify 的地方要调用
 
     # 下面的测试均为 notifier 的测试, 测试 render 和 send
     def test_legacy_render_execution(self):
         notifier = LegacyRender(
-            workflow=self.wf,
-            event_type=EventType.EXECUTE,
-            sys_config=self.sys_config
+            workflow=self.wf, event_type=EventType.EXECUTE, sys_config=self.sys_config
         )
         notifier.render()
         self.assertEqual(len(notifier.messages), 1)
@@ -133,7 +142,7 @@ class TestNotify(TestCase):
             event_type=EventType.AUDIT,
             audit=self.audit_wf,
             audit_detail=self.audit_wf_detail,
-            sys_config=self.sys_config
+            sys_config=self.sys_config,
         )
         notifier.render()
         self.assertEqual(len(notifier.messages), 1)
@@ -144,21 +153,44 @@ class TestNotify(TestCase):
             event_type=EventType.AUDIT,
             audit=self.audit_wf,
             audit_detail=self.audit_wf_detail,
-            sys_config=self.sys_config
+            sys_config=self.sys_config,
         )
         notifier.render()
         self.assertIsNotNone(notifier.request_data)
-        self.assertDictEqual(notifier.request_data["audit"],
-                             {
-                                 "audit_id": 3, "group_name": "some_group", "workflow_type": 2,
-                                 "create_user_display": "",
-                                 "workflow_title": "申请标题", "audit_auth_groups": "1,2,3", "current_audit": "1",
-                                 "current_status": 0, "create_time": self.audit_wf.create_time.isoformat()
-                             })
-        self.assertDictEqual(notifier.request_data["workflow"],
-                             {"id": 2, "workflow_name": "some_name", "demand_url": "", "group_id": 1,
-                              "group_name": "g1", "db_name": "some_db", "syntax_type": 1, "is_backup": True,
-                              "engineer": "test_user", "engineer_display": "中文显示", "status": "workflow_timingtask",
-                              "audit_auth_groups": "some_audit_group", "run_date_start": None, "run_date_end": None,
-                              "finish_time": None, "is_manual": 0, "instance": 2,
-                              "create_time": self.wf.create_time.isoformat()})
+        self.assertDictEqual(
+            notifier.request_data["audit"],
+            {
+                "audit_id": 3,
+                "group_name": "some_group",
+                "workflow_type": 2,
+                "create_user_display": "",
+                "workflow_title": "申请标题",
+                "audit_auth_groups": "1,2,3",
+                "current_audit": "1",
+                "current_status": 0,
+                "create_time": self.audit_wf.create_time.isoformat(),
+            },
+        )
+        self.assertDictEqual(
+            notifier.request_data["workflow"],
+            {
+                "id": 2,
+                "workflow_name": "some_name",
+                "demand_url": "",
+                "group_id": 1,
+                "group_name": "g1",
+                "db_name": "some_db",
+                "syntax_type": 1,
+                "is_backup": True,
+                "engineer": "test_user",
+                "engineer_display": "中文显示",
+                "status": "workflow_timingtask",
+                "audit_auth_groups": "some_audit_group",
+                "run_date_start": None,
+                "run_date_end": None,
+                "finish_time": None,
+                "is_manual": 0,
+                "instance": 2,
+                "create_time": self.wf.create_time.isoformat(),
+            },
+        )

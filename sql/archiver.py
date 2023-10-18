@@ -202,7 +202,9 @@ def archive_apply(request):
             )
             archive_id = archive_info.id
             # 调用工作流插入审核信息
-            audit_result, audit_detail = Audit.add(WorkflowDict.workflow_type["archive"], archive_id)
+            audit_result, audit_detail = Audit.add(
+                WorkflowDict.workflow_type["archive"], archive_id
+            )
     except Exception as msg:
         logger.error(traceback.format_exc())
         result["status"] = 1
