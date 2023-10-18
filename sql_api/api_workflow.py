@@ -574,7 +574,7 @@ class ExecuteWorkflow(views.APIView):
                 )
                 if is_notified:
                     notify_for_execute(
-                        worflow=SqlWorkflow.objects.get(id=workflow_id),
+                        workflow=SqlWorkflow.objects.get(id=workflow_id),
                     )
         # 执行数据归档工单
         elif workflow_type == 3:
