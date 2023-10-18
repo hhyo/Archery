@@ -160,7 +160,7 @@ class TestNotify(TestCase):
         self.assertDictEqual(
             notifier.request_data["audit"],
             {
-                "audit_id": 3,
+                "audit_id": self.audit_wf.audit_id,
                 "group_name": "some_group",
                 "workflow_type": 2,
                 "create_user_display": "",
@@ -174,7 +174,7 @@ class TestNotify(TestCase):
         self.assertDictEqual(
             notifier.request_data["workflow"],
             {
-                "id": 2,
+                "id": self.wf.id,
                 "workflow_name": "some_name",
                 "demand_url": "",
                 "group_id": 1,
