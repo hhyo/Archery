@@ -28,7 +28,7 @@ from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
 from sql.utils.resource_group import user_groups
 from sql.utils.workflow_audit import Audit
 from sql.utils.tasks import del_schedule
-from sql.notify import notify_for_audit, auto_notify, EventType
+from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.engines import get_engine
 from common.utils.const import WorkflowDict
@@ -573,10 +573,8 @@ class ExecuteWorkflow(views.APIView):
                     else True
                 )
                 if is_notified:
-                    auto_notify(
+                    notify_for_execute(
                         worflow=SqlWorkflow.objects.get(id=workflow_id),
-                        sys_config=sys_config,
-                        event_type=EventType.EXECUTE,
                     )
         # 执行数据归档工单
         elif workflow_type == 3:
