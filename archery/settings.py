@@ -88,7 +88,6 @@ AVAILABLE_ENGINES = {
 }
 ENABLED_NOTIFIERS = (
     "sql.notify:FeishuWebhookNotifier",
-    "sql.notify:GenericWebhookNotifier"
 )
 ENABLED_ENGINES = env("ENABLED_ENGINES")
 

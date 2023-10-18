@@ -155,11 +155,11 @@ class Audit(object):
         # 增加审核id
         result["data"]["audit_id"] = audit_detail.audit_id
         # 返回添加结果
-        return result
+        return result, audit_detail
 
     # 工单审核
     @staticmethod
-    def audit(audit_id, audit_status, audit_user, audit_remark):
+    def audit(audit_id, audit_status, audit_user, audit_remark) -> (dict, WorkflowAuditDetail):
         result = {"status": 0, "msg": "ok", "data": 0}
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
 
@@ -310,7 +310,7 @@ class Audit(object):
 
         # 返回审核结果
         result["data"] = {"workflow_status": audit_result.current_status}
-        return result
+        return result, audit_detail_result
 
     # 获取用户待办工单数量
     @staticmethod
@@ -340,7 +340,7 @@ class Audit(object):
 
     # 通过业务id获取审核信息
     @staticmethod
-    def detail_by_workflow_id(workflow_id, workflow_type):
+    def detail_by_workflow_id(workflow_id, workflow_type) -> WorkflowAudit:
         try:
             return WorkflowAudit.objects.get(
                 workflow_id=workflow_id, workflow_type=workflow_type

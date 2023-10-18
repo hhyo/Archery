@@ -202,7 +202,7 @@ def archive_apply(request):
             )
             archive_id = archive_info.id
             # 调用工作流插入审核信息
-            audit_result = Audit.add(WorkflowDict.workflow_type["archive"], archive_id)
+            audit_result, audit_detail = Audit.add(WorkflowDict.workflow_type["archive"], archive_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         result["status"] = 1
@@ -210,12 +210,13 @@ def archive_apply(request):
     else:
         result = audit_result
         # 消息通知
-        audit_id = Audit.detail_by_workflow_id(
+        workflow_audit = Audit.detail_by_workflow_id(
             workflow_id=archive_id, workflow_type=WorkflowDict.workflow_type["archive"]
-        ).audit_id
+        )
         async_task(
             notify_for_audit,
-            audit_id=audit_id,
+            workflow_audit=workflow_audit,
+            workflow_audit_detail=audit_detail,
             timeout=60,
             task_name=f"archive-apply-{archive_id}",
         )
@@ -245,15 +246,17 @@ def archive_audit(request):
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
-            audit_id = Audit.detail_by_workflow_id(
+            workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=archive_id,
                 workflow_type=WorkflowDict.workflow_type["archive"],
-            ).audit_id
+            )
+            audit_id = workflow_audit.audit_id
 
             # 调用工作流插入审核信息，更新业务表审核状态
-            audit_status = Audit.audit(
+            audit_status, workflow_audit_detail = Audit.audit(
                 audit_id, audit_status, user.username, audit_remark
-            )["data"]["workflow_status"]
+            )
+            audit_status = audit_status["data"]["workflow_status"]
             ArchiveConfig(
                 id=archive_id,
                 status=audit_status,
@@ -269,8 +272,8 @@ def archive_audit(request):
         # 消息通知
         async_task(
             notify_for_audit,
-            audit_id=audit_id,
-            audit_remark=audit_remark,
+            workflow_audit=workflow_audit,
+            workflow_audit_detail=workflow_audit_detail,
             timeout=60,
             task_name=f"archive-audit-{archive_id}",
         )

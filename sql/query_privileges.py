@@ -444,7 +444,7 @@ def query_priv_audit(request):
             ).audit_id
 
             # 调用工作流接口审核
-            audit_result = Audit.audit(
+            audit_result, _ = Audit.audit(
                 audit_id, audit_status, user.username, audit_remark
             )
 

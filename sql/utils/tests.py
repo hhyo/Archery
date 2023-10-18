@@ -946,7 +946,7 @@ class TestExecuteSql(TestCase):
             operator_display="系统",
         )
 
-    @patch("sql.utils.execute_sql.auto_notify")
+    @patch("sql.utils.execute_sql.notify_for_execute")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_success(self, _audit, _notify):
         # 初始化工单执行返回对象
@@ -978,7 +978,7 @@ class TestExecuteSql(TestCase):
         )
         _notify.assert_called_once()
 
-    @patch("sql.utils.execute_sql.auto_notify")
+    @patch("sql.utils.execute_sql.notify_for_execute")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_failure(self, _audit, _notify):
         # 初始化工单执行返回对象
@@ -1006,7 +1006,7 @@ class TestExecuteSql(TestCase):
         )
         _notify.assert_called_once()
 
-    @patch("sql.utils.execute_sql.auto_notify")
+    @patch("sql.utils.execute_sql.notify_for_execute")
     @patch("sql.utils.execute_sql.Audit")
     def test_execute_callback_failure_no_execute_result(self, _audit, _notify):
         # 初始化工单执行返回对象
@@ -1179,7 +1179,7 @@ class TestAudit(TestCase):
 
     def test_audit_add_query(self):
         """测试添加查询审核工单"""
-        result = Audit.add(1, self.query_apply_1.apply_id)
+        result, _ = Audit.add(1, self.query_apply_1.apply_id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
@@ -1196,7 +1196,7 @@ class TestAudit(TestCase):
 
     def test_audit_add_sqlreview(self):
         """测试添加上线审核工单"""
-        result = Audit.add(2, self.wf.id)
+        result, _ = Audit.add(2, self.wf.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
@@ -1213,7 +1213,7 @@ class TestAudit(TestCase):
 
     def test_audit_add_archive_review(self):
         """测试添加数据归档工单"""
-        result = Audit.add(3, self.archive_apply_1.id)
+        result, workflow_audit_detail = Audit.add(3, self.archive_apply_1.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
@@ -1250,7 +1250,7 @@ class TestAudit(TestCase):
     def test_audit_add_auto_review(self, _is_auto_review):
         """测试提交自动审核通过"""
         self.sys_config.set("auto_review", "true")
-        result = Audit.add(2, self.wf.id)
+        result, workflow_audit_detail = Audit.add(2, self.wf.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_success"])
@@ -1267,7 +1267,7 @@ class TestAudit(TestCase):
         """测试提交多级审核"""
         self.wf.audit_auth_groups = "1,2,3"
         self.wf.save()
-        result = Audit.add(2, self.wf.id)
+        result, _ = Audit.add(2, self.wf.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
@@ -1286,7 +1286,7 @@ class TestAudit(TestCase):
         self.audit.current_audit = "3"
         self.audit.next_audit = "-1"
         self.audit.save()
-        result = Audit.audit(
+        result, _ = Audit.audit(
             self.audit.audit_id,
             WorkflowDict.workflow_status["audit_success"],
             self.user.username,
@@ -1311,7 +1311,7 @@ class TestAudit(TestCase):
         self.audit.current_audit = "1"
         self.audit.next_audit = "2"
         self.audit.save()
-        result = Audit.audit(
+        result, _ = Audit.audit(
             self.audit.audit_id,
             WorkflowDict.workflow_status["audit_success"],
             self.user.username,
@@ -1333,7 +1333,7 @@ class TestAudit(TestCase):
 
     def test_audit_reject(self):
         """测试审核不通过"""
-        result = Audit.audit(
+        result, _ = Audit.audit(
             self.audit.audit_id,
             WorkflowDict.workflow_status["audit_reject"],
             self.user.username,
@@ -1357,7 +1357,7 @@ class TestAudit(TestCase):
         """测试取消审批"""
         self.audit.create_user = self.user.username
         self.audit.save()
-        result = Audit.audit(
+        result, _ = Audit.audit(
             self.audit.audit_id,
             WorkflowDict.workflow_status["audit_abort"],
             self.user.username,

@@ -1,7 +1,8 @@
 import json
 from datetime import timedelta, datetime, date
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, patch, ANY, Mock
 from django.conf import settings
+from django.db import connection
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.test import Client, TestCase, TransactionTestCase
@@ -33,7 +34,12 @@ from sql.models import (
 User = Users
 
 
-class TestView(TestCase):
+class PickableMock(Mock):
+    def __reduce__(self):
+        return (Mock, ())
+
+
+class TestView(TransactionTestCase):
     """测试view视图"""
 
     def setUp(self):
@@ -99,6 +105,11 @@ class TestView(TestCase):
         self.wl = WorkflowLog.objects.create(
             audit_id=self.audit.audit_id, operation_type=1
         )
+        # 慢查询建表
+        with connection.cursor() as cursor:
+            with open("src/init_sql/mysql_slow_query_review.sql") as fp:
+                content = fp.read()
+                cursor.execute(content)
 
     def tearDown(self):
         self.sys_config.purge()
@@ -109,6 +120,8 @@ class TestView(TestCase):
         WorkflowLog.objects.all().delete()
         QueryPrivilegesApply.objects.all().delete()
         ResourceGroup.objects.all().delete()
+        with connection.cursor() as cursor:
+            cursor.execute("DROP table mysql_slow_query_review,mysql_slow_query_review_history")
 
     def test_index(self):
         """测试index页面"""
@@ -1567,10 +1580,11 @@ class TestWorkflowView(TransactionTestCase):
         r_json = r.json()
         self.assertEqual(r_json["total"], 2)
 
+    @patch("sql.notify.auto_notify")
     @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
     @patch("sql.utils.workflow_audit.Audit.audit")
     @patch("sql.utils.workflow_audit.Audit.can_review")
-    def testWorkflowPassedView(self, _can_review, _audit, _detail_by_id):
+    def testWorkflowPassedView(self, _can_review, _audit, _detail_by_id, _):
         """测试审核工单"""
         c = Client()
         c.force_login(self.superuser1)
@@ -1580,8 +1594,10 @@ class TestWorkflowView(TransactionTestCase):
         r = c.post("/passed/", {"workflow_id": self.wf1.id})
         self.assertContains(r, "你无权操作当前工单！")
         _can_review.return_value = True
-        _detail_by_id.return_value.audit_id = 123
-        _audit.return_value = {"data": {"workflow_status": 1}}  # TODO 改为audit_success
+        mock_audit_detail = PickableMock()
+        mock_audit_detail.audit_id = 123
+        _detail_by_id.return_value = mock_audit_detail
+        _audit.return_value = ({"data": {"workflow_status": 1}},{"foo": "bar"})  # TODO 改为audit_success
         r = c.post(
             "/passed/",
             data={"workflow_id": self.wf1.id, "audit_remark": "some_audit"},
@@ -1593,7 +1609,7 @@ class TestWorkflowView(TransactionTestCase):
         self.wf1.refresh_from_db()
         self.assertEqual(self.wf1.status, "workflow_review_pass")
 
-    @patch("sql.sql_workflow.auto_notify")
+    @patch("sql.sql_workflow.notify_for_execute")
     @patch("sql.sql_workflow.Audit.add_log")
     @patch("sql.sql_workflow.Audit.detail_by_workflow_id")
     @patch("sql.sql_workflow.can_execute")
@@ -2076,11 +2092,11 @@ class TestArchiver(TestCase):
         :return:
         """
         _audit.detail_by_workflow_id.return_value.audit_id = 1
-        _audit.audit.return_value = {
+        _audit.audit.return_value = ({
             "status": 0,
             "msg": "ok",
             "data": {"workflow_status": 1},
-        }
+        }, None)
         data = {
             "archive_id": self.archive_apply.id,
             "audit_status": WorkflowDict.workflow_status["audit_success"],
