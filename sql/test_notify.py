@@ -190,7 +190,7 @@ class TestNotify(TestCase):
                 "run_date_end": None,
                 "finish_time": None,
                 "is_manual": 0,
-                "instance": 2,
+                "instance": self.ins.id,
                 "create_time": self.wf.create_time.isoformat(),
             },
         )
