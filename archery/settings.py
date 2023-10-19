@@ -64,8 +64,8 @@ env = environ.Env(
             "sql.notify:QywxWebhookNotifier",
             "sql.notify:MailNotifier",
             "sql.notify:GenericWebhookNotifier",
-        ]
-    )
+        ],
+    ),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
