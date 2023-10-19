@@ -54,6 +54,18 @@ env = environ.Env(
             "cassandra",
         ],
     ),
+    ENABLED_NOTIFIERS=(
+        list,
+        [
+            "sql.notify:DingdingWebhookNotifier",
+            "sql.notify:DingdingPersonNotifier",
+            "sql.notify:FeishuWebhookNotifier",
+            "sql.notify:FeishuPersonNotifier",
+            "sql.notify:QywxWebhookNotifier",
+            "sql.notify:MailNotifier",
+            "sql.notify:GenericWebhookNotifier",
+        ]
+    )
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -87,15 +99,7 @@ AVAILABLE_ENGINES = {
     "odps": {"path": "sql.engines.odps:ODPSEngine"},
 }
 
-ENABLED_NOTIFIERS = (
-    "sql.notify:DingdingWebhookNotifier",
-    "sql.notify:DingdingPersonNotifier",
-    "sql.notify:FeishuWebhookNotifier",
-    "sql.notify:FeishuPersonNotifier",
-    "sql.notify:QywxWebhookNotifier",
-    "sql.notify:MailNotifier",
-    "sql.notify:GenericWebhookNotifier",
-)
+ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
 
 ENABLED_ENGINES = env("ENABLED_ENGINES")
 
