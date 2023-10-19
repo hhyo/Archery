@@ -439,12 +439,15 @@ class TestNotify(TestCase):
                 "run_date_end": None,
                 "finish_time": None,
                 "is_manual": 0,
-                "instance": ANY,
+                "instance": self.ins.id,
                 "create_time": self.wf.create_time.isoformat(),
             },
         )
         self.assertEqual(
             notifier.request_data["workflow_content"]["sql_content"], "some_sql"
+        )
+        self.assertEqual(
+            notifier.request_data["instance"]["instance_name"], self.ins.instance_name
         )
 
 
@@ -496,7 +499,7 @@ class TestNotifySend(TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-    def generate_notifier(self, module) -> object:
+    def generate_notifier(self, module) -> Notifier:
         return module(workflow=None, audit=self.audit_wf, sys_config=self.sys_config)
 
     def test_ding_webhook_send(self):

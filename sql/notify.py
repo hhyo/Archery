@@ -1,17 +1,20 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import importlib
-from enum import Enum
+import logging
 import re
+from dataclasses import dataclass, field
+from enum import Enum
 from itertools import chain
 from typing import Union, List
-from dataclasses import dataclass, field
 
 import requests
-from django.contrib.auth.models import Group
 from django.conf import settings
+from django.contrib.auth.models import Group
 
 from common.config import SysConfig
+from common.utils.const import WorkflowDict
+from common.utils.sendmsg import MsgSender
 from sql.models import (
     QueryPrivilegesApply,
     Users,
@@ -22,22 +25,15 @@ from sql.models import (
     WorkflowAuditDetail,
     SqlWorkflowContent,
 )
-from sql_api.serializers import (
-    WorkflowSerializer,
-    WorkflowContentSerializer,
-    ArchiveConfigSerializer,
-    QueryPrivilegesApplySerializer,
-    WorkflowAuditListSerializer,
-    WorkflowAuditListSerializer,
-    QueryPrivilegesApplySerializer,
-    ArchiveConfigSerializer,
-)
 from sql.utils.resource_group import auth_group_users
-from common.utils.sendmsg import MsgSender
-from common.utils.const import WorkflowDict
 from sql.utils.workflow_audit import Audit
-
-import logging
+from sql_api.serializers import (
+    WorkflowContentSerializer,
+    WorkflowAuditListSerializer,
+    QueryPrivilegesApplySerializer,
+    ArchiveConfigSerializer,
+    InstanceSerializer,
+)
 
 logger = logging.getLogger("default")
 
@@ -103,21 +99,26 @@ class GenericWebhookNotifier(Notifier):
         self.request_data = None
 
     def render(self):
+        self.request_data = {}
         if isinstance(self.workflow, SqlWorkflow):
             workflow_content = SqlWorkflowContent.objects.get(workflow=self.workflow)
-            workflow_dict = WorkflowContentSerializer(workflow_content).data
+            self.request_data["workflow_content"] = WorkflowContentSerializer(
+                workflow_content
+            ).data
+            instance = self.workflow.instance
+            self.request_data["instance"] = InstanceSerializer(instance).data
         elif isinstance(self.workflow, ArchiveConfig):
-            workflow_dict = ArchiveConfigSerializer(self.workflow).data
+            self.request_data["workflow_content"] = ArchiveConfigSerializer(
+                self.workflow
+            ).data
         elif isinstance(self.workflow, QueryPrivilegesApply):
-            workflow_dict = QueryPrivilegesApplySerializer(self.workflow).data
+            self.request_data["workflow_content"] = QueryPrivilegesApplySerializer(
+                self.workflow
+            ).data
         else:
             raise ValueError(f"workflow type `{type(self.workflow)}` not supported yet")
 
-        audit_dict = WorkflowAuditListSerializer(self.audit).data
-        self.request_data = {
-            "audit": audit_dict,
-            "workflow_content": workflow_dict,
-        }
+        self.request_data["audit"] = WorkflowAuditListSerializer(self.audit).data
 
     def send(self):
         url = self.sys_config.get(self.sys_config_key)
