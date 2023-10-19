@@ -83,7 +83,7 @@ jobs:
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
-        coverage run --source='.' manage.py test -v 3 --keepdb
+        coverage run manage.py test -v 3 --keepdb
         coverage xml
 
     - name: Upload coverage to Codecov

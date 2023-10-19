@@ -5,7 +5,7 @@ from enum import Enum
 import re
 from itertools import chain
 from typing import Union, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import requests
 from django.contrib.auth.models import Group
@@ -43,35 +43,6 @@ class EventType(Enum):
     M2SQL = "m2sql"
 
 
-def __notify_cnf_status():
-    """返回消息通知开关"""
-    sys_config = SysConfig()
-    mail_status = sys_config.get("mail")
-    ding_status = sys_config.get("ding_to_person")
-    ding_webhook_status = sys_config.get("ding")
-    wx_status = sys_config.get("wx")
-    qywx_webhook_status = sys_config.get("qywx_webhook")
-    feishu_webhook_status = sys_config.get("feishu_webhook")
-    feishu_status = sys_config.get("feishu")
-    generic_webhook = sys_config.get("generic_webhook")
-    if not any(
-        [
-            mail_status,
-            ding_status,
-            ding_webhook_status,
-            wx_status,
-            feishu_status,
-            feishu_webhook_status,
-            qywx_webhook_status,
-            generic_webhook,
-        ]
-    ):
-        logger.info("未开启任何消息通知，可在系统设置中开启")
-        return False
-    else:
-        return True
-
-
 @dataclass
 class My2SqlResult:
     submitter: str
@@ -80,27 +51,9 @@ class My2SqlResult:
     error: str = ""
 
 
-def notify_for_my2sql(task):
-    """
-    my2sql执行结束的通知
-    :param task:
-    :return:
-    """
-    if task.success:
-        result = My2SqlResult(
-            success=True, submitter=task.kwargs["user"], file_path=task.result[1]
-        )
-    else:
-        result = My2SqlResult(
-            success=False, submitter=task.kwargs["user"], error=task.result
-        )
-    # 发送
-    sys_config = SysConfig()
-    auto_notify(workflow=result, sys_config=sys_config, event_type=EventType.M2SQL)
-
-
 class Notifier:
     name = "base"
+    sys_config_key: str = ""
 
     def __init__(
         self,
@@ -122,9 +75,23 @@ class Notifier:
     def send(self):
         raise NotImplementedError
 
+    def should_run(self):
+        if not self.sys_config_key:
+            return True
+        config_status = self.sys_config.get(self.sys_config_key)
+        if config_status:
+            return True
+
+    def run(self):
+        if not self.should_run():
+            return
+        self.render()
+        self.send()
+
 
 class GenericWebhookNotifier(Notifier):
     name = "generic_webhook"
+    sys_config_key: str = "generic_webhook_url"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -155,12 +122,13 @@ class GenericWebhookNotifier(Notifier):
 class LegacyMessage:
     msg_title: str
     msg_content: str
-    msg_to: List[Users] = None
-    msg_cc: List[Users] = None
+    msg_to: List[Users] = field(default_factory=list)
+    msg_cc: List[Users] = field(default_factory=list)
 
 
 class LegacyRender(Notifier):
     messages: List[LegacyMessage]
+    sys_config_key: str = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -185,32 +153,24 @@ class LegacyRender(Notifier):
         workflow_auditors, current_workflow_auditors = Audit.review_info(
             self.audit.workflow_id, self.audit.workflow_type
         )
-        # 准备消息内容
+        # workflow content, 即申请通过后要执行什么东西
+        # 执行的 SQL 语句, 授权的范围
         if workflow_type == WorkflowDict.workflow_type["query"]:
             workflow_type_display = WorkflowDict.workflow_type["query_display"]
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             instance = workflow_detail.instance.instance_name
-            db_name = " "
+            db_name = workflow_detail.db_list
+            workflow_content = ""
             if workflow_detail.priv_type == 1:
-                workflow_content = """数据库清单：{}\n授权截止时间：{}\n结果集：{}\n""".format(
-                    workflow_detail.db_list,
-                    datetime.datetime.strftime(
-                        workflow_detail.valid_date, "%Y-%m-%d %H:%M:%S"
-                    ),
-                    workflow_detail.limit_num,
-                )
+                workflow_content = f"""数据库清单：{workflow_detail.db_list}\n"""
             elif workflow_detail.priv_type == 2:
-                db_name = workflow_detail.db_list
-                workflow_content = """数据库：{}\n表清单：{}\n授权截止时间：{}\n结果集：{}\n""".format(
-                    workflow_detail.db_list,
-                    workflow_detail.table_list,
-                    datetime.datetime.strftime(
-                        workflow_detail.valid_date, "%Y-%m-%d %H:%M:%S"
-                    ),
-                    workflow_detail.limit_num,
-                )
-            else:
-                workflow_content = ""
+                workflow_content = f"""数据库：{workflow_detail.db_list}\n表清单：{workflow_detail.table_list}\n"""
+            auth_ends_at = datetime.datetime.strftime(
+                workflow_detail.valid_date, "%Y-%m-%d %H:%M:%S"
+            )
+            workflow_content += (
+                f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
+            )
         elif workflow_type == WorkflowDict.workflow_type["sqlreview"]:
             workflow_type_display = WorkflowDict.workflow_type["sqlreview_display"]
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
@@ -233,7 +193,7 @@ class LegacyRender(Notifier):
             )
         else:
             raise Exception("工单类型不正确")
-        # 准备消息格式
+        # 渲染提醒内容, 包括工单的所有信息, 申请人, 审批流等
         if status == WorkflowDict.workflow_status["audit_wait"]:  # 申请阶段
             msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
             # 接收人，发送给该资源组内对应权限组所有的用户
@@ -400,6 +360,7 @@ class LegacyRender(Notifier):
 
 class DingdingWebhookNotifier(LegacyRender):
     name = "dingding_webhook"
+    sys_config_key: str = "ding"
 
     def send(self):
         dingding_webhook = ResourceGroup.objects.get(
@@ -414,6 +375,7 @@ class DingdingWebhookNotifier(LegacyRender):
 
 class DingdingPersonNotifier(LegacyRender):
     name = "ding_to_person"
+    sys_config_key: str = "ding_to_person"
 
     def send(self):
         msg_sender = MsgSender()
@@ -430,6 +392,7 @@ class DingdingPersonNotifier(LegacyRender):
 
 class FeishuWebhookNotifier(LegacyRender):
     name = "feishu_webhook"
+    sys_config_key: str = "feishu_webhook"
 
     def send(self):
         feishu_webhook = ResourceGroup.objects.get(
@@ -444,6 +407,7 @@ class FeishuWebhookNotifier(LegacyRender):
 
 class FeishuPersonNotifier(LegacyRender):
     name = "feishu_to_person"
+    sys_config_key: str = "feishu"
 
     def send(self):
         msg_sender = MsgSender()
@@ -463,6 +427,7 @@ class FeishuPersonNotifier(LegacyRender):
 
 class QywxWebhookNotifier(LegacyRender):
     name = "qywx_webhook"
+    sys_config_key: str = "qywx_webhook"
 
     def send(self):
         qywx_webhook = ResourceGroup.objects.get(
@@ -474,6 +439,20 @@ class QywxWebhookNotifier(LegacyRender):
         for m in self.messages:
             msg_sender.send_qywx_webhook(
                 qywx_webhook, f"{m.msg_title}\n{m.msg_content}"
+            )
+
+
+class MailNotifier(LegacyRender):
+    name = "mail"
+    sys_config_key = "mail"
+
+    def send(self):
+        msg_sender = MsgSender()
+        for m in self.messages:
+            msg_to_email = [user.email for user in m.msg_to if user.email]
+            msg_cc_email = [user.email for user in m.msg_cc if user.email]
+            msg_sender.send_email(
+                m.msg_title, m.msg_content, msg_to_email, list_cc_addr=msg_cc_email
             )
 
 
@@ -506,8 +485,7 @@ def auto_notify(
             event_type=event_type,
             sys_config=sys_config,
         )
-        notifier.render()
-        notifier.send()
+        notifier.run()
 
 
 def notify_for_execute(workflow: SqlWorkflow, sys_config: SysConfig = None):
@@ -533,3 +511,22 @@ def notify_for_audit(
         audit_detail=workflow_audit_detail,
         sys_config=sys_config,
     )
+
+
+def notify_for_my2sql(task):
+    """
+    my2sql执行结束的通知
+    :param task:
+    :return:
+    """
+    if task.success:
+        result = My2SqlResult(
+            success=True, submitter=task.kwargs["user"], file_path=task.result[1]
+        )
+    else:
+        result = My2SqlResult(
+            success=False, submitter=task.kwargs["user"], error=task.result
+        )
+    # 发送
+    sys_config = SysConfig()
+    auto_notify(workflow=result, sys_config=sys_config, event_type=EventType.M2SQL)
