@@ -114,7 +114,7 @@ class GenericWebhookNotifier(Notifier):
         }
 
     def send(self):
-        url = self.sys_config.get("generic_webhook")
+        url = self.sys_config.get(self.sys_config_key)
         requests.post(url, json=self.request_data)
 
 

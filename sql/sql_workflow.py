@@ -451,7 +451,7 @@ def cancel(request):
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
         context = {"errMsg": "终止原因不能为空"}
@@ -466,14 +466,15 @@ def cancel(request):
     try:
         with transaction.atomic():
             # 调用工作流接口取消或者驳回
-            audit_id = Audit.detail_by_workflow_id(
+            workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
                 workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            ).audit_id
+            )
+            audit_id = workflow_audit.audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflow_detail.status != "workflow_manreviewing":
+            if sql_workflow.status != "workflow_manreviewing":
                 # 增加工单日志
-                if user.username == workflow_detail.engineer:
+                if user.username == sql_workflow.engineer:
                     Audit.add_log(
                         audit_id=audit_id,
                         operation_type=3,
@@ -492,8 +493,8 @@ def cancel(request):
                         operator_display=request.user.display,
                     )
             else:
-                if user.username == workflow_detail.engineer:
-                    Audit.audit(
+                if user.username == sql_workflow.engineer:
+                    _, workflow_audit_detail = Audit.audit(
                         audit_id,
                         WorkflowDict.workflow_status["audit_abort"],
                         user.username,
@@ -501,7 +502,7 @@ def cancel(request):
                     )
                 # 非提交人需要校验审核权限
                 elif user.has_perm("sql.sql_review"):
-                    Audit.audit(
+                    _, workflow_audit_detail = Audit.audit(
                         audit_id,
                         WorkflowDict.workflow_status["audit_reject"],
                         user.username,
@@ -511,12 +512,12 @@ def cancel(request):
                     raise PermissionDenied
 
             # 删除定时执行task
-            if workflow_detail.status == "workflow_timingtask":
+            if sql_workflow.status == "workflow_timingtask":
                 schedule_name = f"sqlreview-timing-{workflow_id}"
                 del_schedule(schedule_name)
             # 将流程状态修改为人工终止流程
-            workflow_detail.status = "workflow_abort"
-            workflow_detail.save()
+            sql_workflow.status = "workflow_abort"
+            sql_workflow.save()
     except Exception as msg:
         logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
         context = {"errMsg": msg}
@@ -530,18 +531,15 @@ def cancel(request):
             else True
         )
         if is_notified:
-            audit_detail = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            )
-            if audit_detail.current_status in (
+            workflow_audit.refresh_from_db()
+            if workflow_audit.current_status in (
                 WorkflowDict.workflow_status["audit_abort"],
                 WorkflowDict.workflow_status["audit_reject"],
             ):
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_detail.audit_id,
-                    audit_remark=audit_remark,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=workflow_audit_detail,
                     timeout=60,
                     task_name=f"sqlreview-cancel-{workflow_id}",
                 )

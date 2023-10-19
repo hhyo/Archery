@@ -272,6 +272,7 @@ def archive_audit(request):
         return render(request, "error.html", context)
     else:
         # 消息通知
+        workflow_audit.refresh_from_db()
         async_task(
             notify_for_audit,
             workflow_audit=workflow_audit,

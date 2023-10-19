@@ -240,10 +240,11 @@ class AuditWorkflow(views.APIView):
             # 使用事务保持数据一致性
             try:
                 with transaction.atomic():
-                    audit_id = Audit.detail_by_workflow_id(
+                    workflow_audit = Audit.detail_by_workflow_id(
                         workflow_id=workflow_id,
                         workflow_type=WorkflowDict.workflow_type["query"],
-                    ).audit_id
+                    )
+                    audit_id = workflow_audit.audit_id
 
                     # 调用工作流接口审核
                     audit_result, audit_detail = Audit.audit(
@@ -269,8 +270,8 @@ class AuditWorkflow(views.APIView):
                 # 消息通知
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_id,
-                    audit_detail_id=audit_detail.audit_detail_id,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=audit_detail,
                     timeout=60,
                     task_name=f"query-priv-audit-{workflow_id}",
                 )
@@ -440,10 +441,11 @@ class AuditWorkflow(views.APIView):
             # 使用事务保持数据一致性
             try:
                 with transaction.atomic():
-                    audit_id = Audit.detail_by_workflow_id(
+                    workflow_audit = Audit.detail_by_workflow_id(
                         workflow_id=workflow_id,
                         workflow_type=WorkflowDict.workflow_type["archive"],
-                    ).audit_id
+                    )
+                    audit_id = workflow_audit.audit_id
 
                     # 调用工作流插入审核信息，更新业务表审核状态
                     audit_status, audit_detail = Audit.audit(
@@ -464,8 +466,8 @@ class AuditWorkflow(views.APIView):
                 # 消息通知
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_id,
-                    audit_detail_id=audit_detail.audit_detail_id,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=audit_detail,
                     timeout=60,
                     task_name=f"archive-audit-{workflow_id}",
                 )

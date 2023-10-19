@@ -1655,7 +1655,8 @@ class TestWorkflowView(TransactionTestCase):
         self.assertContains(r, "你无权操作当前工单！")
         _can_cancel.return_value = True
         _detail_by_id = 123
-        r = c.post(
+        _audit.return_value = (None, None)
+        c.post(
             "/cancel/",
             data={"workflow_id": self.wf2.id, "cancel_remark": "some_reason"},
         )
