@@ -1,7 +1,6 @@
-import importlib
+import json
 from datetime import datetime, timedelta
 from unittest.mock import patch, Mock, ANY
-from typing import ClassVar
 
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
@@ -406,6 +405,7 @@ class TestNotify(TestCase):
         )
         notifier.render()
         self.assertIsNotNone(notifier.request_data)
+        print(json.dumps(notifier.request_data))
         self.assertDictEqual(
             notifier.request_data["audit"],
             {
@@ -421,7 +421,7 @@ class TestNotify(TestCase):
             },
         )
         self.assertDictEqual(
-            notifier.request_data["workflow"],
+            notifier.request_data["workflow_content"]["workflow"],
             {
                 "id": self.wf.id,
                 "workflow_name": "some_name",
@@ -439,9 +439,12 @@ class TestNotify(TestCase):
                 "run_date_end": None,
                 "finish_time": None,
                 "is_manual": 0,
-                "instance": self.ins.id,
+                "instance": ANY,
                 "create_time": self.wf.create_time.isoformat(),
             },
+        )
+        self.assertEqual(
+            notifier.request_data["workflow_content"]["sql_content"], "some_sql"
         )
 
 

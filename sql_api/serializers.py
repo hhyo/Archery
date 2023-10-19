@@ -317,6 +317,8 @@ class ExecuteCheckResultSerializer(serializers.Serializer):
 
 
 class WorkflowSerializer(serializers.ModelSerializer):
+    instance = InstanceSerializer()
+
     def to_internal_value(self, data):
         if data.get("run_date_start") == "":
             data["run_date_start"] = None

@@ -20,9 +20,14 @@ from sql.models import (
     ArchiveConfig,
     WorkflowAudit,
     WorkflowAuditDetail,
+    SqlWorkflowContent,
 )
 from sql_api.serializers import (
     WorkflowSerializer,
+    WorkflowContentSerializer,
+    ArchiveConfigSerializer,
+    QueryPrivilegesApplySerializer,
+    WorkflowAuditListSerializer,
     WorkflowAuditListSerializer,
     QueryPrivilegesApplySerializer,
     ArchiveConfigSerializer,
@@ -99,7 +104,8 @@ class GenericWebhookNotifier(Notifier):
 
     def render(self):
         if isinstance(self.workflow, SqlWorkflow):
-            workflow_dict = WorkflowSerializer(self.workflow).data
+            workflow_content = SqlWorkflowContent.objects.get(workflow=self.workflow)
+            workflow_dict = WorkflowContentSerializer(workflow_content).data
         elif isinstance(self.workflow, ArchiveConfig):
             workflow_dict = ArchiveConfigSerializer(self.workflow).data
         elif isinstance(self.workflow, QueryPrivilegesApply):
@@ -110,7 +116,7 @@ class GenericWebhookNotifier(Notifier):
         audit_dict = WorkflowAuditListSerializer(self.audit).data
         self.request_data = {
             "audit": audit_dict,
-            "workflow": workflow_dict,
+            "workflow_content": workflow_dict,
         }
 
     def send(self):
@@ -476,16 +482,23 @@ def auto_notify(
             workflow = SqlWorkflow.objects.get(id=audit.workflow_id)
     for notifier in settings.ENABLED_NOTIFIERS:
         file, _class = notifier.split(":")
-        notify_module = importlib.import_module(file)
-        notifier = getattr(notify_module, _class)
-        notifier = notifier(
-            workflow=workflow,
-            audit=audit,
-            audit_detail=audit_detail,
-            event_type=event_type,
-            sys_config=sys_config,
-        )
-        notifier.run()
+        try:
+            notify_module = importlib.import_module(file)
+            notifier = getattr(notify_module, _class)
+        except (ImportError, AttributeError) as e:
+            logger.error(f"failed to import notifier {notifier}, {str(e)}")
+            continue
+        try:
+            notifier = notifier(
+                workflow=workflow,
+                audit=audit,
+                audit_detail=audit_detail,
+                event_type=event_type,
+                sys_config=sys_config,
+            )
+            notifier.run()
+        except Exception as e:  # NOQA 捕获一些错误, 让其他的 notifier 可以正常运行
+            logger.error(f"failed to notify using `{notifier}`: {str(e)}")
 
 
 def notify_for_execute(workflow: SqlWorkflow, sys_config: SysConfig = None):
