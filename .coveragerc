@@ -1,9 +1,8 @@
 [run]
-include =
-    common*
-    sql*
-    sql_api*
+source =
+    .
 omit =
     src*
     downloads*
     sql/migrations/*
+    venv*

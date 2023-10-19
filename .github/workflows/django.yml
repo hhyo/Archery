@@ -78,13 +78,12 @@ jobs:
       run: |
         mysql -h127.0.0.1 -uroot -e "CREATE DATABASE archery CHARSET UTF8MB4;"
         mysql -h127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS test_archery;CREATE DATABASE test_archery CHARSET UTF8MB4;"
-        mysql -h127.0.0.1 -uroot test_archery<src/init_sql/mysql_slow_query_review.sql
-      
+
     - name: Run Tests
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
-        coverage run --source='.' manage.py test -v 3 --keepdb
+        coverage run manage.py test -v 3 --keepdb
         coverage xml
 
     - name: Upload coverage to Codecov
