@@ -387,10 +387,8 @@ if ENABLE_CAS:
     CAS_IGNORE_REFERER = True
     # https请求问题
     CAS_FORCE_SSL_SERVICE_URL = env("CAS_FORCE_SSL_SERVICE_URL", default=False)
-    CAS_RETRY_LOGIN = True
-    CAS_EXTRA_LOGIN_PARAMS = {"renew": True}
     CAS_RETRY_TIMEOUT = 1
-    CAS_LOGOUT_COMPLETELY = True
+    CAS_RETRY_LOGIN = True
 
 SUPPORTED_AUTHENTICATION = [
     ("LDAP", ENABLE_LDAP),
@@ -405,7 +403,7 @@ ENABLE_AUTHENTICATION_COUNT = len(
 if ENABLE_AUTHENTICATION_COUNT > 0:
     if ENABLE_AUTHENTICATION_COUNT > 1:
         logger.warning(
-            "系统外部认证目前支持LDAP、DINGDING、OIDC三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC"
+            "系统外部认证目前支持LDAP、DINGDING、OIDC、CAS四种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC > CAS"
         )
     authentication = ""  # 默认为空
     for name, enabled in SUPPORTED_AUTHENTICATION:
