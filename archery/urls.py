@@ -13,6 +13,7 @@ urlpatterns = [
 
 if settings.ENABLE_CAS:
     import django_cas_ng.views
+
     urlpatterns += [
         path(
             "cas/authenticate/",
