@@ -8,7 +8,7 @@ from common.utils.const import WorkflowDict
 from common.config import SysConfig
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import SqlWorkflow
-from sql.notify import notify_for_execute
+from sql.notify import notify_for_execute, EventType
 from sql.utils.workflow_audit import Audit
 from sql.engines import get_engine
 

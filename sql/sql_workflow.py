@@ -11,16 +11,15 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
+from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import Const, WorkflowDict
+from common.utils.const import WorkflowDict
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines import get_engine
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.notify import notify_for_audit, notify_for_execute
-from sql.models import ResourceGroup
-from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.tasks import add_sql_schedule, del_schedule
+from sql.notify import notify_for_audit, EventType, notify_for_execute
+from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import (
     can_timingtask,
     can_cancel,
@@ -29,11 +28,9 @@ from sql.utils.sql_review import (
     can_view,
     can_rollback,
 )
+from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit
-from .models import SqlWorkflow, SqlWorkflowContent, Instance
-from django_q.tasks import async_task
-
-from sql.engines import get_engine
+from .models import SqlWorkflow
 
 logger = logging.getLogger("default")
 
@@ -251,11 +248,12 @@ def passed(request):
     try:
         with transaction.atomic():
             # 调用工作流接口审核
-            audit_id = Audit.detail_by_workflow_id(
+            workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
                 workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            ).audit_id
-            audit_result = Audit.audit(
+            )
+            audit_id = workflow_audit.audit_id
+            audit_result, audit_detail = Audit.audit(
                 audit_id,
                 WorkflowDict.workflow_status["audit_success"],
                 user.username,
@@ -286,8 +284,8 @@ def passed(request):
         if is_notified:
             async_task(
                 notify_for_audit,
-                audit_id=audit_id,
-                audit_remark=audit_remark,
+                workflow_audit=workflow_audit,
+                workflow_audit_detail=audit_detail,
                 timeout=60,
                 task_name=f"sqlreview-pass-{workflow_id}",
             )
@@ -378,7 +376,7 @@ def execute(request):
             else True
         )
         if is_notified:
-            notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+            notify_for_execute(workflow=SqlWorkflow.objects.get(id=workflow_id))
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
@@ -453,7 +451,7 @@ def cancel(request):
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
         context = {"errMsg": "终止原因不能为空"}
@@ -468,14 +466,15 @@ def cancel(request):
     try:
         with transaction.atomic():
             # 调用工作流接口取消或者驳回
-            audit_id = Audit.detail_by_workflow_id(
+            workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
                 workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            ).audit_id
+            )
+            audit_id = workflow_audit.audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflow_detail.status != "workflow_manreviewing":
+            if sql_workflow.status != "workflow_manreviewing":
                 # 增加工单日志
-                if user.username == workflow_detail.engineer:
+                if user.username == sql_workflow.engineer:
                     Audit.add_log(
                         audit_id=audit_id,
                         operation_type=3,
@@ -494,8 +493,8 @@ def cancel(request):
                         operator_display=request.user.display,
                     )
             else:
-                if user.username == workflow_detail.engineer:
-                    Audit.audit(
+                if user.username == sql_workflow.engineer:
+                    _, workflow_audit_detail = Audit.audit(
                         audit_id,
                         WorkflowDict.workflow_status["audit_abort"],
                         user.username,
@@ -503,7 +502,7 @@ def cancel(request):
                     )
                 # 非提交人需要校验审核权限
                 elif user.has_perm("sql.sql_review"):
-                    Audit.audit(
+                    _, workflow_audit_detail = Audit.audit(
                         audit_id,
                         WorkflowDict.workflow_status["audit_reject"],
                         user.username,
@@ -513,12 +512,12 @@ def cancel(request):
                     raise PermissionDenied
 
             # 删除定时执行task
-            if workflow_detail.status == "workflow_timingtask":
+            if sql_workflow.status == "workflow_timingtask":
                 schedule_name = f"sqlreview-timing-{workflow_id}"
                 del_schedule(schedule_name)
             # 将流程状态修改为人工终止流程
-            workflow_detail.status = "workflow_abort"
-            workflow_detail.save()
+            sql_workflow.status = "workflow_abort"
+            sql_workflow.save()
     except Exception as msg:
         logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
         context = {"errMsg": msg}
@@ -532,18 +531,15 @@ def cancel(request):
             else True
         )
         if is_notified:
-            audit_detail = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            )
-            if audit_detail.current_status in (
+            workflow_audit.refresh_from_db()
+            if workflow_audit.current_status in (
                 WorkflowDict.workflow_status["audit_abort"],
                 WorkflowDict.workflow_status["audit_reject"],
             ):
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_detail.audit_id,
-                    audit_remark=audit_remark,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=workflow_audit_detail,
                     timeout=60,
                     task_name=f"sqlreview-cancel-{workflow_id}",
                 )

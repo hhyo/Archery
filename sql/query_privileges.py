@@ -301,12 +301,12 @@ def query_priv_apply(request):
     else:
         result = audit_result
         # 消息通知
-        audit_id = Audit.detail_by_workflow_id(
+        workflow_audit = Audit.detail_by_workflow_id(
             workflow_id=apply_id, workflow_type=WorkflowDict.workflow_type["query"]
-        ).audit_id
+        )
         async_task(
             notify_for_audit,
-            audit_id=audit_id,
+            workflow_audit=workflow_audit,
             timeout=60,
             task_name=f"query-priv-apply-{apply_id}",
         )
@@ -444,7 +444,7 @@ def query_priv_audit(request):
             ).audit_id
 
             # 调用工作流接口审核
-            audit_result = Audit.audit(
+            audit_result, workflow_audit_detail = Audit.audit(
                 audit_id, audit_status, user.username, audit_remark
             )
 
@@ -462,10 +462,11 @@ def query_priv_audit(request):
         return render(request, "error.html", context)
     else:
         # 消息通知
+        audit_detail.refresh_from_db()
         async_task(
             notify_for_audit,
-            audit_id=audit_id,
-            audit_remark=audit_remark,
+            workflow_audit=audit_detail,
+            workflow_audit_detail=workflow_audit_detail,
             timeout=60,
             task_name=f"query-priv-audit-{apply_id}",
         )

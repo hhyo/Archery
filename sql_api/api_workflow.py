@@ -1,4 +1,3 @@
-import MySQLdb
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
 from rest_framework import views, generics, status, serializers, permissions
@@ -134,7 +133,25 @@ class WorkflowList(generics.ListAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        workflow_content = serializer.save()
+        sys_config = SysConfig()
+        is_notified = (
+            "Apply" in sys_config.get("notify_phase_control").split(",")
+            if sys_config.get("notify_phase_control")
+            else True
+        )
+        if workflow_content.workflow.status == "workflow_manreviewing" and is_notified:
+            # 获取审核信息
+            workflow_audit = Audit.detail_by_workflow_id(
+                workflow_id=workflow_content.workflow.id,
+                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+            )
+            async_task(
+                notify_for_audit,
+                workflow_audit=workflow_audit,
+                timeout=60,
+                task_name=f"sqlreview-submit-{workflow_content.workflow.id}",
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -223,25 +240,26 @@ class AuditWorkflow(views.APIView):
             # 使用事务保持数据一致性
             try:
                 with transaction.atomic():
-                    audit_id = Audit.detail_by_workflow_id(
+                    workflow_audit = Audit.detail_by_workflow_id(
                         workflow_id=workflow_id,
                         workflow_type=WorkflowDict.workflow_type["query"],
-                    ).audit_id
+                    )
+                    audit_id = workflow_audit.audit_id
 
                     # 调用工作流接口审核
-                    audit_result = Audit.audit(
+                    audit_result, audit_detail = Audit.audit(
                         audit_id, audit_status, user.username, audit_remark
                     )
 
                     # 按照审核结果更新业务表审核状态
-                    audit_detail = Audit.detail(audit_id)
+                    workflow_audit = Audit.detail(audit_id)
                     if (
-                        audit_detail.workflow_type
+                        workflow_audit.workflow_type
                         == WorkflowDict.workflow_type["query"]
                     ):
                         # 更新业务表审核状态,插入权限信息
                         _query_apply_audit_call_back(
-                            audit_detail.workflow_id,
+                            workflow_audit.workflow_id,
                             audit_result["data"]["workflow_status"],
                         )
 
@@ -252,8 +270,8 @@ class AuditWorkflow(views.APIView):
                 # 消息通知
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_id,
-                    audit_remark=audit_remark,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=audit_detail,
                     timeout=60,
                     task_name=f"query-priv-audit-{workflow_id}",
                 )
@@ -274,11 +292,12 @@ class AuditWorkflow(views.APIView):
                 try:
                     with transaction.atomic():
                         # 调用工作流接口审核
-                        audit_id = Audit.detail_by_workflow_id(
+                        workflow_audit = Audit.detail_by_workflow_id(
                             workflow_id=workflow_id,
                             workflow_type=WorkflowDict.workflow_type["sqlreview"],
-                        ).audit_id
-                        audit_result = Audit.audit(
+                        )
+                        audit_id = workflow_audit.audit_id
+                        audit_result, audit_detail = Audit.audit(
                             audit_id,
                             WorkflowDict.workflow_status["audit_success"],
                             user.username,
@@ -308,8 +327,8 @@ class AuditWorkflow(views.APIView):
                     if is_notified:
                         async_task(
                             notify_for_audit,
-                            audit_id=audit_id,
-                            audit_remark=audit_remark,
+                            workflow_audit=workflow_audit,
+                            workflow_audit_detail=audit_detail,
                             timeout=60,
                             task_name=f"sqlreview-pass-{workflow_id}",
                         )
@@ -336,7 +355,7 @@ class AuditWorkflow(views.APIView):
                         if workflow_detail.status != "workflow_manreviewing":
                             # 增加工单日志
                             if user.username == workflow_detail.engineer:
-                                Audit.add_log(
+                                _, audit_detail = Audit.add_log(
                                     audit_id=audit_id,
                                     operation_type=3,
                                     operation_type_desc="取消执行",
@@ -345,7 +364,7 @@ class AuditWorkflow(views.APIView):
                                     operator_display=user.display,
                                 )
                             else:
-                                Audit.add_log(
+                                _, audit_detail = Audit.add_log(
                                     audit_id=audit_id,
                                     operation_type=2,
                                     operation_type_desc="审批不通过",
@@ -355,7 +374,7 @@ class AuditWorkflow(views.APIView):
                                 )
                         else:
                             if user.username == workflow_detail.engineer:
-                                Audit.audit(
+                                _, audit_detail = Audit.audit(
                                     audit_id,
                                     WorkflowDict.workflow_status["audit_abort"],
                                     user.username,
@@ -363,7 +382,7 @@ class AuditWorkflow(views.APIView):
                                 )
                             # 非提交人需要校验审核权限
                             elif user.has_perm("sql.sql_review"):
-                                Audit.audit(
+                                _, audit_detail = Audit.audit(
                                     audit_id,
                                     WorkflowDict.workflow_status["audit_reject"],
                                     user.username,
@@ -393,18 +412,18 @@ class AuditWorkflow(views.APIView):
                         else True
                     )
                     if is_notified:
-                        audit_detail = Audit.detail_by_workflow_id(
+                        workflow_audit = Audit.detail_by_workflow_id(
                             workflow_id=workflow_id,
                             workflow_type=WorkflowDict.workflow_type["sqlreview"],
                         )
-                        if audit_detail.current_status in (
+                        if workflow_audit.current_status in (
                             WorkflowDict.workflow_status["audit_abort"],
                             WorkflowDict.workflow_status["audit_reject"],
                         ):
                             async_task(
                                 notify_for_audit,
-                                audit_id=audit_detail.audit_id,
-                                audit_remark=audit_remark,
+                                workflow_audit=workflow_audit,
+                                workflow_audit_detail=audit_detail,
                                 timeout=60,
                                 task_name=f"sqlreview-cancel-{workflow_id}",
                             )
@@ -422,15 +441,17 @@ class AuditWorkflow(views.APIView):
             # 使用事务保持数据一致性
             try:
                 with transaction.atomic():
-                    audit_id = Audit.detail_by_workflow_id(
+                    workflow_audit = Audit.detail_by_workflow_id(
                         workflow_id=workflow_id,
                         workflow_type=WorkflowDict.workflow_type["archive"],
-                    ).audit_id
+                    )
+                    audit_id = workflow_audit.audit_id
 
                     # 调用工作流插入审核信息，更新业务表审核状态
-                    audit_status = Audit.audit(
+                    audit_status, audit_detail = Audit.audit(
                         audit_id, audit_status, user.username, audit_remark
-                    )["data"]["workflow_status"]
+                    )
+                    audit_status = audit_status["data"]["workflow_status"]
                     ArchiveConfig(
                         id=workflow_id,
                         status=audit_status,
@@ -445,8 +466,8 @@ class AuditWorkflow(views.APIView):
                 # 消息通知
                 async_task(
                     notify_for_audit,
-                    audit_id=audit_id,
-                    audit_remark=audit_remark,
+                    workflow_audit=workflow_audit,
+                    workflow_audit_detail=audit_detail,
                     timeout=60,
                     task_name=f"archive-audit-{workflow_id}",
                 )
@@ -554,7 +575,9 @@ class ExecuteWorkflow(views.APIView):
                     else True
                 )
                 if is_notified:
-                    notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+                    notify_for_execute(
+                        workflow=SqlWorkflow.objects.get(id=workflow_id),
+                    )
         # 执行数据归档工单
         elif workflow_type == 3:
             async_task(
