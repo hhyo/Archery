@@ -5,7 +5,7 @@ import re
 import sqlparse
 
 from . import EngineBase
-# import pyodbc
+import pyodbc
 from .models import ResultSet, ReviewSet, ReviewResult
 from sql.utils.data_masking import brute_mask
 
