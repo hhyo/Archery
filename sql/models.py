@@ -581,7 +581,7 @@ class DataMaskingColumns(models.Model):
     class Meta:
         managed = True
         db_table = "data_masking_columns"
-        unique_together = ("instance_id","table_schema","table_name","column_name")
+        unique_together = ("instance_id", "table_schema", "table_name", "column_name")
         verbose_name = "脱敏字段配置"
         verbose_name_plural = "脱敏字段配置"
 
