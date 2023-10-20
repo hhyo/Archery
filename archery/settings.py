@@ -369,8 +369,8 @@ if ENABLE_CAS:
     INSTALLED_APPS += ("django_cas_ng",)
     MIDDLEWARE += ("django_cas_ng.middleware.CASMiddleware",)
     AUTHENTICATION_BACKENDS = (
-        "django_cas_ng.middleware.CASMiddleware",
         "django.contrib.auth.backends.ModelBackend",
+        "django_cas_ng.backends.CASBackend",
     )
 
     # CAS 的地址
@@ -389,6 +389,8 @@ if ENABLE_CAS:
     CAS_FORCE_SSL_SERVICE_URL = env("CAS_FORCE_SSL_SERVICE_URL", default=False)
     CAS_RETRY_TIMEOUT = 1
     CAS_RETRY_LOGIN = True
+    CAS_EXTRA_LOGIN_PARAMS = {"renew": True}
+    CAS_LOGOUT_COMPLETELY = True
 
 SUPPORTED_AUTHENTICATION = [
     ("LDAP", ENABLE_LDAP),
