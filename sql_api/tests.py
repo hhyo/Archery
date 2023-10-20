@@ -422,6 +422,8 @@ class TestWorkflow(APITestCase):
         self.token = r.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + self.token)
         SysConfig().set("api_user_whitelist", self.user.id)
+        self.notify_patcher = patch("sql.notify.auto_notify")
+        self.notify_patcher.start()
 
     def tearDown(self):
         self.user.delete()
@@ -431,6 +433,7 @@ class TestWorkflow(APITestCase):
         SqlWorkflow.objects.all().delete()
         WorkflowAudit.objects.all().delete()
         WorkflowLog.objects.all().delete()
+        self.notify_patcher.stop()
 
     def test_get_sql_workflow_list(self):
         """测试获取SQL上线工单列表"""
@@ -478,7 +481,7 @@ class TestWorkflow(APITestCase):
         print(json.loads(r.content))
         self.assertDictEqual(json.loads(r.content), {"errors": "RuntimeError"})
 
-    @patch("sql_api.serializers.get_engine")
+    @patch("sql_api.api_workflow.get_engine")
     def test_check(self, _get_engine):
         """测试工单检测，正常返回"""
         json_data = {

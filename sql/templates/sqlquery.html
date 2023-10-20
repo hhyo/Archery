@@ -1115,6 +1115,14 @@
                     resource_type: resource_type
                 },
                 complete: function () {
+                    if (optgroup === "PgSQL") {
+                        //获取schema
+                        $("#div-schema_name").show();
+                        $("#schema_name").selectpicker('val', db_name);
+                        if ($("#schema_name").val()) {
+                            $("#schema_name").selectpicker().trigger("change");
+                        }
+                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {

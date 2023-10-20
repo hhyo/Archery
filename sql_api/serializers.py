@@ -10,16 +10,16 @@ from sql.models import (
     ResourceGroup,
     WorkflowAudit,
     WorkflowLog,
+    QueryPrivilegesApply,
+    ArchiveConfig,
 )
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django_q.tasks import async_task
 from sql.engines import get_engine
 from sql.utils.workflow_audit import Audit
 from sql.utils.resource_group import user_instances
-from sql.notify import notify_for_audit
 from common.utils.const import WorkflowDict
 from common.config import SysConfig
 import traceback
@@ -248,6 +248,18 @@ class AliyunRdsSerializer(serializers.ModelSerializer):
         fields = ("id", "rds_dbinstanceid", "is_enable", "instance", "ak")
 
 
+class QueryPrivilegesApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QueryPrivilegesApply
+        fields = "__all__"
+
+
+class ArchiveConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArchiveConfig
+        fields = "__all__"
+
+
 class InstanceResourceSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     resource_type = serializers.ChoiceField(
@@ -419,26 +431,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
-        else:
-            # 自动审核通过且开启了Apply阶段通知参数才发送消息通知
-            is_notified = (
-                "Apply" in sys_config.get("notify_phase_control").split(",")
-                if sys_config.get("notify_phase_control")
-                else True
-            )
-            if workflow_status == "workflow_manreviewing" and is_notified:
-                # 获取审核信息
-                audit_id = Audit.detail_by_workflow_id(
-                    workflow_id=workflow.id,
-                    workflow_type=WorkflowDict.workflow_type["sqlreview"],
-                ).audit_id
-                async_task(
-                    notify_for_audit,
-                    audit_id=audit_id,
-                    timeout=60,
-                    task_name=f"sqlreview-submit-{workflow.id}",
-                )
-            return workflow_content
+        return workflow_content
 
     class Meta:
         model = SqlWorkflowContent
