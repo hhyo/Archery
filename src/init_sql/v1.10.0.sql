@@ -10,4 +10,3 @@ drop prepare stmt;
 alter table instance_account add unique index uidx_instanceid_user_host_dbname(`instance_id`, `user`, `host`, `db_name`);
 --- 增加 ssl 支持
 ALTER TABLE sql_instance ADD is_ssl tinyint(1) DEFAULT 0  COMMENT '是否启用SSL';
-
