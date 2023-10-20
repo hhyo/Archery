@@ -369,7 +369,7 @@ if ENABLE_CAS:
     INSTALLED_APPS += ("django_cas_ng",)
     MIDDLEWARE += ("django_cas_ng.middleware.CASMiddleware",)
     AUTHENTICATION_BACKENDS = (
-        'django_cas_ng.middleware.CASMiddleware',
+        "django_cas_ng.middleware.CASMiddleware",
         "django.contrib.auth.backends.ModelBackend",
     )
 
@@ -388,7 +388,7 @@ if ENABLE_CAS:
     # https请求问题
     CAS_FORCE_SSL_SERVICE_URL = env("CAS_FORCE_SSL_SERVICE_URL", default=False)
     CAS_RETRY_LOGIN = True
-    CAS_EXTRA_LOGIN_PARAMS = {'renew': True}
+    CAS_EXTRA_LOGIN_PARAMS = {"renew": True}
     CAS_RETRY_TIMEOUT = 1
     CAS_LOGOUT_COMPLETELY = True
 
