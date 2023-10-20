@@ -29,6 +29,10 @@
                 <div class="form-group">
                     <a class="btn btn-primary btn-block" role="button" href="/oidc/authenticate/">{{ oidc_btn_name }}</a>
                 </div>
+            {% elif cas_enabled %}
+            <div class="form-group">
+                <a class="btn btn-primary btn-block" role="button" href="/cas/authenticate/">CAS认证登录</a>
+            </div>
             {% endif %}
             {% if dingding_enabled or oidc_enabled %}
                 <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">

@@ -1,6 +1,7 @@
 from django.urls import include, path
 from django.contrib import admin
 from common import views
+from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -9,6 +10,17 @@ urlpatterns = [
     path("dingding/", include("django_auth_dingding.urls")),
     path("", include(("sql.urls", "sql"), namespace="sql")),
 ]
+
+if settings.ENABLE_CAS:
+    import django_cas_ng.views
+
+    urlpatterns += [
+        path(
+            "cas/authenticate/",
+            django_cas_ng.views.LoginView.as_view(),
+            name="cas-login",
+        ),
+    ]
 
 handler400 = views.bad_request
 handler403 = views.permission_denied
