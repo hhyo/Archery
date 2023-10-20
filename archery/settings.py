@@ -363,10 +363,38 @@ if ENABLE_LDAP:
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
 
+# CAS认证
+ENABLE_CAS = env("ENABLE_CAS", default=False)
+if ENABLE_CAS:
+    INSTALLED_APPS += ("django_cas_ng",)
+    MIDDLEWARE += ("django_cas_ng.middleware.CASMiddleware",)
+    AUTHENTICATION_BACKENDS = (
+        "common.authenticate.cas_auth.CASAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+
+    # CAS 的地址
+    CAS_SERVER_URL = env("CAS_SERVER_URL")
+    # CAS 版本
+    CAS_VERSION = env("CAS_VERSION")
+    # 存入所有 CAS 服务端返回的 User 数据。
+    CAS_APPLY_ATTRIBUTES_TO_USER = True
+    # 关闭浏览器退出登录
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    #  忽略  SSL  证书校验
+    CAS_VERIFY_SSL_CERTIFICATE = env("CAS_VERIFY_SSL_CERTIFICATE", default=False)
+    #  忽略来源验证
+    CAS_IGNORE_REFERER = True
+    # https请求问题
+    CAS_FORCE_SSL_SERVICE_URL = env("CAS_FORCE_SSL_SERVICE_URL", default=False)
+    CAS_RETRY_LOGIN = True
+    CAS_RETRY_TIMEOUT = 1
+
 SUPPORTED_AUTHENTICATION = [
     ("LDAP", ENABLE_LDAP),
     ("DINGDING", ENABLE_DINGDING),
     ("OIDC", ENABLE_OIDC),
+    ("CAS", ENABLE_CAS),
 ]
 # 计算当前启用的外部认证方式数量
 ENABLE_AUTHENTICATION_COUNT = len(
