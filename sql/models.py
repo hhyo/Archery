@@ -5,6 +5,7 @@ from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
 
+from common.utils.const import WorkflowStatus, WorkflowType
 
 class ResourceGroup(models.Model):
     """
@@ -304,10 +305,6 @@ class SqlWorkflowContent(models.Model):
         verbose_name_plural = "SQL工单内容"
 
 
-workflow_type_choices = ((1, _("sql_query")), (2, _("sql_review")))
-workflow_status_choices = ((0, "待审核"), (1, "审核通过"), (2, "审核不通过"), (3, "审核取消"))
-
-
 class WorkflowAudit(models.Model):
     """
     工作流审核状态表
@@ -317,13 +314,13 @@ class WorkflowAudit(models.Model):
     group_id = models.IntegerField("组ID")
     group_name = models.CharField("组名称", max_length=100)
     workflow_id = models.BigIntegerField("关联业务id")
-    workflow_type = models.IntegerField("申请类型", choices=workflow_type_choices)
+    workflow_type = models.IntegerField("申请类型", choices=WorkflowType.choices)
     workflow_title = models.CharField("申请标题", max_length=50)
     workflow_remark = models.CharField("申请备注", default="", max_length=140, blank=True)
     audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
     current_audit = models.CharField("当前审批权限组", max_length=20)
     next_audit = models.CharField("下级审批权限组", max_length=20)
-    current_status = models.IntegerField("审核状态", choices=workflow_status_choices)
+    current_status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
     create_user = models.CharField("申请人", max_length=30)
     create_user_display = models.CharField("申请人中文名", max_length=50, default="")
     create_time = models.DateTimeField("申请时间", auto_now_add=True)
@@ -349,7 +346,7 @@ class WorkflowAuditDetail(models.Model):
     audit_id = models.IntegerField("审核主表id")
     audit_user = models.CharField("审核人", max_length=30)
     audit_time = models.DateTimeField("审核时间")
-    audit_status = models.IntegerField("审核状态", choices=workflow_status_choices)
+    audit_status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
     remark = models.CharField("审核备注", default="", max_length=1000)
     sys_time = models.DateTimeField("系统时间", auto_now=True)
 
@@ -371,7 +368,7 @@ class WorkflowAuditSetting(models.Model):
     audit_setting_id = models.AutoField(primary_key=True)
     group_id = models.IntegerField("组ID")
     group_name = models.CharField("组名称", max_length=100)
-    workflow_type = models.IntegerField("审批类型", choices=workflow_type_choices)
+    workflow_type = models.IntegerField("审批类型", choices=WorkflowType.choices)
     audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -446,7 +443,7 @@ class QueryPrivilegesApply(models.Model):
         ),
         default=0,
     )
-    status = models.IntegerField("审核状态", choices=workflow_status_choices)
+    status = models.IntegerField("审核状态", choices=WorkflowStatus.choices)
     audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -720,7 +717,7 @@ class ArchiveConfig(models.Model):
     no_delete = models.BooleanField("是否保留源数据")
     sleep = models.IntegerField("归档limit行后的休眠秒数", default=1)
     status = models.IntegerField(
-        "审核状态", choices=workflow_status_choices, blank=True, default=1
+        "审核状态", choices=WorkflowStatus.choices, blank=True, default=1
     )
     state = models.BooleanField("是否启用归档", default=True)
     user_name = models.CharField("申请人", max_length=30, blank=True, default="")

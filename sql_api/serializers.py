@@ -20,7 +20,7 @@ from django.db import transaction
 from sql.engines import get_engine
 from sql.utils.workflow_audit import Audit
 from sql.utils.resource_group import user_instances
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowType
 from common.config import SysConfig
 import traceback
 import logging
@@ -414,7 +414,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             engineer_display=user.display,
             group_name=group.group_name,
             audit_auth_groups=Audit.settings(
-                workflow_data["group_id"], WorkflowDict.workflow_type["sqlreview"]
+                workflow_data["group_id"], WorkflowType.SQL_REVIEW
             ),
         )
         try:
@@ -427,7 +427,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 # 自动审核通过了，才调用工作流
                 if workflow_status == "workflow_manreviewing":
                     # 调用工作流插入审核信息, SQL上线权限申请workflow_type=2
-                    Audit.add(WorkflowDict.workflow_type["sqlreview"], workflow.id)
+                    Audit.add(WorkflowType.SQL_REVIEW, workflow.id)
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})

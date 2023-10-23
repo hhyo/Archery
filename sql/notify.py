@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from common.utils.sendmsg import MsgSender
 from sql.models import (
     QueryPrivilegesApply,
@@ -162,8 +162,8 @@ class LegacyRender(Notifier):
         )
         # workflow content, 即申请通过后要执行什么东西
         # 执行的 SQL 语句, 授权的范围
-        if workflow_type == WorkflowDict.workflow_type["query"]:
-            workflow_type_display = WorkflowDict.workflow_type["query_display"]
+        if workflow_type == WorkflowType.QUERY:
+            workflow_type_display = WorkflowType.QUERY.label
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             instance = workflow_detail.instance.instance_name
             db_name = workflow_detail.db_list
@@ -178,8 +178,8 @@ class LegacyRender(Notifier):
             workflow_content += (
                 f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
             )
-        elif workflow_type == WorkflowDict.workflow_type["sqlreview"]:
-            workflow_type_display = WorkflowDict.workflow_type["sqlreview_display"]
+        elif workflow_type == WorkflowType.SQL_REVIEW:
+            workflow_type_display = WorkflowType.SQL_REVIEW.label
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
             instance = workflow_detail.instance.instance_name
             db_name = workflow_detail.db_name
@@ -188,8 +188,8 @@ class LegacyRender(Notifier):
                 "\n",
                 workflow_detail.sqlworkflowcontent.sql_content[0:500].replace("\r", ""),
             )
-        elif workflow_type == WorkflowDict.workflow_type["archive"]:
-            workflow_type_display = WorkflowDict.workflow_type["archive_display"]
+        elif workflow_type == WorkflowType.ARCHIVE:
+            workflow_type_display = WorkflowType.ARCHIVE.label
             workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
             instance = workflow_detail.src_instance.instance_name
             db_name = workflow_detail.src_db_name
@@ -201,7 +201,7 @@ class LegacyRender(Notifier):
         else:
             raise Exception("工单类型不正确")
         # 渲染提醒内容, 包括工单的所有信息, 申请人, 审批流等
-        if status == WorkflowDict.workflow_status["audit_wait"]:  # 申请阶段
+        if status == WorkflowStatus.WAITING:  # 申请阶段
             msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = Group.objects.get(id=self.audit.current_audit).name
@@ -228,7 +228,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 workflow_content,
             )
-        elif status == WorkflowDict.workflow_status["audit_success"]:  # 审核通过
+        elif status == WorkflowStatus.PASSED:  # 审核通过
             msg_title = "[{}]工单审核通过#{}".format(workflow_type_display, audit_id)
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
@@ -244,7 +244,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 workflow_content,
             )
-        elif status == WorkflowDict.workflow_status["audit_reject"]:  # 审核驳回
+        elif status == WorkflowStatus.REJECTED:  # 审核驳回
             msg_title = "[{}]工单被驳回#{}".format(workflow_type_display, audit_id)
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
@@ -257,7 +257,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
             )
-        elif status == WorkflowDict.workflow_status["audit_abort"]:  # 审核取消，通知所有审核人
+        elif status == WorkflowStatus.ABORTED:  # 审核取消，通知所有审核人
             msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = [
@@ -293,7 +293,7 @@ class LegacyRender(Notifier):
             base_url=base_url, audit_id=audit_id
         )
         msg_title = (
-            f"[{WorkflowDict.workflow_type['sqlreview_display']}]工单"
+            f"[{WorkflowType.SQL_REVIEW.label}]工单"
             f"{self.workflow.get_status_display()}#{audit_id}"
         )
         preview = re.sub(

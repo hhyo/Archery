@@ -14,7 +14,7 @@ from django.urls import reverse
 from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
 from sql.engines.models import ReviewResult, ReviewSet
@@ -250,12 +250,12 @@ def passed(request):
             # 调用工作流接口审核
             workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+                workflow_type=WorkflowType.SQL_REVIEW,
             )
             audit_id = workflow_audit.audit_id
             audit_result, audit_detail = Audit.audit(
                 audit_id,
-                WorkflowDict.workflow_status["audit_success"],
+                WorkflowStatus.PASSED,
                 user.username,
                 audit_remark,
             )
@@ -263,7 +263,7 @@ def passed(request):
             # 按照审核结果更新业务表审核状态
             if (
                 audit_result["data"]["workflow_status"]
-                == WorkflowDict.workflow_status["audit_success"]
+                == WorkflowStatus.PASSED
             ):
                 # 将流程状态修改为审核通过
                 SqlWorkflow(id=workflow_id, status="workflow_review_pass").save(
@@ -319,7 +319,7 @@ def execute(request):
         return render(request, "error.html", context)
     # 获取审核信息
     audit_id = Audit.detail_by_workflow_id(
-        workflow_id=workflow_id, workflow_type=WorkflowDict.workflow_type["sqlreview"]
+        workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
     ).audit_id
     # 根据执行模式进行对应修改
     mode = request.POST.get("mode")
@@ -424,7 +424,7 @@ def timing_task(request):
             # 增加工单日志
             audit_id = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+                workflow_type=WorkflowType.SQL_REVIEW,
             ).audit_id
             Audit.add_log(
                 audit_id=audit_id,
@@ -468,7 +468,7 @@ def cancel(request):
             # 调用工作流接口取消或者驳回
             workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+                workflow_type=WorkflowType.SQL_REVIEW,
             )
             audit_id = workflow_audit.audit_id
             # 仅待审核的需要调用工作流，审核通过的不需要
@@ -496,7 +496,7 @@ def cancel(request):
                 if user.username == sql_workflow.engineer:
                     _, workflow_audit_detail = Audit.audit(
                         audit_id,
-                        WorkflowDict.workflow_status["audit_abort"],
+                        WorkflowStatus.ABORTED,
                         user.username,
                         audit_remark,
                     )
@@ -504,7 +504,7 @@ def cancel(request):
                 elif user.has_perm("sql.sql_review"):
                     _, workflow_audit_detail = Audit.audit(
                         audit_id,
-                        WorkflowDict.workflow_status["audit_reject"],
+                        WorkflowStatus.REJECTED,
                         user.username,
                         audit_remark,
                     )
@@ -533,8 +533,8 @@ def cancel(request):
         if is_notified:
             workflow_audit.refresh_from_db()
             if workflow_audit.current_status in (
-                WorkflowDict.workflow_status["audit_abort"],
-                WorkflowDict.workflow_status["audit_reject"],
+                WorkflowStatus.ABORTED,
+                WorkflowStatus.REJECTED,
             ):
                 async_task(
                     notify_for_audit,

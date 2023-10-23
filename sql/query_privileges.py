@@ -20,7 +20,7 @@ from django.urls import reverse
 from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines.goinception import GoInceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
@@ -75,7 +75,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             for table in table_ref:
                 # 既无库权限也无表权限则鉴权失败
                 if not _db_priv(user, instance, table["schema"]) and not _tb_priv(
-                    user, instance, table["schema"], table["name"]
+                        user, instance, table["schema"], table["name"]
                 ):
                     # 没有库表查询权限时的staus为2
                     result["status"] = 2
@@ -216,12 +216,12 @@ def query_priv_apply(request):
             return HttpResponse(json.dumps(result), content_type="application/json")
     elif int(priv_type) == 2:
         if not (
-            title
-            and instance_name
-            and db_name
-            and valid_date
-            and table_list
-            and limit_num
+                title
+                and instance_name
+                and db_name
+                and valid_date
+                and table_list
+                and limit_num
         ):
             result["status"] = 1
             result["msg"] = "请填写完整"
@@ -268,14 +268,14 @@ def query_priv_apply(request):
                 group_id=group_id,
                 group_name=group_name,
                 audit_auth_groups=Audit.settings(
-                    group_id, WorkflowDict.workflow_type["query"]
+                    group_id, WorkflowType.QUERY
                 ),
                 user_name=user.username,
                 user_display=user.display,
                 instance=ins,
                 priv_type=int(priv_type),
                 valid_date=valid_date,
-                status=WorkflowDict.workflow_status["audit_wait"],
+                status=WorkflowStatus.WAITING,
                 limit_num=limit_num,
             )
             if int(priv_type) == 1:
@@ -288,7 +288,7 @@ def query_priv_apply(request):
             apply_id = applyinfo.apply_id
 
             # 调用工作流插入审核信息,查询权限申请workflow_type=1
-            audit_result = Audit.add(WorkflowDict.workflow_type["query"], apply_id)
+            audit_result = Audit.add(WorkflowType.QUERY, apply_id)
             if audit_result["status"] == 0:
                 # 更新业务表审核状态,判断是否插入权限信息
                 _query_apply_audit_call_back(
@@ -302,7 +302,7 @@ def query_priv_apply(request):
         result = audit_result
         # 消息通知
         workflow_audit = Audit.detail_by_workflow_id(
-            workflow_id=apply_id, workflow_type=WorkflowDict.workflow_type["query"]
+            workflow_id=apply_id, workflow_type=WorkflowType.QUERY
         )
         async_task(
             notify_for_audit,
@@ -440,7 +440,7 @@ def query_priv_audit(request):
     try:
         with transaction.atomic():
             audit_id = Audit.detail_by_workflow_id(
-                workflow_id=apply_id, workflow_type=WorkflowDict.workflow_type["query"]
+                workflow_id=apply_id, workflow_type=WorkflowType.QUERY
             ).audit_id
 
             # 调用工作流接口审核
@@ -450,7 +450,7 @@ def query_priv_audit(request):
 
             # 按照审核结果更新业务表审核状态
             audit_detail = Audit.detail(audit_id)
-            if audit_detail.workflow_type == WorkflowDict.workflow_type["query"]:
+            if audit_detail.workflow_type == WorkflowType.QUERY:
                 # 更新业务表审核状态,插入权限信息
                 _query_apply_audit_call_back(
                     audit_detail.workflow_id, audit_result["data"]["workflow_status"]
@@ -578,7 +578,7 @@ def _query_apply_audit_call_back(apply_id, workflow_status):
     apply_info.status = workflow_status
     apply_info.save()
     # 审核通过插入权限信息，批量插入，减少性能消耗
-    if workflow_status == WorkflowDict.workflow_status["audit_success"]:
+    if workflow_status == WorkflowStatus.PASSED:
         apply_queryset = QueryPrivilegesApply.objects.get(apply_id=apply_id)
         # 库权限
 

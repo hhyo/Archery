@@ -9,7 +9,7 @@ from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus
 from sql.archiver import add_archive_task, archive
 from sql.binlog import my2sql_file
 from sql.engines.models import ResultSet
@@ -1946,7 +1946,7 @@ class TestArchiver(TestCase):
             mode="file",
             no_delete=True,
             sleep=1,
-            status=WorkflowDict.workflow_status["audit_wait"],
+            status=WorkflowStatus.WAITING,
             state=False,
             user_name="some_user",
             user_display="display",
@@ -2108,7 +2108,7 @@ class TestArchiver(TestCase):
         )
         data = {
             "archive_id": self.archive_apply.id,
-            "audit_status": WorkflowDict.workflow_status["audit_success"],
+            "audit_status": WorkflowStatus.PASSED,
             "audit_remark": "xxxx",
         }
         self.client.force_login(self.superuser)

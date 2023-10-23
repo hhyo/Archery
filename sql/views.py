@@ -40,7 +40,7 @@ from sql.utils.sql_review import (
     can_view,
     can_rollback,
 )
-from common.utils.const import Const, WorkflowDict
+from common.utils.const import Const, WorkflowType
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 
 import logging
@@ -207,7 +207,7 @@ def detail(request, workflow_id):
         try:
             audit_detail = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+                workflow_type=WorkflowType.SQL_REVIEW,
             )
             audit_id = audit_detail.audit_id
             last_operation_info = (
@@ -528,7 +528,7 @@ def config(request):
         "instance_tags": instance_tags,
         "db_type": db_type,
         "config": sys_config,
-        "WorkflowDict": WorkflowDict,
+        "workflow_choices": WorkflowType,
     }
     return render(request, "config.html", context)
 
@@ -557,15 +557,15 @@ def workflowsdetail(request, audit_id):
     audit_detail = Audit.detail(audit_id)
     if not audit_detail:
         raise Http404("不存在对应的工单记录")
-    if audit_detail.workflow_type == WorkflowDict.workflow_type["query"]:
+    if audit_detail.workflow_type == WorkflowType.QUERY:
         return HttpResponseRedirect(
             reverse("sql:queryapplydetail", args=(audit_detail.workflow_id,))
         )
-    elif audit_detail.workflow_type == WorkflowDict.workflow_type["sqlreview"]:
+    elif audit_detail.workflow_type == WorkflowType.SQL_REVIEW:
         return HttpResponseRedirect(
             reverse("sql:detail", args=(audit_detail.workflow_id,))
         )
-    elif audit_detail.workflow_type == WorkflowDict.workflow_type["archive"]:
+    elif audit_detail.workflow_type == WorkflowType.ARCHIVE:
         return HttpResponseRedirect(
             reverse("sql:archive_detail", args=(audit_detail.workflow_id,))
         )
