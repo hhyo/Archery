@@ -7,6 +7,7 @@ from mirage.crypto import Crypto
 
 from common.utils.const import WorkflowStatus, WorkflowType
 
+
 class ResourceGroup(models.Model):
     """
     资源组

@@ -101,9 +101,7 @@ class Audit(object):
             audit_detail.create_user = create_user
             audit_detail.create_user_display = create_user_display
             audit_detail.save()
-            result["data"] = {
-                "workflow_status": WorkflowStatus.PASSED
-            }
+            result["data"] = {"workflow_status": WorkflowStatus.PASSED}
             result["msg"] = "无审核配置，直接审核通过"
             # 增加工单日志
             Audit.add_log(
@@ -135,9 +133,7 @@ class Audit(object):
             audit_detail.create_user = create_user
             audit_detail.create_user_display = create_user_display
             audit_detail.save()
-            result["data"] = {
-                "workflow_status": WorkflowStatus.WAITING
-            }
+            result["data"] = {"workflow_status": WorkflowStatus.WAITING}
             # 增加工单日志
             audit_auth_group, current_audit_auth_group = Audit.review_info(
                 workflow_id, workflow_type
@@ -166,10 +162,7 @@ class Audit(object):
         # 不同审核状态
         if audit_status == WorkflowStatus.PASSED:
             # 判断当前工单是否为待审核状态
-            if (
-                audit_detail.current_status
-                != WorkflowStatus.WAITING
-            ):
+            if audit_detail.current_status != WorkflowStatus.WAITING:
                 result["msg"] = "工单不是待审核状态，请返回刷新"
                 raise Exception(result["msg"])
 
@@ -226,10 +219,7 @@ class Audit(object):
             )
         elif audit_status == WorkflowStatus.REJECTED:
             # 判断当前工单是否为待审核状态
-            if (
-                audit_detail.current_status
-                != WorkflowStatus.WAITING
-            ):
+            if audit_detail.current_status != WorkflowStatus.WAITING:
                 result["msg"] = "工单不是待审核状态，请返回刷新"
                 raise Exception(result["msg"])
 
@@ -263,10 +253,8 @@ class Audit(object):
         elif audit_status == WorkflowStatus.ABORTED:
             # 判断当前工单是否为待审核/审核通过状态
             if (
-                audit_detail.current_status
-                != WorkflowStatus.WAITING
-                and audit_detail.current_status
-                != WorkflowStatus.PASSED
+                audit_detail.current_status != WorkflowStatus.WAITING
+                and audit_detail.current_status != WorkflowStatus.PASSED
             ):
                 result["msg"] = "工单不是待审核态/审核通过状态，请返回刷新"
                 raise Exception(result["msg"])

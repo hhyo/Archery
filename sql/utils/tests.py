@@ -1436,9 +1436,7 @@ class TestAudit(TestCase):
         self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
-        result = Audit.detail_by_workflow_id(
-            self.wf.id, WorkflowType.SQL_REVIEW
-        )
+        result = Audit.detail_by_workflow_id(self.wf.id, WorkflowType.SQL_REVIEW)
         self.assertEqual(result, self.audit)
         result = Audit.detail_by_workflow_id(0, 0)
         self.assertEqual(result, None)

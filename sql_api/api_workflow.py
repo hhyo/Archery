@@ -255,10 +255,7 @@ class AuditWorkflow(views.APIView):
 
                     # 按照审核结果更新业务表审核状态
                     workflow_audit = Audit.detail(audit_id)
-                    if (
-                        workflow_audit.workflow_type
-                        == WorkflowType.QUERY
-                    ):
+                    if workflow_audit.workflow_type == WorkflowType.QUERY:
                         # 更新业务表审核状态,插入权限信息
                         _query_apply_audit_call_back(
                             workflow_audit.workflow_id,
@@ -457,9 +454,7 @@ class AuditWorkflow(views.APIView):
                     ArchiveConfig(
                         id=workflow_id,
                         status=audit_status,
-                        state=True
-                        if audit_status == WorkflowStatus.PASSED
-                        else False,
+                        state=True if audit_status == WorkflowStatus.PASSED else False,
                     ).save(update_fields=["status", "state"])
             except Exception as msg:
                 logger.error(traceback.format_exc())

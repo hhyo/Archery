@@ -75,7 +75,7 @@ def query_priv_check(user, instance, db_name, sql_content, limit_num):
             for table in table_ref:
                 # 既无库权限也无表权限则鉴权失败
                 if not _db_priv(user, instance, table["schema"]) and not _tb_priv(
-                        user, instance, table["schema"], table["name"]
+                    user, instance, table["schema"], table["name"]
                 ):
                     # 没有库表查询权限时的staus为2
                     result["status"] = 2
@@ -216,12 +216,12 @@ def query_priv_apply(request):
             return HttpResponse(json.dumps(result), content_type="application/json")
     elif int(priv_type) == 2:
         if not (
-                title
-                and instance_name
-                and db_name
-                and valid_date
-                and table_list
-                and limit_num
+            title
+            and instance_name
+            and db_name
+            and valid_date
+            and table_list
+            and limit_num
         ):
             result["status"] = 1
             result["msg"] = "请填写完整"
@@ -267,9 +267,7 @@ def query_priv_apply(request):
                 title=title,
                 group_id=group_id,
                 group_name=group_name,
-                audit_auth_groups=Audit.settings(
-                    group_id, WorkflowType.QUERY
-                ),
+                audit_auth_groups=Audit.settings(group_id, WorkflowType.QUERY),
                 user_name=user.username,
                 user_display=user.display,
                 instance=ins,

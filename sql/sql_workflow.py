@@ -261,10 +261,7 @@ def passed(request):
             )
 
             # 按照审核结果更新业务表审核状态
-            if (
-                audit_result["data"]["workflow_status"]
-                == WorkflowStatus.PASSED
-            ):
+            if audit_result["data"]["workflow_status"] == WorkflowStatus.PASSED:
                 # 将流程状态修改为审核通过
                 SqlWorkflow(id=workflow_id, status="workflow_review_pass").save(
                     update_fields=["status"]

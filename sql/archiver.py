@@ -171,9 +171,7 @@ def archive_apply(request):
 
     # 获取资源组和审批信息
     res_group = ResourceGroup.objects.get(group_name=group_name)
-    audit_auth_groups = Audit.settings(
-        res_group.group_id, WorkflowType.ARCHIVE
-    )
+    audit_auth_groups = Audit.settings(res_group.group_id, WorkflowType.ARCHIVE)
     if not audit_auth_groups:
         return JsonResponse({"status": 1, "msg": "审批流程不能为空，请先配置审批流程", "data": {}})
 
@@ -202,9 +200,7 @@ def archive_apply(request):
             )
             archive_id = archive_info.id
             # 调用工作流插入审核信息
-            audit_result, audit_detail = Audit.add(
-                WorkflowType.ARCHIVE, archive_id
-            )
+            audit_result, audit_detail = Audit.add(WorkflowType.ARCHIVE, archive_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         result["status"] = 1
@@ -262,9 +258,7 @@ def archive_audit(request):
             ArchiveConfig(
                 id=archive_id,
                 status=audit_status,
-                state=True
-                if audit_status == WorkflowStatus.PASSED
-                else False,
+                state=True if audit_status == WorkflowStatus.PASSED else False,
             ).save(update_fields=["status", "state"])
     except Exception as msg:
         logger.error(traceback.format_exc())
