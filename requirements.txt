@@ -1,5 +1,5 @@
 Django==4.1.10
-mysqlclient==2.*
+mysqlclient==2.0.3
 requests==2.31.0
 simplejson==3.17.2
 mybatis_mapper2sql==0.1.9
