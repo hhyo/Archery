@@ -22,7 +22,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_q.tasks import async_task
 
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
@@ -171,9 +171,7 @@ def archive_apply(request):
 
     # 获取资源组和审批信息
     res_group = ResourceGroup.objects.get(group_name=group_name)
-    audit_auth_groups = Audit.settings(
-        res_group.group_id, WorkflowDict.workflow_type["archive"]
-    )
+    audit_auth_groups = Audit.settings(res_group.group_id, WorkflowType.ARCHIVE)
     if not audit_auth_groups:
         return JsonResponse({"status": 1, "msg": "审批流程不能为空，请先配置审批流程", "data": {}})
 
@@ -195,16 +193,14 @@ def archive_apply(request):
                 mode=mode,
                 no_delete=no_delete,
                 sleep=sleep,
-                status=WorkflowDict.workflow_status["audit_wait"],
+                status=WorkflowStatus.WAITING,
                 state=False,
                 user_name=user.username,
                 user_display=user.display,
             )
             archive_id = archive_info.id
             # 调用工作流插入审核信息
-            audit_result, audit_detail = Audit.add(
-                WorkflowDict.workflow_type["archive"], archive_id
-            )
+            audit_result, audit_detail = Audit.add(WorkflowType.ARCHIVE, archive_id)
     except Exception as msg:
         logger.error(traceback.format_exc())
         result["status"] = 1
@@ -213,7 +209,7 @@ def archive_apply(request):
         result = audit_result
         # 消息通知
         workflow_audit = Audit.detail_by_workflow_id(
-            workflow_id=archive_id, workflow_type=WorkflowDict.workflow_type["archive"]
+            workflow_id=archive_id, workflow_type=WorkflowType.ARCHIVE
         )
         async_task(
             notify_for_audit,
@@ -250,7 +246,7 @@ def archive_audit(request):
         with transaction.atomic():
             workflow_audit = Audit.detail_by_workflow_id(
                 workflow_id=archive_id,
-                workflow_type=WorkflowDict.workflow_type["archive"],
+                workflow_type=WorkflowType.ARCHIVE,
             )
             audit_id = workflow_audit.audit_id
 
@@ -262,9 +258,7 @@ def archive_audit(request):
             ArchiveConfig(
                 id=archive_id,
                 status=audit_status,
-                state=True
-                if audit_status == WorkflowDict.workflow_status["audit_success"]
-                else False,
+                state=True if audit_status == WorkflowStatus.PASSED else False,
             ).save(update_fields=["status", "state"])
     except Exception as msg:
         logger.error(traceback.format_exc())
@@ -298,11 +292,11 @@ def add_archive_task(archive_ids=None):
         archive_cnf_list = ArchiveConfig.objects.filter(
             id__in=archive_ids,
             state=True,
-            status=WorkflowDict.workflow_status["audit_success"],
+            status=WorkflowStatus.PASSED,
         )
     else:
         archive_cnf_list = ArchiveConfig.objects.filter(
-            state=True, status=WorkflowDict.workflow_status["audit_success"]
+            state=True, status=WorkflowStatus.PASSED
         )
 
     # 添加task任务

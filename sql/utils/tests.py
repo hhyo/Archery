@@ -21,7 +21,7 @@ from django.test import TestCase, Client
 from django_q.models import Schedule
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from sql.engines.models import ReviewResult, ReviewSet, SqlItem
 from sql.models import (
     Users,
@@ -1143,7 +1143,7 @@ class TestAudit(TestCase):
             mode="file",
             no_delete=True,
             sleep=1,
-            status=WorkflowDict.workflow_status["audit_wait"],
+            status=WorkflowStatus.WAITING,
             state=False,
             user_name="some_user",
             user_display="display",
@@ -1182,7 +1182,7 @@ class TestAudit(TestCase):
         result, _ = Audit.add(1, self.query_apply_1.apply_id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
+        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
         # 当前审批
         self.assertEqual(audit_detail.current_audit, "some_audit_group")
@@ -1199,7 +1199,7 @@ class TestAudit(TestCase):
         result, _ = Audit.add(2, self.wf.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
+        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
         # 当前审批
         self.assertEqual(audit_detail.current_audit, "some_audit_group")
@@ -1216,7 +1216,7 @@ class TestAudit(TestCase):
         result, workflow_audit_detail = Audit.add(3, self.archive_apply_1.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
+        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
         # 当前审批
         self.assertEqual(audit_detail.current_audit, "some_audit_group")
@@ -1253,7 +1253,7 @@ class TestAudit(TestCase):
         result, workflow_audit_detail = Audit.add(2, self.wf.id)
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_success"])
+        self.assertEqual(workflow_status, WorkflowStatus.PASSED)
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
         # 无下级审批
         self.assertEqual(audit_detail.next_audit, "-1")
@@ -1271,7 +1271,7 @@ class TestAudit(TestCase):
         audit_id = result["data"]["audit_id"]
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
+        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
         # 存在下级审批
         self.assertEqual(audit_detail.current_audit, "1")
         self.assertEqual(audit_detail.next_audit, "2")
@@ -1288,14 +1288,14 @@ class TestAudit(TestCase):
         self.audit.save()
         result, _ = Audit.audit(
             self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_success"],
+            WorkflowStatus.PASSED,
             self.user.username,
             "通过",
         )
         audit_id = self.audit.audit_id
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_success"])
+        self.assertEqual(workflow_status, WorkflowStatus.PASSED)
         # 不存在下级审批
         self.assertEqual(audit_detail.next_audit, "-1")
         # 验证日志
@@ -1313,14 +1313,14 @@ class TestAudit(TestCase):
         self.audit.save()
         result, _ = Audit.audit(
             self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_success"],
+            WorkflowStatus.PASSED,
             self.user.username,
             "通过",
         )
         audit_id = self.audit.audit_id
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
+        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
         # 存在下级审批
         self.assertEqual(audit_detail.next_audit, "3")
         # 验证日志
@@ -1335,14 +1335,14 @@ class TestAudit(TestCase):
         """测试审核不通过"""
         result, _ = Audit.audit(
             self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_reject"],
+            WorkflowStatus.REJECTED,
             self.user.username,
             "不通过",
         )
         audit_id = self.audit.audit_id
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_reject"])
+        self.assertEqual(workflow_status, WorkflowStatus.REJECTED)
         # 不存在下级审批
         self.assertEqual(audit_detail.next_audit, "-1")
         # 验证日志
@@ -1359,14 +1359,14 @@ class TestAudit(TestCase):
         self.audit.save()
         result, _ = Audit.audit(
             self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_abort"],
+            WorkflowStatus.ABORTED,
             self.user.username,
             "取消",
         )
         audit_id = self.audit.audit_id
         workflow_status = result["data"]["workflow_status"]
         audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_abort"])
+        self.assertEqual(workflow_status, WorkflowStatus.ABORTED)
         # 不存在下级审批
         self.assertEqual(audit_detail.next_audit, "-1")
         # 验证日志
@@ -1389,7 +1389,7 @@ class TestAudit(TestCase):
         with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
             Audit.audit(
                 self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_success"],
+                WorkflowStatus.PASSED,
                 self.user.username,
                 "",
             )
@@ -1401,7 +1401,7 @@ class TestAudit(TestCase):
         with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
             Audit.audit(
                 self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_reject"],
+                WorkflowStatus.REJECTED,
                 self.user.username,
                 "",
             )
@@ -1413,7 +1413,7 @@ class TestAudit(TestCase):
         with self.assertRaisesMessage(Exception, "工单不是待审核态/审核通过状态，请返回刷新"):
             Audit.audit(
                 self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_abort"],
+                WorkflowStatus.ABORTED,
                 self.user.username,
                 "",
             )
@@ -1433,12 +1433,10 @@ class TestAudit(TestCase):
 
     def test_detail_by_workflow_id(self):
         """测试通过业务id获取审核信息"""
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
-        result = Audit.detail_by_workflow_id(
-            self.wf.id, WorkflowDict.workflow_type["sqlreview"]
-        )
+        result = Audit.detail_by_workflow_id(self.wf.id, WorkflowType.SQL_REVIEW)
         self.assertEqual(result, self.audit)
         result = Audit.detail_by_workflow_id(0, 0)
         self.assertEqual(result, None)
@@ -1477,7 +1475,7 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
         r = Audit.can_review(
@@ -1497,7 +1495,7 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.own_wf.id
         self.audit.save()
         r = Audit.can_review(
@@ -1514,7 +1512,7 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["query"]
+        self.audit.workflow_type = WorkflowType.QUERY
         self.audit.workflow_id = self.query_apply_1.apply_id
         self.audit.save()
         r = Audit.can_review(
@@ -1531,7 +1529,7 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
         r = Audit.can_review(self.su, self.audit.workflow_id, self.audit.workflow_type)
@@ -1544,9 +1542,9 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
-        self.audit.current_status = WorkflowDict.workflow_status["audit_success"]
+        self.audit.current_status = WorkflowStatus.PASSED
         self.audit.save()
         r = Audit.can_review(
             self.user, self.audit.workflow_id, self.audit.workflow_type
@@ -1560,7 +1558,7 @@ class TestAudit(TestCase):
         aug = Group.objects.create(name="auth_group")
         _detail_by_workflow_id.return_value.current_audit = aug.id
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
         r = Audit.can_review(
@@ -1577,7 +1575,7 @@ class TestAudit(TestCase):
         Group.objects.create(name="auth_group")
         _detail_by_workflow_id.side_effect = RuntimeError()
         _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
         with self.assertRaisesMessage(Exception, "当前审批auth_group_id不存在，请检查并清洗历史数据"):
@@ -1587,7 +1585,7 @@ class TestAudit(TestCase):
 
     def test_review_info_no_review(self):
         """测试获取当前工单审批流程和当前审核组，无需审批"""
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.audit_auth_groups = ""
         self.audit.current_audit = "-1"
@@ -1601,7 +1599,7 @@ class TestAudit(TestCase):
     def test_review_info(self):
         """测试获取当前工单审批流程和当前审核组，无需审批"""
         aug = Group.objects.create(name="DBA")
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.audit_auth_groups = str(aug.id)
         self.audit.current_audit = str(aug.id)

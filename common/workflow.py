@@ -2,7 +2,7 @@ import simplejson as json
 from django.contrib.auth.models import Group
 from django.http import HttpResponse
 
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
 from sql.models import WorkflowAudit, WorkflowLog
 from sql.utils.resource_group import user_groups
@@ -31,7 +31,7 @@ def lists(request):
     # 只返回所在资源组当前待自己审核的数据
     workflow_audit = WorkflowAudit.objects.filter(
         workflow_title__icontains=search,
-        current_status=WorkflowDict.workflow_status["audit_wait"],
+        current_status=WorkflowStatus.WAITING,
         group_id__in=group_ids,
         current_audit__in=auth_group_ids,
     )
