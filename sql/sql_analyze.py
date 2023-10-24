@@ -75,6 +75,7 @@ def analyze(request):
         }
         rows = generate_sql(text)
         for row in rows:
+            # 验证是不是传过来的文件, 如果是文件, 报错
             try:
                 p = Path(row["sql"])
                 if p.exists():
