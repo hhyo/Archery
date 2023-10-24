@@ -6,6 +6,7 @@
 @time: 2019/03/14
 """
 import simplejson as json
+from pathlib import Path
 from django.contrib.auth.decorators import permission_required
 
 from common.config import SysConfig
@@ -74,6 +75,12 @@ def analyze(request):
         }
         rows = generate_sql(text)
         for row in rows:
+            try:
+                p = Path(row["sql"])
+                if p.exists():
+                    return JsonResponse({"status": 1, "msg": "SQL 语句不合法", "data": []})
+            except OSError:
+                pass
             args["query"] = row["sql"]
             cmd_args = soar.generate_args2cmd(args=args)
             stdout, stderr = soar.execute_cmd(cmd_args).communicate()
