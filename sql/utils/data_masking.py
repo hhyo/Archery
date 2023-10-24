@@ -102,6 +102,7 @@ def analyze_query_tree(select_list, instance):
             column.get("table"),
             column.get("field"),
         )
+        field = field.lower()
         masking_column = masking_columns.get(
             f"{instance}-{table_schema}-{table}-{field}"
         )
