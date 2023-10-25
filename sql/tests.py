@@ -2303,6 +2303,28 @@ class TestSQLAnalyze(TestCase):
             list(json.loads(r.content)["rows"][0].keys()), ["sql_id", "sql", "report"]
         )
 
+    @patch("sql.sql_analyze.Path")
+    @patch("sql.plugins.plugin.subprocess")
+    def test_analyze_text_evil(self, _subprocess, mock_path):
+        """
+        测试分析SQL，text不为空
+        :return:
+        """
+        _subprocess.Popen.return_value.communicate.return_value = (
+            "some_stdout",
+            "some_stderr",
+        )
+        mock_path.return_value.exists.return_value = True
+        self.sys_config.set("soar", "/opt/archery/src/plugins/soar")
+        text = "/etc/passwd"
+        instance_name = self.master.instance_name
+        db_name = settings.DATABASES["default"]["TEST"]["NAME"]
+        r = self.client.post(
+            path="/sql_analyze/analyze/",
+            data={"text": text, "instance_name": instance_name, "db_name": db_name},
+        )
+        self.assertEqual(r.json()["msg"], "SQL 语句不合法")
+
 
 class TestBinLog(TestCase):
     """

@@ -5,8 +5,11 @@
 @file: sql_analyze.py
 @time: 2019/03/14
 """
+from pathlib import Path
+
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
+from django.core.files.temp import NamedTemporaryFile
 
 from common.config import SysConfig
 from sql.plugins.soar import Soar
@@ -74,6 +77,13 @@ def analyze(request):
         }
         rows = generate_sql(text)
         for row in rows:
+            # 验证是不是传过来的文件, 如果是文件, 报错
+            try:
+                p = Path(row["sql"].strip())
+                if p.exists():
+                    return JsonResponse({"status": 1, "msg": "SQL 语句不合法", "data": []})
+            except OSError:
+                pass
             args["query"] = row["sql"]
             cmd_args = soar.generate_args2cmd(args=args)
             stdout, stderr = soar.execute_cmd(cmd_args).communicate()
