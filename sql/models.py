@@ -340,7 +340,7 @@ class WorkflowAudit(models.Model):
 
 class WorkflowAuditDetail(models.Model):
     """
-    审批明细表
+    审批明细表(已弃用, 建议使用 WorkflowLog)
     """
 
     audit_detail_id = models.AutoField(primary_key=True)

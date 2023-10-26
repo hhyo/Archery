@@ -1,10 +1,12 @@
 # -*- coding: UTF-8 -*-
+import importlib
 from dataclasses import dataclass, field
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List
 
 from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
 from sql.utils.resource_group import user_groups, auth_group_users
 from sql.utils.sql_review import is_auto_review
@@ -45,6 +47,7 @@ SUPPORTED_OPERATION_GRID = {
         WorkflowAction.ABORT,
     ],
     WorkflowStatus.PASSED.value: [
+        WorkflowAction.ABORT,
         WorkflowAction.EXECUTE_SET_TIME,
         WorkflowAction.EXECUTE_START,
         WorkflowAction.EXECUTE_END,
@@ -104,7 +107,7 @@ class AuditV2:
             audit_auth_groups=workflow_audit_setting.audit_auth_groups.split(",")
         )
 
-    def create_audit(self) -> str:
+    def create_audit(self) -> WorkflowAuditDetail:
         """按照传进来的工作流创建审批流, 返回一个 message如果有任何错误, 会以 exception 的形式抛出, 其他情况都是正常进行"""
         # 检查是否已存在待审核数据
         workflow_info = self.get_audit_info()
@@ -206,7 +209,7 @@ class AuditV2:
             )
         if action not in allowed_actions:
             raise AuditException(
-                f"不允许的操作, 工单当前状态为 {self.audit.current_status}, 允许的操作为{','.join(allowed_actions)}"
+                f"不允许的操作, 工单当前状态为 {self.audit.current_status}, 允许的操作为{','.join(x.label for x in allowed_actions)}"
             )
 
         if action == WorkflowAction.PASS:
@@ -223,7 +226,7 @@ class AuditV2:
         try:
             self.audit = WorkflowAudit.objects.get(
                 workflow_type=self.workflow_type,
-                workflow_id=self.workflow.__getattribute__(self.workflow_pk_field),
+                workflow_id=getattr(self.workflow, self.workflow_pk_field),
             )
             return self.audit
         except ObjectDoesNotExist:
@@ -774,3 +777,26 @@ class Audit(object):
     @staticmethod
     def logs(audit_id):
         return WorkflowLog.objects.filter(audit_id=audit_id)
+
+
+def get_auditor(
+    # workflow 对象有可能是还没有在数据库中创建的对象, 这里需要注意
+    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply],
+    sys_config: SysConfig = field(default_factory=SysConfig),
+
+
+    audit: WorkflowAudit = None,
+    workflow_type: WorkflowType = WorkflowType.SQL_REVIEW,
+    workflow_pk_field: str = "id",
+    # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
+    resource_group: str = "",
+    resource_group_id: int = 0,
+) -> AuditV2:
+    current_auditor = settings.CURRENT_AUDITOR
+    module, o = current_auditor.split(":")
+    auditor = getattr(importlib.import_module(module), o)
+    return auditor(workflow=workflow,workflow_type=workflow_type,
+                   workflow_pk_field=workflow_pk_field,
+                   sys_config=sys_config,
+                   audit=audit,
+                   resource_group=resource_group, resource_group_id=resource_group_id)

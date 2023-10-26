@@ -26,7 +26,7 @@ from sql.engines.goinception import GoInceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.workflow_audit import Audit, AuditV2, AuditException
+from sql.utils.workflow_audit import Audit, AuditException, get_auditor
 from sql.utils.sql_utils import extract_tables
 
 logger = logging.getLogger("default")
@@ -279,7 +279,7 @@ def query_priv_apply(request):
     elif int(priv_type) == 2:
         apply_info.db_list = db_name
         apply_info.table_list = ",".join(table_list)
-    audit_handler = AuditV2(workflow=apply_info)
+    audit_handler = Auditor(workflow=apply_info)
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():

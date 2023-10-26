@@ -30,7 +30,9 @@ from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import get_auditor, AuditException
+
+
 
 logger = logging.getLogger("default")
 __author__ = "hhyo"
@@ -171,18 +173,14 @@ def archive_apply(request):
 
     # 获取资源组和审批信息
     res_group = ResourceGroup.objects.get(group_name=group_name)
-    audit_auth_groups = Audit.settings(res_group.group_id, WorkflowType.ARCHIVE)
-    if not audit_auth_groups:
-        return JsonResponse({"status": 1, "msg": "审批流程不能为空，请先配置审批流程", "data": {}})
-
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
             # 保存申请信息到数据库
-            archive_info = ArchiveConfig.objects.create(
+            archive_info = ArchiveConfig(
                 title=title,
                 resource_group=res_group,
-                audit_auth_groups=audit_auth_groups,
+                audit_auth_groups="",
                 src_instance=s_ins,
                 src_db_name=src_db_name,
                 src_table_name=src_table_name,
@@ -198,9 +196,23 @@ def archive_apply(request):
                 user_name=user.username,
                 user_display=user.display,
             )
-            archive_id = archive_info.id
-            # 调用工作流插入审核信息
-            audit_result, audit_detail = Audit.add(WorkflowType.ARCHIVE, archive_id)
+            audit_handler = get_auditor(workflow=archive_info,
+                                    resource_group=res_group.group_name,
+                                    resource_group_id=res_group.group_id)
+
+            try:
+                audit_handler.create_audit()
+            except AuditException as e:
+                return JsonResponse({"status": 1,
+                                     "msg": f"新建审批流失败: {str(e)}",
+                                     "data": {}})
+            async_task(
+                notify_for_audit,
+                workflow_audit=self.audit,
+                workflow_audit_detail=audit_detail,
+                timeout=60,
+                task_name=f"archive-apply-{archive_id}",
+            )
     except Exception as msg:
         logger.error(traceback.format_exc())
         result["status"] = 1

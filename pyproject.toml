@@ -1,0 +1,3 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "archery.settings"
+python_files = "tests.py test_*.py *_tests.py"
