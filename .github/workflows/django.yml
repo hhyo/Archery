@@ -84,7 +84,7 @@ jobs:
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
-        pytest --cov-report xml
+        pytest --cov --cov-report xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
