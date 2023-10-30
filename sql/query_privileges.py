@@ -20,7 +20,7 @@ from django.urls import reverse
 from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import WorkflowStatus, WorkflowType
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines.goinception import GoInceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
@@ -279,7 +279,7 @@ def query_priv_apply(request):
     elif int(priv_type) == 2:
         apply_info.db_list = db_name
         apply_info.table_list = ",".join(table_list)
-    audit_handler = Auditor(workflow=apply_info)
+    audit_handler = get_auditor(workflow=apply_info)
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
@@ -415,50 +415,42 @@ def query_priv_audit(request):
     # 获取用户信息
     user = request.user
     apply_id = int(request.POST["apply_id"])
-    audit_status = int(request.POST["audit_status"])
+    try:
+        audit_status = WorkflowAction(int(request.POST["audit_status"]))
+    except ValueError as e:
+        return render(request, "error.html", {"errMsg": f"audit_status 参数错误, {str(e)}"})
     audit_remark = request.POST.get("audit_remark")
 
-    if audit_remark is None:
+    if not audit_remark:
         audit_remark = ""
 
-    if Audit.can_review(request.user, apply_id, 1) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
-        return render(request, "error.html", context)
-
-    # 使用事务保持数据一致性
     try:
-        with transaction.atomic():
-            audit_id = Audit.detail_by_workflow_id(
-                workflow_id=apply_id, workflow_type=WorkflowType.QUERY
-            ).audit_id
-
-            # 调用工作流接口审核
-            audit_result, workflow_audit_detail = Audit.audit(
-                audit_id, audit_status, user.username, audit_remark
+        sql_query_apply = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+    except QueryPrivilegesApply.DoesNotExist:
+        return render(request, "error.html", {"errMsg": "工单不存在"})
+    auditor = get_auditor(workflow=sql_query_apply)
+    # 使用事务保持数据一致性
+    with transaction.atomic():
+        try:
+            workflow_audit_detail = auditor.operate(
+                audit_status, request.user, audit_remark
+            )
+        except AuditException as e:
+            return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
+        if auditor.audit.current_status == WorkflowStatus.PASSED:
+            # 通过了, 授权
+            _query_apply_audit_call_back(
+                auditor.audit.workflow_id, auditor.audit.current_status
             )
 
-            # 按照审核结果更新业务表审核状态
-            audit_detail = Audit.detail(audit_id)
-            if audit_detail.workflow_type == WorkflowType.QUERY:
-                # 更新业务表审核状态,插入权限信息
-                _query_apply_audit_call_back(
-                    audit_detail.workflow_id, audit_result["data"]["workflow_status"]
-                )
-
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
-    else:
-        # 消息通知
-        audit_detail.refresh_from_db()
-        async_task(
-            notify_for_audit,
-            workflow_audit=audit_detail,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"query-priv-audit-{apply_id}",
-        )
+    # 消息通知
+    async_task(
+        notify_for_audit,
+        workflow_audit=auditor.audit,
+        workflow_audit_detail=workflow_audit_detail,
+        timeout=60,
+        task_name=f"query-priv-audit-{apply_id}",
+    )
 
     return HttpResponseRedirect(reverse("sql:queryapplydetail", args=(apply_id,)))
 

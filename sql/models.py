@@ -340,7 +340,9 @@ class WorkflowAudit(models.Model):
 
 class WorkflowAuditDetail(models.Model):
     """
-    审批明细表(已弃用, 建议使用 WorkflowLog)
+    审批明细表
+    TODO
+    部分字段与 WorkflowLog 重复, 建议整合到一起)
     """
 
     audit_detail_id = models.AutoField(primary_key=True)

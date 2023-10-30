@@ -410,6 +410,8 @@ class TestWorkflow(APITestCase):
             current_audit="1",
             next_audit="-1",
             current_status=0,
+            create_user=self.user.username,
+            create_user_display=self.user.display,
         )
         self.wl = WorkflowLog.objects.create(
             audit_id=self.audit1.audit_id, operation_type=1

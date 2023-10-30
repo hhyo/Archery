@@ -18,7 +18,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from sql.engines import get_engine
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, get_auditor
 from sql.utils.resource_group import user_instances
 from common.utils.const import WorkflowType
 from common.config import SysConfig
@@ -424,10 +424,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                 workflow_content = SqlWorkflowContent.objects.create(
                     workflow=workflow, **validated_data
                 )
-                # 自动审核通过了，才调用工作流
-                if workflow_status == "workflow_manreviewing":
-                    # 调用工作流插入审核信息, SQL上线权限申请workflow_type=2
-                    Audit.add(WorkflowType.SQL_REVIEW, workflow.id)
+                # 自动创建工作流
+                auditor = get_auditor(workflow=workflow)
+                auditor.create_audit()
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
@@ -451,7 +450,7 @@ class AuditWorkflowSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField(label="工单id")
     audit_remark = serializers.CharField(label="审批备注")
     workflow_type = serializers.ChoiceField(
-        choices=[1, 2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        choices=WorkflowType.choices, label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
     )
     audit_type = serializers.ChoiceField(choices=["pass", "cancel"], label="审核类型")
 

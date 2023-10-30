@@ -3,19 +3,30 @@ import datetime
 import pytest
 
 from common.utils.const import WorkflowStatus
-from sql.models import Instance, ResourceGroup, SqlWorkflow, SqlWorkflowContent, QueryPrivilegesApply, ArchiveConfig
+from sql.models import (
+    Instance,
+    ResourceGroup,
+    SqlWorkflow,
+    SqlWorkflowContent,
+    QueryPrivilegesApply,
+    ArchiveConfig,
+)
 
 
 @pytest.fixture
 def normal_user(django_user_model):
-    user = django_user_model.objects.create(username="test_user", display="中文显示", is_active=True)
+    user = django_user_model.objects.create(
+        username="test_user", display="中文显示", is_active=True
+    )
     yield user
     user.delete()
 
 
 @pytest.fixture
 def super_user(django_user_model):
-    user = django_user_model.objects.create(username="super_user", display="超级用户", is_active=True, is_superuser=True)
+    user = django_user_model.objects.create(
+        username="super_user", display="超级用户", is_active=True, is_superuser=True
+    )
     yield user
     user.delete()
 
@@ -37,9 +48,7 @@ def db_instance(db):
 
 @pytest.fixture
 def resource_group(db) -> ResourceGroup:
-    res_group = ResourceGroup.objects.create(
-        group_id=1, group_name="group_name"
-    )
+    res_group = ResourceGroup.objects.create(group_id=1, group_name="group_name")
     yield res_group
     res_group.delete()
 
@@ -90,24 +99,23 @@ def sql_query_apply(db_instance):
 @pytest.fixture
 def archive_apply(db_instance, resource_group):
     archive_apply_1 = ArchiveConfig.objects.create(
-            title="title",
-            resource_group=resource_group,
-            audit_auth_groups="",
-            src_instance=db_instance,
-            src_db_name="src_db_name",
-            src_table_name="src_table_name",
-            dest_instance=db_instance,
-            dest_db_name="src_db_name",
-            dest_table_name="src_table_name",
-            condition="1=1",
-            mode="file",
-            no_delete=True,
-            sleep=1,
-            status=WorkflowStatus.WAITING,
-            state=False,
-            user_name="some_user",
-            user_display="display",
-        )
+        title="title",
+        resource_group=resource_group,
+        audit_auth_groups="",
+        src_instance=db_instance,
+        src_db_name="src_db_name",
+        src_table_name="src_table_name",
+        dest_instance=db_instance,
+        dest_db_name="src_db_name",
+        dest_table_name="src_table_name",
+        condition="1=1",
+        mode="file",
+        no_delete=True,
+        sleep=1,
+        status=WorkflowStatus.WAITING,
+        state=False,
+        user_name="some_user",
+        user_display="display",
+    )
     yield archive_apply_1
     archive_apply_1.delete()
-

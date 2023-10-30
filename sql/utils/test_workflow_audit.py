@@ -8,8 +8,18 @@ from django.test import TestCase
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
-from sql.models import Instance, ResourceGroup, SqlWorkflow, SqlWorkflowContent, QueryPrivilegesApply, ArchiveConfig, \
-    WorkflowAudit, WorkflowLog, WorkflowAuditDetail, WorkflowAuditSetting
+from sql.models import (
+    Instance,
+    ResourceGroup,
+    SqlWorkflow,
+    SqlWorkflowContent,
+    QueryPrivilegesApply,
+    ArchiveConfig,
+    WorkflowAudit,
+    WorkflowLog,
+    WorkflowAuditDetail,
+    WorkflowAuditSetting,
+)
 from sql.utils.tests import User
 from sql.utils.workflow_audit import Audit, AuditV2, AuditSetting, AuditException
 
@@ -125,247 +135,6 @@ class TestAudit(TestCase):
         WorkflowLog.objects.all().delete()
         ResourceGroup.objects.all().delete()
         ArchiveConfig.objects.all().delete()
-
-    def test_audit_add_query(self):
-        """测试添加查询审核工单"""
-        result, _ = Audit.add(1, self.query_apply_1.apply_id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_sqlreview(self):
-        """测试添加上线审核工单"""
-        result, _ = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_archive_review(self):
-        """测试添加数据归档工单"""
-        result, workflow_audit_detail = Audit.add(3, self.archive_apply_1.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_wrong_type(self):
-        """测试添加不存在的类型"""
-        with self.assertRaisesMessage(Exception, "工单类型不存在"):
-            Audit.add(4, 1)
-
-    def test_audit_add_settings_not_exists(self):
-        """测试审批流程未配置"""
-        self.wf.audit_auth_groups = ""
-        self.wf.save()
-        with self.assertRaisesMessage(Exception, "审批流程不能为空，请先配置审批流程"):
-            Audit.add(2, self.wf.id)
-
-    def test_audit_add_duplicate(self):
-        """测试重复提交"""
-        Audit.add(2, self.wf.id)
-        with self.assertRaisesMessage(Exception, "该工单当前状态为待审核，请勿重复提交"):
-            Audit.add(2, self.wf.id)
-
-    @patch("sql.utils.workflow_audit.is_auto_review", return_value=True)
-    def test_audit_add_auto_review(self, _is_auto_review):
-        """测试提交自动审核通过"""
-        self.sys_config.set("auto_review", "true")
-        result, workflow_audit_detail = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowStatus.PASSED)
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertEqual(log_info.operation_info, "无需审批，系统直接审核通过")
-
-    def test_audit_add_multiple_audit(self):
-        """测试提交多级审核"""
-        self.wf.audit_auth_groups = "1,2,3"
-        self.wf.save()
-        result, _ = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
-        # 存在下级审批
-        self.assertEqual(audit_detail.current_audit, "1")
-        self.assertEqual(audit_detail.next_audit, "2")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_success_not_exists_next(self):
-        """测试审核通过、无下一级"""
-        self.audit.current_audit = "3"
-        self.audit.next_audit = "-1"
-        self.audit.save()
-        result, _ = Audit.audit(
-            self.audit.audit_id,
-            WorkflowStatus.PASSED,
-            self.user.username,
-            "通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowStatus.PASSED)
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 1)
-        self.assertEqual(log_info.operation_type_desc, "审批通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：通过，下级审批：None")
-
-    def test_audit_success_exists_next(self):
-        """测试审核通过、存在下一级"""
-        self.audit.current_audit = "1"
-        self.audit.next_audit = "2"
-        self.audit.save()
-        result, _ = Audit.audit(
-            self.audit.audit_id,
-            WorkflowStatus.PASSED,
-            self.user.username,
-            "通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowStatus.WAITING)
-        # 存在下级审批
-        self.assertEqual(audit_detail.next_audit, "3")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 1)
-        self.assertEqual(log_info.operation_type_desc, "审批通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：通过，下级审批：2")
-
-    def test_audit_reject(self):
-        """测试审核不通过"""
-        result, _ = Audit.audit(
-            self.audit.audit_id,
-            WorkflowStatus.REJECTED,
-            self.user.username,
-            "不通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowStatus.REJECTED)
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 2)
-        self.assertEqual(log_info.operation_type_desc, "审批不通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：不通过")
-
-    def test_audit_abort(self):
-        """测试取消审批"""
-        self.audit.create_user = self.user.username
-        self.audit.save()
-        result, _ = Audit.audit(
-            self.audit.audit_id,
-            WorkflowStatus.ABORTED,
-            self.user.username,
-            "取消",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowStatus.ABORTED)
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 3)
-        self.assertEqual(log_info.operation_type_desc, "审批取消")
-        self.assertEqual(log_info.operation_info, f"取消原因：取消")
-
-    def test_audit_wrong_exception(self):
-        """测试审核异常的状态"""
-        with self.assertRaisesMessage(Exception, "审核异常"):
-            Audit.audit(self.audit.audit_id, 10, self.user.username, "")
-
-    def test_audit_success_wrong_status(self):
-        """测试审核通过，当前状态不是待审核"""
-        self.audit.current_status = 1
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowStatus.PASSED,
-                self.user.username,
-                "",
-            )
-
-    def test_audit_reject_wrong_status(self):
-        """测试审核不通过，当前状态不是待审核"""
-        self.audit.current_status = 1
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowStatus.REJECTED,
-                self.user.username,
-                "",
-            )
-
-    def test_audit_abort_wrong_status(self):
-        """测试审核不通过，当前状态不是待审核"""
-        self.audit.current_status = 2
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核态/审核通过状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowStatus.ABORTED,
-                self.user.username,
-                "",
-            )
 
     @patch("sql.utils.workflow_audit.user_groups", return_value=[])
     def test_todo(self, _user_groups):
@@ -566,8 +335,9 @@ class TestAudit(TestCase):
 
 
 # AuditV2 测试
-def test_create_audit(sql_workflow, sql_query_apply, archive_apply, resource_group,
-                      mocker: MockFixture):
+def test_create_audit(
+    sql_workflow, sql_query_apply, archive_apply, resource_group, mocker: MockFixture
+):
     """测试正常创建, 可正常获取到一个 audit_setting"""
     mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
     fake_audit_setting = AuditSetting(
@@ -585,14 +355,26 @@ def test_create_audit(sql_workflow, sql_query_apply, archive_apply, resource_gro
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
     sql_query_apply.refresh_from_db()
-    assert sql_query_apply.audit_auth_groups == fake_audit_setting.audit_auth_group_in_db
+    assert (
+        sql_query_apply.audit_auth_groups == fake_audit_setting.audit_auth_group_in_db
+    )
 
-    audit = AuditV2(workflow=archive_apply,
-                    resource_group=resource_group.group_name,
-                    resource_group_id=resource_group.group_id)
+    audit = AuditV2(
+        workflow=archive_apply,
+        resource_group=resource_group.group_name,
+        resource_group_id=resource_group.group_id,
+    )
     audit.create_audit()
     archive_apply.refresh_from_db()
     assert archive_apply.audit_auth_groups == fake_audit_setting.audit_auth_group_in_db
+
+
+def test_duplicate_create(sql_query_apply, fake_generate_audit_setting):
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    with pytest.raises(AuditException) as e:
+        audit.create_audit()
+    assert "请勿重复提交" in str(e.value)
 
 
 def test_create_audit_auto_pass(sql_workflow, mocker: MockFixture):
@@ -621,18 +403,27 @@ def fake_generate_audit_setting(mocker: MockFixture):
     yield mock_generate_audit_setting
 
 
-@pytest.mark.parametrize("status,operation,allowed", [
-    (WorkflowStatus.WAITING, WorkflowAction.SUBMIT, False),
-    (WorkflowStatus.WAITING, WorkflowAction.PASS, True),
-    (WorkflowStatus.WAITING, WorkflowAction.REJECT, True),
-    (WorkflowStatus.WAITING, WorkflowAction.EXECUTE_START, False),
-    (WorkflowStatus.PASSED, WorkflowAction.ABORT, True),
-    (WorkflowStatus.PASSED, WorkflowAction.REJECT, False),
-    (WorkflowStatus.PASSED, WorkflowAction.PASS, False),
-    (WorkflowStatus.REJECTED, WorkflowAction.PASS, False),
-    (WorkflowStatus.ABORTED, WorkflowAction.PASS, False),
-])
-def test_supported_operate(sql_query_apply, status, super_user, operation, allowed: bool, fake_generate_audit_setting):
+@pytest.mark.parametrize(
+    "status,operation,allowed",
+    [
+        (WorkflowStatus.WAITING, WorkflowAction.SUBMIT, False),
+        (WorkflowStatus.WAITING, WorkflowAction.PASS, True),
+        (WorkflowStatus.WAITING, WorkflowAction.REJECT, True),
+        (WorkflowStatus.WAITING, WorkflowAction.EXECUTE_START, False),
+        (WorkflowStatus.PASSED, WorkflowAction.REJECT, True),
+        (WorkflowStatus.PASSED, WorkflowAction.PASS, False),
+        (WorkflowStatus.REJECTED, WorkflowAction.PASS, False),
+        (WorkflowStatus.ABORTED, WorkflowAction.PASS, False),
+    ],
+)
+def test_supported_operate(
+    sql_query_apply,
+    status,
+    super_user,
+    operation,
+    allowed: bool,
+    fake_generate_audit_setting,
+):
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
     audit.audit.current_status = status
@@ -646,7 +437,9 @@ def test_supported_operate(sql_query_apply, status, super_user, operation, allow
         assert isinstance(result, WorkflowAuditDetail)
         assert result.audit_id == audit.audit.audit_id
         # 在 log 表里找对于的记录
-        log = WorkflowLog.objects.filter(audit_id=audit.audit.audit_id, operation_type=operation).all()
+        log = WorkflowLog.objects.filter(
+            audit_id=audit.audit.audit_id, operation_type=operation
+        ).all()
         assert len(log) == 1
 
 
@@ -670,6 +463,7 @@ def test_generate_audit_setting_empty_config(sql_query_apply):
     assert "未配置审流" in str(e.value)
 
 
-def test_generate_audit_setting_full_config(sql_workflow, sql_query_apply, archive_apply, resource_group,
-                      mocker: MockFixture):
+def test_generate_audit_setting_full_config(
+    sql_workflow, sql_query_apply, archive_apply, resource_group, mocker: MockFixture
+):
     pass

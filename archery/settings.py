@@ -66,7 +66,7 @@ env = environ.Env(
             "sql.notify:GenericWebhookNotifier",
         ],
     ),
-    CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2")
+    CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2"),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
