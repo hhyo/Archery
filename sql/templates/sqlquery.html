@@ -205,7 +205,7 @@
                                 </div>
 
                                 <div id="setHelp" class="alert alert-info" style="display: none">
-                                    ` <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                                    <i> 1、smembers key 列出集合key中的所有成员</i></br>
                                     <i> 2、scard key 返回集合key中元素的个数</i></br>
                                     <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
                                     <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
@@ -824,7 +824,7 @@
                                         if (xhr.status === 200) {
                                             var blob = xhr.response;
                                             var downloadLink = document.createElement('a');
-                                            downloadLink.href = window.URL.createObjectURL(blob);                                            
+                                            downloadLink.href = window.URL.createObjectURL(blob);
                                             downloadLink.click();
                                         }
                                     };
