@@ -3141,7 +3141,7 @@ class TestDataDictionary(TestCase):
         self.assertEqual(r.json()["status"], 1)
 
     @patch("sql.data_dictionary.get_engine")
-    def oracle_test_export_instance(self, _get_engine):
+    def test_oracle_export_instance(self, _get_engine):
         """
         oracle元数据测试导出
         :return:

@@ -369,6 +369,19 @@ def test_create_audit(
     assert archive_apply.audit_auth_groups == fake_audit_setting.audit_auth_group_in_db
 
 
+def test_init_no_workflow_and_audit():
+    with pytest.raises(ValueError) as e:
+        AuditV2()
+    assert "WorkflowAudit 或 workflow" in str(e.value)
+
+
+def test_archive_init_no_resource_group(archive_apply):
+    """测试 archive 初始化时指定的资源组不存在"""
+    with pytest.raises(AuditException) as e:
+        AuditV2(workflow=archive_apply, resource_group="not_exists_group")
+    assert "参数错误, 未发现资源组" in str(e.value)
+
+
 def test_duplicate_create(sql_query_apply, fake_generate_audit_setting):
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
@@ -387,8 +400,6 @@ def test_create_audit_auto_pass(sql_workflow, mocker: MockFixture):
     mock_generate_audit_setting.return_value = fake_audit_setting
     audit = AuditV2(workflow=workflow)
     audit.create_audit()
-    workflow.refresh_from_db()
-    assert workflow.status == "workflow_review_pass"
     assert audit.audit.current_status == WorkflowStatus.PASSED
 
 
@@ -459,11 +470,41 @@ def test_pass_has_next_level(sql_query_apply, super_user, fake_generate_audit_se
 def test_generate_audit_setting_empty_config(sql_query_apply):
     audit = AuditV2(workflow=sql_query_apply)
     with pytest.raises(AuditException) as e:
-        audit_setting = audit.generate_audit_setting()
+        audit.generate_audit_setting()
     assert "未配置审流" in str(e.value)
 
 
-def test_generate_audit_setting_full_config(
-    sql_workflow, sql_query_apply, archive_apply, resource_group, mocker: MockFixture
+def test_generate_audit_setting_auto_review(
+    sql_workflow, setup_sys_config, mocker: MockFixture
 ):
-    pass
+    sql_workflow, _ = sql_workflow
+    setup_sys_config.set("auto_review", True)
+    mock_is_auto_review = mocker.patch(
+        "sql.utils.workflow_audit.is_auto_review", return_value=True
+    )
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
+    audit_setting = audit.generate_audit_setting()
+    assert audit_setting.auto_pass is True
+    mock_is_auto_review.assert_called()
+
+
+def test_get_workflow(
+    archive_apply,
+    sql_query_apply,
+    sql_workflow,
+    resource_group,
+    fake_generate_audit_setting,
+):
+    """初始化时只传了 audit, 尝试取 workflow"""
+    sql_workflow, _ = sql_workflow
+    for wf in [sql_query_apply, sql_workflow]:
+        a = AuditV2(workflow=wf)
+        a.create_audit()
+        audit_init_with_audit = AuditV2(audit=a.audit)
+        assert audit_init_with_audit.workflow_type == a.workflow_type
+        assert audit_init_with_audit.workflow == a.workflow
+    a = AuditV2(workflow=archive_apply, resource_group=resource_group.group_name)
+    a.create_audit()
+    audit_init_with_audit = AuditV2(audit=a.audit)
+    assert audit_init_with_audit.workflow_type == a.workflow_type
+    assert audit_init_with_audit.workflow == a.workflow

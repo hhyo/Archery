@@ -89,9 +89,6 @@ class TwoFactorAuthConfig(models.Model):
     )
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
 
-    def __int__(self):
-        return self.username
-
     class Meta:
         managed = True
         db_table = "2fa_config"

@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import dataclasses
 import importlib
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from typing import Union, Optional, List
 
 from django.contrib.auth.models import Group
@@ -110,6 +110,8 @@ class AuditV2:
             self.workflow = SqlWorkflow.objects.get(id=self.audit.workflow_id)
         elif self.audit.workflow_type == WorkflowType.ARCHIVE:
             self.workflow = ArchiveConfig.objects.get(id=self.audit.workflow_id)
+            self.resource_group = self.audit.group_name
+            self.resource_group_id = self.audit.group_id
 
     def generate_audit_setting(self) -> AuditSetting:
         if self.workflow_type == WorkflowType.SQL_REVIEW:
@@ -140,10 +142,7 @@ class AuditV2:
         if workflow_info:
             raise AuditException("该工单当前状态为待审核，请勿重复提交")
         # 获取审批流程
-        try:
-            audit_setting = self.generate_audit_setting()
-        except AuditException as e:
-            raise e
+        audit_setting = self.generate_audit_setting()
 
         if self.workflow_type == WorkflowType.QUERY:
             workflow_title = self.workflow.title
@@ -182,7 +181,7 @@ class AuditV2:
             create_user_display=create_user_display,
         )
         # 自动通过的情况
-        if audit_setting.auto_pass and self.workflow_type == WorkflowType.SQL_REVIEW:
+        if audit_setting.auto_pass:
             self.audit.current_status = WorkflowStatus.PASSED
             self.audit.save()
             WorkflowLog.objects.create(
@@ -193,8 +192,6 @@ class AuditV2:
                 operator=self.audit.create_user,
                 operator_display=self.audit.create_user_display,
             )
-            self.workflow.status = "workflow_review_pass"
-            self.workflow.save()
 
             return "无需审批, 直接审核通过"
 
@@ -302,6 +299,9 @@ class AuditV2:
                 workflow_type=self.workflow_type,
                 workflow_id=getattr(self.workflow, self.workflow_pk_field),
             )
+            if self.audit.workflow_type == WorkflowType.ARCHIVE:
+                self.resource_group = self.audit.group_name
+                self.resource_group_id = self.audit.group_id
             return self.audit
         except ObjectDoesNotExist:
             return None

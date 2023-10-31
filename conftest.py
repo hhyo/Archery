@@ -11,6 +11,7 @@ from sql.models import (
     QueryPrivilegesApply,
     ArchiveConfig,
 )
+from common.config import SysConfig
 
 
 @pytest.fixture
@@ -119,3 +120,10 @@ def archive_apply(db_instance, resource_group):
     )
     yield archive_apply_1
     archive_apply_1.delete()
+
+
+@pytest.fixture
+def setup_sys_config(db):
+    sys_config = SysConfig()
+    yield sys_config
+    sys_config.purge()
