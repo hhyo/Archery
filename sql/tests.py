@@ -2087,7 +2087,7 @@ class TestArchiver(TestCase):
         r = self.client.post(path="/archive/apply/", data=data)
         self.assertDictEqual(
             json.loads(r.content),
-            {"data": {}, "msg": "新建审批流失败: 审批类型 数据归档申请 未配置审流", "status": 1},
+            {"data": {}, "msg": "新建审批流失败, 请联系管理员", "status": 1},
         )
 
     @patch("sql.archiver.async_task")

@@ -202,7 +202,8 @@ def archive_apply(request):
         try:
             audit_handler.create_audit()
         except AuditException as e:
-            return JsonResponse({"status": 1, "msg": f"新建审批流失败: {str(e)}", "data": {}})
+            logger.error(f"新建审批流失败: {str(e)}")
+            return JsonResponse({"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}})
         async_task(
             notify_for_audit,
             workflow_audit=audit_handler.audit,
