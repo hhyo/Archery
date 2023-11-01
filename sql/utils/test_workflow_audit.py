@@ -342,7 +342,7 @@ def test_create_audit(
     mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
     fake_audit_setting = AuditSetting(
         auto_pass=False,
-        audit_auth_groups=["some_auth_group"],
+        audit_auth_groups=[123],
     )
     mock_generate_audit_setting.return_value = fake_audit_setting
 
@@ -408,7 +408,7 @@ def fake_generate_audit_setting(mocker: MockFixture):
     mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
     fake_audit_setting = AuditSetting(
         auto_pass=False,
-        audit_auth_groups=["some_auth_group"],
+        audit_auth_groups=[123],
     )
     mock_generate_audit_setting.return_value = fake_audit_setting
     yield mock_generate_audit_setting
@@ -457,13 +457,13 @@ def test_supported_operate(
 def test_pass_has_next_level(sql_query_apply, super_user, fake_generate_audit_setting):
     fake_generate_audit_setting.return_value = AuditSetting(
         auto_pass=False,
-        audit_auth_groups=["some_auth_group", "another_auth_group"],
+        audit_auth_groups=[1, 2],
     )
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
     audit.operate(WorkflowAction.PASS, super_user, "ok")
     assert audit.audit.current_status == WorkflowStatus.WAITING
-    assert audit.audit.current_audit == "another_auth_group"
+    assert audit.audit.current_audit == 2
     assert audit.audit.next_audit == "-1"
 
 

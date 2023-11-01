@@ -479,6 +479,8 @@ def _db_priv(user, instance, db_name):
     :return: 权限存在则返回对应权限的limit_num，否则返回False
     TODO 返回统一为 int 类型, 不存在返回0 (虽然其实在python中 0==False)
     """
+    if user.is_superuser:
+        return int(SysConfig().get("admin_query_limit", 5000))
     # 获取用户库权限
     user_privileges = QueryPrivileges.objects.filter(
         user_name=user.username,
@@ -488,11 +490,8 @@ def _db_priv(user, instance, db_name):
         is_deleted=0,
         priv_type=1,
     )
-    if user.is_superuser:
-        return int(SysConfig().get("admin_query_limit", 5000))
-    else:
-        if user_privileges.exists():
-            return user_privileges.first().limit_num
+    if user_privileges.exists():
+        return user_privileges.first().limit_num
     return False
 
 

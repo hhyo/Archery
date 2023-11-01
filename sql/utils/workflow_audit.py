@@ -3,6 +3,7 @@ import dataclasses
 import importlib
 from dataclasses import dataclass, field
 from typing import Union, Optional, List
+import logging
 
 from django.contrib.auth.models import Group
 from django.utils import timezone
@@ -26,18 +27,25 @@ from sql.models import (
 from common.config import SysConfig
 
 
+logger = logging.getLogger("default")
+
+
 class AuditException(Exception):
     pass
 
 
 @dataclass
 class AuditSetting:
-    audit_auth_groups: List[str] = field(default_factory=list)
+    """
+    audit_auth_groups 为 django 组的 id
+    """
+
+    audit_auth_groups: List = field(default_factory=list)
     auto_pass: bool = False
 
     @property
     def audit_auth_group_in_db(self):
-        return ",".join(self.audit_auth_groups)
+        return ",".join(str(x) for x in self.audit_auth_groups)
 
 
 # 列出审核工单中不同状态的合法操作
@@ -99,6 +107,32 @@ class AuditV2:
         # 防止 get_auditor 显式的传了个 None
         if not self.sys_config:
             self.sys_config = SysConfig()
+
+    @property
+    def review_info(self) -> (str, str):
+        """获取可读的审批流信息, 包含整体的审批流和当前节点信息"""
+        if self.audit.audit_auth_groups == "":
+            audit_auth_group = "无需审批"
+        else:
+            try:
+                audit_auth_group = "->".join(
+                    [
+                        Group.objects.get(id=auth_group_id).name
+                        for auth_group_id in self.audit.audit_auth_groups.split(",")
+                    ]
+                )
+            except Group.DoesNotExist:
+                audit_auth_group = self.audit.audit_auth_groups
+        if self.audit.current_audit == "-1":
+            current_audit_auth_group = None
+        else:
+            try:
+                current_audit_auth_group = Group.objects.get(
+                    id=self.audit.current_audit
+                ).name
+            except Group.DoesNotExist:
+                current_audit_auth_group = self.audit.current_audit
+        return audit_auth_group, current_audit_auth_group
 
     def get_workflow(self):
         """尝试从 audit 中取出 workflow"""
@@ -207,11 +241,12 @@ class AuditV2:
         self.audit.create_user = create_user
         self.audit.create_user_display = create_user_display
         self.audit.save()
+        readable_review_flow, _ = self.review_info
         audit_log = WorkflowLog(
             audit_id=self.audit.audit_id,
             operation_type=WorkflowAction.SUBMIT,
             operation_type_desc=WorkflowAction.SUBMIT.label,
-            operation_info="等待审批，审批流程：{}".format(self.audit.audit_auth_groups),
+            operation_info="等待审批，审批流程：{}".format(readable_review_flow),
             operator=self.audit.create_user,
             operator_display=self.audit.create_user_display,
         )
@@ -319,15 +354,18 @@ class AuditV2:
             self.audit.current_audit = self.audit.next_audit
             # 判断后续是否还有下下一级审核组
             audit_auth_groups_list = self.audit.audit_auth_groups.split(",")
-            for index, auth_group in enumerate(audit_auth_groups_list):
-                if auth_group == self.audit.next_audit:
-                    # 无下下级审核组
-                    if index == len(audit_auth_groups_list) - 1:
-                        self.audit.next_audit = "-1"
-                    # 存在下下级审核组
-                    else:
-                        self.audit.next_audit = audit_auth_groups_list[index + 1]
-                    break
+            try:
+                position = audit_auth_groups_list.index(str(self.audit.current_audit))
+            except ValueError as e:
+                logger.error(
+                    f"审批流配置错误, 审批节点{self.audit.current_audit} 不在审批流内: 审核ID {self.audit.audit_id}"
+                )
+                raise e
+            if position + 1 >= len(audit_auth_groups_list):
+                # 最后一个节点
+                self.audit.next_audit = "-1"
+            else:
+                self.audit.next_audit = audit_auth_groups_list[position + 1]
             self.audit.save()
 
         # 插入审核明细数据
@@ -339,12 +377,17 @@ class AuditV2:
             remark=remark,
         )
 
+        if self.audit.current_audit == "-1":
+            operation_info = f"审批备注: {remark}, 无下级审批"
+        else:
+            operation_info = f"审批备注：{remark}, 下级审批：{self.audit.current_audit}"
+
         # 增加工单日志
         WorkflowLog.objects.create(
             audit_id=self.audit.audit_id,
             operation_type=WorkflowAction.PASS,
             operation_type_desc=WorkflowAction.PASS.label,
-            operation_info="审批备注：{}，下级审批：{}".format(remark, self.audit.current_audit),
+            operation_info=operation_info,
             operator=actor.username,
             operator_display=actor.display,
         )
