@@ -52,23 +52,25 @@ class My2SqlResult:
     error: str = ""
 
 
+@dataclass
 class Notifier:
-    name = "base"
-    sys_config_key: str = ""
+    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult]
+    sys_config: SysConfig = None
+    # init false, class property, 不是 instance property
+    name: str = field(init=False, default="base")
+    sys_config_key: str = field(init=False, default="")
+    event_type: EventType = EventType.AUDIT
+    audit: WorkflowAudit = None
+    audit_detail: WorkflowAuditDetail = None
 
-    def __init__(
-        self,
-        workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult],
-        sys_config: SysConfig,
-        audit: WorkflowAudit = None,
-        audit_detail: WorkflowAuditDetail = None,
-        event_type: EventType = EventType.AUDIT,
-    ):
-        self.workflow = workflow
-        self.audit = audit
-        self.audit_detail = audit_detail
-        self.event_type = event_type
-        self.sys_config = sys_config
+    def __post_init__(self):
+        if not self.workflow:
+            if not self.audit:
+                raise ValueError("需要提供 WorkflowAudit 或 workflow")
+            self.workflow = self.audit.get_workflow()
+        # 防止 get_auditor 显式的传了个 None
+        if not self.sys_config:
+            self.sys_config = SysConfig()
 
     def render(self):
         raise NotImplementedError
@@ -91,12 +93,9 @@ class Notifier:
 
 
 class GenericWebhookNotifier(Notifier):
-    name = "generic_webhook"
+    name: str = "generic_webhook"
     sys_config_key: str = "generic_webhook_url"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.request_data = None
+    request_data: dict = None
 
     def render(self):
         self.request_data = {}
@@ -133,13 +132,9 @@ class LegacyMessage:
     msg_cc: List[Users] = field(default_factory=list)
 
 
+@dataclass
 class LegacyRender(Notifier):
-    messages: List[LegacyMessage]
-    sys_config_key: str = ""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.messages = []
+    messages: List[LegacyMessage] = field(default_factory=list)
 
     def render_audit(self):
         # 获取审核信息
@@ -476,11 +471,6 @@ def auto_notify(
     加载所有的 notifier, 调用 notifier 的 render 和 send 方法
     内部方法, 有数据库查询, 为了方便测试, 请勿使用 async_task 调用, 防止 patch 后调用失败
     """
-    if not workflow and event_type == EventType.AUDIT:
-        if audit.workflow_type == 1:
-            workflow = QueryPrivilegesApply.objects.get(apply_id=audit.workflow_id)
-        if audit.workflow_type == 2:
-            workflow = SqlWorkflow.objects.get(id=audit.workflow_id)
     for notifier in settings.ENABLED_NOTIFIERS:
         file, _class = notifier.split(":")
         try:
