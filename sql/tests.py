@@ -9,7 +9,7 @@ from django.test import Client, TestCase, TransactionTestCase
 
 import sql.query_privileges
 from common.config import SysConfig
-from common.utils.const import WorkflowStatus
+from common.utils.const import WorkflowStatus, WorkflowType
 from sql.archiver import add_archive_task, archive
 from sql.binlog import my2sql_file
 from sql.engines.models import ResultSet
@@ -29,7 +29,9 @@ from sql.models import (
     WorkflowLog,
     WorkflowAuditSetting,
     ArchiveConfig,
+    WorkflowAuditDetail,
 )
+from sql.utils.workflow_audit import AuditException
 
 User = Users
 
@@ -1418,6 +1420,19 @@ class TestWorkflowView(TransactionTestCase):
             db_name="some_db",
             syntax_type=1,
         )
+        self.audit_flow = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="g1",
+            workflow_id=self.wf2.id,
+            workflow_type=WorkflowType.SQL_REVIEW,
+            workflow_title="123",
+            audit_auth_groups="123",
+            current_audit="",
+            next_audit="",
+            current_status=WorkflowStatus.WAITING,
+            create_user="",
+            create_user_display="",
+        )
         self.wfc2 = SqlWorkflowContent.objects.create(
             workflow=self.wf2,
             sql_content="some_sql",
@@ -1583,36 +1598,32 @@ class TestWorkflowView(TransactionTestCase):
         self.assertEqual(r_json["total"], 2)
 
     @patch("sql.notify.auto_notify")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    @patch("sql.utils.workflow_audit.Audit.audit")
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def testWorkflowPassedView(self, _can_review, _audit, _detail_by_id, _):
+    @patch("sql.utils.workflow_audit.AuditV2.operate")
+    def testWorkflowPassedView(self, mock_operate, _):
         """测试审核工单"""
         c = Client()
         c.force_login(self.superuser1)
         r = c.post("/passed/")
         self.assertContains(r, "workflow_id参数为空.")
-        _can_review.return_value = False
-        r = c.post("/passed/", {"workflow_id": self.wf1.id})
-        self.assertContains(r, "你无权操作当前工单！")
-        _can_review.return_value = True
-        mock_audit_detail = PickableMock()
-        mock_audit_detail.audit_id = 123
-        _detail_by_id.return_value = mock_audit_detail
-        _audit.return_value = (
-            {"data": {"workflow_status": 1}},
-            {"foo": "bar"},
-        )  # TODO 改为audit_success
+        mock_operate.side_effect = AuditException("mock audit failed")
+        r = c.post("/passed/", {"workflow_id": self.wf2.id})
+        self.assertContains(r, "mock audit failed")
+        mock_operate.reset_mock(side_effect=True)
+        mock_operate.return_value = None
+        # 因为 operate 被 mock 了, 为了测试审批流通过, 这里把审批流手动设置为通过, 仅 测试 view 层的逻辑
+        # audit operate 的测试由其他测试覆盖
+        self.audit_flow.current_status = WorkflowStatus.PASSED
+        self.audit_flow.save()
         r = c.post(
             "/passed/",
-            data={"workflow_id": self.wf1.id, "audit_remark": "some_audit"},
+            data={"workflow_id": self.wf2.id, "audit_remark": "some_audit"},
             follow=False,
         )
         self.assertRedirects(
-            r, "/detail/{}/".format(self.wf1.id), fetch_redirect_response=False
+            r, "/detail/{}/".format(self.wf2.id), fetch_redirect_response=False
         )
-        self.wf1.refresh_from_db()
-        self.assertEqual(self.wf1.status, "workflow_review_pass")
+        self.wf2.refresh_from_db()
+        self.assertEqual(self.wf2.status, "workflow_review_pass")
 
     @patch("sql.sql_workflow.notify_for_execute")
     @patch("sql.sql_workflow.Audit.add_log")
@@ -1633,13 +1644,15 @@ class TestWorkflowView(TransactionTestCase):
         self.assertEqual("workflow_finish", self.wf2.status)
 
     @patch("sql.sql_workflow.Audit.add_log")
-    @patch("sql.sql_workflow.Audit.detail_by_workflow_id")
-    @patch("sql.sql_workflow.Audit.audit")
+    @patch("sql.notify.auto_notify")
+    @patch("sql.utils.workflow_audit.AuditV2.operate")
     # patch view里的can_cancel 而不是原始位置的can_cancel ,因为在调用时, 已经 import 了真的 can_cancel ,会导致mock失效
     # 在import 静态函数时需要注意这一点, 动态对象因为每次都会重新生成,也可以 mock 原函数/方法/对象
     # 参见 : https://docs.python.org/3/library/unittest.mock.html#where-to-patch
     @patch("sql.sql_workflow.can_cancel")
-    def testWorkflowCancelView(self, _can_cancel, _audit, _detail_by_id, _add_log):
+    def testWorkflowCancelView(
+        self, _can_cancel, mock_audit_operate, mock_notify, _add_log
+    ):
         """测试工单驳回、取消"""
         c = Client()
         c.force_login(self.u2)
@@ -1648,6 +1661,7 @@ class TestWorkflowView(TransactionTestCase):
         r = c.post("/cancel/", data={"workflow_id": self.wf2.id})
         self.assertContains(r, "终止原因不能为空")
         _can_cancel.return_value = False
+        mock_audit_operate.return_value = None
         r = c.post(
             "/cancel/",
             data={"workflow_id": self.wf2.id, "cancel_remark": "some_reason"},
@@ -1655,7 +1669,6 @@ class TestWorkflowView(TransactionTestCase):
         self.assertContains(r, "你无权操作当前工单！")
         _can_cancel.return_value = True
         _detail_by_id = 123
-        _audit.return_value = (None, None)
         c.post(
             "/cancel/",
             data={"workflow_id": self.wf2.id, "cancel_remark": "some_reason"},
@@ -1951,6 +1964,19 @@ class TestArchiver(TestCase):
             user_name="some_user",
             user_display="display",
         )
+        self.audit_flow = WorkflowAudit.objects.create(
+            group_id=1,
+            group_name="g1",
+            workflow_id=self.archive_apply.id,
+            workflow_type=WorkflowType.ARCHIVE,
+            workflow_title="123",
+            audit_auth_groups="123",
+            current_audit="",
+            next_audit="",
+            current_status=WorkflowStatus.WAITING,
+            create_user="",
+            create_user_display="",
+        )
         self.sys_config = SysConfig()
         self.client = Client()
 
@@ -2060,7 +2086,8 @@ class TestArchiver(TestCase):
         self.client.force_login(self.superuser)
         r = self.client.post(path="/archive/apply/", data=data)
         self.assertDictEqual(
-            json.loads(r.content), {"data": {}, "msg": "审批流程不能为空，请先配置审批流程", "status": 1}
+            json.loads(r.content),
+            {"data": {}, "msg": "新建审批流失败, 请联系管理员", "status": 1},
         )
 
     @patch("sql.archiver.async_task")
@@ -2090,32 +2117,30 @@ class TestArchiver(TestCase):
         r = self.client.post(path="/archive/apply/", data=data)
         self.assertEqual(json.loads(r.content)["status"], 0)
 
-    @patch("sql.archiver.Audit")
+    @patch("sql.utils.workflow_audit.AuditV2.operate")
     @patch("sql.archiver.async_task")
-    def test_archive_audit(self, _async_task, _audit):
+    def test_archive_audit(self, _async_task, mock_operate):
         """
         测试审核归档实例数据
         :return:
         """
-        _audit.detail_by_workflow_id.return_value.audit_id = 1
-        _audit.audit.return_value = (
-            {
-                "status": 0,
-                "msg": "ok",
-                "data": {"workflow_status": 1},
-            },
-            None,
-        )
+        mock_operate.return_value = None
         data = {
             "archive_id": self.archive_apply.id,
             "audit_status": WorkflowStatus.PASSED,
             "audit_remark": "xxxx",
         }
+        # operate 被 patch 了, 这里强制设置一下, 走一下流程
+        self.audit_flow.current_status = WorkflowStatus.PASSED
+        self.audit_flow.save()
         self.client.force_login(self.superuser)
         r = self.client.post(path="/archive/audit/", data=data)
         self.assertRedirects(
             r, f"/archive/{self.archive_apply.id}/", fetch_redirect_response=False
         )
+        self.archive_apply.refresh_from_db()
+        assert self.archive_apply.state == True
+        assert self.archive_apply.status == WorkflowStatus.PASSED
 
     @patch("sql.archiver.async_task")
     def test_add_archive_task(self, _async_task):
@@ -3116,7 +3141,7 @@ class TestDataDictionary(TestCase):
         self.assertEqual(r.json()["status"], 1)
 
     @patch("sql.data_dictionary.get_engine")
-    def oracle_test_export_instance(self, _get_engine):
+    def test_oracle_export_instance(self, _get_engine):
         """
         oracle元数据测试导出
         :return:

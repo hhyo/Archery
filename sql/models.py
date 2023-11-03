@@ -5,7 +5,7 @@ from mirage import fields
 from django.utils.translation import gettext as _
 from mirage.crypto import Crypto
 
-from common.utils.const import WorkflowStatus, WorkflowType
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 
 
 class ResourceGroup(models.Model):
@@ -88,9 +88,6 @@ class TwoFactorAuthConfig(models.Model):
         verbose_name="用户密钥", max_length=256, null=True
     )
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
-
-    def __int__(self):
-        return self.username
 
     class Meta:
         managed = True
@@ -341,6 +338,8 @@ class WorkflowAudit(models.Model):
 class WorkflowAuditDetail(models.Model):
     """
     审批明细表
+    TODO
+    部分字段与 WorkflowLog 重复, 建议整合到一起)
     """
 
     audit_detail_id = models.AutoField(primary_key=True)
@@ -390,19 +389,10 @@ class WorkflowLog(models.Model):
     工作流日志表
     """
 
-    operation_type_choices = (
-        (0, "提交/待审核"),
-        (1, "审核通过"),
-        (2, "审核不通过"),
-        (3, "审核取消"),
-        (4, "定时执行"),
-        (5, "执行工单"),
-        (6, "执行结束"),
-    )
-
     id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField("工单审批id", db_index=True)
-    operation_type = models.SmallIntegerField("操作类型", choices=operation_type_choices)
+    operation_type = models.SmallIntegerField("操作类型", choices=WorkflowAction.choices)
+    # operation_type_desc 字段实际无意义
     operation_type_desc = models.CharField("操作类型描述", max_length=10)
     operation_info = models.CharField("操作信息", max_length=1000)
     operator = models.CharField("操作人", max_length=30)

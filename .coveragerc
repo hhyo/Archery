@@ -1,8 +1,0 @@
-[run]
-source =
-    .
-omit =
-    src*
-    downloads*
-    sql/migrations/*
-    venv*
