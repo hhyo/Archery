@@ -69,10 +69,10 @@ class ExecuteCheck(views.APIView):
             check_result = check_engine.execute_check(
                 db_name=db_name, sql=request.data["full_sql"].strip()
             )
-            max_sql_length = SysConfig().get("max_sql_length", default_value=10000)
-            if len(check_result.rows) > int(max_sql_length):
+            max_sql_length = SysConfig().get("max_sql_length", default_value=0)
+            if (len(check_result.rows) > int(max_sql_length)) and not max_sql_length:
                 raise serializers.ValidationError(
-                    {"errors": f"执行行数超过{str(max_sql_length)}行，请联系DBA核查！"}
+                    {"errors": f"执行行数超过{str(max_sql_length)}行，请联系管理员核查！"}
                 )
         except Exception as e:
             raise serializers.ValidationError({"errors": f"{e}"})
