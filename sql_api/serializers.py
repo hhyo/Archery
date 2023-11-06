@@ -20,7 +20,7 @@ from django.db import transaction
 from sql.engines import get_engine
 from sql.utils.workflow_audit import Audit, get_auditor
 from sql.utils.resource_group import user_instances
-from common.utils.const import WorkflowType
+from common.utils.const import WorkflowType, WorkflowStatus
 from common.config import SysConfig
 import traceback
 import logging
@@ -428,6 +428,10 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
+        # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
+        if auditor.audit.current_status == WorkflowStatus.PASSED:
+            auditor.workflow.status = "workflow_review_pass"
+            auditor.workflow.save()
         return workflow_content
 
     class Meta:
