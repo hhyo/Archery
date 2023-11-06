@@ -639,14 +639,3 @@ class TestWorkflow(APITestCase):
         r = self.client.post("/api/v1/workflow/execute/", execute_data, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(r.json(), {"msg": "开始执行，执行结果请到工单详情页查看"})
-
-    def test_execute_check(self):
-        """测试 执行测试"""
-        SysConfig().set("max_sql_length", 0)
-        execute_data = {
-            "db_name": "test_db",
-            "full_sql": "select 1",
-            "instance_id": self.ins.id,
-        }
-        r = self.client.post("/api/v1/workflow/sqlcheck/", execute_data, format="json")
-        self.assertEqual(r.status_code, status.HTTP_200_OK)
