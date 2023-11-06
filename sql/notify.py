@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType
 from common.utils.sendmsg import MsgSender
 from sql.models import (
     QueryPrivilegesApply,
@@ -52,23 +52,25 @@ class My2SqlResult:
     error: str = ""
 
 
+@dataclass
 class Notifier:
-    name = "base"
-    sys_config_key: str = ""
+    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult]
+    sys_config: SysConfig = None
+    # init false, class property, 不是 instance property
+    name: str = field(init=False, default="base")
+    sys_config_key: str = field(init=False, default="")
+    event_type: EventType = EventType.AUDIT
+    audit: WorkflowAudit = None
+    audit_detail: WorkflowAuditDetail = None
 
-    def __init__(
-        self,
-        workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult],
-        sys_config: SysConfig,
-        audit: WorkflowAudit = None,
-        audit_detail: WorkflowAuditDetail = None,
-        event_type: EventType = EventType.AUDIT,
-    ):
-        self.workflow = workflow
-        self.audit = audit
-        self.audit_detail = audit_detail
-        self.event_type = event_type
-        self.sys_config = sys_config
+    def __post_init__(self):
+        if not self.workflow:
+            if not self.audit:
+                raise ValueError("需要提供 WorkflowAudit 或 workflow")
+            self.workflow = self.audit.get_workflow()
+        # 防止 get_auditor 显式的传了个 None
+        if not self.sys_config:
+            self.sys_config = SysConfig()
 
     def render(self):
         raise NotImplementedError
@@ -91,12 +93,9 @@ class Notifier:
 
 
 class GenericWebhookNotifier(Notifier):
-    name = "generic_webhook"
+    name: str = "generic_webhook"
     sys_config_key: str = "generic_webhook_url"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.request_data = None
+    request_data: dict = None
 
     def render(self):
         self.request_data = {}
@@ -133,13 +132,9 @@ class LegacyMessage:
     msg_cc: List[Users] = field(default_factory=list)
 
 
+@dataclass
 class LegacyRender(Notifier):
-    messages: List[LegacyMessage]
-    sys_config_key: str = ""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.messages = []
+    messages: List[LegacyMessage] = field(default_factory=list)
 
     def render_audit(self):
         # 获取审核信息
@@ -162,8 +157,8 @@ class LegacyRender(Notifier):
         )
         # workflow content, 即申请通过后要执行什么东西
         # 执行的 SQL 语句, 授权的范围
-        if workflow_type == WorkflowDict.workflow_type["query"]:
-            workflow_type_display = WorkflowDict.workflow_type["query_display"]
+        if workflow_type == WorkflowType.QUERY:
+            workflow_type_display = WorkflowType.QUERY.label
             workflow_detail = QueryPrivilegesApply.objects.get(apply_id=workflow_id)
             instance = workflow_detail.instance.instance_name
             db_name = workflow_detail.db_list
@@ -178,8 +173,8 @@ class LegacyRender(Notifier):
             workflow_content += (
                 f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
             )
-        elif workflow_type == WorkflowDict.workflow_type["sqlreview"]:
-            workflow_type_display = WorkflowDict.workflow_type["sqlreview_display"]
+        elif workflow_type == WorkflowType.SQL_REVIEW:
+            workflow_type_display = WorkflowType.SQL_REVIEW.label
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
             instance = workflow_detail.instance.instance_name
             db_name = workflow_detail.db_name
@@ -188,8 +183,8 @@ class LegacyRender(Notifier):
                 "\n",
                 workflow_detail.sqlworkflowcontent.sql_content[0:500].replace("\r", ""),
             )
-        elif workflow_type == WorkflowDict.workflow_type["archive"]:
-            workflow_type_display = WorkflowDict.workflow_type["archive_display"]
+        elif workflow_type == WorkflowType.ARCHIVE:
+            workflow_type_display = WorkflowType.ARCHIVE.label
             workflow_detail = ArchiveConfig.objects.get(pk=workflow_id)
             instance = workflow_detail.src_instance.instance_name
             db_name = workflow_detail.src_db_name
@@ -201,7 +196,7 @@ class LegacyRender(Notifier):
         else:
             raise Exception("工单类型不正确")
         # 渲染提醒内容, 包括工单的所有信息, 申请人, 审批流等
-        if status == WorkflowDict.workflow_status["audit_wait"]:  # 申请阶段
+        if status == WorkflowStatus.WAITING:  # 申请阶段
             msg_title = "[{}]新的工单申请#{}".format(workflow_type_display, audit_id)
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = Group.objects.get(id=self.audit.current_audit).name
@@ -228,7 +223,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 workflow_content,
             )
-        elif status == WorkflowDict.workflow_status["audit_success"]:  # 审核通过
+        elif status == WorkflowStatus.PASSED:  # 审核通过
             msg_title = "[{}]工单审核通过#{}".format(workflow_type_display, audit_id)
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
@@ -244,7 +239,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 workflow_content,
             )
-        elif status == WorkflowDict.workflow_status["audit_reject"]:  # 审核驳回
+        elif status == WorkflowStatus.REJECTED:  # 审核驳回
             msg_title = "[{}]工单被驳回#{}".format(workflow_type_display, audit_id)
             # 接收人，仅发送给申请人
             msg_to = [Users.objects.get(username=self.audit.create_user)]
@@ -257,7 +252,7 @@ class LegacyRender(Notifier):
                 workflow_url,
                 re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
             )
-        elif status == WorkflowDict.workflow_status["audit_abort"]:  # 审核取消，通知所有审核人
+        elif status == WorkflowStatus.ABORTED:  # 审核取消，通知所有审核人
             msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = [
@@ -293,7 +288,7 @@ class LegacyRender(Notifier):
             base_url=base_url, audit_id=audit_id
         )
         msg_title = (
-            f"[{WorkflowDict.workflow_type['sqlreview_display']}]工单"
+            f"[{WorkflowType.SQL_REVIEW.label}]工单"
             f"{self.workflow.get_status_display()}#{audit_id}"
         )
         preview = re.sub(
@@ -476,11 +471,6 @@ def auto_notify(
     加载所有的 notifier, 调用 notifier 的 render 和 send 方法
     内部方法, 有数据库查询, 为了方便测试, 请勿使用 async_task 调用, 防止 patch 后调用失败
     """
-    if not workflow and event_type == EventType.AUDIT:
-        if audit.workflow_type == 1:
-            workflow = QueryPrivilegesApply.objects.get(apply_id=audit.workflow_id)
-        if audit.workflow_type == 2:
-            workflow = SqlWorkflow.objects.get(id=audit.workflow_id)
     for notifier in settings.ENABLED_NOTIFIERS:
         file, _class = notifier.split(":")
         try:

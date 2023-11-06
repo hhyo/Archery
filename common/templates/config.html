@@ -27,12 +27,15 @@
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
                                     data-name="工单类型" data-placeholder="请选择工单类型:" required />
-                                <option value="{{ WorkflowDict.workflow_type.sqlreview }}" selected="selected">
-                                    {{ WorkflowDict.workflow_type.sqlreview_display }}</option>
-                                <option value="{{ WorkflowDict.workflow_type.query }}">
-                                    {{ WorkflowDict.workflow_type.query_display }}</option>
-                                <option value="{{ WorkflowDict.workflow_type.archive }}">
-                                    {{ WorkflowDict.workflow_type.archive_display }}</option>
+                                {% for c in workflow_choices %}
+                                {% if forloop.first %}
+                                <option value="{{ c.value }}" selected="selected">
+                                {{ c.label }}</option>
+                                {% else %}
+                                <option value="{{ c.value }}">
+                                {{ c.label }}</option>
+                                {% endif %}
+                                {% endfor %}
                             </select>
                         </div>
                         <h5 class="control-label text-bold">组：</h5>

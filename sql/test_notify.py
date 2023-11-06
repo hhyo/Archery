@@ -199,7 +199,7 @@ class TestNotify(TestCase):
     @patch("sql.notify.FeishuWebhookNotifier.run")
     def test_auto_notify(self, mock_run):
         with self.settings(ENABLED_NOTIFIERS=("sql.notify:FeishuWebhookNotifier",)):
-            auto_notify(self.sys_config, event_type=EventType.EXECUTE)
+            auto_notify(self.sys_config, event_type=EventType.EXECUTE, workflow=self.wf)
             mock_run.assert_called_once()
 
     @patch("sql.notify.auto_notify")
@@ -273,6 +273,17 @@ class TestNotify(TestCase):
         notifier = LegacyRender(
             workflow=self.wf,
             event_type=EventType.AUDIT,
+            audit=self.audit_wf,
+            audit_detail=self.audit_wf_detail,
+            sys_config=self.sys_config,
+        )
+        notifier.render()
+        self.assertEqual(len(notifier.messages), 1)
+        self.assertIn("新的工单申请", notifier.messages[0].msg_title)
+        # 测试一下不传 workflow
+        notifier = LegacyRender(
+            event_type=EventType.AUDIT,
+            workflow=None,
             audit=self.audit_wf,
             audit_detail=self.audit_wf_detail,
             sys_config=self.sys_config,
@@ -494,10 +505,13 @@ class TestNotifySend(TestCase):
     def setUp(self):
         self.patcher = patch("sql.notify.MsgSender")
         self.mock_msg_sender = self.patcher.start()
+        self.get_workflow_patcher = patch("sql.models.WorkflowAudit.get_workflow")
+        self.mock_get_workflow = self.get_workflow_patcher.start()
         self.sys_config = SysConfig()
 
     def tearDown(self):
         self.patcher.stop()
+        self.get_workflow_patcher.stop()
 
     def generate_notifier(self, module) -> Notifier:
         return module(workflow=None, audit=self.audit_wf, sys_config=self.sys_config)
@@ -561,3 +575,13 @@ class TestNotifySend(TestCase):
         ]
         notifier.send()
         mocker.assert_called_once()
+
+
+def test_override_sys_key():
+    """dataclass 的继承有时候让人有点困惑, 在这里补一个测试确认可以正常覆盖一些值"""
+
+    class OverrideNotifier(Notifier):
+        sys_config_key = "test"
+
+    n = OverrideNotifier(workflow="test")
+    assert n.sys_config_key == "test"
