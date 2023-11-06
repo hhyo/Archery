@@ -280,6 +280,17 @@ class TestNotify(TestCase):
         notifier.render()
         self.assertEqual(len(notifier.messages), 1)
         self.assertIn("新的工单申请", notifier.messages[0].msg_title)
+        # 测试一下不传 workflow
+        notifier = LegacyRender(
+            event_type=EventType.AUDIT,
+            workflow=None,
+            audit=self.audit_wf,
+            audit_detail=self.audit_wf_detail,
+            sys_config=self.sys_config,
+        )
+        notifier.render()
+        self.assertEqual(len(notifier.messages), 1)
+        self.assertIn("新的工单申请", notifier.messages[0].msg_title)
 
     def test_legacy_render_query_audit(self):
         # 默认是库权限的
@@ -568,7 +579,9 @@ class TestNotifySend(TestCase):
 
 def test_override_sys_key():
     """dataclass 的继承有时候让人有点困惑, 在这里补一个测试确认可以正常覆盖一些值"""
+
     class OverrideNotifier(Notifier):
         sys_config_key = "test"
+
     n = OverrideNotifier(workflow="test")
     assert n.sys_config_key == "test"

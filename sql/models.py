@@ -327,9 +327,7 @@ class WorkflowAudit(models.Model):
     def get_workflow(self):
         """尝试从 audit 中取出 workflow"""
         if self.workflow_type == WorkflowType.QUERY:
-            return QueryPrivilegesApply.objects.get(
-                apply_id=self.workflow_id
-            )
+            return QueryPrivilegesApply.objects.get(apply_id=self.workflow_id)
         elif self.workflow_type == WorkflowType.SQL_REVIEW:
             return SqlWorkflow.objects.get(id=self.workflow_id)
         elif self.workflow_type == WorkflowType.ARCHIVE:
