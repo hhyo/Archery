@@ -486,6 +486,7 @@ class TestWorkflow(APITestCase):
     @patch("sql_api.api_workflow.get_engine")
     def test_check(self, _get_engine):
         """测试工单检测，正常返回"""
+        SysConfig().set("max_sql_length", 0)
         json_data = {
             "full_sql": "use mysql",
             "db_name": "test_db",
