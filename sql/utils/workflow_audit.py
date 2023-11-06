@@ -136,14 +136,8 @@ class AuditV2:
 
     def get_workflow(self):
         """尝试从 audit 中取出 workflow"""
-        if self.audit.workflow_type == WorkflowType.QUERY:
-            self.workflow = QueryPrivilegesApply.objects.get(
-                apply_id=self.audit.workflow_id
-            )
-        elif self.audit.workflow_type == WorkflowType.SQL_REVIEW:
-            self.workflow = SqlWorkflow.objects.get(id=self.audit.workflow_id)
-        elif self.audit.workflow_type == WorkflowType.ARCHIVE:
-            self.workflow = ArchiveConfig.objects.get(id=self.audit.workflow_id)
+        self.workflow = self.audit.get_workflow()
+        if self.audit.workflow_type == WorkflowType.ARCHIVE:
             self.resource_group = self.audit.group_name
             self.resource_group_id = self.audit.group_id
 

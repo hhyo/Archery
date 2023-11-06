@@ -324,6 +324,16 @@ class WorkflowAudit(models.Model):
     create_time = models.DateTimeField("申请时间", auto_now_add=True)
     sys_time = models.DateTimeField("系统时间", auto_now=True)
 
+    def get_workflow(self):
+        """尝试从 audit 中取出 workflow"""
+        if self.workflow_type == WorkflowType.QUERY:
+            return QueryPrivilegesApply.objects.get(apply_id=self.workflow_id)
+        elif self.workflow_type == WorkflowType.SQL_REVIEW:
+            return SqlWorkflow.objects.get(id=self.workflow_id)
+        elif self.workflow_type == WorkflowType.ARCHIVE:
+            return ArchiveConfig.objects.get(id=self.workflow_id)
+        raise ValueError("无法获取到关联工单")
+
     def __int__(self):
         return self.audit_id
 
