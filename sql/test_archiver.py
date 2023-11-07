@@ -9,7 +9,13 @@ from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType
 from sql.utils.workflow_audit import AuditSetting
 from sql.archiver import add_archive_task, archive
-from sql.models import Instance, ResourceGroup, ArchiveConfig, WorkflowAudit, WorkflowAuditSetting
+from sql.models import (
+    Instance,
+    ResourceGroup,
+    ArchiveConfig,
+    WorkflowAudit,
+    WorkflowAuditSetting,
+)
 from sql.tests import User
 
 
@@ -236,7 +242,7 @@ class TestArchiver(TestCase):
         return_data = r.json()
         self.assertEqual(return_data["status"], 0)
         archive_config = ArchiveConfig.objects.get(id=return_data["data"]["archive_id"])
-        assert archive_config.state==True
+        assert archive_config.state == True
         assert archive_config.status == WorkflowStatus.PASSED
 
     @patch("sql.utils.workflow_audit.AuditV2.operate")

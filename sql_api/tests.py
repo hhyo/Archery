@@ -602,16 +602,12 @@ class TestWorkflow(APITestCase):
             },
             "sql_content": "alter table abc add column note varchar(64);",
         }
-        mock_generate_settings.return_value = AuditSetting(
-            auto_pass=True
-        )
+        mock_generate_settings.return_value = AuditSetting(auto_pass=True)
         r = self.client.post("/api/v1/workflow/", json_data, format="json")
         return_data = r.json()
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         workflow_in_db = SqlWorkflow.objects.get(id=return_data["workflow"]["id"])
         assert workflow_in_db.status == "workflow_review_pass"
-
-
 
     def test_submit_param_is_None(self):
         """测试SQL提交，参数内容为空"""
