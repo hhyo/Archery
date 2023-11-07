@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from pytest_mock import MockFixture
 
 from common.utils.const import WorkflowStatus
 from sql.models import (
@@ -12,6 +13,7 @@ from sql.models import (
     ArchiveConfig,
 )
 from common.config import SysConfig
+from sql.utils.workflow_audit import AuditV2, AuditSetting
 
 
 @pytest.fixture
@@ -91,7 +93,7 @@ def sql_query_apply(db_instance):
         valid_date=tomorrow,
         priv_type=1,
         status=0,
-        audit_auth_groups="some_audit_group",
+        audit_auth_groups="1",
     )
     yield query_apply_1
     query_apply_1.delete()
@@ -127,3 +129,14 @@ def setup_sys_config(db):
     sys_config = SysConfig()
     yield sys_config
     sys_config.purge()
+
+
+@pytest.fixture
+def fake_generate_audit_setting(mocker: MockFixture):
+    mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
+    fake_audit_setting = AuditSetting(
+        auto_pass=False,
+        audit_auth_groups=[123],
+    )
+    mock_generate_audit_setting.return_value = fake_audit_setting
+    yield mock_generate_audit_setting

@@ -413,7 +413,6 @@ def query_priv_audit(request):
     :return:
     """
     # 获取用户信息
-    user = request.user
     apply_id = int(request.POST["apply_id"])
     try:
         audit_status = WorkflowAction(int(request.POST["audit_status"]))
@@ -437,11 +436,10 @@ def query_priv_audit(request):
             )
         except AuditException as e:
             return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
-        if auditor.audit.current_status == WorkflowStatus.PASSED:
-            # 通过了, 授权
-            _query_apply_audit_call_back(
-                auditor.audit.workflow_id, auditor.audit.current_status
-            )
+        # 统一 call back, 内部做授权和更新数据库内容
+        _query_apply_audit_call_back(
+            auditor.audit.workflow_id, auditor.audit.current_status
+        )
 
     # 消息通知
     async_task(
