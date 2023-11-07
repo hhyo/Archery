@@ -669,16 +669,24 @@ class TestQueryPrivilegesCheck(TestCase):
         )
 
 
-def test_query_privilege_audit(sql_query_apply, resource_group, super_user, client, fake_generate_audit_setting):
+def test_query_privilege_audit(
+    sql_query_apply, resource_group, super_user, client, fake_generate_audit_setting
+):
     client.force_login(super_user)
     auditor = AuditV2(workflow=sql_query_apply)
     auditor.create_audit()
-    response = client.post("/query/privaudit/", data={
-        "apply_id": sql_query_apply.apply_id,
-        "audit_status": WorkflowAction.PASS,
-        "audit_remark": "test",
-    })
-    assertRedirects(response, fetch_redirect_response=False,
-                    expected_url=f"/queryapplydetail/{sql_query_apply.apply_id}/")
+    response = client.post(
+        "/query/privaudit/",
+        data={
+            "apply_id": sql_query_apply.apply_id,
+            "audit_status": WorkflowAction.PASS,
+            "audit_remark": "test",
+        },
+    )
+    assertRedirects(
+        response,
+        fetch_redirect_response=False,
+        expected_url=f"/queryapplydetail/{sql_query_apply.apply_id}/",
+    )
     sql_query_apply.refresh_from_db()
     assert sql_query_apply.status == WorkflowStatus.PASSED
