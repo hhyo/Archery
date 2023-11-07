@@ -413,7 +413,6 @@ def query_priv_audit(request):
     :return:
     """
     # 获取用户信息
-    user = request.user
     apply_id = int(request.POST["apply_id"])
     try:
         audit_status = WorkflowAction(int(request.POST["audit_status"]))

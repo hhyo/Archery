@@ -403,17 +403,6 @@ def test_create_audit_auto_pass(sql_workflow, mocker: MockFixture):
     assert audit.audit.current_status == WorkflowStatus.PASSED
 
 
-@pytest.fixture
-def fake_generate_audit_setting(mocker: MockFixture):
-    mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
-    fake_audit_setting = AuditSetting(
-        auto_pass=False,
-        audit_auth_groups=[123],
-    )
-    mock_generate_audit_setting.return_value = fake_audit_setting
-    yield mock_generate_audit_setting
-
-
 @pytest.mark.parametrize(
     "status,operation,allowed",
     [
