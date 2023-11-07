@@ -221,6 +221,7 @@ def archive_apply(request):
             "data": {
                 "workflow_status": audit_handler.audit.current_status,
                 "audit_id": audit_handler.audit.audit_id,
+                "archive_id": audit_handler.workflow.id,
             },
         }
     )
