@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login To Archery</title>
+    <title>Login To Archery v{{ archery_version }}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 引入 Bootstrap -->
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'dist/css/login.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/style.css' %}" rel="stylesheet">
     <!-- HTML5 Shim 和 Respond.js 用于让 IE8 支持 HTML5元素和媒体查询 -->
     <!-- 注意： 如果通过 file://  引入 Respond.js 文件，则该文件无法起效果 -->
     <!--[if lt IE 9]>
@@ -18,15 +18,18 @@
 <body style="background-color:#edeff1;">
 <div class="row lsb-login">
     <div class="col-sm-4 login-form-wrapper">
-        <h3 class="text-center">Login To Archery</h3>
+        <section class="text-center">
+            <img src="/static/img/archery.png" alt="Archery Logo" />
+        </section>
+{#        <h3 class="text-center" i18n="main.title" style="margin-bottom: 20px"> </h3>#}
         <form class="login-form fade-in-effect" id="login" method="post" role="form">
             {% csrf_token %}
             {% if dingding_enabled %}
-                <div class="form-group">
+                <div class="form-group" id="login-method-dingding">
                     <a class="btn btn-primary btn-block" role="button" href="/dingding/authenticate/">以钉钉登录</a>
                 </div>
             {% elif oidc_enabled %}
-                <div class="form-group">
+                <div class="form-group" id="login-method-oidc">
                     <a class="btn btn-primary btn-block" role="button" href="/oidc/authenticate/">{{ oidc_btn_name }}</a>
                 </div>
             {% elif cas_enabled %}
@@ -35,9 +38,9 @@
             </div>
             {% endif %}
             {% if dingding_enabled or oidc_enabled %}
-                <a data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                  显示传统登录
-                </a>
+                <div class="text-right">
+                    <a data-toggle="collapse" id="toggle-tran-btn" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample" i18n="btn.show_tran_login"> </a>
+                </div>
                 <div class="collapse" id="collapseExample">
                   <div>
                     {% include 'legacy_login_form.html' %}
@@ -114,7 +117,7 @@
             </div>
             <div class="modal-body" id="wrongpwd-modal-body"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">确定
+                <button type="button" class="btn btn-primary" data-dismiss="modal" i18n="btn.confirm">确定
                 </button>
             </div>
         </div><!-- /.modal-content -->
@@ -123,10 +126,12 @@
 
 <!--底部部分 -->
 <div class="user-bottom-div">
-    <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
+    <p><strong>&copy; <a i18n="main.title" href="https://github.com/hhyo/Archery" target="_blank"> </a></strong>&nbsp;(v{{ archery_version }})</p>
 </div>
 <!-- jQuery (Bootstrap 的 JavaScript 插件需要引入 jQuery，务必先引入jquery js再引入bootstrap js) -->
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
+<script src="{% static 'i18n/i18n.min.js' %}"></script>
+<script src="{% static 'i18n/i18n-archery.js' %}"></script>
 <!-- 包括所有已编译的插件 -->
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
 </body>
@@ -137,7 +142,6 @@
             headers: {"X-CSRFToken": getCookie("csrftoken")}
         });
     });
-
     function getCookie(name) {
         var cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -153,8 +157,6 @@
         }
         return cookieValue;
     }
-</script>
-<script>
     <!-- 退出登录后清空sessionStorage -->
     $(document).ready(function () {
         sessionStorage.clear();
@@ -164,7 +166,6 @@
     $(document).ready(function () {
         $(document).keydown(function (event) {
             //keycode==13为回车键
-            console.log($("#sign-up").css("display"))
             if (event.keyCode === 13 && $("#sign-up").css("display") === 'none') {
                 $('#btnLogin').addClass('disabled');
                 $('#btnLogin').prop('disabled', true);
@@ -174,6 +175,14 @@
             }
         });
     });
+
+    $('#toggle-tran-btn').click(
+        function () {
+            $(this).hide();
+            $('#login-method-dingding').hide()
+            $('#login-method-oidc').hide()
+        }
+    )
 
     $('#btnLogin').click(function () {
         $('#btnLogin').addClass('disabled');

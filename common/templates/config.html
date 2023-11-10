@@ -14,7 +14,7 @@
                         <div class="form-group">
                             <select id="config" name="confg"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="配置项" data-placeholder="请选择配置项:" required />
+                                    data-name="配置项" data-placeholder="请选择配置项:" required="required">
                                 <option value="is-empty" disabled="">请选择配置项:</option>
                                 <option value="0" selected="selected">系统设置</option>
                                 <option value="1">工单审核流配置</option>
@@ -26,7 +26,7 @@
                         <div class="form-group">
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="工单类型" data-placeholder="请选择工单类型:" required />
+                                    data-name="工单类型" data-placeholder="请选择工单类型:" required>
                                 {% for c in workflow_choices %}
                                 {% if forloop.first %}
                                 <option value="{{ c.value }}" selected="selected">
@@ -42,7 +42,7 @@
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required />
+                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                                 {% for group in group_list %}
                                     <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                 {% endfor %}

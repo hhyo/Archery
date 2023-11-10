@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Archery-SQL审核查询平台</title>
+    <title i18n="main.title"> </title>
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
 
     <!-- 引入 Bootstrap -->
@@ -18,13 +18,14 @@
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-switch/css/bootstrap-switch.min.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/style.css' %}" rel="stylesheet">
     <style type="text/css">
     table{
         max-width: none !important;      /*解决 ios 横向滚动失效*/
     }
     </style>
     <!-- django i18n -->
-    <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
+{#    <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>#}
 </head>
 <body>
 
@@ -39,13 +40,16 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/index/"><strong>Archery</strong></a>
+{#            <a class="navbar-brand" href="/index/"><strong>Archery</strong></a>#}
+            <a class="navbar-brand" href="/index/">
+                <img src="/static/img/archery.png" alt="Archery Logo" />
+            </a>
         </div>
 
         <!-- /.navbar-header -->
         <ul class="nav navbar-top-links navbar-right">
             <li>
-                <a>你好，{{ user }}</a>
+                <a><span i18n="label.hello"> </span>，{{ user }}</a>
             </li>
             {% if todo > 0 %}
                 <li>
@@ -68,17 +72,27 @@
                 <ul class="dropdown-menu dropdown-user">
                     {% if user.is_superuser %}
                         <li>
-                            <a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> 系统信息</a>
+                            <a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> <span i18n="label.sysinfo"> </span></a>
                         </li>
                         <li>
-                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> 管理后台</a>
+                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> <span i18n="label.admin_dashboard"> </span></a>
                         </li>
                     {% endif %}
-                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-lock fa-fw"></i> 两步验证</a></li>
-                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
-                    <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
+                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-lock fa-fw"></i> <span i18n="label.2fa"> </span></a></li>
+                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> <span i18n="label.change_pass"> </span></a></li>
+                    <li><a href="/logout/"><i class="fa fa-close fa-fw"></i> <span i18n="label.logout"> </span></a></li>
                 </ul>
                 <!-- /.dropdown-user -->
+            </li>
+            <!-- /.dropdown -->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fa fa-language fa-fw"></i> <i class="fa fa-caret-down"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-user">
+                    <li><a class="lang_btn" href="javascript:;" lang="cn">简体中文</a></li>
+                    <li><a class="lang_btn" href="javascript:;" lang="en">English</a></li>
+                </ul>
             </li>
             <!-- /.dropdown -->
             <li>
@@ -94,21 +108,21 @@
                 <ul class="nav" id="side-menu">
                     {% if perms.sql.menu_dashboard %}
                         <li>
-                            <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                            <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> <span i18n="label.dashboard"> </span></a>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_sqlcheck %}
                         <li>
-                            <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-check fa-fw"></i> <span i18n="label.sql_audition"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlworkflow %}
                                     <li>
-                                        <a href="/sqlworkflow/">SQL上线</a>
+                                        <a href="/sqlworkflow/" i18n="label.sql_online"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_sqlanalyze %}
                                     <li>
-                                        <a href="/sqlanalyze/">SQL分析</a>
+                                        <a href="/sqlanalyze/" i18n="label.sql_analysis"> </a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -117,21 +131,21 @@
                     {% endif %}
                     {% if perms.sql.menu_query %}
                         <li>
-                            <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-search fa-fw"></i> <span i18n="label.sql_query"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqlquery %}
                                     <li>
-                                        <a href="/sqlquery/">在线查询</a>
+                                        <a href="/sqlquery/" i18n="label.sql_query"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_data_dictionary %}
                                     <li>
-                                        <a href="/data_dictionary/">数据字典</a>
+                                        <a href="/data_dictionary/" i18n="label.data_dictionary"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_queryapplylist %}
                                     <li>
-                                        <a href="/queryapplylist/">权限管理</a>
+                                        <a href="/queryapplylist/" i18n="label.privilege_manage"> </a>
                                     </li>
                                 {% endif %}
 
@@ -141,16 +155,16 @@
                     {% endif %}
                     {% if perms.sql.menu_sqloptimize %}
                         <li>
-                            <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-wrench fa-fw"></i> <span i18n="label.sql_optimization"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_sqladvisor %}
                                     <li>
-                                        <a href="/sqladvisor/">优化工具</a>
+                                        <a href="/sqladvisor/" i18n="label.sql_optimization"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_slowquery %}
                                     <li>
-                                        <a href="/slowquery/">慢查日志</a>
+                                        <a href="/slowquery/" i18n="label.slow_log"> </a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -159,32 +173,32 @@
                     {% endif %}
                     {% if perms.sql.menu_instance %}
                         <li>
-                            <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-database fa-fw"></i> <span i18n="label.instance_manage"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_instance_list %}
                                     <li>
-                                        <a href="/instance/">实例列表</a>
+                                        <a href="/instance/" i18n="label.instance"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_dbdiagnostic %}
                                     <li>
-                                        <a href="/dbdiagnostic/">会话管理</a>
+                                        <a href="/dbdiagnostic/" i18n="label.session"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_database %}
                                     <li>
-                                        <a href="/database/">数据库管理</a>
+                                        <a href="/database/" i18n="label.database"> </a>
                                     </li>
                                 {% endif %}
 
                                 {% if perms.sql.menu_instance_account %}
                                     <li>
-                                        <a href="/instanceaccount/">账号管理</a>
+                                        <a href="/instanceaccount/" i18n="label.user"> </a>
                                     </li>
                                 {% endif %}
                                 {% if perms.sql.menu_param %}
                                     <li>
-                                        <a href="/instanceparam/">参数配置</a>
+                                        <a href="/instanceparam/" i18n="label.variables"> </a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -193,7 +207,7 @@
                     {% endif %}
                     {% if perms.sql.menu_tools %}
                         <li>
-                            <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-plug fa-fw"></i> <span i18n="label.plugins"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 {% if perms.sql.menu_archive %}
                                     <li>
@@ -216,28 +230,22 @@
                     {% endif %}
                     {% if perms.sql.menu_system %}
                         <li>
-                            <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-cogs fa-fw"></i> <span i18n="label.system"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 <li>
-                                    <a href="/config/">配置项管理</a>
+                                    <a href="/config/" i18n="label.general"> </a>
                                 </li>
                                 <li>
-                                    <a href="/group/">资源组管理</a>
+                                    <a href="/group/" i18n="label.resource_group"> </a>
                                 </li>
                                 <li>
-                                    <a href="#">其他配置管理 <span class="fa arrow"></span></a>
-                                    <ul class="nav nav-third-level collapse">
-                                        <li>
-                                            <a target="_blank" href="/admin/sql/users/">用户管理</a>
-                                        </li>
-                                        <li>
-                                            <a target="_blank" href="/admin/auth/group/">权限组管理</a>
-                                        </li>
-                                        <li>
-                                            <a target="_blank" href="/admin/">全部后台数据</a>
-                                        </li>
-                                    </ul>
-                                    <!-- /.nav-third-level -->
+                                    <a target="_blank" href="/admin/sql/users/" i18n="label.user"> </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/admin/auth/group/" i18n="label.privilege"> </a>
+                                </li>
+                                <li>
+                                    <a target="_blank" href="/admin/" i18n="label.admin_dashboard"> </a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -245,23 +253,23 @@
                     {% endif %}
                     {% if perms.sql.audit_user %}
                         <li>
-                            <a href="#"><i class="fa fa-eye fa-fw"></i> 系统审计<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-eye fa-fw"></i> <span i18n="label.audition"> </span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
                                 <li>
-                                    <a href="/audit/">通用审计</a>
+                                    <a href="/audit/" i18n="label.general"> </a>
                                 </li>
                                 <li>
-                                    <a href="/audit_sqlworkflow/">sql上线审计</a>
+                                    <a href="/audit_sqlworkflow/" i18n="label.sql_online"> </a>
                                 </li>
                                 <li>
-                                    <a href="/audit_sqlquery/">查询审计</a>
+                                    <a href="/audit_sqlquery/" i18n="label.query"> </a>
                                 </li>
                             </ul>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_document %}
                         <li>
-                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
+                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> <span i18n="label.dba_principles"> </span></a>
                         </li>
                     {% endif %}
                     {% if perms.sql.menu_openapi %}
@@ -283,7 +291,7 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold">两步验证</h4>
+                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold" i18n="label.2fa"> </h4>
             </div>
             <div class="modal-body">
                 <div class="form-horizontal">
@@ -316,7 +324,7 @@
                 </select>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" i18n="label.2fa"> </button>
             </div>
         </div>
     </div>
@@ -338,8 +346,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                <button id="btnConfirm" type="submit" class="btn btn-success">确认</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" i18n="btn.cancel"> </button>
+                <button id="btnConfirm" type="submit" class="btn btn-success" i18n="btn.confirm"> </button>
             </div>
         </div>
     </div>
@@ -388,7 +396,7 @@
             <!--底部部分 -->
             <footer class="text-center">
                 <hr>
-                <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
+                <p><strong>&copy; <a i18n="main.title" href="https://github.com/hhyo/Archery" target="_blank"> </a></strong>&nbsp;(v{{ archery_version }})</p>
             </footer>
         </div>
     </div>
@@ -408,17 +416,19 @@
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 <script src="{% static 'dist/js/utils.js' %}"></script>
-<script src="{% static 'watermark/shuiyin.js' %}"></script>
+<script src="{% static 'i18n/i18n.min.js' %}"></script>
+<script src="{% static 'i18n/i18n-archery.js' %}"></script>
+<script src="{% static 'watermark/watermark.js' %}"></script>
 <script type="text/javascript">
-    var now = getNow();
-    var user = '{{ user }}';
-    var watermark_enabled = '{{ watermark_enabled }}';
-    if(watermark_enabled == 'True'){
+    let now = getNow();
+    let user = '{{ user }}';
+    let watermark_enabled = '{{ watermark_enabled }}';
+    if(watermark_enabled === 'True'){
         watermark.init({ watermark_txt: user + " " + now })
         window.onscroll = function(){
             watermark.load({ watermark_txt: user + " " + now })
         }
-    };
+    }
 </script>
 <script>
     function twofa(enable, auth_type) {
@@ -682,8 +692,7 @@
 
     $('input[name="2fa"]').on('switchChange.bootstrapSwitch', function(event, state) {
         if ($("#state").val() !== 'initial') {
-            $("#auth_type").val($(this).attr('auth_type'));
-            $("#auth_type").trigger('change');
+            $("#auth_type").val($(this).attr('auth_type')).trigger('change');
             $("#enable").val(state);
             $("#2fa").modal("hide");
             $("#passwd-auth").modal("show");

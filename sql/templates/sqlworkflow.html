@@ -5,7 +5,7 @@
     <div id="toolbar" class="form-inline pull-left">
         <div class="form-group">
             <select id="navStatus" class="form-control selectpicker">
-                <option value="" selected="selected">状态</option>
+                <option value="" selected="selected" i18n="label.status"> </option>
                 {% for status, status_display in status_list %}
                     <option value="{{ status }}">{{ status_display }}</option>
                 {% endfor %}
@@ -14,7 +14,7 @@
         <div class="form-group">
             <select id="instance_id" class="form-control selectpicker"
                     data-live-search="true">
-                <option value="" selected="selected">实例</option>
+                <option value="" selected="selected" i18n="label.instance"> </option>
                 {% for ins in instance %}
                     <option value="{{ ins.id }}">{{ ins.instance_name }}</option>
                 {% endfor %}
@@ -37,10 +37,10 @@
             </div>
         </div>
         <div class="form-group ">
-            <button id="btn_add" type="button" class="btn btn-default"
+            <button id="btn_add" type="button" class="btn btn-success"
                     onclick="window.location.href='/submitsql/'">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                提交SQL
+                <i class="fa fa-plus"></i>
+                <span i18n="btn.submit_sql"> </span>
             </button>
         </div>
     </div>
@@ -99,7 +99,6 @@
                 locale: {
                     format: "YYYY-MM-DD",// 显示格式
                     separator: " / ",// 两个日期之间的分割线
-                    // 中文化
                     applyLabel: "确定",
                     cancelLabel: "取消",
                     fromLabel: "开始",
@@ -241,7 +240,7 @@
                     title: '目标实例',
                     field: 'instance__instance_name'
                 }, {
-                    title: '数据库',
+                    title: i18n.get("label.database"),
                     field: 'db_name'
                 }, {
                     title: '组',
