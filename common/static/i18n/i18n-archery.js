@@ -1,4 +1,4 @@
-let i18n_default_lang = 'en'
+let i18n_default_lang = 'cn'
 let i18n_default_path = '/static/i18n/lang/'
 /*默认语言*/
 i18n("[i18n]", {
