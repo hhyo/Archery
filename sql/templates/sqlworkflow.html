@@ -237,16 +237,16 @@
                     title: '发起时间',
                     field: 'create_time'
                 }, {
-                    title: '目标实例',
+                    title: i18n.get("label.instance"),
                     field: 'instance__instance_name'
                 }, {
                     title: i18n.get("label.database"),
                     field: 'db_name'
                 }, {
-                    title: '组',
+                    title: i18n.get("label.group"),
                     field: 'group_name'
                 }, {
-                    title: '操作',
+                    title: i18n.get("label.operation"),
                     field: 'operation',
                     formatter: function (value, row, index) {
                         return "<button class=\"btn btn-info btn-xs\" workflow_id=\"" + row.id + "\"\n" + "onclick=\"getLog(this)\" >操作日志\n" + "</button>"
