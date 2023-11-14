@@ -2,6 +2,7 @@
 import MySQLdb
 import simplejson as json
 import datetime
+import pymysql
 from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
@@ -206,7 +207,7 @@ def slowquery_review_history(request):
 def report(request):
     """返回慢SQL历史趋势"""
     checksum = request.GET.get("checksum")
-    checksum = MySQLdb.escape_string(checksum).decode("utf-8")
+    checksum = pymysql.escape_string(checksum)
     cnt_data = ChartDao().slow_query_review_history_by_cnt(checksum)
     pct_data = ChartDao().slow_query_review_history_by_pct_95_time(checksum)
     cnt_x_data = [row[1] for row in cnt_data["rows"]]
