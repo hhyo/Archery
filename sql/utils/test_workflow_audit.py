@@ -318,6 +318,7 @@ class TestAudit(TestCase):
     def test_review_info(self):
         """测试获取当前工单审批流程和当前审核组，无需审批"""
         aug = Group.objects.create(name="DBA")
+        self.user.groups.add(aug)
         self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.audit_auth_groups = str(aug.id)
@@ -327,7 +328,7 @@ class TestAudit(TestCase):
             self.audit.workflow_id, self.audit.workflow_type
         )
         self.assertEqual(audit_auth_group, "DBA")
-        self.assertEqual(current_audit_auth_group, "DBA")
+        self.assertEqual(current_audit_auth_group, f"DBA: {self.user.username}")
 
     def test_logs(self):
         """测试获取工单日志"""
