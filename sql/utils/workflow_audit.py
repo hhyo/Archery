@@ -626,11 +626,9 @@ class Audit(object):
             current_audit_auth_group = None
         else:
             try:
-                auth_group_in_db = Group.objects.get(
-                    id=audit_info.current_audit
-                )
+                auth_group_in_db = Group.objects.get(id=audit_info.current_audit)
                 users = auth_group_in_db.user_set.all()
-                users_display = ','.join(x.username for x in users) or "组内无用户, 请联系管理员"
+                users_display = ",".join(x.username for x in users) or "组内无用户, 请联系管理员"
                 current_audit_auth_group = f"{auth_group_in_db.name}: {users_display}"
             except Exception:
                 current_audit_auth_group = audit_info.current_audit

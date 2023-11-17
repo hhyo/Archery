@@ -215,7 +215,9 @@ def detail(request, workflow_id):
             )
             # 等待审批的展示当前全部审批人
             if workflow_detail.status == "workflow_manreviewing":
-                _, current_audit_users_display = Audit.review_info(workflow_id,WorkflowType.SQL_REVIEW)
+                _, current_audit_users_display = Audit.review_info(
+                    workflow_id, WorkflowType.SQL_REVIEW
+                )
                 last_operation_info += f"，当前审批节点：{current_audit_users_display}"
         except Exception as e:
             logger.debug(f"无审核日志记录，错误信息{e}")
