@@ -13,6 +13,7 @@ def test_get_sql_workflow(
     sql_workflow, _ = sql_workflow
     audit = AuditV2(workflow=sql_workflow)
     audit.create_audit()
+    audit.workflow.status = "workflow_manreviewing"
     audit.workflow.save()
     response = admin_client.get(f"/detail/{sql_workflow.id}/")
     assert response.status_code == 200
