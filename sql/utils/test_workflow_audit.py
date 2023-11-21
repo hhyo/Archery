@@ -1,4 +1,5 @@
 import datetime
+import json
 from unittest.mock import patch
 
 import pytest
@@ -468,10 +469,11 @@ def test_generate_audit_setting_auto_review(
 ):
     sql_workflow, _ = sql_workflow
     setup_sys_config.set("auto_review", True)
-    mock_is_auto_review = mocker.patch(
-        "sql.utils.workflow_audit.is_auto_review", return_value=True
-    )
+
     audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
+    mock_is_auto_review = mocker.patch.object(
+        audit, "is_auto_review", return_value=True
+    )
     audit_setting = audit.generate_audit_setting()
     assert audit_setting.auto_pass is True
     mock_is_auto_review.assert_called()
@@ -497,3 +499,46 @@ def test_get_workflow(
     audit_init_with_audit = AuditV2(audit=a.audit)
     assert audit_init_with_audit.workflow_type == a.workflow_type
     assert audit_init_with_audit.workflow == a.workflow
+
+
+def test_auto_review_non_sql_review(sql_query_apply):
+    """当前自动审核仅对 SQL 上线工单生效"""
+    audit = AuditV2(workflow=sql_query_apply)
+    assert audit.is_auto_review() is False
+
+
+def test_auto_review_not_applicable(
+    db_instance, sql_workflow, instance_tag, setup_sys_config
+):
+    """未启用, 实例类型不匹配, 实例无对应标签, 正则匹配, 行数超规模"""
+    sql_workflow, _ = sql_workflow
+    # 未启用
+    setup_sys_config.set("auto_review", False)
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
+    assert audit.is_auto_review() is False
+    setup_sys_config.set("auto_review", True)
+    # 实例类型不匹配
+    db_instance.db_type = "redis"
+    db_instance.save()
+    audit.sys_config.set("auto_review_db_type", "mysql")
+    assert audit.is_auto_review() is False
+    audit.sys_config.set("auto_review_db_type", "redis")
+    # 实例无对应标签
+    audit.sys_config.set("auto_review_tag", instance_tag.tag_code)
+    assert audit.is_auto_review() is False
+    db_instance.instance_tag.add(instance_tag)
+    # 匹配到高危语句
+    audit.sys_config.set("auto_review_regex", "^drop")
+    audit.workflow.sqlworkflowcontent.sql_content = "drop table"
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps(
+        [{"sql": "drop table", "affected_rows": 10}]
+    )
+    audit.workflow.sqlworkflowcontent.save()
+    assert audit.is_auto_review() is False
+    audit.sys_config.set("auto_review_regex", "^select")
+    # 行数超规模
+    audit.sys_config.set("auto_review_max_update_rows", 1)
+    assert audit.is_auto_review() is False
+    audit.sys_config.set("auto_review_max_update_rows", 1000)
+    # 全部条件满足, 自动审核通过
+    assert audit.is_auto_review() is True

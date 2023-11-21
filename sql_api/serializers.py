@@ -431,7 +431,7 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             auditor.workflow.status = "workflow_review_pass"
-            auditor.workflow.save()
+        auditor.workflow.save()
         return workflow_content
 
     class Meta:
