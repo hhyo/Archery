@@ -588,10 +588,10 @@ class Audit(object):
             except Exception:
                 raise Exception("当前审批auth_group_id不存在，请检查并清洗历史数据")
             if (
-                auth_group_users([audit_auth_group], group_id)
+                user.is_superuser
+                or auth_group_users([audit_auth_group], group_id)
                 .filter(id=user.id)
                 .exists()
-                or user.is_superuser == 1
             ):
                 if workflow_type == 1:
                     if user.has_perm("sql.query_review"):
@@ -626,9 +626,10 @@ class Audit(object):
             current_audit_auth_group = None
         else:
             try:
-                current_audit_auth_group = Group.objects.get(
-                    id=audit_info.current_audit
-                ).name
+                auth_group_in_db = Group.objects.get(id=audit_info.current_audit)
+                users = auth_group_in_db.user_set.all()
+                users_display = ",".join(x.username for x in users) or "组内无用户, 请联系管理员"
+                current_audit_auth_group = f"{auth_group_in_db.name}: {users_display}"
             except Exception:
                 current_audit_auth_group = audit_info.current_audit
         return audit_auth_group, current_audit_auth_group

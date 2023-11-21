@@ -10,7 +10,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect, FileResponse, Http404
 from django.urls import reverse
 
-from archery import settings
+from django.conf import settings
 from common.config import SysConfig
 from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
@@ -215,14 +215,10 @@ def detail(request, workflow_id):
             )
             # 等待审批的展示当前全部审批人
             if workflow_detail.status == "workflow_manreviewing":
-                auth_group_name = Group.objects.get(id=audit_detail.current_audit).name
-                current_audit_users = auth_group_users(
-                    [auth_group_name], audit_detail.group_id
+                _, current_audit_users_display = Audit.review_info(
+                    workflow_id, WorkflowType.SQL_REVIEW
                 )
-                current_audit_users_display = [
-                    user.display for user in current_audit_users
-                ]
-                last_operation_info += "，当前审批人：" + ",".join(current_audit_users_display)
+                last_operation_info += f"，当前审批节点：{current_audit_users_display}"
         except Exception as e:
             logger.debug(f"无审核日志记录，错误信息{e}")
             last_operation_info = ""

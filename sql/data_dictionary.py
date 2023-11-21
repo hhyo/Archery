@@ -6,7 +6,7 @@ from urllib.parse import quote
 import MySQLdb
 import simplejson as json
 from django.template import loader
-from archery import settings
+from django.conf import settings
 from sql.engines import get_engine
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse, FileResponse
