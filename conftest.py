@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 from pytest_mock import MockFixture
+from django.contrib.auth.models import Group
 
 from common.utils.const import WorkflowStatus
 from sql.models import (
@@ -133,11 +134,19 @@ def setup_sys_config(db):
 
 
 @pytest.fixture
-def fake_generate_audit_setting(mocker: MockFixture):
+def create_auth_group(db):
+    auth_group = Group.objects.create(name="test_group")
+    yield auth_group
+    auth_group.delete()
+
+
+@pytest.fixture
+def fake_generate_audit_setting(mocker: MockFixture, super_user, create_auth_group):
+    super_user.groups.add(create_auth_group)
     mock_generate_audit_setting = mocker.patch.object(AuditV2, "generate_audit_setting")
     fake_audit_setting = AuditSetting(
         auto_pass=False,
-        audit_auth_groups=[123],
+        audit_auth_groups=[create_auth_group.id],
     )
     mock_generate_audit_setting.return_value = fake_audit_setting
     yield mock_generate_audit_setting
