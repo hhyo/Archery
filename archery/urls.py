@@ -11,6 +11,7 @@ urlpatterns = [
 
 if settings.ENABLE_CAS:  # pragma: no cover
     import django_cas_ng.views
+
     # pragma: no cover
     urlpatterns += [
         path(
