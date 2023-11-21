@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 import dataclasses
 import importlib
+import json
+import re
 from dataclasses import dataclass, field
 from typing import Union, Optional, List
 import logging
@@ -10,8 +12,8 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
+from sql.engines.models import ReviewResult
 from sql.utils.resource_group import user_groups, auth_group_users
-from sql.utils.sql_review import is_auto_review
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from sql.models import (
     WorkflowAudit,
@@ -25,7 +27,7 @@ from sql.models import (
     ArchiveConfig,
 )
 from common.config import SysConfig
-
+from sql.utils.sql_utils import remove_comments
 
 logger = logging.getLogger("default")
 
@@ -141,12 +143,52 @@ class AuditV2:
             self.resource_group = self.audit.group_name
             self.resource_group_id = self.audit.group_id
 
+    def is_auto_review(self) -> bool:
+        if self.workflow_type != WorkflowType.SQL_REVIEW:
+            # 当前自动审核仅对 sql 上线工单有用
+            return False
+        auto_review_enabled = self.sys_config.get("auto_review", False)
+        if not auto_review_enabled:
+            return False
+        auto_review_tags = self.sys_config.get("auto_review_tag", "").split(",")
+        auto_review_db_type = self.sys_config.get("auto_review_db_type", "").split(",")
+        # TODO 这里也可以放到engine中实现，但是配置项可能会相对复杂
+        if self.workflow.instance.db_type not in auto_review_db_type:
+            return False
+        if not self.workflow.instance.instance_tag.filter(
+            tag_code__in=auto_review_tags
+        ).exists():
+            return False
+
+        # 获取正则表达式
+        auto_review_regex = self.sys_config.get(
+            "auto_review_regex", "^alter|^create|^drop|^truncate|^rename|^delete"
+        )
+        p = re.compile(auto_review_regex, re.I)
+
+        # 判断是否匹配到需要手动审核的语句
+        all_affected_rows = 0
+        review_content = self.workflow.sqlworkflowcontent.review_content
+        for review_row in json.loads(review_content):
+            review_result = ReviewResult(**review_row)
+            # 去除SQL注释 https://github.com/hhyo/Archery/issues/949
+            sql = remove_comments(review_result.sql).replace("\n", "").replace("\r", "")
+            # 正则匹配
+            if p.match(sql):
+                # 匹配成功, 代表需要人工复核
+                return False
+            # 影响行数加测, 总语句影响行数超过指定数量则需要人工审核
+            all_affected_rows += int(review_result.affected_rows)
+        if all_affected_rows > int(
+            self.sys_config.get("auto_review_max_update_rows", 50)
+        ):
+            # 影响行数超规模, 需要人工审核
+            return False
+        return True
+
     def generate_audit_setting(self) -> AuditSetting:
-        if self.workflow_type == WorkflowType.SQL_REVIEW:
-            if self.sys_config.get("auto_review", False):
-                # 判断是否无需审批
-                if is_auto_review(self.workflow.id):
-                    return AuditSetting(auto_pass=True, audit_auth_groups=["无需审批"])
+        if self.is_auto_review():
+            return AuditSetting(auto_pass=True, audit_auth_groups=["无需审批"])
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
 

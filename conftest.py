@@ -11,6 +11,7 @@ from sql.models import (
     SqlWorkflowContent,
     QueryPrivilegesApply,
     ArchiveConfig,
+    InstanceTag,
 )
 from common.config import SysConfig
 from sql.utils.workflow_audit import AuditV2, AuditSetting
@@ -140,3 +141,10 @@ def fake_generate_audit_setting(mocker: MockFixture):
     )
     mock_generate_audit_setting.return_value = fake_audit_setting
     yield mock_generate_audit_setting
+
+
+@pytest.fixture
+def instance_tag(db):
+    tag = InstanceTag.objects.create(tag_code="test_tag", tag_name="测试标签")
+    yield tag
+    tag.delete()
