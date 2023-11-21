@@ -9,7 +9,7 @@ urlpatterns = [
     path("", include(("sql.urls", "sql"), namespace="sql")),
 ]
 
-if settings.ENABLE_CAS:
+if settings.ENABLE_CAS:  # pragma: no cover
     import django_cas_ng.views
 
     urlpatterns += [
@@ -20,12 +20,12 @@ if settings.ENABLE_CAS:
         ),
     ]
 
-if settings.ENABLE_OIDC:
+if settings.ENABLE_OIDC:  # pragma: no cover
     urlpatterns += [
         path("oidc/", include("mozilla_django_oidc.urls")),
     ]
 
-if settings.ENABLE_DINGDING:
+if settings.ENABLE_DINGDING:  # pragma: no cover
     urlpatterns += [
         path("dingding/", include("django_auth_dingding.urls")),
     ]
