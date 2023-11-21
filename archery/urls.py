@@ -12,13 +12,13 @@ urlpatterns = [
 if settings.ENABLE_CAS:  # pragma: no cover
     import django_cas_ng.views
 
-    urlpatterns += [  # pragma: no cover
+    urlpatterns += [
         path(
             "cas/authenticate/",
             django_cas_ng.views.LoginView.as_view(),
             name="cas-login",
         ),
-    ]
+    ]  # pragma: no cover
 
 if settings.ENABLE_OIDC:  # pragma: no cover
     urlpatterns += [
