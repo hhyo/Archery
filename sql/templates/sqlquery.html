@@ -707,8 +707,8 @@
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
                 if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
+                    need_describe_display = true
                     if (data.is_describe===undefined || !data.is_describe) {
-                        need_describe_display = true
                         tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
                 }
