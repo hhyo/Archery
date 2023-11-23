@@ -55,6 +55,7 @@ column_types_map = {
 
 class MysqlForkType(Enum):
     """定义几个支持的版本类型"""
+
     MYSQL = "mysql"
     MARIADB = "mariadb"
     PERCONA = "percona"
@@ -185,7 +186,7 @@ class MysqlEngine(EngineBase):
             row[0]
             for row in result.rows
             if row[0]
-               not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
         ]
         result.rows = db_list
         return result
@@ -362,8 +363,10 @@ class MysqlEngine(EngineBase):
         sql_get_user_without_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
         # MySQL 5.7.6版本, mariadb 10.4.2  起支持ACCOUNT LOCK
         if (
-                self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6)) or (
-                self.server_fork_type == MysqlForkType.MARIADB and self.server_version >= (10, 4, 2)
+            self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6)
+        ) or (
+            self.server_fork_type == MysqlForkType.MARIADB
+            and self.server_version >= (10, 4, 2)
         ):
             sql_get_user = sql_get_user_with_account_locked
         else:
@@ -485,13 +488,13 @@ class MysqlEngine(EngineBase):
         return result_set
 
     def query(
-            self,
-            db_name=None,
-            sql="",
-            limit_num=0,
-            close_conn=True,
-            parameters=None,
-            **kwargs,
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
     ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
@@ -553,13 +556,13 @@ class MysqlEngine(EngineBase):
                 result["msg"] = explain_result.error
         # 不应该查看mysql.user表
         if re.match(
-                ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
-                sql.lower().replace("\n", ""),
+            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
+            sql.lower().replace("\n", ""),
         ) or (
-                db_name == "mysql"
-                and re.match(
-            ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
-        )
+            db_name == "mysql"
+            and re.match(
+                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
+            )
         ):
             result["bad_query"] = True
             result["msg"] = "您无权查看该表"

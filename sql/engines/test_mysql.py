@@ -485,4 +485,3 @@ class TestMysql(TestCase):
                 }
             ],
         )
-
