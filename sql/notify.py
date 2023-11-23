@@ -54,7 +54,9 @@ class My2SqlResult:
 
 @dataclass
 class Notifier:
-    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult] = None
+    workflow: Union[
+        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult
+    ] = None
     sys_config: SysConfig = None
     # init false, class property, 不是 instance property
     name: str = field(init=False, default="base")
