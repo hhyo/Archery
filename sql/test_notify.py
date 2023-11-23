@@ -196,6 +196,10 @@ class TestNotify(TestCase):
         n.sys_config_key = "not-foo"
         self.assertFalse(n.should_run())
 
+    def test_no_workflow_and_audit(self):
+        with self.assertRaises(ValueError):
+            n = Notifier(workflow=None, audit=None)
+
     @patch("sql.notify.FeishuWebhookNotifier.run")
     def test_auto_notify(self, mock_run):
         with self.settings(ENABLED_NOTIFIERS=("sql.notify:FeishuWebhookNotifier",)):
