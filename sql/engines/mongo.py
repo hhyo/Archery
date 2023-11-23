@@ -510,7 +510,7 @@ class MongoEngine(EngineBase):
 
         sql = sql.strip()
         # sql 检查过滤注释语句
-        sql = re.sub(r'^\s*//.*$','', sql,flags=re.MULTILINE)
+        sql = re.sub(r"^\s*//.*$","", sql,flags=re.MULTILINE)
         if sql.find(";") < 0:
             raise Exception("提交的语句请以分号结尾")
         # 以；切分语句，逐句执行
