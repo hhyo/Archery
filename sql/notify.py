@@ -54,7 +54,9 @@ class My2SqlResult:
 
 @dataclass
 class Notifier:
-    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult]
+    workflow: Union[
+        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult
+    ] = None
     sys_config: SysConfig = None
     # init false, class property, 不是 instance property
     name: str = field(init=False, default="base")
@@ -64,10 +66,12 @@ class Notifier:
     audit_detail: WorkflowAuditDetail = None
 
     def __post_init__(self):
+        if not self.audit and not self.workflow:
+            raise ValueError("需要提供 WorkflowAudit 或 workflow")
         if not self.workflow:
-            if not self.audit:
-                raise ValueError("需要提供 WorkflowAudit 或 workflow")
             self.workflow = self.audit.get_workflow()
+        if not self.audit and not isinstance(self.workflow, My2SqlResult):
+            self.audit = self.workflow.get_audit()
         # 防止 get_auditor 显式的传了个 None
         if not self.sys_config:
             self.sys_config = SysConfig()
@@ -495,7 +499,7 @@ def auto_notify(
 def notify_for_execute(workflow: SqlWorkflow, sys_config: SysConfig = None):
     if not sys_config:
         sys_config = SysConfig()
-    auto_notify(workflow=workflow, sys_config=sys_config)
+    auto_notify(workflow=workflow, sys_config=sys_config, event_type=EventType.EXECUTE)
 
 
 def notify_for_audit(
@@ -514,6 +518,7 @@ def notify_for_audit(
         audit=workflow_audit,
         audit_detail=workflow_audit_detail,
         sys_config=sys_config,
+        event_type=EventType.AUDIT,
     )
 
 
