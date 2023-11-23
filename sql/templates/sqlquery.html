@@ -703,11 +703,12 @@
             var active_li_id = sessionStorage.getItem('active_li_id');
             let active_li_title = sessionStorage.getItem('active_li_title');
             let tb_name
+            let need_describe_display = false
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
                 if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
                     if (data.is_describe===undefined || !data.is_describe) {
-                        data.is_describe = true
+                        need_describe_display = true
                         tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
                 }
@@ -719,6 +720,9 @@
                         tab_add(tb_name);
                     }
                     n = sessionStorage.getItem('tab_num');
+                    if (result.column_list === ["table", "create table"]) {
+                        need_describe_display = true
+                    }
                 }
                 // 执行结果页默认不新增
                 else if (active_li_title.match(/^执行结果\d$/)) {
@@ -768,7 +772,7 @@
                             }
                         });
                     });
-                    if (data.is_describe) {
+                    if (need_describe_display) {
                         //初始化表结构显示
                         $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
                                 escape: false,
