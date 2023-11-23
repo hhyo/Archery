@@ -9,7 +9,6 @@ import logging
 
 from django.contrib.auth.models import Group
 from django.utils import timezone
-from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
 from sql.engines.models import ReviewResult
@@ -76,7 +75,6 @@ class AuditV2:
     sys_config: SysConfig = field(default_factory=SysConfig)
     audit: WorkflowAudit = None
     workflow_type: WorkflowType = WorkflowType.SQL_REVIEW
-    workflow_pk_field: str = "id"
     # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
     resource_group: str = ""
     resource_group_id: int = 0
@@ -86,22 +84,17 @@ class AuditV2:
             if not self.audit:
                 raise ValueError("需要提供 WorkflowAudit 或 workflow")
             self.get_workflow()
+        self.workflow_type = self.workflow.workflow_type
         if isinstance(self.workflow, SqlWorkflow):
-            self.workflow_type = WorkflowType.SQL_REVIEW
-            self.workflow_pk_field = "id"
             self.resource_group = self.workflow.group_name
             self.resource_group_id = self.workflow.group_id
         elif isinstance(self.workflow, ArchiveConfig):
-            self.workflow_type = WorkflowType.ARCHIVE
-            self.workflow_pk_field = "id"
             try:
                 group_in_db = ResourceGroup.objects.get(group_name=self.resource_group)
                 self.resource_group_id = group_in_db.group_id
             except ResourceGroup.DoesNotExist:
                 raise AuditException(f"参数错误, 未发现资源组 {self.resource_group}")
         elif isinstance(self.workflow, QueryPrivilegesApply):
-            self.workflow_type = WorkflowType.QUERY
-            self.workflow_pk_field = "apply_id"
             self.resource_group = self.workflow.group_name
             self.resource_group_id = self.workflow.group_id
         # 该方法可能获取不到相关的审批流, 但是也不要报错, 因为有的时候是新建工单, 此时还没有审批流
@@ -241,7 +234,7 @@ class AuditV2:
         self.audit = WorkflowAudit(
             group_id=group_id,
             group_name=group_name,
-            workflow_id=self.workflow.__getattribute__(self.workflow_pk_field),
+            workflow_id=self.workflow.pk,
             workflow_type=self.workflow_type,
             workflow_title=workflow_title,
             audit_auth_groups=audit_setting.audit_auth_group_in_db,
@@ -365,17 +358,8 @@ class AuditV2:
         """尝试根据 workflow 取出审批工作流"""
         if self.audit:
             return self.audit
-        try:
-            self.audit = WorkflowAudit.objects.get(
-                workflow_type=self.workflow_type,
-                workflow_id=getattr(self.workflow, self.workflow_pk_field),
-            )
-            if self.audit.workflow_type == WorkflowType.ARCHIVE:
-                self.resource_group = self.audit.group_name
-                self.resource_group_id = self.audit.group_id
-            return self.audit
-        except ObjectDoesNotExist:
-            return None
+        self.audit = self.workflow.get_audit()
+        return self.audit
 
     def operate_pass(self, actor: Users, remark: str) -> WorkflowAuditDetail:
         # 判断是否还有下一级审核
@@ -667,7 +651,6 @@ def get_auditor(
     sys_config: SysConfig = None,
     audit: WorkflowAudit = None,
     workflow_type: WorkflowType = WorkflowType.SQL_REVIEW,
-    workflow_pk_field: str = "id",
     # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
     resource_group: str = "",
     resource_group_id: int = 0,
@@ -678,7 +661,6 @@ def get_auditor(
     return auditor(
         workflow=workflow,
         workflow_type=workflow_type,
-        workflow_pk_field=workflow_pk_field,
         sys_config=sys_config,
         audit=audit,
         resource_group=resource_group,

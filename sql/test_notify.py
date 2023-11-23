@@ -206,7 +206,9 @@ class TestNotify(TestCase):
     def test_notify_for_execute(self, mock_auto_notify: Mock):
         """测试适配器"""
         notify_for_execute(self.wf)
-        mock_auto_notify.assert_called_once_with(workflow=self.wf, sys_config=ANY)
+        mock_auto_notify.assert_called_once_with(
+            workflow=self.wf, sys_config=ANY, event_type=EventType.EXECUTE
+        )
 
     @patch("sql.notify.auto_notify")
     def test_notify_for_audit(self, mock_auto_notify: Mock):
@@ -216,6 +218,7 @@ class TestNotify(TestCase):
         )
         mock_auto_notify.assert_called_once_with(
             workflow=None,
+            event_type=EventType.AUDIT,
             sys_config=ANY,
             audit=self.audit_wf,
             audit_detail=self.audit_wf_detail,
@@ -583,5 +586,5 @@ def test_override_sys_key():
     class OverrideNotifier(Notifier):
         sys_config_key = "test"
 
-    n = OverrideNotifier(workflow="test")
+    n = OverrideNotifier(workflow=Mock())
     assert n.sys_config_key == "test"

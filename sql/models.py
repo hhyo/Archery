@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+from typing import Optional
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from mirage import fields
@@ -240,7 +242,36 @@ SQL_WORKFLOW_CHOICES = (
 )
 
 
-class SqlWorkflow(models.Model):
+class WorkflowAuditMixin:
+    @property
+    def workflow_type(self):
+        if isinstance(self, SqlWorkflow):
+            return WorkflowType.SQL_REVIEW
+        elif isinstance(self, ArchiveConfig):
+            return WorkflowType.ARCHIVE
+        elif isinstance(self, QueryPrivilegesApply):
+            return WorkflowType.QUERY
+
+    @property
+    def workflow_pk_field(self):
+        if isinstance(self, SqlWorkflow):
+            return "id"
+        elif isinstance(self, ArchiveConfig):
+            return "id"
+        elif isinstance(self, QueryPrivilegesApply):
+            return "apply_id"
+
+    def get_audit(self) -> Optional["WorkflowAudit"]:
+        try:
+            return WorkflowAudit.objects.get(
+                workflow_type=self.workflow_type,
+                workflow_id=getattr(self, self.workflow_pk_field),
+            )
+        except WorkflowAudit.DoesNotExist:
+            return None
+
+
+class SqlWorkflow(models.Model, WorkflowAuditMixin):
     """
     存放各个SQL上线工单的基础内容
     """
@@ -419,7 +450,7 @@ class WorkflowLog(models.Model):
         verbose_name_plural = "工作流日志"
 
 
-class QueryPrivilegesApply(models.Model):
+class QueryPrivilegesApply(models.Model, WorkflowAuditMixin):
     """
     查询权限申请记录表
     """
@@ -687,7 +718,7 @@ class ParamHistory(models.Model):
         verbose_name_plural = "实例参数修改历史"
 
 
-class ArchiveConfig(models.Model):
+class ArchiveConfig(models.Model, WorkflowAuditMixin):
     """
     归档配置表
     """
