@@ -198,7 +198,7 @@ class TestNotify(TestCase):
 
     def test_no_workflow_and_audit(self):
         with self.assertRaises(ValueError):
-            n = Notifier(workflow=None, audit=None)
+            Notifier(workflow=None, audit=None)
 
     @patch("sql.notify.FeishuWebhookNotifier.run")
     def test_auto_notify(self, mock_run):
