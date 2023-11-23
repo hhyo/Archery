@@ -4,6 +4,7 @@ import traceback
 import MySQLdb
 import pymysql
 import re
+from enum import Enum
 
 import schemaobject
 import sqlparse
@@ -52,8 +53,18 @@ column_types_map = {
 }
 
 
+class MysqlForkType(Enum):
+    """定义几个支持的版本类型"""
+    MYSQL = "mysql"
+    MARIADB = "mariadb"
+    PERCONA = "percona"
+
+
 class MysqlEngine(EngineBase):
     test_query = "SELECT 1"
+    _server_version = None
+    _server_fork_type = None
+    _server_info = None
 
     def __init__(self, instance=None):
         super().__init__(instance=instance)
@@ -119,6 +130,9 @@ class MysqlEngine(EngineBase):
 
     @property
     def server_version(self):
+        if self._server_version:
+            return self._server_version
+
         def numeric_part(s):
             """Returns the leading numeric part of a string."""
             re_numeric_part = re.compile(r"^(\d+)")
@@ -129,7 +143,25 @@ class MysqlEngine(EngineBase):
 
         self.get_connection()
         version = self.conn.get_server_info()
-        return tuple([numeric_part(n) for n in version.split(".")[:3]])
+        self._server_version = tuple([numeric_part(n) for n in version.split(".")[:3]])
+        return self._server_version
+
+    @property
+    def server_info(self):
+        if self._server_info:
+            return self._server_info
+        conn = self.get_connection()
+        self._server_info = conn.get_server_info()
+        return self._server_info
+
+    @property
+    def server_fork_type(self):
+        """确认 server 具体是哪种 mysql, mysql, mariadb, 还是 percona"""
+        server_info = self.server_info
+        for i in list(MysqlForkType):
+            if i.value in server_info.lower():
+                return i
+        return MysqlForkType.MYSQL
 
     @property
     def schema_object(self):
@@ -153,7 +185,7 @@ class MysqlEngine(EngineBase):
             row[0]
             for row in result.rows
             if row[0]
-            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+               not in ("information_schema", "performance_schema", "mysql", "test", "sys")
         ]
         result.rows = db_list
         return result
@@ -326,12 +358,20 @@ class MysqlEngine(EngineBase):
     def get_instance_users_summary(self):
         """实例账号管理功能，获取实例所有账号信息"""
         server_version = self.server_version
-        # MySQL 5.7.6版本起支持ACCOUNT LOCK
-        if server_version >= (5, 7, 6):
-            sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
+        sql_get_user_with_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
+        sql_get_user_without_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
+        # MySQL 5.7.6版本, mariadb 10.4.2  起支持ACCOUNT LOCK
+        if (
+                self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6)) or (
+                self.server_fork_type == MysqlForkType.MARIADB and self.server_version >= (10, 4, 2)
+        ):
+            sql_get_user = sql_get_user_with_account_locked
         else:
-            sql_get_user = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
+            sql_get_user = sql_get_user_without_account_locked
         query_result = self.query("mysql", sql_get_user)
+        if query_result.error and sql_get_user == sql_get_user_with_account_locked:
+            # 查询出错了, fallback 到不带 lock 信息的 sql
+            query_result = self.query("mysql", sql_get_user_without_account_locked)
         if not query_result.error:
             db_users = query_result.rows
             # 获取用户权限信息
@@ -445,13 +485,13 @@ class MysqlEngine(EngineBase):
         return result_set
 
     def query(
-        self,
-        db_name=None,
-        sql="",
-        limit_num=0,
-        close_conn=True,
-        parameters=None,
-        **kwargs,
+            self,
+            db_name=None,
+            sql="",
+            limit_num=0,
+            close_conn=True,
+            parameters=None,
+            **kwargs,
     ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
@@ -513,13 +553,13 @@ class MysqlEngine(EngineBase):
                 result["msg"] = explain_result.error
         # 不应该查看mysql.user表
         if re.match(
-            ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
-            sql.lower().replace("\n", ""),
+                ".*(\\s)+(mysql|`mysql`)(\\s)*\\.(\\s)*(user|`user`)((\\s)*|;).*",
+                sql.lower().replace("\n", ""),
         ) or (
-            db_name == "mysql"
-            and re.match(
-                ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
-            )
+                db_name == "mysql"
+                and re.match(
+            ".*(\\s)+(user|`user`)((\\s)*|;).*", sql.lower().replace("\n", "")
+        )
         ):
             result["bad_query"] = True
             result["msg"] = "您无权查看该表"
