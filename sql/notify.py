@@ -448,6 +448,22 @@ class QywxWebhookNotifier(LegacyRender):
             )
 
 
+class QywxToUserNotifier(LegacyRender):
+    name = "qywx_to_user"
+    sys_config_key: str = "wx"
+
+    def send(self):
+        msg_sender = MsgSender()
+        for m in self.messages:
+            msg_to_wx_user = [
+                user.wx_user_id if user.wx_user_id else user.username
+                for user in chain(m.msg_to, m.msg_cc)
+            ]
+            msg_sender.send_wx2user(
+                f"{msg_title}\n{msg_content}", msg_to_wx_user
+            )
+
+
 class MailNotifier(LegacyRender):
     name = "mail"
     sys_config_key = "mail"
