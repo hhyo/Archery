@@ -702,7 +702,7 @@
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
             let active_li_title = sessionStorage.getItem('active_li_title');
-            let tb_name
+            let tb_name, n
             let need_describe_display = false
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
@@ -726,7 +726,7 @@
                 }
                 // 执行结果页默认不新增
                 else if (active_li_title.match(/^执行结果\d$/)) {
-                    let n = active_li_id.split("execute_result_tab")[1];
+                     n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
@@ -774,7 +774,7 @@
                     });
                     if (need_describe_display) {
                         //初始化表结构显示
-                        $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
                                 escape: false,
                                 data: result['rows'],
                                 columns: [{
@@ -806,7 +806,7 @@
                             isdetail = true
                         }
                         var showExport = {{can_download}}===1
-                        $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
                             columns: columns,
@@ -995,7 +995,6 @@
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
                     $('input[type=button]').prop('disabled', false);
-                    optgroup_control();
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
