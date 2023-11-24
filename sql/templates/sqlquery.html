@@ -726,7 +726,7 @@
                 }
                 // 执行结果页默认不新增
                 else if (active_li_title.match(/^执行结果\d$/)) {
-                     n = active_li_id.split("execute_result_tab")[1];
+                    n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
