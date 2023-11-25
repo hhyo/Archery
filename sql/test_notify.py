@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from unittest.mock import patch, Mock, ANY
 import pytest
 from pytest_mock import MockFixture
@@ -61,7 +61,7 @@ class TestNotify(TestCase):
         )
         self.su.groups.add(self.aug)
 
-        tomorrow = datetime.today() + timedelta(days=1)
+        tomorrow = date.today() + timedelta(days=1)
         self.ins = Instance.objects.create(
             instance_name="some_ins",
             type="slave",
@@ -422,6 +422,7 @@ class TestNotify(TestCase):
         self.assertEqual(notifier.messages[0].msg_title, "[Archery 通知]My2SQL执行失败")
 
     def test_general_webhook(self):
+        # SQL 上线工单
         notifier = GenericWebhookNotifier(
             workflow=self.wf,
             event_type=EventType.AUDIT,
@@ -474,6 +475,19 @@ class TestNotify(TestCase):
         )
         self.assertEqual(
             notifier.request_data["instance"]["instance_name"], self.ins.instance_name
+        )
+        # SQL 查询工单
+        notifier = GenericWebhookNotifier(
+            workflow=self.query_apply_1,
+            event_type=EventType.AUDIT,
+            audit=self.audit_query,
+            audit_detail=self.audit_query_detail,
+            sys_config=self.sys_config,
+        )
+        notifier.render()
+        self.assertIsNotNone(notifier.request_data)
+        self.assertEqual(
+            notifier.request_data["workflow_content"]["title"], self.query_apply_1.title
         )
 
 
