@@ -16,7 +16,7 @@ class MssqlEngine(EngineBase):
     test_query = "SELECT 1"
 
     def get_connection(self, db_name=None):
-        connstr = """DRIVER=ODBC Driver 18ls for SQL Server;SERVER={0},{1};UID={2};PWD={3};
+        connstr = """DRIVER=ODBC Driver 18 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
 client charset = UTF-8;connect timeout=10;CHARSET={4};TrustServerCertificate=yes;""".format(
             self.host,
             self.port,
