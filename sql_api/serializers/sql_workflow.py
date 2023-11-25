@@ -18,7 +18,6 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
 from sql.engines import ReviewSet, get_engine
 from sql.engines.models import ReviewResult
 from sql.models import Instance, SqlWorkflow, Users
@@ -256,7 +255,9 @@ class SqlWorkflowSerializer(BaseModelSerializer):
         """用于MySQL的大表DDL控制"""
         execute_engine = get_engine(instance=obj.instance)
         try:
-            execute_result = execute_engine.osc_control(command=command, sqlsha1=sqlsha1)
+            execute_result = execute_engine.osc_control(
+                command=command, sqlsha1=sqlsha1
+            )
             rows = execute_result.to_dict()
             error = execute_result.error
         except Exception as e:
@@ -296,5 +297,6 @@ class SqlWorkflowMySQLOscControlSerializer(serializers.Serializer):
         label="SQL审核返回的sqlsha1信息",
     )
     command = serializers.ChoiceField(
-        choices=["get", "pause", "resume", "kill"], label="命令：get-获取详情，pause-暂停，resume-恢复，kill-终止"
+        choices=["get", "pause", "resume", "kill"],
+        label="命令：get-获取详情，pause-暂停，resume-恢复，kill-终止",
     )
