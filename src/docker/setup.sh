@@ -1,10 +1,5 @@
 #!/bin/bash
 set -euxo pipefail
-curl -q -L -o dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-tar -C /opt -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-chmod +x /opt/dockerize
-mv /opt/dockerize /usr/local/bin/
-rm -rf dockerize*
 #sqladvisor
 curl -o sqladvisor -L https://github.com/LeoQuote/SQLAdvisor/releases/download/v2.1/sqladvisor-linux-amd64
 chmod +x sqladvisor
@@ -52,6 +47,5 @@ apt-get clean
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
 echo $TZ > /etc/timezone
 chmod +x sqladvisor soar my2sql
-chmod +x /usr/local/bin/dockerize
 chmod +x /usr/local/bin/mongo
 python3 -m venv venv4archery
