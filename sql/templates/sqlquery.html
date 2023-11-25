@@ -713,7 +713,7 @@
                         tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
                     }
                 }
-                if (data.is_describe) {
+                if (data.is_describe || need_describe_display) {
                     if (tb_name === undefined) {
                         tb_name = $("#table_name").val();
                     }
