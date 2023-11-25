@@ -873,7 +873,7 @@ class TestWorkflowView(TransactionTestCase):
     # 参见 : https://docs.python.org/3/library/unittest.mock.html#where-to-patch
     @patch("sql.sql_workflow.can_cancel")
     def testWorkflowCancelView(
-            self, _can_cancel, mock_audit_operate, mock_notify, _add_log
+        self, _can_cancel, mock_audit_operate, mock_notify, _add_log
     ):
         """测试工单驳回、取消"""
         c = Client()
@@ -1555,7 +1555,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_not_config(
-            self, _get_engine, _get_variables, _set_variable
+        self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，参数未在模板配置
@@ -1575,7 +1575,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_not_change(
-            self, _get_engine, _get_variables, _set_variable
+        self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，但是值无变化
@@ -1605,7 +1605,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_change(
-            self, _get_engine, _get_variables, _set_variable
+        self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，且值有变化
@@ -1635,7 +1635,7 @@ class TestParam(TestCase):
     @patch("sql.engines.mysql.MysqlEngine.get_variables")
     @patch("sql.engines.get_engine")
     def test_param_edit_variable_error(
-            self, _get_engine, _get_variables, _set_variable
+        self, _get_engine, _get_variables, _set_variable
     ):
         """
         测试参数修改，已在参数模板配置，修改抛错
