@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timedelta
 from unittest.mock import patch, Mock, ANY
+import pytest
+from pytest_mock import MockFixture
 
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
@@ -28,6 +30,7 @@ from sql.notify import (
     FeishuPersonNotifier,
     FeishuWebhookNotifier,
     QywxWebhookNotifier,
+    QywxToUserNotifier,
     LegacyMessage,
     Notifier,
     notify_for_execute,
@@ -469,119 +472,41 @@ class TestNotify(TestCase):
         )
 
 
-class TestNotifySend(TestCase):
-    audit_wf: WorkflowAudit = None
-    rs: ResourceGroup = None
-    user: User = None
-
-    @classmethod
-    def setUpClass(cls):
-        cls.user = User.objects.create(
-            username="test",
-            email="test@example.com",
-            ding_user_id="1234",
-            wx_user_id="1234",
-            feishu_open_id="1234",
-        )
-        cls.rs = ResourceGroup.objects.create(
-            group_name="test",
-            ding_webhook="ding_url",
-            feishu_webhook="feishu_url",
-            qywx_webhook="qywx_url",
-        )
-        cls.audit_wf = WorkflowAudit.objects.create(
-            group_id=cls.rs.group_id,
-            group_name="some_group",
-            workflow_id=1,
-            workflow_type=2,
-            workflow_title="申请标题",
-            workflow_remark="申请备注",
-            audit_auth_groups="1",
-            current_audit="1",
-            next_audit="2",
-            current_status=0,
-            create_user=cls.user.username,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
-        cls.rs.delete()
-        cls.audit_wf.delete()
-
-    def setUp(self):
-        self.patcher = patch("sql.notify.MsgSender")
-        self.mock_msg_sender = self.patcher.start()
-        self.get_workflow_patcher = patch("sql.models.WorkflowAudit.get_workflow")
-        self.mock_get_workflow = self.get_workflow_patcher.start()
-        self.sys_config = SysConfig()
-
-    def tearDown(self):
-        self.patcher.stop()
-        self.get_workflow_patcher.stop()
-
-    def generate_notifier(self, module) -> Notifier:
-        return module(workflow=None, audit=self.audit_wf, sys_config=self.sys_config)
-
-    def test_ding_webhook_send(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_ding", mocker)
-        notifier = self.generate_notifier(DingdingWebhookNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
-
-    def test_ding_person_send(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_ding2user", mocker)
-        notifier = self.generate_notifier(DingdingPersonNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
-
-    def test_feishu_webhook(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_feishu_webhook", mocker)
-        notifier = self.generate_notifier(FeishuWebhookNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
-
-    def test_feishu_person(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_feishu_user", mocker)
-        notifier = self.generate_notifier(FeishuPersonNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
-
-    def test_qywx_webhook(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_qywx_webhook", mocker)
-        notifier = self.generate_notifier(QywxWebhookNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
-
-    def test_mail(self):
-        mocker = Mock()
-        setattr(self.mock_msg_sender.return_value, "send_email", mocker)
-        notifier = self.generate_notifier(MailNotifier)
-        notifier.messages = [
-            LegacyMessage(msg_to=[self.user], msg_title="test", msg_content="test")
-        ]
-        notifier.send()
-        mocker.assert_called_once()
+@pytest.mark.parametrize(
+    "notifier_to_test,method_assert_called",
+    [
+        (DingdingWebhookNotifier, "send_ding"),
+        (DingdingPersonNotifier, "send_ding2user"),
+        (FeishuWebhookNotifier, "send_feishu_webhook"),
+        (FeishuPersonNotifier, "send_feishu_user"),
+        (QywxWebhookNotifier, "send_qywx_webhook"),
+        (QywxToUserNotifier, "send_wx2user"),
+        (MailNotifier, "send_email"),
+    ],
+)
+def test_notify_send(
+    mocker: MockFixture,
+    create_audit_workflow,
+    notifier_to_test: Notifier.__class__,
+    method_assert_called: str,
+):
+    """测试通知发送
+    初始化 notifier_to_test, 然后调用 send 方法, 然后断言对应的方法`method_assert_called`被调用了
+    send 方法都是 MsgSender 的方法, 所以这里只需要断言 MsgSender 的方法被调用了, 如果没有用到 MsgSender 的方法, 那么就不需要这个测试
+    需要自己写别的测试
+    """
+    mock_send_method = Mock()
+    mock_msg_sender = mocker.patch("sql.notify.MsgSender")
+    mocker.patch("sql.models.WorkflowAudit.get_workflow")
+    setattr(mock_msg_sender.return_value, method_assert_called, mock_send_method)
+    notifier = notifier_to_test(
+        workflow=None, audit=create_audit_workflow, sys_config=SysConfig()
+    )
+    notifier.messages = [
+        LegacyMessage(msg_to=[Mock()], msg_title="test", msg_content="test")
+    ]
+    notifier.send()
+    mock_send_method.assert_called_once()
 
 
 def test_override_sys_key():

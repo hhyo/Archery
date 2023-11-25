@@ -459,9 +459,7 @@ class QywxToUserNotifier(LegacyRender):
                 user.wx_user_id if user.wx_user_id else user.username
                 for user in chain(m.msg_to, m.msg_cc)
             ]
-            msg_sender.send_wx2user(
-                f"{msg_title}\n{msg_content}", msg_to_wx_user
-            )
+            msg_sender.send_wx2user(f"{m.msg_title}\n{m.msg_content}", msg_to_wx_user)
 
 
 class MailNotifier(LegacyRender):

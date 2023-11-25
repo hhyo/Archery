@@ -13,6 +13,7 @@ from sql.models import (
     QueryPrivilegesApply,
     ArchiveConfig,
     InstanceTag,
+    WorkflowAudit,
 )
 from common.config import SysConfig
 from sql.utils.workflow_audit import AuditV2, AuditSetting
@@ -157,3 +158,35 @@ def instance_tag(db):
     tag = InstanceTag.objects.create(tag_code="test_tag", tag_name="测试标签")
     yield tag
     tag.delete()
+
+
+@pytest.fixture
+def create_resource_group(db):
+    resource_group = ResourceGroup.objects.create(
+        group_name="group_name",
+        is_deleted=False,
+        qywx_webhook="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx",
+        feishu_webhook="https://open.feishu.cn/open-apis/bot/v2/hook/xxx",
+        ding_webhook="https://oapi.dingtalk.com/robot/send?access_token=xxx",
+    )
+    yield resource_group
+    resource_group.delete()
+
+
+@pytest.fixture
+def create_audit_workflow(normal_user, create_resource_group):
+    audit_wf = WorkflowAudit.objects.create(
+        group_id=create_resource_group.group_id,
+        group_name=create_resource_group.group_name,
+        workflow_id=1,
+        workflow_type=2,
+        workflow_title="申请标题",
+        workflow_remark="申请备注",
+        audit_auth_groups="1",
+        current_audit="1",
+        next_audit="2",
+        current_status=0,
+        create_user=normal_user.username,
+    )
+    yield audit_wf
+    audit_wf.delete()
