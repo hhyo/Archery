@@ -196,6 +196,11 @@ class TestNotify(TestCase):
         n = Notifier(workflow=self.wf, sys_config=self.sys_config)
         n.sys_config_key = "foo"
         self.assertTrue(n.should_run())
+        with self.assertRaises(NotImplementedError):
+            n.run()
+        n.send = Mock()
+        n.render = Mock()
+        n.run()
         n.sys_config_key = "not-foo"
         self.assertFalse(n.should_run())
 
