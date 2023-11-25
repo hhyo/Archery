@@ -995,6 +995,7 @@
                 complete: function () {
                     $('input[type=button]').removeClass('disabled');
                     $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
                 },
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
@@ -1016,19 +1017,61 @@
     </script>
     <!-- common -->
     <script>
+        // 按钮和控制器展示配置
+        const defaultDisplayConfig = {
+            showTableName: true,
+            showSchemaName: false,
+            showFormat: true,
+            showExplain: true,
+            showRedisHelp: false,
+        }
+        const createDisplayConfig = function(extraArgs = null) {
+            if (extraArgs === null) {
+                extraArgs = {}
+            }
+            return Object.assign({}, defaultDisplayConfig, extraArgs)
+        }
+        const engineDisplayConfig = {
+            "MsSQL": createDisplayConfig({showExplain: false}),
+            "Redis": createDisplayConfig({showTableName: false, showSchemaName: false,
+                showRedisHelp: true,
+                showFormat: false, showExplain: false}),
+            "PgSQL": createDisplayConfig({showSchemaName: true}),
+            "Mongo": createDisplayConfig({showFormat: false}),
+            "Phoenix": createDisplayConfig({showExplain: false}),
+            // 如有特殊的显示需求, 在此处添加配置, 并在下方的optgroup_control中添加对应的控制逻辑
+            // 如无特殊需求, 可以直接不填写, 这样会使用默认配置
+        };
         //控制按钮和选择器显示
         function optgroup_control(change) {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (change) {
-                $("#div-table_name").show();
-                $("#div-schema_name").hide();
-            }
-            $("#btn-format").attr('disabled', false);
-            $("#btn-explain").attr('disabled', false);
-            if (optgroup === "Redis") {
-                redis_help_tab_add();
+            let optgroup = $('#instance_name :selected').parent().attr('label');
+            let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
+            if (displayConfig.showExplain) {
+                $("#btn-explain").attr('disabled', false);
             } else {
-                redis_help_tab_remove();
+                $("#btn-explain").attr('disabled', true);
+            }
+            if (displayConfig.showFormat) {
+                $("#btn-format").attr('disabled', false);
+            } else {
+                $("#btn-format").attr('disabled', true);
+            }
+            if (change) {
+                if (displayConfig.showTableName) {
+                    $("#div-table_name").show();
+                } else {
+                    $("#div-table_name").hide();
+                }
+                if (displayConfig.showSchemaName) {
+                    $("#div-schema_name").show();
+                } else {
+                    $("#div-schema_name").hide();
+                }
+                if (displayConfig.showRedisHelp) {
+                    redis_help_tab_add();
+                } else {
+                    redis_help_tab_remove();
+                }
             }
         }
 
