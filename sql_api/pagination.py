@@ -29,3 +29,11 @@ class CustomizedPagination(PageNumberPagination):
                 ]
             )
         )
+
+
+class CustomizedPaginationV2(PageNumberPagination):
+    """V2的分页器"""
+
+    page_size = 14
+    page_size_query_param = "size"
+    max_page_size = None

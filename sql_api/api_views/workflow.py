@@ -13,28 +13,23 @@ from rest_framework.response import Response
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
-from sql.engines import get_engine
 from sql.models import (
     SqlWorkflow,
     SqlWorkflowContent,
     WorkflowAudit,
     Users,
     WorkflowLog,
-    ArchiveConfig,
-    QueryPrivilegesApply,
 )
 from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.utils.resource_group import user_groups
-from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
+from sql.utils.sql_review import can_execute, on_correct_time_period
 from sql.utils.tasks import del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .filters import WorkflowFilter, WorkflowAuditFilter
-from .pagination import CustomizedPagination
-from .serializers import (
+from sql_api.filters import WorkflowFilter, WorkflowAuditFilter
+from sql_api.pagination import CustomizedPagination
+from sql_api.serializers.serializers import (
     WorkflowContentSerializer,
-    ExecuteCheckSerializer,
-    ExecuteCheckResultSerializer,
     WorkflowAuditSerializer,
     WorkflowAuditListSerializer,
     WorkflowLogSerializer,
@@ -44,36 +39,6 @@ from .serializers import (
 )
 
 logger = logging.getLogger("default")
-
-
-class ExecuteCheck(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @extend_schema(
-        summary="SQL检查",
-        request=ExecuteCheckSerializer,
-        responses={200: ExecuteCheckResultSerializer},
-        description="对提供的SQL进行语法检查",
-    )
-    @method_decorator(permission_required("sql.sql_submit", raise_exception=True))
-    def post(self, request):
-        # 参数验证
-        serializer = ExecuteCheckSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.get_instance()
-        # 交给engine进行检测
-        try:
-            db_name = request.data["db_name"]
-            check_engine = get_engine(instance=instance)
-            db_name = check_engine.escape_string(db_name)
-            check_result = check_engine.execute_check(
-                db_name=db_name, sql=request.data["full_sql"].strip()
-            )
-        except Exception as e:
-            raise serializers.ValidationError({"errors": f"{e}"})
-        check_result.rows = check_result.to_dict()
-        serializer_obj = ExecuteCheckResultSerializer(check_result)
-        return Response(serializer_obj.data)
 
 
 class WorkflowList(generics.ListAPIView):

@@ -9,10 +9,12 @@
         </h4>
         <!--只允许发起人提交其他实例-->
         {% if user.username == workflow_detail.engineer %}
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning'
+               href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)"
+               href="/editsql/">查看提交信息</a>
         {% endif %}
     </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -194,21 +196,9 @@
     {% endif %}
     <!--立即执行按钮-->
     {% if is_can_execute %}
-        <form id="from-execute" action="/execute/" method="post" style="display:inline-block;">
-            {% csrf_token %}
-            <input type="hidden" name="mode" value="auto">
-            <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-            <input type="button" id="btnExecuteOnly" class="btn btn-danger"
-                   value="立即执行"/>
-        </form>
+        <input type="button" id="btnExecuteOnly" class="btn btn-danger" value="立即执行"/>
         {% if manual %}
-            <form id="from-execute-manual" action="/execute/" method="post" style="display:inline-block;">
-                {% csrf_token %}
-                <input type="hidden" name="mode" value="manual">
-                <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning"
-                       value="已手动完成"/>
-            </form>
+            <input type="button" id="btnExecuteOnly-manual" class="btn btn-warning" value="已手动完成"/>
         {% endif %}
     {% endif %}
     <!--定时执行按钮-->
@@ -216,7 +206,8 @@
         {% if workflow_detail.status == 'workflow_review_pass' %}
             <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="定时执行"/>
         {% elif workflow_detail.status == 'workflow_timingtask' %}
-            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm" value="执行时间变更"/>
+            <input type="button" class="btn btn-info" data-toggle="modal" data-target="#cronComfirm"
+                   value="执行时间变更"/>
         {% endif %}
     {% endif %}
     <!--终止执行按钮-->
@@ -279,8 +270,6 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
-
-                        <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                         <input type="button" id="btnAddsqlcronjob" class="btn btn-danger" value="确认提交"/>
                     </div>
 
@@ -317,7 +306,7 @@
         </div>
     </div>
     <!-- 修改可执行时间弹出框 -->
-    <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
+    <form id="from-alterexecutabletime" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -466,20 +455,22 @@
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
             }
-            var formExecuteOnly = $("#from-execute");
             if (isContinue) {
-                formExecuteOnly.submit();
-                loading(this)
+                sqlWorkflowAction('post', 'execute', JSON.stringify({
+                        "mode": "auto",
+                    }, $(this).attr('id')
+                ))
             }
         });
 
         // 执行确认手工执行
         $("#btnExecuteOnly-manual").click(function () {
             var isContinue = confirm("请确认是否已经手工执行结束？");
-            var formExecuteOnly = $("#from-execute-manual");
             if (isContinue) {
-                formExecuteOnly.submit();
-                loading(this)
+                sqlWorkflowAction('post', 'execute', JSON.stringify({
+                        "mode": "manual",
+                    }, $(this).attr('id')
+                ))
             }
         });
 
@@ -507,11 +498,12 @@
 
         // 定时时间校验
         $("#btnAddsqlcronjob").click(function () {
-            //获取form对象，判断输入，通过则提交
-            var formAddsqlcronjo = $("#from-addsqlcronjob");
-            if ($("#run_date").val()) {
-                loading(this);
-                formAddsqlcronjo.submit();
+            let run_date = $("#run_date").val()
+            if (run_date) {
+                sqlWorkflowAction('post', 'timing_task', JSON.stringify({
+                        "run_date": run_date,
+                    }, $(this).attr('id')
+                ))
             } else {
                 alert('请填写定时执行时间')
             }
@@ -519,10 +511,11 @@
 
         // 修改可执行时间
         $("#btnalterExecutabletime").click(function () {
-            //获取form对象，判断输入，通过则提交
-            var formAlterexecutabletime = $("#from-alterexecutabletime");
-            loading(this);
-            formAlterexecutabletime.submit();
+            sqlWorkflowAction('patch', 'alter_run_date', JSON.stringify({
+                    run_date_start: $("#run_date_start").val(),
+                    run_date_end: $("#run_date_end").val(),
+                }, $(this).attr('id')
+            ))
         });
 
         // 按钮禁用
@@ -532,6 +525,34 @@
                 $(obj).dequeue();
             });
         }
+
+        // 工单操作
+        function sqlWorkflowAction(http_method, action, data, btnAttrId) {
+            $.ajax({
+                type: http_method,
+                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/" + action + "/",
+                dataType: "json",
+                contentType: 'application/json;',
+                data: data,
+                beforeSend: function (xhr) {
+                    $('#' + btnAttrId).button('loading')
+                },
+                complete: function () {
+                    $('#' + btnAttrId).button('reset')
+                },
+                success: function (data) {
+                    window.location.reload();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    if (XMLHttpRequest.responseJSON) {
+                        alert(XMLHttpRequest.responseText)
+                    } else {
+                        alert(errorThrown);
+                    }
+                }
+            });
+        }
+
     </script>
     <!--表格初始化 -->
     <script>
@@ -540,16 +561,16 @@
             $('#tb-detail').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'get',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/sqlworkflow/detail_content/",
+                contentType: "application/json",
+                url: "/api/v2/workflow/sql/{{ workflow_detail.id }}/",
                 striped: true,                      //是否显示行间隔色
                 cache: true,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: true,                   //是否显示分页（*）
                 sortable: true,                     //是否启用排序
                 sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 500,                       //每页的记录行数（*）
-                pageList: [500, 1000, 5000],        //可供选择的每页的行数（*）
+                pageSize: 14,                       //每页的记录行数（*）
+                pageList: [14, 500, 1000, 5000],        //可供选择的每页的行数（*）
                 search: true,                       //是否显示表格搜索
                 strictSearch: false,                //是否全匹配搜索
                 showColumns: true,                  //是否显示所有的列（选择显示的列）
@@ -589,14 +610,6 @@
                     });
                     return html.join('');
                 },
-                queryParamsType: 'limit',
-                //请求服务数据时所传参数
-                queryParams:
-                    function (params) {
-                        return {
-                            workflow_id: "{{ workflow_detail.id }}",
-                        }
-                    },
                 locale: 'zh-CN',                    //本地化
                 columns: [{
                     title: 'ID',
@@ -610,7 +623,7 @@
                     title: 'SQL内容',
                     field: 'sql',
                     formatter: function (value, row, index) {
-                        var sql=row.sql;
+                        var sql = row.sql;
                         if (sql.length > 80) {
                             return sql.substr(0, 80) + '...';
                         } else {
@@ -674,6 +687,10 @@
                         style = 'danger';
                     }
                     return {classes: style}
+                },
+                responseHandler: function (data) {
+                    //在ajax获取到数据，渲染表格之前，修改数据源
+                    return data.display_content;
                 },
                 onLoadSuccess: function () {
                 },
@@ -747,8 +764,9 @@
             $('#osc_percent_list').bootstrapTable('destroy').bootstrapTable({
                 escape: true,
                 method: 'post',
-                contentType: "application/x-www-form-urlencoded",
-                url: "/inception/osc_control/",
+                contentType: "application/json",
+                url: "/api/v2/workflow/sql/" + workflow_id + "/mysql_osc_control/",
+                dataType: "json",
                 striped: true,                      //是否显示行间隔色
                 cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                 pagination: false,                   //是否显示分页（*）
@@ -791,11 +809,11 @@
                 //请求服务数据时所传参数
                 queryParams:
                     function (params) {
-                        return {
+                        return JSON.stringify({
                             sqlsha1: $(obj).attr("sqlsha1"),
                             workflow_id: "{{ workflow_detail.id }}",
                             command: "get"
-                        }
+                        })
                     },
                 columns: [{
                     title: '',
@@ -870,11 +888,11 @@
                     //发送请求
                     $.ajax({
                         type: "post",
-                        url: "/inception/osc_control/",
+                        contentType: "application/json",
+                        url: "/api/v2/workflow/sql/" + workflow_id + "/mysql_osc_control/",
                         dataType: "json",
                         data: {
                             sqlsha1: sqlsha1,
-                            workflow_id: "{{ workflow_detail.id }}",
                             command: command
                         },
                         complete: function () {
@@ -925,13 +943,11 @@
             if (workflow_id > 0) {
                 // console.log('get workflow status');
                 $.ajax({
-                    type: "post",
+                    type: "get",
                     async: false,
-                    url: "/getWorkflowStatus/",
+                    contentType: "application/json",
+                    url: "/api/v2/workflow/sql/" + workflow_id + "/progress/",
                     dataType: "json",
-                    data: {
-                        workflow_id: workflow_id
-                    },
                     complete: function () {
                         if (wfStatus !== -1 && wfStatus !== "workflow_executing") {
                             window.location.reload(true);

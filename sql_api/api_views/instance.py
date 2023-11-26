@@ -1,7 +1,7 @@
 from rest_framework import views, generics, status, serializers
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
-from .serializers import (
+from sql_api.serializers.serializers import (
     InstanceSerializer,
     InstanceDetailSerializer,
     TunnelSerializer,
@@ -9,8 +9,8 @@ from .serializers import (
     InstanceResourceSerializer,
     InstanceResourceListSerializer,
 )
-from .pagination import CustomizedPagination
-from .filters import InstanceFilter
+from sql_api.pagination import CustomizedPagination
+from sql_api.filters import InstanceFilter
 from sql.models import Instance, Tunnel, AliyunRdsConfig
 from sql.engines import get_engine
 from django.http import Http404

@@ -27,7 +27,7 @@ from sql.models import (
 )
 from sql.utils.resource_group import auth_group_users
 from sql.utils.workflow_audit import Audit
-from sql_api.serializers import (
+from sql_api.serializers.serializers import (
     WorkflowContentSerializer,
     WorkflowAuditListSerializer,
     QueryPrivilegesApplySerializer,
