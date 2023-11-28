@@ -509,6 +509,7 @@ class AuditV2:
         如果总体是待审核状态, 当前节点之前为已通过, 当前节点为当前节点, 未通过, 当前节点之后为未通过
         如果总体为其他状态, 节点的属性都不设置, 均为默认值
         """
+        self.get_audit_info()
         review_nodes = []
         has_met_current_node = False
         current_node_group_id = int(self.audit.current_audit)

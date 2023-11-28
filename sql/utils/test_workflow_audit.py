@@ -532,17 +532,17 @@ def test_get_review_info(
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
     review_info = audit.get_review_info()
-    assert review_info[0].group.name == create_auth_group.name
-    assert review_info[0].is_current_node is True
-    assert review_info[0].is_passed_node is False
-    assert review_info[1].is_current_node is False
-    assert review_info[1].is_passed_node is False
+    assert review_info.nodes[0].group.name == create_auth_group.name
+    assert review_info.nodes[0].is_current_node is True
+    assert review_info.nodes[0].is_passed_node is False
+    assert review_info.nodes[1].is_current_node is False
+    assert review_info.nodes[1].is_passed_node is False
 
     # 将当前节点设置为第二个节点, 重新生成
     audit.audit.current_audit = str(g2.id)
     audit.audit.save()
     review_info = audit.get_review_info()
-    assert review_info[0].is_current_node is False
-    assert review_info[0].is_passed_node is True
-    assert review_info[1].is_current_node is True
-    assert review_info[1].is_passed_node is False
+    assert review_info.nodes[0].is_current_node is False
+    assert review_info.nodes[0].is_passed_node is True
+    assert review_info.nodes[1].is_current_node is True
+    assert review_info.nodes[1].is_passed_node is False
