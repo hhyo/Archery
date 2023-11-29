@@ -676,29 +676,6 @@ class Audit(object):
                         result = True
         return result
 
-    # 获取当前工单审批流程和当前审核组
-    @staticmethod
-    def review_info(workflow_id, workflow_type) -> (List[str], Optional[Group]):
-        audit_info = WorkflowAudit.objects.get(
-            workflow_id=workflow_id, workflow_type=workflow_type
-        )
-        if audit_info.audit_auth_groups == "":
-            audit_auth_group = ["无需审批"]
-        else:
-            try:
-                audit_auth_group = [
-                    Group.objects.get(id=auth_group_id).name
-                    for auth_group_id in audit_info.audit_auth_groups.split(",")
-                ]
-            except Group.DoesNotExist:
-                audit_auth_group = [audit_info.audit_auth_groups]
-        if audit_info.current_audit == "-1":
-            current_audit_auth_group = None
-        else:
-            auth_group_in_db = Group.objects.get(id=audit_info.current_audit)
-            current_audit_auth_group = auth_group_in_db
-        return audit_auth_group, current_audit_auth_group
-
     # 新增工单日志
     @staticmethod
     def add_log(
