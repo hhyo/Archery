@@ -19,8 +19,7 @@ def test_get_sql_workflow(
     assert response.status_code == 200
     assertTemplateUsed(response, "detail.html")
     # 展示审批人用户名
-    review_info = response.context["review_info"]
-    assert len(review_info.nodes) == len(
-        fake_generate_audit_setting.return_value.audit_auth_groups
+    assert (
+        response.context["current_audit_auth_group"]
+        == f"{create_auth_group.name}: {super_user.username}"
     )
-    assert review_info.nodes[0].group.name == create_auth_group.name

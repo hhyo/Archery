@@ -131,9 +131,9 @@ class TestNotify(TestCase):
             workflow_type=1,
             workflow_title="申请标题",
             workflow_remark="申请备注",
-            audit_auth_groups=",".join([str(self.aug.id)]),
-            current_audit=str(self.aug.id),
-            next_audit="-1",
+            audit_auth_groups="1,2,3",
+            current_audit="1",
+            next_audit="2",
             current_status=0,
         )
         self.audit_query_detail = WorkflowAuditDetail.objects.create(
@@ -167,9 +167,9 @@ class TestNotify(TestCase):
             workflow_type=3,
             workflow_title=self.archive_apply.title,
             workflow_remark="申请备注",
-            audit_auth_groups=",".join([str(self.aug.id)]),
-            current_audit=str(self.aug.id),
-            next_audit="-1",
+            audit_auth_groups="1,2,3",
+            current_audit="1",
+            next_audit="2",
             current_status=0,
         )
 
