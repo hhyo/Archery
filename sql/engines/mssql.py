@@ -311,15 +311,15 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             result["msg"] = keyword_warning
         return result
 
-def filter_sql(sql="", limit_num=0):
-    sql_lower = sql.lower()
-    # 对查询sql增加limit限制
-    if re.match(r"^select", sql_lower):
-        if sql_lower.find(" top ") == -1:
-            if sql_lower.find(" distinct ") > 0:
-                return sql_lower.replace("distinct", "distinct top {}".format(limit_num))
-            return sql_lower.replace("select", "select top {}".format(limit_num))
-    return sql.strip()
+    def filter_sql(sql="", limit_num=0):
+        sql_lower = sql.lower()
+        # 对查询sql增加limit限制
+        if re.match(r"^select", sql_lower):
+            if sql_lower.find(" top ") == -1:
+                if sql_lower.find(" distinct ") > 0:
+                    return sql_lower.replace("distinct", "distinct top {}".format(limit_num))
+                return sql_lower.replace("select", "select top {}".format(limit_num))
+        return sql.strip()
 
     def query(
         self,
