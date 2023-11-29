@@ -302,6 +302,34 @@ class TestAudit(TestCase):
                 self.user, self.audit.workflow_id, self.audit.workflow_type
             )
 
+    def test_review_info_no_review(self):
+        """测试获取当前工单审批流程和当前审核组，无需审批"""
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
+        self.audit.workflow_id = self.wf.id
+        self.audit.audit_auth_groups = ""
+        self.audit.current_audit = "-1"
+        self.audit.save()
+        audit_auth_group, current_audit_auth_group = Audit.review_info(
+            self.audit.workflow_id, self.audit.workflow_type
+        )
+        self.assertEqual(audit_auth_group, "无需审批")
+        self.assertEqual(current_audit_auth_group, None)
+
+    def test_review_info(self):
+        """测试获取当前工单审批流程和当前审核组，无需审批"""
+        aug = Group.objects.create(name="DBA")
+        self.user.groups.add(aug)
+        self.audit.workflow_type = WorkflowType.SQL_REVIEW
+        self.audit.workflow_id = self.wf.id
+        self.audit.audit_auth_groups = str(aug.id)
+        self.audit.current_audit = str(aug.id)
+        self.audit.save()
+        audit_auth_group, current_audit_auth_group = Audit.review_info(
+            self.audit.workflow_id, self.audit.workflow_type
+        )
+        self.assertEqual(audit_auth_group, "DBA")
+        self.assertEqual(current_audit_auth_group, f"DBA: {self.user.username}")
+
     def test_logs(self):
         """测试获取工单日志"""
         r = Audit.logs(self.audit.audit_id).first()
@@ -515,34 +543,3 @@ def test_auto_review_not_applicable(
     audit.sys_config.set("auto_review_max_update_rows", 1000)
     # 全部条件满足, 自动审核通过
     assert audit.is_auto_review() is True
-
-
-def test_get_review_info(
-    sql_query_apply,
-    resource_group,
-    create_auth_group,
-    fake_generate_audit_setting,
-    clean_auth_group,
-):
-    g2 = Group.objects.create(name="g2")
-    g3 = Group.objects.create(name="g3")
-    fake_generate_audit_setting.return_value = AuditSetting(
-        auto_pass=False, audit_auth_groups=[create_auth_group.id, g2.id, g3.id]
-    )
-    audit = AuditV2(workflow=sql_query_apply)
-    audit.create_audit()
-    review_info = audit.get_review_info()
-    assert review_info.nodes[0].group.name == create_auth_group.name
-    assert review_info.nodes[0].is_current_node is True
-    assert review_info.nodes[0].is_passed_node is False
-    assert review_info.nodes[1].is_current_node is False
-    assert review_info.nodes[1].is_passed_node is False
-
-    # 将当前节点设置为第二个节点, 重新生成
-    audit.audit.current_audit = str(g2.id)
-    audit.audit.save()
-    review_info = audit.get_review_info()
-    assert review_info.nodes[0].is_current_node is False
-    assert review_info.nodes[0].is_passed_node is True
-    assert review_info.nodes[1].is_current_node is True
-    assert review_info.nodes[1].is_passed_node is False

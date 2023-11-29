@@ -190,9 +190,3 @@ def create_audit_workflow(normal_user, create_resource_group):
     )
     yield audit_wf
     audit_wf.delete()
-
-
-@pytest.fixture
-def clean_auth_group(db):
-    yield
-    Group.objects.all().delete()
