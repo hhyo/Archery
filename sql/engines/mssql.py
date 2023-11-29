@@ -311,7 +311,7 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
             result["msg"] = keyword_warning
         return result
 
-    def filter_sql(sql="", limit_num=0):
+    def filter_sql(self, sql="", limit_num=0):
         sql_lower = sql.lower()
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
