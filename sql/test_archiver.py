@@ -4,10 +4,11 @@ from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import TestCase, Client
+from pytest_django.asserts import assertTemplateUsed
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType
-from sql.utils.workflow_audit import AuditSetting
+from sql.utils.workflow_audit import AuditSetting, AuditV2
 from sql.archiver import add_archive_task, archive
 from sql.models import (
     Instance,
@@ -299,3 +300,23 @@ class TestArchiver(TestCase):
         self.client.force_login(self.superuser)
         r = self.client.post(path="/archive/log/", data=data)
         self.assertDictEqual(json.loads(r.content), {"total": 0, "rows": []})
+
+
+def test_archive_detail_view(
+    archive_apply,
+    resource_group,
+    admin_client,
+    fake_generate_audit_setting,
+    create_auth_group,
+):
+    audit = AuditV2(workflow=archive_apply, resource_group=resource_group.group_name)
+    audit.create_audit()
+    audit.workflow.save()
+    response = admin_client.get(f"/archive/{archive_apply.id}/")
+    assert response.status_code == 200
+    assertTemplateUsed(response, "archivedetail.html")
+    review_info = response.context["review_info"]
+    assert len(review_info.nodes) == len(
+        fake_generate_audit_setting.return_value.audit_auth_groups
+    )
+    assert review_info.nodes[0].group.name == create_auth_group.name

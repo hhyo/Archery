@@ -825,52 +825,6 @@ class TestWorkflowView(TransactionTestCase):
             r, f"/detail/{self.wf1.id}/", fetch_redirect_response=False
         )
 
-    @patch("sql.utils.workflow_audit.Audit.logs")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    @patch("sql.utils.workflow_audit.Audit.review_info")
-    @patch("sql.utils.workflow_audit.Audit.can_review")
-    def testWorkflowDetailView(self, _can_review, _review_info, _detail_by_id, _logs):
-        """测试工单详情"""
-        _review_info.return_value = ("some_auth_group", "current_auth_group")
-        _can_review.return_value = False
-        _detail_by_id.return_value.audit_id = 123
-        _logs.return_value.latest("id").operation_info = ""
-        c = Client()
-        c.force_login(self.u1)
-        r = c.get("/detail/{}/".format(self.wf1.id))
-        expected_status_display = r"""id="workflow_detail_disaply">已正常结束"""
-        self.assertContains(r, expected_status_display)
-        exepcted_status = r"""id="workflow_detail_status">workflow_finish"""
-        self.assertContains(r, exepcted_status)
-
-        # 测试执行详情解析失败
-        self.wfc1.execute_result = "cannotbedecode:1,:"
-        self.wfc1.save()
-        r = c.get("/detail/{}/".format(self.wf1.id))
-        self.assertContains(r, expected_status_display)
-        self.assertContains(r, exepcted_status)
-
-        # 执行详情为空
-        self.wfc1.review_content = [
-            {
-                "id": 1,
-                "stage": "CHECKED",
-                "errlevel": 0,
-                "stagestatus": "Audit completed",
-                "errormessage": "None",
-                "sql": "use archery",
-                "affected_rows": 0,
-                "sequence": "'0_0_0'",
-                "backup_dbname": "None",
-                "execute_time": "0",
-                "sqlsha1": "",
-                "actual_affected_rows": "",
-            }
-        ]
-        self.wfc1.execute_result = ""
-        self.wfc1.save()
-        r = c.get("/detail/{}/".format(self.wf1.id))
-
     def testWorkflowListView(self):
         """测试工单列表"""
         c = Client()

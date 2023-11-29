@@ -32,7 +32,7 @@ from .models import (
     AuditEntry,
     TwoFactorAuthConfig,
 )
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, AuditV2, AuditException
 from sql.utils.sql_review import (
     can_execute,
     can_timingtask,
@@ -40,7 +40,7 @@ from sql.utils.sql_review import (
     can_view,
     can_rollback,
 )
-from common.utils.const import Const, WorkflowType
+from common.utils.const import Const, WorkflowType, WorkflowAction
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 
 import logging
@@ -185,13 +185,12 @@ def submit_sql(request):
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
     workflow_detail = get_object_or_404(SqlWorkflow, pk=workflow_id)
+    audit_handler = AuditV2(workflow=workflow_detail)
     if not can_view(request.user, workflow_id):
         raise PermissionDenied
+    review_info = audit_handler.get_review_info()
     # 自动审批不通过的不需要获取下列信息
     if workflow_detail.status != "workflow_autoreviewwrong":
-        # 获取当前审批和审批流程
-        audit_auth_group, current_audit_auth_group = Audit.review_info(workflow_id, 2)
-
         # 是否可审核
         is_can_review = Audit.can_review(request.user, workflow_id, 2)
         # 是否可执行 TODO 这几个判断方法入参都修改为workflow对象，可减少多次数据库交互
@@ -213,18 +212,10 @@ def detail(request, workflow_id):
             last_operation_info = (
                 Audit.logs(audit_id=audit_id).latest("id").operation_info
             )
-            # 等待审批的展示当前全部审批人
-            if workflow_detail.status == "workflow_manreviewing":
-                _, current_audit_users_display = Audit.review_info(
-                    workflow_id, WorkflowType.SQL_REVIEW
-                )
-                last_operation_info += f"，当前审批节点：{current_audit_users_display}"
         except Exception as e:
             logger.debug(f"无审核日志记录，错误信息{e}")
             last_operation_info = ""
     else:
-        audit_auth_group = "系统自动驳回"
-        current_audit_auth_group = "系统自动驳回"
         is_can_review = False
         is_can_execute = False
         is_can_timingtask = False
@@ -254,9 +245,8 @@ def detail(request, workflow_id):
         "is_can_timingtask": is_can_timingtask,
         "is_can_cancel": is_can_cancel,
         "is_can_rollback": is_can_rollback,
-        "audit_auth_group": audit_auth_group,
+        "review_info": review_info,
         "manual": manual,
-        "current_audit_auth_group": current_audit_auth_group,
         "run_date": run_date,
     }
     return render(request, "detail.html", context)
@@ -348,7 +338,8 @@ def queryapplydetail(request, apply_id):
     """查询权限申请详情页面"""
     workflow_detail = QueryPrivilegesApply.objects.get(apply_id=apply_id)
     # 获取当前审批和审批流程
-    audit_auth_group, current_audit_auth_group = Audit.review_info(apply_id, 1)
+    audit_handler = AuditV2(workflow=workflow_detail)
+    review_info = audit_handler.get_review_info()
 
     # 是否可审核
     is_can_review = Audit.can_review(request.user, apply_id, 1)
@@ -369,9 +360,8 @@ def queryapplydetail(request, apply_id):
 
     context = {
         "workflow_detail": workflow_detail,
-        "audit_auth_group": audit_auth_group,
+        "review_info": review_info,
         "last_operation_info": last_operation_info,
-        "current_audit_auth_group": current_audit_auth_group,
         "is_can_review": is_can_review,
     }
     return render(request, "queryapplydetail.html", context)
@@ -469,13 +459,15 @@ def archive_detail(request, id):
     """归档详情页面"""
     archive_config = ArchiveConfig.objects.get(pk=id)
     # 获取当前审批和审批流程、是否可审核
+    audit_handler = AuditV2(
+        workflow=archive_config, resource_group=archive_config.resource_group
+    )
+    review_info = audit_handler.get_review_info()
     try:
-        audit_auth_group, current_audit_auth_group = Audit.review_info(id, 3)
-        is_can_review = Audit.can_review(request.user, id, 3)
-    except Exception as e:
-        logger.debug(f"归档配置{id}无审核信息，{e}")
-        audit_auth_group, current_audit_auth_group = None, None
-        is_can_review = False
+        audit_handler.can_operate(WorkflowAction.PASS, request.user)
+        can_review = True
+    except AuditException:
+        can_review = False
     # 获取审核日志
     if archive_config.status == 2:
         try:
@@ -493,10 +485,9 @@ def archive_detail(request, id):
 
     context = {
         "archive_config": archive_config,
-        "audit_auth_group": audit_auth_group,
+        "review_info": review_info,
         "last_operation_info": last_operation_info,
-        "current_audit_auth_group": current_audit_auth_group,
-        "is_can_review": is_can_review,
+        "can_review": can_review,
     }
     return render(request, "archivedetail.html", context)
 

@@ -26,7 +26,7 @@ from sql.models import (
     SqlWorkflowContent,
 )
 from sql.utils.resource_group import auth_group_users
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, AuditV2
 from sql_api.serializers import (
     WorkflowContentSerializer,
     WorkflowAuditListSerializer,
@@ -156,9 +156,8 @@ class LegacyRender(Notifier):
         workflow_from = self.audit.create_user_display
         group_name = self.audit.group_name
         # 获取当前审批和审批流程
-        workflow_auditors, current_workflow_auditors = Audit.review_info(
-            self.audit.workflow_id, self.audit.workflow_type
-        )
+        audit_handler = AuditV2(workflow=self.workflow, audit=self.audit)
+        review_info = audit_handler.get_review_info()
         # workflow content, 即申请通过后要执行什么东西
         # 执行的 SQL 语句, 授权的范围
         if workflow_type == WorkflowType.QUERY:
@@ -221,8 +220,8 @@ class LegacyRender(Notifier):
                 group_name,
                 instance,
                 db_name,
-                workflow_auditors,
-                current_workflow_auditors,
+                review_info.readable_info,
+                review_info.current_node.group.name,
                 workflow_title,
                 workflow_url,
                 workflow_content,
@@ -238,7 +237,7 @@ class LegacyRender(Notifier):
                 group_name,
                 instance,
                 db_name,
-                workflow_auditors,
+                review_info.readable_info,
                 workflow_title,
                 workflow_url,
                 workflow_content,
@@ -284,9 +283,8 @@ class LegacyRender(Notifier):
         base_url = self.sys_config.get(
             "archery_base_url", "http://127.0.0.1:8000"
         ).rstrip("/")
-        audit_auth_group, current_audit_auth_group = Audit.review_info(
-            self.workflow.id, 2
-        )
+        audit_handler = AuditV2(workflow=self.workflow, audit=self.audit)
+        review_info = audit_handler.get_review_info()
         audit_id = Audit.detail_by_workflow_id(self.workflow.id, 2).audit_id
         url = "{base_url}/workflow/{audit_id}".format(
             base_url=base_url, audit_id=audit_id
@@ -305,7 +303,7 @@ class LegacyRender(Notifier):
 组：{self.workflow.group_name}
 目标实例：{self.workflow.instance.instance_name}
 数据库：{self.workflow.db_name}
-审批流程：{audit_auth_group}
+审批流程：{review_info.readable_info}
 工单名称：{self.workflow.workflow_name}
 工单地址：{url}
 工单详情预览：{preview}"""
