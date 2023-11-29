@@ -36,6 +36,45 @@ class AuditException(Exception):
 
 
 @dataclass
+class ReviewNode:
+    group: Group
+    is_current_node: bool = False
+    is_passed_node: bool = False
+
+
+@dataclass
+class ReviewInfo:
+    nodes: List[ReviewNode] = field(default_factory=list)
+    current_node_index: int = None
+
+    @property
+    def readable_info(self) -> str:
+        """生成可读的工作流, 形如 g1(passed) -> g2(current) -> g3
+        一般用途是渲染消息
+        """
+        steps = []
+        for index, n in enumerate(self.nodes):
+            if n.is_current_node:
+                self.current_node_index = index
+                steps.append(f"{n.group.name}(current)")
+                continue
+            if n.is_passed_node:
+                steps.append(f"{n.group.name}(passed)")
+                continue
+            steps.append(n.group.name)
+        return " -> ".join(steps)
+
+    @property
+    def current_node(self) -> ReviewNode:
+        if self.current_node_index:
+            return self.nodes[self.current_node_index]
+        for index, n in enumerate(self.nodes):
+            if n.is_current_node:
+                self.current_node_index = n
+                return n
+
+
+@dataclass
 class AuditSetting:
     """
     audit_auth_groups 为 django 组的 id
@@ -283,7 +322,7 @@ class AuditV2:
         return "工单已正常提交"
 
     def can_operate(self, action: WorkflowAction, actor: Users):
-        """检查用户是否有权限做相关操作, 默认不返回, 如有权限问题, raise AuditException"""
+        """检查用户是否有权限做相关操作, 如有权限问题, raise AuditException, 无问题返回 True"""
         # 首先检查工单状态和相关操作是否匹配, 如已通过的工单不能再通过
         allowed_actions = SUPPORTED_OPERATION_GRID.get(self.audit.current_status)
         if not allowed_actions:
@@ -306,12 +345,12 @@ class AuditV2:
         if action == WorkflowAction.ABORT:
             if actor.username != self.audit.create_user:
                 raise AuditException(f"只有工单提交者可以撤回工单")
-            return
+            return True
         if action in [WorkflowAction.PASS, WorkflowAction.REJECT]:
             # 需要检查权限
             # 超级用户可以审批所有工单
             if actor.is_superuser:
-                return
+                return True
             # 看是否本人审核
             if actor.username == self.audit.create_user and self.sys_config.get(
                 "ban_self_audit"
@@ -328,14 +367,14 @@ class AuditV2:
                 raise AuditException("当前审批权限组不存在, 请联系管理员检查并清洗错误数据")
             if not auth_group_users([audit_auth_group.name], self.resource_group_id):
                 raise AuditException("用户不在当前审批审批节点的用户组内, 无权限审核")
-            return
+            return True
         if action in [
             WorkflowAction.EXECUTE_START,
             WorkflowAction.EXECUTE_END,
             WorkflowAction.EXECUTE_SET_TIME,
         ]:
             # 一般是系统自动流转, 自动通过
-            return
+            return True
 
         raise AuditException(f"不支持的操作, 无法判断权限")
 
@@ -465,6 +504,55 @@ class AuditV2:
         )
         return workflow_audit_detail
 
+    def get_review_info(self) -> ReviewInfo:
+        """提供审批流各节点的状态
+        如果总体是待审核状态, 当前节点之前为已通过, 当前节点为当前节点, 未通过, 当前节点之后为未通过
+        如果总体为其他状态, 节点的属性都不设置, 均为默认值
+        """
+        self.get_audit_info()
+        review_nodes = []
+        has_met_current_node = False
+        current_node_group_id = int(self.audit.current_audit)
+        for g in self.audit.audit_auth_groups.split(","):
+            g = int(g)
+            group_in_db = Group.objects.get(id=g)
+            if self.audit.current_status != WorkflowStatus.WAITING:
+                # 总体状态不是待审核, 不设置详细的属性
+                review_nodes.append(
+                    ReviewNode(
+                        group=group_in_db,
+                    )
+                )
+                continue
+            if current_node_group_id == g:
+                # 当前节点, 一定为未通过
+                has_met_current_node = True
+                review_nodes.append(
+                    ReviewNode(
+                        group=group_in_db,
+                        is_current_node=True,
+                        is_passed_node=False,
+                    )
+                )
+                continue
+            if has_met_current_node:
+                # 当前节点之后的节点, 一定为未通过
+                review_nodes.append(
+                    ReviewNode(
+                        group=group_in_db,
+                        is_passed_node=False,
+                    )
+                )
+                continue
+            # 以上情况之外的情况, 一定为已经通过的节点
+            review_nodes.append(
+                ReviewNode(
+                    group=group_in_db,
+                    is_passed_node=True,
+                )
+            )
+        return ReviewInfo(nodes=review_nodes)
+
 
 class Audit(object):
     """老版 Audit, 建议不再更新新内容, 转而使用 AuditV2"""
@@ -587,36 +675,6 @@ class Audit(object):
                     if user.has_perm("sql.archive_review"):
                         result = True
         return result
-
-    # 获取当前工单审批流程和当前审核组
-    @staticmethod
-    def review_info(workflow_id, workflow_type):
-        audit_info = WorkflowAudit.objects.get(
-            workflow_id=workflow_id, workflow_type=workflow_type
-        )
-        if audit_info.audit_auth_groups == "":
-            audit_auth_group = "无需审批"
-        else:
-            try:
-                audit_auth_group = "->".join(
-                    [
-                        Group.objects.get(id=auth_group_id).name
-                        for auth_group_id in audit_info.audit_auth_groups.split(",")
-                    ]
-                )
-            except Exception:
-                audit_auth_group = audit_info.audit_auth_groups
-        if audit_info.current_audit == "-1":
-            current_audit_auth_group = None
-        else:
-            try:
-                auth_group_in_db = Group.objects.get(id=audit_info.current_audit)
-                users = auth_group_in_db.user_set.all()
-                users_display = ",".join(x.username for x in users) or "组内无用户, 请联系管理员"
-                current_audit_auth_group = f"{auth_group_in_db.name}: {users_display}"
-            except Exception:
-                current_audit_auth_group = audit_info.current_audit
-        return audit_auth_group, current_audit_auth_group
 
     # 新增工单日志
     @staticmethod
