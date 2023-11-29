@@ -509,15 +509,6 @@ class ChartTest(TestCase):
         expected_rows = ((self.u2.display, 3), (self.u1.display, 2))
         self.assertEqual(result["rows"], expected_rows)
 
-    def testDashboard(self):
-        """Dashboard测试"""
-        # TODO 这部分测试并没有遵循单元测试, 而是某种集成测试, 直接从响应到结果, 并且只检查状态码
-        # TODO 需要具体查看pyecharst有没有被调用, 以及调用的参数
-        c = Client()
-        c.force_login(self.superuser1)
-        r = c.get("/dashboard/")
-        self.assertEqual(r.status_code, 200)
-
 
 class AuthTest(TestCase):
     def setUp(self):

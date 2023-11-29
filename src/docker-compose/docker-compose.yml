@@ -8,6 +8,11 @@ services:
     command: redis-server --requirepass 123456
     expose:
       - "6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   mysql:
     image: mysql:5.7
@@ -21,6 +26,11 @@ services:
     environment:
       MYSQL_DATABASE: archery
       MYSQL_ROOT_PASSWORD: 123456
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   goinception:
     image: hanchuanchuan/goinception
@@ -32,9 +42,18 @@ services:
       - "./inception/config.toml:/etc/config.toml"
 
   archery:
-    image: hhyo/archery:v1.9.1
+    # 下方的镜像地址仅为示例, 请前往以下地址确认你需要的版本:
+    # dockerhub https://hub.docker.com/r/hhyo/archery
+    # github packages https://github.com/hhyo/Archery/pkgs/container/archery
+    # 如有需要, 也可以自行build docker 镜像, 替换为自己的镜像
+    image: hhyo/archery:v1.10.0
     container_name: archery
     restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
     ports:
       - "9123:9123"
     volumes:
@@ -45,6 +64,6 @@ services:
       - "./archery/sql/migrations:/opt/archery/sql/migrations"
       - "./archery/logs:/opt/archery/logs"
       - "./archery/keys:/opt/archery/keys"
-    entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
+    entrypoint: "bash /opt/archery/src/docker/startup.sh"
     env_file:
       - .env

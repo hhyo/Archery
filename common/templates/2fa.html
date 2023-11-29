@@ -18,7 +18,7 @@
 </head>
 <body onload="document.getElementById('otpCode').focus()" style="background-color:#edeff1;">
 <div class="row lsb-login">
-    <div class="col-sm-3 mypanalbox">
+    <div class="col-sm-3 login-form-wrapper">
         <form class="login-form fade-in-effect" id="auth" method="post" role="form">
             {% csrf_token %}
             {% if verify_mode == 'verify_config' %}

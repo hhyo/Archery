@@ -4,26 +4,30 @@
 
 {% block content %}
     <!-- 自定义操作按钮-->
-    <div id="toolbar" class="form-inline pull-left">
-        <div class="form-group ">
-            <select id=instance class="form-control selectpicker" name="instance_list"
-                    title="请选择实例"
-                    data-live-search="true">
-            </select>
-        </div>
-        <div class="form-group">
-            <select id="saved" class="form-control selectpicker"
-                    title="全部">
-                <option value="" selected="selected">全部</option>
-                <option value="true">已录入</option>
-            </select>
-        </div>
-        <div class="form-group ">
-            <button id="btn-create-account" type="button" class="btn btn-default" disabled="disabled"
-                    data-toggle="modal" data-target="#create-account">
-                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                创建账号
-            </button>
+    <div style="position: relative">
+        <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
+            <div class="form-group ">
+                <select id=instance class="form-control selectpicker" name="instance_list"
+                        title="请选择实例"
+                        data-live-search="true">
+                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
+                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="saved" class="form-control selectpicker"
+                        title="全部">
+                    <option value="" selected="selected">全部</option>
+                    <option value="true">已录入</option>
+                </select>
+            </div>
+            <div class="form-group ">
+                <button id="btn-create-account" type="button" class="btn btn-default" disabled="disabled"
+                        data-toggle="modal" onclick="show_create_modal()">
+                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    创建账号
+                </button>
+            </div>
         </div>
     </div>
     <!-- 表格-->
@@ -43,6 +47,17 @@
                     <h6 style="color:red">注：新创建的账号无权限，需要使用授权功能授予相关权限</h6>
                 </div>
                 <div class="modal-body form-group">
+                    <!-- 数据库名称 -->
+                    <div class="form-group row" id="db-name1-row">
+                        <label for="db_name1" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库</label>
+                        <div class="col-sm-9">
+                            <select id="db_name1" class="form-control selectpicker" name="db_name1"
+                                    title="请选择数据库"
+                                    data-live-search="true">
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group row">
                         <label for="user" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>数据库账号</label>
@@ -55,7 +70,7 @@
                             </small>
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="form-group row" id="host-row">
                         <label for="host" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>主机</label>
                         <div class="col-sm-9">
@@ -116,7 +131,17 @@
                     <h6 style="color:red">注：此操作不会修改账号密码，仅将相关信息录入平台进行管理，如需修改密码请使用改密功能</h6>
                 </div>
                 <div class="modal-body form-group">
-
+                    <!-- 数据库名称 -->
+                    <div class="form-group row" id="edit-db-name1-row">
+                        <label for="edit-db-name1" class="col-sm-3 col-form-label">
+                            <span style="color:red">*</span>数据库</label>
+                        <div class="col-sm-9">
+                            <select id="edit-db-name1" class="form-control selectpicker" name="edit_db_name1"
+                                    title="请选择数据库" disabled
+                                    data-live-search="true">
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group row">
                         <label for="edit-user" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>数据库账号</label>
@@ -126,7 +151,7 @@
                                    placeholder="请输入账号名称">
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="form-group row" id="edit-host-row">
                         <label for="edit-host" class="col-sm-3 col-form-label">
                             <span style="color:red">*</span>主机</label>
                         <div class="col-sm-9">
@@ -171,7 +196,7 @@
                         账号: <span id="modify-user" style="color: red"></span></h4>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
+                    <div id="mysql-grant-content" class="row">
                         <div class="col-md-3">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
@@ -888,6 +913,33 @@
                             </div>
                         </div>
                     </div>
+                    <div id="mongo-grant-content" class="form-group">
+                        <div class="form-group row">
+                            <label for="db-roles" class="col-sm-3 col-form-label">
+                                <span style="color:red">*</span>数据库角色</label>
+                            <div class="col-sm-9">
+                                <select id="db-roles" class="form-control selectpicker" name="db_roles"
+                                        title="请选择数据库角色"
+                                        multiple
+                                        data-live-search="true">
+                                    <option value="read">read</option>
+                                    <option value="readWrite">readWrite</option>
+                                    <option value="dbAdmin">dbAdmin</option>
+                                    <option value="dbOwner">dbOwner</option>
+                                    <option value="userAdmin">userAdmin</option>
+                                    <option value="clusterAdmin">clusterAdmin</option>
+                                    <option value="clusterManager">clusterManager</option>
+                                    <option value="clusterMonitor">clusterMonitor</option>
+                                    <option value="hostManager">hostManager</option>
+                                    <option value="readAnyDatabase">readAnyDatabase</option>
+                                    <option value="readWriteAnyDatabase">readWriteAnyDatabase</option>
+                                    <option value="userAdminAnyDatabase">userAdminAnyDatabase</option>
+                                    <option value="dbAdminAnyDatabase">dbAdminAnyDatabase</option>
+                                    <option value="root">root</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
@@ -991,6 +1043,29 @@
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
+        function get_db_type() {
+            // 获取选中的数据库实例的类型
+            let db_type = "";
+            if ($("#instance").val()) {
+                db_type = $("#instance")[0].options[$("#instance")[0].selectedIndex].getAttribute("instance-type");
+            }
+            return db_type;
+        }
+
+        // 打开创建modal
+        function show_create_modal() {
+            const db_type = get_db_type();
+            // 根据数据库类型显示不同的form row
+            if (db_type === 'mysql') {
+                $("#db-name1-row").hide();
+                $("#host-row").show();
+            } else if (db_type === 'mongo') {
+                $("#db-name1-row").show();
+                $("#host-row").hide();
+            }
+            $("#create-account").modal('show');
+        }
+
         //权限切换
         $("#priv-type").change(function () {
             let priv_type = $("#priv-type").val();
@@ -1074,8 +1149,111 @@
             }
         });
 
+        // 根据数据库类型获取显示的字段
+        function get_db_columns(db_type) {
+            switch (db_type) {
+                case 'mysql':
+                    return [
+                        {
+                            title: '账号',
+                            field: 'user_host',
+                            formatter: function (value, row, index) {
+                                if (row.saved) {
+                                    return "<a target=\"_blank\" href=\"/admin/sql/instanceaccount/" + row.id + "/change/\">" + value + "</a>"
+                                } else {
+                                    return value
+                                }
+                            }
+                        }, {
+                            title: '帐号名',
+                            field: 'user',
+                            visible: false
+                        }, {
+                            title: '主机',
+                            field: 'host',
+                            visible: false
+                        }, {
+                            title: '权限',
+                            field: 'privileges',
+                            formatter: function (value, row, index) {
+                                var priv = '';
+                                for (var i = 0; i < value.length; i++) {
+                                    priv = priv + value[i] + ';</br>'
+                                }
+                                return priv
+                            },
+                            width: "60",
+                            widthUnit: "%",
+                        }, {
+                            title: '备注',
+                            field: 'remark'
+                        }, {
+                            title: '操作',
+                            field: '',
+                            formatter: function (value, row, index) {
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
+                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                                let btn_lock_account = "";
+                                if (row.is_locked === 'N') {
+                                    btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">锁定</button>\n";
+                                } else if (row.is_locked === 'Y') {
+                                    btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">解锁</button>\n";
+                                }
+                                return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
+                            }
+                        }]
+                case 'mongo':
+                    return [
+                        {
+                            title: '数据库名',
+                            field: 'db_name'
+                        }, {
+                            title: '账号',
+                            field: 'user',
+                            formatter: function (value, row, index) {
+                                if (row.saved) {
+                                    return "<a target=\"_blank\" href=\"/admin/sql/instanceaccount/" + row.id + "/change/\">" + value + "</a>"
+                                } else {
+                                    return value
+                                }
+                            }
+                        }, {
+                            title: '角色',
+                            field: 'roles',
+                            formatter: function (value, row, index) {
+                                return value.join(',')
+                            }
+                        }, {
+                            title: '备注',
+                            field: 'remark'
+                        }, {
+                            title: '操作',
+                            field: '',
+                            formatter: function (value, row, index) {
+                                let btn_edit = "<button class=\"btn btn-info btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
+                                let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
+                                let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
+                                let btn_del_account = "<button class=\"btn btn-danger btn-xs\" db_name_user=\"" + row.db_name_user + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
+                                return btn_edit + btn_modify_grants + btn_reset_passwd + btn_del_account
+                            }
+                        }
+                    ]
+                default:
+                    return []
+            }
+        }
+
         //获取账号列表
         function user_list() {
+            const db_type = get_db_type();
+            let uniqueId;
+            if (db_type === 'mysql') {
+                uniqueId = 'user_host';
+            } else if (db_type === 'mongo') {
+                uniqueId = 'db_name_user';
+            }
             //初始化table
             $('#user-list').bootstrapTable('destroy').bootstrapTable({
                 escape: false,
@@ -1101,12 +1279,11 @@
                 showRefresh: true,                  //是否显示刷新按钮
                 minimumCountColumns: 2,             //最少允许的列数
                 clickToSelect: true,                //是否启用点击选中行
-                uniqueId: "user_host",               //每一行的唯一标识，一般为主键列
+                uniqueId: uniqueId,               //每一行的唯一标识，一般为主键列
                 showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
                 cardView: false,                    //是否显示详细视图
                 detailView: false,                  //是否显示父子表
                 locale: 'zh-CN',                    //本地化
-                toolbar: "#toolbar",               //指明自定义的toolbar
                 queryParamsType: 'limit',
                 //请求服务数据时所传参数
                 queryParams:
@@ -1119,57 +1296,7 @@
                             }
                         }
                     },
-                columns: [
-                    {
-                        title: '账号',
-                        field: 'user_host',
-                        formatter: function (value, row, index) {
-                            if (row.saved) {
-                                return "<a target=\"_blank\" href=\"/admin/sql/instanceaccount/" + row.id + "/change/\">" + value + "</a>"
-                            } else {
-                                return value
-                            }
-                        }
-                    }, {
-                        title: '帐号名',
-                        field: 'user',
-                        visible: false
-                    }, {
-                        title: '主机',
-                        field: 'host',
-                        visible: false
-                    }, {
-                        title: '权限',
-                        field: 'privileges',
-                        formatter: function (value, row, index) {
-                            var priv = '';
-                            for (var i = 0; i < value.length; i++) {
-                                priv = priv + value[i] + ';</br>'
-                            }
-                            return priv
-                        },
-                        width: "60",
-                        widthUnit:"%",
-                    }, {
-                        title: '备注',
-                        field: 'remark'
-                    }, {
-                        title: '操作',
-                        field: '',
-                        formatter: function (value, row, index) {
-                            let btn_edit = "<button class=\"btn btn-info btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_edit_modal(this)" + "\">编辑</button>\n";
-                            let btn_modify_grants = "<button class=\"btn btn-primary btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_grants_modal(this)" + "\">授权</button>\n";
-                            let btn_reset_passwd = "<button class=\"btn btn-warning btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_reset_modal(this)" + "\">改密</button>\n";
-                            let btn_del_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" onclick=\"show_delete_modal(this)" + "\">删除</button>\n";
-                            let btn_lock_account = "";
-                            if (row.is_locked === 'N') {
-                                btn_lock_account = "<button class=\"btn btn-danger btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\" onclick=\"show_lock_modal(this)" + "\">锁定</button>\n";
-                            } else if (row.is_locked === 'Y') {
-                                btn_lock_account = "<button class=\"btn btn-success btn-xs\" user_host=\"" + row.user_host + "\" is_locked=\"" + row.is_locked + "\"  onclick=\"show_lock_modal(this)" + "\">解锁</button>\n";
-                            }
-                            return btn_edit + btn_modify_grants + btn_reset_passwd + btn_lock_account + btn_del_account
-                        }
-                    }],
+                columns: get_db_columns(db_type),
                 onLoadSuccess: function (data) {
                     if (data.status !== 0) {
                         alert("数据加载失败！" + data.msg);
@@ -1206,14 +1333,26 @@
                     if (data.status === 0) {
                         let result = data.data;
                         let db_name = $("#db_name");
+                        let db_name1 = $("#db_name1");
+                        let edit_db_name1 = $("#edit-db-name1");
                         db_name.empty();
+                        db_name1.empty();
+                        edit_db_name1.empty();
                         for (var i = 0; i < result.length; i++) {
                             var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
                             db_name.append(name);
+                            db_name1.append(name);
+                            edit_db_name1.append(name);
                         }
                         db_name.val('');
                         db_name.selectpicker('render');
                         db_name.selectpicker('refresh');
+                        db_name1.val('');
+                        db_name1.selectpicker('render');
+                        db_name1.selectpicker('refresh');
+                        edit_db_name1.val('');
+                        edit_db_name1.selectpicker('render');
+                        edit_db_name1.selectpicker('refresh');
                     } else {
                         alert(data.msg);
                     }
@@ -1343,6 +1482,7 @@
                     dataType: "json",
                     data: {
                         instance_id: $("#instance").val(),
+                        db_name: $("#db_name1").val(),
                         user: $("#user").val(),
                         host: $("#host").val(),
                         password1: $("#password1").val(),
@@ -1370,11 +1510,28 @@
 
         //编辑、录入账号
         function show_edit_modal(obj) {
-            let user_host = $(obj).attr("user_host");
-            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+            const db_type = get_db_type();
+            let user_host;
+            let db_name_user;
+            let row_data;
+            if (db_type === 'mysql') {
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+                $("#edit-db-name1-row").hide();
+                $("#edit-host-row").show();
+            } else {
+                db_name_user = $(obj).attr("db_name_user");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
+                $("#edit-db-name1-row").show();
+                $("#edit-host-row").hide();
+            }
+
             let user = row_data['user'];
+            let db_name = row_data['db_name'];
             let host = row_data['host'];
             let remark = row_data['remark'];
+            $("#edit-db-name1").val(db_name);
+            $('#edit-db-name1').selectpicker('render').selectpicker('refresh');
             $("#edit-user").val(user);
             $("#edit-host").val(host);
             $("#edit-remark").val(remark);
@@ -1391,6 +1548,8 @@
                         user_host: user_host,
                         user: user,
                         host: host,
+                        db_name: db_name,
+                        db_name_user: db_name_user,
                         password: $("#edit-password").val(),
                         remark: $("#edit-remark").val()
                     },
@@ -1414,60 +1573,75 @@
 
         //修改权限
         function show_grants_modal(obj) {
-            let user_host = $(obj).attr("user_host");
-            $("#modify-user").text(user_host);
+            const db_type = get_db_type();
+            let user_host;
+            let db_name_user;
+            if (db_type === 'mysql') {
+                $("#grants-modal").children().addClass("modal-lg");
+                $("#mysql-grant-content").show();
+                $("#mongo-grant-content").hide();
+                user_host = $(obj).attr("user_host");
+                $("#modify-user").text(user_host);
+            } else if (db_type === 'mongo') {
+                $("#grants-modal").children().removeClass("modal-lg");
+                $("#mongo-grant-content").show();
+                $("#mysql-grant-content").hide();
+                db_name_user = $(obj).attr("db_name_user");
+                $("#modify-user").text(db_name_user);
+                let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
+                $("#db-roles").val(row_data['roles']);
+                $("#db-roles").selectpicker('render').selectpicker('refresh');
+            }
             $("#grants-modal").modal('show');
 
             //变更账号权限
             $("#grantsBtn").unbind("click").click(function () {
-                let op_type = $("#op-type").val();
-                let priv_type = $("#priv-type").val();
-                let db_name = $("#db_name").val();
-                let tb_name = $("#tb_name").val();
-                let col_name = $("#col_name").val();
-                let div_global_priv = $("#div-global-priv");
-                let div_db_priv = $("#div-db-priv");
-                let div_tb_priv = $("#div-tb-priv");
-                let div_col_priv = $("#div-col-priv");
-                let global_privs = [];
-                let db_privs = [];
-                let tb_privs = [];
-                let col_privs = [];
-                div_global_priv.find('input[type="checkbox"]:checked').each(
-                    function () {
-                        let priv_name = $(this).attr("name");
-                        global_privs.push(priv_name);
-                    }
-                );
-                div_db_priv.find('input[type="checkbox"]:checked').each(
-                    function () {
-                        let priv_name = $(this).attr("name");
-                        db_privs.push(priv_name);
-                    }
-                );
-                div_tb_priv.find('input[type="checkbox"]:checked').each(
-                    function () {
-                        let priv_name = $(this).attr("name");
-                        tb_privs.push(priv_name);
-                    }
-                );
-                div_col_priv.find('input[type="checkbox"]:checked').each(
-                    function () {
-                        let priv_name = $(this).attr("name");
-                        col_privs.push(priv_name);
-                    }
-                );
-                let privs = {
-                    "global_privs": global_privs,
-                    "db_privs": db_privs,
-                    "tb_privs": tb_privs,
-                    "col_privs": col_privs
-                };
-                $.ajax({
-                    type: "post",
-                    url: "/instance/user/grant/",
-                    dataType: "json",
-                    data: {
+                let data;
+                if (db_type == 'mysql') {
+                    let op_type = $("#op-type").val();
+                    let priv_type = $("#priv-type").val();
+                    let db_name = $("#db_name").val();
+                    let tb_name = $("#tb_name").val();
+                    let col_name = $("#col_name").val();
+                    let div_global_priv = $("#div-global-priv");
+                    let div_db_priv = $("#div-db-priv");
+                    let div_tb_priv = $("#div-tb-priv");
+                    let div_col_priv = $("#div-col-priv");
+                    let global_privs = [];
+                    let db_privs = [];
+                    let tb_privs = [];
+                    let col_privs = [];
+                    div_global_priv.find('input[type="checkbox"]:checked').each(
+                        function () {
+                            let priv_name = $(this).attr("name");
+                            global_privs.push(priv_name);
+                        }
+                    );
+                    div_db_priv.find('input[type="checkbox"]:checked').each(
+                        function () {
+                            let priv_name = $(this).attr("name");
+                            db_privs.push(priv_name);
+                        }
+                    );
+                    div_tb_priv.find('input[type="checkbox"]:checked').each(
+                        function () {
+                            let priv_name = $(this).attr("name");
+                            tb_privs.push(priv_name);
+                        }
+                    );
+                    div_col_priv.find('input[type="checkbox"]:checked').each(
+                        function () {
+                            let priv_name = $(this).attr("name");
+                            col_privs.push(priv_name);
+                        }
+                    );
+                    let privs = {
+                        "global_privs": global_privs,
+                        "db_privs": db_privs,
+                        "tb_privs": tb_privs,
+                        "col_privs": col_privs
+                    };
+                    data = {
                         instance_id: $("#instance").val(),
                         user_host: $("#modify-user").text(),
                         op_type: op_type,
@@ -1476,7 +1650,20 @@
                         db_name: db_name,
                         tb_name: tb_name,
                         col_name: col_name
-                    },
+                    }
+                } else if (db_type == 'mongo') {
+                    data = {
+                        instance_id: $("#instance").val(),
+                        db_name_user: db_name_user,
+                        roles: $("#db-roles").val()
+                    }
+                }
+
+                $.ajax({
+                    type: "post",
+                    url: "/instance/user/grant/",
+                    dataType: "json",
+                    data: data,
                     complete: function () {
                     },
                     success: function (data) {
@@ -1503,11 +1690,20 @@
 
         //变更密码
         function show_reset_modal(obj) {
-            let user_host = $(obj).attr("user_host");
-            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
-            let user = row_data['user'];
-            let host = row_data['host'];
-            $("#reset-user").text(user_host);
+            const db_type = get_db_type();
+            let user_host;
+            let db_name_user;
+            let row_data;
+            if (db_type === 'mysql') {
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+                $("#reset-user").text(user_host);
+            } else {
+                db_name_user = $(obj).attr("db_name_user");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
+                $("#reset-user").text(db_name_user);
+            }
+
             $("#reset-pwd").modal('show');
 
             //变更密码
@@ -1518,9 +1714,7 @@
                     dataType: "json",
                     data: {
                         instance_id: $("#instance").val(),
-                        user_host: user_host,
-                        user: user,
-                        host: host,
+                        ...row_data,
                         reset_pwd1: $("#reset-pwd1").val(),
                         reset_pwd2: $("#reset-pwd2").val(),
                     },
@@ -1581,11 +1775,20 @@
 
         //删除账号
         function show_delete_modal(obj) {
-            let user_host = $(obj).attr("user_host");
-            let row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
-            let user = row_data['user'];
-            let host = row_data['host'];
-            $("#delete-user").text(user_host);
+            const db_type = get_db_type();
+            let user_host;
+            let db_name_user;
+            let row_data;
+            if (db_type === 'mysql') {
+                user_host = $(obj).attr("user_host");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', user_host);
+                $("#delete-user").text(user_host);
+            } else {
+                db_name_user = $(obj).attr("db_name_user");
+                row_data = $('#user-list').bootstrapTable('getRowByUniqueId', db_name_user);
+                $("#delete-user").text(db_name_user);
+            }
+
             $("#delete-account").modal('show');
 
             $("#deleteBtn").unbind("click").click(function () {
@@ -1595,9 +1798,7 @@
                     dataType: "json",
                     data: {
                         instance_id: $("#instance").val(),
-                        user_host: user_host,
-                        user: user,
-                        host: host,
+                        ...row_data,
                     },
                     complete: function () {
                     },
@@ -1628,20 +1829,22 @@
                     url: "/group/user_all_instances/",
                     dataType: "json",
                     data: {
-                        db_type: ['mysql']
+                        db_type: ['mysql', 'mongo']
                     },
                     complete: function () {
                     },
                     success: function (data) {
                         if (data.status === 0) {
                             let result = data['data'];
-                            $("#instance").empty();
-                            for (let i = 0; i < result.length; i++) {
-                                let instance = "<option value=\"" + result[i]['id'] + "\">" + result[i]['instance_name'] + "</option>";
-                                $("#instance").append(instance);
+                            $("optgroup[id^='optgroup']").empty();
+                            const supportDb = ['mysql', 'mongo']
+                            for (let i of result) {
+                                let instance = "<option value=\"" + i.id + "\" instance-id=" + i.id + " instance-type=" + i.db_type + ">" + i.instance_name + "</option>";
+                                if (supportDb.indexOf(i.db_type) !== -1) {
+                                    $("#optgroup-" + i.db_type).append(instance);
+                                }
                             }
-                            $('#instance').selectpicker('render');
-                            $('#instance').selectpicker('refresh');
+                            $('#instance').selectpicker('render').selectpicker('refresh');
                         } else {
                             alert(data.msg);
                         }

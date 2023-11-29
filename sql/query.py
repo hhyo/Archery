@@ -162,22 +162,24 @@ def query(request):
                 limit_num = int(query_result.affected_rows)
             else:
                 limit_num = min(int(limit_num), int(query_result.affected_rows))
-            query_log = QueryLog(
-                username=user.username,
-                user_display=user.display,
-                db_name=db_name,
-                instance_name=instance.instance_name,
-                sqllog=sql_content,
-                effect_row=limit_num,
-                cost_time=query_result.query_time,
-                priv_check=priv_check,
-                hit_rule=query_result.mask_rule_hit,
-                masking=query_result.is_masked,
-            )
             # 防止查询超时
             if connection.connection and not connection.is_usable():
                 close_old_connections()
-            query_log.save()
+        else:
+            limit_num = 0
+        query_log = QueryLog(
+            username=user.username,
+            user_display=user.display,
+            db_name=db_name,
+            instance_name=instance.instance_name,
+            sqllog=sql_content,
+            effect_row=limit_num,
+            cost_time=query_result.query_time,
+            priv_check=priv_check,
+            hit_rule=query_result.mask_rule_hit,
+            masking=query_result.is_masked,
+        )
+        query_log.save()
     except Exception as e:
         logger.error(f"查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}")
         result["status"] = 1

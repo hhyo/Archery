@@ -149,20 +149,85 @@ def get_base_sqlitem_list(full_sql):
 
 def get_full_sqlitem_list(full_sql, db_name):
     """获取Sql对应的SqlItem列表, 包括PLSQL部分
-        PLSQL语句块由delimiter $$作为开始间隔符，以$$作为结束间隔符
     :param full_sql: 全部sql内容
     :return: SqlItem 列表
     """
+
+    """预处理SQL文本，第一步：自动添加PLSQL块结尾标识符
+    根据PLSQL书写语法，识别结尾符号，在PLSQL语句结尾添加$$符号（单独一行），作为该平台处理PLSQL块结尾标识符
+    同时需要过滤掉PLSQL块中间可能存在的注释 /* 注释内容 */ 干扰
+    """
+    pattern = r"(;(\s)*\n(/$|/\s))"
+    full_sql = re.sub(pattern, ";\n/\n$$", full_sql, flags=re.I)
+
+    """预处理SQL文本，第二步：自动添加PLSQL块开始标识符
+    根据PLSQL书写语法，识别开始符号，在PLSQL语句开始前添加delimiter $$符号（单独一行），作为该平台处理PLSQL块开始标识符
+    PLSQL块包括：以declare开始的匿名块、以begin开始的匿名块、存储过程、函数、触发器、包以及包体、对象类型以及对象类型体
+    """
+
+    """1、调整PLSQL开始部分语句，对于开始部分（如：create or replace procedure）中间可能存在换行的调整为一行，
+    保证下一步处理中，使用换行分割时，PLSQL开始标识完整的落在一行内
+    """
+    pattern_dict = {
+        r"(create\s+or\s+replace\s+procedure)": "create or replace procedure",
+        r"(create\s+or\s+replace\s+function)": "create or replace function",
+        r"(create\s+or\s+replace\s+trigger)": "create or replace trigger",
+        r"(create\s+or\s+replace\s+package)": "create or replace package",
+        r"(create\s+or\s+replace\s+type)": "create or replace type",
+        r"(create\s+procedure)": "create procedure",
+        r"(create\s+function)": "create function",
+        r"(create\s+trigger)": "create trigger",
+        r"(create\s+package)": "create package",
+        r"(create\s+type)": "create type",
+    }
+
+    for pattern in pattern_dict:
+        full_sql = re.sub(pattern, pattern_dict[pattern], full_sql, flags=re.I)
+
+    """2、使用换行符分割SQL文本，逐行处理SQL文本：
+    识别PLSQL开始语法标识符，在开始标识符前加delimiter $$（独立一行），作为该平台识别PLSQL开始位置的标识符，
+    同时通过引入is_inside_plsqlblock参数，排除掉那些可能存在于PLSQL程序块内部的开始标识符（declare，begin,create [or replace] xx等）
+    """
+    pre_sql_list = full_sql.split("\n")
+    full_sql_new = ""
+    is_inside_plsqlblock = 0
+
+    # 逐行处理SQL文本
+    for line in pre_sql_list:
+        # 匹配到declare和begin开始的行，同时该行SQL不是处于PLSQL程序块内部的，前面添加delimiter $$标识符（独立一行）
+        pattern = r"^(declare|begin)"
+        groups = re.match(pattern, line.lstrip(), re.IGNORECASE)
+        if groups and is_inside_plsqlblock == 0:
+            line = "delimiter $$" + "\n" + line
+            # 修改is_inside_plsqlblock参数为1，标识文本进入PLSQL块内部
+            is_inside_plsqlblock = 1
+
+        # 匹配到create [or replace] function|procedure|trigger|package|type开始的行，同时该行SQL不是处于PLSQL程序块内部的，
+        # 前面添加delimiter $$标识符（独立一行）
+        pattern = (
+            r"^create\s+(or\s+replace\s+)?(function|procedure|trigger|package|type)\s"
+        )
+        groups = re.match(pattern, line.lstrip(), re.IGNORECASE)
+        if groups and is_inside_plsqlblock == 0:
+            line = "delimiter $$" + "\n" + line
+            # 修改is_inside_plsqlblock参数为1，标识文本进入PLSQL块内部
+            is_inside_plsqlblock = 1
+
+        # 匹配到内容为$$的行，修改is_inside_plsqlblock参数为0，标识文本跳出PLSQL块
+        if line.strip() == "$$":
+            is_inside_plsqlblock = 0
+        full_sql_new = full_sql_new + line + "\n"
+
     list = []
 
     # 定义开始分隔符，两端用括号，是为了re.split()返回列表包含分隔符
     regex_delimiter = r"(delimiter\s*\$\$)"
     # 注意：必须把package body置于package之前，否则将永远匹配不上package body
-    regex_objdefine = r'create\s+or\s+replace\s+(function|procedure|trigger|package\s+body|package|view)\s+("?\w+"?\.)?"?\w+"?[\s+|\(]'
+    regex_objdefine = r'create\s+or\s+replace\s+(function|procedure|trigger|package\s+body|package|type\s+body|type)\s+("?\w+"?\.)?"?\w+"?[\s+|\(]'
     # 对象命名，两端有双引号
     regex_objname = r'^".+"$'
 
-    sql_list = re.split(pattern=regex_delimiter, string=full_sql, flags=re.I)
+    sql_list = re.split(pattern=regex_delimiter, string=full_sql_new, flags=re.I)
 
     # delimiter_flag => 分隔符标记, 0:不是, 1:是
     # 遇到分隔符标记为1, 则本块SQL要去判断是否有PLSQL内容
@@ -206,7 +271,6 @@ def get_full_sqlitem_list(full_sql, db_name):
                 # 情况2：plsql block 为匿名执行块
 
                 if search_result:
-
                     # 检索到关键字, 属于情况1
 
                     str_plsql_match = search_result.group()
@@ -273,7 +337,9 @@ def get_full_sqlitem_list(full_sql, db_name):
 
                 if length > pos + 2:
                     # 处理$$之后的那些语句, 默认为单条可执行SQL的集合
-                    sql_area = sql[pos + 2 :].strip()
+                    # 创建视图、序列、表，语句作为SQL处理最后如果加了 / ，预处理中会在 / 后一行加$$，
+                    # 这里需要将SQL文本中 /\n$$ 去除后再传给get_base_sqlitem_list函数
+                    sql_area = sql[pos + 2 :].replace("/\n$$", "").strip()
                     if len(sql_area) > 0:
                         tmp_list = get_base_sqlitem_list(sql_area)
                         list.extend(tmp_list)
@@ -287,6 +353,9 @@ def get_full_sqlitem_list(full_sql, db_name):
             delimiter_flag = 0
         else:
             # 表示当前为以;结尾的正常sql
+            # 创建视图、序列、表，语句作为SQL处理最后如果加了 / ，预处理中会在 / 后一行加$$，
+            # 这里需要将SQL文本中 /\n$$ 去除后再传给get_base_sqlitem_list函数
+            sql = sql.replace("/\n$$", "")
             tmp_list = get_base_sqlitem_list(sql)
             list.extend(tmp_list)
     return list
@@ -299,7 +368,6 @@ def get_exec_sqlitem_list(reviewResult, db_name):
     :return:
     """
     list = []
-    list.append(SqlItem(statement=f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" '))
 
     for item in reviewResult:
         list.append(

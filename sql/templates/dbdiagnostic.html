@@ -95,9 +95,9 @@
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
     <script>
 
-        var processListColumns  = NaN;
-        var tablespaceListColumns = NaN;
-        var lockListColumns = NaN;
+        var processListColumns  = [];
+        var tablespaceListColumns = [];
+        var lockListColumns = [];
         var processListDetailFormatCallback = NaN;
         var lockListDetailFormatCallback = NaN;
 
@@ -460,7 +460,7 @@
                     escape: true,
                     method: 'post',
                     contentType: "application/x-www-form-urlencoded",
-                    url: "/db_diagnostic/tablesapce/",
+                    url: "/db_diagnostic/tablespace/",
                     striped: true,                      //是否显示行间隔色
                     cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
                     pagination: true,                   //是否显示分页（*）

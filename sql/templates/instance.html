@@ -13,15 +13,9 @@
         <div class="form-group">
             <select id="db_type" class="form-control selectpicker">
                 <option value="" selected="selected">数据库类型</option>
-                <option value="mysql">MySQL</option>
-                <option value="mssql">MsSQL</option>
-                <option value="redis">Redis</option>
-                <option value="pgsql">PgSQL</option>
-                <option value="oracle">Oracle</option>
-                <option value="mongo">Mongo</option>
-                <option value="phoenix">Phoenix</option>
-                <option value="odps">ODPS</option>
-                <option value="clickhouse">ClickHouse</option>
+                {% for name, engine in engines.items %}
+                    <option value="{{ name }}">{{ engine.name }}</option>
+                {%  endfor %}
             </select>
         </div>
         <div class="form-group">

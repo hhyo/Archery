@@ -28,8 +28,9 @@ class OracleEngine(EngineBase):
 
     def __init__(self, instance=None):
         super(OracleEngine, self).__init__(instance=instance)
-        self.service_name = instance.service_name
-        self.sid = instance.sid
+        if instance:
+            self.service_name = instance.service_name
+            self.sid = instance.sid
 
     def get_connection(self, db_name=None):
         if self.conn:
@@ -50,13 +51,9 @@ class OracleEngine(EngineBase):
             raise ValueError("sid 和 dsn 均未填写, 请联系管理页补充该实例配置.")
         return self.conn
 
-    @property
-    def name(self):
-        return "Oracle"
+    name = "Oracle"
 
-    @property
-    def info(self):
-        return "Oracle engine"
+    info = "Oracle engine"
 
     @property
     def auto_backup(self):
@@ -160,17 +157,22 @@ class OracleEngine(EngineBase):
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
-        sql = f"""SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = '{db_name}' AND IOT_NAME IS NULL AND DURATION IS NULL order by table_name
-        """
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"""SELECT table_name 
+        FROM all_tables 
+        WHERE nvl(tablespace_name, 'no tablespace') NOT IN ('SYSTEM', 'SYSAUX') 
+        AND OWNER = :db_name AND IOT_NAME IS NULL 
+        AND DURATION IS NULL order by table_name"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
         tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
         result.rows = tb_list
         return result
 
     def get_group_tables_by_db(self, db_name):
         data = {}
-        table_list_sql = f"""SELECT     table_name,   comments     FROM    dba_tab_comments        WHERE     owner = '{db_name}'"""
-        result = self.query(db_name=db_name, sql=table_list_sql)
+        table_list_sql = f"""SELECT table_name, comments FROM  dba_tab_comments  WHERE owner = :db_name"""
+        result = self.query(
+            db_name=db_name, sql=table_list_sql, parameters={"db_name": db_name}
+        )
         for row in result.rows:
             table_name, table_cmt = row[0], row[1]
             if table_name[0] not in data:
@@ -205,9 +207,13 @@ class OracleEngine(EngineBase):
                                         and bss.TABLE_NAME = tcs.table_name
     
                                     WHERE
-                                        tcs.OWNER='{db_name}'
-                                        AND tcs.TABLE_NAME='{tb_name}'"""
-        _meta_data = self.query(db_name=db_name, sql=meta_data_sql)
+                                        tcs.OWNER=:db_name
+                                        AND tcs.TABLE_NAME=:tb_name"""
+        _meta_data = self.query(
+            db_name=db_name,
+            sql=meta_data_sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
         return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
@@ -249,10 +255,14 @@ class OracleEngine(EngineBase):
                             and acs.table_name = ics.TABLE_NAME
                             and acs.index_name = ics.INDEX_NAME
                         WHERE
-                            bcs.OWNER='{db_name}'
-                            AND bcs.TABLE_NAME='{tb_name}'
+                            bcs.OWNER=:db_name
+                            AND bcs.TABLE_NAME=:tb_name
                         ORDER BY bcs.COLUMN_NAME"""
-        _desc_data = self.query(db_name=db_name, sql=desc_sql)
+        _desc_data = self.query(
+            db_name=db_name,
+            sql=desc_sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
         return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
@@ -272,9 +282,11 @@ class OracleEngine(EngineBase):
                                 on ais.owner = pis.owner
                                 and ais.index_name = pis.index_name
                             WHERE
-                                ais.owner = '{db_name}'
-                                AND ais.table_name = '{tb_name}'"""
-        _index_data = self.query(db_name, index_sql)
+                                ais.owner = :db_name
+                                AND ais.table_name = :tb_name"""
+        _index_data = self.query(
+            db_name, index_sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
@@ -324,9 +336,11 @@ class OracleEngine(EngineBase):
                                 on t1.OWNER = bcs.OWNER
                                AND t1.TABLE_NAME = bcs.TABLE_NAME
                                AND t1.column_name = bcs.COLUMN_NAME
-                             WHERE bcs.OWNER = '{db_name}'
+                             WHERE bcs.OWNER = :db_name
                              order by bcs.TABLE_NAME, comments"""
-        cols_req = self.query(sql=sql_cols, close_conn=False).rows
+        cols_req = self.query(
+            sql=sql_cols, close_conn=False, parameters={"db_name": db_name}
+        ).rows
 
         # 给查询结果定义列名，query_engine.query的游标是0 1 2
         cols_df = pd.DataFrame(
@@ -371,8 +385,8 @@ class OracleEngine(EngineBase):
 
     def get_all_objects(self, db_name, **kwargs):
         """获取object_name 列表, 返回一个ResultSet"""
-        sql = f"""SELECT object_name FROM all_objects WHERE OWNER = '{db_name}' """
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"""SELECT object_name FROM all_objects WHERE OWNER = :db_name """
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
         tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
         result.rows = tb_list
         return result
@@ -398,9 +412,13 @@ class OracleEngine(EngineBase):
         WHERE a.table_name = b.table_name
         and a.owner = b.OWNER
         and a.COLUMN_NAME = b.COLUMN_NAME
-        and a.table_name = '{tb_name}' and a.owner = '{db_name}' order by column_id
+        and a.table_name = :tb_name and a.owner = :db_name order by column_id
         """
-        result = self.query(db_name=db_name, sql=sql)
+        result = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters={"db_name": db_name, "tb_name": tb_name},
+        )
         return result
 
     def object_name_check(self, db_name=None, object_name=""):
@@ -426,8 +444,13 @@ class OracleEngine(EngineBase):
                 object_name = object_name.replace('"', "")
             else:
                 object_name = object_name.upper()
-        sql = f""" SELECT object_name FROM all_objects WHERE OWNER = '{schema_name}' and OBJECT_NAME = '{object_name}' """
-        result = self.query(db_name=db_name, sql=sql, close_conn=False)
+        sql = f""" SELECT object_name FROM all_objects WHERE OWNER = :schema_name and OBJECT_NAME = :object_name """
+        result = self.query(
+            db_name=db_name,
+            sql=sql,
+            close_conn=False,
+            parameters={"schema_name": schema_name, "object_name": object_name},
+        )
         if result.affected_rows > 0:
             return True
         else:
@@ -437,49 +460,38 @@ class OracleEngine(EngineBase):
     def get_sql_first_object_name(sql=""):
         """获取sql文本中的object_name"""
         object_name = ""
-        if re.match(r"^create\s+table\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+table\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+index\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+unique\s+index\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+unique\s+index\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+sequence\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+sequence\s(.+?)(\s|$)", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^alter\s+table\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^alter\s+table\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+function\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+function\s(.+?)(\s|\()", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+view\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+view\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+procedure\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+procedure\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+package\s+body", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+package\s+body\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        elif re.match(r"^create\s+package\s", sql, re.M | re.IGNORECASE):
-            object_name = re.match(
-                r"^create\s+package\s(.+?)\s", sql, re.M | re.IGNORECASE
-            ).group(1)
-        else:
-            return object_name.strip()
-        return object_name.strip()
+        # 匹配表、索引、序列
+        pattern = r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s"
+        groups = re.match(pattern, sql, re.M | re.IGNORECASE)
+
+        if groups:
+            object_name = (
+                re.match(
+                    r"^(create|alter)\s+(table|index|unique\sindex|sequence)\s+(.+?)(\s|\()",
+                    sql,
+                    re.M | re.IGNORECASE,
+                )
+                .group(3)
+                .strip()
+            )
+            return object_name
+
+        # 匹配创建或者替换SQL块
+        pattern = r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s"
+        groups = re.match(pattern, sql, re.M | re.IGNORECASE)
+
+        if groups:
+            object_name = (
+                re.match(
+                    r"^create\s+(or\s+replace\s+)?(function|view|procedure|trigger|package\sbody|package|type\sbody|type)\s+(.+?)(\s|\()",
+                    sql,
+                    re.M | re.IGNORECASE,
+                )
+                .group(3)
+                .strip()
+            )
+            return object_name
+        return object_name
 
     @staticmethod
     def check_create_index_table(sql="", object_name_list=None, db_name=""):
@@ -578,7 +590,7 @@ class OracleEngine(EngineBase):
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
+                conn.current_schema = db_name
             if re.match(r"^explain", sql, re.I):
                 sql = sql
             else:
@@ -586,7 +598,9 @@ class OracleEngine(EngineBase):
             sql = sql.rstrip(";")
             cursor.execute(sql)
             # 获取影响行数
-            cursor.execute(f"select CARDINALITY from SYS.PLAN_TABLE$ where id = 0")
+            cursor.execute(
+                "select CARDINALITY from (select CARDINALITY from PLAN_TABLE t where id = 0 order by t.timestamp desc) where rownum = 1"
+            )
             rows = cursor.fetchone()
             conn.rollback()
             if not rows:
@@ -637,21 +651,29 @@ class OracleEngine(EngineBase):
             sql = f"select sql_audit.* from ({sql.rstrip(';')}) sql_audit where rownum <= {limit_num}"
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             if db_name:
-                cursor.execute(f' ALTER SESSION SET CURRENT_SCHEMA = "{db_name}" ')
+                conn.current_schema = db_name
             sql = sql.rstrip(";")
             # 支持oralce查询SQL执行计划语句
             if re.match(r"^explain", sql, re.I):
                 cursor.execute(sql)
                 # 重置SQL文本，获取SQL执行计划
                 sql = f"select PLAN_TABLE_OUTPUT from table(dbms_xplan.display)"
-            cursor.execute(sql)
+            cursor.execute(sql, parameters or [])
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
                 rows = [
@@ -702,6 +724,7 @@ class OracleEngine(EngineBase):
         critical_ddl_regex = config.get("critical_ddl_regex", "")
         p = re.compile(critical_ddl_regex)
         check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML
+        sqlitem = None
         try:
             sqlitemList = get_full_sqlitem_list(sql, db_name)
             for sqlitem in sqlitemList:
@@ -840,7 +863,10 @@ class OracleEngine(EngineBase):
                                     )
                                 else:
                                     object_name_list.add(object_name)
-                                    if result_set["rows"] > 1000:
+                                    if (
+                                        result_set.get("rows", None)
+                                        and result_set["rows"] > 1000
+                                    ):
                                         result = ReviewResult(
                                             id=line,
                                             errlevel=1,
@@ -869,7 +895,10 @@ class OracleEngine(EngineBase):
                                             execute_time=0,
                                         )
                             else:
-                                if result_set["rows"] > 1000:
+                                if (
+                                    result_set.get("rows", None)
+                                    and result_set["rows"] > 1000
+                                ):
                                     result = ReviewResult(
                                         id=line,
                                         errlevel=1,
@@ -966,7 +995,26 @@ class OracleEngine(EngineBase):
                                 object_name = object_name.upper()
 
                         object_name = f"""{schema_name}.{object_name}"""
-                        if (
+                        if re.match(r"^create\sor\sreplace", sql_lower) and (
+                            self.object_name_check(
+                                db_name=db_name, object_name=object_name
+                            )
+                            or object_name in object_name_list
+                        ):
+                            result = ReviewResult(
+                                id=line,
+                                errlevel=1,
+                                stagestatus=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                errormessage=f"""{object_name}对象已经存在，请确认是否替换！""",
+                                sql=sqlitem.statement,
+                                stmt_type=sqlitem.stmt_type,
+                                object_owner=sqlitem.object_owner,
+                                object_type=sqlitem.object_type,
+                                object_name=sqlitem.object_name,
+                                affected_rows=0,
+                                execute_time=0,
+                            )
+                        elif (
                             self.object_name_check(
                                 db_name=db_name, object_name=object_name
                             )
@@ -1047,6 +1095,7 @@ class OracleEngine(EngineBase):
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            conn.current_schema = workflow.db_name
             # 获取执行工单时间，用于备份SQL的日志挖掘起始时间
             cursor.execute(f"alter session set nls_date_format='yyyy-mm-dd hh24:mi:ss'")
             cursor.execute(f"select sysdate from dual")
@@ -1340,23 +1389,26 @@ class OracleEngine(EngineBase):
                                   my_task_name VARCHAR2(30);
                                   my_sqltext  CLOB;
                                   BEGIN
-                                  my_sqltext := '{sql}';
+                                  my_sqltext := :sql;
                                   my_task_name := DBMS_SQLTUNE.CREATE_TUNING_TASK(
                                   sql_text    => my_sqltext,
-                                  user_name   => '{db_name}',
+                                  user_name   => :db_name,
                                   scope       => 'COMPREHENSIVE',
                                   time_limit  => 30,
-                                  task_name   => '{task_name}',
+                                  task_name   => :task_name,
                                   description => 'tuning');
-                                  DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => '{task_name}');
+                                  DBMS_SQLTUNE.EXECUTE_TUNING_TASK( task_name => :task_name);
                                   END;"""
             task_begin = 1
-            cursor.execute(create_task_sql)
+            cursor.execute(
+                create_task_sql,
+                {"sql": sql, "db_name": db_name, "task_name": task_name},
+            )
             # 获取分析报告
             get_task_sql = (
-                f"""select DBMS_SQLTUNE.REPORT_TUNING_TASK( '{task_name}') from dual"""
+                f"""select DBMS_SQLTUNE.REPORT_TUNING_TASK(:task_name) from dual"""
             )
-            cursor.execute(get_task_sql)
+            cursor.execute(get_task_sql, {"task_name": task_name})
             fields = cursor.description
             if any(x[1] == cx_Oracle.CLOB for x in fields):
                 rows = [
@@ -1383,7 +1435,7 @@ class OracleEngine(EngineBase):
                 self.close()
         return result_set
 
-    def execute(self, db_name=None, sql="", close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
@@ -1391,7 +1443,7 @@ class OracleEngine(EngineBase):
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
                 statement = statement.rstrip(";")
-                cursor.execute(statement)
+                cursor.execute(statement, parameters or [])
         except Exception as e:
             logger.warning(f"Oracle语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
             result.error = str(e)
@@ -1488,11 +1540,11 @@ class OracleEngine(EngineBase):
                 and a.tablespace_name = c.tablespace_name
                 and a.tablespace_name = d.tablespace_name
                 order by total_space desc ) e
-                where rownum <={}
-        ) f where f.rownumber >={};""".format(
-            row_count, offset
+                where rownum <=:row_count
+        ) f where f.rownumber >=:offset;"""
+        return self.query(
+            sql=sql, parameters={"row_count": row_count, "offset": offset}
         )
-        return self.query(sql=sql)
 
     def tablespace_count(self):
         """获取表空间数量"""

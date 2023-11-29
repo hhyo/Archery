@@ -29,29 +29,27 @@ class RedisEngine(EngineBase):
             return redis.cluster.RedisCluster(
                 host=self.host,
                 port=self.port,
-                password=self.password,
+                password=self.password or None,
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
         else:
             return redis.Redis(
                 host=self.host,
                 port=self.port,
                 db=db_name,
-                password=self.password,
+                password=self.password or None,
                 encoding_errors="ignore",
                 decode_responses=True,
                 socket_connect_timeout=10,
+                ssl=self.is_ssl,
             )
 
-    @property
-    def name(self):
-        return "Redis"
+    name = "Redis"
 
-    @property
-    def info(self):
-        return "Redis engine"
+    info = "Redis engine"
 
     def test_connection(self):
         return self.get_all_databases()

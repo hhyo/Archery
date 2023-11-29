@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, Permission
 from rest_framework.test import APITestCase
 from rest_framework import status
 from common.config import SysConfig
+from sql.utils.workflow_audit import AuditSetting
 from sql.engines import ReviewSet
 from sql.engines.models import ReviewResult
 from sql.models import (
@@ -410,6 +411,8 @@ class TestWorkflow(APITestCase):
             current_audit="1",
             next_audit="-1",
             current_status=0,
+            create_user=self.user.username,
+            create_user_display=self.user.display,
         )
         self.wl = WorkflowLog.objects.create(
             audit_id=self.audit1.audit_id, operation_type=1
@@ -422,6 +425,8 @@ class TestWorkflow(APITestCase):
         self.token = r.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + self.token)
         SysConfig().set("api_user_whitelist", self.user.id)
+        self.notify_patcher = patch("sql.notify.auto_notify")
+        self.notify_patcher.start()
 
     def tearDown(self):
         self.user.delete()
@@ -431,6 +436,7 @@ class TestWorkflow(APITestCase):
         SqlWorkflow.objects.all().delete()
         WorkflowAudit.objects.all().delete()
         WorkflowLog.objects.all().delete()
+        self.notify_patcher.stop()
 
     def test_get_sql_workflow_list(self):
         """测试获取SQL上线工单列表"""
@@ -478,7 +484,7 @@ class TestWorkflow(APITestCase):
         print(json.loads(r.content))
         self.assertDictEqual(json.loads(r.content), {"errors": "RuntimeError"})
 
-    @patch("sql_api.serializers.get_engine")
+    @patch("sql_api.api_workflow.get_engine")
     def test_check(self, _get_engine):
         """测试工单检测，正常返回"""
         json_data = {
@@ -583,6 +589,25 @@ class TestWorkflow(APITestCase):
         self.assertEqual(r.json()["workflow"]["workflow_name"], "上线工单1")
         self.assertEqual(r.json()["workflow"]["engineer"], user2.username)
         self.assertEqual(r.json()["workflow"]["engineer_display"], user2.display)
+
+    @patch("sql.utils.workflow_audit.AuditV2.generate_audit_setting")
+    def test_submit_workflow_auto_pass(self, mock_generate_settings):
+        json_data = {
+            "workflow": {
+                "workflow_name": "上线工单1",
+                "demand_url": "test",
+                "group_id": 1,
+                "db_name": "test_db",
+                "instance": self.ins.id,
+            },
+            "sql_content": "alter table abc add column note varchar(64);",
+        }
+        mock_generate_settings.return_value = AuditSetting(auto_pass=True)
+        r = self.client.post("/api/v1/workflow/", json_data, format="json")
+        return_data = r.json()
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+        workflow_in_db = SqlWorkflow.objects.get(id=return_data["workflow"]["id"])
+        assert workflow_in_db.status == "workflow_review_pass"
 
     def test_submit_param_is_None(self):
         """测试SQL提交，参数内容为空"""

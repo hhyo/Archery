@@ -15,7 +15,6 @@ logger = logging.getLogger("default")
 class SysConfig(object):
     def __init__(self):
         self.sys_config = {}
-        self.get_all_config()
 
     def get_all_config(self):
         try:
@@ -34,10 +33,28 @@ class SysConfig(object):
             self.sys_config = {}
 
     def get(self, key, default_value=None):
-        value = self.sys_config.get(key, default_value)
+        value = self.sys_config.get(key)
+        if value:
+            return value
+        # 尝试去数据库里取
+        config_entry = Config.objects.filter(item=key).last()
+        if config_entry:
+            # 清洗成 python 的 bool
+            value = self.filter_bool(config_entry.value)
         # 是字符串的话, 如果是空, 或者全是空格, 返回默认值
         if isinstance(value, str) and value.strip() == "":
             return default_value
+        if value is not None:
+            self.sys_config[key] = value
+            return value
+        return default_value
+
+    @staticmethod
+    def filter_bool(value: str):
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
         return value
 
     def set(self, key, value):
@@ -50,8 +67,7 @@ class SysConfig(object):
         obj, created = Config.objects.update_or_create(
             item=key, defaults={"value": db_value}
         )
-        if created:
-            self.sys_config.update({key: value})
+        self.sys_config.update({key: value})
 
     def replace(self, configs):
         result = {"status": 0, "msg": "ok", "data": []}

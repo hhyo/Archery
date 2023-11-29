@@ -11,16 +11,15 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
+from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import Const, WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
+from sql.engines import get_engine
 from sql.engines.models import ReviewResult, ReviewSet
-from sql.notify import notify_for_audit, notify_for_execute
-from sql.models import ResourceGroup
-from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.tasks import add_sql_schedule, del_schedule
+from sql.notify import notify_for_audit, EventType, notify_for_execute
+from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import (
     can_timingtask,
     can_cancel,
@@ -29,11 +28,9 @@ from sql.utils.sql_review import (
     can_view,
     can_rollback,
 )
-from sql.utils.workflow_audit import Audit
-from .models import SqlWorkflow, SqlWorkflowContent, Instance
-from django_q.tasks import async_task
-
-from sql.engines import get_engine
+from sql.utils.tasks import add_sql_schedule, del_schedule
+from sql.utils.workflow_audit import Audit, get_auditor, AuditException
+from .models import SqlWorkflow
 
 logger = logging.getLogger("default")
 
@@ -241,56 +238,40 @@ def passed(request):
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
-
-    user = request.user
-    if Audit.can_review(user, workflow_id, 2) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
-        return render(request, "error.html", context)
-
-    # 使用事务保持数据一致性
     try:
-        with transaction.atomic():
-            # 调用工作流接口审核
-            audit_id = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            ).audit_id
-            audit_result = Audit.audit(
-                audit_id,
-                WorkflowDict.workflow_status["audit_success"],
-                user.username,
-                audit_remark,
-            )
+        sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
+    except SqlWorkflow.DoesNotExist:
+        return render(request, "error.html", {"errMsg": "工单不存在"})
 
-            # 按照审核结果更新业务表审核状态
-            if (
-                audit_result["data"]["workflow_status"]
-                == WorkflowDict.workflow_status["audit_success"]
-            ):
-                # 将流程状态修改为审核通过
-                SqlWorkflow(id=workflow_id, status="workflow_review_pass").save(
-                    update_fields=["status"]
-                )
-    except Exception as msg:
-        logger.error(f"审核工单报错，错误信息：{traceback.format_exc()}")
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
-    else:
-        # 开启了Pass阶段通知参数才发送消息通知
-        sys_config = SysConfig()
-        is_notified = (
-            "Pass" in sys_config.get("notify_phase_control").split(",")
-            if sys_config.get("notify_phase_control")
-            else True
-        )
-        if is_notified:
-            async_task(
-                notify_for_audit,
-                audit_id=audit_id,
-                audit_remark=audit_remark,
-                timeout=60,
-                task_name=f"sqlreview-pass-{workflow_id}",
+    sys_config = SysConfig()
+    auditor = get_auditor(workflow=sql_workflow, sys_config=sys_config)
+    # 使用事务保持数据一致性
+    with transaction.atomic():
+        try:
+            workflow_audit_detail = auditor.operate(
+                WorkflowAction.PASS, request.user, audit_remark
             )
+        except AuditException as e:
+            return render(request, "error.html", {"errMsg": f"审核失败, 错误信息: {str(e)}"})
+        if auditor.audit.current_status == WorkflowStatus.PASSED:
+            # 审批流全部走完了, 把工单标记为审核通过
+            auditor.workflow.status = "workflow_review_pass"
+            auditor.workflow.save()
+
+    # 开启了Pass阶段通知参数才发送消息通知
+    is_notified = (
+        "Pass" in sys_config.get("notify_phase_control").split(",")
+        if sys_config.get("notify_phase_control")
+        else True
+    )
+    if is_notified:
+        async_task(
+            notify_for_audit,
+            workflow_audit=auditor.audit,
+            workflow_audit_detail=workflow_audit_detail,
+            timeout=60,
+            task_name=f"sqlreview-pass-{workflow_id}",
+        )
 
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
@@ -321,7 +302,7 @@ def execute(request):
         return render(request, "error.html", context)
     # 获取审核信息
     audit_id = Audit.detail_by_workflow_id(
-        workflow_id=workflow_id, workflow_type=WorkflowDict.workflow_type["sqlreview"]
+        workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
     ).audit_id
     # 根据执行模式进行对应修改
     mode = request.POST.get("mode")
@@ -378,7 +359,7 @@ def execute(request):
             else True
         )
         if is_notified:
-            notify_for_execute(SqlWorkflow.objects.get(id=workflow_id))
+            notify_for_execute(workflow=SqlWorkflow.objects.get(id=workflow_id))
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
@@ -426,7 +407,7 @@ def timing_task(request):
             # 增加工单日志
             audit_id = Audit.detail_by_workflow_id(
                 workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
+                workflow_type=WorkflowType.SQL_REVIEW,
             ).audit_id
             Audit.add_log(
                 audit_id=audit_id,
@@ -453,7 +434,7 @@ def cancel(request):
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
-    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
     audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
         context = {"errMsg": "终止原因不能为空"}
@@ -465,88 +446,40 @@ def cancel(request):
         return render(request, "error.html", context)
 
     # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 调用工作流接口取消或者驳回
-            audit_id = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            ).audit_id
-            # 仅待审核的需要调用工作流，审核通过的不需要
-            if workflow_detail.status != "workflow_manreviewing":
-                # 增加工单日志
-                if user.username == workflow_detail.engineer:
-                    Audit.add_log(
-                        audit_id=audit_id,
-                        operation_type=3,
-                        operation_type_desc="取消执行",
-                        operation_info="取消原因：{}".format(audit_remark),
-                        operator=request.user.username,
-                        operator_display=request.user.display,
-                    )
-                else:
-                    Audit.add_log(
-                        audit_id=audit_id,
-                        operation_type=2,
-                        operation_type_desc="审批不通过",
-                        operation_info="审批备注：{}".format(audit_remark),
-                        operator=request.user.username,
-                        operator_display=request.user.display,
-                    )
-            else:
-                if user.username == workflow_detail.engineer:
-                    Audit.audit(
-                        audit_id,
-                        WorkflowDict.workflow_status["audit_abort"],
-                        user.username,
-                        audit_remark,
-                    )
-                # 非提交人需要校验审核权限
-                elif user.has_perm("sql.sql_review"):
-                    Audit.audit(
-                        audit_id,
-                        WorkflowDict.workflow_status["audit_reject"],
-                        user.username,
-                        audit_remark,
-                    )
-                else:
-                    raise PermissionDenied
-
-            # 删除定时执行task
-            if workflow_detail.status == "workflow_timingtask":
-                schedule_name = f"sqlreview-timing-{workflow_id}"
-                del_schedule(schedule_name)
-            # 将流程状态修改为人工终止流程
-            workflow_detail.status = "workflow_abort"
-            workflow_detail.save()
-    except Exception as msg:
-        logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
+    if user.username == sql_workflow.engineer:
+        action = WorkflowAction.ABORT
+    elif user.has_perm("sql.sql_review"):
+        action = WorkflowAction.REJECT
     else:
-        # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
-        sys_config = SysConfig()
-        is_notified = (
-            "Cancel" in sys_config.get("notify_phase_control").split(",")
-            if sys_config.get("notify_phase_control")
-            else True
+        raise PermissionDenied
+    with transaction.atomic():
+        auditor = get_auditor(workflow=sql_workflow)
+        try:
+            workflow_audit_detail = auditor.operate(action, request.user, audit_remark)
+        except AuditException as e:
+            logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
+            return render(request, "error.html", {"errMsg": f"{str(e)}"})
+        # 将流程状态修改为人工终止流程
+        sql_workflow.status = "workflow_abort"
+        sql_workflow.save()
+    # 删除定时执行task
+    if sql_workflow.status == "workflow_timingtask":
+        del_schedule(f"sqlreview-timing-{workflow_id}")
+    # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
+    sys_config = SysConfig()
+    is_notified = (
+        "Cancel" in sys_config.get("notify_phase_control").split(",")
+        if sys_config.get("notify_phase_control")
+        else True
+    )
+    if is_notified:
+        async_task(
+            notify_for_audit,
+            workflow_audit=auditor.audit,
+            workflow_audit_detail=workflow_audit_detail,
+            timeout=60,
+            task_name=f"sqlreview-cancel-{workflow_id}",
         )
-        if is_notified:
-            audit_detail = Audit.detail_by_workflow_id(
-                workflow_id=workflow_id,
-                workflow_type=WorkflowDict.workflow_type["sqlreview"],
-            )
-            if audit_detail.current_status in (
-                WorkflowDict.workflow_status["audit_abort"],
-                WorkflowDict.workflow_status["audit_reject"],
-            ):
-                async_task(
-                    notify_for_audit,
-                    audit_id=audit_detail.audit_id,
-                    audit_remark=audit_remark,
-                    timeout=60,
-                    task_name=f"sqlreview-cancel-{workflow_id}",
-                )
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 

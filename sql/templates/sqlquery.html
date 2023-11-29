@@ -71,15 +71,9 @@
                                         data-live-search="true" data-live-search-placeholder="搜索您所在组的实例"
                                         title="请选择实例:"
                                         data-placeholder="请选择实例:" required>
-                                    <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
-                                    <optgroup id="optgroup-mssql" label="MsSQL"></optgroup>
-                                    <optgroup id="optgroup-redis" label="Redis"></optgroup>
-                                    <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
-                                    <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
-                                    <optgroup id="optgroup-mongo" label="Mongo"></optgroup>
-                                    <optgroup id="optgroup-phoenix" label="Phoenix"></optgroup>
-                                    <optgroup id="optgroup-odps" label="ODPS"></optgroup>
-                                    <optgroup id="optgroup-clickhouse" label="ClickHouse"></optgroup>
+                                {% for name,engine in engines.items %}
+                                    <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
+                                {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -211,7 +205,7 @@
                                 </div>
 
                                 <div id="setHelp" class="alert alert-info" style="display: none">
-                                    ` <i> 1、smembers key 列出集合key中的所有成员</i></br>
+                                    <i> 1、smembers key 列出集合key中的所有成员</i></br>
                                     <i> 2、scard key 返回集合key中元素的个数</i></br>
                                     <i> 3、sdiff key[key...] 获取集合的差集，若key为1个则返回集合的全部成员</i></br>
                                     <i> 4、sunion key[key...] 返回集合的并集，不存在的key会被当做空集处理</i></br>
@@ -639,8 +633,9 @@
         //先做表单验证，验证成功再成功提交执行计划查看
         $("#btn-explain").click(function () {
                 if (sqlquery_validate()) {
-                    $('input[type=button]').addClass('disabled');
-                    $('input[type=button]').prop('disabled', true);
+                    const inputButton = $('input[type=button]')
+                    inputButton.addClass('disabled');
+                    inputButton.prop("disabled", true)
                     sqlquery('explain')
                 }
             }
@@ -707,24 +702,32 @@
             var query_str = target+'|'+result['full_sql'];
             //获取当前的标签页,如果当前不在执行结果页，则默认新增一个页面
             var active_li_id = sessionStorage.getItem('active_li_id');
-            var active_li_title = sessionStorage.getItem('active_li_title');
-
+            let active_li_title = sessionStorage.getItem('active_li_title');
+            let tb_name, n
+            let need_describe_display = false
             if (data.status === 0) {
                 // 查看表结构默认新增tab，相同表结构获取不新增
-                if (data.is_describe || result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
-                    if (data.is_describe) {
-                        var tb_name = $("#table_name").val();
-                    } else {
-                        var tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
+                if (result['full_sql'].match(/^show\s+create\s+table\s+(.*)/)) {
+                    need_describe_display = true
+                    if (data.is_describe===undefined || !data.is_describe) {
+                        tb_name = result['full_sql'].match(/^show\s+create\s+table\s+(.*);/)[1];
+                    }
+                }
+                if (data.is_describe || need_describe_display) {
+                    if (tb_name === undefined) {
+                        tb_name = $("#table_name").val();
                     }
                     if (tb_name !== active_li_title) {
                         tab_add(tb_name);
                     }
                     n = sessionStorage.getItem('tab_num');
+                    if (result.column_list === ["table", "create table"]) {
+                        need_describe_display = true
+                    }
                 }
                 // 执行结果页默认不新增
                 else if (active_li_title.match(/^执行结果\d$/)) {
-                    var n = active_li_id.split("execute_result_tab")[1];
+                    n = active_li_id.split("execute_result_tab")[1];
                 } else {
                     tab_add();
                     n = sessionStorage.getItem('tab_num');
@@ -738,7 +741,7 @@
                 //显示查询结果
                 if (result['column_list']) {
                     //异步获取要动态生成的列
-                    var columns = [];
+                    let columns = [];
                     $.each(result['column_list'], function (i, column) {
                         var iswholeCol = true;
                         if (column == "mongodballdata") {
@@ -770,9 +773,9 @@
                             }
                         });
                     });
-                    if (result['full_sql'].match(/^show\s+create\s+table/)) {
+                    if (need_describe_display) {
                         //初始化表结构显示
-                        $("#" + ("query_result" + n)).bootstrapTable('destroy').bootstrapTable({
+                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
                                 escape: false,
                                 data: result['rows'],
                                 columns: [{
@@ -804,7 +807,7 @@
                             isdetail = true
                         }
                         var showExport = {{can_download}}===1
-                        $("#" + ('query_result' + n)).bootstrapTable('destroy').bootstrapTable({
+                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
                             columns: columns,
@@ -813,7 +816,26 @@
                             exportTypes: ['json', 'sql', 'csv', 'txt', 'xml', 'xlsx'],
                             exportOptions: {
                                 //ignoreColumn: [0],  //忽略某些列的索引数组
-                                fileName: 'export_result'  //文件名称设置
+                                fileName: function () {
+                                var userInput = prompt('请输入文件名：');  // 弹出对话框让用户输入文件名
+                                return userInput || 'export_result';  // 若用户未输入文件名，则使用默认文件名
+                                },
+                                onFileSave: function (e) {
+                                    var url = e.currentTarget.href;
+                                    var xhr = new XMLHttpRequest();
+                                    xhr.open('GET', url, true);
+                                    xhr.responseType = 'blob';
+                                    xhr.onload = function () {
+                                        if (xhr.status === 200) {
+                                            var blob = xhr.response;
+                                            var downloadLink = document.createElement('a');
+                                            downloadLink.href = window.URL.createObjectURL(blob);
+                                            downloadLink.click();
+                                        }
+                                    };
+                                    xhr.send();
+                                    return false;
+                                }
                             },
                             undefinedText: '(null)',
                             detailView: isdetail, //开启显示行首"+"
@@ -854,7 +876,9 @@
                                 for(let i=0;i<tabs.length;i++){
                                     if(tabs[i].getAttribute("class") === "active") {
                                         // sql内容固定隐藏绑定在第二个子元素
-                                        var extraInfo = tabs[i].children[1].innerHTML+"|"+e.length;
+                                        var instance_name = $("#instance_name").val()
+                                        var db_name =$("#db_name").val()
+                                        var extraInfo = instance_name+"/"+db_name+"|"+$(tabs[i].children[1]).attr('sql_cache')+"|"+e.length;
                                         $.ajax({
                                             type: "post",
                                             url: "/audit/input/",
@@ -994,73 +1018,62 @@
     </script>
     <!-- common -->
     <script>
+        // 按钮和控制器展示配置
+        const defaultDisplayConfig = {
+            showTableName: true,
+            showSchemaName: false,
+            showFormat: true,
+            showExplain: true,
+            showRedisHelp: false,
+        }
+        const createDisplayConfig = function(extraArgs = null) {
+            if (extraArgs === null) {
+                extraArgs = {}
+            }
+            return Object.assign({}, defaultDisplayConfig, extraArgs)
+        }
+        const engineDisplayConfig = {
+            "MsSQL": createDisplayConfig({showExplain: false}),
+            "Redis": createDisplayConfig({showTableName: false, showSchemaName: false,
+                showRedisHelp: true,
+                showFormat: false, showExplain: false}),
+            "PgSQL": createDisplayConfig({showSchemaName: true}),
+            "Mongo": createDisplayConfig({showFormat: false}),
+            "Phoenix": createDisplayConfig({showExplain: false}),
+            "Cassandra": createDisplayConfig({showExplain: false}),
+            // 如有特殊的显示需求, 在此处添加配置, 并在下方的optgroup_control中添加对应的控制逻辑
+            // 如无特殊需求, 可以直接不填写, 这样会使用默认配置
+        };
         //控制按钮和选择器显示
         function optgroup_control(change) {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
-            if (optgroup === "MySQL") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
+            let optgroup = $('#instance_name :selected').parent().attr('label');
+            let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
+            if (displayConfig.showExplain) {
                 $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "MsSQL") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
+            } else {
                 $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "Redis") {
-                if (change) {
+            }
+            if (displayConfig.showFormat) {
+                $("#btn-format").attr('disabled', false);
+            } else {
+                $("#btn-format").attr('disabled', true);
+            }
+            if (change) {
+                if (displayConfig.showTableName) {
+                    $("#div-table_name").show();
+                } else {
                     $("#div-table_name").hide();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_add();
                 }
-                $("#btn-format").attr('disabled', true);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "PgSQL") {
-                if (change) {
-                    $("#div-table_name").show();
+                if (displayConfig.showSchemaName) {
                     $("#div-schema_name").show();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "Oracle") {
-                if (change) {
-                    $("#div-table_name").show();
+                } else {
                     $("#div-schema_name").hide();
+                }
+                if (displayConfig.showRedisHelp) {
+                    redis_help_tab_add();
+                } else {
                     redis_help_tab_remove();
                 }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "Mongo") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', true);
-                $("#btn-explain").attr('disabled', false);
-            } else if (optgroup === "Phoenix") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', true);
-            } else if (optgroup === "ClickHouse") {
-                if (change) {
-                    $("#div-table_name").show();
-                    $("#div-schema_name").hide();
-                    redis_help_tab_remove();
-                }
-                $("#btn-format").attr('disabled', false);
-                $("#btn-explain").attr('disabled', false);
             }
         }
 
@@ -1150,6 +1163,14 @@
                     resource_type: resource_type
                 },
                 complete: function () {
+                    if (optgroup === "PgSQL") {
+                        //获取schema
+                        $("#div-schema_name").show();
+                        $("#schema_name").selectpicker('val', db_name);
+                        if ($("#schema_name").val()) {
+                            $("#schema_name").selectpicker().trigger("change");
+                        }
+                    }
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -1313,10 +1334,12 @@
                         if (data.status === 0) {
                             $("optgroup[id^='optgroup']").empty();
                             let result = data['data']
-                            const supportDb = ['mysql', 'mssql', 'redis', 'pgsql', 'oracle', 'mongo', 'phoenix', 'odps', 'clickhouse']
+                            const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
                             for (let i of result) {
                                 let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + ">" + i.instance_name + "</option>";
                                 if (supportDb.indexOf(i.db_type) !== -1) {
+                                    console.log("get supported db")
+                                    console.log(i)
                                     $("#optgroup-" + i.db_type).append(instance);
                                 }
                             }
@@ -1334,36 +1357,28 @@
         });
 
         function show(o) {
-            if (o.value == "key") {
-                document.getElementById("keyHelp").style.display = "block";
-                document.getElementById("stringHelp").style.display = "none";
-                document.getElementById("hashHelp").style.display = "none";
-                document.getElementById("setHelp").style.display = "none";
-                document.getElementById("zsetHelp").style.display = "none";
-            } else if (o.value == "string") {
-                document.getElementById("keyHelp").style.display = "none";
-                document.getElementById("stringHelp").style.display = "block";
-                document.getElementById("hashHelp").style.display = "none";
-                document.getElementById("setHelp").style.display = "none";
-                document.getElementById("zsetHelp").style.display = "none";
-            } else if (o.value == "hash") {
-                document.getElementById("keyHelp").style.display = "none";
-                document.getElementById("stringHelp").style.display = "none";
-                document.getElementById("hashHelp").style.display = "block";
-                document.getElementById("setHelp").style.display = "none";
-                document.getElementById("zsetHelp").style.display = "none";
-            } else if (o.value == "set") {
-                document.getElementById("keyHelp").style.display = "none";
-                document.getElementById("stringHelp").style.display = "none";
-                document.getElementById("hashHelp").style.display = "none";
-                document.getElementById("setHelp").style.display = "block";
-                document.getElementById("zsetHelp").style.display = "none";
-            } else if (o.value == "zset") {
-                document.getElementById("keyHelp").style.display = "none";
-                document.getElementById("stringHelp").style.display = "none";
-                document.getElementById("hashHelp").style.display = "none";
-                document.getElementById("setHelp").style.display = "none";
-                document.getElementById("zsetHelp").style.display = "block";
+            let allHelpPages = ["keyHelp", "stringHelp", "hashHelp", "setHelp", "zsetHelp"]
+            allHelpPages.forEach(function (item) {
+                document.getElementById(item).style.display = "none";
+            })
+            switch(o.value) {
+                case "key":
+                    document.getElementById("keyHelp").style.display = "block";
+                    break;
+                case "string":
+                    document.getElementById("stringHelp").style.display = "block";
+                    break;
+                case "hash":
+                    document.getElementById("hashHelp").style.display = "block";
+                    break;
+                case "set":
+                    document.getElementById("setHelp").style.display = "block";
+                    break;
+                case "zset":
+                    document.getElementById("zsetHelp").style.display = "block";
+                    break;
+                default:
+                    break;
             }
         }
     </script>

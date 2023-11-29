@@ -6,11 +6,6 @@
 @time: 2019/03/14
 """
 
-import os
-import sys
-import os
-import django
-
 import datetime
 import json
 from unittest.mock import patch, MagicMock
@@ -21,7 +16,6 @@ from django.test import TestCase, Client
 from django_q.models import Schedule
 
 from common.config import SysConfig
-from common.utils.const import WorkflowDict
 from sql.engines.models import ReviewResult, ReviewSet
 from sql.models import (
     Users,
@@ -30,18 +24,12 @@ from sql.models import (
     Instance,
     ResourceGroup,
     WorkflowLog,
-    WorkflowAudit,
-    WorkflowAuditDetail,
-    WorkflowAuditSetting,
-    QueryPrivilegesApply,
     DataMaskingRules,
     DataMaskingColumns,
     InstanceTag,
-    ArchiveConfig,
 )
 from sql.utils.resource_group import user_groups, user_instances, auth_group_users
 from sql.utils.sql_review import (
-    is_auto_review,
     can_execute,
     can_timingtask,
     can_cancel,
@@ -50,7 +38,6 @@ from sql.utils.sql_review import (
 from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
-from sql.utils.workflow_audit import Audit
 from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
 
 User = Users
@@ -159,6 +146,244 @@ class TestSQLUtils(TestCase):
             ],
         )
 
+    def test_get_full_sqlitem_list_anonymous_plsql(self):
+        """
+        测试SQL文本中plsql可执行块（匿名块）自动分割
+        :return:
+        """
+        text = """
+declare
+    v_rowcount integer;
+begin
+    select count(1) into v_rowcount  from user_tables
+      where table_name = upper('test2'); --账户特定关系人信息历史表
+    if v_rowcount = 0 then
+        execute IMMEDIATE '
+        create table test2
+        (
+        vc_bfcyid           int,           --受益人信息唯一标志ID
+        vc_specperid        VARCHAR2(100)  --特定关系人信息唯一标志ID
+        )
+        ';
+        execute IMMEDIATE '
+        CREATE index Idx_test2_1 ON test2(VC_BFCYID)
+        ';
+    end if;
+end;
+/
+
+BEGIN
+    insert into test2 values(1,'qq1');
+    commit;
+END;
+/
+"""
+        lists = get_full_sqlitem_list(text, "db")
+        rows = [
+            SqlItem(
+                id=0,
+                statement="""declare
+    v_rowcount integer;
+begin
+    select count(1) into v_rowcount  from user_tables
+      where table_name = upper('test2'); --账户特定关系人信息历史表
+    if v_rowcount = 0 then
+        execute IMMEDIATE '
+        create table test2
+        (
+        vc_bfcyid           int,           --受益人信息唯一标志ID
+        vc_specperid        VARCHAR2(100)  --特定关系人信息唯一标志ID
+        )
+        ';
+        execute IMMEDIATE '
+        CREATE index Idx_test2_1 ON test2(VC_BFCYID)
+        ';
+    end if;
+end;""",
+                stmt_type="PLSQL",
+                object_owner="db",
+                object_type="ANONYMOUS",
+                object_name="ANONYMOUS",
+            ),
+            SqlItem(
+                id=0,
+                statement="""BEGIN
+    insert into test2 values(1,'qq1');
+    commit;
+END;""",
+                stmt_type="PLSQL",
+                object_owner="db",
+                object_type="ANONYMOUS",
+                object_name="ANONYMOUS",
+            ),
+        ]
+        self.assertIsInstance(lists[0], SqlItem)
+        self.assertIsInstance(lists[1], SqlItem)
+        self.assertEqual(lists[0].__dict__, rows[0].__dict__)
+        self.assertEqual(lists[1].__dict__, rows[1].__dict__)
+
+    def test_get_full_sqlitem_list_plsql(self):
+        """
+        测试SQL文本中plsql对象定义语句（存储过程、函数等）自动分割
+        :return:
+        """
+        text = """
+create or replace procedure INSERTUSER
+(id IN NUMBER,
+name IN VARCHAR2)
+is
+begin
+    insert into user1 values(id,name);
+end;
+/
+
+create or replace function annual_income(name1 varchar2)
+return number is
+annual_salary number(7,2);
+begin
+    select sal*12+nvl(comm,0) into annual_salary from emp where lower(ename)=lower(name1);
+return annual_salary;
+end;
+/
+"""
+        lists = get_full_sqlitem_list(text, "db")
+        rows = [
+            SqlItem(
+                id=0,
+                statement="""create or replace procedure INSERTUSER
+(id IN NUMBER,
+name IN VARCHAR2)
+is
+begin
+    insert into user1 values(id,name);
+end;""",
+                stmt_type="PLSQL",
+                object_owner="db",
+                object_type="PROCEDURE",
+                object_name="INSERTUSER",
+            ),
+            SqlItem(
+                id=0,
+                statement="""create or replace function annual_income(name1 varchar2)
+return number is
+annual_salary number(7,2);
+begin
+    select sal*12+nvl(comm,0) into annual_salary from emp where lower(ename)=lower(name1);
+return annual_salary;
+end;""",
+                stmt_type="PLSQL",
+                object_owner="db",
+                object_type="FUNCTION",
+                object_name="ANNUAL_INCOME",
+            ),
+        ]
+        self.assertIsInstance(lists[0], SqlItem)
+        self.assertIsInstance(lists[1], SqlItem)
+        self.assertEqual(lists[0].__dict__, rows[0].__dict__)
+        self.assertEqual(lists[1].__dict__, rows[1].__dict__)
+
+    def test_get_full_sqlitem_list_sql_after_plsql(self):
+        """
+        测试SQL文本中plsql后面普通SQL语句以;自动分割
+        :return:
+        """
+        text = """
+create or replace procedure INSERTUSER
+(id IN NUMBER,
+name IN VARCHAR2)
+is
+begin
+    insert into user1 values(id,name);
+end;
+/
+update user_account set created=sysdate where account_no=1; 
+create table user(
+    id int,
+    uname varchar(100),
+    age int
+);
+"""
+        sql1 = "update user_account set created=sysdate where account_no=1;"
+        sql2 = """create table user(
+    id int,
+    uname varchar(100),
+    age int
+);"""
+        lists = get_full_sqlitem_list(text, "db")
+        rows = [
+            SqlItem(
+                id=0,
+                statement=sqlparse.format(
+                    sql1, strip_comments=True, reindent=True, keyword_case="lower"
+                ),
+                stmt_type="SQL",
+                object_owner="",
+                object_type="",
+                object_name="",
+            ),
+            SqlItem(
+                id=0,
+                statement=sqlparse.format(
+                    sql2, strip_comments=True, reindent=True, keyword_case="lower"
+                ),
+                stmt_type="SQL",
+                object_owner="",
+                object_type="",
+                object_name="",
+            ),
+        ]
+        self.assertIsInstance(lists[1], SqlItem)
+        self.assertIsInstance(lists[2], SqlItem)
+        self.assertEqual(lists[1].__dict__, rows[0].__dict__)
+        self.assertEqual(lists[2].__dict__, rows[1].__dict__)
+
+    def test_get_full_sqlitem_list_sql(self):
+        """
+        测试普通SQL（不包含plsql执行块和plsql对象定义块）文本，以;符号进行SQL语句分割
+        :return:
+        """
+        text = """
+update user_account set created=sysdate where account_no=1; 
+create table user(
+    id int,
+    uname varchar(100),
+    age int
+);
+"""
+        sql1 = "update user_account set created=sysdate where account_no=1;"
+        sql2 = """create table user(
+    id int,
+    uname varchar(100),
+    age int
+);"""
+        lists = get_full_sqlitem_list(text, "db")
+        rows = [
+            SqlItem(
+                id=0,
+                statement=sqlparse.format(
+                    sql1, strip_comments=True, reindent=True, keyword_case="lower"
+                ),
+                stmt_type="SQL",
+                object_owner="",
+                object_type="",
+                object_name="",
+            ),
+            SqlItem(
+                id=0,
+                statement=sqlparse.format(
+                    sql2, strip_comments=True, reindent=True, keyword_case="lower"
+                ),
+                stmt_type="SQL",
+                object_owner="",
+                object_type="",
+                object_name="",
+            ),
+        ]
+        self.assertIsInstance(lists[0], SqlItem)
+        self.assertIsInstance(lists[1], SqlItem)
+        self.assertEqual(lists[0].__dict__, rows[0].__dict__)
+        self.assertEqual(lists[1].__dict__, rows[1].__dict__)
+
 
 class TestSQLReview(TestCase):
     """
@@ -207,189 +432,6 @@ class TestSQLReview(TestCase):
         self.user.delete()
         self.master.delete()
         self.sys_config.replace(json.dumps({}))
-
-    @patch("sql.engines.get_engine")
-    def test_auto_review_hit_review_regex(
-        self,
-        _get_engine,
-    ):
-        """
-        测试自动审批通过的判定条件，命中判断正则
-        :return:
-        """
-        # 开启自动审批设置
-        self.sys_config.set("auto_review", "true")
-        self.sys_config.set("auto_review_db_type", "mysql")
-        self.sys_config.set("auto_review_regex", "^drop")  # drop语句需要审批
-        self.sys_config.set("auto_review_max_update_rows", "50")  # update影响行数大于50需要审批
-        self.sys_config.get_all_config()
-        # 修改工单为drop
-        self.wfc1.sql_content = "drop table users;"
-        self.wfc1.save(update_fields=("sql_content",))
-        r = is_auto_review(self.wfc1.workflow_id)
-        self.assertFalse(r)
-
-    @patch("sql.engines.mysql.MysqlEngine.execute_check")
-    @patch("sql.engines.get_engine")
-    def test_auto_review_gt_max_update_rows(self, _get_engine, _execute_check):
-        """
-        测试自动审批通过的判定条件，影响行数大于auto_review_max_update_rows
-        :return:
-        """
-        # 开启自动审批设置
-        self.sys_config.set("auto_review", "true")
-        self.sys_config.set("auto_review_db_type", "mysql")
-        self.sys_config.set("auto_review_regex", "^drop")  # drop语句需要审批
-        self.sys_config.set("auto_review_max_update_rows", "2")  # update影响行数大于2需要审批
-        self.sys_config.get_all_config()
-        # 修改工单为update
-        self.wfc1.sql_content = "update table users set email='';"
-        self.wfc1.save(update_fields=("sql_content",))
-        # mock返回值，update影响行数=3
-        _execute_check.return_value.to_dict.return_value = [
-            {
-                "id": 1,
-                "stage": "CHECKED",
-                "errlevel": 0,
-                "stagestatus": "Audit completed",
-                "errormessage": "None",
-                "sql": "use archer_test",
-                "affected_rows": 0,
-                "sequence": "'0_0_0'",
-                "backup_dbname": "None",
-                "execute_time": "0",
-                "sqlsha1": "",
-                "actual_affected_rows": "null",
-            },
-            {
-                "id": 2,
-                "stage": "CHECKED",
-                "errlevel": 0,
-                "stagestatus": "Audit completed",
-                "errormessage": "None",
-                "sql": "update table users set email=''",
-                "affected_rows": 3,
-                "sequence": "'0_0_1'",
-                "backup_dbname": "mysql_3306_archer_test",
-                "execute_time": "0",
-                "sqlsha1": "",
-                "actual_affected_rows": "null",
-            },
-        ]
-        r = is_auto_review(self.wfc1.workflow_id)
-        self.assertFalse(r)
-
-    @patch("sql.engines.get_engine")
-    def test_auto_review_true(self, _get_engine):
-        """
-        测试自动审批通过的判定条件，
-        :return:
-        """
-        # 开启自动审批设置
-        self.sys_config.set("auto_review", "true")
-        self.sys_config.set("auto_review_db_type", "mysql")
-        self.sys_config.set("auto_review_regex", "^drop")  # drop语句需要审批
-        self.sys_config.set("auto_review_max_update_rows", "2")  # update影响行数大于2需要审批
-        self.sys_config.set("auto_review_tag", "GA")  # 仅GA开启自动审批
-        self.sys_config.get_all_config()
-        # 修改工单为update，mock返回值，update影响行数=3
-        self.wfc1.sql_content = "update table users set email='';"
-        self.wfc1.review_content = json.dumps(
-            [
-                {
-                    "id": 1,
-                    "stage": "CHECKED",
-                    "errlevel": 0,
-                    "stagestatus": "Audit completed",
-                    "errormessage": "None",
-                    "sql": "use archer_test",
-                    "affected_rows": 0,
-                    "sequence": "'0_0_0'",
-                    "backup_dbname": "None",
-                    "execute_time": "0",
-                    "sqlsha1": "",
-                    "actual_affected_rows": "null",
-                },
-                {
-                    "id": 2,
-                    "stage": "CHECKED",
-                    "errlevel": 0,
-                    "stagestatus": "Audit completed",
-                    "errormessage": "None",
-                    "sql": "update table users set email=''",
-                    "affected_rows": 1,
-                    "sequence": "'0_0_1'",
-                    "backup_dbname": "mysql_3306_archer_test",
-                    "execute_time": "0",
-                    "sqlsha1": "",
-                    "actual_affected_rows": "null",
-                },
-            ]
-        )
-        self.wfc1.save(update_fields=("sql_content", "review_content"))
-        # 修改工单实例标签
-        tag, is_created = InstanceTag.objects.get_or_create(
-            tag_code="GA", defaults={"tag_name": "生产环境", "active": True}
-        )
-        self.wf1.instance.instance_tag.add(tag)
-        r = is_auto_review(self.wfc1.workflow_id)
-        self.assertTrue(r)
-
-    @patch("sql.engines.get_engine")
-    def test_auto_review_false(self, _get_engine):
-        """
-        测试自动审批通过的判定条件，
-        :return:
-        """
-        # 开启自动审批设置
-        self.sys_config.set("auto_review", "true")
-        self.sys_config.set("auto_review_db_type", "")  # 未配置auto_review_db_type需要审批
-        self.sys_config.set("auto_review_regex", "^drop")  # drop语句需要审批
-        self.sys_config.set("auto_review_max_update_rows", "2")  # update影响行数大于2需要审批
-        self.sys_config.set("auto_review_tag", "GA")  # 仅GA开启自动审批
-        self.sys_config.get_all_config()
-        # 修改工单为update，mock返回值，update影响行数=3
-        self.wfc1.sql_content = "update table users set email='';"
-        self.wfc1.review_content = json.dumps(
-            [
-                {
-                    "id": 1,
-                    "stage": "CHECKED",
-                    "errlevel": 0,
-                    "stagestatus": "Audit completed",
-                    "errormessage": "None",
-                    "sql": "use archer_test",
-                    "affected_rows": 0,
-                    "sequence": "'0_0_0'",
-                    "backup_dbname": "None",
-                    "execute_time": "0",
-                    "sqlsha1": "",
-                    "actual_affected_rows": "null",
-                },
-                {
-                    "id": 2,
-                    "stage": "CHECKED",
-                    "errlevel": 0,
-                    "stagestatus": "Audit completed",
-                    "errormessage": "None",
-                    "sql": "update table users set email=''",
-                    "affected_rows": 1,
-                    "sequence": "'0_0_1'",
-                    "backup_dbname": "mysql_3306_archer_test",
-                    "execute_time": "0",
-                    "sqlsha1": "",
-                    "actual_affected_rows": "null",
-                },
-            ]
-        )
-        self.wfc1.save(update_fields=("sql_content", "review_content"))
-        # 修改工单实例标签
-        tag, is_created = InstanceTag.objects.get_or_create(
-            tag_code="GA", defaults={"tag_name": "生产环境", "active": True}
-        )
-        self.wf1.instance.instance_tag.add(tag)
-        r = is_auto_review(self.wfc1.workflow_id)
-        self.assertFalse(r)
 
     def test_can_execute_for_resource_group(
         self,
@@ -825,526 +867,6 @@ class TestTasks(TestCase):
     def test_task_info_not_exists(self):
         with self.assertRaises(Schedule.DoesNotExist):
             Schedule.objects.get(name="some_name1")
-
-
-class TestAudit(TestCase):
-    def setUp(self):
-        self.sys_config = SysConfig()
-        self.user = User.objects.create(
-            username="test_user", display="中文显示", is_active=True
-        )
-        self.su = User.objects.create(
-            username="s_user", display="中文显示", is_active=True, is_superuser=True
-        )
-        tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
-        self.ins = Instance.objects.create(
-            instance_name="some_ins",
-            type="slave",
-            db_type="mysql",
-            host="some_host",
-            port=3306,
-            user="ins_user",
-            password="some_str",
-        )
-        self.res_group = ResourceGroup.objects.create(
-            group_id=1, group_name="group_name"
-        )
-        self.wf = SqlWorkflow.objects.create(
-            workflow_name="some_name",
-            group_id=1,
-            group_name="g1",
-            engineer_display="",
-            audit_auth_groups="some_audit_group",
-            create_time=datetime.datetime.now(),
-            status="workflow_timingtask",
-            is_backup=True,
-            instance=self.ins,
-            db_name="some_db",
-            syntax_type=1,
-        )
-        SqlWorkflowContent.objects.create(
-            workflow=self.wf, sql_content="some_sql", execute_result=""
-        )
-        self.query_apply_1 = QueryPrivilegesApply.objects.create(
-            group_id=1,
-            group_name="some_name",
-            title="some_title1",
-            user_name="some_user",
-            instance=self.ins,
-            db_list="some_db,some_db2",
-            limit_num=100,
-            valid_date=tomorrow,
-            priv_type=1,
-            status=0,
-            audit_auth_groups="some_audit_group",
-        )
-        self.archive_apply_1 = ArchiveConfig.objects.create(
-            title="title",
-            resource_group=self.res_group,
-            audit_auth_groups="some_audit_group",
-            src_instance=self.ins,
-            src_db_name="src_db_name",
-            src_table_name="src_table_name",
-            dest_instance=self.ins,
-            dest_db_name="src_db_name",
-            dest_table_name="src_table_name",
-            condition="1=1",
-            mode="file",
-            no_delete=True,
-            sleep=1,
-            status=WorkflowDict.workflow_status["audit_wait"],
-            state=False,
-            user_name="some_user",
-            user_display="display",
-        )
-        self.audit = WorkflowAudit.objects.create(
-            group_id=1,
-            group_name="some_group",
-            workflow_id=1,
-            workflow_type=1,
-            workflow_title="申请标题",
-            workflow_remark="申请备注",
-            audit_auth_groups="1,2,3",
-            current_audit="1",
-            next_audit="2",
-            current_status=0,
-        )
-        self.wl = WorkflowLog.objects.create(
-            audit_id=self.audit.audit_id, operation_type=1
-        )
-
-    def tearDown(self):
-        self.sys_config.purge()
-        User.objects.all().delete()
-        SqlWorkflow.objects.all().delete()
-        SqlWorkflowContent.objects.all().delete()
-        WorkflowAudit.objects.all().delete()
-        WorkflowAuditDetail.objects.all().delete()
-        WorkflowAuditSetting.objects.all().delete()
-        QueryPrivilegesApply.objects.all().delete()
-        WorkflowLog.objects.all().delete()
-        ResourceGroup.objects.all().delete()
-        ArchiveConfig.objects.all().delete()
-
-    def test_audit_add_query(self):
-        """测试添加查询审核工单"""
-        result = Audit.add(1, self.query_apply_1.apply_id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_sqlreview(self):
-        """测试添加上线审核工单"""
-        result = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_archive_review(self):
-        """测试添加数据归档工单"""
-        result = Audit.add(3, self.archive_apply_1.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 当前审批
-        self.assertEqual(audit_detail.current_audit, "some_audit_group")
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_add_wrong_type(self):
-        """测试添加不存在的类型"""
-        with self.assertRaisesMessage(Exception, "工单类型不存在"):
-            Audit.add(4, 1)
-
-    def test_audit_add_settings_not_exists(self):
-        """测试审批流程未配置"""
-        self.wf.audit_auth_groups = ""
-        self.wf.save()
-        with self.assertRaisesMessage(Exception, "审批流程不能为空，请先配置审批流程"):
-            Audit.add(2, self.wf.id)
-
-    def test_audit_add_duplicate(self):
-        """测试重复提交"""
-        Audit.add(2, self.wf.id)
-        with self.assertRaisesMessage(Exception, "该工单当前状态为待审核，请勿重复提交"):
-            Audit.add(2, self.wf.id)
-
-    @patch("sql.utils.workflow_audit.is_auto_review", return_value=True)
-    def test_audit_add_auto_review(self, _is_auto_review):
-        """测试提交自动审核通过"""
-        self.sys_config.set("auto_review", "true")
-        result = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_success"])
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        # 无下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertEqual(log_info.operation_info, "无需审批，系统直接审核通过")
-
-    def test_audit_add_multiple_audit(self):
-        """测试提交多级审核"""
-        self.wf.audit_auth_groups = "1,2,3"
-        self.wf.save()
-        result = Audit.add(2, self.wf.id)
-        audit_id = result["data"]["audit_id"]
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
-        # 存在下级审批
-        self.assertEqual(audit_detail.current_audit, "1")
-        self.assertEqual(audit_detail.next_audit, "2")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).first()
-        self.assertEqual(log_info.operation_type, 0)
-        self.assertEqual(log_info.operation_type_desc, "提交")
-        self.assertIn("等待审批，审批流程：", log_info.operation_info)
-
-    def test_audit_success_not_exists_next(self):
-        """测试审核通过、无下一级"""
-        self.audit.current_audit = "3"
-        self.audit.next_audit = "-1"
-        self.audit.save()
-        result = Audit.audit(
-            self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_success"],
-            self.user.username,
-            "通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_success"])
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 1)
-        self.assertEqual(log_info.operation_type_desc, "审批通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：通过，下级审批：None")
-
-    def test_audit_success_exists_next(self):
-        """测试审核通过、存在下一级"""
-        self.audit.current_audit = "1"
-        self.audit.next_audit = "2"
-        self.audit.save()
-        result = Audit.audit(
-            self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_success"],
-            self.user.username,
-            "通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_wait"])
-        # 存在下级审批
-        self.assertEqual(audit_detail.next_audit, "3")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 1)
-        self.assertEqual(log_info.operation_type_desc, "审批通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：通过，下级审批：2")
-
-    def test_audit_reject(self):
-        """测试审核不通过"""
-        result = Audit.audit(
-            self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_reject"],
-            self.user.username,
-            "不通过",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_reject"])
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 2)
-        self.assertEqual(log_info.operation_type_desc, "审批不通过")
-        self.assertEqual(log_info.operation_info, f"审批备注：不通过")
-
-    def test_audit_abort(self):
-        """测试取消审批"""
-        self.audit.create_user = self.user.username
-        self.audit.save()
-        result = Audit.audit(
-            self.audit.audit_id,
-            WorkflowDict.workflow_status["audit_abort"],
-            self.user.username,
-            "取消",
-        )
-        audit_id = self.audit.audit_id
-        workflow_status = result["data"]["workflow_status"]
-        audit_detail = WorkflowAudit.objects.get(audit_id=audit_id)
-        self.assertEqual(workflow_status, WorkflowDict.workflow_status["audit_abort"])
-        # 不存在下级审批
-        self.assertEqual(audit_detail.next_audit, "-1")
-        # 验证日志
-        log_info = WorkflowLog.objects.filter(audit_id=audit_id).order_by("-id").first()
-        self.assertEqual(log_info.operator, self.user.username)
-        self.assertEqual(log_info.operator_display, self.user.display)
-        self.assertEqual(log_info.operation_type, 3)
-        self.assertEqual(log_info.operation_type_desc, "审批取消")
-        self.assertEqual(log_info.operation_info, f"取消原因：取消")
-
-    def test_audit_wrong_exception(self):
-        """测试审核异常的状态"""
-        with self.assertRaisesMessage(Exception, "审核异常"):
-            Audit.audit(self.audit.audit_id, 10, self.user.username, "")
-
-    def test_audit_success_wrong_status(self):
-        """测试审核通过，当前状态不是待审核"""
-        self.audit.current_status = 1
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_success"],
-                self.user.username,
-                "",
-            )
-
-    def test_audit_reject_wrong_status(self):
-        """测试审核不通过，当前状态不是待审核"""
-        self.audit.current_status = 1
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_reject"],
-                self.user.username,
-                "",
-            )
-
-    def test_audit_abort_wrong_status(self):
-        """测试审核不通过，当前状态不是待审核"""
-        self.audit.current_status = 2
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "工单不是待审核态/审核通过状态，请返回刷新"):
-            Audit.audit(
-                self.audit.audit_id,
-                WorkflowDict.workflow_status["audit_abort"],
-                self.user.username,
-                "",
-            )
-
-    @patch("sql.utils.workflow_audit.user_groups", return_value=[])
-    def test_todo(self, _user_groups):
-        """TODO 测试todo数量,未断言"""
-        Audit.todo(self.user)
-        Audit.todo(self.su)
-
-    def test_detail(self):
-        """测试获取审核信息"""
-        result = Audit.detail(self.audit.audit_id)
-        self.assertEqual(result, self.audit)
-        result = Audit.detail(0)
-        self.assertEqual(result, None)
-
-    def test_detail_by_workflow_id(self):
-        """测试通过业务id获取审核信息"""
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.save()
-        result = Audit.detail_by_workflow_id(
-            self.wf.id, WorkflowDict.workflow_type["sqlreview"]
-        )
-        self.assertEqual(result, self.audit)
-        result = Audit.detail_by_workflow_id(0, 0)
-        self.assertEqual(result, None)
-
-    def test_settings(self):
-        """测试通过组和审核类型，获取审核配置信息"""
-        WorkflowAuditSetting.objects.create(
-            workflow_type=1, group_id=1, audit_auth_groups="1,2,3"
-        )
-        result = Audit.settings(workflow_type=1, group_id=1)
-        self.assertEqual(result, "1,2,3")
-        result = Audit.settings(0, 0)
-        self.assertEqual(result, None)
-
-    def test_change_settings_edit(self):
-        """修改配置信息"""
-        ws = WorkflowAuditSetting.objects.create(
-            workflow_type=1, group_id=1, audit_auth_groups="1,2,3"
-        )
-        Audit.change_settings(workflow_type=1, group_id=1, audit_auth_groups="1,2")
-        ws = WorkflowAuditSetting.objects.get(audit_setting_id=ws.audit_setting_id)
-        self.assertEqual(ws.audit_auth_groups, "1,2")
-
-    def test_change_settings_add(self):
-        """添加配置信息"""
-        Audit.change_settings(workflow_type=1, group_id=1, audit_auth_groups="1,2")
-        ws = WorkflowAuditSetting.objects.get(workflow_type=1, group_id=1)
-        self.assertEqual(ws.audit_auth_groups, "1,2")
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_sql_review(self, _detail_by_workflow_id, _auth_group_users):
-        """测试判断用户当前是否是可审核上线工单，非管理员拥有权限"""
-        sql_review = Permission.objects.get(codename="sql_review")
-        self.user.user_permissions.add(sql_review)
-        aug = Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.return_value.current_audit = aug.id
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.save()
-        r = Audit.can_review(
-            self.user, self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(r, True)
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_query_review(self, _detail_by_workflow_id, _auth_group_users):
-        """测试判断用户当前是否是可审核查询工单，非管理员拥有权限"""
-        query_review = Permission.objects.get(codename="query_review")
-        self.user.user_permissions.add(query_review)
-        aug = Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.return_value.current_audit = aug.id
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["query"]
-        self.audit.workflow_id = self.query_apply_1.apply_id
-        self.audit.save()
-        r = Audit.can_review(
-            self.user, self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(r, True)
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_sql_review_super(
-        self, _detail_by_workflow_id, _auth_group_users
-    ):
-        """测试判断用户当前是否是可审核查询工单，用户是管理员"""
-        aug = Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.return_value.current_audit = aug.id
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.save()
-        r = Audit.can_review(self.su, self.audit.workflow_id, self.audit.workflow_type)
-        self.assertEqual(r, True)
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_wrong_status(self, _detail_by_workflow_id, _auth_group_users):
-        """测试判断用户当前是否是可审核，非待审核工单"""
-        aug = Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.return_value.current_audit = aug.id
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.current_status = WorkflowDict.workflow_status["audit_success"]
-        self.audit.save()
-        r = Audit.can_review(
-            self.user, self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(r, False)
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_no_prem(self, _detail_by_workflow_id, _auth_group_users):
-        """测试判断用户当前是否是可审核，普通用户无权限"""
-        aug = Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.return_value.current_audit = aug.id
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.save()
-        r = Audit.can_review(
-            self.user, self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(r, False)
-
-    @patch("sql.utils.workflow_audit.auth_group_users")
-    @patch("sql.utils.workflow_audit.Audit.detail_by_workflow_id")
-    def test_can_review_no_prem_exception(
-        self, _detail_by_workflow_id, _auth_group_users
-    ):
-        """测试判断用户当前是否是可审核，权限组不存在"""
-        Group.objects.create(name="auth_group")
-        _detail_by_workflow_id.side_effect = RuntimeError()
-        _auth_group_users.return_value.filter.exists = True
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.save()
-        with self.assertRaisesMessage(Exception, "当前审批auth_group_id不存在，请检查并清洗历史数据"):
-            Audit.can_review(
-                self.user, self.audit.workflow_id, self.audit.workflow_type
-            )
-
-    def test_review_info_no_review(self):
-        """测试获取当前工单审批流程和当前审核组，无需审批"""
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.audit_auth_groups = ""
-        self.audit.current_audit = "-1"
-        self.audit.save()
-        audit_auth_group, current_audit_auth_group = Audit.review_info(
-            self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(audit_auth_group, "无需审批")
-        self.assertEqual(current_audit_auth_group, None)
-
-    def test_review_info(self):
-        """测试获取当前工单审批流程和当前审核组，无需审批"""
-        aug = Group.objects.create(name="DBA")
-        self.audit.workflow_type = WorkflowDict.workflow_type["sqlreview"]
-        self.audit.workflow_id = self.wf.id
-        self.audit.audit_auth_groups = str(aug.id)
-        self.audit.current_audit = str(aug.id)
-        self.audit.save()
-        audit_auth_group, current_audit_auth_group = Audit.review_info(
-            self.audit.workflow_id, self.audit.workflow_type
-        )
-        self.assertEqual(audit_auth_group, "DBA")
-        self.assertEqual(current_audit_auth_group, "DBA")
-
-    def test_logs(self):
-        """测试获取工单日志"""
-        r = Audit.logs(self.audit.audit_id).first()
-        self.assertEqual(r, self.wl)
 
 
 class TestDataMasking(TestCase):

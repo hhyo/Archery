@@ -14,6 +14,9 @@ logger = logging.getLogger("default")
 class PhoenixEngine(EngineBase):
     test_query = "SELECT 1"
 
+    name = "phoenix"
+    info = "phoenix engine"
+
     def get_connection(self, db_name=None):
         if self.conn:
             return self.conn
@@ -31,8 +34,8 @@ class PhoenixEngine(EngineBase):
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
-        sql = f"SELECT DISTINCT TABLE_NAME FROM SYSTEM.CATALOG WHERE TABLE_SCHEM = '{db_name}'"
-        result = self.query(db_name=db_name, sql=sql)
+        sql = f"SELECT DISTINCT TABLE_NAME FROM SYSTEM.CATALOG WHERE TABLE_SCHEM = ?"
+        result = self.query(db_name=db_name, sql=sql, parameters=(db_name,))
         result.rows = [row[0] for row in result.rows if row[0] is not None]
         return result
 
@@ -40,14 +43,20 @@ class PhoenixEngine(EngineBase):
         """获取所有字段, 返回一个ResultSet"""
 
         sql = f""" SELECT DISTINCT COLUMN_NAME FROM SYSTEM.CATALOG
- WHERE TABLE_SCHEM = '{db_name}' AND table_name = '{tb_name}' AND column_name is not null"""
-        return self.query(sql=sql)
+ WHERE TABLE_SCHEM = ? AND table_name = ? AND column_name is not null"""
+        return self.query(
+            sql=sql,
+            parameters=(
+                db_name,
+                tb_name,
+            ),
+        )
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet"""
         sql = f"""SELECT COLUMN_NAME,SqlTypeName(DATA_TYPE) FROM SYSTEM.CATALOG
- WHERE TABLE_SCHEM = '{db_name}' and table_name = '{tb_name}' and column_name is not null"""
-        result = self.query(sql=sql)
+ WHERE TABLE_SCHEM = ? and table_name = ? and column_name is not null"""
+        result = self.query(sql=sql, parameters=(db_name, tb_name))
         return result
 
     def query_check(self, db_name=None, sql=""):
@@ -87,13 +96,21 @@ class PhoenixEngine(EngineBase):
             sql = f"{sql};"
         return sql.strip()
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(sql)
+            cursor.execute(sql, parameters)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(int(limit_num))
             else:
@@ -142,7 +159,7 @@ class PhoenixEngine(EngineBase):
             db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content
         )
 
-    def execute(self, db_name=None, sql="", close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""
         execute_result = ReviewSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
@@ -151,7 +168,7 @@ class PhoenixEngine(EngineBase):
         split_sql = sqlparse.split(sql)
         for statement in split_sql:
             try:
-                cursor.execute(statement.rstrip(";"))
+                cursor.execute(statement.rstrip(";"), parameters)
             except Exception as e:
                 logger.error(f"Phoenix命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
                 execute_result.error = str(e)

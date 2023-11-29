@@ -22,7 +22,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django_q.tasks import async_task
 
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
@@ -30,7 +30,7 @@ from sql.notify import notify_for_audit
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import get_auditor, AuditException, Audit
 
 logger = logging.getLogger("default")
 __author__ = "hhyo"
@@ -171,55 +171,60 @@ def archive_apply(request):
 
     # 获取资源组和审批信息
     res_group = ResourceGroup.objects.get(group_name=group_name)
-    audit_auth_groups = Audit.settings(
-        res_group.group_id, WorkflowDict.workflow_type["archive"]
-    )
-    if not audit_auth_groups:
-        return JsonResponse({"status": 1, "msg": "审批流程不能为空，请先配置审批流程", "data": {}})
-
     # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            # 保存申请信息到数据库
-            archive_info = ArchiveConfig.objects.create(
-                title=title,
-                resource_group=res_group,
-                audit_auth_groups=audit_auth_groups,
-                src_instance=s_ins,
-                src_db_name=src_db_name,
-                src_table_name=src_table_name,
-                dest_instance=d_ins,
-                dest_db_name=dest_db_name,
-                dest_table_name=dest_table_name,
-                condition=condition,
-                mode=mode,
-                no_delete=no_delete,
-                sleep=sleep,
-                status=WorkflowDict.workflow_status["audit_wait"],
-                state=False,
-                user_name=user.username,
-                user_display=user.display,
-            )
-            archive_id = archive_info.id
-            # 调用工作流插入审核信息
-            audit_result = Audit.add(WorkflowDict.workflow_type["archive"], archive_id)
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        result["status"] = 1
-        result["msg"] = str(msg)
-    else:
-        result = audit_result
-        # 消息通知
-        audit_id = Audit.detail_by_workflow_id(
-            workflow_id=archive_id, workflow_type=WorkflowDict.workflow_type["archive"]
-        ).audit_id
+    with transaction.atomic():
+        # 保存申请信息到数据库
+        archive_info = ArchiveConfig(
+            title=title,
+            resource_group=res_group,
+            audit_auth_groups="",
+            src_instance=s_ins,
+            src_db_name=src_db_name,
+            src_table_name=src_table_name,
+            dest_instance=d_ins,
+            dest_db_name=dest_db_name,
+            dest_table_name=dest_table_name,
+            condition=condition,
+            mode=mode,
+            no_delete=no_delete,
+            sleep=sleep,
+            status=WorkflowStatus.WAITING,
+            state=False,
+            user_name=user.username,
+            user_display=user.display,
+        )
+        audit_handler = get_auditor(
+            workflow=archive_info,
+            resource_group=res_group.group_name,
+            resource_group_id=res_group.group_id,
+        )
+
+        try:
+            audit_handler.create_audit()
+        except AuditException as e:
+            logger.error(f"新建审批流失败: {str(e)}")
+            return JsonResponse({"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}})
+        audit_handler.workflow.status = audit_handler.audit.current_status
+        if audit_handler.audit.current_status == WorkflowStatus.PASSED:
+            audit_handler.workflow.state = True
+        audit_handler.workflow.save()
         async_task(
             notify_for_audit,
-            audit_id=audit_id,
+            workflow_audit=audit_handler.audit,
             timeout=60,
-            task_name=f"archive-apply-{archive_id}",
+            task_name=f"archive-apply-{audit_handler.workflow.id}",
         )
-    return HttpResponse(json.dumps(result), content_type="application/json")
+    return JsonResponse(
+        {
+            "status": 0,
+            "msg": "",
+            "data": {
+                "workflow_status": audit_handler.audit.current_status,
+                "audit_id": audit_handler.audit.audit_id,
+                "archive_id": audit_handler.workflow.id,
+            },
+        }
+    )
 
 
 @permission_required("sql.archive_review", raise_exception=True)
@@ -230,50 +235,46 @@ def archive_audit(request):
     :return:
     """
     # 获取用户信息
-    user = request.user
     archive_id = int(request.POST["archive_id"])
-    audit_status = int(request.POST["audit_status"])
+    try:
+        audit_status = WorkflowAction(int(request.POST["audit_status"]))
+    except ValueError as e:
+        return render(
+            request,
+            "error.html",
+            {"errMsg": f"数据错误, 不允许的操作, 请检查 audit_status, error: {str(e)}"},
+        )
     audit_remark = request.POST.get("audit_remark")
 
     if audit_remark is None:
         audit_remark = ""
+    try:
+        archive_workflow = ArchiveConfig.objects.get(id=archive_id)
+    except ArchiveConfig.DoesNotExist:
+        return render(request, "error.html", {"errMsg": "工单不存在"})
 
-    if Audit.can_review(request.user, archive_id, 3) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
-        return render(request, "error.html", context)
+    resource_group = archive_workflow.resource_group
+    auditor = get_auditor(workflow=archive_workflow, resource_group=resource_group)
 
     # 使用事务保持数据一致性
-    try:
-        with transaction.atomic():
-            audit_id = Audit.detail_by_workflow_id(
-                workflow_id=archive_id,
-                workflow_type=WorkflowDict.workflow_type["archive"],
-            ).audit_id
-
-            # 调用工作流插入审核信息，更新业务表审核状态
-            audit_status = Audit.audit(
-                audit_id, audit_status, user.username, audit_remark
-            )["data"]["workflow_status"]
-            ArchiveConfig(
-                id=archive_id,
-                status=audit_status,
-                state=True
-                if audit_status == WorkflowDict.workflow_status["audit_success"]
-                else False,
-            ).save(update_fields=["status", "state"])
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
-    else:
-        # 消息通知
-        async_task(
-            notify_for_audit,
-            audit_id=audit_id,
-            audit_remark=audit_remark,
-            timeout=60,
-            task_name=f"archive-audit-{archive_id}",
-        )
+    with transaction.atomic():
+        try:
+            workflow_audit_detail = auditor.operate(
+                audit_status, request.user, audit_remark
+            )
+        except AuditException as e:
+            return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
+        auditor.workflow.status = auditor.audit.current_status
+        if auditor.audit.current_status == WorkflowStatus.PASSED:
+            auditor.workflow.state = True
+        auditor.workflow.save()
+    async_task(
+        notify_for_audit,
+        workflow_audit=auditor.audit,
+        workflow_audit_detail=workflow_audit_detail,
+        timeout=60,
+        task_name=f"archive-audit-{archive_id}",
+    )
 
     return HttpResponseRedirect(reverse("sql:archive_detail", args=(archive_id,)))
 
@@ -292,11 +293,11 @@ def add_archive_task(archive_ids=None):
         archive_cnf_list = ArchiveConfig.objects.filter(
             id__in=archive_ids,
             state=True,
-            status=WorkflowDict.workflow_status["audit_success"],
+            status=WorkflowStatus.PASSED,
         )
     else:
         archive_cnf_list = ArchiveConfig.objects.filter(
-            state=True, status=WorkflowDict.workflow_status["audit_success"]
+            state=True, status=WorkflowStatus.PASSED
         )
 
     # 添加task任务

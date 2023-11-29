@@ -14,7 +14,7 @@
                         <div class="form-group">
                             <select id="config" name="confg"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="配置项" data-placeholder="请选择配置项:" required>
+                                    data-name="配置项" data-placeholder="请选择配置项:" required />
                                 <option value="is-empty" disabled="">请选择配置项:</option>
                                 <option value="0" selected="selected">系统设置</option>
                                 <option value="1">工单审核流配置</option>
@@ -26,20 +26,23 @@
                         <div class="form-group">
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="工单类型" data-placeholder="请选择工单类型:" required>
-                                <option value="{{ WorkflowDict.workflow_type.sqlreview }}" selected="selected">
-                                    {{ WorkflowDict.workflow_type.sqlreview_display }}</option>
-                                <option value="{{ WorkflowDict.workflow_type.query }}">
-                                    {{ WorkflowDict.workflow_type.query_display }}</option>
-                                <option value="{{ WorkflowDict.workflow_type.archive }}">
-                                    {{ WorkflowDict.workflow_type.archive_display }}</option>
+                                    data-name="工单类型" data-placeholder="请选择工单类型:" required />
+                                {% for c in workflow_choices %}
+                                {% if forloop.first %}
+                                <option value="{{ c.value }}" selected="selected">
+                                {{ c.label }}</option>
+                                {% else %}
+                                <option value="{{ c.value }}">
+                                {{ c.label }}</option>
+                                {% endif %}
+                                {% endfor %}
                             </select>
                         </div>
                         <h5 class="control-label text-bold">组：</h5>
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
+                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required />
                                 {% for group in group_list %}
                                     <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                 {% endfor %}
@@ -69,7 +72,7 @@
                                                id="go_inception_host"
                                                key="go_inception_host"
                                                value="{{ config.go_inception_host }}"
-                                               placeholder="goInception地址">
+                                               placeholder="goInception地址" />
                                     </div>
                                     <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
                                 </div>
@@ -81,7 +84,7 @@
                                                id="go_inception_port"
                                                key="go_inception_port"
                                                value="{{ config.go_inception_port }}"
-                                               placeholder="goInception端口">
+                                               placeholder="goInception端口" />
                                     </div>
                                 </div>
                             </div>
@@ -93,7 +96,7 @@
                                            id="inception_remote_backup_host"
                                            key="inception_remote_backup_host"
                                            value="{{ config.inception_remote_backup_host }}"
-                                           placeholder="备份库地址">
+                                           placeholder="备份库地址" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -104,7 +107,7 @@
                                            id="inception_remote_backup_port"
                                            key="inception_remote_backup_port"
                                            value="{{ config.inception_remote_backup_port }}"
-                                           placeholder="备份库端口">
+                                           placeholder="备份库端口" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -115,7 +118,7 @@
                                            id="inception_remote_backup_user"
                                            key="inception_remote_backup_user"
                                            value="{{ config.inception_remote_backup_user }}"
-                                           placeholder="备份库用户">
+                                           placeholder="备份库用户" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -126,7 +129,7 @@
                                            id="inception_remote_backup_password"
                                            key="inception_remote_backup_password"
                                            value="{{ config.inception_remote_backup_password }}"
-                                           placeholder="备份库用户密码">
+                                           placeholder="备份库用户密码" />
                                 </div>
                             </div>
                         </div>
@@ -144,7 +147,7 @@
                                            id="critical_ddl_regex"
                                            key="critical_ddl_regex"
                                            value="{{ config.critical_ddl_regex }}"
-                                           placeholder="正则条件，匹配的语句会禁止提交">
+                                           placeholder="正则条件，匹配的语句会禁止提交" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -155,7 +158,7 @@
                                            id="auto_review_wrong"
                                            key="auto_review_wrong"
                                            value="{{ config.auto_review_wrong }}"
-                                           placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回">
+                                           placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -167,7 +170,7 @@
                                             <input id="enable_backup_switch"
                                                    key="enable_backup_switch"
                                                    value="{{ config.enable_backup_switch }}"
-                                                   type="checkbox">
+                                                   type="checkbox" />
                                             是否开启备份选项(默认关闭, 强制要求备份)
                                         </label>
                                     </div>
@@ -182,7 +185,7 @@
                                             <input id="auto_review"
                                                    key="auto_review"
                                                    value="{{ config.auto_review }}"
-                                                   type="checkbox">
+                                                   type="checkbox" />
                                             是否开启SQL上线自动审批
                                         </label>
                                     </div>
@@ -234,7 +237,7 @@
                                                id="auto_review_regex"
                                                key="auto_review_regex"
                                                value="{{ config.auto_review_regex }}"
-                                               placeholder="正则条件，匹配的语句需要人工审批">
+                                               placeholder="正则条件，匹配的语句需要人工审批" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -245,7 +248,7 @@
                                                id="auto_review_max_update_rows"
                                                key="auto_review_max_update_rows"
                                                value="{{ config.auto_review_max_update_rows }}"
-                                               placeholder="自动审批允许工单最大更新行数">
+                                               placeholder="自动审批允许工单最大更新行数" />
                                     </div>
                                 </div>
                             </div>
@@ -258,8 +261,38 @@
                                             <input id="manual"
                                                    key="manual"
                                                    value="{{ config.manual }}"
-                                                   type="checkbox">
+                                                   type="checkbox" />
                                             是否开启SQL上线手工执行确认
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ddl_dml_separation"
+                                       class="col-sm-4 control-label">DDL_DML_SEPARATION</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="ddl_dml_separation"
+                                                   key="ddl_dml_separation"
+                                                   value="{{ config.ddl_dml_separation }}"
+                                                   type="checkbox" />
+                                            是否禁止DDL和DML在SQL上线同时提交(MySQL)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ban_self_audit"
+                                       class="col-sm-4 control-label">BAN_SELF_AUDIT</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="ban_self_audit"
+                                                   key="ban_self_audit"
+                                                   value="{{ config.ban_self_audit }}"
+                                                   type="checkbox" />
+                                            是否允许工单审批人与提出人相同
                                         </label>
                                     </div>
                                 </div>
@@ -277,7 +310,7 @@
                                         <label>
                                             <input id="data_masking"
                                                    key="data_masking"
-                                                   value="{{ config.data_masking }}" type="checkbox">
+                                                   value="{{ config.data_masking }}" type="checkbox" />
                                             是否开启动态脱敏
                                         </label>
                                     </div>
@@ -291,7 +324,7 @@
                                         <label>
                                             <input id="query_check"
                                                    key="query_check"
-                                                   value="{{ config.query_check }}" type="checkbox">
+                                                   value="{{ config.query_check }}" type="checkbox" />
                                             是否开启脱敏校验(无法脱敏的语句会抛错)
                                         </label>
                                     </div>
@@ -305,7 +338,7 @@
                                         <label>
                                             <input id="disable_star"
                                                    key="disable_star"
-                                                   value="{{ config.disable_star }}" type="checkbox">
+                                                   value="{{ config.disable_star }}" type="checkbox" />
                                             禁止在查询时使用 *
                                         </label>
                                     </div>
@@ -318,7 +351,7 @@
                                     <input type="number" class="form-control" id="max_execution_time"
                                            key="max_execution_time"
                                            value="{{ config.max_execution_time }}"
-                                           placeholder="在线查询超时时间阈值，单位秒，默认60">
+                                           placeholder="在线查询超时时间阈值，单位秒，默认60" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -328,7 +361,7 @@
                                     <input type="number" class="form-control" id="admin_query_limit"
                                            key="admin_query_limit"
                                            value="{{ config.admin_query_limit }}"
-                                           placeholder="管理员/DBA查询结果集限制">
+                                           placeholder="管理员/DBA查询结果集限制" />
                                 </div>
                             </div>
                             <h5 style="color: darkgrey"><b>SQL优化</b></h5>
@@ -340,7 +373,7 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="sqladvisor" key="sqladvisor"
                                                value="{{ config.sqladvisor }}"
-                                               placeholder="SQLADVISOR路径">
+                                               placeholder="SQLADVISOR路径" />
                                     </div>
                                 </div>
                             </div>
@@ -351,7 +384,7 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="soar" key="soar"
                                                value="{{ config.soar }}"
-                                               placeholder="SOAR路径">
+                                               placeholder="SOAR路径" />
                                     </div>
                                 </div>
                             </div>
@@ -362,7 +395,7 @@
                                     <div class="switch switch-small">
                                         <input type="text" class="form-control" id="soar_test_dsn" key="soar_test_dsn"
                                                value="{{ config.soar_test_dsn }}"
-                                               placeholder="SOAR测试实例：user:pwd@host:port/db">
+                                               placeholder="SOAR测试实例：user:pwd@host:port/db" />
                                     </div>
                                 </div>
                             </div>
@@ -384,7 +417,7 @@
                                            id="archery_base_url"
                                            key="archery_base_url"
                                            value="{{ config.archery_base_url }}"
-                                           placeholder="系统HOST地址, 用于通知链接，如https://archery.com">
+                                           placeholder="系统HOST地址, 用于通知链接，如https://archery.com" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -427,7 +460,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="mail" key="mail" value="{{ config.mail }}"
-                                                   type="checkbox"> 是否开启邮件通知
+                                                   type="checkbox" /> 是否开启邮件通知
                                         </label>
                                         <button id='check_email' class='btn-sm btn-info'>测试连接</button>
                                     </div>
@@ -442,7 +475,7 @@
                                             <label>
                                                 <input id="mail_ssl" key="mail_ssl"
                                                        value="{{ config.mail_ssl }}"
-                                                       type="checkbox"> 是否使用SSL
+                                                       type="checkbox" /> 是否使用SSL
                                             </label>
                                         </div>
                                     </div>
@@ -455,7 +488,7 @@
                                                id="mail_smtp_server"
                                                key="mail_smtp_server"
                                                value="{{ config.mail_smtp_server }}"
-                                               placeholder="邮件smtp地址">
+                                               placeholder="邮件smtp地址" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -466,7 +499,7 @@
                                                id="mail_smtp_port"
                                                key="mail_smtp_port"
                                                value="{{ config.mail_smtp_port }}"
-                                               placeholder="邮件smtp端口">
+                                               placeholder="邮件smtp端口" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -477,7 +510,7 @@
                                                id="mail_smtp_user"
                                                key="mail_smtp_user"
                                                value="{{ config.mail_smtp_user }}"
-                                               placeholder="邮箱账号">
+                                               placeholder="邮箱账号" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -488,7 +521,7 @@
                                                id="mail_smtp_password"
                                                key="mail_smtp_password"
                                                value="{{ config.mail_smtp_password }}"
-                                               placeholder="邮箱账号密码">
+                                               placeholder="邮箱账号密码" />
                                     </div>
                                 </div>
                             </div>
@@ -499,7 +532,7 @@
                                     <div class="switch switch-small">
                                         <label>
                                             <input id="ding" key="ding" value="{{ config.ding }}"
-                                                   type="checkbox"> 是否开启钉钉Webhook通知
+                                                   type="checkbox" /> 是否开启钉钉Webhook通知
                                         </label>
                                     </div>
                                 </div>
@@ -512,7 +545,7 @@
                                         <label>
                                             <input id="ding_to_person" key="ding_to_person"
                                                    value="{{ config.ding_to_person }}"
-                                                   type="checkbox"> 是否开启钉钉个人消息通知
+                                                   type="checkbox" /> 是否开启钉钉个人消息通知
                                         </label>
                                     </div>
                                 </div>
@@ -533,7 +566,7 @@
                                                id="ding_agent_id"
                                                key="ding_agent_id"
                                                value="{{ config.ding_agent_id }}"
-                                               placeholder="微应用Archery的AgentId">
+                                               placeholder="微应用Archery的AgentId" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -544,7 +577,7 @@
                                                id="ding_app_key"
                                                key="ding_app_key"
                                                value="{{ config.ding_app_key }}"
-                                               placeholder="微应用Archery的AppKey">
+                                               placeholder="微应用Archery的AppKey" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -555,7 +588,7 @@
                                                id="ding_app_secret"
                                                key="ding_app_secret"
                                                value="{{ config.ding_app_secret }}"
-                                               placeholder="微应用Archery的AppSecret">
+                                               placeholder="微应用Archery的AppSecret" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -566,7 +599,7 @@
                                                id="ding_archery_username"
                                                key="ding_archery_username"
                                                value="{{ config.ding_archery_username }}"
-                                               placeholder="Archery.username对应钉钉里的字段">
+                                               placeholder="Archery.username对应钉钉里的字段" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -576,7 +609,7 @@
                                         <textarea class="form-control"
                                                   id="ding_dept_ids"
                                                   key="ding_dept_ids"
-                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea>
+                                                  placeholder="钉钉部门id，使用逗号分隔">{{ config.ding_dept_ids }}</textarea />
                                     </div>
                                 </div>
                             </div>
@@ -589,7 +622,7 @@
                                         <label>
                                             <input id="wx" key="wx"
                                                    value="{{ config.wx }}"
-                                                   type="checkbox"> 是否开启企业微信自建应用通知
+                                                   type="checkbox" /> 是否开启企业微信自建应用通知
                                         </label>
                                     </div>
                                 </div>
@@ -610,7 +643,7 @@
                                                id="wx_corpid"
                                                key="wx_corpid"
                                                value="{{ config.wx_corpid }}"
-                                               placeholder="企业微信的企业ID">
+                                               placeholder="企业微信的企业ID" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -621,7 +654,7 @@
                                                id="wx_agent_id"
                                                key="wx_agent_id"
                                                value="{{ config.wx_agent_id }}"
-                                               placeholder="应用的AgentId">
+                                               placeholder="应用的AgentId" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -632,7 +665,7 @@
                                                id="wx_app_secret"
                                                key="wx_app_secret"
                                                value="{{ config.wx_app_secret }}"
-                                               placeholder="应用的Secret">
+                                               placeholder="应用的Secret" />
                                     </div>
                                 </div>
                             </div>
@@ -644,7 +677,7 @@
                                         <label>
                                             <input id="qywx_webhook" key="qywx_webhook"
                                                    value="{{ config.qywx_webhook }}"
-                                                   type="checkbox"> 是否开启企业微信群机器人通知
+                                                   type="checkbox" /> 是否开启企业微信群机器人通知
                                         </label>
                                     </div>
                                 </div>
@@ -657,7 +690,7 @@
                                         <label>
                                             <input id="feishu_webhook" key="feishu_webhook"
                                                    value="{{ config.feishu_webhook }}"
-                                                   type="checkbox"> 是否开启飞书Webhook通知
+                                                   type="checkbox" /> 是否开启飞书Webhook通知
                                         </label>
                                     </div>
                                 </div>
@@ -670,7 +703,7 @@
                                         <label>
                                             <input id="feishu" key="feishu"
                                                    value="{{ config.feishu }}"
-                                                   type="checkbox"> 是否开启飞书通知
+                                                   type="checkbox" /> 是否开启飞书通知
                                         </label>
                                     </div>
                                 </div>
@@ -691,7 +724,7 @@
                                                id="feishu_appid"
                                                key="feishu_appid"
                                                value="{{ config.feishu_appid }}"
-                                               placeholder="飞书应用AppID">
+                                               placeholder="飞书应用AppID" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -702,8 +735,19 @@
                                                id="feishu_app_secret"
                                                key="feishu_app_secret"
                                                value="{{ config.feishu_app_secret }}"
-                                               placeholder="飞书AppSecret">
+                                               placeholder="飞书AppSecret" />
                                     </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="generic_webhook_url"
+                                       class="col-sm-4 control-label">通用Webhook地址</label>
+                                <div class="col-sm-5">
+                                    <input class="form-control"
+                                           id="generic_webhook_url"
+                                           key="generic_webhook_url"
+                                           value="{{ config.generic_webhook_url }}"
+                                           placeholder="通用 webhook 地址, 每个工单的每个状态转变均会调用" />
                                 </div>
                             </div>
                             <h5 style="color: darkgrey"><b>短信服务</b></h5>
@@ -729,7 +773,7 @@
                                                id="aliyun_access_key_id"
                                                key="aliyun_access_key_id"
                                                value="{{ config.aliyun_access_key_id }}"
-                                               placeholder="阿里云访问密钥ID，用于标识用户">
+                                               placeholder="阿里云访问密钥ID，用于标识用户" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -740,7 +784,7 @@
                                                id="aliyun_access_key_secret"
                                                key="aliyun_access_key_secret"
                                                value="{{ config.aliyun_access_key_secret }}"
-                                               placeholder="阿里云访问密钥（AccessKey），用于验证用户的密钥">
+                                               placeholder="阿里云访问密钥（AccessKey），用于验证用户的密钥" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -751,7 +795,7 @@
                                                id="aliyun_sign_name"
                                                key="aliyun_sign_name"
                                                value="{{ config.aliyun_sign_name }}"
-                                               placeholder="短信签名，需为审核通过状态">
+                                               placeholder="短信签名，需为审核通过状态" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -762,7 +806,7 @@
                                                id="aliyun_template_code"
                                                key="aliyun_template_code"
                                                value="{{ config.aliyun_template_code }}"
-                                               placeholder="短信模板Code，需为审核通过状态">
+                                               placeholder="短信模板Code，需为审核通过状态" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -773,7 +817,7 @@
                                                id="aliyun_variable_name"
                                                key="aliyun_variable_name"
                                                value="{{ config.aliyun_variable_name }}"
-                                               placeholder="短信模板中的变量名，如：code">
+                                               placeholder="短信模板中的变量名，如：code" />
                                     </div>
                                 </div>
                             </div>
@@ -786,7 +830,7 @@
                                                id="tencent_secret_id"
                                                key="tencent_secret_id"
                                                value="{{ config.tencent_secret_id }}"
-                                               placeholder="用于标识API调用者的身份">
+                                               placeholder="用于标识API调用者的身份" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -797,7 +841,7 @@
                                                id="tencent_secret_key"
                                                key="tencent_secret_key"
                                                value="{{ config.tencent_secret_key }}"
-                                               placeholder="用于加密签名字符串和服务器端验证签名字符串的密钥">
+                                               placeholder="用于加密签名字符串和服务器端验证签名字符串的密钥" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -808,7 +852,7 @@
                                                id="tencent_sign_name"
                                                key="tencent_sign_name"
                                                value="{{ config.tencent_sign_name }}"
-                                               placeholder="短信签名，需为审核通过状态">
+                                               placeholder="短信签名，需为审核通过状态" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -819,7 +863,7 @@
                                                id="tencent_template_id"
                                                key="tencent_template_id"
                                                value="{{ config.tencent_template_id }}"
-                                               placeholder="短信模板ID，需为审核通过状态">
+                                               placeholder="短信模板ID，需为审核通过状态" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -830,12 +874,30 @@
                                                id="tencent_sdk_appid"
                                                key="tencent_sdk_appid"
                                                value="{{ config.tencent_sdk_appid }}"
-                                               placeholder="短信应用ID">
+                                               placeholder="短信应用ID" />
                                     </div>
                                 </div>
                             </div>
                         <br>
                         </div>
+
+                        <h4 style="color: darkgrey; display: inline;"><b>OIDC 配置</b></h4>
+                        <hr/>
+
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="index_path_url"
+                                       class="col-sm-4 control-label">OIDC_BTN_NAME</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="oidc_btn_name"
+                                           key="oidc_btn_name"
+                                           value="{{ config.oidc_btn_name }}"
+                                           placeholder="登录按钮显示名称，比如Login With KeyCloak" />
+                                </div>
+                            </div>
+                        </div>
+
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>
                         <div class="form-horizontal">
@@ -847,7 +909,7 @@
                                            id="index_path_url"
                                            key="index_path_url"
                                            value="{{ config.index_path_url }}"
-                                           placeholder="系统首页路径，默认SQL工单页面：sqlworkflow">
+                                           placeholder="系统首页路径，默认SQL工单页面：sqlworkflow" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -858,7 +920,7 @@
                                            id="my2sql"
                                            key="my2sql"
                                            value="{{ config.my2sql }}"
-                                           placeholder="my2sql调用路径，类似/opt/archery/src/plugins/my2sql">
+                                           placeholder="my2sql调用路径，类似/opt/archery/src/plugins/my2sql" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -924,7 +986,7 @@
                                            id="lock_time_threshold"
                                            key="lock_time_threshold"
                                            value="{{ config.lock_time_threshold }}"
-                                           placeholder="账户登录失败锁定时间(秒)">
+                                           placeholder="账户登录失败锁定时间(秒)" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -935,7 +997,7 @@
                                            id="lock_cnt_threshold"
                                            key="lock_cnt_threshold"
                                            value="{{ config.lock_cnt_threshold }}"
-                                           placeholder="账户登录失败几次锁账户">
+                                           placeholder="账户登录失败几次锁账户" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -946,7 +1008,7 @@
                                         <label>
                                             <input id="sign_up_enabled" key="sign_up_enabled"
                                                    value="{{ config.sign_up_enabled }}"
-                                                   type="checkbox"> 是否开启注册功能
+                                                   type="checkbox" /> 是否开启注册功能
                                         </label>
                                     </div>
                                 </div>
@@ -959,7 +1021,7 @@
                                         <label>
                                             <input id="watermark_enabled" key="watermark_enabled"
                                                    value="{{ config.watermark_enabled }}"
-                                                   type="checkbox"> 是否开启水印功能
+                                                   type="checkbox" /> 是否开启水印功能
                                         </label>
                                     </div>
                                 </div>
@@ -972,15 +1034,16 @@
                                         <label>
                                             <input id="enforce_2fa" key="enforce_2fa"
                                                    value="{{ config.enforce_2fa }}"
-                                                   type="checkbox"> 登录是否强制使用2FA
+                                                   type="checkbox" /> 登录是否强制使用2FA
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <hr />
                         <div class="form-group">
                             <div class="col-sm-offset-4 col-sm-10">
-                                <button id="saveconfig" type="button" class="btn btn-default">保存配置</button>
+                                <button id="saveconfig" type="button" class="btn btn-primary">保存配置</button>
                             </div>
                         </div>
                     </div>

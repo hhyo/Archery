@@ -6,17 +6,30 @@ import os
 from typing import List
 from datetime import timedelta
 import environ
+import requests
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(List[str], ["*"]),
+    ALLOWED_HOSTS=(list, ["*"]),
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
     CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    # 系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC
     ENABLE_LDAP=(bool, False),
+    ENABLE_OIDC=(bool, False),
+    ENABLE_DINGDING=(
+        bool,
+        False,
+    ),  # 钉钉认证方式参考文档：https://open.dingtalk.com/document/orgapp/tutorial-obtaining-user-personal-information
     AUTH_LDAP_ALWAYS_UPDATE_USER=(bool, True),
     AUTH_LDAP_USER_ATTR_MAP=(
         dict,
@@ -25,6 +38,36 @@ env = environ.Env(
     Q_CLUISTER_SYNC=(bool, False),  # qcluster 同步模式, debug 时可以调整为 True
     # CSRF_TRUSTED_ORIGINS=subdomain.example.com,subdomain.example2.com subdomain.example.com
     CSRF_TRUSTED_ORIGINS=(list, []),
+    ENABLED_ENGINES=(
+        list,
+        [
+            "mysql",
+            "clickhouse",
+            "goinception",
+            "mssql",
+            "redis",
+            "pgsql",
+            "oracle",
+            "mongo",
+            "phoenix",
+            "odps",
+            "cassandra",
+        ],
+    ),
+    ENABLED_NOTIFIERS=(
+        list,
+        [
+            "sql.notify:DingdingWebhookNotifier",
+            "sql.notify:DingdingPersonNotifier",
+            "sql.notify:FeishuWebhookNotifier",
+            "sql.notify:FeishuPersonNotifier",
+            "sql.notify:QywxWebhookNotifier",
+            "sql.notify:QywxToUserNotifier",
+            "sql.notify:MailNotifier",
+            "sql.notify:GenericWebhookNotifier",
+        ],
+    ),
+    CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2"),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -43,6 +86,26 @@ USE_X_FORWARDED_HOST = True
 
 # 请求限制
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+
+AVAILABLE_ENGINES = {
+    "mysql": {"path": "sql.engines.mysql:MysqlEngine"},
+    "cassandra": {"path": "sql.engines.cassandra:CassandraEngine"},
+    "clickhouse": {"path": "sql.engines.clickhouse:ClickHouseEngine"},
+    "goinception": {"path": "sql.engines.goinception:GoInceptionEngine"},
+    "mssql": {"path": "sql.engines.mssql:MssqlEngine"},
+    "redis": {"path": "sql.engines.redis:RedisEngine"},
+    "pgsql": {"path": "sql.engines.pgsql:PgSQLEngine"},
+    "oracle": {"path": "sql.engines.oracle:OracleEngine"},
+    "mongo": {"path": "sql.engines.mongo:MongoEngine"},
+    "phoenix": {"path": "sql.engines.phoenix:PhoenixEngine"},
+    "odps": {"path": "sql.engines.odps:ODPSEngine"},
+}
+
+ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
+
+ENABLED_ENGINES = env("ENABLED_ENGINES")
+
+CURRENT_AUDITOR = env("CURRENT_AUDITOR")
 
 # Application definition
 INSTALLED_APPS = (
@@ -228,6 +291,49 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# OIDC
+ENABLE_OIDC = env("ENABLE_OIDC", False)
+if ENABLE_OIDC:
+    INSTALLED_APPS += ("mozilla_django_oidc",)
+    AUTHENTICATION_BACKENDS = (
+        "common.authenticate.oidc_auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+
+    OIDC_RP_WELLKNOWN_URL = env(
+        "OIDC_RP_WELLKNOWN_URL"
+    )  # 例如 https://keycloak.example.com/realms/<your realm>/.well-known/openid-configuration
+    OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
+
+    response = requests.get(OIDC_RP_WELLKNOWN_URL)
+    response.raise_for_status()
+    config = response.json()
+    OIDC_OP_AUTHORIZATION_ENDPOINT = config["authorization_endpoint"]
+    OIDC_OP_TOKEN_ENDPOINT = config["token_endpoint"]
+    OIDC_OP_USER_ENDPOINT = config["userinfo_endpoint"]
+    OIDC_OP_JWKS_ENDPOINT = config["jwks_uri"]
+    OIDC_OP_LOGOUT_ENDPOINT = config["end_session_endpoint"]
+
+    OIDC_RP_SCOPES = env("OIDC_RP_SCOPES", default="openid profile email")
+    OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
+
+    LOGIN_REDIRECT_URL = "/"
+
+# Dingding
+ENABLE_DINGDING = env("ENABLE_DINGDING", False)
+if ENABLE_DINGDING:
+    INSTALLED_APPS += ("django_auth_dingding",)
+    AUTHENTICATION_BACKENDS = (
+        "common.authenticate.dingding_auth.DingdingAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+    AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL = env(
+        "AUTH_DINGDING_AUTHENTICATION_CALLBACK_URL"
+    )
+    AUTH_DINGDING_APP_KEY = env("AUTH_DINGDING_APP_KEY")
+    AUTH_DINGDING_APP_SECRET = env("AUTH_DINGDING_APP_SECRET")
+
 # LDAP
 ENABLE_LDAP = env("ENABLE_LDAP", False)
 if ENABLE_LDAP:
@@ -260,6 +366,58 @@ if ENABLE_LDAP:
         "AUTH_LDAP_ALWAYS_UPDATE_USER", default=True
     )  # 每次登录从ldap同步用户信息
     AUTH_LDAP_USER_ATTR_MAP = env("AUTH_LDAP_USER_ATTR_MAP")
+
+# CAS认证
+ENABLE_CAS = env("ENABLE_CAS", default=False)
+if ENABLE_CAS:
+    INSTALLED_APPS += ("django_cas_ng",)
+    MIDDLEWARE += ("django_cas_ng.middleware.CASMiddleware",)
+    AUTHENTICATION_BACKENDS = (
+        "django.contrib.auth.backends.ModelBackend",
+        "django_cas_ng.backends.CASBackend",
+    )
+
+    # CAS 的地址
+    CAS_SERVER_URL = env("CAS_SERVER_URL")
+    # CAS 版本
+    CAS_VERSION = env("CAS_VERSION")
+    # 存入所有 CAS 服务端返回的 User 数据。
+    CAS_APPLY_ATTRIBUTES_TO_USER = True
+    # 关闭浏览器退出登录
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    #  忽略  SSL  证书校验
+    CAS_VERIFY_SSL_CERTIFICATE = env("CAS_VERIFY_SSL_CERTIFICATE", default=False)
+    #  忽略来源验证
+    CAS_IGNORE_REFERER = True
+    # https请求问题
+    CAS_FORCE_SSL_SERVICE_URL = env("CAS_FORCE_SSL_SERVICE_URL", default=False)
+    CAS_RETRY_TIMEOUT = 1
+    CAS_RETRY_LOGIN = True
+    CAS_EXTRA_LOGIN_PARAMS = {"renew": True}
+    CAS_LOGOUT_COMPLETELY = True
+
+SUPPORTED_AUTHENTICATION = [
+    ("LDAP", ENABLE_LDAP),
+    ("DINGDING", ENABLE_DINGDING),
+    ("OIDC", ENABLE_OIDC),
+    ("CAS", ENABLE_CAS),
+]
+# 计算当前启用的外部认证方式数量
+ENABLE_AUTHENTICATION_COUNT = len(
+    [enabled for (name, enabled) in SUPPORTED_AUTHENTICATION if enabled]
+)
+if ENABLE_AUTHENTICATION_COUNT > 0:
+    if ENABLE_AUTHENTICATION_COUNT > 1:
+        logger.warning(
+            "系统外部认证目前支持LDAP、DINGDING、OIDC、CAS四种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC > CAS"
+        )
+    authentication = ""  # 默认为空
+    for name, enabled in SUPPORTED_AUTHENTICATION:
+        if enabled:
+            authentication = name
+            break
+    logger.info("当前生效的外部认证方式：" + authentication)
+    logger.info("认证后端：" + AUTHENTICATION_BACKENDS.__str__())
 
 # LOG配置
 LOGGING = {
@@ -304,6 +462,11 @@ LOGGING = {
             "propagate": False,
         },
         "django_auth_ldap": {  # django_auth_ldap模块相关日志
+            "handlers": ["console", "default"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "mozilla_django_oidc": {
             "handlers": ["console", "default"],
             "level": "WARNING",
             "propagate": False,

@@ -3,6 +3,7 @@ import logging
 import re
 import traceback
 import MySQLdb
+import pymysql
 import simplejson as json
 
 from common.config import SysConfig
@@ -17,13 +18,9 @@ logger = logging.getLogger("default")
 class GoInceptionEngine(EngineBase):
     test_query = "INCEPTION GET VARIABLES"
 
-    @property
-    def name(self):
-        return "GoInception"
+    name = "GoInception"
 
-    @property
-    def info(self):
-        return "GoInception engine"
+    info = "GoInception engine"
 
     def get_connection(self, db_name=None):
         if self.conn:
@@ -62,6 +59,10 @@ class GoInceptionEngine(EngineBase):
             charset="utf8mb4",
             autocommit=True,
         )
+
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return pymysql.escape_string(value)
 
     def execute_check(self, instance=None, db_name=None, sql=""):
         """inception check"""
@@ -282,8 +283,8 @@ class GoInceptionEngine(EngineBase):
 
     def osc_control(self, **kwargs):
         """控制osc执行，获取进度、终止、暂停、恢复等"""
-        sqlsha1 = MySQLdb.escape_string(kwargs.get("sqlsha1")).decode("utf-8")
-        command = MySQLdb.escape_string(kwargs.get("command")).decode("utf-8")
+        sqlsha1 = self.escape_string(kwargs.get("sqlsha1", ""))
+        command = self.escape_string(kwargs.get("command", ""))
         if command == "get":
             sql = f"inception get osc_percent '{sqlsha1}';"
         else:

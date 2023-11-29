@@ -2,7 +2,9 @@
 import logging
 import traceback
 import MySQLdb
+import pymysql
 import re
+from enum import Enum
 
 import schemaobject
 import sqlparse
@@ -51,8 +53,19 @@ column_types_map = {
 }
 
 
+class MysqlForkType(Enum):
+    """定义几个支持的版本类型"""
+
+    MYSQL = "mysql"
+    MARIADB = "mariadb"
+    PERCONA = "percona"
+
+
 class MysqlEngine(EngineBase):
     test_query = "SELECT 1"
+    _server_version = None
+    _server_fork_type = None
+    _server_info = None
 
     def __init__(self, instance=None):
         super().__init__(instance=instance)
@@ -90,13 +103,13 @@ class MysqlEngine(EngineBase):
         self.thread_id = self.conn.thread_id()
         return self.conn
 
-    @property
-    def name(self):
-        return "MySQL"
+    name = "MySQL"
 
-    @property
-    def info(self):
-        return "MySQL engine"
+    info = "MySQL engine"
+
+    def escape_string(self, value: str) -> str:
+        """字符串参数转义"""
+        return pymysql.escape_string(value)
 
     @property
     def auto_backup(self):
@@ -118,6 +131,9 @@ class MysqlEngine(EngineBase):
 
     @property
     def server_version(self):
+        if self._server_version:
+            return self._server_version
+
         def numeric_part(s):
             """Returns the leading numeric part of a string."""
             re_numeric_part = re.compile(r"^(\d+)")
@@ -128,7 +144,25 @@ class MysqlEngine(EngineBase):
 
         self.get_connection()
         version = self.conn.get_server_info()
-        return tuple([numeric_part(n) for n in version.split(".")[:3]])
+        self._server_version = tuple([numeric_part(n) for n in version.split(".")[:3]])
+        return self._server_version
+
+    @property
+    def server_info(self):
+        if self._server_info:
+            return self._server_info
+        conn = self.get_connection()
+        self._server_info = conn.get_server_info()
+        return self._server_info
+
+    @property
+    def server_fork_type(self):
+        """确认 server 具体是哪种 mysql, mysql, mariadb, 还是 percona"""
+        server_info = self.server_info
+        for i in list(MysqlForkType):
+            if i.value in server_info.lower():
+                return i
+        return MysqlForkType.MYSQL
 
     @property
     def schema_object(self):
@@ -166,16 +200,14 @@ class MysqlEngine(EngineBase):
         return result
 
     def get_group_tables_by_db(self, db_name):
-        # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
         data = {}
         sql = f"""SELECT TABLE_NAME,
                             TABLE_COMMENT
                         FROM
                             information_schema.TABLES
                         WHERE
-                            TABLE_SCHEMA='{db_name}';"""
-        result = self.query(db_name=db_name, sql=sql)
+                            TABLE_SCHEMA=%(db_name)s;"""
+        result = self.query(db_name=db_name, sql=sql, parameters={"db_name": db_name})
         for row in result.rows:
             table_name, table_cmt = row[0], row[1]
             if table_name[0] not in data:
@@ -185,9 +217,6 @@ class MysqlEngine(EngineBase):
 
     def get_table_meta_data(self, db_name, tb_name, **kwargs):
         """数据字典页面使用：获取表格的元信息，返回一个dict{column_list: [], rows: []}"""
-        # escape
-        db_name = MySQLdb.escape_string(db_name).decode("utf-8")
-        tb_name = MySQLdb.escape_string(tb_name).decode("utf-8")
         sql = f"""SELECT
                         TABLE_NAME as table_name,
                         ENGINE as engine,
@@ -208,9 +237,11 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.TABLES
                     WHERE
-                        TABLE_SCHEMA='{db_name}'
-                            AND TABLE_NAME='{tb_name}'"""
-        _meta_data = self.query(db_name, sql)
+                        TABLE_SCHEMA=%(db_name)s
+                            AND TABLE_NAME=%(tb_name)s"""
+        _meta_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _meta_data.column_list, "rows": _meta_data.rows[0]}
 
     def get_table_desc_data(self, db_name, tb_name, **kwargs):
@@ -227,10 +258,12 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.COLUMNS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                            AND TABLE_NAME = '{tb_name}'
+                        TABLE_SCHEMA = %(db_name)s
+                            AND TABLE_NAME = %(tb_name)s
                     ORDER BY ORDINAL_POSITION;"""
-        _desc_data = self.query(db_name, sql)
+        _desc_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _desc_data.column_list, "rows": _desc_data.rows}
 
     def get_table_index_data(self, db_name, tb_name, **kwargs):
@@ -247,18 +280,23 @@ class MysqlEngine(EngineBase):
                     FROM
                         information_schema.STATISTICS
                     WHERE
-                        TABLE_SCHEMA = '{db_name}'
-                    AND TABLE_NAME = '{tb_name}';"""
-        _index_data = self.query(db_name, sql)
+                        TABLE_SCHEMA = %(db_name)s
+                    AND TABLE_NAME = %(tb_name)s;"""
+        _index_data = self.query(
+            db_name, sql, parameters={"db_name": db_name, "tb_name": tb_name}
+        )
         return {"column_list": _index_data.column_list, "rows": _index_data.rows}
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
         sql_tbs = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db_name}';"
+            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%(db_name)s;"
         )
         tbs = self.query(
-            sql=sql_tbs, cursorclass=MySQLdb.cursors.DictCursor, close_conn=False
+            sql=sql_tbs,
+            cursorclass=MySQLdb.cursors.DictCursor,
+            close_conn=False,
+            parameters={"db_name": db_name},
         ).rows
         table_metas = []
         for tb in tbs:
@@ -282,6 +320,125 @@ class MysqlEngine(EngineBase):
             table_metas.append(_meta)
         return table_metas
 
+    def get_bind_users(self, db_name: str):
+        sql_get_bind_users = f"""select group_concat(distinct(GRANTEE)),TABLE_SCHEMA
+                from information_schema.SCHEMA_PRIVILEGES
+                where TABLE_SCHEMA=%(db_name)s
+                group by TABLE_SCHEMA;"""
+        return self.query(
+            "information_schema",
+            sql_get_bind_users,
+            close_conn=False,
+            parameters={"db_name": db_name},
+        ).rows
+
+    def get_all_databases_summary(self):
+        """实例数据库管理功能，获取实例所有的数据库描述信息"""
+        # 获取所有数据库
+        sql_get_db = """SELECT SCHEMA_NAME,DEFAULT_CHARACTER_SET_NAME,DEFAULT_COLLATION_NAME 
+        FROM information_schema.SCHEMATA
+        WHERE SCHEMA_NAME NOT IN ('information_schema', 'performance_schema', 'mysql', 'test', 'sys');"""
+        query_result = self.query("information_schema", sql_get_db, close_conn=False)
+        if not query_result.error:
+            dbs = query_result.rows
+            # 获取数据库关联用户信息
+            rows = []
+            for db in dbs:
+                bind_users = self.get_bind_users(db_name=db[0])
+                row = {
+                    "db_name": db[0],
+                    "charset": db[1],
+                    "collation": db[2],
+                    "grantees": bind_users[0][0].split(",") if bind_users else [],
+                    "saved": False,
+                }
+                rows.append(row)
+            query_result.rows = rows
+        return query_result
+
+    def get_instance_users_summary(self):
+        """实例账号管理功能，获取实例所有账号信息"""
+        server_version = self.server_version
+        sql_get_user_with_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host,account_locked from mysql.user;"
+        sql_get_user_without_account_locked = "select concat('`', user, '`', '@', '`', host,'`') as query,user,host from mysql.user;"
+        # MySQL 5.7.6版本, mariadb 10.4.2  起支持ACCOUNT LOCK
+        if (
+            self.server_fork_type == MysqlForkType.MYSQL and server_version >= (5, 7, 6)
+        ) or (
+            self.server_fork_type == MysqlForkType.MARIADB
+            and self.server_version >= (10, 4, 2)
+        ):
+            sql_get_user = sql_get_user_with_account_locked
+        else:
+            sql_get_user = sql_get_user_without_account_locked
+        query_result = self.query("mysql", sql_get_user)
+        if query_result.error and sql_get_user == sql_get_user_with_account_locked:
+            # 查询出错了, fallback 到不带 lock 信息的 sql
+            query_result = self.query("mysql", sql_get_user_without_account_locked)
+        if not query_result.error:
+            db_users = query_result.rows
+            # 获取用户权限信息
+            rows = []
+            for db_user in db_users:
+                user_host = db_user[0]
+                user_priv = self.query(
+                    "mysql", "show grants for {};".format(user_host), close_conn=False
+                ).rows
+                row = {
+                    "user_host": user_host,
+                    "user": db_user[1],
+                    "host": db_user[2],
+                    "privileges": user_priv,
+                    "saved": False,
+                    "is_locked": db_user[3] if server_version >= (5, 7, 6) else None,
+                }
+                rows.append(row)
+            query_result.rows = rows
+        return query_result
+
+    def create_instance_user(self, **kwargs):
+        """实例账号管理功能，创建实例账号"""
+        # escape
+        user = self.escape_string(kwargs.get("user", ""))
+        host = self.escape_string(kwargs.get("host", ""))
+        password1 = self.escape_string(kwargs.get("password1", ""))
+        remark = kwargs.get("remark", "")
+        # 在一个事务内执行
+        hosts = host.split("|")
+        create_user_cmd = ""
+        accounts = []
+        for host in hosts:
+            create_user_cmd += (
+                f"create user '{user}'@'{host}' identified by '{password1}';"
+            )
+            accounts.append(
+                {
+                    "instance": self.instance,
+                    "user": user,
+                    "host": host,
+                    "password": password1,
+                    "remark": remark,
+                }
+            )
+        exec_result = self.execute(db_name="mysql", sql=create_user_cmd)
+        exec_result.rows = accounts
+        return exec_result
+
+    def drop_instance_user(self, user_host: str, **kwarg):
+        """实例账号管理功能，删除实例账号"""
+        # escape
+        user_host = self.escape_string(user_host)
+        return self.execute(db_name="mysql", sql=f"DROP USER {user_host};")
+
+    def reset_instance_user_pwd(self, user_host: str, reset_pwd: str, **kwargs):
+        """实例账号管理功能，重置实例账号密码"""
+        # escape
+        user_host = self.escape_string(user_host)
+        reset_pwd = self.escape_string(reset_pwd)
+        return self.execute(
+            db_name="mysql", sql=f"ALTER USER {user_host} IDENTIFIED BY '{reset_pwd}';"
+        )
+
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         sql = f"""SELECT
@@ -295,16 +452,21 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = '{db_name}'
-                AND TABLE_NAME = '{tb_name}'
+            TABLE_SCHEMA = %(db_name)s
+                AND TABLE_NAME = %(tb_name)s
         ORDER BY ORDINAL_POSITION;"""
-        result = self.query(db_name=db_name, sql=sql)
+        result = self.query(
+            db_name=db_name,
+            sql=sql,
+            parameters=({"db_name": db_name, "tb_name": tb_name}),
+        )
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
 
     def describe_table(self, db_name, tb_name, **kwargs):
         """return ResultSet 类似查询"""
+        tb_name = self.escape_string(tb_name)
         sql = f"show create table `{tb_name}`;"
         result = self.query(db_name=db_name, sql=sql)
         return result
@@ -325,7 +487,15 @@ class MysqlEngine(EngineBase):
         result_set.rows = tuple(new_rows)
         return result_set
 
-    def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
+    def query(
+        self,
+        db_name=None,
+        sql="",
+        limit_num=0,
+        close_conn=True,
+        parameters=None,
+        **kwargs,
+    ):
         """返回 ResultSet"""
         result_set = ResultSet(full_sql=sql)
         max_execution_time = kwargs.get("max_execution_time", 0)
@@ -338,7 +508,7 @@ class MysqlEngine(EngineBase):
                 cursor.execute(f"set session max_execution_time={max_execution_time};")
             except MySQLdb.OperationalError:
                 pass
-            effect_row = cursor.execute(sql)
+            effect_row = cursor.execute(sql, parameters)
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
@@ -461,11 +631,16 @@ class MysqlEngine(EngineBase):
 
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
+        ddl_dml_separation = self.config.get("ddl_dml_separation", False)
         p = re.compile(critical_ddl_regex)
+        # 获取语句类型：DDL或者DML
+        ddl_dml_flag = ""
         for row in check_result.rows:
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type="mysql")
+            # 获取提交类型
+            syntax_type = get_syntax_type(statement, parser=False, db_type="mysql")
             # 禁用语句
             if re.match(r"^select", statement.lower()):
                 check_result.error_count += 1
@@ -478,6 +653,14 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
+            elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
+                if ddl_dml_flag == "":
+                    ddl_dml_flag = syntax_type
+                elif ddl_dml_flag != syntax_type:
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回不支持语句"
+                    row.errlevel = 2
+                    row.errormessage = "DDL语句和DML语句不能同时执行！"
         return check_result
 
     def execute_workflow(self, workflow):
@@ -505,14 +688,14 @@ class MysqlEngine(EngineBase):
         # inception执行
         return self.inc_engine.execute(workflow)
 
-    def execute(self, db_name=None, sql="", close_conn=True):
+    def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""
         result = ResultSet(full_sql=sql)
         conn = self.get_connection(db_name=db_name)
         try:
             cursor = conn.cursor()
             for statement in sqlparse.split(sql):
-                cursor.execute(statement)
+                cursor.execute(statement, parameters)
             conn.commit()
             cursor.close()
         except Exception as e:
@@ -560,7 +743,7 @@ class MysqlEngine(EngineBase):
         """获取连接信息"""
         base_sql = "select id, user, host, db, command, time, state, ifnull(info,'') as info from information_schema.processlist"
         # escape
-        command_type = MySQLdb.escape_string(command_type).decode("utf-8")
+        command_type = self.escape_string(command_type)
         if not command_type:
             command_type = "Query"
         if command_type == "All":
@@ -601,7 +784,7 @@ class MysqlEngine(EngineBase):
             kill_sql = kill_sql + row[0]
         return self.execute("information_schema", kill_sql)
 
-    def tablesapce(self, offset=0, row_count=14):
+    def tablespace(self, offset=0, row_count=14):
         """获取表空间信息"""
         sql = """
         SELECT
@@ -622,7 +805,7 @@ class MysqlEngine(EngineBase):
         )
         return self.query("information_schema", sql)
 
-    def tablesapce_num(self):
+    def tablespace_count(self):
         """获取表空间数量"""
         sql = """
         SELECT count(*)

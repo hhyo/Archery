@@ -10,17 +10,17 @@ from sql.models import (
     ResourceGroup,
     WorkflowAudit,
     WorkflowLog,
+    QueryPrivilegesApply,
+    ArchiveConfig,
 )
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django_q.tasks import async_task
 from sql.engines import get_engine
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, get_auditor
 from sql.utils.resource_group import user_instances
-from sql.notify import notify_for_audit
-from common.utils.const import WorkflowDict
+from common.utils.const import WorkflowType, WorkflowStatus
 from common.config import SysConfig
 import traceback
 import logging
@@ -248,6 +248,18 @@ class AliyunRdsSerializer(serializers.ModelSerializer):
         fields = ("id", "rds_dbinstanceid", "is_enable", "instance", "ak")
 
 
+class QueryPrivilegesApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QueryPrivilegesApply
+        fields = "__all__"
+
+
+class ArchiveConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArchiveConfig
+        fields = "__all__"
+
+
 class InstanceResourceSerializer(serializers.Serializer):
     instance_id = serializers.IntegerField(label="实例id")
     resource_type = serializers.ChoiceField(
@@ -401,44 +413,26 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             engineer=user.username,
             engineer_display=user.display,
             group_name=group.group_name,
-            audit_auth_groups=Audit.settings(
-                workflow_data["group_id"], WorkflowDict.workflow_type["sqlreview"]
-            ),
+            audit_auth_groups="",
         )
         try:
             with transaction.atomic():
-                workflow = SqlWorkflow.objects.create(**workflow_data)
+                workflow = SqlWorkflow(**workflow_data)
                 validated_data["review_content"] = check_result.json()
+                # 自动创建工作流
+                auditor = get_auditor(workflow=workflow)
+                auditor.create_audit()
                 workflow_content = SqlWorkflowContent.objects.create(
                     workflow=workflow, **validated_data
                 )
-                # 自动审核通过了，才调用工作流
-                if workflow_status == "workflow_manreviewing":
-                    # 调用工作流插入审核信息, SQL上线权限申请workflow_type=2
-                    Audit.add(WorkflowDict.workflow_type["sqlreview"], workflow.id)
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
-        else:
-            # 自动审核通过且开启了Apply阶段通知参数才发送消息通知
-            is_notified = (
-                "Apply" in sys_config.get("notify_phase_control").split(",")
-                if sys_config.get("notify_phase_control")
-                else True
-            )
-            if workflow_status == "workflow_manreviewing" and is_notified:
-                # 获取审核信息
-                audit_id = Audit.detail_by_workflow_id(
-                    workflow_id=workflow.id,
-                    workflow_type=WorkflowDict.workflow_type["sqlreview"],
-                ).audit_id
-                async_task(
-                    notify_for_audit,
-                    audit_id=audit_id,
-                    timeout=60,
-                    task_name=f"sqlreview-submit-{workflow.id}",
-                )
-            return workflow_content
+        # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
+        if auditor.audit.current_status == WorkflowStatus.PASSED:
+            auditor.workflow.status = "workflow_review_pass"
+        auditor.workflow.save()
+        return workflow_content
 
     class Meta:
         model = SqlWorkflowContent
@@ -458,7 +452,7 @@ class AuditWorkflowSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField(label="工单id")
     audit_remark = serializers.CharField(label="审批备注")
     workflow_type = serializers.ChoiceField(
-        choices=[1, 2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        choices=WorkflowType.choices, label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
     )
     audit_type = serializers.ChoiceField(choices=["pass", "cancel"], label="审核类型")
 
