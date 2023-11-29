@@ -192,6 +192,13 @@ class TestMssql(TestCase):
         check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
         self.assertEqual(check_result, "select top 10 user from user_table")
 
+    def test_filter_sql_with_distinct(self):
+        new_engine = MssqlEngine(instance=self.ins1)
+        # 只抽查一个函数
+        banned_sql = "select distinct * from user_table"
+        check_result = new_engine.filter_sql(sql=banned_sql, limit_num=10)
+        self.assertEqual(check_result, "select distinct top 10 * from user_table")
+
     def test_execute_check(self):
         new_engine = MssqlEngine(instance=self.ins1)
         test_sql = (
