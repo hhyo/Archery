@@ -22,7 +22,13 @@ from sql.models import (
     WorkflowAuditSetting,
 )
 from sql.utils.tests import User
-from sql.utils.workflow_audit import Audit, AuditV2, AuditSetting, AuditException
+from sql.utils.workflow_audit import (
+    Audit,
+    AuditV2,
+    AuditSetting,
+    AuditException,
+    ReviewNodeType,
+)
 
 
 class TestAudit(TestCase):
@@ -546,3 +552,20 @@ def test_get_review_info(
     assert review_info.nodes[0].is_passed_node is True
     assert review_info.nodes[1].is_current_node is True
     assert review_info.nodes[1].is_passed_node is False
+
+
+def test_get_review_info_auto_pass(
+    sql_query_apply,
+    fake_generate_audit_setting,
+    admin_client,
+):
+    # 自动通过的情况
+    fake_generate_audit_setting.return_value = AuditSetting(auto_pass=True)
+    audit = AuditV2(workflow=sql_query_apply)
+    audit.create_audit()
+    review_info = audit.get_review_info()
+    assert review_info.nodes[0].node_type == ReviewNodeType.AUTO_PASS
+    # 测一下详情页 get
+    response = admin_client.get(f"/queryapplydetail/{sql_query_apply.apply_id}/")
+    assert response.status_code == 200
+    assert "无需审批" in response.content.decode("utf-8")

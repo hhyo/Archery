@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
 import traceback
-from django.conf import settings
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
@@ -32,7 +31,7 @@ from .models import (
     AuditEntry,
     TwoFactorAuthConfig,
 )
-from sql.utils.workflow_audit import Audit, AuditV2, AuditException
+from sql.utils.workflow_audit import Audit, AuditV2, AuditException, ReviewNodeType
 from sql.utils.sql_review import (
     can_execute,
     can_timingtask,
