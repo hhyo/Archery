@@ -4,6 +4,7 @@ import importlib
 import json
 import re
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Union, Optional, List
 import logging
 
@@ -35,12 +36,25 @@ class AuditException(Exception):
     pass
 
 
+class ReviewNodeType(Enum):
+    GROUP = "group"
+    AUTO_PASS = "auto_pass"
+
+
 @dataclass
 class ReviewNode:
-    group: Group
+    group: Optional[Group] = None
+    node_type: ReviewNodeType = ReviewNodeType.GROUP
     is_current_node: bool = False
     is_passed_node: bool = False
 
+    def __post_init__(self):
+        if self.node_type == ReviewNodeType.GROUP and not self.group:
+            raise ValueError(f"group not provided and node_type is set as {self.node_type}")
+
+    @property
+    def is_auto_pass(self):
+        return self.node_type == ReviewNodeType.AUTO_PASS
 
 @dataclass
 class ReviewInfo:
@@ -514,6 +528,15 @@ class AuditV2:
         has_met_current_node = False
         current_node_group_id = int(self.audit.current_audit)
         for g in self.audit.audit_auth_groups.split(","):
+            if not g:
+                # 空的值, 代表的是自动通过
+                review_nodes.append(
+                    ReviewNode(
+                        node_type=ReviewNodeType.AUTO_PASS,
+                        is_passed_node=True,
+                    )
+                )
+                continue
             g = int(g)
             group_in_db = Group.objects.get(id=g)
             if self.audit.current_status != WorkflowStatus.WAITING:
