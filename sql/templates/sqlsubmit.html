@@ -27,7 +27,7 @@
                             <div class="form-group">
                                 <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
                                        class="form-control"
-                                       data-name="上线单名称" data-placeholder="请输入上线单名称！"
+                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
                                        placeholder="请输入上线单名称，如:XX项目会员功能建表"
                                        required>
                             </div>
@@ -333,6 +333,7 @@
             element.find('[required]').each(
                 function () {
                     var fieldElement = $(this);
+                    var fieldId = $(this).attr('id');
                     //如果为null则设置为''
                     var value = fieldElement.val() || '';
                     if (value) {
@@ -340,6 +341,11 @@
                     }
                     if (!value || value === fieldElement.attr('data-placeholder')) {
                         alert(fieldElement.attr('data-placeholder'));
+                        result = false;
+                        return result;
+                    }
+                    if(fieldId == "workflow_name" && value.length>=50){
+                        alert("上线单名称/工单名称不能超过50个字符！");
                         result = false;
                         return result;
                     }
@@ -564,10 +570,6 @@
                 obj[item.name] = item.value;
                 return obj;
             }, {})
-            if (formData.workflow_name.length>=50){
-                    alert("上线单名称/工单名称不能超过50个字符！")
-                    return
-            }
             $.ajax({
                 type: "post",
                 url: "/api/v1/workflow/",
