@@ -22,7 +22,13 @@ from sql.models import (
     WorkflowAuditSetting,
 )
 from sql.utils.tests import User
-from sql.utils.workflow_audit import Audit, AuditV2, AuditSetting, AuditException, ReviewNodeType
+from sql.utils.workflow_audit import (
+    Audit,
+    AuditV2,
+    AuditSetting,
+    AuditException,
+    ReviewNodeType,
+)
 
 
 class TestAudit(TestCase):
@@ -549,9 +555,9 @@ def test_get_review_info(
 
 
 def test_get_review_info_auto_pass(
-        sql_query_apply,
-        fake_generate_audit_setting,
-        admin_client,
+    sql_query_apply,
+    fake_generate_audit_setting,
+    admin_client,
 ):
     # 自动通过的情况
     fake_generate_audit_setting.return_value = AuditSetting(auto_pass=True)

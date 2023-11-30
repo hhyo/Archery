@@ -50,11 +50,14 @@ class ReviewNode:
 
     def __post_init__(self):
         if self.node_type == ReviewNodeType.GROUP and not self.group:
-            raise ValueError(f"group not provided and node_type is set as {self.node_type}")
+            raise ValueError(
+                f"group not provided and node_type is set as {self.node_type}"
+            )
 
     @property
     def is_auto_pass(self):
         return self.node_type == ReviewNodeType.AUTO_PASS
+
 
 @dataclass
 class ReviewInfo:
