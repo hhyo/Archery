@@ -564,6 +564,10 @@
                 obj[item.name] = item.value;
                 return obj;
             }, {})
+            if (formData.workflow_name.length>=50){
+                    alert("上线单名称/工单名称不能超过50个字符！")
+                    return
+            }
             $.ajax({
                 type: "post",
                 url: "/api/v1/workflow/",
