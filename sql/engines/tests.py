@@ -1503,8 +1503,10 @@ class MongoTest(TestCase):
     @patch("sql.engines.mongo.MongoEngine.get_connection")
     def test_query(self, mock_get_connection):
         # TODO 正常查询还没做
-        test_sql = """db.job.find().count()"""
-        self.assertIsInstance(self.engine.query("some_db", test_sql), ResultSet)
+        test_sql1 = """db.job.find().count()"""
+        test_sql2 = """db.job.find({ goofy :{"$exists":false}})"""
+        self.assertIsInstance(self.engine.query("some_db", test_sql1), ResultSet)
+        self.assertIsInstance(self.engine.query("some_db", test_sql2), ResultSet)
 
     @patch("sql.engines.mongo.MongoEngine.get_all_tables")
     def test_query_check(self, mock_get_all_tables):

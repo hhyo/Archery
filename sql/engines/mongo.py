@@ -231,7 +231,7 @@ class JsonDecoder:
                 date_content = date_regex.findall(outstr)
                 if len(date_content) > 0:
                     return parse(date_content[0], yearfirst=True)
-            elif data_type.replace(" ", "") in ("NumberLong"):
+            elif data_type.replace(" ", "") in ("NumberLong",):
                 nuStr = re.findall(r"NumberLong\(.*?\)", outstr)  # 单独处理NumberLong
                 if len(nuStr) > 0:
                     id_str = re.findall(r"\(.*?\)", nuStr[0])
