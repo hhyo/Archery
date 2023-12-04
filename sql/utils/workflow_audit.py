@@ -205,7 +205,7 @@ class AuditV2:
         if self.workflow.instance.db_type not in auto_review_db_type:
             return False
         if not self.workflow.instance.instance_tag.filter(
-                tag_code__in=auto_review_tags
+            tag_code__in=auto_review_tags
         ).exists():
             return False
 
@@ -229,7 +229,7 @@ class AuditV2:
             # 影响行数加测, 总语句影响行数超过指定数量则需要人工审核
             all_affected_rows += int(review_result.affected_rows)
         if all_affected_rows > int(
-                self.sys_config.get("auto_review_max_update_rows", 50)
+            self.sys_config.get("auto_review_max_update_rows", 50)
         ):
             # 影响行数超规模, 需要人工审核
             return False
@@ -370,7 +370,7 @@ class AuditV2:
                 return True
             # 看是否本人审核
             if actor.username == self.audit.create_user and self.sys_config.get(
-                    "ban_self_audit"
+                "ban_self_audit"
             ):
                 raise AuditException("当前配置禁止本人审核自己的工单")
             # 确认用户权限
@@ -396,7 +396,7 @@ class AuditV2:
         raise AuditException(f"不支持的操作, 无法判断权限")
 
     def operate(
-            self, action: WorkflowAction, actor: Users, remark: str
+        self, action: WorkflowAction, actor: Users, remark: str
     ) -> WorkflowAuditDetail:
         """操作已提交的工单"""
         if not self.audit:
@@ -682,9 +682,9 @@ class Audit(object):
 
         applicant = get_workflow_applicant(workflow_id, workflow_type)
         if (
-                user.username == applicant
-                and not user.is_superuser
-                and SysConfig().get("ban_self_audit")
+            user.username == applicant
+            and not user.is_superuser
+            and SysConfig().get("ban_self_audit")
         ):
             return result
         # 只有待审核状态数据才可以审核
@@ -697,10 +697,10 @@ class Audit(object):
             except Exception:
                 raise Exception("当前审批auth_group_id不存在，请检查并清洗历史数据")
             if (
-                    user.is_superuser
-                    or auth_group_users([audit_auth_group], group_id)
-                    .filter(id=user.id)
-                    .exists()
+                user.is_superuser
+                or auth_group_users([audit_auth_group], group_id)
+                .filter(id=user.id)
+                .exists()
             ):
                 if workflow_type == 1:
                     if user.has_perm("sql.query_review"):
@@ -716,12 +716,12 @@ class Audit(object):
     # 新增工单日志
     @staticmethod
     def add_log(
-            audit_id,
-            operation_type,
-            operation_type_desc,
-            operation_info,
-            operator,
-            operator_display,
+        audit_id,
+        operation_type,
+        operation_type_desc,
+        operation_info,
+        operator,
+        operator_display,
     ):
         log = WorkflowLog(
             audit_id=audit_id,
@@ -741,14 +741,14 @@ class Audit(object):
 
 
 def get_auditor(
-        # workflow 对象有可能是还没有在数据库中创建的对象, 这里需要注意
-        workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply] = None,
-        sys_config: SysConfig = None,
-        audit: WorkflowAudit = None,
-        workflow_type: WorkflowType = WorkflowType.SQL_REVIEW,
-        # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
-        resource_group: str = "",
-        resource_group_id: int = 0,
+    # workflow 对象有可能是还没有在数据库中创建的对象, 这里需要注意
+    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply] = None,
+    sys_config: SysConfig = None,
+    audit: WorkflowAudit = None,
+    workflow_type: WorkflowType = WorkflowType.SQL_REVIEW,
+    # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
+    resource_group: str = "",
+    resource_group_id: int = 0,
 ) -> AuditV2:
     current_auditor = settings.CURRENT_AUDITOR
     module, o = current_auditor.split(":")
