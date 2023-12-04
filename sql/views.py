@@ -31,7 +31,7 @@ from .models import (
     AuditEntry,
     TwoFactorAuthConfig,
 )
-from sql.utils.workflow_audit import Audit, AuditV2, AuditException, ReviewNodeType
+from sql.utils.workflow_audit import Audit, AuditV2, AuditException
 from sql.utils.sql_review import (
     can_execute,
     can_timingtask,
@@ -40,7 +40,7 @@ from sql.utils.sql_review import (
     can_rollback,
 )
 from common.utils.const import Const, WorkflowType, WorkflowAction
-from sql.utils.resource_group import user_groups, user_instances, auth_group_users
+from sql.utils.resource_group import user_groups, user_instances
 
 import logging
 
@@ -501,7 +501,7 @@ def config(request):
     # 获取所有实例标签
     instance_tags = InstanceTag.objects.all()
     # 支持自动审核的数据库类型
-    db_type = ["mysql", "oracle", "mongo", "clickhouse"]
+    db_type = ["mysql", "oracle", "mongo", "clickhouse", "redis"]
     # 获取所有配置项
     all_config = Config.objects.all().values("item", "value")
     sys_config = {}

@@ -419,12 +419,13 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 workflow = SqlWorkflow(**workflow_data)
                 validated_data["review_content"] = check_result.json()
-                # 自动创建工作流
-                auditor = get_auditor(workflow=workflow)
-                auditor.create_audit()
+                workflow.save()
                 workflow_content = SqlWorkflowContent.objects.create(
                     workflow=workflow, **validated_data
                 )
+                # 自动创建工作流
+                auditor = get_auditor(workflow=workflow)
+                auditor.create_audit()
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
