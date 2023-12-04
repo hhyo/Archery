@@ -237,7 +237,7 @@ class AuditV2:
 
     def generate_audit_setting(self) -> AuditSetting:
         if self.is_auto_review():
-            return AuditSetting(auto_pass=True, audit_auth_groups=["无需审批"])
+            return AuditSetting(auto_pass=True)
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
 
@@ -540,7 +540,18 @@ class AuditV2:
                     )
                 )
                 continue
-            g = int(g)
+            try:
+                g = int(g)
+            except ValueError:  # pragma: no cover
+                # 脏数据, 当成自动通过
+                # 兼容代码, 一般是空值代表自动通过
+                review_nodes.append(
+                    ReviewNode(
+                        node_type=ReviewNodeType.AUTO_PASS,
+                        is_passed_node=True,
+                    )
+                )
+                continue
             group_in_db = Group.objects.get(id=g)
             if self.audit.current_status != WorkflowStatus.WAITING:
                 # 总体状态不是待审核, 不设置详细的属性
