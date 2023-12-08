@@ -44,6 +44,7 @@ def debug(request):
     # 敏感信息处理
     secret_keys = [
         "inception_remote_backup_password",
+        "go_inception_password",
         "ding_app_secret",
         "feishu_app_secret",
         "mail_smtp_password",
@@ -120,6 +121,8 @@ def debug(request):
     # Inception和goInception信息
     go_inception_host = sys_config.get("go_inception_host")
     go_inception_port = sys_config.get("go_inception_port", 0)
+    go_inception_user = sys_config.get("go_inception_user", "")
+    go_inception_password = sys_config.get("go_inception_password", "")
     inception_remote_backup_host = sys_config.get("inception_remote_backup_host", "")
     inception_remote_backup_port = sys_config.get("inception_remote_backup_port", "")
     inception_remote_backup_user = sys_config.get("inception_remote_backup_user", "")
@@ -132,6 +135,8 @@ def debug(request):
         goinc_conn = MySQLdb.connect(
             host=go_inception_host,
             port=int(go_inception_port),
+            user=go_inception_user,
+            passwd=go_inception_password,
             connect_timeout=1,
             cursorclass=MySQLdb.cursors.DictCursor,
         )

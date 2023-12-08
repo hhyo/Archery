@@ -87,6 +87,28 @@
                                                placeholder="goInception端口" />
                                     </div>
                                 </div>
+                                <div class="form-group">
+                                    <label for="go_inception_user"
+                                           class="col-sm-4 control-label">GO_INCEPTION_USER</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control"
+                                               id="go_inception_user"
+                                               key="go_inception_user"
+                                               value="{{ config.go_inception_user }}"
+                                               placeholder="goInception用户（未启用认证可不填）" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="go_inception_password"
+                                           class="col-sm-4 control-label">GO_INCEPTION_PASSWORD</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control"
+                                               id="go_inception_password"
+                                               key="go_inception_password"
+                                               value="{{ config.go_inception_password }}"
+                                               placeholder="goInception密码（未启用认证可不填）" />
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="inception_remote_backup_host"
@@ -1430,6 +1452,8 @@
                 data: {
                     go_inception_host: $("#go_inception_host").val(),
                     go_inception_port: $("#go_inception_port").val(),
+                    go_inception_user: $("#go_inception_user").val(),
+                    go_inception_password: $("#go_inception_password").val(),
                     inception_remote_backup_host: $("#inception_remote_backup_host").val(),
                     inception_remote_backup_port: $("#inception_remote_backup_port").val(),
                     inception_remote_backup_user: $("#inception_remote_backup_user").val(),

@@ -370,6 +370,8 @@ class CheckTest(TestCase):
         data = {
             "go_inception_host": "inception",
             "go_inception_port": "6669",
+            "go_inception_user": "",
+            "go_inception_password": "",
             "inception_remote_backup_host": "mysql",
             "inception_remote_backup_port": 3306,
             "inception_remote_backup_user": "mysql",

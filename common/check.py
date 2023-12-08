@@ -20,6 +20,8 @@ def go_inception(request):
     result = {"status": 0, "msg": "ok", "data": []}
     go_inception_host = request.POST.get("go_inception_host", "")
     go_inception_port = request.POST.get("go_inception_port", "")
+    go_inception_user = request.POST.get("go_inception_user", "")
+    go_inception_password = request.POST.get("go_inception_password", "")
     inception_remote_backup_host = request.POST.get("inception_remote_backup_host", "")
     inception_remote_backup_port = request.POST.get("inception_remote_backup_port", "")
     inception_remote_backup_user = request.POST.get("inception_remote_backup_user", "")
@@ -31,6 +33,8 @@ def go_inception(request):
         conn = MySQLdb.connect(
             host=go_inception_host,
             port=int(go_inception_port),
+            user=go_inception_user,
+            password=go_inception_password,
             charset="utf8mb4",
             connect_timeout=5,
         )
