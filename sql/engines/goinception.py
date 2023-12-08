@@ -36,9 +36,13 @@ class GoInceptionEngine(EngineBase):
         archer_config = SysConfig()
         go_inception_host = archer_config.get("go_inception_host")
         go_inception_port = int(archer_config.get("go_inception_port", 4000))
+        go_inception_user = archer_config.get("go_inception_user", "")
+        go_inception_password = archer_config.get("go_inception_password", "")
         self.conn = MySQLdb.connect(
             host=go_inception_host,
             port=go_inception_port,
+            user=go_inception_user,
+            passwd=go_inception_password,
             charset="utf8mb4",
             connect_timeout=10,
         )
