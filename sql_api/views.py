@@ -40,16 +40,9 @@ def debug(request):
     full = request.GET.get("full")
 
     # 系统配置
-    sys_config = SysConfig().sys_config
-    # 敏感信息处理
-    secret_keys = [
-        "inception_remote_backup_password",
-        "go_inception_password",
-        "ding_app_secret",
-        "feishu_app_secret",
-        "mail_smtp_password",
-    ]
-    sys_config.update({k: "******" for k in secret_keys})
+    config = SysConfig()
+    config.get_all_config()
+    sys_config = config.sys_config
 
     # MySQL信息
     cursor = connection.cursor()
@@ -178,6 +171,19 @@ def debug(request):
     installed_packages_list = sorted(
         ["%s==%s" % (i.key, i.version) for i in installed_packages]
     )
+
+    # 敏感信息处理
+    secret_keys = [
+        "inception_remote_backup_password",
+        "ding_app_secret",
+        "feishu_app_secret",
+        "mail_smtp_password",
+        "go_inception_password",
+        "wx_app_secret",
+        "aliyun_access_key_secret",
+        "tencent_secret_key",
+    ]
+    sys_config.update({k: "******" for k in secret_keys})
 
     # 最终集合
     system_info = {
