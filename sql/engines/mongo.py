@@ -16,6 +16,7 @@ from bson.int64 import Int64
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from common.config import SysConfig
 
 logger = logging.getLogger("default")
 
@@ -508,6 +509,9 @@ class MongoEngine(EngineBase):
         count = 0
         check_result = ReviewSet(full_sql=sql)
 
+        # 获取real_row_count参数选项
+        real_row_count = SysConfig().get("real_row_count", False)
+
         sql = sql.strip()
         # sql 检查过滤注释语句
         sql = re.sub(r"^\s*//.*$", "", sql, flags=re.MULTILINE)
@@ -682,55 +686,57 @@ class MongoEngine(EngineBase):
                                     sql=check_sql,
                                     execute_time=0,
                                 )
-                            if methodStr == "insertOne":
-                                count = 1
-                            elif methodStr in ("insert", "insertMany"):
-                                insert_str = re.search(
-                                    rf"{methodStr}\((.*)\)", sql_str, re.S
-                                ).group(1)
-                                first_char = insert_str.replace(" ", "").replace(
-                                    "\n", ""
-                                )[0]
-                                if first_char == "{":
+                            if real_row_count:
+                                if methodStr == "insertOne":
                                     count = 1
-                                elif first_char == "[":
-                                    insert_values = re.search(
-                                        r"\[(.*?)\]", insert_str, re.S
-                                    ).group(0)
-                                    de = JsonDecoder()
-                                    insert_values = de.decode(insert_values)
-                                    count = len(insert_values)
-                                else:
-                                    count = 0
-                            elif methodStr in (
-                                "update",
-                                "updateOne",
-                                "updateMany",
-                                "deleteOne",
-                                "deleteMany",
-                                "remove",
-                            ):
-                                if sql_str.find("find(") > 0:
-                                    count_sql = sql_str.replace(methodStr, "count")
-                                else:
-                                    count_sql = (
-                                        sql_str.replace(methodStr, "find") + ".count()"
+                                elif methodStr in ("insert", "insertMany"):
+                                    insert_str = re.search(
+                                        rf"{methodStr}\((.*)\)", sql_str, re.S
+                                    ).group(1)
+                                    first_char = insert_str.replace(" ", "").replace(
+                                        "\n", ""
+                                    )[0]
+                                    if first_char == "{":
+                                        count = 1
+                                    elif first_char == "[":
+                                        insert_values = re.search(
+                                            r"\[(.*?)\]", insert_str, re.S
+                                        ).group(0)
+                                        de = JsonDecoder()
+                                        insert_values = de.decode(insert_values)
+                                        count = len(insert_values)
+                                    else:
+                                        count = 0
+                                elif methodStr in (
+                                    "update",
+                                    "updateOne",
+                                    "updateMany",
+                                    "deleteOne",
+                                    "deleteMany",
+                                    "remove",
+                                ):
+                                    if sql_str.find("find(") > 0:
+                                        count_sql = sql_str.replace(methodStr, "count")
+                                    else:
+                                        count_sql = (
+                                            sql_str.replace(methodStr, "find")
+                                            + ".count()"
+                                        )
+                                    query_dict = self.parse_query_sentence(count_sql)
+                                    count_sql = f"""db.getCollection("{query_dict["collection"]}").find({query_dict["condition"]}).count()"""
+                                    query_result = self.query(db_name, count_sql)
+                                    count = json.loads(query_result.rows[0][0]).get(
+                                        "count", 0
                                     )
-                                query_dict = self.parse_query_sentence(count_sql)
-                                count_sql = f"""db.getCollection("{query_dict["collection"]}").find({query_dict["condition"]}).count()"""
-                                query_result = self.query(db_name, count_sql)
-                                count = json.loads(query_result.rows[0][0]).get(
-                                    "count", 0
-                                )
-                                if (
-                                    methodStr == "update"
-                                    and "multi:true"
-                                    not in sql_str.replace(" ", "")
-                                    .replace('"', "")
-                                    .replace("'", "")
-                                    .replace("\n", "")
-                                ) or methodStr in ("deleteOne", "updateOne"):
-                                    count = 1 if count > 0 else 0
+                                    if (
+                                        methodStr == "update"
+                                        and "multi:true"
+                                        not in sql_str.replace(" ", "")
+                                        .replace('"', "")
+                                        .replace("'", "")
+                                        .replace("\n", "")
+                                    ) or methodStr in ("deleteOne", "updateOne"):
+                                        count = 1 if count > 0 else 0
                             if methodStr in (
                                 "insertOne",
                                 "insert",
@@ -759,7 +765,6 @@ class MongoEngine(EngineBase):
                                 errormessage="仅支持DML和DDL语句，如需查询请使用数据库查询功能！",
                                 sql=check_sql,
                             )
-
                 else:
                     check_result.error = "语法错误"
                     result = ReviewResult(

@@ -1491,6 +1491,7 @@ class MongoTest(TestCase):
             user="ins_user",
         )
         self.engine = MongoEngine(instance=self.ins)
+        self.sys_config = SysConfig()
 
     def tearDown(self) -> None:
         self.ins.delete()
@@ -1606,6 +1607,14 @@ class MongoTest(TestCase):
 
     @patch("sql.engines.mongo.MongoEngine.get_all_tables")
     def test_execute_check_on_dml(self, mock_get_all_tables):
+        sql = """db.job.insert([{"orderCode":1001},{"orderCode":1002}]);"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_dml_with_real_row_count(self, mock_get_all_tables):
+        self.sys_config.set("real_row_count", True)
         sql = """db.job.insert([{"orderCode":1001},{"orderCode":1002}]);"""
         mock_get_all_tables.return_value.rows = "job"
         check_result = self.engine.execute_check("some_db", sql)
