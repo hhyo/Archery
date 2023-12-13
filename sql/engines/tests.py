@@ -1491,6 +1491,7 @@ class MongoTest(TestCase):
             user="ins_user",
         )
         self.engine = MongoEngine(instance=self.ins)
+        self.sys_config = SysConfig()
 
     def tearDown(self) -> None:
         self.ins.delete()
@@ -1605,11 +1606,72 @@ class MongoTest(TestCase):
         )
 
     @patch("sql.engines.mongo.MongoEngine.get_all_tables")
-    def test_execute_check_on_dml(self, mock_get_all_tables):
+    def test_execute_check_on_dml_without_real_row_count(self, mock_get_all_tables):
+        sql = """db.job.insert([{"orderCode":1001},{"orderCode":1002}]);"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_insert_one(self, mock_get_all_tables):
+        self.sys_config.set("real_row_count", True)
+        sql = """db.job.insertOne({"orderCode":1001});"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 1)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_insert_single(self, mock_get_all_tables):
+        self.sys_config.set("real_row_count", True)
+        sql = """db.job.insert({"orderCode":1001});"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 1)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_insert_multiple(self, mock_get_all_tables):
+        self.sys_config.set("real_row_count", True)
         sql = """db.job.insert([{"orderCode":1001},{"orderCode":1002}]);"""
         mock_get_all_tables.return_value.rows = "job"
         check_result = self.engine.execute_check("some_db", sql)
         self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 2)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_on_insert_except(self, mock_get_all_tables):
+        self.sys_config.set("real_row_count", True)
+        sql = """db.job.insert(("orderCode":1001));"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    @patch("sql.engines.mongo.MongoEngine.query")
+    def test_execute_check_on_update_with_find(self, mock_get_all_tables, mock_query):
+        self.sys_config.set("real_row_count", True)
+        sql = """db.job.find({"orderCode":1001}).update(({"orderCode":1002}));"""
+        mock_get_all_tables.return_value.rows = "job"
+        mock_query.return_value.rows = (('{"count": 0}',),)
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    @patch("sql.engines.mongo.MongoEngine.query")
+    def test_execute_check_on_update_without_find(
+        self, mock_get_all_tables, mock_query
+    ):
+        self.sys_config.set("real_row_count", True)
+        sql = """db.job.update({"orderCode":1001},{$set:{"orderCode":1002}}));"""
+        mock_get_all_tables.return_value.rows = "job"
+        mock_query.return_value.rows = (('{"count": 0}',),)
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["affected_rows"], 0)
+
+    @patch("sql.engines.mongo.MongoEngine.get_all_tables")
+    def test_execute_check_with_syntax_error(self, mock_get_all_tables):
+        sql = """db.job.insert({"orderCode":1001);"""
+        mock_get_all_tables.return_value.rows = "job"
+        check_result = self.engine.execute_check("some_db", sql)
+        self.assertEqual(check_result.rows[0].__dict__["stagestatus"], "语法错误")
 
     @patch("sql.engines.mongo.MongoEngine.exec_cmd")
     @patch("sql.engines.mongo.MongoEngine.get_master")
