@@ -195,7 +195,7 @@ def get_full_sqlitem_list(full_sql, db_name):
     # 逐行处理SQL文本
     for line in pre_sql_list:
         # 匹配到declare和begin开始的行，同时该行SQL不是处于PLSQL程序块内部的，前面添加delimiter $$标识符（独立一行）
-        pattern = r"^(declare|begin)"
+        pattern = r"^(declare|begin)\s|\n"
         groups = re.match(pattern, line.lstrip(), re.IGNORECASE)
         if groups and is_inside_plsqlblock == 0:
             line = "delimiter $$" + "\n" + line
