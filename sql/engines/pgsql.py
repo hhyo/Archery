@@ -35,6 +35,7 @@ class PgSQLEngine(EngineBase):
             port=self.port,
             user=self.user,
             password=self.password,
+            client_encoding=self.instance.charset,
             dbname=db_name,
             connect_timeout=10,
         )
