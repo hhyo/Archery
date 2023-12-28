@@ -11,6 +11,7 @@ from django.views.decorators.cache import cache_page
 from pyecharts.charts import Line
 from pyecharts import options as opts
 from common.utils.chart_dao import ChartDao
+from sql.engines import get_engine
 
 from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -44,7 +45,7 @@ def slowquery_review(request):
         # 调用阿里云慢日志接口
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review(
-            self, start_time, end_time, db_name, limit, offset
+            start_time, end_time, db_name, limit, offset
         )
     else:
         limit = offset + limit
