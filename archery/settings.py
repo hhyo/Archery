@@ -125,6 +125,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE = (
+    "django.middleware.cache.UpdateCacheMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -135,6 +136,7 @@ MIDDLEWARE = (
     "django.middleware.gzip.GZipMiddleware",
     "common.middleware.check_login_middleware.CheckLoginMiddleware",
     "common.middleware.exception_logging_middleware.ExceptionLoggingMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
 )
 
 ROOT_URLCONF = "archery.urls"
