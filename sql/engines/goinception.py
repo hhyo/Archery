@@ -310,7 +310,7 @@ class GoInceptionEngine(EngineBase):
             tree = DictTree(tree)
 
             # nodes = tree.find_max_tree("TableRefs") or tree.find_max_tree("Left", "Right")
-            nodes = tree.find_max_tree("TableRefs", "Left", "Right","From")
+            nodes = tree.find_max_tree("TableRefs", "Left", "Right", "From")
             if nodes:
                 # assert isinstance(v, dict) is true
                 find_queue.extend([v for node in nodes for v in node.values() if v])
