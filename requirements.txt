@@ -23,7 +23,7 @@ django-mirage-field==1.4.0
 schema-sync==0.9.7
 parsedatetime==2.4
 sshtunnel==0.1.5
-pycryptodome==3.10.1
+pycryptodome==3.19.1
 pyodps==0.*
 pandas==1.5.*
 clickhouse-driver==0.*
