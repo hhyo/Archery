@@ -15,3 +15,5 @@ sonar-project.properties
 .env
 local_settings.py
 src/docker-compose-dev
+.coverage
+archery_custom

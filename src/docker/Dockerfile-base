@@ -1,91 +1,15 @@
-FROM centos:7 AS compbasedeps
+ARG PYTHON_BASE_IMAGE=library/python:3.11-bullseye
+FROM ${PYTHON_BASE_IMAGE}
 
-ENV PYTHON_VERSION 3.9.10
-ENV DOCKERIZE_VERSION v0.6.1
 ENV SOAR_VERSION 0.11.0
+ENV TZ Asia/Shanghai
 
+ARG HTTPS_PROXY=""
+ARG HTTP_PROXY=""
 WORKDIR /opt
 
-RUN sed -e 's|^mirrorlist=|#mirrorlist=|g' -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' -i /etc/yum.repos.d/CentOS-*.repo \
-    && yum install -y epel-release \
-    && sed -e 's!^metalink=!#metalink=!g' -e 's!^#baseurl=!baseurl=!g' -e 's!//download\.fedoraproject\.org/pub!//mirrors.tuna.tsinghua.edu.cn!g' -e 's!//download\.example/pub!//mirrors.tuna.tsinghua.edu.cn!g' -e 's!http://mirrors!https://mirrors!g' -i /etc/yum.repos.d/epel*.repo \
-    && yum -y install cmake glibc-common bison gcc-c++ git mysql-devel libaio-devel glib2 glib2-devel libffi-devel gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel xz-devel wget \
-#python 3
-    && cd /opt \
-    && wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" \
-    && tar -xvJf Python-$PYTHON_VERSION.tar.xz \
-    && cd /opt/Python-$PYTHON_VERSION \
-    && ./configure prefix=/usr/local/python3 \
-    && make && make install \
-    && /usr/local/python3/bin/pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple virtualenv \
-#dockerize
-    && wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /opt -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-#sqladvisor
-    && yum -y install https://mirrors.ustc.edu.cn/percona/percona/yum/percona-release-latest.noarch.rpm \
-    && sed -e 's|http://repo.percona.com/|https://mirrors.ustc.edu.cn/percona/|g' -i /etc/yum.repos.d/percona-*.repo \
-    && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 \
-    && yum -y install percona-toolkit \
-    && ln -fs /usr/lib64/mysql/libmysqlclient.so.18 /usr/lib64/libperconaserverclient_r.so \
-    && cd /opt \
-    && git clone https://github.com/hhyo/SQLAdvisor.git --depth 3 \
-    && cd /opt/SQLAdvisor/ \
-    && cmake -DBUILD_CONFIG=mysql_release -DCMAKE_BUILD_TYPE=debug -DCMAKE_INSTALL_PREFIX=/usr/local/sqlparser ./ \
-    && make && make install \
-    && cd sqladvisor/ \
-    && cmake -DCMAKE_BUILD_TYPE=debug ./ \
-    && make \
-#soar
-    && cd /opt \
-    && wget https://github.com/XiaoMi/soar/releases/download/$SOAR_VERSION/soar.linux-amd64 -O soar \
-#my2sql
-    && wget https://raw.githubusercontent.com/liuhr/my2sql/master/releases/centOS_release_7.x/my2sql -O my2sql \
-#mongo
-    && wget -c https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-3.6.20.tgz \
-    && tar -xvf mongodb-linux-x86_64-rhel70-3.6.20.tgz 
+COPY src/docker/setup.sh /opt/setup.sh
+RUN chmod +x /opt/setup.sh \
+    && /opt/setup.sh \
+    && rm -rf /opt/setup.sh
 
-FROM centos:7
-
-ENV TZ=Asia/Shanghai
-
-WORKDIR /opt
-
-COPY --from=compbasedeps /etc/yum.repos.d/percona-*.repo /opt/
-COPY --from=compbasedeps /etc/pki/rpm-gpg/PERCONA-* /opt/
-COPY --from=compbasedeps /etc/yum.repos.d/epel*.repo /etc/yum.repos.d/
-COPY --from=compbasedeps /opt/SQLAdvisor/sqladvisor/sqladvisor /opt/
-COPY --from=compbasedeps /opt/soar /opt/
-COPY --from=compbasedeps /opt/my2sql /opt/
-COPY --from=compbasedeps /opt/dockerize /usr/local/bin/
-COPY --from=compbasedeps /opt/mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/
-COPY --from=compbasedeps /usr/local/python3 /usr/local/python3
-COPY --from=compbasedeps /usr/local/sqlparser /usr/local/sqlparser
-
-RUN cd /opt \
-    && sed -e 's|^mirrorlist=|#mirrorlist=|g' -e 's|^#baseurl=http://mirror.centos.org|baseurl=https://mirrors.tuna.tsinghua.edu.cn|g' -i /etc/yum.repos.d/CentOS-*.repo \
-    && yum -y install vim kde-l10n-Chinese glibc-common libcurl cyrus-sasl-gssapi cyrus-sasl-plain cmake bison gcc-c++ mysql-devel libaio-devel glib2 glib2-devel xz-compat-libs libffi-devel gcc make zlib-devel openssl openssl-devel ncurses-devel openldap-devel gettext bzip2-devel xz-devel wget \
-#msodbc
-    && curl https://packages.microsoft.com/config/rhel/7/prod.repo > /etc/yum.repos.d/mssql-release.repo \
-    && ACCEPT_EULA=Y yum -y install msodbcsql17 unixODBC-devel \
-#oracle client
-    && yum -y install http://yum.oracle.com/repo/OracleLinux/OL7/oracle/instantclient/x86_64/getPackage/oracle-instantclient19.3-basiclite-19.3.0.0.0-1.x86_64.rpm \
-    && mv /opt/percona-*.repo /etc/yum.repos.d/ \
-    && mv /opt/PERCONA-* /etc/pki/rpm-gpg/ \
-    && yum -y install Percona-Server-devel-57 Percona-Server-shared-57  Percona-Server-client-57 percona-toolkit \
-    && yum clean all \
-    && rm -rf /var/cache/yum/* \
-    && ln -fs /usr/lib64/mysql/libmysqlclient.so.18 /usr/lib64/libperconaserverclient_r.so \
-    && ln -fs /usr/lib64/liblzma.so.0 /usr/lib64/liblzma.so \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
-    && localedef -c -f UTF-8 -i zh_CN zh_CN.utf8 \
-    && cd /opt \
-    && chmod +x sqladvisor soar my2sql \
-    && chmod +x /usr/local/bin/dockerize \
-    && chmod +x /usr/local/bin/mongo \
-    && ln -fs /usr/local/python3/bin/python3 /usr/bin/python3 \
-    && ln -fs /usr/local/python3/bin/pip3 /usr/bin/pip3 \
-    && ln -fs /usr/local/python3/bin/virtualenv /usr/bin/virtualenv \
-    && virtualenv venv4archery --python=python3
-
-ENV LANG zh_CN.UTF-8
-ENV LC_ALL zh_CN.UTF-8

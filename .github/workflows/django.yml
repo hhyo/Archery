@@ -72,7 +72,8 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install libsasl2-dev libkrb5-dev libldap2-dev libssl-dev unixodbc unixodbc-dev
         python -m pip install --upgrade pip
-        pip install codecov coverage flake8 -r requirements.txt
+        pip install -r requirements.txt
+        pip install -r dev-requirements.txt
         
     - name: Init Table
       run: |
@@ -83,8 +84,7 @@ jobs:
       run: |
         python manage.py makemigrations
         python manage.py makemigrations sql
-        coverage run manage.py test -v 3 --keepdb
-        coverage xml
+        pytest --cov --cov-report xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

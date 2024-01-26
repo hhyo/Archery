@@ -36,9 +36,13 @@ class GoInceptionEngine(EngineBase):
         archer_config = SysConfig()
         go_inception_host = archer_config.get("go_inception_host")
         go_inception_port = int(archer_config.get("go_inception_port", 4000))
+        go_inception_user = archer_config.get("go_inception_user", "")
+        go_inception_password = archer_config.get("go_inception_password", "")
         self.conn = MySQLdb.connect(
             host=go_inception_host,
             port=go_inception_port,
+            user=go_inception_user,
+            passwd=go_inception_password,
             charset="utf8mb4",
             connect_timeout=10,
         )
@@ -72,7 +76,10 @@ class GoInceptionEngine(EngineBase):
         # inception 校验
         check_result.rows = []
         variables, set_session_sql = get_session_variables(instance)
-        inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;*/
+        # 获取real_row_count参数选项
+        real_row_count = SysConfig().get("real_row_count", False)
+        real_row_count_option = "--real_row_count=true;" if real_row_count else ""
+        inception_sql = f"""/*--user='{user}';--password='{password}';--host='{host}';--port={port};--check=1;{real_row_count_option}*/
                             inception_magic_start;
                             {set_session_sql}
                             use `{db_name}`;

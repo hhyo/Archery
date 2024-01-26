@@ -12,7 +12,7 @@ from rest_framework import views, generics, status, serializers, permissions
 from rest_framework.response import Response
 
 from common.config import SysConfig
-from common.utils.const import WorkflowStatus, WorkflowType
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from sql.engines import get_engine
 from sql.models import (
     SqlWorkflow,
@@ -21,13 +21,14 @@ from sql.models import (
     Users,
     WorkflowLog,
     ArchiveConfig,
+    QueryPrivilegesApply,
 )
 from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.utils.resource_group import user_groups
 from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
 from sql.utils.tasks import del_schedule
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .filters import WorkflowFilter, WorkflowAuditFilter
 from .pagination import CustomizedPagination
 from .serializers import (
@@ -221,258 +222,79 @@ class AuditWorkflow(views.APIView):
         serializer = AuditWorkflowSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        audit_type = request.data["audit_type"]
-        workflow_type = request.data["workflow_type"]
-        workflow_id = request.data["workflow_id"]
-        audit_remark = request.data["audit_remark"]
-        engineer = request.data["engineer"]
-        user = Users.objects.get(username=engineer)
-
-        # 审核查询权限申请
-        if workflow_type == 1:
-            audit_status = 1 if audit_type == "pass" else 2
-
-            if audit_remark is None:
-                audit_remark = ""
-
-            if Audit.can_review(user, workflow_id, workflow_type) is False:
-                raise serializers.ValidationError({"errors": "你无权操作当前工单！"})
-
-            # 使用事务保持数据一致性
-            try:
-                with transaction.atomic():
-                    workflow_audit = Audit.detail_by_workflow_id(
-                        workflow_id=workflow_id,
-                        workflow_type=WorkflowType.QUERY,
-                    )
-                    audit_id = workflow_audit.audit_id
-
-                    # 调用工作流接口审核
-                    audit_result, audit_detail = Audit.audit(
-                        audit_id, audit_status, user.username, audit_remark
-                    )
-
-                    # 按照审核结果更新业务表审核状态
-                    workflow_audit = Audit.detail(audit_id)
-                    if workflow_audit.workflow_type == WorkflowType.QUERY:
-                        # 更新业务表审核状态,插入权限信息
-                        _query_apply_audit_call_back(
-                            workflow_audit.workflow_id,
-                            audit_result["data"]["workflow_status"],
-                        )
-
-            except Exception as msg:
-                logger.error(traceback.format_exc())
-                raise serializers.ValidationError({"errors": msg})
+        # 此处已经通过校验, 肯定存在, 就不 try 了
+        workflow_audit = WorkflowAudit.objects.get(
+            workflow_id=serializer.data["workflow_id"],
+            workflow_type=serializer.data["workflow_type"],
+        )
+        sys_config = SysConfig()
+        auditor = get_auditor(audit=workflow_audit)
+        user = Users.objects.get(username=serializer.data["engineer"])
+        if serializer.data["audit_type"] == "pass":
+            action = WorkflowAction.PASS
+            notify_config_key = "Pass"
+            success_message = "passed"
+        elif serializer.data["audit_type"] == "cancel":
+            notify_config_key = "Cancel"
+            success_message = "canceled"
+            if auditor.workflow.engineer == serializer.data["engineer"]:
+                action = WorkflowAction.ABORT
             else:
-                # 消息通知
-                async_task(
-                    notify_for_audit,
-                    workflow_audit=workflow_audit,
-                    workflow_audit_detail=audit_detail,
-                    timeout=60,
-                    task_name=f"query-priv-audit-{workflow_id}",
-                )
-                return (
-                    Response({"msg": "passed"})
-                    if audit_type == "pass"
-                    else Response({"msg": "canceled"})
-                )
-        # 审核SQL上线申请
-        elif workflow_type == 2:
-            # SQL上线申请通过
-            if audit_type == "pass":
-                # 权限验证
-                if Audit.can_review(user, workflow_id, workflow_type) is False:
-                    raise serializers.ValidationError({"errors": "你无权操作当前工单！"})
+                raise serializers.ValidationError({"errors": "用户无权操作此工单"})
+        else:
+            raise serializers.ValidationError(
+                {"errors": "audit_type 只能是 pass 或 cancel"}
+            )
 
-                # 使用事务保持数据一致性
-                try:
-                    with transaction.atomic():
-                        # 调用工作流接口审核
-                        workflow_audit = Audit.detail_by_workflow_id(
-                            workflow_id=workflow_id,
-                            workflow_type=WorkflowType.SQL_REVIEW,
-                        )
-                        audit_id = workflow_audit.audit_id
-                        audit_result, audit_detail = Audit.audit(
-                            audit_id,
-                            WorkflowStatus.PASSED,
-                            user.username,
-                            audit_remark,
-                        )
+        try:
+            workflow_audit_detail = auditor.operate(
+                action, user, serializer.data["audit_remark"]
+            )
+        except AuditException as e:
+            raise serializers.ValidationError({"errors": f"操作失败, {str(e)}"})
 
-                        # 按照审核结果更新业务表审核状态
-                        if (
-                            audit_result["data"]["workflow_status"]
-                            == WorkflowStatus.PASSED
-                        ):
-                            # 将流程状态修改为审核通过
-                            SqlWorkflow(
-                                id=workflow_id, status="workflow_review_pass"
-                            ).save(update_fields=["status"])
-                except Exception as msg:
-                    logger.error(traceback.format_exc())
-                    raise serializers.ValidationError({"errors": msg})
-                else:
-                    # 开启了Pass阶段通知参数才发送消息通知
-                    sys_config = SysConfig()
-                    is_notified = (
-                        "Pass" in sys_config.get("notify_phase_control").split(",")
-                        if sys_config.get("notify_phase_control")
-                        else True
-                    )
-                    if is_notified:
-                        async_task(
-                            notify_for_audit,
-                            workflow_audit=workflow_audit,
-                            workflow_audit_detail=audit_detail,
-                            timeout=60,
-                            task_name=f"sqlreview-pass-{workflow_id}",
-                        )
-                    return Response({"msg": "passed"})
-            # SQL上线申请驳回/取消
-            elif audit_type == "cancel":
-                workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
-
-                if audit_remark is None:
-                    raise serializers.ValidationError({"errors": "终止原因不能为空"})
-
-                if can_cancel(user, workflow_id) is False:
-                    raise serializers.ValidationError({"errors": "你无权操作当前工单！"})
-
-                # 使用事务保持数据一致性
-                try:
-                    with transaction.atomic():
-                        # 调用工作流接口取消或者驳回
-                        audit_id = Audit.detail_by_workflow_id(
-                            workflow_id=workflow_id,
-                            workflow_type=WorkflowType.SQL_REVIEW,
-                        ).audit_id
-                        # 仅待审核的需要调用工作流，审核通过的不需要
-                        if workflow_detail.status != "workflow_manreviewing":
-                            # 增加工单日志
-                            if user.username == workflow_detail.engineer:
-                                _, audit_detail = Audit.add_log(
-                                    audit_id=audit_id,
-                                    operation_type=3,
-                                    operation_type_desc="取消执行",
-                                    operation_info="取消原因：{}".format(audit_remark),
-                                    operator=user.username,
-                                    operator_display=user.display,
-                                )
-                            else:
-                                _, audit_detail = Audit.add_log(
-                                    audit_id=audit_id,
-                                    operation_type=2,
-                                    operation_type_desc="审批不通过",
-                                    operation_info="审批备注：{}".format(audit_remark),
-                                    operator=user.username,
-                                    operator_display=user.display,
-                                )
-                        else:
-                            if user.username == workflow_detail.engineer:
-                                _, audit_detail = Audit.audit(
-                                    audit_id,
-                                    WorkflowStatus.ABORTED,
-                                    user.username,
-                                    audit_remark,
-                                )
-                            # 非提交人需要校验审核权限
-                            elif user.has_perm("sql.sql_review"):
-                                _, audit_detail = Audit.audit(
-                                    audit_id,
-                                    WorkflowStatus.REJECTED,
-                                    user.username,
-                                    audit_remark,
-                                )
-                            else:
-                                raise serializers.ValidationError(
-                                    {"errors": "Permission Denied"}
-                                )
-
-                        # 删除定时执行task
-                        if workflow_detail.status == "workflow_timingtask":
-                            schedule_name = f"sqlreview-timing-{workflow_id}"
-                            del_schedule(schedule_name)
-                        # 将流程状态修改为人工终止流程
-                        workflow_detail.status = "workflow_abort"
-                        workflow_detail.save()
-                except Exception as msg:
-                    logger.error(f"取消工单报错，错误信息：{traceback.format_exc()}")
-                    raise serializers.ValidationError({"errors": msg})
-                else:
-                    # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
-                    sys_config = SysConfig()
-                    is_notified = (
-                        "Cancel" in sys_config.get("notify_phase_control").split(",")
-                        if sys_config.get("notify_phase_control")
-                        else True
-                    )
-                    if is_notified:
-                        workflow_audit = Audit.detail_by_workflow_id(
-                            workflow_id=workflow_id,
-                            workflow_type=WorkflowType.SQL_REVIEW,
-                        )
-                        if workflow_audit.current_status in (
-                            WorkflowStatus.ABORTED,
-                            WorkflowStatus.REJECTED,
-                        ):
-                            async_task(
-                                notify_for_audit,
-                                workflow_audit=workflow_audit,
-                                workflow_audit_detail=audit_detail,
-                                timeout=60,
-                                task_name=f"sqlreview-cancel-{workflow_id}",
-                            )
-                    return Response({"msg": "canceled"})
-        # 审核数据归档申请
-        elif workflow_type == 3:
-            audit_status = 1 if audit_type == "pass" else 2
-
-            if audit_remark is None:
-                audit_remark = ""
-
-            if Audit.can_review(user, workflow_id, workflow_type) is False:
-                raise serializers.ValidationError({"errors": "你无权操作当前工单！"})
-
-            # 使用事务保持数据一致性
-            try:
-                with transaction.atomic():
-                    workflow_audit = Audit.detail_by_workflow_id(
-                        workflow_id=workflow_id,
-                        workflow_type=WorkflowType.ARCHIVE,
-                    )
-                    audit_id = workflow_audit.audit_id
-
-                    # 调用工作流插入审核信息，更新业务表审核状态
-                    audit_status, audit_detail = Audit.audit(
-                        audit_id, audit_status, user.username, audit_remark
-                    )
-                    audit_status = audit_status["data"]["workflow_status"]
-                    ArchiveConfig(
-                        id=workflow_id,
-                        status=audit_status,
-                        state=True if audit_status == WorkflowStatus.PASSED else False,
-                    ).save(update_fields=["status", "state"])
-            except Exception as msg:
-                logger.error(traceback.format_exc())
-                raise serializers.ValidationError({"errors": msg})
+        # 最后处置一下原本工单的状态
+        if auditor.workflow_type == WorkflowType.QUERY:
+            _query_apply_audit_call_back(
+                auditor.audit.workflow_id,
+                auditor.audit.current_status,
+            )
+        elif auditor.workflow_type == WorkflowType.SQL_REVIEW:
+            if auditor.audit.current_status == WorkflowStatus.PASSED:
+                auditor.workflow.status = "workflow_review_pass"
+                auditor.workflow.save(update_fields=["status"])
+            elif auditor.audit.current_status in [
+                WorkflowStatus.ABORTED,
+                WorkflowStatus.REJECTED,
+            ]:
+                if auditor.workflow.status == "workflow_timingtask":
+                    del_schedule(f"sqlreview-timing-{auditor.workflow.id}")
+                    # 将流程状态修改为人工终止流程
+                auditor.workflow.status = "workflow_abort"
+                auditor.workflow.save(update_fields=["status"])
+        elif auditor.workflow_type == WorkflowType.ARCHIVE:
+            auditor.workflow.status = auditor.audit.current_status
+            if auditor.audit.current_status == WorkflowStatus.PASSED:
+                auditor.workflow.state = True
             else:
-                # 消息通知
-                async_task(
-                    notify_for_audit,
-                    workflow_audit=workflow_audit,
-                    workflow_audit_detail=audit_detail,
-                    timeout=60,
-                    task_name=f"archive-audit-{workflow_id}",
-                )
-                return (
-                    Response({"msg": "passed"})
-                    if audit_type == "pass"
-                    else Response({"msg": "canceled"})
-                )
+                auditor.workflow.state = False
+            auditor.workflow.save(update_fields=["status", "state"])
+
+        # 发消息
+        is_notified = (
+            notify_config_key in sys_config.get("notify_phase_control").split(",")
+            if sys_config.get("notify_phase_control")
+            else True
+        )
+        if is_notified:
+            async_task(
+                notify_for_audit,
+                workflow_audit=auditor.audit,
+                workflow_audit_detail=workflow_audit_detail,
+                timeout=60,
+                task_name=f"notify-audit-{auditor.audit}-{WorkflowType(auditor.audit.workflow_type).label}",
+            )
+        return Response({"msg": success_message})
 
 
 class ExecuteWorkflow(views.APIView):

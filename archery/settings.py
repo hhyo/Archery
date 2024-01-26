@@ -62,10 +62,12 @@ env = environ.Env(
             "sql.notify:FeishuWebhookNotifier",
             "sql.notify:FeishuPersonNotifier",
             "sql.notify:QywxWebhookNotifier",
+            "sql.notify:QywxToUserNotifier",
             "sql.notify:MailNotifier",
             "sql.notify:GenericWebhookNotifier",
         ],
     ),
+    CURRENT_AUDITOR=(str, "sql.utils.workflow_audit:AuditV2"),
 )
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -102,6 +104,8 @@ AVAILABLE_ENGINES = {
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
 
 ENABLED_ENGINES = env("ENABLED_ENGINES")
+
+CURRENT_AUDITOR = env("CURRENT_AUDITOR")
 
 # Application definition
 INSTALLED_APPS = (

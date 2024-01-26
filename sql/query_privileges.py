@@ -20,13 +20,13 @@ from django.urls import reverse
 from django_q.tasks import async_task
 
 from common.config import SysConfig
-from common.utils.const import WorkflowStatus, WorkflowType
+from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines.goinception import GoInceptionEngine
 from sql.models import QueryPrivilegesApply, QueryPrivileges, Instance, ResourceGroup
 from sql.notify import notify_for_audit
 from sql.utils.resource_group import user_groups, user_instances
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, AuditException, get_auditor
 from sql.utils.sql_utils import extract_tables
 
 logger = logging.getLogger("default")
@@ -259,55 +259,46 @@ def query_priv_apply(request):
                 result["msg"] = f"你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请"
                 return HttpResponse(json.dumps(result), content_type="application/json")
 
+    apply_info = QueryPrivilegesApply(
+        title=title,
+        group_id=group_id,
+        group_name=group_name,
+        # audit_auth_groups 暂时设置为空
+        audit_auth_groups="",
+        user_name=user.username,
+        user_display=user.display,
+        instance=ins,
+        priv_type=int(priv_type),
+        valid_date=valid_date,
+        status=WorkflowStatus.WAITING,
+        limit_num=limit_num,
+    )
+    if int(priv_type) == 1:
+        apply_info.db_list = ",".join(db_list)
+        apply_info.table_list = ""
+    elif int(priv_type) == 2:
+        apply_info.db_list = db_name
+        apply_info.table_list = ",".join(table_list)
+    audit_handler = get_auditor(workflow=apply_info)
     # 使用事务保持数据一致性
     try:
         with transaction.atomic():
-            # 保存申请信息到数据库
-            applyinfo = QueryPrivilegesApply(
-                title=title,
-                group_id=group_id,
-                group_name=group_name,
-                audit_auth_groups=Audit.settings(group_id, WorkflowType.QUERY),
-                user_name=user.username,
-                user_display=user.display,
-                instance=ins,
-                priv_type=int(priv_type),
-                valid_date=valid_date,
-                status=WorkflowStatus.WAITING,
-                limit_num=limit_num,
-            )
-            if int(priv_type) == 1:
-                applyinfo.db_list = ",".join(db_list)
-                applyinfo.table_list = ""
-            elif int(priv_type) == 2:
-                applyinfo.db_list = db_name
-                applyinfo.table_list = ",".join(table_list)
-            applyinfo.save()
-            apply_id = applyinfo.apply_id
-
-            # 调用工作流插入审核信息,查询权限申请workflow_type=1
-            audit_result = Audit.add(WorkflowType.QUERY, apply_id)
-            if audit_result["status"] == 0:
-                # 更新业务表审核状态,判断是否插入权限信息
-                _query_apply_audit_call_back(
-                    apply_id, audit_result["data"]["workflow_status"]
-                )
-    except Exception as msg:
-        logger.error(traceback.format_exc())
+            audit_handler.create_audit()
+    except AuditException as e:
+        logger.error(f"新建审批流失败, {str(e)}")
         result["status"] = 1
-        result["msg"] = str(msg)
-    else:
-        result = audit_result
-        # 消息通知
-        workflow_audit = Audit.detail_by_workflow_id(
-            workflow_id=apply_id, workflow_type=WorkflowType.QUERY
-        )
-        async_task(
-            notify_for_audit,
-            workflow_audit=workflow_audit,
-            timeout=60,
-            task_name=f"query-priv-apply-{apply_id}",
-        )
+        result["msg"] = "新建审批流失败, 请联系管理员"
+        return HttpResponse(json.dumps(result), content_type="application/json")
+    _query_apply_audit_call_back(
+        audit_handler.workflow.apply_id, audit_handler.audit.current_status
+    )
+    # 消息通知
+    async_task(
+        notify_for_audit,
+        workflow_audit=audit_handler.audit,
+        timeout=60,
+        task_name=f"query-priv-apply-{audit_handler.workflow.apply_id}",
+    )
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
@@ -422,52 +413,42 @@ def query_priv_audit(request):
     :return:
     """
     # 获取用户信息
-    user = request.user
     apply_id = int(request.POST["apply_id"])
-    audit_status = int(request.POST["audit_status"])
+    try:
+        audit_status = WorkflowAction(int(request.POST["audit_status"]))
+    except ValueError as e:
+        return render(request, "error.html", {"errMsg": f"audit_status 参数错误, {str(e)}"})
     audit_remark = request.POST.get("audit_remark")
 
-    if audit_remark is None:
+    if not audit_remark:
         audit_remark = ""
 
-    if Audit.can_review(request.user, apply_id, 1) is False:
-        context = {"errMsg": "你无权操作当前工单！"}
-        return render(request, "error.html", context)
-
-    # 使用事务保持数据一致性
     try:
-        with transaction.atomic():
-            audit_id = Audit.detail_by_workflow_id(
-                workflow_id=apply_id, workflow_type=WorkflowType.QUERY
-            ).audit_id
-
-            # 调用工作流接口审核
-            audit_result, workflow_audit_detail = Audit.audit(
-                audit_id, audit_status, user.username, audit_remark
+        sql_query_apply = QueryPrivilegesApply.objects.get(apply_id=apply_id)
+    except QueryPrivilegesApply.DoesNotExist:
+        return render(request, "error.html", {"errMsg": "工单不存在"})
+    auditor = get_auditor(workflow=sql_query_apply)
+    # 使用事务保持数据一致性
+    with transaction.atomic():
+        try:
+            workflow_audit_detail = auditor.operate(
+                audit_status, request.user, audit_remark
             )
-
-            # 按照审核结果更新业务表审核状态
-            audit_detail = Audit.detail(audit_id)
-            if audit_detail.workflow_type == WorkflowType.QUERY:
-                # 更新业务表审核状态,插入权限信息
-                _query_apply_audit_call_back(
-                    audit_detail.workflow_id, audit_result["data"]["workflow_status"]
-                )
-
-    except Exception as msg:
-        logger.error(traceback.format_exc())
-        context = {"errMsg": msg}
-        return render(request, "error.html", context)
-    else:
-        # 消息通知
-        audit_detail.refresh_from_db()
-        async_task(
-            notify_for_audit,
-            workflow_audit=audit_detail,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"query-priv-audit-{apply_id}",
+        except AuditException as e:
+            return render(request, "error.html", {"errMsg": f"审核失败: {str(e)}"})
+        # 统一 call back, 内部做授权和更新数据库内容
+        _query_apply_audit_call_back(
+            auditor.audit.workflow_id, auditor.audit.current_status
         )
+
+    # 消息通知
+    async_task(
+        notify_for_audit,
+        workflow_audit=auditor.audit,
+        workflow_audit_detail=workflow_audit_detail,
+        timeout=60,
+        task_name=f"query-priv-audit-{apply_id}",
+    )
 
     return HttpResponseRedirect(reverse("sql:queryapplydetail", args=(apply_id,)))
 
@@ -496,6 +477,8 @@ def _db_priv(user, instance, db_name):
     :return: 权限存在则返回对应权限的limit_num，否则返回False
     TODO 返回统一为 int 类型, 不存在返回0 (虽然其实在python中 0==False)
     """
+    if user.is_superuser:
+        return int(SysConfig().get("admin_query_limit", 5000))
     # 获取用户库权限
     user_privileges = QueryPrivileges.objects.filter(
         user_name=user.username,
@@ -505,11 +488,8 @@ def _db_priv(user, instance, db_name):
         is_deleted=0,
         priv_type=1,
     )
-    if user.is_superuser:
-        return int(SysConfig().get("admin_query_limit", 5000))
-    else:
-        if user_privileges.exists():
-            return user_privileges.first().limit_num
+    if user_privileges.exists():
+        return user_privileges.first().limit_num
     return False
 
 

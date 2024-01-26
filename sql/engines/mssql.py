@@ -16,8 +16,8 @@ class MssqlEngine(EngineBase):
     test_query = "SELECT 1"
 
     def get_connection(self, db_name=None):
-        connstr = """DRIVER=ODBC Driver 17 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
-client charset = UTF-8;connect timeout=10;CHARSET={4};""".format(
+        connstr = """DRIVER=ODBC Driver 18 for SQL Server;SERVER={0},{1};UID={2};PWD={3};
+client charset = UTF-8;connect timeout=10;CHARSET={4};TrustServerCertificate=yes;""".format(
             self.host,
             self.port,
             self.user,
@@ -316,6 +316,10 @@ then DATA_TYPE + '(' + convert(varchar(max), CHARACTER_MAXIMUM_LENGTH) + ')' els
         # 对查询sql增加limit限制
         if re.match(r"^select", sql_lower):
             if sql_lower.find(" top ") == -1:
+                if sql_lower.find(" distinct ") > 0:
+                    return sql_lower.replace(
+                        "distinct", "distinct top {}".format(limit_num)
+                    )
                 return sql_lower.replace("select", "select top {}".format(limit_num))
         return sql.strip()
 

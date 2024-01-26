@@ -26,7 +26,7 @@ from sql.models import (
     SqlWorkflowContent,
 )
 from sql.utils.resource_group import auth_group_users
-from sql.utils.workflow_audit import Audit
+from sql.utils.workflow_audit import Audit, AuditV2
 from sql_api.serializers import (
     WorkflowContentSerializer,
     WorkflowAuditListSerializer,
@@ -52,23 +52,29 @@ class My2SqlResult:
     error: str = ""
 
 
+@dataclass
 class Notifier:
-    name = "base"
-    sys_config_key: str = ""
+    workflow: Union[
+        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult
+    ] = None
+    sys_config: SysConfig = None
+    # init false, class property, 不是 instance property
+    name: str = field(init=False, default="base")
+    sys_config_key: str = field(init=False, default="")
+    event_type: EventType = EventType.AUDIT
+    audit: WorkflowAudit = None
+    audit_detail: WorkflowAuditDetail = None
 
-    def __init__(
-        self,
-        workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult],
-        sys_config: SysConfig,
-        audit: WorkflowAudit = None,
-        audit_detail: WorkflowAuditDetail = None,
-        event_type: EventType = EventType.AUDIT,
-    ):
-        self.workflow = workflow
-        self.audit = audit
-        self.audit_detail = audit_detail
-        self.event_type = event_type
-        self.sys_config = sys_config
+    def __post_init__(self):
+        if not self.audit and not self.workflow:
+            raise ValueError("需要提供 WorkflowAudit 或 workflow")
+        if not self.workflow:
+            self.workflow = self.audit.get_workflow()
+        if not self.audit and not isinstance(self.workflow, My2SqlResult):
+            self.audit = self.workflow.get_audit()
+        # 防止 get_auditor 显式的传了个 None
+        if not self.sys_config:
+            self.sys_config = SysConfig()
 
     def render(self):
         raise NotImplementedError
@@ -91,12 +97,9 @@ class Notifier:
 
 
 class GenericWebhookNotifier(Notifier):
-    name = "generic_webhook"
+    name: str = "generic_webhook"
     sys_config_key: str = "generic_webhook_url"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.request_data = None
+    request_data: dict = None
 
     def render(self):
         self.request_data = {}
@@ -133,13 +136,9 @@ class LegacyMessage:
     msg_cc: List[Users] = field(default_factory=list)
 
 
+@dataclass
 class LegacyRender(Notifier):
-    messages: List[LegacyMessage]
-    sys_config_key: str = ""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.messages = []
+    messages: List[LegacyMessage] = field(default_factory=list)
 
     def render_audit(self):
         # 获取审核信息
@@ -157,9 +156,8 @@ class LegacyRender(Notifier):
         workflow_from = self.audit.create_user_display
         group_name = self.audit.group_name
         # 获取当前审批和审批流程
-        workflow_auditors, current_workflow_auditors = Audit.review_info(
-            self.audit.workflow_id, self.audit.workflow_type
-        )
+        audit_handler = AuditV2(workflow=self.workflow, audit=self.audit)
+        review_info = audit_handler.get_review_info()
         # workflow content, 即申请通过后要执行什么东西
         # 执行的 SQL 语句, 授权的范围
         if workflow_type == WorkflowType.QUERY:
@@ -222,8 +220,8 @@ class LegacyRender(Notifier):
                 group_name,
                 instance,
                 db_name,
-                workflow_auditors,
-                current_workflow_auditors,
+                review_info.readable_info,
+                review_info.current_node.group.name,
                 workflow_title,
                 workflow_url,
                 workflow_content,
@@ -239,7 +237,7 @@ class LegacyRender(Notifier):
                 group_name,
                 instance,
                 db_name,
-                workflow_auditors,
+                review_info.readable_info,
                 workflow_title,
                 workflow_url,
                 workflow_content,
@@ -285,9 +283,8 @@ class LegacyRender(Notifier):
         base_url = self.sys_config.get(
             "archery_base_url", "http://127.0.0.1:8000"
         ).rstrip("/")
-        audit_auth_group, current_audit_auth_group = Audit.review_info(
-            self.workflow.id, 2
-        )
+        audit_handler = AuditV2(workflow=self.workflow, audit=self.audit)
+        review_info = audit_handler.get_review_info()
         audit_id = Audit.detail_by_workflow_id(self.workflow.id, 2).audit_id
         url = "{base_url}/workflow/{audit_id}".format(
             base_url=base_url, audit_id=audit_id
@@ -306,7 +303,7 @@ class LegacyRender(Notifier):
 组：{self.workflow.group_name}
 目标实例：{self.workflow.instance.instance_name}
 数据库：{self.workflow.db_name}
-审批流程：{audit_auth_group}
+审批流程：{review_info.readable_info}
 工单名称：{self.workflow.workflow_name}
 工单地址：{url}
 工单详情预览：{preview}"""
@@ -449,6 +446,20 @@ class QywxWebhookNotifier(LegacyRender):
             )
 
 
+class QywxToUserNotifier(LegacyRender):
+    name = "qywx_to_user"
+    sys_config_key: str = "wx"
+
+    def send(self):
+        msg_sender = MsgSender()
+        for m in self.messages:
+            msg_to_wx_user = [
+                user.wx_user_id if user.wx_user_id else user.username
+                for user in chain(m.msg_to, m.msg_cc)
+            ]
+            msg_sender.send_wx2user(f"{m.msg_title}\n{m.msg_content}", msg_to_wx_user)
+
+
 class MailNotifier(LegacyRender):
     name = "mail"
     sys_config_key = "mail"
@@ -476,11 +487,6 @@ def auto_notify(
     加载所有的 notifier, 调用 notifier 的 render 和 send 方法
     内部方法, 有数据库查询, 为了方便测试, 请勿使用 async_task 调用, 防止 patch 后调用失败
     """
-    if not workflow and event_type == EventType.AUDIT:
-        if audit.workflow_type == 1:
-            workflow = QueryPrivilegesApply.objects.get(apply_id=audit.workflow_id)
-        if audit.workflow_type == 2:
-            workflow = SqlWorkflow.objects.get(id=audit.workflow_id)
     for notifier in settings.ENABLED_NOTIFIERS:
         file, _class = notifier.split(":")
         try:
@@ -505,7 +511,7 @@ def auto_notify(
 def notify_for_execute(workflow: SqlWorkflow, sys_config: SysConfig = None):
     if not sys_config:
         sys_config = SysConfig()
-    auto_notify(workflow=workflow, sys_config=sys_config)
+    auto_notify(workflow=workflow, sys_config=sys_config, event_type=EventType.EXECUTE)
 
 
 def notify_for_audit(
@@ -524,6 +530,7 @@ def notify_for_audit(
         audit=workflow_audit,
         audit_detail=workflow_audit_detail,
         sys_config=sys_config,
+        event_type=EventType.AUDIT,
     )
 
 

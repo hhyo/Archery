@@ -2,6 +2,7 @@
 import MySQLdb
 import simplejson as json
 import datetime
+import pymysql
 from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
@@ -10,6 +11,7 @@ from django.views.decorators.cache import cache_page
 from pyecharts.charts import Line
 from pyecharts import options as opts
 from common.utils.chart_dao import ChartDao
+from sql.engines import get_engine
 
 from sql.utils.resource_group import user_instances
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -43,7 +45,7 @@ def slowquery_review(request):
         # 调用阿里云慢日志接口
         query_engine = get_engine(instance=instance_info)
         result = query_engine.slowquery_review(
-            self, start_time, end_time, db_name, limit, offset
+            start_time, end_time, db_name, limit, offset
         )
     else:
         limit = offset + limit
@@ -206,7 +208,7 @@ def slowquery_review_history(request):
 def report(request):
     """返回慢SQL历史趋势"""
     checksum = request.GET.get("checksum")
-    checksum = MySQLdb.escape_string(checksum).decode("utf-8")
+    checksum = pymysql.escape_string(checksum)
     cnt_data = ChartDao().slow_query_review_history_by_cnt(checksum)
     pct_data = ChartDao().slow_query_review_history_by_pct_95_time(checksum)
     cnt_x_data = [row[1] for row in cnt_data["rows"]]

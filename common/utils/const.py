@@ -23,6 +23,18 @@ class WorkflowStatus(models.IntegerChoices):
     ABORTED = 3, "审核取消"
 
 
+class WorkflowAction(models.IntegerChoices):
+    """工单操作列表, 必须是动词, 不是一种状态"""
+
+    SUBMIT = 0, "提交"
+    PASS = 1, "审核通过"
+    REJECT = 2, "审核不通过"
+    ABORT = 3, "审核取消"
+    EXECUTE_SET_TIME = 4, "设置定时执行"
+    EXECUTE_START = 5, "开始执行"
+    EXECUTE_END = 6, "执行结束"
+
+
 class SQLTuning:
     SYS_PARM_FILTER = [
         "BINLOG_CACHE_SIZE",

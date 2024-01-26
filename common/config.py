@@ -67,8 +67,7 @@ class SysConfig(object):
         obj, created = Config.objects.update_or_create(
             item=key, defaults={"value": db_value}
         )
-        if created:
-            self.sys_config.update({key: value})
+        self.sys_config.update({key: value})
 
     def replace(self, configs):
         result = {"status": 0, "msg": "ok", "data": []}

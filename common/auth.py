@@ -11,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
-from archery import settings
+from django.conf import settings
 from common.config import SysConfig
 from common.utils.ding_api import get_ding_user_id
 from sql.models import Users, ResourceGroup, TwoFactorAuthConfig

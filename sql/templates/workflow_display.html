@@ -1,0 +1,21 @@
+{# review_info 应为 ReviewInfo 对象, 本模板为所有用到 audit 工作流的审批共用 #}
+{% for n in review_info.nodes %}
+    {% if n.is_auto_pass %}
+        <span class="text-success">无需审批</span>
+    {% elif n.is_passed_node %}
+        <span class="text-success">{{ n.group.name }}</span>
+    {% elif n.is_current_node %}
+    <!-- 当前节点 -->
+        <u class="text-danger">
+            {{ n.group.name }}(
+            {% for u in n.group.user_set.all %}
+            <span class="text-primary">{{ u.username }}</span>
+            {% endfor %})
+        </u>
+    {% else %}
+        {{ n.group.name }}
+    {% endif %}
+    {% if not forloop.last %}
+        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+    {% endif %}
+{% endfor %}
