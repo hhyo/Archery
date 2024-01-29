@@ -121,7 +121,9 @@ class PhoenixEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.warning(f"PhoenixDB语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"PhoenixDB语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -170,7 +172,9 @@ class PhoenixEngine(EngineBase):
             try:
                 cursor.execute(statement.rstrip(";"), parameters)
             except Exception as e:
-                logger.error(f"Phoenix命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+                logger.error(
+                    f"Phoenix命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
+                )
                 execute_result.error = str(e)
                 execute_result.rows.append(
                     ReviewResult(

@@ -45,9 +45,9 @@ class SMS(TwoFactorAuthBase):
                     result = {"status": 1, "msg": "系统未配置短信服务商！"}
             else:
                 result["status"] = 1
-                result[
-                    "msg"
-                ] = f"获取验证码太频繁，请于{captcha['update_time'] - int(time.time()) + 60}秒后再试"
+                result["msg"] = (
+                    f"获取验证码太频繁，请于{captcha['update_time'] - int(time.time()) + 60}秒后再试"
+                )
         else:
             if self.client:
                 result = self.client.send_code(**kwargs)

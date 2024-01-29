@@ -2023,7 +2023,8 @@ class TestClickHouse(TestCase):
         select_sql = "select id,name from tb_test"
         check_result = new_engine.execute_check(db_name="some_db", sql=select_sql)
         self.assertEqual(
-            check_result.rows[0].errormessage, "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
+            check_result.rows[0].errormessage,
+            "仅支持DML和DDL语句，查询语句请使用SQL查询功能！",
         )
 
     @patch.object(ClickHouseEngine, "query")

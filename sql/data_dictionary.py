@@ -121,7 +121,9 @@ def export(request):
     elif request.user.is_superuser:
         dbs = query_engine.get_all_databases().rows
     else:
-        return JsonResponse({"status": 1, "msg": "仅管理员可以导出整个实例的字典信息！", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "仅管理员可以导出整个实例的字典信息！", "data": []}
+        )
 
     # 获取数据，存入目录
     path = os.path.join(settings.BASE_DIR, "downloads", "dictionary")
@@ -149,9 +151,9 @@ def export(request):
             return JsonResponse({"status": 1, "msg": "实例名或db名不合法", "data": []})
         response = FileResponse(open(fullpath, "rb"))
         response["Content-Type"] = "application/octet-stream"
-        response[
-            "Content-Disposition"
-        ] = f'attachment;filename="{quote(instance_name)}_{quote(db_name)}.html"'
+        response["Content-Disposition"] = (
+            f'attachment;filename="{quote(instance_name)}_{quote(db_name)}.html"'
+        )
         return response
 
     else:

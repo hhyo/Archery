@@ -89,7 +89,9 @@ def create(request):
     ) or (
         instance.db_type == "mongo" and not all([db_name, user, password1, password2])
     ):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     if password1 != password2:
         return JsonResponse({"status": 1, "msg": "两次输入密码不一致", "data": []})
@@ -137,7 +139,9 @@ def edit(request):
     if (instance.db_type == "mysql" and not all([user, host])) or (
         instance.db_type == "mongo" and not all([db_name, user])
     ):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     # 保存到数据库
     if password:
@@ -186,7 +190,9 @@ def grant(request):
         if priv_type == 0:
             global_privs = privs["global_privs"]
             if not all([global_privs]):
-                return JsonResponse({"status": 1, "msg": "信息不完整，请确认后提交", "data": []})
+                return JsonResponse(
+                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
+                )
             global_privs = ["GRANT OPTION" if g == "GRANT" else g for g in global_privs]
             if op_type == 0:
                 grant_sql = f"GRANT {','.join(global_privs)} ON *.* TO {user_host};"
@@ -198,7 +204,9 @@ def grant(request):
             db_privs = privs["db_privs"]
             db_name = request.POST.getlist("db_name[]")
             if not all([db_privs, db_name]):
-                return JsonResponse({"status": 1, "msg": "信息不完整，请确认后提交", "data": []})
+                return JsonResponse(
+                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
+                )
             for db in db_name:
                 db_privs = ["GRANT OPTION" if d == "GRANT" else d for d in db_privs]
                 if op_type == 0:
@@ -215,7 +223,9 @@ def grant(request):
             db_name = request.POST.get("db_name")
             tb_name = request.POST.getlist("tb_name[]")
             if not all([tb_privs, db_name, tb_name]):
-                return JsonResponse({"status": 1, "msg": "信息不完整，请确认后提交", "data": []})
+                return JsonResponse(
+                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
+                )
             for tb in tb_name:
                 tb_privs = ["GRANT OPTION" if t == "GRANT" else t for t in tb_privs]
                 if op_type == 0:
@@ -229,7 +239,9 @@ def grant(request):
             tb_name = request.POST.get("tb_name")
             col_name = request.POST.getlist("col_name[]")
             if not all([col_privs, db_name, tb_name, col_name]):
-                return JsonResponse({"status": 1, "msg": "信息不完整，请确认后提交", "data": []})
+                return JsonResponse(
+                    {"status": 1, "msg": "信息不完整，请确认后提交", "data": []}
+                )
             for priv in col_privs:
                 if op_type == 0:
                     grant_sql += f"GRANT {priv}(`{'`,`'.join(col_name)}`) ON `{db_name}`.`{tb_name}` TO {user_host};"
@@ -281,7 +293,9 @@ def reset_pwd(request):
     ) or (
         instance.db_type == "mongo" and not all([db_name, user, reset_pwd1, reset_pwd2])
     ):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     if reset_pwd1 != reset_pwd2:
         return JsonResponse({"status": 1, "msg": "两次输入密码不一致", "data": []})
@@ -323,7 +337,9 @@ def lock(request):
     lock_sql = ""
 
     if not all([user_host]):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     try:
         instance = user_instances(request.user, db_type=["mysql"]).get(id=instance_id)
@@ -365,7 +381,9 @@ def delete(request):
     if (instance.db_type == "mysql" and not all([user_host])) or (
         instance.db_type == "mongo" and not all([db_name_user])
     ):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     engine = get_engine(instance=instance)
     exec_result = engine.drop_instance_user(

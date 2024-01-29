@@ -61,7 +61,9 @@ def analyze(request):
                     instance_name=instance_name
                 )
             except Instance.DoesNotExist:
-                return JsonResponse({"status": 1, "msg": "你所在组未关联该实例！", "data": []})
+                return JsonResponse(
+                    {"status": 1, "msg": "你所在组未关联该实例！", "data": []}
+                )
             soar_test_dsn = SysConfig().get("soar_test_dsn")
             # 获取实例连接信息
             online_dsn = f"{instance.user}:{instance.password}@{instance.host}:{instance.port}/{db_name}"
@@ -81,7 +83,9 @@ def analyze(request):
             try:
                 p = Path(row["sql"].strip())
                 if p.exists():
-                    return JsonResponse({"status": 1, "msg": "SQL 语句不合法", "data": []})
+                    return JsonResponse(
+                        {"status": 1, "msg": "SQL 语句不合法", "data": []}
+                    )
             except OSError:
                 pass
             args["query"] = row["sql"]

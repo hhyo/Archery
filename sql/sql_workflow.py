@@ -154,7 +154,8 @@ def detail_content(request):
                 ReviewResult(
                     id=1,
                     sql=workflow_detail.sqlworkflowcontent.sql_content,
-                    errormessage="Json decode failed." "执行结果Json解析失败, 请联系管理员",
+                    errormessage="Json decode failed."
+                    "执行结果Json解析失败, 请联系管理员",
                 )
             ]
             rows = review_result.json()
@@ -164,7 +165,8 @@ def detail_content(request):
                     id=1,
                     sql=workflow_detail.sqlworkflowcontent.sql_content,
                     # 迫于无法单元测试这里加上英文报错信息
-                    errormessage="Json decode failed." "执行结果Json解析失败, 请联系管理员",
+                    errormessage="Json decode failed."
+                    "执行结果Json解析失败, 请联系管理员",
                 )
             ]
             rows = review_result.json()
@@ -252,7 +254,9 @@ def passed(request):
                 WorkflowAction.PASS, request.user, audit_remark
             )
         except AuditException as e:
-            return render(request, "error.html", {"errMsg": f"审核失败, 错误信息: {str(e)}"})
+            return render(
+                request, "error.html", {"errMsg": f"审核失败, 错误信息: {str(e)}"}
+            )
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             # 审批流全部走完了, 把工单标记为审核通过
             auditor.workflow.status = "workflow_review_pass"
@@ -298,7 +302,9 @@ def execute(request):
         return render(request, "error.html", context)
 
     if on_correct_time_period(workflow_id) is False:
-        context = {"errMsg": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"}
+        context = {
+            "errMsg": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+        }
         return render(request, "error.html", context)
     # 获取审核信息
     audit_id = Audit.detail_by_workflow_id(
@@ -393,7 +399,9 @@ def timing_task(request):
     schedule_name = f"sqlreview-timing-{workflow_id}"
 
     if on_correct_time_period(workflow_id, run_date) is False:
-        context = {"errMsg": "不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!"}
+        context = {
+            "errMsg": "不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!"
+        }
         return render(request, "error.html", context)
 
     # 使用事务保持数据一致性

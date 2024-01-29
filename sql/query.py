@@ -148,7 +148,9 @@ def query(request):
                     result["msg"] = f"数据脱敏异常，请联系管理员，错误信息：{msg}"
                 # 关闭query_check，忽略错误信息，返回未脱敏数据，权限校验标记为跳过
                 else:
-                    logger.warning(f"数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}")
+                    logger.warning(
+                        f"数据脱敏异常，按照配置放行，查询语句：{sql_content}，错误信息：{msg}"
+                    )
                     query_result.error = None
                     result["data"] = query_result.__dict__
         # 无需脱敏的语句
@@ -181,7 +183,9 @@ def query(request):
         )
         query_log.save()
     except Exception as e:
-        logger.error(f"查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}")
+        logger.error(
+            f"查询异常报错，查询语句：{sql_content}\n，错误信息：{traceback.format_exc()}"
+        )
         result["status"] = 1
         result["msg"] = f"查询异常报错，错误信息：{e}"
         return HttpResponse(json.dumps(result), content_type="application/json")

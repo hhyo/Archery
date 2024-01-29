@@ -524,7 +524,9 @@ class MysqlEngine(EngineBase):
             if kwargs.get("binary_as_hex"):
                 result_set = self.result_set_binary_as_hex(result_set)
         except Exception as e:
-            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -617,14 +619,18 @@ class MysqlEngine(EngineBase):
                 instance=self.instance, db_name=db_name, sql=sql
             )
         except Exception as e:
-            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}")
+            logger.debug(
+                f"{self.inc_engine.name}检测语句报错：错误信息{traceback.format_exc()}"
+            )
             raise RuntimeError(
                 f"{self.inc_engine.name}检测语句报错，请注意检查系统配置中{self.inc_engine.name}配置，错误信息：\n{e}"
             )
 
         # 判断Inception检测结果
         if check_result.error:
-            logger.debug(f"{self.inc_engine.name}检测语句报错：错误信息{check_result.error}")
+            logger.debug(
+                f"{self.inc_engine.name}检测语句报错：错误信息{check_result.error}"
+            )
             raise RuntimeError(
                 f"{self.inc_engine.name}检测语句报错，错误信息：\n{check_result.error}"
             )
@@ -699,7 +705,9 @@ class MysqlEngine(EngineBase):
             conn.commit()
             cursor.close()
         except Exception as e:
-            logger.warning(f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"MySQL语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result.error = str(e)
         if close_conn:
             self.close()

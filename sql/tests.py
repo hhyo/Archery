@@ -1044,14 +1044,16 @@ class TestOptimize(TestCase):
         )
         r = self.client.post(path="/slowquery/optimize_sqladvisor/")
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "页面提交参数可能为空", "data": []},
         )
         r = self.client.post(
             path="/slowquery/optimize_sqladvisor/",
             data={"sql_content": "select 1;", "instance_name": "test_instance"},
         )
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "请配置SQLAdvisor路径！", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "请配置SQLAdvisor路径！", "data": []},
         )
         self.sys_config.set("sqladvisor", "/opt/archery/src/plugins/sqladvisor")
         self.sys_config.get_all_config()
@@ -1093,7 +1095,8 @@ class TestOptimize(TestCase):
         )
         r = self.client.post(path="/slowquery/optimize_soar/")
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "页面提交参数可能为空", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "页面提交参数可能为空", "data": []},
         )
         r = self.client.post(
             path="/slowquery/optimize_soar/",
@@ -1133,7 +1136,8 @@ class TestOptimize(TestCase):
         data["instance_name"] = "test_instancex"
         r = self.client.post(path="/slowquery/optimize_sqltuning/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "你所在组未关联该实例！", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "你所在组未关联该实例！", "data": []},
         )
 
         # 获取sys_parm
@@ -1466,7 +1470,8 @@ class TestBinLog(TestCase):
         }
         r = self.client.post(path="/binlog/my2sql/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "可执行文件路径不能为空！", "data": {}}
+            json.loads(r.content),
+            {"status": 1, "msg": "可执行文件路径不能为空！", "data": {}},
         )
 
     @patch("sql.plugins.plugin.subprocess")
@@ -1560,7 +1565,8 @@ class TestBinLog(TestCase):
         data = {"instance_id": self.master.id, "binlog": ""}
         r = self.client.post(path="/binlog/del_log/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "Error:未选择binlog！", "data": ""}
+            json.loads(r.content),
+            {"status": 1, "msg": "Error:未选择binlog！", "data": ""},
         )
 
     @patch("sql.engines.mysql.MysqlEngine.query")
@@ -1589,7 +1595,8 @@ class TestBinLog(TestCase):
         _query.return_value.error = "清理失败"
         r = self.client.post(path="/binlog/del_log/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 2, "msg": "清理失败,Error:清理失败", "data": ""}
+            json.loads(r.content),
+            {"status": 2, "msg": "清理失败,Error:清理失败", "data": ""},
         )
 
 
@@ -1673,7 +1680,8 @@ class TestParam(TestCase):
         }
         r = self.client.post(path="/param/edit/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"data": [], "msg": "请先在参数模板中配置该参数！", "status": 1}
+            json.loads(r.content),
+            {"data": [], "msg": "请先在参数模板中配置该参数！", "status": 1},
         )
 
     @patch("sql.engines.mysql.MysqlEngine.set_variable")
@@ -1703,7 +1711,8 @@ class TestParam(TestCase):
         }
         r = self.client.post(path="/param/edit/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "参数值与实际运行值一致，未调整！", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "参数值与实际运行值一致，未调整！", "data": []},
         )
 
     @patch("sql.engines.mysql.MysqlEngine.set_variable")
@@ -1733,7 +1742,8 @@ class TestParam(TestCase):
         }
         r = self.client.post(path="/param/edit/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 0, "msg": "修改成功，请手动持久化到配置文件！", "data": []}
+            json.loads(r.content),
+            {"status": 0, "msg": "修改成功，请手动持久化到配置文件！", "data": []},
         )
 
     @patch("sql.engines.mysql.MysqlEngine.set_variable")
@@ -1763,7 +1773,8 @@ class TestParam(TestCase):
         }
         r = self.client.post(path="/param/edit/", data=data)
         self.assertEqual(
-            json.loads(r.content), {"status": 1, "msg": "设置错误，错误信息：修改报错", "data": []}
+            json.loads(r.content),
+            {"status": 1, "msg": "设置错误，错误信息：修改报错", "data": []},
         )
 
 
@@ -1777,7 +1788,9 @@ class TestDataDictionary(TestCase):
         self.su = User.objects.create(
             username="s_user", display="中文显示", is_active=True, is_superuser=True
         )
-        self.u1 = User.objects.create(username="user1", display="中文显示", is_active=True)
+        self.u1 = User.objects.create(
+            username="user1", display="中文显示", is_active=True
+        )
         self.client = Client()
         self.client.force_login(self.su)
         # 使用 travis.ci 时实例和测试service保持一致
@@ -1948,7 +1961,8 @@ class TestDataDictionary(TestCase):
         }
         r = self.client.get(path="/data_dictionary/export/", data=data)
         self.assertDictEqual(
-            json.loads(r.content), {"data": [], "msg": "你所在组未关联该实例！", "status": 1}
+            json.loads(r.content),
+            {"data": [], "msg": "你所在组未关联该实例！", "status": 1},
         )
 
     @patch("sql.data_dictionary.user_instances")

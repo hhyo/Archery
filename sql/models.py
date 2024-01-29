@@ -23,7 +23,9 @@ class ResourceGroup(models.Model):
     ding_webhook = models.CharField("钉钉webhook地址", max_length=255, blank=True)
     feishu_webhook = models.CharField("飞书webhook地址", max_length=255, blank=True)
     qywx_webhook = models.CharField("企业微信webhook地址", max_length=255, blank=True)
-    is_deleted = models.IntegerField("是否删除", choices=((0, "否"), (1, "是")), default=0)
+    is_deleted = models.IntegerField(
+        "是否删除", choices=((0, "否"), (1, "是")), default=0
+    )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -47,7 +49,9 @@ class Users(AbstractUser):
     wx_user_id = models.CharField("企业微信UserID", max_length=64, blank=True)
     feishu_open_id = models.CharField("飞书OpenID", max_length=64, blank=True)
     failed_login_count = models.IntegerField("失败计数", default=0)
-    last_login_failed_at = models.DateTimeField("上次失败登录时间", blank=True, null=True)
+    last_login_failed_at = models.DateTimeField(
+        "上次失败登录时间", blank=True, null=True
+    )
     resource_group = models.ManyToManyField(
         ResourceGroup, verbose_name="资源组", blank=True
     )
@@ -207,7 +211,9 @@ class Instance(models.Model):
     resource_group = models.ManyToManyField(
         ResourceGroup, verbose_name="资源组", blank=True
     )
-    instance_tag = models.ManyToManyField(InstanceTag, verbose_name="实例标签", blank=True)
+    instance_tag = models.ManyToManyField(
+        InstanceTag, verbose_name="实例标签", blank=True
+    )
     tunnel = models.ForeignKey(
         Tunnel,
         verbose_name="连接隧道",
@@ -283,7 +289,9 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField("数据库", max_length=64)
     syntax_type = models.IntegerField(
-        "工单类型 0、未知，1、DDL，2、DML", choices=((0, "其他"), (1, "DDL"), (2, "DML")), default=0
+        "工单类型 0、未知，1、DDL，2、DML",
+        choices=((0, "其他"), (1, "DDL"), (2, "DML")),
+        default=0,
     )
     is_backup = models.BooleanField(
         "是否备份",
@@ -301,7 +309,9 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     run_date_end = models.DateTimeField("可执行结束时间", null=True, blank=True)
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
     finish_time = models.DateTimeField("结束时间", null=True, blank=True)
-    is_manual = models.IntegerField("是否原生执行", choices=((0, "否"), (1, "是")), default=0)
+    is_manual = models.IntegerField(
+        "是否原生执行", choices=((0, "否"), (1, "是")), default=0
+    )
 
     def __str__(self):
         return self.workflow_name
@@ -345,7 +355,9 @@ class WorkflowAudit(models.Model):
     workflow_id = models.BigIntegerField("关联业务id")
     workflow_type = models.IntegerField("申请类型", choices=WorkflowType.choices)
     workflow_title = models.CharField("申请标题", max_length=50)
-    workflow_remark = models.CharField("申请备注", default="", max_length=140, blank=True)
+    workflow_remark = models.CharField(
+        "申请备注", default="", max_length=140, blank=True
+    )
     audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
     current_audit = models.CharField("当前审批权限组", max_length=20)
     next_audit = models.CharField("下级审批权限组", max_length=20)
@@ -432,7 +444,9 @@ class WorkflowLog(models.Model):
 
     id = models.AutoField(primary_key=True)
     audit_id = models.IntegerField("工单审批id", db_index=True)
-    operation_type = models.SmallIntegerField("操作类型", choices=WorkflowAction.choices)
+    operation_type = models.SmallIntegerField(
+        "操作类型", choices=WorkflowAction.choices
+    )
     # operation_type_desc 字段实际无意义
     operation_type_desc = models.CharField("操作类型描述", max_length=10)
     operation_info = models.CharField("操作信息", max_length=1000)
@@ -549,7 +563,9 @@ class QueryLog(models.Model):
         default=False,
     )
     hit_rule = models.BooleanField(
-        "查询是否命中脱敏规则", choices=((False, "未命中/未知"), (True, "命中")), default=False
+        "查询是否命中脱敏规则",
+        choices=((False, "未命中/未知"), (True, "命中")),
+        default=False,
     )
     masking = models.BooleanField(
         "查询结果是否正常脱敏",
@@ -595,12 +611,16 @@ class DataMaskingColumns(models.Model):
 
     column_id = models.AutoField("字段id", primary_key=True)
     rule_type = models.IntegerField("规则类型", choices=rule_type_choices)
-    active = models.BooleanField("激活状态", choices=((False, "未激活"), (True, "激活")))
+    active = models.BooleanField(
+        "激活状态", choices=((False, "未激活"), (True, "激活"))
+    )
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     table_schema = models.CharField("字段所在库名", max_length=64)
     table_name = models.CharField("字段所在表名", max_length=64)
     column_name = models.CharField("字段名", max_length=64)
-    column_comment = models.CharField("字段描述", max_length=1024, default="", blank=True)
+    column_comment = models.CharField(
+        "字段描述", max_length=1024, default="", blank=True
+    )
     create_time = models.DateTimeField(auto_now_add=True)
     sys_time = models.DateTimeField(auto_now=True)
 
@@ -617,7 +637,10 @@ class DataMaskingRules(models.Model):
     """
 
     rule_type = models.IntegerField("规则类型", choices=rule_type_choices, unique=True)
-    rule_regex = models.CharField("规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替", max_length=255)
+    rule_regex = models.CharField(
+        "规则脱敏所用的正则表达式，表达式必须分组，隐藏的组会使用****代替",
+        max_length=255,
+    )
     hide_group = models.IntegerField("需要隐藏的组")
     rule_desc = models.CharField("规则描述", max_length=100, default="", blank=True)
     sys_time = models.DateTimeField(auto_now=True)
@@ -636,8 +659,12 @@ class InstanceAccount(models.Model):
 
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     user = fields.EncryptedCharField(verbose_name="账号", max_length=128)
-    host = models.CharField(verbose_name="主机", max_length=64)  # mysql数据库存储主机信息
-    db_name = models.CharField(verbose_name="数据库名称", max_length=128)  # mongo数据库存储数据库名称
+    host = models.CharField(
+        verbose_name="主机", max_length=64
+    )  # mysql数据库存储主机信息
+    db_name = models.CharField(
+        verbose_name="数据库名称", max_length=128
+    )  # mongo数据库存储数据库名称
     password = fields.EncryptedCharField(
         verbose_name="密码", max_length=128, default="", blank=True
     )
@@ -660,7 +687,9 @@ class InstanceDatabase(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     db_name = models.CharField("数据库名", max_length=128)
     owner = models.CharField("负责人", max_length=50, default="", blank=True)
-    owner_display = models.CharField("负责人中文名", max_length=50, default="", blank=True)
+    owner_display = models.CharField(
+        "负责人中文名", max_length=50, default="", blank=True
+    )
     remark = models.CharField("备注", max_length=255, default="", blank=True)
     sys_time = models.DateTimeField("系统修改时间", auto_now=True)
 
@@ -753,7 +782,9 @@ class ArchiveConfig(models.Model, WorkflowAuditMixin):
     )
     state = models.BooleanField("是否启用归档", default=True)
     user_name = models.CharField("申请人", max_length=30, blank=True, default="")
-    user_display = models.CharField("申请人中文名", max_length=50, blank=True, default="")
+    user_display = models.CharField(
+        "申请人中文名", max_length=50, blank=True, default=""
+    )
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
     last_archive_time = models.DateTimeField("最近归档时间", blank=True, null=True)
     sys_time = models.DateTimeField("系统时间修改", auto_now=True)

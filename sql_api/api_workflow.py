@@ -215,7 +215,9 @@ class AuditWorkflow(views.APIView):
     """
 
     @extend_schema(
-        summary="审核工单", request=AuditWorkflowSerializer, description="审核一条工单（通过或终止）"
+        summary="审核工单",
+        request=AuditWorkflowSerializer,
+        description="审核一条工单（通过或终止）",
     )
     def post(self, request):
         # 参数验证
@@ -303,7 +305,9 @@ class ExecuteWorkflow(views.APIView):
     """
 
     @extend_schema(
-        summary="执行工单", request=ExecuteWorkflowSerializer, description="执行一条工单"
+        summary="执行工单",
+        request=ExecuteWorkflowSerializer,
+        description="执行一条工单",
     )
     def post(self, request):
         # 参数验证
@@ -332,7 +336,9 @@ class ExecuteWorkflow(views.APIView):
 
             if on_correct_time_period(workflow_id) is False:
                 raise serializers.ValidationError(
-                    {"errors": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"}
+                    {
+                        "errors": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+                    }
                 )
 
             # 获取审核信息

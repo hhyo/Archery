@@ -32,7 +32,11 @@ class Plugin:
         # 检查禁用参数
         for arg in args.keys():
             if arg in self.disable_args:
-                return {"status": 1, "msg": "{arg}参数已被禁用".format(arg=arg), "data": {}}
+                return {
+                    "status": 1,
+                    "msg": "{arg}参数已被禁用".format(arg=arg),
+                    "data": {},
+                }
         # 检查必须参数
         for req_arg in self.required_args:
             if req_arg not in args.keys():

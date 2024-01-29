@@ -204,7 +204,9 @@ class InstanceResource(views.APIView):
                     db_name=db_name, tb_name=tb_name, schema_name=schema_name
                 )
             else:
-                raise serializers.ValidationError({"errors": "不支持的资源类型或者参数不完整！"})
+                raise serializers.ValidationError(
+                    {"errors": "不支持的资源类型或者参数不完整！"}
+                )
         except Exception as msg:
             raise serializers.ValidationError({"errors": msg})
         else:

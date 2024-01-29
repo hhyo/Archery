@@ -294,7 +294,9 @@ class ExecuteCheckSerializer(serializers.Serializer):
         try:
             Instance.objects.get(pk=instance_id)
         except Instance.DoesNotExist:
-            raise serializers.ValidationError({"errors": f"不存在该实例：{instance_id}"})
+            raise serializers.ValidationError(
+                {"errors": f"不存在该实例：{instance_id}"}
+            )
         return instance_id
 
     def get_instance(self):
@@ -453,7 +455,8 @@ class AuditWorkflowSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField(label="工单id")
     audit_remark = serializers.CharField(label="审批备注")
     workflow_type = serializers.ChoiceField(
-        choices=WorkflowType.choices, label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        choices=WorkflowType.choices,
+        label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请",
     )
     audit_type = serializers.ChoiceField(choices=["pass", "cancel"], label="审核类型")
 
@@ -504,7 +507,8 @@ class WorkflowAuditListSerializer(serializers.ModelSerializer):
 class WorkflowLogSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField(label="工单id")
     workflow_type = serializers.ChoiceField(
-        choices=[1, 2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
+        choices=[1, 2, 3],
+        label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请",
     )
 
     def validate(self, attrs):
@@ -539,7 +543,9 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
         choices=[2, 3], label="工单类型：1-查询权限申请，2-SQL上线申请，3-数据归档申请"
     )
     mode = serializers.ChoiceField(
-        choices=["auto", "manual"], label="执行模式：auto-线上执行，manual-已手动执行", required=False
+        choices=["auto", "manual"],
+        label="执行模式：auto-线上执行，manual-已手动执行",
+        required=False,
     )
 
     def validate(self, attrs):
@@ -558,7 +564,9 @@ class ExecuteWorkflowSerializer(serializers.Serializer):
             try:
                 Users.objects.get(username=engineer)
             except Users.DoesNotExist:
-                raise serializers.ValidationError({"errors": f"不存在该用户：{engineer}"})
+                raise serializers.ValidationError(
+                    {"errors": f"不存在该用户：{engineer}"}
+                )
 
         try:
             WorkflowAudit.objects.get(

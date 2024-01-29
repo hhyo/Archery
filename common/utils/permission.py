@@ -33,7 +33,11 @@ def role_required(roles=()):
             if user.role not in roles and user.is_superuser is False:
                 is_ajax = request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
                 if is_ajax:
-                    result = {"status": 1, "msg": "您无权操作，请联系管理员", "data": []}
+                    result = {
+                        "status": 1,
+                        "msg": "您无权操作，请联系管理员",
+                        "data": [],
+                    }
                     return HttpResponse(
                         json.dumps(result), content_type="application/json"
                     )

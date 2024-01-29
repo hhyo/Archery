@@ -247,7 +247,9 @@ class UserAuth(views.APIView):
 
     permission_classes = [IsOwner]
 
-    @extend_schema(summary="用户认证校验", request=UserAuthSerializer, description="用户认证校验")
+    @extend_schema(
+        summary="用户认证校验", request=UserAuthSerializer, description="用户认证校验"
+    )
     def post(self, request):
         # 参数验证
         serializer = UserAuthSerializer(data=request.data)
@@ -323,7 +325,9 @@ class TwoFAState(views.APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        summary="查询2fa配置情况", request=TwoFAStateSerializer, description="查询2fa配置情况"
+        summary="查询2fa配置情况",
+        request=TwoFAStateSerializer,
+        description="查询2fa配置情况",
     )
     def post(self, request):
         # 参数验证

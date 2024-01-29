@@ -381,7 +381,9 @@ class AuditV2:
             try:
                 audit_auth_group = Group.objects.get(id=self.audit.current_audit)
             except Group.DoesNotExist:
-                raise AuditException("当前审批权限组不存在, 请联系管理员检查并清洗错误数据")
+                raise AuditException(
+                    "当前审批权限组不存在, 请联系管理员检查并清洗错误数据"
+                )
             if not auth_group_users([audit_auth_group.name], self.resource_group_id):
                 raise AuditException("用户不在当前审批审批节点的用户组内, 无权限审核")
             return True
