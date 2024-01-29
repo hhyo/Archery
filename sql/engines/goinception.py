@@ -86,7 +86,9 @@ class GoInceptionEngine(EngineBase):
                             {sql.rstrip(';')};
                             inception_magic_commit;"""
         inception_result = self.query(sql=inception_sql)
-        check_result.syntax_type = 2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
+        check_result.syntax_type = (
+            2  # TODO 工单类型 0、其他 1、DDL，2、DML 仅适用于MySQL，待调整
+        )
         for r in inception_result.rows:
             check_result.rows += [ReviewResult(inception_result=r)]
             if r[2] == 1:  # 警告

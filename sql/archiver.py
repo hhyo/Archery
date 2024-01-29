@@ -148,7 +148,9 @@ def archive_apply(request):
     ):
         return JsonResponse({"status": 1, "msg": "请填写完整！", "data": {}})
     if mode == "dest" and not all([dest_instance_name, dest_db_name, dest_table_name]):
-        return JsonResponse({"status": 1, "msg": "归档到实例时目标实例信息必选！", "data": {}})
+        return JsonResponse(
+            {"status": 1, "msg": "归档到实例时目标实例信息必选！", "data": {}}
+        )
 
     # 获取源实例信息
     try:
@@ -165,7 +167,9 @@ def archive_apply(request):
                 instance_name=dest_instance_name
             )
         except Instance.DoesNotExist:
-            return JsonResponse({"status": 1, "msg": "你所在组未关联该实例！", "data": {}})
+            return JsonResponse(
+                {"status": 1, "msg": "你所在组未关联该实例！", "data": {}}
+            )
     else:
         d_ins = None
 
@@ -203,7 +207,9 @@ def archive_apply(request):
             audit_handler.create_audit()
         except AuditException as e:
             logger.error(f"新建审批流失败: {str(e)}")
-            return JsonResponse({"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}})
+            return JsonResponse(
+                {"status": 1, "msg": "新建审批流失败, 请联系管理员", "data": {}}
+            )
         audit_handler.workflow.status = audit_handler.audit.current_status
         if audit_handler.audit.current_status == WorkflowStatus.PASSED:
             audit_handler.workflow.state = True
@@ -376,9 +382,9 @@ def archive(archive_id):
     elif mode == "file":
         output_directory = os.path.join(settings.BASE_DIR, "downloads/archiver")
         os.makedirs(output_directory, exist_ok=True)
-        args[
-            "file"
-        ] = f"{output_directory}/{s_ins.instance_name}-{src_db_name}-{src_table_name}.txt"
+        args["file"] = (
+            f"{output_directory}/{s_ins.instance_name}-{src_db_name}-{src_table_name}.txt"
+        )
         if no_delete:
             args["no-delete"] = True
     elif mode == "purge":
@@ -447,9 +453,11 @@ def archive(archive_id):
     shell_cmd = " ".join(cmd_args)
     ArchiveLog.objects.create(
         archive=archive_info,
-        cmd=shell_cmd.replace(s_ins.password, "***").replace(d_ins.password, "***")
-        if mode == "dest"
-        else shell_cmd.replace(s_ins.password, "***"),
+        cmd=(
+            shell_cmd.replace(s_ins.password, "***").replace(d_ins.password, "***")
+            if mode == "dest"
+            else shell_cmd.replace(s_ins.password, "***")
+        ),
         condition=condition,
         mode=mode,
         no_delete=no_delete,

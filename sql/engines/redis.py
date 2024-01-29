@@ -144,7 +144,9 @@ class RedisEngine(EngineBase):
             if limit_num > 0:
                 result_set.rows = result_set.rows[0:limit_num]
         except Exception as e:
-            logger.warning(f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
+            logger.warning(
+                f"Redis命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
+            )
             result_set.error = str(e)
         return result_set
 

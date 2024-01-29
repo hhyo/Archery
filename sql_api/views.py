@@ -103,9 +103,11 @@ def debug(request):
         django_q_info = {
             "version": django_q_version,
             "conf": django_q.conf.Conf.conf,
-            "q_cluster_stats": q_cluster_stats
-            if q_cluster_stats
-            else "没有正在运行的集群信息，请检查django_q状态",
+            "q_cluster_stats": (
+                q_cluster_stats
+                if q_cluster_stats
+                else "没有正在运行的集群信息，请检查django_q状态"
+            ),
             "q_broker_stats": q_broker_stats,
         }
     except Exception as e:

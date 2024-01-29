@@ -608,7 +608,9 @@ class OracleEngine(EngineBase):
             else:
                 result["rows"] = rows[0]
         except Exception as e:
-            logger.warning(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result["msg"] = str(e)
         finally:
             if close_conn:
@@ -691,7 +693,9 @@ class OracleEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.warning(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result_set.error = str(e)
         finally:
             if close_conn:
@@ -751,7 +755,9 @@ class OracleEngine(EngineBase):
                         id=line,
                         errlevel=2,
                         stagestatus="驳回高危SQL",
-                        errormessage="禁止提交匹配" + critical_ddl_regex + "条件的语句！",
+                        errormessage="禁止提交匹配"
+                        + critical_ddl_regex
+                        + "条件的语句！",
                         sql=sqlitem.statement,
                     )
                 # 驳回未带where数据修改语句，如确实需做全部删除或更新，显示的带上where 1=1
@@ -1421,7 +1427,9 @@ class OracleEngine(EngineBase):
             result_set.rows = [tuple(x) for x in rows]
             result_set.affected_rows = len(result_set.rows)
         except Exception as e:
-            logger.warning(f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"Oracle 语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result_set.error = str(e)
         finally:
             # 结束分析任务
@@ -1445,7 +1453,9 @@ class OracleEngine(EngineBase):
                 statement = statement.rstrip(";")
                 cursor.execute(statement, parameters or [])
         except Exception as e:
-            logger.warning(f"Oracle语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}")
+            logger.warning(
+                f"Oracle语句执行报错，语句：{sql}，错误信息{traceback.format_exc()}"
+            )
             result.error = str(e)
         if close_conn:
             self.close()

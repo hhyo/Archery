@@ -163,7 +163,8 @@ class TestArchiver(TestCase):
         self.client.force_login(self.superuser)
         r = self.client.post(path="/archive/apply/", data=data)
         self.assertDictEqual(
-            json.loads(r.content), {"status": 1, "msg": "归档到实例时目标实例信息必选！", "data": {}}
+            json.loads(r.content),
+            {"status": 1, "msg": "归档到实例时目标实例信息必选！", "data": {}},
         )
 
     def test_archive_apply_not_exist_review(self):

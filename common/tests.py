@@ -539,7 +539,10 @@ class AuthTest(TestCase):
 class PermissionTest(TestCase):
     def setUp(self) -> None:
         self.user = User.objects.create(
-            username="test_user", display="中文显示", is_active=True, email="XXX@xxx.com"
+            username="test_user",
+            display="中文显示",
+            is_active=True,
+            email="XXX@xxx.com",
         )
         self.client.force_login(self.user)
 

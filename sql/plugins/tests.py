@@ -58,7 +58,8 @@ class TestPlugin(TestCase):
         soar = Soar()
         args_check_result = soar.check_args(args)
         self.assertDictEqual(
-            args_check_result, {"status": 1, "msg": "可执行文件路径不能为空！", "data": {}}
+            args_check_result,
+            {"status": 1, "msg": "可执行文件路径不能为空！", "data": {}},
         )
         # 路径不为空
         self.sys_config.set("soar", "/opt/archery/src/plugins/soar")

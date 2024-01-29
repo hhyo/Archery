@@ -126,7 +126,9 @@ class MsgSender(object):
                 self.MAIL_REVIEW_FROM_ADDR, to + list_cc, main_msg.as_string()
             )
             server.quit()
-            logger.debug(f"邮件推送成功\n消息标题:{subject}\n通知对象：{to + list_cc}\n消息内容：{body}")
+            logger.debug(
+                f"邮件推送成功\n消息标题:{subject}\n通知对象：{to + list_cc}\n消息内容：{body}"
+            )
             return "success"
         except Exception:
             errmsg = "邮件推送失败\n{}".format(traceback.format_exc())
@@ -150,7 +152,9 @@ class MsgSender(object):
         if r_json["errcode"] == 0:
             logger.debug(f"钉钉Webhook推送成功\n通知对象：{url}\n消息内容：{content}")
         else:
-            logger.error(f"钉钉Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
+            logger.error(
+                f"钉钉Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}"
+            )
 
     def send_ding2user(self, userid_list, content):
         """
@@ -171,7 +175,9 @@ class MsgSender(object):
         if r_json["errcode"] == 0:
             logger.debug(f"钉钉推送成功\n通知对象：{userid_list}\n消息内容：{content}")
         else:
-            logger.error(f"钉钉推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}")
+            logger.error(
+                f"钉钉推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}"
+            )
 
     def send_wx2user(self, msg, user_list):
         if not user_list:
@@ -191,7 +197,9 @@ class MsgSender(object):
         if r_json["errcode"] == 0:
             logger.debug(f"企业微信推送成功\n通知对象：{to_user}")
         else:
-            logger.error(f"企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}")
+            logger.error(
+                f"企业微信推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}"
+            )
 
     def send_qywx_webhook(self, qywx_webhook, msg):
         send_url = qywx_webhook
@@ -212,7 +220,9 @@ class MsgSender(object):
         if r_json["errcode"] == 0:
             logger.debug(f"企业微信机器人推送成功\n通知对象：机器人")
         else:
-            logger.error(f"企业微信机器人推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}")
+            logger.error(
+                f"企业微信机器人推送失败\n请求连接:{send_url}\n请求参数:{data}\n请求响应:{r_json}"
+            )
 
     @staticmethod
     def send_feishu_webhook(url, title, content):
@@ -239,7 +249,9 @@ class MsgSender(object):
         ):
             logger.debug(f"飞书Webhook推送成功\n通知对象：{url}\n消息内容：{content}")
         else:
-            logger.error(f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}")
+            logger.error(
+                f"飞书Webhook推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r_json}"
+            )
 
     @staticmethod
     def send_feishu_user(title, content, open_id, user_mail):
@@ -261,4 +273,6 @@ class MsgSender(object):
         if r["code"] == 0:
             logger.debug(f"飞书单推推送成功\n通知对象：{url}\n消息内容：{content}")
         else:
-            logger.error(f"飞书单推推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r}")
+            logger.error(
+                f"飞书单推推送失败错误码\n请求url:{url}\n请求data:{data}\n请求响应:{r}"
+            )

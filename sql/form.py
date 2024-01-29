@@ -31,7 +31,9 @@ class TunnelForm(ModelForm):
                         str(pkey_path, "utf-8").replace(r"\r", "").replace(r"\n", "")
                     )
             except IOError:
-                raise ValidationError("秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存")
+                raise ValidationError(
+                    "秘钥文件不存在， 请勾选秘钥路径的清除选项再进行保存"
+                )
 
 
 class InstanceForm(ModelForm):

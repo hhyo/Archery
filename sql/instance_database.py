@@ -76,7 +76,9 @@ def create(request):
     remark = request.POST.get("remark", "")
 
     if not all([db_name]):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     try:
         instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(
@@ -138,7 +140,9 @@ def edit(request):
     remark = request.POST.get("remark", "")
 
     if not all([db_name]):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
 
     try:
         instance = user_instances(request.user, db_type=["mysql", "mongo"]).get(

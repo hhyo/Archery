@@ -186,7 +186,11 @@ def param_edit(request):
         variable_name=variable_name, variable_value=variable_value
     )
     if set_result.error:
-        result = {"status": 1, "msg": f"设置错误，错误信息：{set_result.error}", "data": []}
+        result = {
+            "status": 1,
+            "msg": f"设置错误，错误信息：{set_result.error}",
+            "data": [],
+        }
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 修改成功的保存修改记录
     else:

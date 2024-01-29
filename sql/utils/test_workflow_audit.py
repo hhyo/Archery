@@ -303,7 +303,9 @@ class TestAudit(TestCase):
         self.audit.workflow_type = WorkflowType.SQL_REVIEW
         self.audit.workflow_id = self.wf.id
         self.audit.save()
-        with self.assertRaisesMessage(Exception, "当前审批auth_group_id不存在，请检查并清洗历史数据"):
+        with self.assertRaisesMessage(
+            Exception, "当前审批auth_group_id不存在，请检查并清洗历史数据"
+        ):
             Audit.can_review(
                 self.user, self.audit.workflow_id, self.audit.workflow_type
             )
