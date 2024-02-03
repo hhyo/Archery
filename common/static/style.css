@@ -1,0 +1,134 @@
+body {
+  font-family: Candara, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+a {
+  color: #222;
+}
+.fa {
+  color: #666;
+}
+.fa.fa-5x {
+  color: white;
+}
+.fa.fa-fw {
+  margin-right: 10px;
+}
+a:hover {
+  color: #555555;
+}
+.navbar-brand strong {
+  font-size: 26px;
+  font-family: Candara Light, serif;
+  margin-left: 4px;
+  letter-spacing: 2px;
+}
+.navbar-brand > img {
+  height: 50px;
+}
+.user-bottom-div {
+  display: block;
+  text-align: center;
+  background-color: #ddd;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  line-height: 50px;
+}
+.lsb-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  margin: 0;
+}
+.login-form-wrapper {
+  background-color: #FFF;
+  border-radius: 4px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 3px 5px;
+  padding: 30px 40px;
+  border-top: 5px solid #337ab7;
+}
+table {
+  max-width: none !important;
+  /*解决 ios 横向滚动失效*/
+}
+.user-bottom-div {
+  display: block;
+  text-align: center;
+  background-color: #ddd;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 50px;
+  line-height: 50px;
+}
+.lsb-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  margin: 0;
+}
+.login-form-wrapper {
+  background-color: #FFF;
+  border-radius: 4px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 3px 5px;
+  padding: 30px 10px;
+  border-top: 5px solid #337ab7;
+}
+.login-form {
+  margin: 20px;
+}
+.sidebar .sidebar-nav.navbar-collapse {
+  padding-left: 0;
+  padding-right: 0;
+}
+.sidebar .sidebar-search {
+  padding: 15px;
+}
+.sidebar ul li a {
+  border-left: 3px solid transparent;
+  color: #333;
+}
+.sidebar ul li a.active {
+  background-color: #eeeeee;
+  border-left: 3px solid #337ab7;
+}
+.sidebar .arrow {
+  float: right;
+  margin-top: 3px;
+}
+.sidebar .fa.arrow:before {
+  content: "\f104";
+}
+.sidebar .active > a > .fa.arrow:before {
+  content: "\f107";
+}
+.sidebar .nav-second-level li,
+.sidebar .nav-third-level li {
+  border-bottom: none !important;
+}
+.sidebar .nav-second-level li a {
+  padding-left: 47px;
+}
+.sidebar .nav-third-level li a {
+  padding-left: 52px;
+}
+@media (min-width: 768px) {
+  .sidebar {
+    z-index: 1;
+    position: absolute;
+    width: 200px;
+    margin-top: 51px;
+  }
+  .navbar-top-links .dropdown-messages,
+  .navbar-top-links .dropdown-tasks,
+  .navbar-top-links .dropdown-alerts {
+    margin-left: auto;
+  }
+}
+.fixed-table-container {
+  border: none;
+}
+/*# sourceMappingURL=style.css.map */
