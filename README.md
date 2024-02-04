@@ -71,6 +71,9 @@ python3 manage.py dbshell<src/init_sql/mysql_slow_query_review.sql
 #创建管理用户
 python3 manage.py createsuperuser
 
+#退出docker sh
+exit
+
 #重启服务
 docker restart archery
 
