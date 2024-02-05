@@ -7,21 +7,17 @@ from sql.models import TwoFactorAuthConfig
 
 def global_info(request):
     """存放用户，菜单信息等."""
-    user = request.user
     twofa_type = "disabled"
-    if user and user.is_authenticated:
-        # 获取待办数量
-        try:
-            todo = Audit.todo(user)
-        except Exception:
-            todo = 0
-
-        twofa_config = TwoFactorAuthConfig.objects.filter(user=user)
-        if twofa_config:
-            twofa_type = twofa_config[0].auth_type
+    try:
+        if request.user and request.user.is_authenticated:
+            # 获取待办数量
+            todo = Audit.todo(request.user)
+            twofa_config = TwoFactorAuthConfig.objects.filter(user=request.user)
+            if twofa_config:
+                twofa_type = twofa_config[0].auth_type
         else:
-            twofa_type = "disabled"
-    else:
+            todo = 0
+    except Exception:
         todo = 0
 
     watermark_enabled = SysConfig().get("watermark_enabled", False)
