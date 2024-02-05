@@ -4,17 +4,17 @@
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-3">
-            <div class="panel panel-default">
-                <div class="panel-heading">
+            <div class="card shadow mb-4">
+                <div class="card-header py3">
                     选择操作
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     <div id="div-config" class="form-group">
                         <h5 class="control-label text-bold">配置项：</h5>
                         <div class="form-group">
                             <select id="config" name="confg"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="配置项" data-placeholder="请选择配置项:" required />
+                                    data-name="配置项" data-placeholder="请选择配置项:" required>
                                 <option value="is-empty" disabled="">请选择配置项:</option>
                                 <option value="0" selected="selected">系统设置</option>
                                 <option value="1">工单审核流配置</option>
@@ -26,7 +26,7 @@
                         <div class="form-group">
                             <select id="workflow_type" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="工单类型" data-placeholder="请选择工单类型:" required />
+                                    data-name="工单类型" data-placeholder="请选择工单类型:" required>
                                 {% for c in workflow_choices %}
                                 {% if forloop.first %}
                                 <option value="{{ c.value }}" selected="selected">
@@ -42,7 +42,7 @@
                         <div class="form-group">
                             <select id="group" name="group"
                                     class="selectpicker show-tick form-control bs-select-hidden"
-                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required />
+                                    data-name="组" data-placeholder="请选择组:" data-live-search="true" required>
                                 {% for group in group_list %}
                                     <option value="{{ group.group_name }}">{{ group.group_name }}</option>
                                 {% endfor %}
@@ -53,11 +53,11 @@
             </div>
         </div>
         <div class="col-md-9 column">
-            <div class="panel panel-default">
-                <div class="panel-heading">
+            <div class="card shadow mb-4">
+                <div class="card-header py3">
                     操作
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     <div id="div-system-config" class="form-group" style="display: none">
                         <h4 style="color: darkgrey; display: inline;"><b>goInception配置</b></h4>&nbsp;&nbsp;&nbsp;
                         <h6 style="color:red">注1：备份库的信息仅用于平台获取回滚语句，需要和审核工具自身的配置保持一致，此处配置变更不会修改审核工具自身的配置</h6>
@@ -74,7 +74,8 @@
                                                value="{{ config.go_inception_host }}"
                                                placeholder="goInception地址" />
                                     </div>
-                                    <button id='check_goincption' class='btn-sm btn-info'>测试连接</button>&nbsp;
+                                    <button id='check_goincption' class='btn-sm btn-primary'>
+                                        <i class="fa text-white fa-flash"></i> 测试连接</button>&nbsp;
                                 </div>
                                 <div class="form-group">
                                     <label for="go_inception_port"
@@ -499,7 +500,9 @@
                                             <input id="mail" key="mail" value="{{ config.mail }}"
                                                    type="checkbox" /> 是否开启邮件通知
                                         </label>
-                                        <button id='check_email' class='btn-sm btn-info'>测试连接</button>
+                                        <button id='check_email' class='btn-sm btn-primary'>
+                                            <i class="fa text-white fa-flash"></i> 测试连接
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1080,7 +1083,9 @@
                         <hr />
                         <div class="form-group">
                             <div class="col-sm-offset-4 col-sm-10">
-                                <button id="saveconfig" type="button" class="btn btn-primary">保存配置</button>
+                                <button id="saveconfig" type="button" class="btn btn-success shadow-sm">
+                                    <i class="fa text-white fa-save"> 保存配置</i>
+                                </button>
                             </div>
                         </div>
                     </div>

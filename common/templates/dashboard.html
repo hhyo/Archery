@@ -6,187 +6,156 @@
     {% cache 600 dashboard %}
         <!-- /.row -->
         <div class="row">
-            <div class="col-lg-3 col-md-6">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <div class="row">
-                            <div class="col-xs-3">
-                                <i class="fa fa-check fa-5x"></i>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters m-0 align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-lg font-weight-bold text-primary text-uppercase mb-1">
+                                    <a href="/sqlworkflow/" style="color: inherit">SQL上线工单</a>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold dashboard-stat-value">{{ count_stats.sql_wf_cnt }}</div>
                             </div>
-                            <div class="col-xs-9 text-right">
-                                <div class="huge">{{ count_stats.sql_wf_cnt }}</div>
-                                <div>SQL上线工单</div>
+                            <div class="col-auto">
+                                <i class="fa fa-calendar fa-3x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
-                    <a href="/sqlworkflow/">
-                        <div class="panel-footer">
-                            <span class="pull-left">更多</span>
-                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                            <div class="clearfix"></div>
-                        </div>
-                    </a>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="panel panel-green">
-                    <div class="panel-heading">
-                        <div class="row">
-                            <div class="col-xs-3">
-                                <i class="fa fa-search fa-5x"></i>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters m-0 align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-lg font-weight-bold text-success text-uppercase mb-1">
+                                    <a href="/queryapplylist/" style="color: inherit">SQL查询工单</a>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold dashboard-stat-value">{{ count_stats.query_wf_cnt }}</div>
                             </div>
-                            <div class="col-xs-9 text-right">
-                                <div class="huge">{{ count_stats.query_wf_cnt }}</div>
-                                <div>SQL查询工单</div>
+                            <div class="col-auto">
+                                <i class="fa fa-search-plus fa-3x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
-                    <a href="/queryapplylist/">
-                        <div class="panel-footer">
-                            <span class="pull-left">更多</span>
-                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                            <div class="clearfix"></div>
-                        </div>
-                    </a>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="panel panel-yellow">
-                    <div class="panel-heading">
-                        <div class="row">
-                            <div class="col-xs-3">
-                                <i class="fa fa-user fa-5x"></i>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters m-0 align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-lg font-weight-bold text-info text-uppercase mb-1">
+                                    <a href="/admin/sql/users/" style="color: inherit">平台用户</a>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold dashboard-stat-value">{{ count_stats.user_cnt }}</div>
                             </div>
-                            <div class="col-xs-9 text-right">
-                                <div class="huge">{{ count_stats.user_cnt }}</div>
-                                <div>平台用户</div>
+                            <div class="col-auto">
+                                <i class="fa fa-user-plus fa-3x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
-                    <a href="/admin/sql/users/">
-                        <div class="panel-footer">
-                            <span class="pull-left">更多</span>
-                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                            <div class="clearfix"></div>
-                        </div>
-                    </a>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="panel panel-red">
-                    <div class="panel-heading">
-                        <div class="row">
-                            <div class="col-xs-3">
-                                <i class="fa fa-database fa-5x"></i>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters m-0 align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-lg font-weight-bold text-warning text-uppercase mb-1">
+                                    <a href="/instance/" style="color: inherit">实例数量</a>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold dashboard-stat-value">{{ count_stats.ins_cnt }}</div>
                             </div>
-                            <div class="col-xs-9 text-right">
-                                <div class="huge">{{ count_stats.ins_cnt }}</div>
-                                <div>实例数量</div>
+                            <div class="col-auto">
+                                <i class="fa fa-database fa-3x text-gray-300"></i>
                             </div>
                         </div>
                     </div>
-                    <a href="/instance/">
-                        <div class="panel-footer">
-                            <span class="pull-left">更多</span>
-                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                            <div class="clearfix"></div>
-                        </div>
-                    </a>
                 </div>
             </div>
         </div>
+
         <!-- /.row -->
         <div class="row">
             <div class="col-lg-8">
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询统计
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">SQL查询统计</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.line1|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线数量
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">SQL上线数量</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.bar1|safe }}
-                        <!-- /.row -->
                     </div>
-                    <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线用户
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">SQL上线用户</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.bar2|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db维度统计
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">24h慢查询db维度统计</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.bar3|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
             </div>
             <!-- /.col-lg-8 -->
             <div class="col-lg-4">
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL上线统计
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">SQL上线统计</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.pie1|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> DB检索行数
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">DB检索行数</h6>
                     </div>
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.pie5|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
                 <!-- /.panel -->
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> SQL查询用户
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">SQL查询用户</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.pie4|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-bar-chart-o fa-fw"></i> 24h慢查询db/user维度统计
+                <!-- /.panel -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0">24h慢查询db/user维度统计</h6>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
+                    <div class="card-body">
                         {{ chart.pie3|safe }}
                     </div>
-                    <!-- /.panel-body -->
                 </div>
             </div>
             <!-- /.col-lg-4 -->
