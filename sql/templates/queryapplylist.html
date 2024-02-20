@@ -3,14 +3,10 @@
 {% block content %}
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="btn-group">
-        <a type="button" class="btn btn-default" href="/queryuserprivileges/">
-            <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限管理</a>
-        <button id="btn_add" type="button" class="btn btn-default"
+        <a id="btn_add" type="button" class="btn btn-primary"
                 data-toggle="modal" data-target="#apply">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-            <span aria-hidden="true"></span>权限申请
-        </button>
+            <i class="fa fa-plus text-white"></i> 权限申请
+        </a>
     </div>
     <!-- 申请列表的表格-->
     <div class="table-responsive">
@@ -20,7 +16,7 @@
     </div>
     <!-- 申请权限的模态框-->
     <div class="modal fade" id="apply" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -113,7 +109,7 @@
     </div>
     <!-- 日志信息-->
     <div class="modal fade" id="logs">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

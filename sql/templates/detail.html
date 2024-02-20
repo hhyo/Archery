@@ -2,19 +2,25 @@
 {% load format_tags %}
 
 {% block content %}
-    <div class="form-inline">
-        <h4 style="display: inline;">
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 m-0 text-gray-800">
+            <i class="fa fa-ticket"></i>
             <a target="_blank"
                href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
-        </h4>
+        </h1>
         <!--只允许发起人提交其他实例-->
         {% if user.username == workflow_detail.engineer %}
-            <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
+            <a type='button' id="btnSubmitOtherCluster" class='d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm' href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            <a type='button' id="btnViewSql" class='d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm' onclick="loading(this)" href="/editsql/">
+                <i class="fa fa-database text-white"></i> 查看提交信息
+            </a>
         {% endif %}
     </div>
+
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
     <input type="hidden" id="editSqlContent" value="{{ workflow_detail.sqlworkflowcontent.sql_content }}"/>
     <hr>
@@ -230,14 +236,14 @@
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
-                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default"
+                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-default shadow-sm"
                        value="查看回滚SQL"/>
             </form>
             <form action="/rollback/" method="get" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
                 <input type="hidden" name="download" value="true">
-                <input type="submit" id="btnRollback" onclick="loading(this)" class="btn btn-info"
+                <input type="submit" id="btnRollbackDownload" onclick="loading(this)" class="btn btn-primary shadow-sm"
                        value="下载回滚SQL"/>
             </form>
         {% endif %}
@@ -255,7 +261,7 @@
     <!-- 定时执行弹出框 -->
     <form id="from-addsqlcronjob" action="/timingtask/" method="post" style="display:inline-block;">
         <div class="modal fade" id="cronComfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header ">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -315,7 +321,7 @@
     <!-- 修改可执行时间弹出框 -->
     <form id="from-alterexecutabletime" action="/alter_run_date/" method="post" style="display:inline-block;">
         <div class="modal fade" id="Executabletime" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header ">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

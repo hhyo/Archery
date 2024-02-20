@@ -3,11 +3,11 @@
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    分析选项
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0">分析选项</h6>
                 </div>
-                <div class="panel-body form-inline">
+                <div class="card-body">
                     <div class="form-group">
                         <input id="sql-upload" name="sql-upload" accept=".sql,.xml" type="file" class="file-loading">
                     </div>
@@ -30,21 +30,19 @@
                                onclick="analyze()"/>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-12 column">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    SQL列表
+           </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0">SQL列表</h6>
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     <div class="table-responsive">
                         <table id="analyze-sql" data-toggle="table" class="table table-striped table-hover"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                     </div>
                 </div>
-            </div>
-        </div>
+           </div>
     </div>
     <!-- 分析报告-->
     <div class="modal fade" id="reports">

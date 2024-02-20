@@ -1,36 +1,39 @@
+html {
+    font-size: 1rem;
+    cursor: default;
+}
+
 body {
     font-family: Candara, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    font-size: 1rem;
+}
+
+.display-block {
+    display: block;
 }
 
 a {
     color: #222;
 }
 
-.fa {
-    color: #666;
+a:hover {
+    color: #555555;
 }
 
-.fa.fa-5x {
-    color: white;
+.fa {
+    color: #666;
 }
 
 .fa.fa-fw {
     margin-right: 10px;
 }
 
-a:hover {
-    color: #555555;
+label {
+    font-weight: 400;
 }
 
-.navbar-brand strong {
-    font-size: 26px;
-    font-family: Candara Light, serif;
-    margin-left: 4px;
-    letter-spacing: 2px;
-}
-
-.navbar-brand > img {
-    height: 50px;
+h3 {
+    font-size: 1.75rem;
 }
 
 .user-bottom-div {
@@ -59,109 +62,6 @@ a:hover {
     padding: 30px 40px;
     border-top: 5px solid #337ab7;
 }
-
-table {
-    max-width: none !important;
-    /*解决 ios 横向滚动失效*/
-}
-
-.user-bottom-div {
-    display: block;
-    text-align: center;
-    background-color: #ddd;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 50px;
-    line-height: 50px;
-}
-
-.lsb-login {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 90vh;
-    margin: 0;
-}
-
-.login-form-wrapper {
-    background-color: #FFF;
-    border-radius: 4px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0 3px 5px;
-    padding: 30px 10px;
-    border-top: 5px solid #337ab7;
-}
-
-.login-form {
-    margin: 20px;
-}
-
-.sidebar .sidebar-nav.navbar-collapse {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.sidebar .sidebar-search {
-    padding: 15px;
-}
-
-.sidebar ul li a {
-    border-left: 3px solid transparent;
-    color: #333;
-}
-
-.sidebar ul li a.active {
-    background-color: #eeeeee;
-    border-left: 3px solid #337ab7;
-}
-
-.sidebar .arrow {
-    float: right;
-    margin-top: 3px;
-}
-
-.sidebar .fa.arrow:before {
-    content: "\f104";
-}
-
-.sidebar .active > a > .fa.arrow:before {
-    content: "\f107";
-}
-
-.sidebar .nav-second-level li,
-.sidebar .nav-third-level li {
-    border-bottom: none !important;
-}
-
-.sidebar .nav-second-level li a {
-    padding-left: 47px;
-}
-
-.sidebar .nav-third-level li a {
-    padding-left: 52px;
-}
-
-@media (min-width: 768px) {
-    .sidebar {
-        z-index: 1;
-        position: absolute;
-        width: 200px;
-        margin-top: 51px;
-    }
-
-    .navbar-top-links .dropdown-messages,
-    .navbar-top-links .dropdown-tasks,
-    .navbar-top-links .dropdown-alerts {
-        margin-left: auto;
-    }
-}
-
-.fixed-table-container {
-    border: none;
-}
-
-/*# sourceMappingURL=style.css.map */
-
 
 /* -- sidebar --------------------------------------------------------------- */
 
@@ -262,4 +162,248 @@ div.genindex-jumpbox {
 table.modindextable td {
     padding: 2px;
     border-collapse: collapse;
+}
+
+
+table {
+    max-width: none !important;
+    /*解决 ios 横向滚动失效*/
+    font-size: 14px;
+    color: #0f0f0f !important;
+    background: white;
+}
+
+table td:first-child .detail-icon {
+    display: block;
+    text-align: center;
+}
+
+table th {
+    color: #555;
+    cursor: default;
+}
+
+table .glyphicon {
+    color: grey;
+    font-size: 10px;
+}
+
+.user-bottom-div {
+    display: block;
+    text-align: center;
+    background-color: #ddd;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+}
+
+.lsb-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+    margin: 0;
+}
+
+.login-form-wrapper {
+    background-color: #FFF;
+    border-radius: 4px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0 3px 5px;
+    padding: 30px 10px;
+    border-top: 5px solid #337ab7;
+}
+
+.login-form {
+    margin: 20px;
+}
+
+.fixed-table-container {
+    border: none;
+}
+
+.sidebar-brand-text {
+    font-size: 20px;
+}
+
+.sidebar {
+    width: 16rem !important
+}
+
+#side-menu {
+    display: block;
+}
+
+#side-menu li a:hover, #side-menu li a:active, #side-menu li a:focus {
+    background: transparent;
+    color: white;
+}
+
+.sidebar ul li a.active {
+    color: white;
+    font-weight: bold;
+}
+
+.sidebar ul li a {
+    color: rgba(255, 255, 255, .8);
+    display: block;
+    padding: 15px 0;
+    font-size: 14px;
+}
+
+#side-menu li .fa {
+    color: whitesmoke;
+}
+
+.sidebar .arrow {
+    float: right;
+    margin-top: 3px;
+}
+
+.sidebar .fa.arrow:before {
+    content: "\f104";
+}
+
+.sidebar .active > a > .fa.arrow:before {
+    content: "\f107";
+}
+
+.sidebar .nav-second-level {
+    display: block;
+}
+
+.sidebar .nav-second-level li,
+.sidebar .nav-third-level li {
+    border-bottom: none !important;
+}
+
+.sidebar .nav-second-level li a {
+    font-size: 12px;
+    padding: 10px 0 10px 31px;
+}
+
+.sidebar .nav-third-level li a {
+    padding-left: 52px;
+}
+
+.collapse {
+    display: none !important;
+}
+
+.collapse.in {
+    display: block !important;
+}
+
+.container-fluid {
+    padding: 0 20px;
+}
+
+.card-header h6 {
+    font-size: 1rem;
+}
+
+.pull-right.search {
+    width: 250px;
+}
+
+.pull-right.search input {
+    border-radius: 3px !important;
+}
+
+.form-group {
+    margin-right: 5px;
+}
+
+.pagination-detail {
+    font-size: 12px;
+    color: gray;
+}
+
+.fixed-table-toolbar div {
+    margin-top: 0 !important;
+}
+
+.dashboard-stat-value {
+    font-size: 30px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.35rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.badge-danger {
+    color: #fff;
+    background-color: #e74a3b
+}
+
+.badge-counter {
+    position: absolute;
+    transform: scale(.7);
+    transform-origin: top right;
+    right: .25rem;
+    margin-top: -1.5rem;
+}
+
+.nav-item:hover {
+    background: #dedede;
+}
+
+.nav-item .fa-fw {
+    margin: 0;
+}
+
+.navbar {
+    padding: 0;
+    background: white;
+}
+
+.navbar li {
+    padding: 0 5px;
+}
+
+.modal-header {
+    display: block;
+}
+
+.modal-header .close {
+    padding: 0 1rem;
+    margin-top: 0;
+}
+
+.card-header, .card-header h6 {
+    color: #4e73df;
+    font-weight: bold;
+}
+
+.nav-tabs {
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.navbar-text {
+    margin: 0 15px;
+}
+
+.caret {
+    display: none;
+}
+
+.btn .glyphicon {
+    top: 2px;
+}
+
+#tab-button {
+    position: absolute;
+    right: 20px;
+    top: 68px
 }
