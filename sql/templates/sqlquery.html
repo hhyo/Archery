@@ -45,28 +45,26 @@
     </div>
     <div class="row clearfix">
         <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py3">
+            <div class="panel panel-default">
+                <div class="panel-heading form-inline">
                     SQL查询
+                    <select id="favorites" name="favorites"
+                            class="form-control selectpicker"
+                            data-live-search="true" data-live-search-placeholder="搜索"
+                            title="常用查询"
+                            required>
+                        {% for sql in favorites %}
+                            <option value={{ sql.id }}>{{ sql.alias }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="card-body">
+                <div class="panel-body">
                     <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
                         {% csrf_token %}
                         <div class="col-md-9 column">
                             <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
                         </div>
                         <div class="col-md-3 column">
-                            <div class="form-group">
-                                <select id="favorites" name="favorites"
-                                        class="form-control selectpicker"
-                                        data-live-search="true" data-live-search-placeholder="搜索"
-                                        title="常用查询"
-                                        required>
-                                    {% for sql in favorites %}
-                                        <option value={{ sql.id }}>{{ sql.alias }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
@@ -117,49 +115,39 @@
                             <div class="form-group">
                                 <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                                 <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <button id="btn-sqlquery-spinner" class="btn btn-success hidden" type="button" disabled>
-                                  <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                                  <span role="status">Loading...</span>
-                                </button>
-                                <button id="btn-sqlquery" type="button" class="btn btn-success"><i class="fa fa-flash text-white"></i> SQL查询</button>
+                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
                             </div>
-                            <div class="text-primary">
-                                <ul class="text-xs p-0">
-                                    <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
-                                    <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值。</li>
-                                </ul>
-                            </div>
+                        </div>
+                        <div class="text-info">
+                            <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
+                            <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
         <div class="col-md-12 column">
-            <div class="card shadow mb-4">
-                <div class="card-header py3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     查询结果 <span style="color: red">
                         <small id="seconds_behind_master"></small>
                     </span>
                 </div>
-                <div class="card-body">
+                <div class="panel-body">
                     <!-- Nav tabs -->
                     <ul id="nav-tabs" class="nav nav-tabs" role="tablist">
                         <li class="active" id="sqllog_tab">
                             <a href="#sql_log_result" role="tab" data-toggle="tab">查询历史</a>
                         </li>
-                    </ul>
-
-                    <div id="tab-button">
                         <button class="btn btn-default btn-sm pull-right" onclick="tab_remove()">
                             <span class="glyphicon glyphicon-minus"></span>
                         </button>
                         <button class="btn btn-default btn-sm pull-right" onclick="tab_add()">
                             <span class="glyphicon glyphicon-plus"></span>
                         </button>
-                    </div>
-
+                    </ul>
                     <!-- Tab panes -->
-                    <div id="tab-content" class="form-group tab-content mt-3">
+                    <div id="tab-content" class="form-group tab-content">
                         <div id="redis_help" role="tabpanel"
                              class="form-group tab-pane fade in table-responsive">
                             <div class="col-sm-12">
@@ -955,8 +943,6 @@
 
         //将数据通过ajax提交给后端进行检查
         function sqlquery(sql) {
-            $('#btn-sqlquery-spinner').removeClass('hidden')
-            $('#btn-sqlquery').addClass('hidden')
             var optgroup = $('#instance_name :selected').parent().attr('label');
             var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
             if (select_sqlContent) {
@@ -1008,8 +994,8 @@
                     limit_num: $("#limit_num").val()
                 },
                 complete: function () {
-                    $('#btn-sqlquery').removeClass('hidden')
-                    $('#btn-sqlquery-spinner').addClass('hidden')
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
                     optgroup_control();
                 },
                 success: function (data) {
@@ -1024,6 +1010,8 @@
 
         function dosqlquery() {
             if (sqlquery_validate()) {
+                $('input[type=button]').addClass('disabled');
+                $('input[type=button]').prop('disabled', true);
                 sqlquery();
             }
         }

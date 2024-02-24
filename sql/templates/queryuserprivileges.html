@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <ul class="breadcrumb">
+        <li><a href="/queryapplylist/">申请列表</a></li>
+        <li class="active">权限管理</li>
+    </ul>
     <!-- 自定义操作按钮-->
     <div id="toolbar" class="bootstrap-select">
         <div class="form-group">
@@ -26,7 +30,7 @@
     </div>
     <!-- 变更操作 -->
     <div class="modal fade" id="modify_privileges" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -54,7 +58,7 @@
     </div>
     <!-- 删除操作确认 -->
     <div class="modal fade" id="deleted_privileges">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content message_align">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

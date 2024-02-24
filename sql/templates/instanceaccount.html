@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
+
+
 {% block content %}
     <!-- 自定义操作按钮-->
     <div style="position: relative">
-        <div id="toolbar" class="form-inline pull-left position-absolute">
+        <div id="toolbar" class="form-inline pull-left" style="position: absolute;top: 10px">
             <div class="form-group ">
                 <select id=instance class="form-control selectpicker" name="instance_list"
                         title="请选择实例"
@@ -36,7 +38,7 @@
     </div>
     <!-- 创建账号模态框 -->
     <div class="modal fade" id="create-account" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -120,7 +122,7 @@
     </div>
     <!-- 修改账号模态框 -->
     <div class="modal fade" id="edit-account" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -949,7 +951,7 @@
     </div>
     <!-- 修改密码模态框 -->
     <div class="modal fade" id="reset-pwd" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -991,7 +993,7 @@
     </div>
     <!-- 锁定账号模态框 -->
     <div class="modal fade" id="lock-account" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
@@ -1014,7 +1016,7 @@
     </div>
     <!-- 删除账号模态框 -->
     <div class="modal fade" id="delete-account" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span

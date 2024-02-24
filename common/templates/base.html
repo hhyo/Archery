@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cn">
+<html>
 <head>
     {% load static %}
     <meta charset="utf-8">
@@ -11,9 +11,9 @@
     <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"/>
 
     <!-- 引入 Bootstrap -->
-    <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'metisMenu/css/metisMenu.min.css' %}" rel="stylesheet">
+    <link href="{% static 'sb-admin-2/css/sb-admin-2.css' %}" rel="stylesheet">
     <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-select/css/bootstrap-select.min.css' %}" rel="stylesheet">
     <link href="{% static 'bootstrap-table/css/bootstrap-table.min.css' %}" rel="stylesheet">
@@ -23,35 +23,374 @@
     <script type="text/javascript" src="{% url 'sql:javascript-catalog' %}"></script>
 </head>
 <body>
+
 <div id="wrapper">
 
-    <!-- Sidebar -->
-    {% include 'includes/sidebar.html' %}
-    <!-- End of Sidebar -->
-
-    <!-- Content Wrapper -->
-    <div id="content-wrapper" class="d-flex flex-column">
-
-        <!-- Main Content -->
-        <div id="content">
-
-            <!-- Topbar -->
-            {% include 'includes/topbar.html' %}
-            <!-- End of Topbar -->
-
-            <!-- Begin Page Content -->
-            <div class="container-fluid">
-                {% block content %}
-                {% endblock content %}
-            </div>
-
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/index/"><strong>Archery</strong></a>
         </div>
 
-    </div>
+        <!-- /.navbar-header -->
+        <ul class="nav navbar-top-links navbar-right">
+            <li>
+                <a>你好，{{ user }}</a>
+            </li>
+            {% if todo > 0 %}
+                <li>
+                    <a href="/workflow/">
+                        <span class="fa fa-bell ">{{ todo }}</span>
+                    </a>
+                </li>
+            {% else %}
+                <li>
+                    <a href="/workflow/">
+                        <span class="fa fa-bell "></span>
+                    </a>
+                </li>
+            {% endif %}
+            <!-- /.dropdown -->
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-user">
+                    {% if user.is_superuser %}
+                        <li>
+                            <a target="_blank" href="/api/debug?full=true"><i class="fa fa-info fa-fw"></i> 系统信息</a>
+                        </li>
+                        <li>
+                            <a target="_blank" href="/admin"><i class="fa fa-sitemap fa-fw"></i> 管理后台</a>
+                        </li>
+                    {% endif %}
+                    <li><a id="2fa-menu" href="javascript:;"><i class="fa fa-lock fa-fw"></i> 两步验证</a></li>
+                    <li><a href="/admin/password_change/"><i class="fa fa-user fa-fw"></i> 修改密码</a></li>
+                    <li><a href="/logout/"><i class="fa fa-gear fa-fw"></i> 退出</a></li>
+                </ul>
+                <!-- /.dropdown-user -->
+            </li>
+            <!-- /.dropdown -->
+            <li>
+                <a href="https://github.com/hhyo/Archery" target="_blank">
+                    <i class="fa fa-github fa-lg" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+        <!-- /.navbar-top-links -->
 
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav" id="side-menu">
+                    {% if perms.sql.menu_dashboard %}
+                        <li>
+                            <a href="/dashboard/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqlcheck %}
+                        <li>
+                            <a href="#"><i class="fa fa-check fa-fw"></i> SQL审核<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                {% if perms.sql.menu_sqlworkflow %}
+                                    <li>
+                                        <a href="/sqlworkflow/">SQL上线</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_sqlanalyze %}
+                                    <li>
+                                        <a href="/sqlanalyze/">SQL分析</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_query %}
+                        <li>
+                            <a href="#"><i class="fa fa-search fa-fw"></i> SQL查询<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                {% if perms.sql.menu_sqlquery %}
+                                    <li>
+                                        <a href="/sqlquery/">在线查询</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_data_dictionary %}
+                                    <li>
+                                        <a href="/data_dictionary/">数据字典</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_queryapplylist %}
+                                    <li>
+                                        <a href="/queryapplylist/">权限管理</a>
+                                    </li>
+                                {% endif %}
+
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_sqloptimize %}
+                        <li>
+                            <a href="#"><i class="fa fa-wrench fa-fw"></i> SQL优化<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                {% if perms.sql.menu_sqladvisor %}
+                                    <li>
+                                        <a href="/sqladvisor/">优化工具</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_slowquery %}
+                                    <li>
+                                        <a href="/slowquery/">慢查日志</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_instance %}
+                        <li>
+                            <a href="#"><i class="fa fa-database fa-fw"></i> 实例管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                {% if perms.sql.menu_instance_list %}
+                                    <li>
+                                        <a href="/instance/">实例列表</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_dbdiagnostic %}
+                                    <li>
+                                        <a href="/dbdiagnostic/">会话管理</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_database %}
+                                    <li>
+                                        <a href="/database/">数据库管理</a>
+                                    </li>
+                                {% endif %}
+
+                                {% if perms.sql.menu_instance_account %}
+                                    <li>
+                                        <a href="/instanceaccount/">账号管理</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_param %}
+                                    <li>
+                                        <a href="/instanceparam/">参数配置</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_tools %}
+                        <li>
+                            <a href="#"><i class="fa fa-plug fa-fw"></i> 工具插件<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                {% if perms.sql.menu_archive %}
+                                    <li>
+                                        <a href="/archive/">PTArchiver</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_my2sql %}
+                                    <li>
+                                        <a href="/my2sql/">My2SQL</a>
+                                    </li>
+                                {% endif %}
+                                {% if perms.sql.menu_schemasync %}
+                                    <li>
+                                        <a href="/schemasync/">SchemaSync</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_system %}
+                        <li>
+                            <a href="#"><i class="fa fa-cogs fa-fw"></i> 系统管理<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                <li>
+                                    <a href="/config/">配置项管理</a>
+                                </li>
+                                <li>
+                                    <a href="/group/">资源组管理</a>
+                                </li>
+                                <li>
+                                    <a href="#">其他配置管理 <span class="fa arrow"></span></a>
+                                    <ul class="nav nav-third-level collapse">
+                                        <li>
+                                            <a target="_blank" href="/admin/sql/users/">用户管理</a>
+                                        </li>
+                                        <li>
+                                            <a target="_blank" href="/admin/auth/group/">权限组管理</a>
+                                        </li>
+                                        <li>
+                                            <a target="_blank" href="/admin/">全部后台数据</a>
+                                        </li>
+                                    </ul>
+                                    <!-- /.nav-third-level -->
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.audit_user %}
+                        <li>
+                            <a href="#"><i class="fa fa-eye fa-fw"></i> 系统审计<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                <li>
+                                    <a href="/audit/">通用审计</a>
+                                </li>
+                                <li>
+                                    <a href="/audit_sqlworkflow/">sql上线审计</a>
+                                </li>
+                                <li>
+                                    <a href="/audit_sqlquery/">查询审计</a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_document %}
+                        <li>
+                            <a href="/dbaprinciples/"><i class="fa fa-sitemap fa-fw"></i> 相关文档</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.sql.menu_openapi %}
+                        <li>
+                            <a href="/api/swagger/" target="_blank"><i class="fa fa-code-fork fa-fw"></i> OpenAPI</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>
+        <!-- /.navbar-static-side -->
+    </nav>
+
+<!-- 两步验证配置模态框-->
+<div class="modal fade" id="2fa" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel1" style="font-weight: bold">两步验证</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="totp-switch" class="col-sm-4 control-label">TOTP：</label>
+                    <div class="col-sm-8">
+                        <div class="switch switch-small">
+                            <label>
+                                <input id="totp-switch" name="2fa" auth_type="totp" type="checkbox">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sms-switch" class="col-sm-4 control-label">短信：</label>
+                    <div class="col-sm-8">
+                        <div class="switch switch-small">
+                            <label>
+                                <input id="sms-switch" name="2fa" auth_type="sms" type="checkbox">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <input id="enable" style="display: none">
+                <input id="state" style="display: none">
+                <select id="auth_type" style="display:none">
+                    <option value="totp"></option>
+                    <option value="sms"></option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-{% include 'includes/modals.html' %}
+<!-- 密码验证模态框-->
+<div class="modal fade" id="passwd-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel1">验证当前用户密码</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="passwd">输入密码验证:</label>
+                    <input type="password" class="form-control" id="passwd" placeholder="确认密码" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="btnConfirm" type="submit" class="btn btn-success">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- OTP验证模态框-->
+<div class="modal fade bs-example-modal-sm" id="2fa-auth" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel2">扫码绑定</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div id="totp-form" class="form-group">
+                        <label class="control-label" for="qrcode-img">1. 使用Google身份验证器扫码：</label>
+                        <img id="qrcode-img" key="" src="" style="width: 100%;height: auto;">
+                    </div>
+                    <div id="sms-form" class="form-group" style="display:none;">
+                        <label class="control-label" for="qrcode-img">1. 输入要绑定的手机号码：</label>
+                        <input class="form-control ng-valid ng-dirty ng-touched" id="phone" name="phone" type="text"
+                        oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
+                    </div>
+                    <label class="control-label" for="otp">2. 输入6位验证码完成绑定：</label>
+                    <input class="form-control ng-valid ng-dirty ng-touched" id="otp" name="otpCode" type="text"
+                       oninput="value=value.replace(/[^\d]/g,'')" autocomplete="off" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="get_captcha" type="button" class="btn btn-primary" style="display: none">获取验证码</button>
+                <button id="binding" type="button" class="btn btn-success">绑定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Page Content -->
+    <div id="page-wrapper">
+        <div class="clearfix">
+            <br>
+            {% block content %}
+            {% endblock content %}
+            <!--底部部分 -->
+            <footer class="text-center">
+                <hr>
+                <p><strong>&copy; Archery</strong>&nbsp;(v{{ archery_version }})</p>
+            </footer>
+        </div>
+    </div>
+    <!-- /#page-wrapper -->
+
+</div>
 
 <script src="{% static 'jquery/jquery.min.js' %}"></script>
 <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
@@ -65,19 +404,18 @@
 <script src="{% static 'sql-formatter/sql-formatter.min.js' %}"></script>
 <script src="{% static 'dist/js/formatter.js' %}"></script>
 <script src="{% static 'dist/js/utils.js' %}"></script>
-
-{% if watermark_enabled %}
-    <script src="{% static 'watermark/shuiyin.js' %}"></script>
-    <script type="text/javascript">
-        var now = getNow();
-        var user = '{{ user }}';
-        watermark.init({watermark_txt: user + " " + now})
-        window.onscroll = function () {
-            watermark.load({watermark_txt: user + " " + now})
+<script src="{% static 'watermark/shuiyin.js' %}"></script>
+<script type="text/javascript">
+    var now = getNow();
+    var user = '{{ user }}';
+    var watermark_enabled = '{{ watermark_enabled }}';
+    if(watermark_enabled == 'True'){
+        watermark.init({ watermark_txt: user + " " + now })
+        window.onscroll = function(){
+            watermark.load({ watermark_txt: user + " " + now })
         }
-    </script>
-{% endif %}
-
+    };
+</script>
 <script>
     function twofa(enable, auth_type) {
         // 配置2fa
@@ -193,7 +531,7 @@
         return result
     }
 
-    $("#auth_type").change(function () {
+    $("#auth_type").change(function() {
         let auth_type = $("#auth_type").val();
         if (auth_type === 'totp') {
             $("#totp-form").show();
@@ -256,12 +594,12 @@
                 } else {
                     let data = twofa(enable, auth_type);
                     if (data.status === 0) {
-                        if (auth_type === 'totp') {
-                            let key = data.data.key;
-                            $("#qrcode-img").attr("key", key)
-                            $("#qrcode-img").attr("src", "/user/qrcode/" + key)
-                        }
-                        $("#2fa-auth").modal("show");
+                            if (auth_type === 'totp') {
+                                let key = data.data.key;
+                                $("#qrcode-img").attr("key", key)
+                                $("#qrcode-img").attr("src", "/user/qrcode/" + key)
+                            }
+                            $("#2fa-auth").modal("show");
                     } else {
                         alert(data.msg)
                     }
@@ -286,7 +624,7 @@
         }
     })
 
-    $("#2fa").on('show.bs.modal', function () {
+    $("#2fa").on('show.bs.modal',function() {
         $('input[name="2fa"]').each(function (i) {
             $(this).bootstrapSwitch({
                 onText: "启用",
@@ -326,7 +664,7 @@
         })
     })
 
-    $("#2fa").on('shown.bs.modal', function () {
+    $("#2fa").on('shown.bs.modal',function(){
         $("#state").val('initial');
         $('input[name="2fa"]').each(function (i) {
             if ($(this).val() === 'true') {
@@ -338,7 +676,7 @@
         $("#state").val('')
     })
 
-    $('input[name="2fa"]').on('switchChange.bootstrapSwitch', function (event, state) {
+    $('input[name="2fa"]').on('switchChange.bootstrapSwitch', function(event, state) {
         if ($("#state").val() !== 'initial') {
             $("#auth_type").val($(this).attr('auth_type'));
             $("#auth_type").trigger('change');
@@ -356,7 +694,6 @@
 
 </script>
 </body>
-
 <script>
     <!-- 解决CSRF-->
     $(function () {
@@ -380,7 +717,7 @@
         }
         return cookieValue;
     }
-    
+
     // 解决下拉筛选项被表格遮挡
     // https://github.com/twbs/bootstrap/issues/11037#issuecomment-274870381
     $('.table-responsive').on('shown.bs.dropdown', function (e) {
