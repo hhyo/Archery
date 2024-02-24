@@ -350,8 +350,8 @@ table .glyphicon {
     position: absolute;
     transform: scale(.7);
     transform-origin: top right;
-    right: 0.5rem;
-    top: 1rem;
+    right: .25rem;
+    margin-top: -1.5rem;
 }
 
 .nav-item:hover {
