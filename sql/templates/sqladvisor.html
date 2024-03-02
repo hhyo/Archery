@@ -3,11 +3,11 @@
 {% block content %}
     <div class="row clearfix">
         <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     SQL优化工具
                 </div>
-                <div class="card-body">
+                <div class="panel-body">
                     <form id="form-sqladvisor" action="/sqladvisor/" method="post" class="form-horizontal" role="form">
                         {% csrf_token %}
                         <div class="col-md-9 column">
@@ -104,11 +104,11 @@
             </div>
         </div>
         <div class="col-md-12 column">
-            <div class="card shadow mb-4">
-                <div class="card-header py3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     优化建议
                 </div>
-                <div class="card-body">
+                <div class="panel-body">
                     <!-- sqladvisor优化信息 -->
                     <div id="sqladvisor-result" style="display:none;" class="form-group">
                         <div id="sqladvisor-result-col" class="col-md-12">
@@ -133,79 +133,79 @@
                     <div id="tuning_result" style="display:none;" class="form-group table-responsive">
                         <div id="div_sys_parm" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
-                            <div class="card-header py3" style="background-color: cornflowerblue; color: white">
+                            <div class="panel-heading" style="background-color: cornflowerblue; color: white">
                                 BASIC INFORMATION
                             </div>
-                            <div class="card-body">
+                            <div class="panel-body">
                                 <p>author：<b id="author"></b>
                                     <a href="http://dbaplus.cn/blog-77-736-1.html" target="_blank"> 查看文章</a></p>
                                 <p>db_version：<b id="db_version"></b></p>
                             </div>
-                            <div class="card-header py3" style="background-color: dimgray; color: white">
+                            <div class="panel-heading" style="background-color: dimgray; color: white">
                                 SYSTEM PARAMETER
                             </div>
-                            <div class="card-body">
+                            <div class="panel-body">
                                 <table id="tb_sys_parameter" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
-                            <div class="card-header py3" style="background-color: dimgrey; color: white">
+                            <div class="panel-heading" style="background-color: dimgrey; color: white">
                                 OPTIMIZER SWITCH
                             </div>
-                            <div class="card-body">
+                            <div class="panel-body">
                                 <table id="tb_optimizer_switch" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                         </div>
                         <div id="div_sql_plan" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
-                            <div class="card-header py3" style="background-color: darkseagreen; color: white">
+                            <div class="panel-heading" style="background-color: darkseagreen; color: white">
                                 SQL PLAN
                             </div>
-                            <div class="card-body">
+                            <div class="panel-body">
                                 <table id="tb_plan" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
-                            <div class="card-header py3" style="background-color: darkseagreen; color: white">
+                            <div class="panel-heading" style="background-color: darkseagreen; color: white">
                                 OPTIMIZER REWRITE SQL
                             </div>
-                            <div class="card-body">
+                            <div class="panel-body">
                                 <table id="tb_optimizer_rewrite_sql" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                             </div>
                         </div>
                         <div id="div_obj_stat" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
-                            <div class="card-header py3" style="background-color: cornflowerblue; color: white">
+                            <div class="panel-heading" style="background-color: cornflowerblue; color: white">
                                 OBJECT STATISTICS
                             </div>
-                            <div id="div_obj_stat-panel-body" class="card-body">
+                            <div id="div_obj_stat-panel-body" class="panel-body">
                             </div>
                         </div>
                         <div id="div_sql_profile" class="panel panel-default base_info"
                              style="border-color: darkgrey;margin-top: 10px;display: none">
-                            <div class="card-header py3" style="background-color: mediumvioletred; color: white">
+                            <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                 STATUS&PROFILING
                             </div>
-                            <div class="card-body">
-                                <div class="card-header py3" style="background-color: mediumvioletred; color: white">
+                            <div class="panel-body">
+                                <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     SESSION STATUS (DIFFERENT)
                                 </div>
                                 <table id="tb_session_status" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
-                                <div class="card-header py3" style="background-color: mediumvioletred; color: white">
+                                <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     SQL PROFILING(DETAIL)
                                 </div>
                                 <table id="tb_sql_profiling_detail" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
-                                <div class="card-header py3" style="background-color: mediumvioletred; color: white">
+                                <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     SQL PROFILING(SUMMARY)
                                 </div>
                                 <table id="tb_sql_profiling_summary" data-toggle="table" class="table table-condensed"
                                        style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                                 <br>
-                                <div class="card-header py3" style="background-color: mediumvioletred; color: white">
+                                <div class="panel-heading" style="background-color: mediumvioletred; color: white">
                                     EXECUTE TIME
                                 </div>
                                 <p>execute_time:&nbsp&nbsp&nbsp&nbsp<b id="execute_time"></b></p>
@@ -213,18 +213,18 @@
                         </div>
                     </div>
                     <div id="div_obj_stat_tmp" style="display: none">
-                        <div class="card-header py3" style="background-color: cornflowerblue; color: white">
+                        <div class="panel-heading" style="background-color: cornflowerblue; color: white">
                             TABLE STRUCTURE
                         </div>
                         <table id="tb_table_structure" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                         <br>
-                        <div class="card-header py3" style="background-color: lightblue; color: white">TABLE INFO
+                        <div class="panel-heading" style="background-color: lightblue; color: white">TABLE INFO
                         </div>
                         <table id="tb_table_info" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
                         <br>
-                        <div class="card-header py3" style="background-color: lightblue; color: white">INDEX INFO
+                        <div class="panel-heading" style="background-color: lightblue; color: white">INDEX INFO
                         </div>
                         <table id="tb_index_info" data-toggle="table" class="table table-condensed"
                                style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></table>
