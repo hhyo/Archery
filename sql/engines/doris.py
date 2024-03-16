@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
 from sql.utils.sql_utils import get_syntax_type, remove_comments
+from sql.engines.mysql import MysqlEngine
 from .models import ResultSet, ReviewResult, ReviewSet
 from common.utils.timer import FuncTimer
 from common.config import SysConfig
-from . import EngineBase
 import traceback
 import pymysql
 import sqlparse
@@ -13,9 +13,7 @@ import re
 
 logger = logging.getLogger("default")
 
-class DorisEngine(EngineBase):
-    test_query = "SELECT 1"
-
+class DorisEngine(MysqlEngine):
     def __init__(self, instance=None):
         super(DorisEngine, self).__init__(instance=instance)
         self.config = SysConfig()
@@ -94,7 +92,7 @@ class DorisEngine(EngineBase):
             row[0]
             for row in result.rows
             if row[0]
-            not in ("_statistics_", "INFORMATION_SCHEMA", "information_schema")
+            not in ("__internal_schema","INFORMATION_SCHEMA", "information_schema")
         ]
         result.rows = db_list
         return result
@@ -114,13 +112,6 @@ class DorisEngine(EngineBase):
         column_list = [row[0] for row in result.rows]
         result.rows = column_list
         return result
-
-    def describe_table(self, db_name, tb_name, **kwargs):
-        """return ResultSet 类似查询"""
-        sql = f"show create table {db_name}.{tb_name}"
-        result = self.query(db_name=db_name, sql=sql)
-        return result
-
 
     def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
@@ -151,36 +142,6 @@ class DorisEngine(EngineBase):
             result["msg"] = "您无权查看该表"
 
         return result
-
-    def filter_sql(self, sql="", limit_num=0):
-        # 对查询sql增加limit限制,limit n 或 limit n,n 或 limit n offset n统一改写成limit n
-        sql = sql.rstrip(";").strip()
-        if re.match(r"^select", sql, re.I):
-            # LIMIT N
-            limit_n = re.compile(r"limit\s+(\d+)\s*$", re.I)
-            # LIMIT M OFFSET N
-            limit_offset = re.compile(r"limit\s+(\d+)\s+offset\s+(\d+)\s*$", re.I)
-            # LIMIT M,N
-            offset_comma_limit = re.compile(r"limit\s+(\d+)\s*,\s*(\d+)\s*$", re.I)
-            if limit_n.search(sql):
-                sql_limit = limit_n.search(sql).group(1)
-                limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_n.sub(f"limit {limit_num};", sql)
-            elif limit_offset.search(sql):
-                sql_limit = limit_offset.search(sql).group(1)
-                sql_offset = limit_offset.search(sql).group(2)
-                limit_num = min(int(limit_num), int(sql_limit))
-                sql = limit_offset.sub(f"limit {limit_num} offset {sql_offset};", sql)
-            elif offset_comma_limit.search(sql):
-                sql_offset = offset_comma_limit.search(sql).group(1)
-                sql_limit = offset_comma_limit.search(sql).group(2)
-                limit_num = min(int(limit_num), int(sql_limit))
-                sql = offset_comma_limit.sub(f"limit {sql_offset},{limit_num};", sql)
-            else:
-                sql = f"{sql} limit {limit_num};"
-        else:
-            sql = f"{sql};"
-        return sql
 
     def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
@@ -309,8 +270,3 @@ class DorisEngine(EngineBase):
         if close_conn:
             self.close()
         return execute_result
-
-    def close(self):
-        if self.conn:
-            self.conn.close()
-            self.conn = None
