@@ -68,14 +68,6 @@ class DorisEngine(MysqlEngine):
         result.rows = db_list
         return result
 
-    def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
-        """获取所有字段, 返回一个ResultSet"""
-        sql = f"""desc {db_name}.{tb_name}"""
-        result = self.query(db_name=db_name, sql=sql)
-        column_list = [row[0] for row in result.rows]
-        result.rows = column_list
-        return result
-
     def query_check(self, db_name=None, sql=""):
         # 查询语句的检查、注释去除、切分
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
