@@ -4,7 +4,9 @@ from sql.engines.mysql import MysqlEngine
 from .models import ResultSet, ReviewResult, ReviewSet
 from common.utils.timer import FuncTimer
 from common.config import SysConfig
+from MySQLdb.constants import FIELD_TYPE
 import traceback
+import MySQLdb
 import pymysql
 import sqlparse
 import logging
@@ -14,39 +16,8 @@ import re
 logger = logging.getLogger("default")
 
 class DorisEngine(MysqlEngine):
-    def __init__(self, instance=None):
-        super(DorisEngine, self).__init__(instance=instance)
-        self.config = SysConfig()
-
-    def get_connection(self, db_name=None):
-        if self.conn:
-            return self.conn
-        if db_name:
-            self.conn = pymysql.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                port=self.port,
-                database=db_name,
-                connect_timeout=10
-            )
-        else:
-            self.conn = pymysql.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                port=self.port,
-                connect_timeout=10
-            )
-        return self.conn
-
-    @property
-    def name(self):
-        return "Doris"
-
-    @property
-    def info(self):
-        return "Doris engine"
+    name = "Doris"
+    info = "Doris engine"
 
     @property
     def auto_backup(self):
@@ -95,14 +66,6 @@ class DorisEngine(MysqlEngine):
             not in ("__internal_schema","INFORMATION_SCHEMA", "information_schema")
         ]
         result.rows = db_list
-        return result
-
-    def get_all_tables(self, db_name, **kwargs):
-        """获取table 列表, 返回一个ResultSet"""
-        sql = "show tables"
-        result = self.query(db_name=db_name, sql=sql)
-        tb_list = [row[0] for row in result.rows]
-        result.rows = tb_list
         return result
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
