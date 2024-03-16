@@ -15,6 +15,7 @@ import re
 
 logger = logging.getLogger("default")
 
+
 class DorisEngine(MysqlEngine):
     name = "Doris"
     info = "Doris engine"
@@ -29,7 +30,6 @@ class DorisEngine(MysqlEngine):
         result = self.query(sql=sql)
         version = result.rows[0][-1].split("-")[0]
         return tuple([int(n) for n in version.split(".")[:3]])
-
 
     def query(self, db_name=None, sql="", limit_num=0, close_conn=True, **kwargs):
         """返回 ResultSet"""
@@ -63,7 +63,7 @@ class DorisEngine(MysqlEngine):
             row[0]
             for row in result.rows
             if row[0]
-            not in ("__internal_schema","INFORMATION_SCHEMA", "information_schema")
+            not in ("__internal_schema", "INFORMATION_SCHEMA", "information_schema")
         ]
         result.rows = db_list
         return result
@@ -100,7 +100,9 @@ class DorisEngine(MysqlEngine):
                 result["bad_query"] = True
                 result["msg"] = explain_result.error
         # 不应该查看doris用户信息
-        if re.match("authentication|grants|roles|users", sql.lower().replace("\n", ""), re.I):
+        if re.match(
+            "authentication|grants|roles|users", sql.lower().replace("\n", ""), re.I
+        ):
             result["bad_query"] = True
             result["msg"] = "您无权查看该表"
 
