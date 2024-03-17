@@ -178,24 +178,32 @@ class MysqlEngine(EngineBase):
         """终止数据库连接"""
         self.query(sql=f"kill {thread_id}")
 
+    # 禁止查询的数据库
+    forbidden_databases = [
+        "information_schema",
+        "performance_schema",
+        "mysql",
+        "test",
+        "sys",
+    ]
+
     def get_all_databases(self):
         """获取数据库列表, 返回一个ResultSet"""
         sql = "show databases"
         result = self.query(sql=sql)
         db_list = [
-            row[0]
-            for row in result.rows
-            if row[0]
-            not in ("information_schema", "performance_schema", "mysql", "test", "sys")
+            row[0] for row in result.rows if row[0] not in self.forbidden_databases
         ]
         result.rows = db_list
         return result
+
+    forbidden_tables = ["test"]
 
     def get_all_tables(self, db_name, **kwargs):
         """获取table 列表, 返回一个ResultSet"""
         sql = "show tables"
         result = self.query(db_name=db_name, sql=sql)
-        tb_list = [row[0] for row in result.rows if row[0] not in ["test"]]
+        tb_list = [row[0] for row in result.rows if row[0] not in self.forbidden_tables]
         result.rows = tb_list
         return result
 
