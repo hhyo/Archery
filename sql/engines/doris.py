@@ -20,9 +20,7 @@ class DorisEngine(MysqlEngine):
     name = "Doris"
     info = "Doris engine"
 
-    @property
-    def auto_backup(self):
-        return False
+    auto_backup = False
 
     @property
     def server_version(self):
@@ -55,50 +53,11 @@ class DorisEngine(MysqlEngine):
                 self.close()
         return result_set
 
-    def get_all_databases(self):
-        """获取数据库列表, 返回一个ResultSet"""
-        sql = "show databases"
-        result = self.query(sql=sql)
-        db_list = [
-            row[0]
-            for row in result.rows
-            if row[0]
-            not in ("__internal_schema", "INFORMATION_SCHEMA", "information_schema")
-        ]
-        result.rows = db_list
-        return result
-
-    def query_check(self, db_name=None, sql=""):
-        # 查询语句的检查、注释去除、切分
-        result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
-        # 删除注释语句，进行语法判断，执行第一条有效sql
-        try:
-            sql = sqlparse.format(sql, strip_comments=True)
-            sql = sqlparse.split(sql)[0]
-            result["filtered_sql"] = sql.strip()
-        except IndexError:
-            result["bad_query"] = True
-            result["msg"] = "没有有效的SQL语句"
-        if re.match(r"^select|^show|^explain", sql, re.I) is None:
-            result["bad_query"] = True
-            result["msg"] = "不支持的查询语法类型!"
-        if "*" in sql:
-            result["has_star"] = True
-            result["msg"] = "SQL语句中含有 * "
-        # select语句先使用Explain判断语法是否正确
-        if re.match(r"^select", sql, re.I):
-            explain_result = self.query(db_name=db_name, sql=f"explain {sql}")
-            if explain_result.error:
-                result["bad_query"] = True
-                result["msg"] = explain_result.error
-        # 不应该查看doris用户信息
-        if re.match(
-            "authentication|grants|roles|users", sql.lower().replace("\n", ""), re.I
-        ):
-            result["bad_query"] = True
-            result["msg"] = "您无权查看该表"
-
-        return result
+    forbidden_databases = [
+        "__internal_schema",
+        "INFORMATION_SCHEMA",
+        "information_schema",
+    ]
 
     def execute_check(self, db_name=None, sql=""):
         """上线单执行前的检查, 返回Review set"""
