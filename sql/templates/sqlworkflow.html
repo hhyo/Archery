@@ -85,7 +85,7 @@
             let end = moment();
 
             function cb(start, end) {
-                if (start.isValid() && end.isValid()) {
+                if (start.isValid() && end.isValid() && start.dayOfYear()!=1) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
                     $('#reservation span').html('全部数据');
@@ -110,7 +110,7 @@
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
+                    "全部": [moment({ year: 1970 }),moment()],
                     "今日": [moment().startOf('day'), moment()],
                     "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
                     "最近7日": [moment().subtract('days', 6), moment()],
