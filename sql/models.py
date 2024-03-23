@@ -981,6 +981,7 @@ class SlowQuery(models.Model):
     reviewed_by = models.CharField(max_length=20, blank=True, null=True)
     reviewed_on = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
+    reviewed_status = models.CharField(max_length=24, blank=True, null=True)
 
     class Meta:
         managed = False

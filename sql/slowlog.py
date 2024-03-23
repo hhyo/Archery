@@ -6,7 +6,7 @@ import pymysql
 from django.contrib.auth.decorators import permission_required
 from django.db.models import F, Sum, Value as V, Max
 from django.db.models.functions import Concat
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.cache import cache_page
 from pyecharts.charts import Line
 from pyecharts import options as opts
@@ -14,6 +14,9 @@ from common.utils.chart_dao import ChartDao
 from sql.engines import get_engine
 
 from sql.utils.resource_group import user_instances
+from sql.utils.instance_management import (
+    SUPPORTED_MANAGEMENT_DB_TYPE,
+)
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from .models import Instance, SlowQuery, SlowQueryHistory, AliyunRdsConfig
 
@@ -68,8 +71,8 @@ def slowquery_review(request):
                 fingerprint__icontains=search,
                 **filter_kwargs
             )
-            .annotate(SQLText=F("fingerprint"), SQLId=F("checksum"))
-            .values("SQLText", "SQLId")
+            .annotate(SQLText=F("fingerprint"), SQLId=F("checksum"), ReviewedBy=F("reviewed_by"), ReviewedOn=F("reviewed_on"), Comments=F("comments"), ReviewedStatus=F("reviewed_status"))
+            .values("SQLText", "SQLId", "ReviewedBy", "ReviewedOn", "Comments", "ReviewedStatus")
             .annotate(
                 CreateTime=Max("slowqueryhistory__ts_max"),
                 DBName=Max("slowqueryhistory__db_max"),  # 数据库
@@ -162,6 +165,7 @@ def slowquery_review_history(request):
             sample__icontains=search,
             **filter_kwargs
         ).annotate(
+            SQLChecksum=F("checksum"),  # SQL语句校验和
             ExecutionStartTime=F(
                 "ts_min"
             ),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
@@ -182,6 +186,7 @@ def slowquery_review_history(request):
         slow_sql_record_list = slow_sql_record_obj.order_by(
             "-" + sortName if "desc".__eq__(sortOrder) else sortName
         )[offset:limit].values(
+            "SQLChecksum",
             "ExecutionStartTime",
             "DBName",
             "HostAddress",
@@ -251,3 +256,42 @@ def report(request):
 
     result = {"status": 0, "msg": "", "data": line.render_embed()}
     return HttpResponse(json.dumps(result), content_type="application/json")
+
+@permission_required("sql.menu_slowquery", raise_exception=True)
+def listreview(request):
+    """获取优化详情列表"""
+    checksum = request.POST.get("review_checksum")
+    if not checksum:
+        return JsonResponse({"status": 0, "msg": "Checksum获取失败", "data": []})
+    review_details=SlowQuery.objects.filter(checksum=checksum).values(
+        "checksum", "reviewed_by", "reviewed_on", "comments", "reviewed_status"
+    ).first()
+    if not review_details:
+        result = {"status": 1, "msg": "优化详情获取失败"}
+    else:
+        result = {"status": 0, "msg": "ok", "rows": review_details}
+    return HttpResponse(
+        json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
+        content_type="application/json",
+    )
+
+@permission_required("sql.menu_slowquery", raise_exception=True)
+def editreview(request):
+    """编辑优化详情"""
+    checksum = request.POST.get("checksum")
+    reviewed_by = request.POST.get("reviewed_by", "")
+    reviewed_on = request.POST.get("reviewed_on", "")
+    comments = request.POST.get("comments", "")
+    reviewed_status = request.POST.get("reviewed_status", "")
+    if (
+         not all([checksum, reviewed_by, reviewed_on, comments,reviewed_status])
+    ):
+        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+    SlowQuery.objects.update_or_create(
+        checksum = checksum,
+        reviewed_by = reviewed_by,
+        reviewed_on = reviewed_on,
+        comments = comments,
+        reviewed_status = reviewed_status,
+    )
+    return JsonResponse({"status": 0, "msg": "", "data": []})
