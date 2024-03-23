@@ -28,7 +28,7 @@ fi
 #收集日志
 #RDS需要增加--no-version-check选项
 ${pt_query_digest} \
---user=${archery_db_user} --password=${archery_db_password} --port=${archery_db_port} \
+--user=${archery_db_user} --password=${archery_db_password} --host=${archery_db_host} --port=${archery_db_port} \
 --review h=${archery_db_host},D=${archery_db_database},t=mysql_slow_query_review  \
 --history h=${archery_db_host},D=${archery_db_database},t=mysql_slow_query_review_history  \
 --no-report --limit=100% --charset=utf8 \
