@@ -2203,13 +2203,15 @@ class TestSQLReview(TestCase):
     @patch("sql.slowlog.listreview")
     def testListreview(self, mock_init):
         """获取优化详情 页面测试"""
-        data = {}
-        r = self.client.get("/sqlreview/list/", data=data)
-        self.assertEqual(r.status_code, 200)
+        response = self.client.get("/sqlreview/list/", data={})
+        data = json.loads(response.content)
+        content = {"status": 0, "msg": "Checksum获取失败", "data": []}
+        self.assertEqual(data, content)
 
     @patch("sql.slowlog.editreview")
     def testListreview(self, mock_init):
         """编辑优化详情 页面测试"""
-        data = {}
-        r = self.client.get("/sqlreview/edit/", data=data)
-        self.assertEqual(r.status_code, 200)
+        response = self.client.get("/sqlreview/edit/", data={})
+        data = json.loads(response.content)
+        content = {"status": 0, "msg": "参数不完整，请确认后提交", "data": []}
+        self.assertEqual(data, content)
