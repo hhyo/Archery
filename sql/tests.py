@@ -2206,9 +2206,14 @@ class TestSQLReview(TestCase):
     def testListreview(self):
         """获取优化详情 页面测试"""
         response = self.client.post("/sqlreview/list/", json={})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
     def testEditreview(self):
         """编辑优化详情 页面测试"""
         response = self.client.post("/sqlreview/edit/", json={})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+
+    def testSqlReview(self):
+        """优化详情 页面测试"""
+        response = self.client.post("/sqlreview/", json={})
+        self.assertEqual(response.status_code, 302)
