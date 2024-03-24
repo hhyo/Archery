@@ -2210,7 +2210,7 @@ class TestSQLReview(TestCase):
         content = {"status": 0, "msg": "Checksum获取失败", "data": []}
         self.assertEqual(data, content)
 
-    def testListreview(self):
+    def testEditreview(self):
         """编辑优化详情 页面测试"""
         response = self.client.post("/sqlreview/edit/", json={})
         data = json.loads(response.content)
