@@ -2198,3 +2198,16 @@ class TestDataDictionary(TestCase):
                 "status": 0,
             },
         )
+
+class TestSQLReview(TestCase):
+    @patch("sql.slowlog.listreview")
+    def testListreview(self, mock_init):
+        """获取优化详情 页面测试"""
+        r = self.client.get("/sqlreview/list/")
+        self.assertEqual(r.status_code, 200)
+
+    @patch("sql.slowlog.editreview")
+    def testListreview(self, mock_init):
+        """编辑优化详情 页面测试"""
+        r = self.client.get("/sqlreview/edit/")
+        self.assertEqual(r.status_code, 200)
