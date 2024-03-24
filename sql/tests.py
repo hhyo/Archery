@@ -2200,6 +2200,9 @@ class TestDataDictionary(TestCase):
         )
 
 class TestSQLReview(TestCase):
+    def setUp(self):
+        self.client = Client()
+        
     def testListreview(self):
         """获取优化详情 页面测试"""
         response = self.client.get("/sqlreview/list/", data={})
