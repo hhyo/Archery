@@ -2200,7 +2200,6 @@ class TestDataDictionary(TestCase):
         )
 
 class TestSQLReview(TestCase):
-    @patch("sql.slowlog.listreview")
     def testListreview(self, mock_init):
         """获取优化详情 页面测试"""
         response = self.client.get("/sqlreview/list/", data={})
@@ -2208,7 +2207,6 @@ class TestSQLReview(TestCase):
         content = {"status": 0, "msg": "Checksum获取失败", "data": []}
         self.assertEqual(data, content)
 
-    @patch("sql.slowlog.editreview")
     def testListreview(self, mock_init):
         """编辑优化详情 页面测试"""
         response = self.client.get("/sqlreview/edit/", data={})
