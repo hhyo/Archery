@@ -2202,17 +2202,17 @@ class TestDataDictionary(TestCase):
 class TestSQLReview(TestCase):
     def setUp(self):
         self.client = Client()
-        
+
     def testListreview(self):
         """获取优化详情 页面测试"""
-        response = self.client.get("/sqlreview/list/", data={})
+        response = self.client.post("/sqlreview/list/", data={})
         data = json.loads(response.content)
         content = {"status": 0, "msg": "Checksum获取失败", "data": []}
         self.assertEqual(data, content)
 
     def testListreview(self):
         """编辑优化详情 页面测试"""
-        response = self.client.get("/sqlreview/edit/", data={})
+        response = self.client.post("/sqlreview/edit/", data={})
         data = json.loads(response.content)
         content = {"status": 0, "msg": "参数不完整，请确认后提交", "data": []}
         self.assertEqual(data, content)
