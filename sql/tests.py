@@ -2203,11 +2203,13 @@ class TestSQLReview(TestCase):
     @patch("sql.slowlog.listreview")
     def testListreview(self, mock_init):
         """获取优化详情 页面测试"""
-        r = self.client.get("/sqlreview/list/")
+        data = {}
+        r = self.client.get("/sqlreview/list/", data=data)
         self.assertEqual(r.status_code, 200)
 
     @patch("sql.slowlog.editreview")
     def testListreview(self, mock_init):
         """编辑优化详情 页面测试"""
-        r = self.client.get("/sqlreview/edit/")
+        data = {}
+        r = self.client.get("/sqlreview/edit/", data=data)
         self.assertEqual(r.status_code, 200)
