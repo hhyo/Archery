@@ -557,7 +557,7 @@ class AuditV2:
             try:
                 group_in_db = Group.objects.get(id=g)
             except Group.DoesNotExist:
-                raise AuditException(f"参数错误, 未发现资源组 {self.resource_group}")
+                raise AuditException(f"参数错误, 未发现用户组")
             if self.audit.current_status != WorkflowStatus.WAITING:
                 # 总体状态不是待审核, 不设置详细的属性
                 review_nodes.append(
