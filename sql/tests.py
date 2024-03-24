@@ -1788,7 +1788,9 @@ class TestDataDictionary(TestCase):
         self.su = User.objects.create(
             username="s_user", display="中文显示", is_active=True, is_superuser=True
         )
-        self.u1 = User.objects.create(username="user1", display="中文显示", is_active=True)
+        self.u1 = User.objects.create(
+            username="user1", display="中文显示", is_active=True
+        )
         self.client = Client()
         self.client.force_login(self.su)
         # 使用 travis.ci 时实例和测试service保持一致

@@ -96,8 +96,12 @@ def slowquery_review(request):
                 MySQLTotalExecutionTimes=Sum(
                     "slowqueryhistory__query_time_sum"
                 ),  # 执行总时长
-                ParseTotalRowCounts=Sum("slowqueryhistory__rows_examined_sum"),  # 扫描总行数
-                ReturnTotalRowCounts=Sum("slowqueryhistory__rows_sent_sum"),  # 返回总行数
+                ParseTotalRowCounts=Sum(
+                    "slowqueryhistory__rows_examined_sum"
+                ),  # 扫描总行数
+                ReturnTotalRowCounts=Sum(
+                    "slowqueryhistory__rows_sent_sum"
+                ),  # 返回总行数
                 ParseRowAvg=Sum("slowqueryhistory__rows_examined_sum")
                 / Sum("slowqueryhistory__ts_cnt"),  # 平均扫描行数
                 ReturnRowAvg=Sum("slowqueryhistory__rows_sent_sum")
@@ -176,7 +180,9 @@ def slowquery_review_history(request):
             **filter_kwargs
         ).annotate(
             SQLChecksum=F("checksum"),  # SQL语句校验和
-            ExecutionStartTime=F("ts_min"),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
+            ExecutionStartTime=F(
+                "ts_min"
+            ),  # 本次统计(每5分钟一次)该类型sql语句出现的最小时间
             DBName=F("db_max"),  # 数据库名
             HostAddress=Concat(
                 V("'"), "user_max", V("'"), V("@"), V("'"), "client_max", V("'")
@@ -295,7 +301,9 @@ def editreview(request):
     comments = request.POST.get("comments", "")
     reviewed_status = request.POST.get("reviewed_status", "")
     if not all([checksum, reviewed_by, reviewed_on, comments, reviewed_status]):
-        return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
+        return JsonResponse(
+            {"status": 1, "msg": "参数不完整，请确认后提交", "data": []}
+        )
     record = SlowQuery.objects.filter(checksum=checksum)
     if not record:
         return JsonResponse({"status": 1, "msg": "记录不存在", "data": []})
