@@ -265,11 +265,12 @@ def listreview(request):
         return JsonResponse({"status": 0, "msg": "Checksum获取失败", "data": []})
     review_details=SlowQuery.objects.filter(checksum=checksum).values(
         "checksum", "reviewed_by", "reviewed_on", "comments", "reviewed_status"
-    ).first()
-    if not review_details:
+    )
+    rows = [row for row in review_details]
+    if not rows:
         result = {"status": 1, "msg": "优化详情获取失败"}
     else:
-        result = {"status": 0, "msg": "ok", "rows": review_details}
+        result = {"status": 0, "msg": "ok", "rows": rows}
     return HttpResponse(
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",
@@ -287,11 +288,13 @@ def editreview(request):
          not all([checksum, reviewed_by, reviewed_on, comments,reviewed_status])
     ):
         return JsonResponse({"status": 1, "msg": "参数不完整，请确认后提交", "data": []})
-    SlowQuery.objects.update_or_create(
-        checksum = checksum,
+    record = SlowQuery.objects.filter(checksum = checksum)
+    if not record:
+         return JsonResponse({"status": 1, "msg": "记录不存在", "data": []})
+    record.update(
         reviewed_by = reviewed_by,
         reviewed_on = reviewed_on,
         comments = comments,
-        reviewed_status = reviewed_status,
+        reviewed_status = reviewed_status
     )
     return JsonResponse({"status": 0, "msg": "", "data": []})
