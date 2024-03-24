@@ -2200,14 +2200,14 @@ class TestDataDictionary(TestCase):
         )
 
 class TestSQLReview(TestCase):
-    def testListreview(self, mock_init):
+    def testListreview(self):
         """获取优化详情 页面测试"""
         response = self.client.get("/sqlreview/list/", data={})
         data = json.loads(response.content)
         content = {"status": 0, "msg": "Checksum获取失败", "data": []}
         self.assertEqual(data, content)
 
-    def testListreview(self, mock_init):
+    def testListreview(self):
         """编辑优化详情 页面测试"""
         response = self.client.get("/sqlreview/edit/", data={})
         data = json.loads(response.content)
