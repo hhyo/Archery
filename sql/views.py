@@ -282,15 +282,13 @@ def rollback(request):
         # 返回
         response = FileResponse(open(file_name, "rb"))
         response["Content-Type"] = "application/octet-stream"
-        response["Content-Disposition"] = (
-            f'attachment;filename="rollback_{workflow_id}.sql"'
-        )
+        response[
+            "Content-Disposition"
+        ] = f'attachment;filename="rollback_{workflow_id}.sql"'
         return response
     # 异步获取，并在页面展示，如果数据量大加载会缓慢
     else:
-        rollback_workflow_name = (
-            f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
-        )
+        rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
         context = {
             "workflow_detail": workflow,
             "rollback_workflow_name": rollback_workflow_name,
