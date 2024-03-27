@@ -1259,25 +1259,52 @@ class OracleEngine(EngineBase):
                                         key `idx_sql_rollback_01` (`workflow_id`)
                                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"""
             )
+            # 获取redo files列表
+            redo_files_sql = f"""SELECT 
+                             b.MEMBER 
+                             FROM v$log a,
+                             (SELECT GROUP#,MEMBER,row_number() OVER(PARTITION BY group# ORDER BY MEMBER) rn FROM v$logfile) b
+                             WHERE a.GROUP# =b.GROUP#
+                             AND b.rn =1 """
             # 使用logminer抓取回滚SQL
-            logmnr_start_sql = f"""begin
+            # 12c以下版本用此SQL
+            logmnr_start_sql_old = f"""begin
                                         dbms_logmnr.start_logmnr(
                                         starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
                                         endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
                                         options=>dbms_logmnr.dict_from_online_catalog + dbms_logmnr.continuous_mine);
                                     end;"""
+            # 12c及以上版本用此SQL
+            logmnr_start_sql_new = f"""begin
+                                        dbms_logmnr.start_logmnr(
+                                        starttime=>to_date('{begin_time}','yyyy-mm-dd hh24:mi:ss'),
+                                        endtime=>to_date('{end_time}','yyyy/mm/dd hh24:mi:ss'),
+                                        options=>dbms_logmnr.dict_from_online_catalog);
+                                    end;"""  
             undo_sql = f"""select 
                            xmlagg(xmlparse(content sql_redo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() ,
                            xmlagg(xmlparse(content sql_undo wellformed)  order by  scn,rs_id,ssn,rownum).getclobval() 
                            from v$logmnr_contents
-                           where  SEG_OWNER not in ('SYS')
+                           where  SEG_OWNER not in ('SYS','AUDSYS')
                            and session# = (select sid from v$mystat where rownum = 1)
                            and serial# = (select serial# from v$session s where s.sid = (select sid from v$mystat where rownum = 1 ))  
                            group by  scn,rs_id,ssn  order by scn desc"""
             logmnr_end_sql = f"""begin
                                     dbms_logmnr.end_logmnr;
                                  end;"""
-            cursor.execute(logmnr_start_sql)
+            # 判断数据库版本，12c及以上版本手动添加redo文件来分析
+            if int(self.server_version[0]) > 11:
+                cursor.execute(redo_files_sql)
+                rows=cursor.fetchall()
+                for index,row in enumerate(rows):
+                    if index == 0:
+                        cursor.execute("BEGIN dbms_logmnr.add_logfile('"+ str(row[0]) + "', dbms_logmnr.new); END;")
+                    else:
+                        cursor.execute("BEGIN dbms_logmnr.add_logfile('"+ str(row[0]) + "', dbms_logmnr.addfile); END;")
+                cursor.execute(logmnr_start_sql_new)
+            # 12c以下版本使用以下logminer
+            else:
+                cursor.execute(logmnr_start_sql_old)
             cursor.execute(undo_sql)
             rows = cursor.fetchall()
             cursor.execute(logmnr_end_sql)
