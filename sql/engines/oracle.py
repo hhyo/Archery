@@ -169,7 +169,7 @@ class OracleEngine(EngineBase):
 
     def get_group_tables_by_db(self, db_name):
         data = {}
-        table_list_sql = f"""SELECT table_name, comments FROM  dba_tab_comments  WHERE owner = :db_name"""
+        table_list_sql = f"""SELECT a.table_name,a.comments FROM dba_tab_comments a,all_tables b WHERE a.table_name=b.table_name AND a.owner=b.owner AND a.owner=:db_name"""
         result = self.query(
             db_name=db_name, sql=table_list_sql, parameters={"db_name": db_name}
         )
