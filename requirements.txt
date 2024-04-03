@@ -32,7 +32,7 @@ djangorestframework-simplejwt==5.2.0
 django-filter==21.1
 drf-spectacular==0.22.0
 pyotp==2.6.0
-pillow==10.2.0
+pillow==10.3.0
 qrcode==7.3.1
 django-environ==0.8.1
 alibabacloud_dysmsapi20170525==2.0.9
