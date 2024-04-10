@@ -72,7 +72,7 @@ class RedisEngine(EngineBase):
             ]
             rows = max(dbs + [15])
 
-        db_list = [str(x) for x in range(int(rows+1))]
+        db_list = [str(x) for x in range(int(rows + 1))]
         result.rows = db_list
         return result
 
