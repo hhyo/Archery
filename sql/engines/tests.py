@@ -319,7 +319,7 @@ class TestRedis(TestCase):
         new_engine = RedisEngine(instance=self.ins)
         result = new_engine.get_all_databases()
         # 验证返回的数据库列表是否符合预期.
-        expected_dbs = [str(x) for x in range(int(18))]
+        expected_dbs = [str(x) for x in range(int(19))]
         self.assertListEqual(result.rows, expected_dbs)
         # 验证config_get方法被调用
         mock_config_get.assert_called_once_with("databases")
