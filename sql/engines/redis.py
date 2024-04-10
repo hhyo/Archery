@@ -56,7 +56,7 @@ class RedisEngine(EngineBase):
 
     def get_all_databases(self, **kwargs):
         """
-        获取数据库列表
+        获取数据库列表 
         :return:
         """
         result = ResultSet(full_sql="CONFIG GET databases")
