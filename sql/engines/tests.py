@@ -304,6 +304,12 @@ class TestRedis(TestCase):
         dbs = new_engine.get_all_databases()
         self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
 
+    @patch("redis.Redis.config_get", return_value={"databases_not_exist_key": 4})
+    def test_get_all_databases_exception(self, _config_get):
+        new_engine = RedisEngine(instance=self.ins)
+        dbs = new_engine.get_all_databases()
+        self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
+
     def test_query_check_safe_cmd(self):
         safe_cmd = "keys 1*"
         new_engine = RedisEngine(instance=self.ins)
