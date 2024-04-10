@@ -304,7 +304,6 @@ class TestRedis(TestCase):
         dbs = new_engine.get_all_databases()
         self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
 
-
     @patch("redis.Redis.info")
     @patch("redis.Redis.config_get")
     def test_get_all_databases_exception_handling(self, mock_config_get, mock_info):
