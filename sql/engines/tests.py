@@ -314,8 +314,28 @@ class TestRedis(TestCase):
         # 实例化RedisEngine并调用get_all_databases方法
         new_engine = RedisEngine(instance="dummy_instance")
         result = new_engine.get_all_databases()
-        # 验证返回的数据库列表是否符合预期
-        expected_dbs = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]
+        # 验证返回的数据库列表是否符合预期. 格式要求分成多行。
+        expected_dbs = [
+           "0",
+           "1",
+           "2",
+           "3",
+           "4",
+           "5",
+           "6",
+           "7",
+           "8",
+           "9",
+           "10",
+           "11",
+           "12",
+           "13",
+           "14",
+           "15",
+           "16",
+           "17",
+           "18",
+       ]
         self.assertListEqual(result.rows, expected_dbs)
         # 验证config_get方法被调用
         mock_config_get.assert_called_once_with("databases")
