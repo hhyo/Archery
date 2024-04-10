@@ -316,7 +316,7 @@ class TestRedis(TestCase):
             "db18": "some_info",
         }
         # 实例化RedisEngine并调用get_all_databases方法
-        new_engine = RedisEngine(instance="dummy_instance")
+        new_engine = RedisEngine(instance=self.ins)
         result = new_engine.get_all_databases()
         # 验证返回的数据库列表是否符合预期.
         expected_dbs = [str(x) for x in range(int(18))]
