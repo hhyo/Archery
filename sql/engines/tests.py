@@ -310,7 +310,11 @@ class TestRedis(TestCase):
         # 模拟config_get方法抛出异常
         mock_config_get.side_effect = Exception("模拟config_get异常")
         # 模拟info方法返回特定的Keyspace信息
-        mock_info.return_value = {"db0": "some_info", "db1": "some_info", "db18": "some_info"}
+        mock_info.return_value = {
+            "db0": "some_info",
+            "db1": "some_info",
+            "db18": "some_info",
+        }
         # 实例化RedisEngine并调用get_all_databases方法
         new_engine = RedisEngine(instance="dummy_instance")
         result = new_engine.get_all_databases()
