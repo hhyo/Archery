@@ -63,11 +63,6 @@ class RedisEngine(EngineBase):
         conn = self.get_connection()
         try:
             rows = conn.config_get("databases")["databases"]
-            rows = rows
-            rows = rows
-            rows = rows
-            rows = rows
-            rows = rows
         except Exception as e:
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
             dbs = [
