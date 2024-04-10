@@ -70,9 +70,9 @@ class RedisEngine(EngineBase):
                 for i in conn.info("Keyspace").keys()
                 if len(i.split("db")) == 2
             ]
-            rows = max(dbs + [16])
+            rows = max(dbs + [15])
 
-        db_list = [str(x) for x in range(int(rows))]
+        db_list = [str(x) for x in range(int(rows+1))]
         result.rows = db_list
         return result
 
