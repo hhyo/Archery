@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+.vscode/*
 *.lock
 *.log
 .idea/
