@@ -328,7 +328,9 @@ class TestRedis(TestCase):
 
     @patch("redis.Redis.info")
     @patch("redis.Redis.config_get")
-    def test_get_all_databases_with_empty_return_value(self, mock_config_get, mock_info):
+    def test_get_all_databases_with_empty_return_value(
+        self, mock_config_get, mock_info
+    ):
         """
         测试当Redis CONFIG GET命令因异常而失败，并且info命令返回空Keyspace信息时，
         get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
@@ -346,7 +348,7 @@ class TestRedis(TestCase):
         # 验证config_get和info方法的调用
         mock_config_get.assert_called_once_with("databases")
         mock_info.assert_called_once_with("Keyspace")
-    
+
     @patch("redis.Redis.info")
     @patch("redis.Redis.config_get")
     def test_get_all_databases_with_less_than_15_dbs(self, mock_config_get, mock_info):
