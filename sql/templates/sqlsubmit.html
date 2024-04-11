@@ -468,7 +468,7 @@
                             }, {
                                 title: '扫描/影响行数',
                                 field: 'affected_rows',
-                                sortable: true,
+                                sortable: true
                             }, {
                                 title: '审核状态',
                                 field: 'errlevel',
@@ -485,7 +485,6 @@
                             }, {
                                 title: '审核信息',
                                 field: 'errormessage',
-                                
                                 formatter: function (value, row, index) {
                                     if (value === null) {
                                         return value
@@ -557,7 +556,6 @@
                                 affected_rows_header.tooltip();
 
                             }
-                            
                         }
                     );
                     //记录审核结果
