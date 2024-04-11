@@ -19,13 +19,11 @@ def global_info(request):
             todo = 0
     except Exception:
         todo = 0
-    
+
     sys_config = SysConfig()
     watermark_enabled = sys_config.get("watermark_enabled", False)
     # 添加公告
-    announcement_content_enabled = sys_config.get(
-        "announcement_content_enabled", False
-    )
+    announcement_content_enabled = sys_config.get("announcement_content_enabled", False)
     announcement_content = sys_config.get("announcement_content", "")
 
     return {
