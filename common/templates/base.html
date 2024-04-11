@@ -378,6 +378,9 @@
     <!-- Page Content -->
     <div id="page-wrapper">
         <div class="clearfix">
+            {% if announcement_content_enabled %}
+            <span style="font-size:20px;color:red;padding-left:0px;display:block;"><br>{{announcement_content}}</span>
+            {% endif %}
             <br>
             {% if announcement_content_enabled %}
             <div class="alert alert-info h4"  role="alert">{{announcement_content}}</div>
@@ -410,7 +413,7 @@
 <script src="{% static 'watermark/shuiyin.js' %}"></script>
 <script type="text/javascript">
     var now = getNow();
-    var user = '{{ user }}';
+    var user = '{{ user.display }}{{ user.date_joined|date:"Hdi" }}';
     var watermark_enabled = '{{ watermark_enabled }}';
     if(watermark_enabled == 'True'){
         watermark.init({ watermark_txt: user + " " + now })

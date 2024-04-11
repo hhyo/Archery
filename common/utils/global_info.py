@@ -26,9 +26,7 @@ def global_info(request):
     announcement_content_enabled = sys_config.get(
         "announcement_content_enabled", False
     )
-    announcement_content = ""
-    if announcement_content_enabled:
-        announcement_content = sys_config.get("announcement_content", "")
+    announcement_content = sys_config.get("announcement_content", "")
 
     return {
         "todo": todo,
