@@ -21,10 +21,17 @@ def global_info(request):
         todo = 0
 
     watermark_enabled = SysConfig().get("watermark_enabled", False)
+    #添加公告
+    announcement_content_enabled = SysConfig().get("announcement_content_enabled", False)
+    announcement_content=""
+    if announcement_content_enabled:
+        announcement_content= SysConfig().get("announcement_content", "")
 
     return {
         "todo": todo,
         "archery_version": display_version,
         "watermark_enabled": watermark_enabled,
+        "announcement_content_enabled":announcement_content_enabled,
+        "announcement_content":announcement_content,
         "twofa_type": twofa_type,
     }
