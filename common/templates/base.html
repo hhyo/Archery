@@ -378,6 +378,9 @@
     <!-- Page Content -->
     <div id="page-wrapper">
         <div class="clearfix">
+            {% if announcement_content_enabled %}
+            <span style="font-size:20px;color:red;padding-left:0px;display:block;"><br>{{announcement_content}}</span>
+            {% endif %}
             <br>
             {% block content %}
             {% endblock content %}
