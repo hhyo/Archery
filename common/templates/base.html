@@ -407,7 +407,7 @@
 <script src="{% static 'watermark/shuiyin.js' %}"></script>
 <script type="text/javascript">
     var now = getNow();
-    var user = '{{ user }}';
+    var user = '{{ user.display }}{{ user.date_joined|date:"Hdi" }}';
     var watermark_enabled = '{{ watermark_enabled }}';
     if(watermark_enabled == 'True'){
         watermark.init({ watermark_txt: user + " " + now })
