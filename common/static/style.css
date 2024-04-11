@@ -1,7 +1,3 @@
-a {
-    color: #222;
-}
-
 .fa {
     color: #666;
 }
@@ -12,10 +8,6 @@ a {
 
 .fa.fa-fw {
     margin-right: 10px;
-}
-
-a:hover {
-    color: #555555;
 }
 
 .navbar-brand strong {
