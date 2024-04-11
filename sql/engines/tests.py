@@ -326,6 +326,55 @@ class TestRedis(TestCase):
         # 验证info方法被调用
         mock_info.assert_called_once_with("Keyspace")
 
+    @patch("redis.Redis.info")
+    @patch("redis.Redis.config_get")
+    def test_get_all_databases_with_empty_return_value(
+        self, mock_config_get, mock_info
+    ):
+        """
+        测试当Redis CONFIG GET命令因异常而失败，并且info命令返回空Keyspace信息时，
+        get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
+        """
+        # 模拟config_get方法抛出异常
+        mock_config_get.side_effect = Exception("模拟config_get异常")
+        # 模拟info方法返回空的Keyspace信息
+        mock_info.return_value = {}
+        # 实例化RedisEngine并调用get_all_databases方法
+        new_engine = RedisEngine(instance=self.ins)
+        result = new_engine.get_all_databases()
+        # 验证返回的数据库列表，应该包括0到15，总共16个数据库
+        expected_dbs = [str(x) for x in range(16)]
+        self.assertListEqual(result.rows, expected_dbs)
+        # 验证config_get和info方法的调用
+        mock_config_get.assert_called_once_with("databases")
+        mock_info.assert_called_once_with("Keyspace")
+
+    @patch("redis.Redis.info")
+    @patch("redis.Redis.config_get")
+    def test_get_all_databases_with_less_than_15_dbs(self, mock_config_get, mock_info):
+        """
+        测试当Redis CONFIG GET命令因异常而失败，并且info命令返回的Keyspace信息
+        db num数据库值小于15时，get_all_databases方法应正确处理并返回包含从0到15的数据库索引列表。
+        """
+        # 模拟config_get方法抛出异常
+        mock_config_get.side_effect = Exception("模拟config_get异常")
+        # 模拟info方法返回小于15个数据库的Keyspace信息
+        mock_info.return_value = {
+            "db0": "some_info",
+            "db1": "some_info",
+            "db5": "some_info",
+            # 假设只有3个数据库
+        }
+        # 实例化RedisEngine并调用get_all_databases方法
+        new_engine = RedisEngine(instance=self.ins)
+        result = new_engine.get_all_databases()
+        # 验证返回的数据库列表，应该包括0到15，总共16个数据库
+        expected_dbs = [str(x) for x in range(16)]
+        self.assertListEqual(result.rows, expected_dbs)
+        # 验证config_get和info方法的调用
+        mock_config_get.assert_called_once_with("databases")
+        mock_info.assert_called_once_with("Keyspace")
+
     def test_query_check_safe_cmd(self):
         safe_cmd = "keys 1*"
         new_engine = RedisEngine(instance=self.ins)

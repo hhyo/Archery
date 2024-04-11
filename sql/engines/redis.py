@@ -64,6 +64,15 @@ class RedisEngine(EngineBase):
         try:
             rows = conn.config_get("databases")["databases"]
         except Exception as e:
+            """
+            由于尝试获取databases配置失败，下面的代码块将通过解析info命令的输出来确定数据库的数量。
+            失败场景1：AWS-ElastiCache(Redis)服务不支持部分命令行。比如: config get xx, acl 部分命令
+            失败场景2：使用了没有管理员权限（-@admin）的Redis用户。 （异常信息：this user has no permissions to run the 'config' command or its subcommand）
+            步骤：
+            - 通过info("Keyspace")获取所有的数据库键空间信息。
+            - 从键空间信息中提取数据库编号（如db0, db1等）。
+            - 计算数据库数量，至少会返回0到15共16个数据库。
+            """
             logger.warning(f"Redis CONFIG GET databases 执行报错，异常信息：{e}")
             dbs = [
                 int(i.split("db")[1])
