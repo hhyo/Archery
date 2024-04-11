@@ -5,7 +5,7 @@ simplejson==3.17.2
 mybatis_mapper2sql==0.1.9
 django-auth-ldap==4.1.0
 python-dateutil==2.8.1
-pymongo==3.11.0
+pymongo==4.6.3
 psycopg2-binary==2.*
 pymysql==0.9.3
 mysql-replication==0.22
