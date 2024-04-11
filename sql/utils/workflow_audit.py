@@ -211,7 +211,7 @@ class AuditV2:
 
         # 获取正则表达式
         auto_review_regex = self.sys_config.get(
-            "auto_review_regex", "^alter|^create|^drop|^truncate|^rename|^delete"
+            "auto_review_regex", "^alter|^create|^drop|^truncate|^rename|^delete|^del|^flushdb|^flushall|^lpop|^rpop"
         )
         p = re.compile(auto_review_regex, re.I)
 
@@ -227,7 +227,9 @@ class AuditV2:
                 # 匹配成功, 代表需要人工复核
                 return False
             # 影响行数加测, 总语句影响行数超过指定数量则需要人工审核
-            all_affected_rows += int(review_result.affected_rows)
+            # 很多时候预测影响行数为0，影响行数规模判断。如果为0行，则改为1行。
+            all_affected_rows += 1 if int(review_result.affected_rows) == 0 else int(review_result.affected_rows)
+
         if all_affected_rows > int(
             self.sys_config.get("auto_review_max_update_rows", 50)
         ):
