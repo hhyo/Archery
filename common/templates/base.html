@@ -378,10 +378,10 @@
     <!-- Page Content -->
     <div id="page-wrapper">
         <div class="clearfix">
-            {% if announcement_content_enabled %}
-            <span style="font-size:20px;color:red;padding-left:0px;display:block;"><br>{{announcement_content}}</span>
-            {% endif %}
             <br>
+            {% if announcement_content_enabled %}
+            <div class="alert alert-info h4"  role="alert">{{announcement_content}}</div>
+            {% endif %}
             {% block content %}
             {% endblock content %}
             <!--底部部分 -->
