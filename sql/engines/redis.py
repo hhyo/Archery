@@ -29,6 +29,7 @@ class RedisEngine(EngineBase):
             return redis.cluster.RedisCluster(
                 host=self.host,
                 port=self.port,
+                username=self.user,
                 password=self.password or None,
                 encoding_errors="ignore",
                 decode_responses=True,
@@ -40,6 +41,7 @@ class RedisEngine(EngineBase):
                 host=self.host,
                 port=self.port,
                 db=db_name,
+                username=self.user,
                 password=self.password or None,
                 encoding_errors="ignore",
                 decode_responses=True,
