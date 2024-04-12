@@ -211,7 +211,8 @@ class AuditV2:
 
         # 获取正则表达式
         auto_review_regex = self.sys_config.get(
-            "auto_review_regex", "^alter|^create|^drop|^truncate|^rename|^delete"
+            "auto_review_regex",
+            "^alter|^create|^drop|^truncate|^rename|^delete|^del|^flushdb|^flushall|^lpop|^rpop",
         )
         p = re.compile(auto_review_regex, re.I)
 
