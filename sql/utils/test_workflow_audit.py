@@ -551,7 +551,7 @@ def test_auto_review_with_default_regex(self, sql_command):
     self.sys_config.set("auto_review_db_type", "mysql,redis")
     self.db_instance.instance_tag.add(self.instance_tag)
 
-    # 设置模拟返回的 SQL 审核内容
+    # 设置审核内容SQL
     sql_content = sql_command
     self.workflow.sqlworkflowcontent.sql_content = sql_content
     self.workflow.sqlworkflowcontent.review_content = json.dumps(
@@ -563,7 +563,7 @@ def test_auto_review_with_default_regex(self, sql_command):
     # 执行自动审核逻辑
     result = audit.is_auto_review()
     assert result is False
-    
+
 def test_get_review_info(
     sql_query_apply,
     resource_group,
