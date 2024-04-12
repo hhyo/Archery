@@ -528,23 +528,28 @@ def test_auto_review_not_applicable(
 @pytest.mark.parametrize(
     "sql_command,expected_result",
     [
-        ("ALTER TABLE my_table ADD COLUMN column_name varchar(255);",False),
-        ("CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);",False),
-        ("DROP TABLE my_table;",False),
-        ("TRUNCATE TABLE my_table;",False),
-        ("RENAME TABLE my_table TO your_table;",False),
-        ("DELETE FROM my_table WHERE id = 1;",False),
-        ("DELETE FROM my_table;",False),
-        ("del key",False),
-        ("FLUSHDB",False),
-        ("FLUSHALL",False),
-        ("LPOP list_key",False),
-        ("add key",False),
-        ("RPOP list_key",False),
+        ("ALTER TABLE my_table ADD COLUMN column_name varchar(255);", False),
+        ("CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);", False),
+        ("DROP TABLE my_table;", False),
+        ("TRUNCATE TABLE my_table;", False),
+        ("RENAME TABLE my_table TO your_table;", False),
+        ("DELETE FROM my_table WHERE id = 1;", False),
+        ("DELETE FROM my_table;", False),
+        ("del key", False),
+        ("FLUSHDB", False),
+        ("FLUSHALL", False),
+        ("LPOP list_key", False),
+        ("add key", False),
+        ("RPOP list_key", False),
     ],
 )
 def test_auto_review_with_default_regex(
-    db_instance, sql_workflow, instance_tag, setup_sys_config, sql_command,expected_result
+    db_instance,
+    sql_workflow,
+    instance_tag,
+    setup_sys_config,
+    sql_command,
+    expected_result,
 ):
     """
     自动审核逻辑中，测试auto_review_regex未配置时使用默认正则表达式的情况。
@@ -564,7 +569,9 @@ def test_auto_review_with_default_regex(
     audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
     # 执行自动审核逻辑
     result = audit.is_auto_review()
-    assert result == expected_result, f"SQL命令 '{sql_command}' 自动审核预期结果为 {expected_result}，但实际结果为 {result}。"
+    assert (
+        result == expected_result
+    ), f"SQL命令 '{sql_command}' 自动审核预期结果为 {expected_result}，但实际结果为 {result}。"
 
 
 def test_get_review_info(
