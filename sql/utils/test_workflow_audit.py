@@ -562,11 +562,7 @@ def test_auto_review_with_default_regex(
         [{"sql": sql_command, "affected_rows": 0}]
     )
     # 执行自动审核逻辑
-    result = audit.is_auto_review()
-
-    assert (
-        result == expected_result
-    ), f"SQL命令 '{sql_command}' 自动审核预期结果为 {expected_result}，但实际结果为 {result}。"
+    assert audit.is_auto_review() == expected_result
 
 
 def test_get_review_info(
