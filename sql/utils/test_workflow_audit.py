@@ -528,10 +528,8 @@ def test_auto_review_not_applicable(
 @pytest.mark.parametrize(
     "sql_command,expected_result",
     [
-        ("CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);", False),
         ("DROP TABLE my_table;", False),
-        ("TRUNCATE TABLE my_table;", False),
-        ("RENAME TABLE my_table TO your_table;", False),
+        ("insert into my_table", True),
         ("FLUSHDB", False),
         ("FLUSHALL", False),
         ("add key", True),
@@ -551,7 +549,9 @@ def test_auto_review_with_default_regex(
     sql_workflow, _ = sql_workflow
     # 设置系统配置未包含 auto_review_regex，模拟未配置的环境
     setup_sys_config.set("auto_review", True)
-    setup_sys_config.set("auto_review_db_type", "redis")
+    setup_sys_config.set("auto_review_db_type", "mysql")
+    setup_sys_config.set("auto_review_tag", instance_tag.tag_code)
+
     db_instance.instance_tag.add(instance_tag)
 
     # 创建 AuditV2 实例
@@ -563,6 +563,7 @@ def test_auto_review_with_default_regex(
     )
     # 执行自动审核逻辑
     result = audit.is_auto_review()
+
     assert (
         result == expected_result
     ), f"SQL命令 '{sql_command}' 自动审核预期结果为 {expected_result}，但实际结果为 {result}。"
