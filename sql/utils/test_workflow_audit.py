@@ -560,8 +560,8 @@ def test_auto_review_with_default_regex(
     db_instance.instance_tag.add(instance_tag)
 
     # 设置审核内容SQL
-    sql_workflow.sqlworkflowcontent.sql_content = sql_command
-    sql_workflow.sqlworkflowcontent.review_content = json.dumps(
+    audit.workflow.sqlworkflowcontent.sql_content = sql_command
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps(
         [{"sql": sql_command, "affected_rows": 0}]
     )
 
