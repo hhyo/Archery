@@ -178,7 +178,7 @@ class RedisEngine(EngineBase):
                 id=line,
                 errlevel=0,
                 stagestatus="Audit completed",
-                errormessage="None",
+                errormessage="影响行数后续支持",
                 sql=cmd,
                 affected_rows=0,
                 execute_time=0,
