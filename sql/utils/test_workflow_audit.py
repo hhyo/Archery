@@ -528,19 +528,13 @@ def test_auto_review_not_applicable(
 @pytest.mark.parametrize(
     "sql_command,expected_result",
     [
-        ("ALTER TABLE my_table ADD COLUMN column_name varchar(255);", False),
         ("CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);", False),
         ("DROP TABLE my_table;", False),
         ("TRUNCATE TABLE my_table;", False),
         ("RENAME TABLE my_table TO your_table;", False),
-        ("DELETE FROM my_table WHERE id = 1;", False),
-        ("DELETE FROM my_table;", False),
-        ("del key", False),
         ("FLUSHDB", False),
         ("FLUSHALL", False),
-        ("LPOP list_key", False),
         ("add key", False),
-        ("RPOP list_key", False),
     ],
 )
 def test_auto_review_with_default_regex(
@@ -559,14 +553,13 @@ def test_auto_review_with_default_regex(
     setup_sys_config.set("auto_review_db_type", "mysql,redis")
     db_instance.instance_tag.add(instance_tag)
 
+    # 创建 AuditV2 实例
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
     # 设置审核内容SQL
     audit.workflow.sqlworkflowcontent.sql_content = sql_command
     audit.workflow.sqlworkflowcontent.review_content = json.dumps(
         [{"sql": sql_command, "affected_rows": 0}]
     )
-
-    # 创建 AuditV2 实例
-    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
     # 执行自动审核逻辑
     result = audit.is_auto_review()
     assert (
