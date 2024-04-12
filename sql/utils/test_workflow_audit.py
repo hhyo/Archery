@@ -524,45 +524,48 @@ def test_auto_review_not_applicable(
     # 全部条件满足, 自动审核通过
     assert audit.is_auto_review() is True
 
+
 @pytest.mark.parametrize(
-    "sql_command",
+    "sql_command,expected_result",
     [
-        "ALTER TABLE my_table ADD COLUMN column_name varchar(255);",
-        "CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);",
-        "DROP TABLE my_table;",
-        "TRUNCATE TABLE my_table;",
-        "RENAME TABLE my_table TO your_table;",
-        "DELETE FROM my_table WHERE id = 1;",
-        "DELETE FROM my_table;",
-        "del key",
-        "FLUSHDB",
-        "FLUSHALL",
-        "LPOP list_key",
-        "add key",
-        "RPOP list_key",
+        ("ALTER TABLE my_table ADD COLUMN column_name varchar(255);",False),
+        ("CREATE TABLE my_table (id int);CREATE TABLE my_table2 (id int);",False),
+        ("DROP TABLE my_table;",False),
+        ("TRUNCATE TABLE my_table;",False),
+        ("RENAME TABLE my_table TO your_table;",False),
+        ("DELETE FROM my_table WHERE id = 1;",False),
+        ("DELETE FROM my_table;",False),
+        ("del key",False),
+        ("FLUSHDB",False),
+        ("FLUSHALL",False),
+        ("LPOP list_key",False),
+        ("add key",False),
+        ("RPOP list_key",False),
     ],
 )
-def test_auto_review_with_default_regex(self, sql_command):
+def test_auto_review_with_default_regex(
+    db_instance, sql_workflow, instance_tag, setup_sys_config, sql_command,expected_result
+):
     """
     自动审核逻辑中，测试auto_review_regex未配置时使用默认正则表达式的情况。
     """
     # 设置系统配置未包含 auto_review_regex，模拟未配置的环境
-    self.sys_config.set("auto_review", True)
-    self.sys_config.set("auto_review_db_type", "mysql,redis")
-    self.db_instance.instance_tag.add(self.instance_tag)
+    setup_sys_config.set("auto_review", True)
+    setup_sys_config.set("auto_review_db_type", "mysql,redis")
+    db_instance.instance_tag.add(instance_tag)
 
     # 设置审核内容SQL
-    sql_content = sql_command
-    self.workflow.sqlworkflowcontent.sql_content = sql_content
-    self.workflow.sqlworkflowcontent.review_content = json.dumps(
-        [{"sql": sql_content, "affected_rows": 0}]
+    sql_workflow.sqlworkflowcontent.sql_content = sql_command
+    sql_workflow.sqlworkflowcontent.review_content = json.dumps(
+        [{"sql": sql_command, "affected_rows": 0}]
     )
 
     # 创建 AuditV2 实例
-    audit = AuditV2(workflow=self.workflow, sys_config=self.sys_config)
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
     # 执行自动审核逻辑
     result = audit.is_auto_review()
-    assert result is False
+    assert result == expected_result, f"SQL命令 '{sql_command}' 自动审核预期结果为 {expected_result}，但实际结果为 {result}。"
+
 
 def test_get_review_info(
     sql_query_apply,
