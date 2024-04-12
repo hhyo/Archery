@@ -534,7 +534,7 @@ def test_auto_review_not_applicable(
         ("RENAME TABLE my_table TO your_table;", False),
         ("FLUSHDB", False),
         ("FLUSHALL", False),
-        ("add key", False),
+        ("add key", True),
     ],
 )
 def test_auto_review_with_default_regex(
