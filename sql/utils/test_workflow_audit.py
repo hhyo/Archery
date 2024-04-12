@@ -525,6 +525,46 @@ def test_auto_review_not_applicable(
     assert audit.is_auto_review() is True
 
 
+@pytest.mark.parametrize(
+    "sql_command,expected_result",
+    [
+        ("DROP TABLE my_table;", False),
+        ("insert into my_table", True),
+        ("FLUSHDB", False),
+        ("FLUSHALL", False),
+        ("add key", True),
+    ],
+)
+def test_auto_review_with_default_regex(
+    db_instance,
+    sql_workflow,
+    instance_tag,
+    setup_sys_config,
+    sql_command,
+    expected_result,
+):
+    """
+    自动审核逻辑中，测试auto_review_regex未配置时使用默认正则表达式的情况。
+    """
+    sql_workflow, _ = sql_workflow
+    # 设置系统配置未包含 auto_review_regex，模拟未配置的环境
+    setup_sys_config.set("auto_review", True)
+    setup_sys_config.set("auto_review_db_type", "mysql")
+    setup_sys_config.set("auto_review_tag", instance_tag.tag_code)
+
+    db_instance.instance_tag.add(instance_tag)
+
+    # 创建 AuditV2 实例
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
+    # 设置审核内容SQL
+    audit.workflow.sqlworkflowcontent.sql_content = sql_command
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps(
+        [{"sql": sql_command, "affected_rows": 0}]
+    )
+    # 执行自动审核逻辑
+    assert audit.is_auto_review() == expected_result
+
+
 def test_get_review_info(
     sql_query_apply,
     resource_group,
