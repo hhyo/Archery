@@ -548,9 +548,10 @@ def test_auto_review_with_default_regex(
     """
     自动审核逻辑中，测试auto_review_regex未配置时使用默认正则表达式的情况。
     """
+    sql_workflow, _ = sql_workflow
     # 设置系统配置未包含 auto_review_regex，模拟未配置的环境
     setup_sys_config.set("auto_review", True)
-    setup_sys_config.set("auto_review_db_type", "mysql,redis")
+    setup_sys_config.set("auto_review_db_type", "redis")
     db_instance.instance_tag.add(instance_tag)
 
     # 创建 AuditV2 实例
