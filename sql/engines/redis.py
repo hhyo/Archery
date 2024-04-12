@@ -204,7 +204,7 @@ class RedisEngine(EngineBase):
                         id=line,
                         errlevel=0,
                         stagestatus="Execute Successfully",
-                        errormessage="None",
+                        errormessage="影响行数后续支持",
                         sql=cmd,
                         affected_rows=0,
                         execute_time=t.cost,

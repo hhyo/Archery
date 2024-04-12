@@ -545,16 +545,6 @@
                                     }
                                 });
                                 return html.join('');
-                            },
-                            onPostHeader:function(){
-                                var affected_rows_header = $('th[data-field="affected_rows"]');
-                                // 为这个<th>元素添加Bootstrap tooltip所需的属性
-                                affected_rows_header.attr({
-                                    'data-toggle': 'tooltip',
-                                    'title': '根据执行计划估算的受影响行数，供参考(Redis暂未支持)'
-                                });
-                                affected_rows_header.tooltip();
-
                             }
                         }
                     );
