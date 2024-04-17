@@ -562,6 +562,7 @@ class PermissionTest(TestCase):
         r = self.client.get("/config/")
         self.assertNotContains(r, "您无权操作，请联系管理员")
 
+
 class ExtendJSONEncoderFTimeTest(TestCase):
     def setUp(self):
         # 初始化测试数据或状态
