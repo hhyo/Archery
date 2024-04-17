@@ -1,5 +1,6 @@
 import json
 import smtplib
+import psycopg2
 from unittest.mock import patch, ANY
 import datetime
 from django.contrib.auth import get_user_model
@@ -17,6 +18,7 @@ from sql.models import (
 )
 from common.utils.chart_dao import ChartDao
 from common.auth import init_user
+from common.utils.extend_json_encoder import ExtendJSONEncoderFTime
 
 User = get_user_model()
 
@@ -559,3 +561,21 @@ class PermissionTest(TestCase):
         User.objects.filter(username=self.user.username).update(is_superuser=1)
         r = self.client.get("/config/")
         self.assertNotContains(r, "您无权操作，请联系管理员")
+
+class ExtendJSONEncoderFTimeTest(TestCase):
+    def setUp(self):
+        # 初始化测试数据或状态
+        self.datetime1 = datetime.datetime.now()
+        self.datetime2 = datetime.datetime.now() - datetime.timedelta(days=1)
+        self.tz_range = psycopg2._range.DateTimeTZRange(self.datetime2, self.datetime1)
+        self.date_time = self.datetime1
+
+    def test_datetime_tz_range(self):
+        # 测试 DateTimeTZRange
+        result = ExtendJSONEncoderFTime().default(self.tz_range)
+        assert self.datetime1.strftime("%Y-%m-%d") in result and self.datetime2.strftime("%Y-%m-%d") in result
+
+    def test_datetime(self):
+        # 测试datetime
+        result = ExtendJSONEncoderFTime().default(self.date_time)
+        assert self.datetime1.strftime("%Y-%m-%d") in result
