@@ -573,7 +573,10 @@ class ExtendJSONEncoderFTimeTest(TestCase):
     def test_datetime_tz_range(self):
         # 测试 DateTimeTZRange
         result = ExtendJSONEncoderFTime().default(self.tz_range)
-        assert self.datetime1.strftime("%Y-%m-%d") in result and self.datetime2.strftime("%Y-%m-%d") in result
+        assert (
+            self.datetime1.strftime("%Y-%m-%d") in result
+            and self.datetime2.strftime("%Y-%m-%d") in result
+        )
 
     def test_datetime(self):
         # 测试datetime
