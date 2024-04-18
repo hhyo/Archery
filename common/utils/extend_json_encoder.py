@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import base64
 import simplejson as json
+import psycopg2
 
 from decimal import Decimal
 from datetime import datetime, date, timedelta
@@ -94,7 +95,9 @@ class ExtendJSONEncoder(json.JSONEncoder):
 class ExtendJSONEncoderFTime(json.JSONEncoder):
     def default(self, obj):
         try:
-            if isinstance(obj, datetime):
+            if isinstance(obj, psycopg2._range.DateTimeTZRange):
+                return obj.lower.isoformat(" ") + "--" + obj.upper.isoformat(" ")
+            elif isinstance(obj, datetime):
                 return obj.isoformat(" ")
             else:
                 return convert(obj)
