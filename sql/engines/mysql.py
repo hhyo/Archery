@@ -449,6 +449,8 @@ class MysqlEngine(EngineBase):
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
+        db_name = self.escape_string(db_name)
+        tb_name = self.escape_string(tb_name)
         sql = f"""SELECT
             COLUMN_NAME,
             COLUMN_TYPE,
@@ -460,8 +462,8 @@ class MysqlEngine(EngineBase):
         FROM
             information_schema.COLUMNS
         WHERE
-            TABLE_SCHEMA = %(db_name)s
-                AND TABLE_NAME = %(tb_name)s
+            TABLE_SCHEMA = '{db_name}'
+                AND TABLE_NAME = '{tb_name}'
         ORDER BY ORDINAL_POSITION;"""
         result = self.query(
             db_name=db_name,
