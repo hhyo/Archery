@@ -807,7 +807,8 @@
                             isdetail = true
                         }
                         var showExport = {{can_download}}===1
-                        $(`#query_result${n}`).bootstrapTable('destroy').bootstrapTable({
+                        var query_result_id=(`query_result${n}`);
+                        $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
                             columns: columns,
@@ -869,6 +870,15 @@
                                     }
                                 });
                                 return html.join('');
+                            },
+                            onPostBody: function(data) {
+                                //此处的属性及样式名称，来自于bootstrap-table.js
+                                //有detail的表头，添加sytle
+                                var thHasDetail=$(`#${query_result_id} th.detail`);
+                                thHasDetail.css('white-space', 'nowrap');
+                                //有详情+号的的td,添加sytle。
+                                var tdHasDetail=$(`#${query_resultId} tr[data-has-detail-view="true"] .detail-icon`).parent('td');
+                                tdHasDetail.css('white-space', 'nowrap');
                             },
                             locale: 'zh-CN',
                             onExportSaved: function (e) {
