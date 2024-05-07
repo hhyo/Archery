@@ -1,5 +1,8 @@
 # Archery Kubernetes Helm 部署文档 
 
+> [!IMPORTANT]  
+> 此 helm chart 已不建议使用, 保留在此仅为历史原因, 请阅读 [wiki](https://github.com/hhyo/Archery/wiki/k8s) 获取最新的部署指引
+
 ## 1. 获取依赖 
 
 helm dependency update
