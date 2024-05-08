@@ -60,7 +60,7 @@ function sqlworkflowStatus_formatter(value) {
 function workflow_type_formatter(value) {
     // 检查value是否为字符串，并将其转换为整数
     if (typeof value === "string") {
-        value = parseInt(value, 10); // 使用基数10以确保是十进制转换
+        value = parseInt(value, 10);
     }
     if (value === workflow_type.query) {
         return workflow_type.query_display
@@ -79,7 +79,7 @@ function workflow_type_formatter(value) {
 function workflow_status_formatter(value) {
     // 检查value是否为字符串，并将其转换为整数
     if (typeof value === "string") {
-        value = parseInt(value, 10); // 使用基数10以确保是十进制转换
+        value = parseInt(value, 10);
     }
     if (value === workflow_status.audit_wait) {
         return "<span class='label label-info'>" + workflow_status.audit_wait_display + " </span>"
