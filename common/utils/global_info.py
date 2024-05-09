@@ -25,7 +25,7 @@ def global_info(request):
     # 添加公告
     announcement_content_enabled = sys_config.get("announcement_content_enabled", False)
     announcement_content = sys_config.get("announcement_content", "")
-    custom_environment_title=sys_config.get("custom_environment_title", '')
+    custom_environment_title = sys_config.get("custom_environment_title", "")
 
     return {
         "todo": todo,
