@@ -25,12 +25,14 @@ def global_info(request):
     # 添加公告
     announcement_content_enabled = sys_config.get("announcement_content_enabled", False)
     announcement_content = sys_config.get("announcement_content", "")
+    custom_environment_title=SysConfig().get("custom_environment_title", '')
 
     return {
         "todo": todo,
         "archery_version": display_version,
         "watermark_enabled": watermark_enabled,
         "announcement_content_enabled": announcement_content_enabled,
+        "custom_environment_title": custom_environment_title,
         "announcement_content": announcement_content,
         "twofa_type": twofa_type,
     }
