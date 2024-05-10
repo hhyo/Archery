@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login To Archery</title>
+    <title>Login To Archery{{ custom_title_suffix }}</title>
     {% load static %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 引入 Bootstrap -->
@@ -18,7 +18,7 @@
 <body style="background-color:#edeff1;">
 <div class="row lsb-login">
     <div class="col-sm-4 login-form-wrapper">
-        <h3 class="text-center">Login To Archery</h3>
+        <h3 class="text-center">Login To Archery{{ custom_title_suffix }}</h3>
         <form class="login-form fade-in-effect" id="login" method="post" role="form">
             {% csrf_token %}
             {% if dingding_enabled %}
