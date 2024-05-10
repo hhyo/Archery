@@ -342,7 +342,7 @@ class ClickHouseEngine(EngineBase):
                 table_engine = self.get_table_engine(table_name)["engine"]
                 table_exist = self.get_table_engine(table_name)["status"]
                 if table_exist == 1:
-                    if table_engine in ("View", "File,", "URL", "Buffer", "Null"):
+                    if table_engine in ("View", "File", "URL", "Buffer", "Null"):
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
