@@ -487,7 +487,7 @@ LOGGING = {
 }
 
 # 在网站标题及登录页面追加此内容, 可用于多archery实例的区分
-CUSTOM_TITLE_SUFFIX = "1"
+CUSTOM_TITLE_SUFFIX = ""
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 if not os.path.exists(MEDIA_ROOT):
