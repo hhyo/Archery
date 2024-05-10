@@ -486,6 +486,9 @@ LOGGING = {
     },
 }
 
+# 在网站标题及登录页面追加此内容, 可用于多archery实例的区分。Archery后台也有相同配置，如都做了配置，以后台配置为准
+CUSTOM_TITLE_SUFFIX = env("CUSTOM_TITLE_SUFFIX", default="")
+
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 if not os.path.exists(MEDIA_ROOT):
     os.mkdir(MEDIA_ROOT)
