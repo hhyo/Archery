@@ -2106,11 +2106,41 @@ class TestClickHouse(TestCase):
         mock_query.return_value = result
         new_engine = ClickHouseEngine(instance=self.ins1)
         table_engine = new_engine.get_table_engine(table_name)
-        alter_sql = "alter table default.tb_test add column remark String"
+        alter_sql = "alter table tb_test add column remark String"
         check_result = new_engine.execute_check(db_name="some_db", sql=alter_sql)
         self.assertEqual(
             check_result.rows[0].errormessage,
             "ALTER TABLE仅支持*MergeTree，Merge以及Distributed等引擎表！",
+        )
+
+    @patch.object(ClickHouseEngine, "query")
+    def test_execute_check_truncate_sql(self, mock_query):
+        table_name = "default.tb_test"
+        result = ResultSet()
+        result.rows = [("File",)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        alter_sql = "truncate table tb_test"
+        check_result = new_engine.execute_check(db_name="some_db", sql=alter_sql)
+        self.assertEqual(
+            check_result.rows[0].errormessage,
+            "TRUNCATE不支持View,File,URL,Buffer和Null表引擎！",
+        )
+
+    @patch.object(ClickHouseEngine, "query")
+    def test_execute_check_insert_sql(self, mock_query):
+        table_name = "default.tb_test"
+        result = ResultSet()
+        result.rows = [("Log",)]
+        mock_query.return_value = result
+        new_engine = ClickHouseEngine(instance=self.ins1)
+        table_engine = new_engine.get_table_engine(table_name)
+        alter_sql = "insert into tb_test(name) values('nick');"
+        check_result = new_engine.execute_check(db_name="some_db", sql=alter_sql)
+        self.assertEqual(
+            check_result.rows[0].errlevel,
+            0,
         )
 
     def test_filter_sql_with_delimiter(self):

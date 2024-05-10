@@ -255,7 +255,7 @@ class ClickHouseEngine(EngineBase):
         for statement in sql_list:
             statement = statement.rstrip(";")
             # 禁用语句
-            if re.match(r"^select|^show", statement.lower()):
+            if re.match(r"^select|^show", statement, re.M | re.IGNORECASE):
                 result = ReviewResult(
                     id=line,
                     errlevel=2,
@@ -273,11 +273,13 @@ class ClickHouseEngine(EngineBase):
                     sql=statement,
                 )
             # alter语句
-            elif re.match(r"^alter", statement.lower()):
+            elif re.match(r"^alter", statement, re.M | re.IGNORECASE):
                 # alter table语句
-                if re.match(r"^alter\s+table\s+(.+?)\s+", statement.lower()):
+                if re.match(
+                    r"^alter\s+table\s+(.+?)\s+", statement, re.M | re.IGNORECASE
+                ):
                     table_name = re.match(
-                        r"^alter\s+table\s+(.+?)\s+", statement.lower(), re.M
+                        r"^alter\s+table\s+(.+?)\s+", statement, re.M | re.IGNORECASE
                     ).group(1)
                     if "." not in table_name:
                         table_name = f"{db_name}.{table_name}"
@@ -298,7 +300,8 @@ class ClickHouseEngine(EngineBase):
                             # delete与update语句，实际是alter语句的变种
                             if re.match(
                                 r"^alter\s+table\s+(.+?)\s+(delete|update)\s+",
-                                statement.lower(),
+                                statement,
+                                re.M | re.IGNORECASE,
                             ):
                                 if not table_engine.endswith("MergeTree"):
                                     result = ReviewResult(
@@ -328,16 +331,18 @@ class ClickHouseEngine(EngineBase):
                 else:
                     result = self.explain_check(check_result, db_name, line, statement)
             # truncate语句
-            elif re.match(r"^truncate\s+table\s+(.+?)(\s|$)", statement.lower()):
+            elif re.match(
+                r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE
+            ):
                 table_name = re.match(
-                    r"^truncate\s+table\s+(.+?)(\s|$)", statement.lower(), re.M
+                    r"^truncate\s+table\s+(.+?)(\s|$)", statement, re.M | re.IGNORECASE
                 ).group(1)
                 if "." not in table_name:
                     table_name = f"{db_name}.{table_name}"
                 table_engine = self.get_table_engine(table_name)["engine"]
                 table_exist = self.get_table_engine(table_name)["status"]
                 if table_exist == 1:
-                    if table_engine in ("View", "File,", "URL", "Buffer", "Null"):
+                    if table_engine in ("View", "File", "URL", "Buffer", "Null"):
                         result = ReviewResult(
                             id=line,
                             errlevel=2,
@@ -358,15 +363,16 @@ class ClickHouseEngine(EngineBase):
                         sql=statement,
                     )
             # insert语句，explain无法正确判断，暂时只做表存在性检查与简单关键字匹配
-            elif re.match(r"^insert", statement.lower()):
+            elif re.match(r"^insert", statement, re.M | re.IGNORECASE):
                 if re.match(
                     r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
-                    statement.lower(),
+                    statement,
+                    re.M | re.IGNORECASE,
                 ):
                     table_name = re.match(
                         r"^insert\s+into\s+([a-zA-Z_][0-9a-zA-Z_.]+)([\w\W]*?)(values|format|select)(\s+|\()",
-                        statement.lower(),
-                        re.M,
+                        statement,
+                        re.M | re.IGNORECASE,
                     ).group(1)
                     if "." not in table_name:
                         table_name = f"{db_name}.{table_name}"
