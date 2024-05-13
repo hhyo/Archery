@@ -168,8 +168,8 @@ class PgSQLEngine(EngineBase):
             result["bad_query"] = True
             result["msg"] = "不支持的查询语法类型!"
         archery_config = SysConfig()
-        if archery_config.get("disable_star") :
-            if "*" in sql :
+        if archery_config.get("disable_star"):
+            if "*" in sql:
                 result["has_star"] = True
                 result["msg"] = "SQL语句中含有 * "
         return result
