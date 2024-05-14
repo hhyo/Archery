@@ -617,7 +617,7 @@ class TestPgSQL(TestCase):
         self.assertDictEqual(
             check_result,
             {
-                "msg":"",
+                "msg": "",
                 "bad_query": False,
                 "filtered_sql": sql.strip(),
                 "has_star": False,
