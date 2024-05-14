@@ -610,6 +610,20 @@ class TestPgSQL(TestCase):
             },
         )
 
+    def test_query_check_explain(self):
+        sql = "explain select x from xx "
+        new_engine = PgSQLEngine(instance=self.ins)
+        check_result = new_engine.query_check(db_name="archery", sql=sql)
+        self.assertDictEqual(
+            check_result,
+            {
+                "msg": "",
+                "bad_query": False,
+                "filtered_sql": sql.strip(),
+                "has_star": False,
+            },
+        )
+
     def test_filter_sql_with_delimiter(self):
         sql = "select * from xx;"
         new_engine = PgSQLEngine(instance=self.ins)

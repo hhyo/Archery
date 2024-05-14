@@ -970,7 +970,7 @@
                 else if (sql === 'show create table') {
                     sqlContent = "desc " + $("#table_name").val() + ";"
                 }
-            } else if (optgroup === "MySQL") {
+            } else if (optgroup === "MySQL" || optgroup === "PgSQL" ) {
                 //查看执行计划
                 if (sql === 'explain') {
                     sqlContent = 'explain ' + sqlContent
