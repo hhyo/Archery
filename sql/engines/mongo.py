@@ -363,9 +363,7 @@ class MongoEngine(EngineBase):
                 msg = "\n".join(_re_msg)
                 msg = msg.replace("true\n", "")
             except Exception as e:
-                logger.warning(
-                    f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}"
-                )
+                logger.warning(f"mongo语句执行报错，语句：{sql}，{e}错误信息{traceback.format_exc()}")
             finally:
                 if is_load:
                     fp.close()
@@ -641,8 +639,7 @@ class MongoEngine(EngineBase):
                                         id=line,
                                         errlevel=2,
                                         stagestatus="后台创建索引",
-                                        errormessage="创建索引没有加 background:true"
-                                        + alert,
+                                        errormessage="创建索引没有加 background:true" + alert,
                                         sql=check_sql,
                                     )
                                 elif not is_in:
@@ -653,8 +650,7 @@ class MongoEngine(EngineBase):
                                     )  # 获得表的总条数
                                     if count >= 5000000:
                                         check_result.warning = (
-                                            alert
-                                            + "大于500万条，请在业务低谷期创建索引"
+                                            alert + "大于500万条，请在业务低谷期创建索引"
                                         )
                                         check_result.warning_count += 1
                                         result = ReviewResult(
@@ -795,15 +791,6 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
-        # self.conn = pymongo.MongoClient(
-        #     self.host,
-        #     self.port,
-        #     authSource=auth_db,
-        #     connect=True,
-        #     connectTimeoutMS=10000,
-        # )
-        # if self.user and self.password:
-        #     self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
         if self.user and self.password:
             uri = f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}?authSource={auth_db}"
         else:
@@ -1130,9 +1117,7 @@ class MongoEngine(EngineBase):
                 )
 
         except Exception as e:
-            logger.warning(
-                f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
-            )
+            logger.warning(f"Mongo命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}")
             result_set.error = str(e)
         finally:
             if close_conn:
