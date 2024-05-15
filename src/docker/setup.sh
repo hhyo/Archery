@@ -19,6 +19,13 @@ tar -xvf mongodb-linux-x86_64-rhel70-3.6.20.tgz
 mv /opt/mongodb-linux-x86_64-rhel70-3.6.20/bin/mongo /usr/local/bin/
 chmod +x /usr/local/bin/mongo
 rm -rf /opt/mongodb*
+curl -L -q -o openssl-1.0.1e https://www.openssl.org/source/old/1.0.1/openssl-1.0.1e.tar.gz
+tar -xvf openssl-1.0.1e.tar.gz
+cd openssl-1.0.1e && ./config shared zlib-dynamic && make
+cp /opt/openssl-1.0.1e/libcrypto.so.1.0.0 /lib/x86_64-linux-gnu/libcrypto.so.10
+cp /opt/openssl-1.0.1e/libssl.so.1.0.0 /lib/x86_64-linux-gnu/libssl.so.10
+rm -rf /opt/openssl-1.0.1e*
+
 #msodbc
 curl -q -L https://packages.microsoft.com/keys/microsoft.asc -o /etc/apt/trusted.gpg.d/microsoft.asc
 curl -q -L https://packages.microsoft.com/config/debian/11/prod.list -o /etc/apt/sources.list.d/mssql-release.list
