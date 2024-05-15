@@ -796,7 +796,7 @@ class MongoEngine(EngineBase):
         else:
             uri = f"mongodb://{self.host}:{self.port}/{self.db_name}"
 
-            # 使用连接字符串创建MongoClient实例
+        # 使用连接字符串创建MongoClient实例
         self.conn = pymongo.MongoClient(uri, connect=True, connectTimeoutMS=10000)
         return self.conn
 
