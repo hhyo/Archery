@@ -21,7 +21,8 @@ chmod +x /usr/local/bin/mongo
 rm -rf /opt/mongodb*
 curl -L -q -o openssl-1.0.1e.tar.gz https://www.openssl.org/source/old/1.0.1/openssl-1.0.1e.tar.gz
 tar -xvf openssl-1.0.1e.tar.gz
-cd openssl-1.0.1e && ./config shared zlib-dynamic && make
+cd /opt/openssl-1.0.1e && ./config shared zlib-dynamic && make
+cd /opt
 cp /opt/openssl-1.0.1e/libcrypto.so.1.0.0 /lib/x86_64-linux-gnu/libcrypto.so.10
 cp /opt/openssl-1.0.1e/libssl.so.1.0.0 /lib/x86_64-linux-gnu/libssl.so.10
 rm -rf /opt/openssl-1.0.1e*
