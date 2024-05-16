@@ -797,9 +797,9 @@ class MongoEngine(EngineBase):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
         if self.user and self.password:
-            self.user = quote_plus(self.user)
-            self.password = quote_plus(self.password)
-            uri = f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}?authSource={auth_db}"
+            user = quote_plus(self.user)
+            password = quote_plus(self.password)
+            uri = f"mongodb://{user}:{password}@{self.host}:{self.port}/{self.db_name}?authSource={auth_db}"
         else:
             uri = f"mongodb://{self.host}:{self.port}/{self.db_name}"
         self.conn = pymongo.MongoClient(uri, connect=True, connectTimeoutMS=10000)
