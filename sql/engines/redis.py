@@ -36,10 +36,6 @@ class RedisEngine(EngineBase):
                 socket_connect_timeout=10,
                 ssl=self.is_ssl,
             )
-        elif self.mode == "sentinel":
-            rs = redis.sentinel([(self.host, self.port)], socket_timeout=0.1)
-            master = rs.discover_master('{}'.format(db_name))
-            return master
         else:
             return redis.Redis(
                 host=self.host,

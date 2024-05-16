@@ -192,7 +192,7 @@ class Instance(models.Model):
         max_length=10,
         default="",
         blank=True,
-        choices=(("standalone", "单机"), ("cluster", "集群"),("sentinel", "哨兵")),
+        choices=(("standalone", "单机"), ("cluster", "集群")),
     )
     host = models.CharField("实例连接", max_length=200)
     port = models.IntegerField("端口", default=0)
