@@ -1274,7 +1274,6 @@ class MongoEngine(EngineBase):
             else:
                 kill_command = kill_command + 'db.killOp("{}");'.format(opid)
         conn.close()
-        
         return kill_command
 
     def kill_op(self, opids):
