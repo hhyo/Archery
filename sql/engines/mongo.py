@@ -831,6 +831,7 @@ class MongoEngine(EngineBase):
             result.rows = conn.list_database_names()
         except OperationFailure:
             result.rows = [self.db_name]
+        conn.close()
         return result
 
     def get_all_tables(self, db_name, **kwargs):
@@ -838,13 +839,16 @@ class MongoEngine(EngineBase):
         conn = self.get_connection()
         db = conn[db_name]
         result.rows = db.list_collection_names()
+        conn.close()
         return result
 
     def get_all_columns_by_tb(self, db_name, tb_name, **kwargs):
         """获取所有字段, 返回一个ResultSet"""
         # https://github.com/getredash/redash/blob/master/redash/query_runner/mongodb.py
         result = ResultSet()
-        db = self.get_connection()[db_name]
+        conn = self.get_connection()
+        db = conn[db_name]
+        conn.close()
         collection_name = tb_name
         documents_sample = []
         if "viewOn" in db[collection_name].options():
@@ -1072,6 +1076,7 @@ class MongoEngine(EngineBase):
             conn = self.get_connection()
             db = conn[db_name]
             collection = db[collection_name]
+            conn.close()
 
             # 执行语句
             logger.debug(find_cmd)
@@ -1247,6 +1252,7 @@ class MongoEngine(EngineBase):
         except Exception as e:
             logger.warning(f"mongodb获取连接信息错误，错误信息{traceback.format_exc()}")
             result_set.error = str(e)
+        conn.close()
 
         return result_set
 
@@ -1267,7 +1273,8 @@ class MongoEngine(EngineBase):
                 kill_command = kill_command + "db.killOp({});".format(opid)
             else:
                 kill_command = kill_command + 'db.killOp("{}");'.format(opid)
-
+        conn.close()
+        
         return kill_command
 
     def kill_op(self, opids):
@@ -1288,6 +1295,7 @@ class MongoEngine(EngineBase):
                     f"{self.name}语句执行killOp报错，语句：db.runCommand({sql}) ，错误信息{traceback.format_exc()}"
                 )
                 result.error = str(e)
+        conn.close()
         return result
 
     def get_all_databases_summary(self):
@@ -1314,6 +1322,7 @@ class MongoEngine(EngineBase):
                 }
                 rows.append(row)
             query_result.rows = rows
+            conn.close()
         return query_result
 
     def get_instance_users_summary(self):
@@ -1339,6 +1348,7 @@ class MongoEngine(EngineBase):
                         }
                     )
             query_result.rows = rows
+            conn.close()
         return query_result
 
     def create_instance_user(self, **kwargs):
@@ -1360,6 +1370,7 @@ class MongoEngine(EngineBase):
                     "remark": remark,
                 }
             ]
+            conn.close()
         except Exception as e:
             exec_result.error = str(e)
         return exec_result
@@ -1373,6 +1384,7 @@ class MongoEngine(EngineBase):
         try:
             conn = self.get_connection()
             conn[db_name].command("dropUser", user)
+            conn.close()
         except Exception as e:
             exec_result.error = str(e)
         return exec_result
@@ -1386,6 +1398,7 @@ class MongoEngine(EngineBase):
         try:
             conn = self.get_connection()
             conn[db_name].command("updateUser", user, pwd=reset_pwd)
+            conn.close()
         except Exception as e:
             exec_result.error = str(e)
         return exec_result
