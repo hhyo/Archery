@@ -1,0 +1,650 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row clearfix">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    SQL上线
+                </div>
+                <div class="panel-body">
+                    <form id="form-submitsql" class="form-horizontal">
+                        {% csrf_token %}
+                        <input type="hidden" id="workflow_id" name="workflow_id"/>
+                        <div class="col-md-9 column">
+                            <pre id="sql_content_editor" style="min-height:450px"></pre>
+                        </div>
+                        <div style="display: none" class="col-md-8 column">
+                            <textarea id="sql_content" name="sql_content" class="form-control" data-name="SQL内容"
+                                      data-placeholder="SQL内容不能为空！"
+                                      placeholder="请在此提交SQL，请以分号结尾。" rows=20
+                                      required></textarea>
+                        </div>
+                        <div class="col-md-3 column">
+                            <div class="form-group">
+                                <input id="sql-upload" name="sql-upload" accept=".sql" type="file" class="file-loading">
+                            </div>
+                            <div class="form-group">
+                                <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
+                                       class="form-control"
+                                       data-name="上线单名称" data-placeholder="请输入上线单名称!"
+                                       placeholder="请输入上线单名称，如:XX项目会员功能建表"
+                                       required>
+                            </div>
+                            <div class="form-group">
+                                <input id="demand_url" type="text" autocomplete="off" name="demand_url"
+                                       class="form-control"
+                                       data-name="需求链接" data-placeholder="请提供需求链接，记录工单需求信息！"
+                                       placeholder="请输入需求链接">
+                            </div>
+                            <div class="form-group">
+                                <select id="group_name" name="group_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="组" data-placeholder="请选择组！"
+                                        title="请选择组"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                    {% for group in group_list %}
+                                        <option value="{{ group.group_name }}"
+                                                group-id="{{ group.group_id }}">{{ group.group_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="instance_name" name="instance_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="实例" data-placeholder="请选择实例！"
+                                        title="请选择实例" multiple='multiple' data-max-options="2000"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在组的实例" required>
+                                {% for name, engine in engines.items %}
+                                    <optgroup id="optgroup-{{ name }}" label="{{ engine.name }}"></optgroup>
+                                {%  endfor %}
+                                </select>
+                            </div>
+                            {% if enable_backup_switch %}
+                                <div id="div-backup" class="form-group">
+                                    <select id="is_backup" name="is_backup"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-name="是否选择备份"
+                                            title="请选择是否需要备份"
+                                            data-placeholder="请选择是否要备份" required>
+                                        <option value=True selected="selected">备份SQL</option>
+                                        <option value=False>不备份SQL</option>
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <!--可执行范围时间-->
+                            <div class='form-group'>
+                                <input type="hidden" id="run_date_start" name="run_date_start">
+                                <input type="hidden" id="run_date_end" name="run_date_end">
+                                <div class='input-group date'>
+                                    <input type="text" id="run_date_range" readonly
+                                           value="请选择可执行时间范围"
+                                           style="background-color: #fff;color: #999 "
+                                           class="form-control "/>
+                                    <span class="input-group-addon"><span
+                                            class="glyphicon glyphicon-time"></span></span>
+                                </div>
+                            </div>
+                            <!--审批流程-->
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                                   data-placeholder="请配置审批流程！" required>
+                            <div id="div-workflow_auditors" class="form-group" style="display: none">
+                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                            </div>
+                            <!--button-->
+                            <div class="form-group">
+                                <button type="button" id="btn-format" class="btn btn-info">美化</button>
+                                <button type="button" id="btn-autoreview" data-loading-text="检测中..."
+                                        class="btn btn-danger">SQL检测
+                                </button>
+                                <button type="button" id="btn-submitsql" data-loading-text="提交中..."
+                                        class="btn btn-success disabled" disabled>
+                                    SQL提交
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 column">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    检测结果
+                </div>
+
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table id="inception-result" data-toggle="table" class="table table-striped table-hover"
+                               style="table-layout:inherit;overflow:hidden;white-space:nowrap;word-break:break-word;text-overflow:ellipsis;display: none"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 审核信息确认 -->
+    <div class="modal fade" id="submitConfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header ">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
+                    <h4 class="modal-title text-danger">提交信息确认</h4>
+                </div>
+                <div class="modal-body">
+                    <p>提交的SQL经检测仍存在<font color="red" size="5"><b id="CheckWarningCount"></b></font>个警告信息和<font
+                            color="red" size="5"><b id="CheckErrorCount"></b></font>个错误信息，请按照平台规范仔细检查！<br>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">取消</button>
+                    <button id="submitsqlconfirm" type="button" class="btn btn-danger" data-dismiss="modal">确定提交
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block js %}
+    {% load static %}
+    <link href="{% static 'bootstrap-fileinput/css/fileinput.min.css' %}" rel="stylesheet">
+    <link href="{% static 'daterangepicker/css/daterangepicker.css' %}" rel="stylesheet" type="text/css"/>
+    <script src="{% static 'ace/ace.js' %}"></script>
+    <script src="{% static 'ace/ext-language_tools.js' %}"></script>
+    <script src="{% static 'ace/mode-mysql.js' %}"></script>
+    <script src="{% static 'ace/theme-github.js' %}"></script>
+    <script src="{% static 'ace/snippets/mysql.js' %}"></script>
+    <script src="{% static 'ace/ace-init.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/fileinput.min.js' %}"></script>
+    <script src="{% static 'bootstrap-fileinput/js/locales/zh.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/moment.min.js' %}"></script>
+    <script src="{% static 'daterangepicker/js/daterangepicker.js' %}"></script>
+
+    <!--初始化时间控件 -->
+    <script>
+        $("#run_date_range").daterangepicker({
+            timePicker: true,
+            timePicker24Hour: true,
+            autoApply: true,
+            autoUpdateInput: false,
+            opens: "left",
+            drops: "up",
+            minDate: moment().startOf('minutes'),
+            startDate: moment().startOf('hour'),
+            endDate: moment().startOf('hour'),
+            locale: {
+                "applyLabel": "确定",
+                "cancelLabel": "清空",
+                "daysOfWeek": ["日", "一", "二", "三", "四", "五", "六"],
+                "monthNames": ["一月", "二月", "三月", "四月", "五月", "六", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                "firstDay": 1
+            },
+        }).on('apply.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#333");
+            $("#run_date_start").val(picker.startDate.format('YYYY-MM-DD HH:mm'));
+            $("#run_date_end").val(picker.endDate.format('YYYY-MM-DD HH:mm'));
+            $(this).val(picker.startDate.format('MM-DD HH:mm') + ' / ' + picker.endDate.format('MM-DD HH:mm'));
+        }).on('cancel.daterangepicker', function (ev, picker) {
+            $(this).css("color", "#999");
+            $(this).val('请选择可执行时间范围');
+            $("#run_date_start").val('');
+            $("#run_date_end").val('');
+        });
+    </script>
+    <!--upload -->
+    <script>
+        //初始化上传控件
+        function init_upload() {
+            $("#sql-upload").fileinput({
+                language: 'zh',
+                allowedFileExtensions: ['sql'],//接收的文件后缀
+                showCaption: true,//是否显示标题
+                initialCaption: '仅支持10M内的SQL文件',
+                defaultPreviewContent: '仅支持10M内的SQL文件',
+                showUpload: false,     //不显示上传按钮
+                showPreview: false,    // 不显示预览,
+                //maxFileSize: 10240
+            }).on('fileloaded', function (event, data, previewId, index) {
+                if (data.size <= 10240 * 1024) {
+                    loadsql();
+                } else {
+                    $('#sql-upload').fileinput('reset');
+                    alert('文件大小超过10M，请重新选择');
+                }
+            }).on('fileclear', function (event) {
+                editor.setValue("");
+            });
+        }
+
+            //选择控件初始化
+        $("#instance_name").selectpicker({
+            actionsBox: true, //在下拉选项添加选中所有和取消选中的按钮
+            countSelectedText: "已选中{0}项",
+            selectedTextFormat: "count > 5"
+        });
+
+        //读取文件并展示在输入域
+        function loadsql() {
+            //获取文件
+            var file = $("#sql-upload")[0].files[0];
+
+            //创建读取文件的对象
+            var reader = new FileReader();
+
+            //创建文件读取相关的变量
+            var sqlFile;
+
+            //为文件读取成功设置事件
+            reader.onload = function (e) {
+                var sqlFile = e.target.result;
+                var value = editor.getValue() + sqlFile;
+                editor.setValue(value);
+                editor.clearSelection();
+            };
+
+            //正式读取文件
+            reader.readAsText(file);
+        }
+    </script>
+    <!--ace -->
+    <!--validate -->
+    <script>
+        function validateForm(element) {
+            var result = true;
+            element.find('[required]').each(
+                function () {
+                    var fieldElement = $(this);
+                    var fieldId = $(this).attr('id');
+                    //如果为null则设置为''
+                    var value = fieldElement.val() || '';
+                    if (value && typeof(value)=='string') {
+                        value = value.trim();
+                    }
+                    if (!value || value === fieldElement.attr('data-placeholder')) {
+                        alert(fieldElement.attr('data-placeholder'));
+                        result = false;
+                        return result;
+                    }
+                    if(fieldId == "workflow_name" && value.length>=50){
+                        alert("上线单名称/工单名称不能超过50个字符！");
+                        result = false;
+                        return result;
+                    }
+                }
+            );
+            return result;
+        }
+
+        //美化
+        $("#btn-format").click(function () {
+                var select_sqlContent = editor.session.getTextRange(editor.getSelectionRange());
+                if (select_sqlContent) {
+                    var sqlContent = select_sqlContent
+                } else {
+                    var sqlContent = editor.getValue();
+
+                }
+                var sqlContent = window.sqlFormatter.format(sqlContent);
+                editor.setValue(sqlContent);
+                editor.clearSelection();
+            }
+        );
+    </script>
+    <!--check-->
+    <script>
+        editor.on('change', function () {
+            $('#btn-submitsql').addClass('disabled').prop("disabled", this);
+        });
+
+        function checkRunDate(gap = 60) {
+            // 结束时间与开始时间的间隔不应该太短
+            var start = $("#run_date_start").val();
+            var end = $("#run_date_end").val();
+            if (start && end) {
+                var realGap = ((new Date(end)).getTime() - (new Date(start)).getTime()) / (1000 * 60)
+                if (realGap >= gap) {
+                    return true
+                } else {
+                    alert("可执行时间范围不应该短于" + gap + "分钟");
+                    return false
+                }
+            }
+            return true
+        }
+
+        $("#btn-autoreview").click(function () {
+            $("#btn-autoreview").addClass('disabled').prop('disabled', true);
+            $("#btn-submitsql").addClass('disabled').prop('disabled', true);
+            //先做表单验证，成功了提交ajax给后端
+            $("#sql_content").val(editor.getValue());
+            if (validateForm($("#form-submitsql")) && checkRunDate()) {
+                autoreview();
+            } else {
+                $("#btn-format").removeClass('disabled').prop('disabled', false);
+                $("#btn-autoreview").removeClass('disabled').prop('disabled', false);
+            }
+        });
+
+        //SQL提交
+        $("#btn-submitsql").click(function () {
+            //获取form对象，判断输入，通过则提交
+            $("#sql_content").val(editor.getValue());
+            if (validateForm($("#form-submitsql")) && checkRunDate()) {
+                //判断是否需要弹出提示
+                var CheckWarningCount = sessionStorage.getItem('CheckWarningCount');
+                var CheckErrorCount = sessionStorage.getItem('CheckErrorCount');
+                $("#CheckWarningCount").text(CheckWarningCount);
+                $("#CheckErrorCount").text(CheckErrorCount);
+                if (CheckWarningCount > 0 || CheckErrorCount > 0) {
+                    $('#submitConfirm').modal('show');
+                } else {
+                    batchSubmit()
+                }
+            }
+        });
+
+        //提交二次确认
+        $("#submitsqlconfirm").click(function () {
+            batchSubmit()
+        });
+
+        function autoreview() {
+            //将数据通过ajax提交给后端进行检查
+            $.ajax({
+                type: "post",
+                url: "/checkbatch/",
+                dataType: "json",
+                data: {
+                    sql_content: editor.getValue(),
+                    instance_name: JSON.stringify($("#instance_name").val()),
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        //初始化表结构显示
+                        // 异步获取要动态生成的列
+                        var columns = [];
+                        $.each(result['column_list'], function (i, column) {
+                            columns.push({"field": i, "title": column, "sortable": true});
+                        });
+                        $("#inception-result").bootstrapTable('destroy').bootstrapTable({
+                                data: result['rows'],
+                                columns: [{
+                                    title: 'ID',
+                                    field: 'id',
+                                    sortable: true
+                                }, {
+                                    title: '客户名称',
+                                    field: 'instance',
+                                    sortable: true
+                                }, {
+                                    title: 'SQL语句',
+                                    field: 'sql',
+                                    formatter: function (value, row, index) {
+                                        var sql = value.replace(/\n/g, '<br>').replace(/\s/g, '&nbsp;');
+                                        if (value.length > 50) {
+                                            return sql.substr(0, 50) + '...';
+                                        } else {
+                                            return sql
+                                        }
+                                    }
+                                }, {
+                                    title: '扫描/影响行数',
+                                    field: 'affected_rows',
+                                    sortable: true
+                                }, {
+                                    title: '审核状态',
+                                    field: 'errlevel',
+                                    sortable: true,
+                                    formatter: function (value, row, index) {
+                                        if (value === 0) {
+                                            return 'pass'
+                                        } else if (value === 1) {
+                                            return 'warning'
+                                        } else if (value === 2) {
+                                            return 'error'
+                                        }
+                                    }
+                                }, {
+                                    title: '审核信息',
+                                    field: 'errormessage',
+                                    formatter: function (value, row, index) {
+                                        if (value === null) {
+                                            return value
+                                        }
+                                        return value.replace(/\n/g, '<br>');
+                                    }
+                                }],
+                                rowStyle: function (row, index) {
+                                    var style = "";
+                                    if (row.errlevel === 1) {
+                                        style = 'warning';
+                                    } else if (row.errlevel === 2) {
+                                        style = 'danger';
+                                    }
+                                    return {classes: style}
+                                },
+                                escape: true,                       // 转义HTML字符串，替换 &, <, >, ", \`, 和 ' 字符。
+                                striped: true,                      //是否显示行间隔色
+                                cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                                sortable: true,                     //是否启用排序
+                                //sortOrder: "desc",                   //排序方式
+                                //sortName: 'errormessage',           //排序字段
+                                pagination: true,                   //是否显示分页（*）
+                                sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
+                                pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                                pageSize: 500,                     //每页的记录行数（*）
+                                pageList: [500, 1000, 5000],       //可供选择的每页的行数（*）
+                                search: true,                      //是否显示表格搜索
+                                strictSearch: false,                //是否全匹配搜索
+                                showColumns: true,                  //是否显示所有的列（选择显示的列）
+                                showRefresh: false,                  //是否显示刷新按钮
+                                showExport: true,
+                                exportDataType: "all",
+                                minimumCountColumns: 1,             //最少允许的列数
+                                uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                                showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                                cardView: false,                    //是否显示详细视图
+                                detailView: true,                  //是否显示父子表
+                                locale: 'zh-CN',                    //本地化
+                                //格式化详情
+                                detailFormatter: function (index, row) {
+                                    var html = [];
+                                    $.each(row, function (key, value) {
+                                        if (key === 'sql') {
+                                            //let sql = window.sqlFormatter.format(key);
+                                            let sql = value;
+                                            //替换标签
+                                            sql = sql.replace(/&/g, "&amp;");
+                                            sql = sql.replace(/</g, "&lt;");
+                                            sql = sql.replace(/>/g, "&gt;");
+                                            sql = sql.replace(/"/g, "&quot;");
+                                            //替换所有的换行符
+                                            sql = sql.replace(/\r\n/g, "<br>");
+                                            sql = sql.replace(/\n/g, "<br>");
+                                            //替换所有的空格
+                                            sql = sql.replace(/\s/g, "&nbsp;");
+                                            html.push('<span>' + sql + '</span>');
+
+                                        }
+                                    });
+                                    return html.join('');
+                                }
+                            }
+                        );
+                        //记录审核结果
+                        sessionStorage.setItem('CheckWarningCount', result['CheckWarningCount']);
+                        sessionStorage.setItem('CheckErrorCount', result['CheckErrorCount']);
+                        $("#inception-result").show();
+                        $("#btn-submitsql").removeClass('disabled').prop('disabled', false);
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                complete: function () {
+                    $("#btn-autoreview").removeClass('disabled').prop('disabled', false);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+
+        }
+
+        function batchSubmit() {
+            $("#instance_name option:selected").each(function() {
+                console.log($(this).attr("instance-id"))
+                console.log($(this).attr("db-name"))
+                sqlSubmit($(this).attr("instance-id"),$(this).attr("db-name"))
+            })
+            window.location.href = "/sqlworkflow/"
+        }
+
+        function sqlSubmit(instance_id,db_name) {
+            let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {})
+            $.ajax({
+                type: "post",
+                url: "/api/v1/workflow/",
+                dataType: "json",
+                contentType: 'application/json;',
+                data: JSON.stringify({
+                        workflow: {
+                            workflow_name: formData.workflow_name,
+                            demand_url: formData.demand_url,
+                            group_id: $("#group_name option:selected").attr("group-id"),
+                            instance: instance_id,
+                            db_name: db_name,
+                            is_backup: formData.is_backup === 'True',
+                            run_date_start: formData.run_date_start,
+                            run_date_end: formData.run_date_end,
+                        },
+                        sql_content: formData.sql_content
+                    }
+                ),
+                beforeSend: function (xhr) {
+                    $('#btn-submitsql').button('loading')
+                },
+                complete: function () {
+                    $('#btn-submitsql').button('reset')
+                },
+                success: function (data) {
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    if (XMLHttpRequest.responseJSON) {
+                        alert(XMLHttpRequest.responseText)
+                    } else {
+                        alert(errorThrown);
+                    }
+                }
+            });
+
+        }
+    </script>
+    <!--group -->
+    <script>
+        // 获取实例信息和审批流程
+        $("#group_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/group/instances/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    tag_code: 'can_write'
+                },
+                complete: function () {
+                    var pathname = window.location.pathname;
+                    if (pathname === "/editsql/") {
+                        //填充实例信息
+                        $('#instance_name').selectpicker('val', sessionStorage.getItem('editClustername'));
+                        if ($("#instance_name").val()) {
+                            $("#instance_name").selectpicker().trigger("change");
+                        }
+                    }
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        $("optgroup[id^='optgroup']").empty();
+                        let result = data['data']
+                        const supportDb = [ {% for name in engines.keys %}"{{ name }}", {% endfor %}]
+                        for (let i of result) {
+                            let instance = "<option value=\"" + i.instance_name + "\" instance-id=" + i.id + " db-name=" + i.db_name + ">" + i.instance_name + "</option>";
+                            if (supportDb.indexOf(i.db_type) !== -1) {
+                                $("#optgroup-" + i.db_type).append(instance);
+                            }
+                        }
+                        $('#instance_name').selectpicker('render').selectpicker('refresh');
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+            $.ajax({
+                type: "post",
+                url: "/group/auditors/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    workflow_type: 2
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#workflow_auditors").val(result['auditors']);
+                        $("#workflow_auditors_display").text(result['auditors_display']);
+                        $("#div-workflow_auditors").show();
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+    </script>
+    <!--init -->
+    <script>
+        $(document).ready(function () {
+            // 初始化上传控件
+            init_upload();
+            // 清空id, 只允许新增不允许修改
+            sessionStorage.removeItem('editWorkflowDetailId');
+            var pathname = window.location.pathname;
+            if (pathname == "/editsql/") {
+                $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
+                $("#group_name").val(sessionStorage.getItem('editGroup'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
+                editor.setValue(sessionStorage.getItem('editSqlContent'));
+                editor.clearSelection();
+                $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
+            } else if (pathname === "/submitotherinstance/") {
+                $("#workflow_name").val(sessionStorage.getItem('editWorkflowNname'));
+                $("#demand_url").val(sessionStorage.getItem('editDemandUrl'));
+                $("#group_name").val(sessionStorage.getItem('editGroup'));
+                editor.setValue(sessionStorage.getItem('editSqlContent'));
+                editor.clearSelection();
+                $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
+            } else if (pathname === "/submitsql/") {
+                //重置页面内容
+                editor.setValue("");
+                $(".selectpicker").selectpicker('val', '');
+                $(".selectpicker").selectpicker('render');
+                $(".selectpicker").selectpicker('refresh');
+            }
+            if ($("#group_name").val()) {
+                $("#group_name").trigger("change");
+            }
+        });
+    </script>
+{% endblock %}

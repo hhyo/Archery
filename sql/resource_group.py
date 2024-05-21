@@ -148,7 +148,7 @@ def instances(request):
     ins = (
         ins.filter(**filter_dict)
         .order_by(Convert("instance_name", "gbk").asc())
-        .values("id", "type", "db_type", "instance_name")
+        .values("id", "type", "db_type", "instance_name", "db_name")
     )
     rows = [row for row in ins]
     result = {"status": 0, "msg": "ok", "data": rows}
