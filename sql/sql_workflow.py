@@ -229,7 +229,7 @@ def alter_run_date(request):
 
 
 @permission_required("sql.sql_review", raise_exception=True)
-def passed(request):
+def passed(request, workflow_id=None, audit_remark=None):
     """
     审核通过，不执行
     :param request:
@@ -280,7 +280,7 @@ def passed(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def execute(request):
+def execute(request, workflow_id=None, op_mode=None):
     """
     执行SQL
     :param request:
@@ -432,7 +432,7 @@ def timing_task(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def cancel(request):
+def cancel(request, workflow_id=None, audit_remark=None):
     """
     终止流程
     :param request:
