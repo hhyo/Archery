@@ -103,7 +103,7 @@
             let end = moment();
 
             function cb(start, end) {
-                if (start.isValid() && end.isValid()) {
+                if (start.isValid() && end.isValid() && start.dayOfYear()!=1) {
                     $('#reservation span').html(start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD'));
                 } else {
                     $('#reservation span').html('全部数据');
@@ -128,7 +128,7 @@
                     firstDay: 1
                 },
                 ranges: {
-                    "全部": [null, null],
+                    "全部": [moment({ year: 1970 }),moment()],
                     "今日": [moment().startOf('day'), moment()],
                     "昨日": [moment().subtract('days', 1).startOf('day'), moment().subtract('days', 1).endOf('day')],
                     "最近7日": [moment().subtract('days', 6), moment()],
@@ -160,8 +160,8 @@
                 sortOrder: "asc",                   //排序方式
                 sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
                 pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                pageSize: 50,                     //每页的记录行数（*）
-                pageList: [50, 100, 200, 300],       //可供选择的每页的行数（*）
+                pageSize: 20,                     //每页的记录行数（*）
+                pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                 showExport: true,                   //是否显示导出按钮
                 exportOptions: {
                     fileName: 'sqlworkflow'  //文件名称设置
@@ -500,7 +500,7 @@
                         sortOrder: "asc",                   //排序方式
                         sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
                         pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
-                        pageSize: 14,                     //每页的记录行数（*）
+                        pageSize: 20,                     //每页的记录行数（*）
                         pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
                         search: false,                      //是否显示表格搜索
                         strictSearch: false,                //是否全匹配搜索

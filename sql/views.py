@@ -180,6 +180,27 @@ def submit_sql(request):
     }
     return render(request, "sqlsubmit.html", context)
 
+def submit_sql_batch(request):
+    """提交SQL的页面"""
+    user = request.user
+    # 获取组信息
+    group_list = user_groups(user)
+
+    # 获取所有有效用户，通知对象
+    active_user = Users.objects.filter(is_active=1)
+
+    # 获取系统配置
+    archer_config = SysConfig()
+
+    # 主动创建标签
+    InstanceTag.objects.get_or_create(tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True})
+
+    context = {
+        "group_list": group_list,
+        "enable_backup_switch": archer_config.get("enable_backup_switch"),
+        "engines": engine_map,
+    }
+    return render(request, 'sqlsubmitbatch.html', context)
 
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
