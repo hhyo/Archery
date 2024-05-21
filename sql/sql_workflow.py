@@ -30,7 +30,7 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .models import SqlWorkflow
+from .models import SqlWorkflow, ResourceGroup
 
 logger = logging.getLogger("default")
 
