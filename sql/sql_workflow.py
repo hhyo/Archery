@@ -550,24 +550,6 @@ def executebatch(request):
     :param request:
     :return:
     """
-    # 非上线时间校验
-    user = request.user
-    now_time = datetime.datetime.now()
-    start_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '18:00', '%Y-%m-%d%H:%M')
-    end_time = datetime.datetime.strptime(str(datetime.datetime.now().date()) + '08:00', '%Y-%m-%d%H:%M')
-    if now_time>end_time and now_time<start_time and str(user) != '廖明':
-        result = {'status':'-1','msg':'非上线期，如有需要，提交飞书紧急上线流程','data':{}}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    #判断正在执行的工单数量，如果正在执行的工单未处理完，请等待处理完先
-    executing_num = SqlWorkflow.objects.filter(status__in = ['workflow_queuing','workflow_executing']).count()
-    if executing_num > 1000:
-        result = {'status':'-2','msg':'正在处理的工单大于1000个，请稍后处理','data':{}}
-        return HttpResponse(json.dumps(result), content_type='application/json')
-
-    # 校验多个权限
-    if not (request.user.has_perm('sql.sql_executebatch')):
-        raise PermissionDenied
     workflow_id_list = request.POST['workflowid_array']
     workflow_id_list = json.loads(workflow_id_list)
     op_mode = 'auto'
@@ -599,7 +581,6 @@ def checkbatch(request):
     sql_content = request.POST.get('sql_content')
     instance_names = request.POST.get('instance_name')
     instance_names= json.loads(instance_names)
-
     instances=[]
     for instance_name in instance_names:
         instance = Instance.objects.get(instance_name=instance_name)
@@ -611,7 +592,6 @@ def checkbatch(request):
         result['status'] = 1
         result['msg'] = '页面提交参数可能为空'
         return HttpResponse(json.dumps(result), content_type='application/json')
-
     warning_count_totle=0
     error_count_totle=0
     # 交给engine进行检测
@@ -650,12 +630,8 @@ def rollbackbatch(request):
     for workflow_id in workflow_id_list:
         workflow = SqlWorkflow.objects.get(id=int(workflow_id))
         rollback_workflow_name = f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
-        try:
-            query_engine = get_engine(instance=workflow.instance)
-            list_backup_sql = query_engine.get_rollback(workflow=workflow)
-        except Exception as msg:
-            return JsonResponse({'status': 1, 'msg': f'{msg}', 'rows': []})
-
+        query_engine = get_engine(instance=workflow.instance)
+        list_backup_sql = query_engine.get_rollback(workflow=workflow)
         ## 获取完整的回滚SQL
         sql_content = '\n'.join(item[1] for item in list_backup_sql)
         param = {
