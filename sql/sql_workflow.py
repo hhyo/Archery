@@ -30,7 +30,7 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .models import SqlWorkflow, ResourceGroup
+from .models import SqlWorkflow, Instance, ResourceGroup
 
 logger = logging.getLogger("default")
 
@@ -298,7 +298,6 @@ def execute(request, workflow_id=None, mode=None):
         or request.user.has_perm("sql.sql_execute_for_resource_group")
     ):
         raise PermissionDenied
-    workflow_id = int(request.POST.get("workflow_id", 0))
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
@@ -450,7 +449,6 @@ def cancel(request, workflow_id=None, audit_remark=None):
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
     sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
-    audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
         context = {"errMsg": "终止原因不能为空"}
         return render(request, "error.html", context)
