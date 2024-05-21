@@ -235,8 +235,10 @@ def passed(request, workflow_id=None, audit_remark=None):
     :param request:
     :return:
     """
-    workflow_id = int(request.POST.get("workflow_id", 0))
-    audit_remark = request.POST.get("audit_remark", "")
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        audit_remark = request.POST.get("audit_remark", "")
+
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
@@ -280,12 +282,16 @@ def passed(request, workflow_id=None, audit_remark=None):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def execute(request, workflow_id=None, op_mode=None):
+def execute(request, workflow_id=None, mode=None):
     """
     执行SQL
     :param request:
     :return:
     """
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        mode = request.POST.get("mode")
+
     # 校验多个权限
     if not (
         request.user.has_perm("sql.sql_execute")
@@ -310,8 +316,6 @@ def execute(request, workflow_id=None, op_mode=None):
     audit_id = Audit.detail_by_workflow_id(
         workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
     ).audit_id
-    # 根据执行模式进行对应修改
-    mode = request.POST.get("mode")
     # 交由系统执行
     if mode == "auto":
         # 修改工单状态为排队中
@@ -438,7 +442,10 @@ def cancel(request, workflow_id=None, audit_remark=None):
     :param request:
     :return:
     """
-    workflow_id = int(request.POST.get("workflow_id", 0))
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        audit_remark = request.POST.get("cancel_remark")
+
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
@@ -552,10 +559,10 @@ def executebatch(request):
     """
     workflow_id_list = request.POST['workflowid_array']
     workflow_id_list = json.loads(workflow_id_list)
-    op_mode = 'auto'
+    mode = 'auto'
 
     for workflow_id in workflow_id_list:
-        execute(request, workflow_id, op_mode)
+        execute(request, workflow_id, mode)
     return HttpResponseRedirect('/sqlworkflow')
 
 @permission_required('sql.sql_reviewbatch', raise_exception=True)
