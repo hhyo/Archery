@@ -7,7 +7,8 @@ WORKDIR /opt/
 
 RUN useradd nginx
 #archery
-RUN apt-get install -yq --no-install-recommends nginx mariadb-client \
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends nginx mariadb-client \
     && source venv4archery/bin/activate \
     && pip install -r /opt/archery/requirements.txt \
     && pip install "redis>=4.1.0" \
