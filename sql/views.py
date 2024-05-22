@@ -181,6 +181,7 @@ def submit_sql(request):
     }
     return render(request, "sqlsubmit.html", context)
 
+
 @permission_required("sql.sql_submitbatch", raise_exception=True)
 def submit_sql_batch(request):
     """提交SQL的页面"""
@@ -196,7 +197,7 @@ def submit_sql_batch(request):
 
     # 主动创建标签
     InstanceTag.objects.get_or_create(
-        tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True}
+        tag_code="can_write", defaults={"tag_name": "支持上线", "active": True}
     )
 
     context = {
@@ -205,6 +206,7 @@ def submit_sql_batch(request):
         "engines": engine_map,
     }
     return render(request, "sqlsubmitbatch.html", context)
+
 
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
