@@ -151,9 +151,9 @@ def sqlworkflow(request):
     archer_config = SysConfig()
 
     context = {
-        "group_list": group_list,
-        "enable_backup_switch": archer_config.get("enable_backup_switch"),
-        "engines": engine_map,
+        "status_list": SQL_WORKFLOW_CHOICES,
+        "instance": instance,
+        "resource_group": resource_group,
         "enable_batch_workflow": archer_config.get("enable_batch_workflow"),
     }
     return render(request, "sqlworkflow.html", context)
