@@ -163,10 +163,10 @@ urlpatterns = [
     path("user/list/", user.lists),
     path("user/qrcode/<str:data>/", totp.generate_qrcode),
 
-    path('submitsqlbatch/', views.submit_sql_batch),
-    path('checkbatch/', sql_workflow.checkbatch),
-    path('passedbatch/', sql_workflow.passedbatch),
-    path('executebatch/', sql_workflow.executebatch),
-    path('cancelbatch/', sql_workflow.cancelbatch),
-    path('rollbackbatch/', sql_workflow.rollbackbatch),
+    path("submitsqlbatch/", views.submit_sql_batch),
+    path("checkbatch/", sql_workflow.checkbatch),
+    path("passedbatch/", sql_workflow.passedbatch),
+    path("executebatch/", sql_workflow.executebatch),
+    path("cancelbatch/", sql_workflow.cancelbatch),
+    path("rollbackbatch/", sql_workflow.rollbackbatch),
 ]

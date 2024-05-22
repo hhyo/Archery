@@ -150,16 +150,13 @@ def sqlworkflow(request):
     # 获取系统配置
     archer_config = SysConfig()
 
-    return render(
-        request,
-        "sqlworkflow.html",
-        {
-            "status_list": SQL_WORKFLOW_CHOICES,
-            "instance": instance,
-            "resource_group": resource_group,
-	    "enable_batch_workflow": archer_config.get("enable_batch_workflow"),
-        },
-    )
+    context = {
+        "group_list": group_list,
+        "enable_backup_switch": archer_config.get("enable_backup_switch"),
+        "engines": engine_map,
+        "enable_batch_workflow": archer_config.get("enable_batch_workflow"),
+    }
+    return render(request, "sqlworkflow.html", context)
 
 
 @permission_required("sql.sql_submit", raise_exception=True)
@@ -184,6 +181,7 @@ def submit_sql(request):
     }
     return render(request, "sqlsubmit.html", context)
 
+@permission_required("sql.sql_submitbatch", raise_exception=True)
 def submit_sql_batch(request):
     """提交SQL的页面"""
     user = request.user
@@ -197,14 +195,16 @@ def submit_sql_batch(request):
     archer_config = SysConfig()
 
     # 主动创建标签
-    InstanceTag.objects.get_or_create(tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True})
+    InstanceTag.objects.get_or_create(
+        tag_code='can_write', defaults={'tag_name': '支持上线', 'active': True}
+    )
 
     context = {
         "group_list": group_list,
         "enable_backup_switch": archer_config.get("enable_backup_switch"),
         "engines": engine_map,
     }
-    return render(request, 'sqlsubmitbatch.html', context)
+    return render(request, "sqlsubmitbatch.html", context)
 
 def detail(request, workflow_id):
     """展示SQL工单详细页面"""
