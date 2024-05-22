@@ -43,6 +43,7 @@
                 提交SQL
             </button>
         </div>
+	{% if enable_batch_workflow %}
         <div class="form-group">
             <select id="batchOper" class="form-control selectpicker">
                 <option value="" selected="selected" >选择批量操作</option>
@@ -61,6 +62,7 @@
                     {% endif %}
             </select>
         </div>
+	{% endif %}
     </div>
     <!-- 审核列表的表格-->
     <div class="table-responsive">

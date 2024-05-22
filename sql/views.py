@@ -147,6 +147,9 @@ def sqlworkflow(request):
     )
     resource_group = ResourceGroup.objects.filter(group_id__in=resource_group_id)
 
+    # 获取系统配置
+    archer_config = SysConfig()
+
     return render(
         request,
         "sqlworkflow.html",
@@ -154,6 +157,7 @@ def sqlworkflow(request):
             "status_list": SQL_WORKFLOW_CHOICES,
             "instance": instance,
             "resource_group": resource_group,
+	    "enable_batch_workflow": archer_config.get("enable_batch_workflow"),
         },
     )
 
