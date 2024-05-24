@@ -335,7 +335,7 @@
                 $("#CheckWarningCount").text(CheckWarningCount);
                 $("#CheckErrorCount").text(CheckErrorCount);
                 if (CheckWarningCount > 0 || CheckErrorCount > 0) {
-                    $('#submitConfirm').modal('show');
+                    $("#submitConfirm').modal('show");
                 } else {
                     batchSubmit()
                 }
@@ -357,7 +357,11 @@
                     sql_content: editor.getValue(),
                     instance_name: JSON.stringify($("#instance_name").val()),
                 },
+                beforeSend: function (xhr) {
+                    $("#btn-autoreview").button("loading")
+                },
                 complete: function () {
+                    $("#btn-autoreview").button("reset")
                 },
                 success: function (data) {
                     if (data.status === 0) {
@@ -482,9 +486,6 @@
                         alert(data.msg);
                     }
                 },
-                complete: function () {
-                    $("#btn-autoreview").removeClass('disabled').prop('disabled', false);
-                },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);
                 }
@@ -493,25 +494,42 @@
         }
 
         function batchSubmit() {
+	    $("#btn-autoreview").addClass('disabled').prop('disabled', true);
+            $('#btn-submitsql').button('loading');
+
+            // 创建一个用于追踪所有异步操作的 Promise 数组
+            var promises = [];
+
             $("#instance_name option:selected").each(function() {
-                console.log($(this).attr("instance-id"))
-                console.log($(this).attr("db-name"))
-                sqlSubmit($(this).attr("instance-id"),$(this).attr("db-name"))
-            })
-            window.location.href = "/sqlworkflow/"
+                var instanceId = $(this).attr("instance-id");
+                var dbName = $(this).attr("db-name");
+
+                var promise = sqlSubmit(instanceId, dbName).then(function(result) {
+                    console.log('sqlSubmit succeeded for', instanceId, dbName);
+                }).catch(function(error) {
+                    console.error('sqlSubmit failed for', instanceId, dbName, error);
+                });
+                promises.push(promise);
+            });
+            Promise.all(promises).then(function() {
+                window.location.href = "/sqlworkflow/"
+            });
         }
 
         function sqlSubmit(instance_id,db_name) {
-            let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
-                obj[item.name] = item.value;
-                return obj;
-            }, {})
-            $.ajax({
-                type: "post",
-                url: "/api/v1/workflow/",
-                dataType: "json",
-                contentType: 'application/json;',
-                data: JSON.stringify({
+            // 返回一个新的 Promise
+            return new Promise((resolve, reject) => {
+                let formData = $('#form-submitsql').serializeArray().reduce(function (obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+                }, {});
+
+                $.ajax({
+                    type: "post",
+                    url: "/api/v1/workflow/",
+                    dataType: "json",
+                    contentType: 'application/json',
+                    data: JSON.stringify({
                         workflow: {
                             workflow_name: formData.workflow_name,
                             demand_url: formData.demand_url,
@@ -523,25 +541,22 @@
                             run_date_end: formData.run_date_end,
                         },
                         sql_content: formData.sql_content
+                    }),
+                    beforeSend: function (xhr) {
+                    },
+                    complete: function () {
+                    },
+                    success: function (data) {
+                        // 当 AJAX 请求成功时，解析数据并调用 resolve
+                        resolve(data);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        // 当 AJAX 请求失败时，调用 reject 并传递错误信息
+                        var errorMessage = XMLHttpRequest.responseJSON ? XMLHttpRequest.responseJSON.message : errorThrown;
+                        reject(new Error(errorMessage));
                     }
-                ),
-                beforeSend: function (xhr) {
-                    $('#btn-submitsql').button('loading')
-                },
-                complete: function () {
-                    $('#btn-submitsql').button('reset')
-                },
-                success: function (data) {
-                },
-                error: function (XMLHttpRequest, textStatus, errorThrown) {
-                    if (XMLHttpRequest.responseJSON) {
-                        alert(XMLHttpRequest.responseText)
-                    } else {
-                        alert(errorThrown);
-                    }
-                }
+                });
             });
-
         }
     </script>
     <!--group -->
@@ -635,7 +650,7 @@
                 editor.setValue(sessionStorage.getItem('editSqlContent'));
                 editor.clearSelection();
                 $("#is_backup").val(sessionStorage.getItem('editIsbackup'));
-            } else if (pathname === "/submitsql/") {
+            } else if (pathname === "/submitsqlbatch/") {
                 //重置页面内容
                 editor.setValue("");
                 $(".selectpicker").selectpicker('val', '');

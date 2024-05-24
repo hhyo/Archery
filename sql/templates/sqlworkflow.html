@@ -61,6 +61,7 @@
                     <option class="glyphicon glyphicon-remove" value="batchCancel">批量终止工单</option>
                     {% endif %}
             </select>
+	    <div id="select-overlay" class="select-overlay" style="display: none;"></div>
         </div>
 	{% endif %}
     </div>
@@ -332,6 +333,8 @@
                 for (var i = 0; i < AllSelections.length; i++) {
                     AllSelectionIds.push(AllSelections[i]['id'])
                 }
+		$("#select-overlay").show();
+                alert("请求已发送后台，请稍等...");
                 $.ajax({
                     url:"/rollbackbatch/",
                     type:"POST",
@@ -343,7 +346,7 @@
                             alert("勾选了包含非【已正常结束】状态的工单,请核查重新提交");
                             location.reload();
                         }else {
-                            console.log(data.data);
+                           // console.log(data.data);
                             sqlSubmit(data.data)
                         }
                     }
@@ -364,6 +367,8 @@
                 for (var i = 0; i < AllSelections.length; i++) {
                     AllSelectionIds.push(AllSelections[i]['id'])
                 }
+		$("#select-overlay").show();
+                alert("请求已发送后台，请稍等");
                 $.ajax({
                     url:"/passedbatch/",
                     type:"POST",
@@ -394,6 +399,8 @@
                     AllSelectionIds.push(AllSelections[i]['id'])
                 }
                 var isContinue = confirm("请确认是否立即执行？");
+		$("#select-overlay").show();
+                alert("请求已发送后台，请稍等...");
                 if (isContinue) {
                     $.ajax({
                         url:"/executebatch/",
@@ -407,7 +414,6 @@
                                 location.reload();
                             }else {
                                 location.reload();
-                                alert("后台执行中，请稍后刷新页面获取工单最新状态");
                             }
                         }
                     })
@@ -429,6 +435,8 @@
                 for (var i = 0; i < AllSelections.length; i++) {
                     AllSelectionIds.push(AllSelections[i]['id'])
                 }
+                $("#select-overlay").show();
+                alert("请求已发送后台，请稍等...");
                 $.ajax({
                     url:"/cancelbatch/",
                     type:"POST",
@@ -440,7 +448,6 @@
                             alert("勾选了包含非【审核通过】或【等待审核人审核】状态的工单,请核查重新提交");
                             location.reload();
                         }else {
-                            alert("请求已发送后台，请稍后主动刷新页面查看提交工单");
                             location.reload();
                         }
                     }
