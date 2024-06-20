@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load format_tags %}
+{% block title %}{{ workflow_detail.title }}-{{ block.super }}{% endblock %}
 {% block content %}
     <h4 style="display: inline;">工单名称：<span>{{ workflow_detail.title }}</span></h4>
     &nbsp;&nbsp;&nbsp;
