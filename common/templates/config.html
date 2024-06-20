@@ -399,6 +399,169 @@
                                            placeholder="管理员/DBA查询结果集限制" />
                                 </div>
                             </div>
+                            <h5 style="color: darkgrey"><b>SQL离线导出配置</b></h5>
+                            <hr/>
+                            <div class="form-group">
+                                <label for="sqlfile_storage"
+                                       class="col-sm-4 control-label">离线导出文件存储服务</label>
+                                <div class="col-sm-5">
+                                    <select id="sqlfile_storage" key="sqlfile_storage"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="离线导出文件存储服务"
+                                            required>
+                                    </select>
+                                </div>
+                                <button id='check_storage_conn' class='btn-sm btn-info'>测试连接</button>
+                            </div>
+                            <div id="local_storage" style="display: none">
+                                <div class="form-group">
+                                    <label for="local_path"
+                                           class="col-sm-4 control-label">LOCAL_PATH</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="local_path"
+                                               key="local_path"
+                                               value="{{ config.local_path }}"
+                                               placeholder="本地保存路径">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="sftp_storage" style="display: none">
+                                <div class="form-group">
+                                    <label for="sftp_host"
+                                           class="col-sm-4 control-label">SFTP_HOST</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_host"
+                                               key="sftp_host"
+                                               value="{{ config.sftp_host }}"
+                                               placeholder="SFTP服务访问IP">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sftp_port"
+                                           class="col-sm-4 control-label">SFTP_PORT</label>
+                                    <div class="col-sm-5">
+                                        <input type="number" class="form-control" id="sftp_port"
+                                               key="sftp_port"
+                                               value="{{ config.sftp_port }}"
+                                               placeholder="SFTP服务端口，亦为SSH服务端口，默认22">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sftp_user"
+                                           class="col-sm-4 control-label">SFTP_USER</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_user"
+                                               key="sftp_user"
+                                               value="{{ config.sftp_user }}"
+                                               placeholder="SFTP服务访问用户">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sftp_password"
+                                           class="col-sm-4 control-label">SFTP_PASSWORD</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="sftp_password"
+                                               key="sftp_password"
+                                               value="{{ config.sftp_password }}"
+                                               placeholder="SFTP服务访问密码">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sftp_path"
+                                           class="col-sm-4 control-label">SFTP_PATH</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="sftp_path"
+                                               key="sftp_path"
+                                               value="{{ config.sftp_path }}"
+                                               placeholder="SFTP服务存储路径，必须以 / 结尾, 若存储到根下的tmp目录: /tmp/">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="oss_storage" style="display: none">
+                                <div class="form-group">
+                                    <label for="oss_access_key_id"
+                                           class="col-sm-4 control-label">OSS_ACCESS_KEY_ID</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="oss_access_key_id"
+                                               key="oss_access_key_id"
+                                               value="{{ config.oss_access_key_id }}"
+                                               placeholder="OSS AK信息">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="oss_access_key_secret"
+                                           class="col-sm-4 control-label">OSS_ACCESS_KEY_SECRET</label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="oss_access_key_secret"
+                                               key="oss_access_key_secret"
+                                               value="{{ config.oss_access_key_secret }}"
+                                               placeholder="OSS SK信息">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="oss_endpoint"
+                                           class="col-sm-4 control-label">OSS_ENDPOINT</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_endpoint"
+                                               key="oss_endpoint"
+                                               value="{{ config.oss_endpoint }}"
+                                               placeholder="OSS Endpoint">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="oss_bucket_name"
+                                           class="col-sm-4 control-label">OSS_BUCKET_NAME</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_bucket_name"
+                                               key="oss_bucket_name"
+                                               value="{{ config.oss_bucket_name }}"
+                                               placeholder="OSS Bucket，无 / 斜线">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="oss_path"
+                                           class="col-sm-4 control-label">OSS_PATH</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="oss_path"
+                                               key="oss_path"
+                                               value="{{ config.oss_path }}"
+                                               placeholder="OSS 存储路径，开头没有 / ，若存储到tmp目录: tmp/">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="offline_download_export_msg" style="display: none">
+                                <div class="form-group">
+                                    <label for="max_export_rows"
+                                           class="col-sm-4 control-label">MAX_EXPORT_ROWS</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="max_export_rows"
+                                               key="max_export_rows"
+                                               value="{{ config.max_export_rows }}"
+                                               placeholder="导出数据量阈值限制，单位: 行，默认值: 10000">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="max_export_exec_time"
+                                           class="col-sm-4 control-label">MAX_EXPORT_EXEC_TIME</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="max_export_exec_time"
+                                               key="max_export_exec_time"
+                                               value="{{ config.max_export_exec_time }}"
+                                               placeholder="导出工单超时时间，单位: 秒，默认值: 60">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="files_expire_with_days"
+                                           class="col-sm-4 control-label">FILES_EXPIRE_WITH_DAYS</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" id="files_expire_with_days"
+                                               key="files_expire_with_days"
+                                               value="{{ config.files_expire_with_days }}"
+                                               placeholder="文件过期时间，单位: 天，默认值: 0 不过期">
+                                    </div>
+                                </div>
+                            </div>
                             <h5 style="color: darkgrey"><b>SQL优化</b></h5>
                             <hr/>
                             <div class="form-group">
@@ -1213,6 +1376,56 @@
                 }
             });
 
+            // sqlfile_storage参数处理
+            function storage_display(storage) {
+                if (storage === 'disabled') {
+                    return '关闭'
+                } else if (storage === 'sftp') {
+                    return 'SFTP'
+                } else if (storage === 'oss') {
+                    return 'OSS'
+                } else if (storage === 'local') {
+                    return '本地存储'
+                }
+            }
+            let sqlfile_storage = "{{ config.sqlfile_storage }}";
+            if (sqlfile_storage === 'disabled' || sqlfile_storage === '') {
+                $("#local_storage").hide();
+                $("#sftp_storage").hide();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").hide();
+                $("#check_storage_conn").hide();
+            } else if (sqlfile_storage === 'sftp') {
+                $("#local_storage").hide();
+                $("#sftp_storage").show();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+            } else if (sqlfile_storage === 'oss') {
+                $("#local_storage").hide();
+                $("#sftp_storage").hide();
+                $("#oss_storage").show();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+            } else if (sqlfile_storage === 'local') {
+                $("#local_storage").show();
+                $("#sftp_storage").hide();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+
+            }
+            let storages = ['disabled', 'sftp', 'oss', 'local'];
+            for (let i=0;i<storages.length;i++) {
+                let storage;
+                if (storages[i] === sqlfile_storage) {
+                    storage = "<option value=\"" + storages[i]+ "\" selected>" + storage_display(storages[i]) + "</option>"
+                } else {
+                    storage = "<option value=\"" + storages[i]+ "\">" + storage_display(storages[i]) + "</option>"
+                }
+                $("#sqlfile_storage").append(storage)
+            }
+            
             // sms_provider参数处理
             function provider_display(provider) {
                 if (provider === 'disabled') {
@@ -1557,6 +1770,66 @@
                 }
             });
         });
+        
+        // 检查sftp或oss的连通性
+        $("#check_storage_conn").click(function () {
+            $(this).addClass('disabled');
+            $(this).prop('disabled', true);
+            var SqlfileStorageType = $("#sqlfile_storage").val();
+            if (SqlfileStorageType === 'sftp') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    max_export_exec_time: $("#max_export_exec_time").val(),
+                    files_expire_with_days: $("#files_expire_with_days").val(),
+                    storage_type: $("#sqlfile_storage").val(),
+                    sftp_host: $("#sftp_host").val(),
+                    sftp_user: $("#sftp_user").val(),
+                    sftp_password: $("#sftp_password").val(),
+                    sftp_port: $("#sftp_port").val(),
+                    sftp_path: $("#sftp_path").val(),
+                }
+            } else if (SqlfileStorageType === 'oss') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    max_export_exec_time: $("#max_export_exec_time").val(),
+                    files_expire_with_days: $("#files_expire_with_days").val(),
+                    storage_type: $("#sqlfile_storage").val(),
+                    access_key_id: $("#oss_access_key_id").val(),
+                    access_key_secret: $("#oss_access_key_secret").val(),
+                    endpoint: $("#oss_endpoint").val(),
+                    bucket_name: $("#oss_bucket_name").val(),
+                    oss_path: $("#oss_path").val(),
+                }
+            } else if (SqlfileStorageType === 'local') {
+                var formData = {
+                    max_export_rows: $("#max_export_rows").val(),
+                    max_export_exec_time: $("#max_export_exec_time").val(),
+                    files_expire_with_days: $("#files_expire_with_days").val(),
+                    storage_type: $("#sqlfile_storage").val(),
+                    local_path: $("#local_path").val(),
+                }
+            }
+            $.ajax({
+                type: "post",
+                url: "/check/file_storage_connect/",
+                dataType: "json",
+                data: formData,
+                complete: function () {
+                    $("#check_storage_conn").removeClass('disabled');
+                    $("#check_storage_conn").prop('disabled', false);
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        alert('连接测试成功，请点击页面下方的保存按钮生效！')
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
 
         // 同步钉钉用户信息
         $("#sync_ding_user").click(function () {
@@ -1595,6 +1868,36 @@
             });
         });
 
+        // 离线文件存储切换
+        $("#sqlfile_storage").change(function () {
+            let storage = this.value;
+            if (storage === 'disabled') {
+                $("#local_storage").hide();
+                $("#sftp_storage").hide();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").hide();
+                $("#check_storage_conn").hide();
+            } else if (storage === 'sftp') {
+                $("#local_storage").hide();
+                $("#sftp_storage").show();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+            } else if (storage === 'oss') {
+                $("#local_storage").hide();
+                $("#sftp_storage").hide();
+                $("#oss_storage").show();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+            } else if (storage === 'local') {
+                $("#local_storage").show();
+                $("#sftp_storage").hide();
+                $("#oss_storage").hide();
+                $("#offline_download_export_msg").show();
+                $("#check_storage_conn").show();
+            }
+        })
+        
         // 短信服务商切换
         $("#sms_provider").change(function () {
             let provider = this.value;

@@ -17,6 +17,7 @@ from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
 from common.config import SysConfig
+from sql.engines.offlinedownload import OffLineDownLoad
 
 logger = logging.getLogger("default")
 
@@ -71,6 +72,7 @@ class MysqlEngine(EngineBase):
         super().__init__(instance=instance)
         self.config = SysConfig()
         self.inc_engine = GoInceptionEngine()
+        self.sql_export = OffLineDownLoad()
 
     def get_connection(self, db_name=None):
         # https://stackoverflow.com/questions/19256155/python-mysqldb-returning-x01-for-bit-values
@@ -621,12 +623,14 @@ class MysqlEngine(EngineBase):
             mask_result = resultset
         return mask_result
 
-    def execute_check(self, db_name=None, sql=""):
+    def execute_check(self, db_name=None, sql="", offline_data=None):
         """上线单执行前的检查, 返回Review set"""
+        # 获取离线导出工单参数
+        offline_exp = offline_data["is_offline_export"] if offline_data is not None else "0"
         # 进行Inception检查，获取检测结果
         try:
             check_result = self.inc_engine.execute_check(
-                instance=self.instance, db_name=db_name, sql=sql
+                instance=self.instance, db_name=db_name, sql=sql, is_offline_export=offline_exp
             )
         except Exception as e:
             logger.debug(
@@ -659,10 +663,11 @@ class MysqlEngine(EngineBase):
             syntax_type = get_syntax_type(statement, parser=False, db_type="mysql")
             # 禁用语句
             if re.match(r"^select", statement.lower()):
-                check_result.error_count += 1
-                row.stagestatus = "驳回不支持语句"
-                row.errlevel = 2
-                row.errormessage = "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
+                if offline_exp != "yes":
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回不支持语句"
+                    row.errlevel = 2
+                    row.errormessage = "仅支持DML和DDL语句，查询语句请使用SQL查询功能！"
             # 高危语句
             elif critical_ddl_regex and p.match(statement.strip().lower()):
                 check_result.error_count += 1
@@ -681,28 +686,31 @@ class MysqlEngine(EngineBase):
 
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
-        # 判断实例是否只读
-        read_only = self.query(sql="SELECT @@global.read_only;").rows[0][0]
-        if read_only in (1, "ON"):
-            result = ReviewSet(
-                full_sql=workflow.sqlworkflowcontent.sql_content,
-                rows=[
-                    ReviewResult(
-                        id=1,
-                        errlevel=2,
-                        stagestatus="Execute Failed",
-                        errormessage="实例read_only=1，禁止执行变更语句!",
-                        sql=workflow.sqlworkflowcontent.sql_content,
-                    )
-                ],
-            )
-            result.error = ("实例read_only=1，禁止执行变更语句!",)
-            return result
-        # TODO 原生执行
-        # if workflow.is_manual == 1:
-        #     return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
-        # inception执行
-        return self.inc_engine.execute(workflow)
+        if workflow.is_offline_export == "yes":
+            return self.sql_export.execute_offline_download(workflow)
+        else:
+            # 判断实例是否只读
+            read_only = self.query(sql="SELECT @@global.read_only;").rows[0][0]
+            if read_only in (1, "ON"):
+                result = ReviewSet(
+                    full_sql=workflow.sqlworkflowcontent.sql_content,
+                    rows=[
+                        ReviewResult(
+                            id=1,
+                            errlevel=2,
+                            stagestatus="Execute Failed",
+                            errormessage="实例read_only=1，禁止执行变更语句!",
+                            sql=workflow.sqlworkflowcontent.sql_content,
+                        )
+                    ],
+                )
+                result.error = ("实例read_only=1，禁止执行变更语句!",)
+                return result
+            # TODO 原生执行
+            # if workflow.is_manual == 1:
+            #     return self.execute(db_name=workflow.db_name, sql=workflow.sqlworkflowcontent.sql_content)
+            # inception执行
+            return self.inc_engine.execute(workflow)
 
     def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """原生执行语句"""

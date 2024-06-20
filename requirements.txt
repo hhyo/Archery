@@ -42,3 +42,7 @@ mozilla-django-oidc==3.0.0
 django-auth-dingding==0.0.3
 django-cas-ng==4.3.0
 cassandra-driver
+sqlparse==0.4.4
+paramiko==3.4.0
+oss2==2.18.3
+openpyxl==3.1.2

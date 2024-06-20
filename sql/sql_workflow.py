@@ -116,6 +116,7 @@ def _sql_workflow_list(request):
         "db_name",
         "group_name",
         "syntax_type",
+        "export_format",
     )
 
     # QuerySet 序列化

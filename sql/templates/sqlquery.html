@@ -65,6 +65,38 @@
                             <pre id="sql_content_editor" class="ace_editor " style="min-height:350px"></pre>
                         </div>
                         <div class="col-md-3 column">
+                            <div class="form-group toggleable">
+                                <input id="workflow_name" type="text" autocomplete="off" name="workflow_name"
+                                       class="form-control"
+                                       data-name="导出单名称" data-placeholder="请输入导出单名称！"
+                                       placeholder="请输入导出单名称，如:XX项目数据分析需求"
+                                       required>
+                            </div>
+                            <div class="form-group toggleable">
+                                <select id="export_format" name="export_format"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="离线导出数据格式" data-placeholder="请选择导出数据格式！"
+                                        title="请选择导出数据格式"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                    <option value="csv">CSV</option>
+                                    <option value="xlsx">Excel</option>
+                                    <option value="sql">SQL</option>
+                                    <option value="json">JSON</option>
+                                    <option value="xml">XML</option>
+                                </select>
+                            </div>
+                            <div class="form-group toggleable">
+                                <select id="group_name" name="group_name"
+                                        class="selectpicker show-tick form-control bs-select-hidden"
+                                        data-name="组" data-placeholder="请选择组！"
+                                        title="请选择组"
+                                        data-live-search="true" data-live-search-placeholder="搜索您所在的组" required>
+                                    {% for group in group_list %}
+                                        <option value="{{ group.group_name }}"
+                                                group-id="{{ group.group_id }}">{{ group.group_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <select id="instance_name" name="instance_name"
                                         class="selectpicker show-tick form-control bs-select-hidden"
@@ -92,7 +124,7 @@
                                         data-placeholder="请选择模式:" required>
                                 </select>
                             </div>
-                            <div id="div-table_name" class="form-group">
+                            <div id="div-table_name" class="form-group toggleableother">
                                 <select id="table_name" name="table_name"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-live-search="true" data-live-search-placeholder="搜索您要查询的表"
@@ -101,7 +133,7 @@
                                         data-placeholder="查看表结构:" required>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group toggleableother">
                                 <select id="limit_num" name="limit_num"
                                         class="form-control selectpicker show-tick bs-select-hidden"
                                         data-placeholder="返回行数:" required>
@@ -112,16 +144,46 @@
                                     <option value=0>max(最大限制行数)</option>
                                 </select>
                             </div>
+                            <!--审批流程-->
+                            <input type="hidden" id="workflow_auditors" name="workflow_auditors" data-name="审批流程"
+                                   data-placeholder="请配置审批流程！" required>
+                            <div id="div-workflow_auditors" class="form-group toggleable" style="display: none">
+                                <p class="bg-primary">&nbsp&nbsp&nbsp审批流程：<b id="workflow_auditors_display"></b></p>
+                            </div>
                             <div class="form-group">
                                 <input id="btn-format" type="button" class="btn btn-info" value="美化"/>
                                 <input id="btn-explain" type="button" class="btn btn-warning" value="执行计划"/>
-                                <input id="btn-sqlquery" type="button" class="btn btn-success" value="SQL查询"/>
+                                <input id="btn-sqlquery" type="button" class="btn btn-success toggleableother" value="SQL查询"/>
+                                <button type="button" id="btn-submitdownload" data-loading-text="提交中..."
+                                        class="btn btn-danger toggleable" disabled>
+                                    提交导出
+                                </button>
+                                {% if config.sqlfile_storage == "sftp" or config.sqlfile_storage == "oss" or config.sqlfile_storage == "local"%}
+                                    {% if can_offline_download == 1 %}
+                                        <input id="btn-offlinedownload" type="button" class="btn btn-primary" value="切换至导出"/>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </div>
-                        <div class="text-info">
+                        <div class="text-info toggleableother">
                             <li>支持注释行，可选择指定语句执行，默认执行第一条;</li>
                             <li>查询结果行数限制见权限管理，会选择查询涉及表的最小limit值</li>
                         </div>
+                        <div class="text-info toggleable">
+                            <li>导出工单仅支持导出一条查询语句</li>
+                            <li>导出请先看执行计划，若扫描行数过多将禁止执行，阈值: {{ config.max_export_rows }}</li>
+                        </div>
+                        <style>
+                            .toggleable {
+                                display: none;
+                            }
+                            .toggleableother {
+
+                            }
+                            .hidden {
+                                display: none;
+                            }
+                        </style>
                     </form>
                 </div>
             </div>
@@ -255,6 +317,190 @@
     <script src="{% static 'bootstrap-table/export-libs/js-xlsx/xlsx.core.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+
+    <!-- 导出表单展示切换  -->
+    <script>
+        (function() {
+            // 初始状态为隐藏
+            let isHidden = true;
+            var toggleableElement = $(".toggleableother");
+
+            // 在按钮点击事件中处理显示/隐藏逻辑
+            $("#btn-offlinedownload").click(function () {
+                // 进行二次确认
+                if (confirm("是否确定要进行查询/导出功能切换？")) {
+                    // 切换状态
+                    isHidden = !isHidden;
+
+                    // 根据状态执行显示或隐藏
+                    if (isHidden) {
+                        $(".toggleable").hide();
+                        // $(".toggleableother").css("display", "");
+                        toggleableElement.removeClass("hidden");
+                        $("#btn-offlinedownload").val("切换至导出")
+                    } else {
+                        $(".toggleable").show();
+                        // $(".toggleableother").css("display", "none");
+                        toggleableElement.addClass("hidden");
+                        $("#btn-offlinedownload").val("切换至查询")
+                    }
+                }
+            });
+
+            $("#instance_name").change(function () {
+                var optgroup = $('#instance_name :selected').parent().attr('label');
+                if (optgroup != 'MySQL') {
+                   isHidden = true;
+                }
+            });
+
+        })();
+
+        // 监听sql文本，若sql发生变化则禁用
+        editor.getSession().on('change', function(e) {
+            $("#btn-submitdownload").prop("disabled", true);
+        });
+
+        // 提交导出工单
+        function submitofflinedownload() {
+            let formData = $('#form-sqlquery').serializeArray().reduce(function (obj, item) {
+                obj[item.name] = item.value;
+                return obj;
+            }, {})
+            var sqlContent = editor.getValue();
+            $.ajax({
+                type: "post",
+                url: "/api/v1/workflow/",
+                dataType: "json",
+                contentType: 'application/json;',
+                data: JSON.stringify({
+                        workflow: {
+                            workflow_name: formData.workflow_name,
+                            // demand_url: formData.demand_url,
+                            export_format: formData.export_format,
+                            is_offline_export: 'yes',
+                            group_id: $("#group_name option:selected").attr("group-id"),
+                            instance: $("#instance_name option:selected").attr("instance-id"),
+                            db_name: formData.db_name,
+                            is_backup: 'False',
+                            // run_date_start: formData.run_date_start,
+                            // run_date_end: formData.run_date_end,
+                            run_date_start: '',
+                            run_date_end: '',
+                        },
+                        sql_content: sqlContent
+                    }
+                ),
+                beforeSend: function (xhr) {
+                    $('#btn-submitdownload').button('loading')
+                },
+                complete: function () {
+                    $('#btn-submitdownload').button('reset')
+                },
+                success: function (data) {
+                    window.location.href = "/detail/"+ data.workflow_id
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    if (XMLHttpRequest.responseJSON) {
+                        alert(XMLHttpRequest.responseText)
+                    } else {
+                        alert(errorThrown);
+                    }
+                }
+            });
+
+        }
+
+        // 获取审批流程
+        $("#group_name").change(function () {
+            $.ajax({
+                type: "post",
+                url: "/group/auditors/",
+                dataType: "json",
+                data: {
+                    group_name: $("#group_name").val(),
+                    workflow_type: 2
+                },
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data.status === 0) {
+                        var result = data.data;
+                        $("#workflow_auditors").val(result['auditors']);
+                        $("#workflow_auditors_display").text(result['auditors_display']);
+                        // $("#div-workflow_auditors").show();
+                    } else {
+                        alert(data.msg);
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        });
+        //离线导出表单验证
+        function sqlofflinedownload_validate() {
+            var result = true;
+            var workflow_name = $("#workflow_name").val();
+            var export_format = $("#export_format").val();
+            var group_name = $("#group_name").val();
+            var workflow_auditors = $("#workflow_auditors").val();
+            var instance_name = $("#instance_name").val();
+            var db_name = $("#db_name").val();
+            var sqlContent = editor.getValue();
+            // 假设 sqlContent 包含多条 SQL 语句，使用分号分隔
+            var sqlStatements = sqlContent.split(';');
+            // 用于存储筛选后的语句
+            var errorStatements = [];
+            // 遍历每一条语句
+            for (var i = 0; i < sqlStatements.length; i++) {
+                // 去除首尾空白字符
+                var trimmedStatement = sqlStatements[i].trim();
+
+                // 只保留以 "SELECT" 开头的语句
+                if (trimmedStatement.toUpperCase().startsWith('SELECT') && trimmedStatement.length > 0) {
+                } else {
+                    // 如果不以 SELECT 开头，输出报错提示
+                    errorStatements.push(trimmedStatement.replace(/\s+/g, ' '));
+                }
+            }
+            // 将筛选后的语句重新组合成一个字符串，使用分号分隔
+            var filteredErrorSql = errorStatements.join(';\n');
+            // 输出非select的SQL语句，并禁用按钮
+            if (filteredErrorSql) {
+                $("#btn-submitdownload").prop("disabled", true);
+                alert("非法SQL\n" + filteredErrorSql)
+                return result = false;
+            } else if (!instance_name) {
+                alert("请选择实例！");
+                return result = false;
+            } else if (!db_name) {
+                alert("请选择数据库！");
+                return result = false;
+            } else if (!sqlContent) {
+                alert("SQL内容不能为空！");
+                return result = false;
+            } else if (!workflow_name) {
+                alert("请输入离线数据导出单名称！");
+                return result = false;
+            } else if (!export_format) {
+                alert("请选择导出格式！");
+                return result = false;
+            } else if (!group_name) {
+                alert("请选择组！");
+                return result = false;
+            } else if (!workflow_auditors) {
+                alert("请配置审批流程！");
+                return result = false;
+            }
+            return result;
+        }
+        $("#btn-submitdownload").click(function () {
+            if (sqlofflinedownload_validate()) {
+                submitofflinedownload();
+            }
+        });
+    </script>
 
     <!-- 查询历史  -->
     <script>
@@ -489,6 +735,7 @@
             if (instance_name && db_name && sql) {
                 $('input[type=button]').addClass('disabled');
                 $('input[type=button]').prop('disabled', true);
+                $("#btn-submitdownload").prop("disabled", true);
                 sqlquery()
             } else {
                 alert("信息不完整，无法一键查询！")
@@ -636,6 +883,7 @@
                     const inputButton = $('input[type=button]')
                     inputButton.addClass('disabled');
                     inputButton.prop("disabled", true)
+                    $("#btn-submitdownload").prop("disabled", true);
                     sqlquery('explain')
                 }
             }
@@ -808,6 +1056,29 @@
                         }
                         var showExport = {{can_download}}===1
                         var query_result_id=(`query_result${n}`);
+                        if ($("#btn-submitdownload").is(':hidden')) {
+                            var isOfflineExport = "no"
+                        } else {
+                            var isOfflineExport = "yes"
+                        }
+                        if (result['full_sql'].trim().toLowerCase().startsWith('explain')) {
+                            if (optgroup === "MySQL" && isOfflineExport === "yes") {
+                                var totalExplainScanRows = 0;
+                                var maxExportRows = "{{ config.max_export_rows }}";
+                                for (var i = 0; i < result['rows'].length; i++) {
+                                    var explainScanRows = parseFloat(result['rows'][i][9]);
+                                    totalExplainScanRows += explainScanRows;
+                                }
+                                if (totalExplainScanRows > maxExportRows) {
+                                    alert('警告信息:\n总扫描行数：' + totalExplainScanRows
+                                        + '\n阈值：' + maxExportRows
+                                        + '\n禁止提交导出!');
+                                    $("#btn-submitdownload").prop("disabled", true);
+                                } else {
+                                    $("#btn-submitdownload").prop("disabled", false);
+                                }
+                            }
+                        }
                         $(`#${query_result_id}`).bootstrapTable('destroy').bootstrapTable({
                             escape: true,
                             data: result['rows'],
@@ -1027,6 +1298,7 @@
             if (sqlquery_validate()) {
                 $('input[type=button]').addClass('disabled');
                 $('input[type=button]').prop('disabled', true);
+                $("#btn-submitdownload").prop("disabled", true);
                 sqlquery();
             }
         }
@@ -1040,6 +1312,7 @@
             showFormat: true,
             showExplain: true,
             showRedisHelp: false,
+            showOfflineDownload: false,
         }
         const createDisplayConfig = function(extraArgs = null) {
             if (extraArgs === null) {
@@ -1048,6 +1321,7 @@
             return Object.assign({}, defaultDisplayConfig, extraArgs)
         }
         const engineDisplayConfig = {
+            "MySQL": createDisplayConfig({showOfflineDownload: true}),
             "MsSQL": createDisplayConfig({showExplain: false}),
             "Redis": createDisplayConfig({showTableName: false, showSchemaName: false,
                 showRedisHelp: true,
@@ -1063,6 +1337,14 @@
         function optgroup_control(change) {
             let optgroup = $('#instance_name :selected').parent().attr('label');
             let displayConfig = engineDisplayConfig[optgroup] || defaultDisplayConfig
+            if (displayConfig.showOfflineDownload) {
+                $("#btn-offlinedownload").show();
+            } else {
+                $(".toggleable").hide();
+                $(".toggleableother").removeClass("hidden");
+                $("#btn-offlinedownload").val("切换至导出")
+                $("#btn-offlinedownload").hide();
+            }
             if (displayConfig.showExplain) {
                 $("#btn-explain").attr('disabled', false);
             } else {

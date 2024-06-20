@@ -5,6 +5,9 @@ import traceback
 import MySQLdb
 import simplejson as json
 from django.http import HttpResponse
+from paramiko import Transport, SFTPClient
+import oss2
+import os
 
 from common.utils.permission import superuser_required
 from sql.engines import get_engine
@@ -130,4 +133,85 @@ def instance(request):
         result["status"] = 1
         result["msg"] = "无法连接实例,\n{}".format(str(e))
     # 返回结果
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@superuser_required
+def file_storage_connect(request):
+    result = {"status": 0, "msg": "ok", "data": []}
+    storage_type = request.POST.get("storage_type")
+    # 检查是否存在该变量
+    max_export_rows = request.POST.get("max_export_rows", '10000')
+    max_export_exec_time = request.POST.get("max_export_exec_time", '60')
+    files_expire_with_days = request.POST.get("files_expire_with_days", '0')
+    # 若变量已经定义，检查是否为空
+    max_export_rows = max_export_rows if max_export_rows else '10000'
+    max_export_exec_time = max_export_exec_time if max_export_exec_time else '60'
+    files_expire_with_days = files_expire_with_days if files_expire_with_days else '0'
+    check_list = {"max_export_rows": max_export_rows,
+                  "max_export_exec_time": max_export_exec_time,
+                  "files_expire_with_days": files_expire_with_days}
+    try:
+        # if not isinstance(files_expire_with_days, int):
+        # 遍历字典，判断是否只有数字
+        for key, value in check_list.items():
+            print(value)
+            if not value.isdigit():
+                raise TypeError(f"Value: {key} \nmust be an integer.")
+    except TypeError as e:
+        result["status"] = 1
+        result["msg"] = "参数类型错误,\n{}".format(str(e))
+
+    if storage_type == 'sftp':
+        sftp_host = request.POST.get("sftp_host")
+        sftp_port = int(request.POST.get("sftp_port"))
+        sftp_user = request.POST.get("sftp_user")
+        sftp_password = request.POST.get("sftp_password")
+        sftp_path = request.POST.get("sftp_path")
+
+        try:
+            with Transport((sftp_host, sftp_port)) as transport:
+                transport.connect(username=sftp_user, password=sftp_password)
+                # 创建 SFTPClient
+                sftp = SFTPClient.from_transport(transport)
+                remote_path = sftp_path
+                try:
+                    sftp.listdir(remote_path)
+                    # files = sftp.listdir(remote_path)
+                    # print(f"SFTP 远程路径 '{remote_path}' 存在，包含文件/文件夹: {files}")
+                except FileNotFoundError:
+                    raise Exception(f"SFTP 远程路径 '{remote_path}' 不存在")
+
+        except Exception as e:
+            result["status"] = 1
+            result["msg"] = "无法连接,\n{}".format(str(e))
+    elif storage_type == 'oss':
+        access_key_id = request.POST.get("access_key_id")
+        access_key_secret = request.POST.get("access_key_secret")
+        endpoint = request.POST.get("endpoint")
+        bucket_name = request.POST.get("bucket_name")
+        try:
+            # 创建 OSS 认证
+            auth = oss2.Auth(access_key_id, access_key_secret)
+            # 创建 OSS Bucket 对象
+            bucket = oss2.Bucket(auth, endpoint, bucket_name)
+
+            # 判断配置的 Bucket 是否存在
+            try:
+                bucket.get_bucket_info()
+            except oss2.exceptions.NoSuchBucket:
+                raise Exception(f"OSS 存储桶 '{bucket_name}' 不存在")
+
+        except Exception as e:
+            result["status"] = 1
+            result["msg"] = "无法连接,\n{}".format(str(e))
+    elif storage_type == 'local':
+        local_path = r'{}'.format(request.POST.get("local_path"))
+        try:
+            if not os.path.exists(local_path):
+                raise FileNotFoundError(f"Destination directory '{local_path}' not found.")
+        except Exception as e:
+            result["status"] = 1
+            result["msg"] = "本地路径不存在,\n{}".format(str(e))
+
     return HttpResponse(json.dumps(result), content_type="application/json")
