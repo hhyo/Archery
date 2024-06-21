@@ -404,8 +404,10 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         workflow_status = "workflow_manreviewing"
         if check_result.warning_count > 0 and auto_review_wrong == "1":
             workflow_status = "workflow_autoreviewwrong"
+            raise serializers.ValidationError({"errors": "存在检测警告，不能提交"})
         elif check_result.error_count > 0 and auto_review_wrong in ("", "1", "2"):
             workflow_status = "workflow_autoreviewwrong"
+            raise serializers.ValidationError({"errors": "存在检测错误，不能提交"})
 
         workflow_data.update(
             status=workflow_status,
