@@ -150,9 +150,8 @@ class RedisEngine(EngineBase):
             elif isinstance(rows, dict):
                 result_set.column_list = ["field", "value"]
                 # 对Redis的返回结果进行类型判断，如果是dict,list转为json字符串。
-                pairs_list = []  # 初始化空列表
+                pairs_list = []
                 for k, v in rows.items():
-                    # 应用条件逻辑或其他处理
                     if isinstance(v, dict):
                         processed_value = json.dumps(v)
                     elif isinstance(v, list):
