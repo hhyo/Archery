@@ -149,7 +149,7 @@ class RedisEngine(EngineBase):
                     result_set.affected_rows = len(rows)
             elif isinstance(rows, dict):
                 result_set.column_list = ["field", "value"]
-                # 对row的items进行类型判断。如果是dict,list转为json。前端不会处理这个类型了。
+                # 对Redis的返回结果进行类型判断，如果是dict,list转为json字符串。
                 pairs_list = []  # 初始化空列表
                 for k, v in rows.items():
                     # 应用条件逻辑或其他处理
