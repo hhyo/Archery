@@ -298,6 +298,29 @@ class TestRedis(TestCase):
         self.assertIsInstance(query_result, ResultSet)
         self.assertTupleEqual(query_result.rows, (["text"],))
 
+    @patch("redis.Redis.execute_command")
+    def test_query_with_dict_response(self, _execute_command):
+        # 定义 execute_command 的字典响应
+        dict_response = {
+            "key1": "value1",
+            "key2": {"subkey": "subvalue"},
+            "key3": ["listitem1", "listitem2"]
+        }
+        _execute_command.return_value = dict_response
+        new_engine = RedisEngine(instance=self.ins)
+        query_result = new_engine.query(db_name=0, sql="keys *", limit_num=100)
+
+        # 验证结果集
+        expected_rows = [
+            ["key1", "value1"],
+            ["key2", json.dumps({"subkey": "subvalue"})],
+            ["key3", json.dumps(["listitem1", "listitem2"])],
+        ]
+        self.assertIsInstance(query_result, ResultSet)
+        self.assertEqual(query_result.column_list, ["field", "value"])
+        self.assertEqual(query_result.rows, tuple(expected_rows))
+        self.assertEqual(query_result.affected_rows, len(expected_rows))
+
     @patch("redis.Redis.config_get", return_value={"databases": 4})
     def test_get_all_databases(self, _config_get):
         new_engine = RedisEngine(instance=self.ins)
