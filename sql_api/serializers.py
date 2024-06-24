@@ -386,9 +386,11 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         # 再次交给engine进行检测，防止绕过
         try:
             check_engine = get_engine(instance=instance)
-            if instance.db_type == 'mysql':
+            if instance.db_type == "mysql":
                 check_result = check_engine.execute_check(
-                    db_name=workflow_data["db_name"], sql=sql_content, offline_data=workflow_data
+                    db_name=workflow_data["db_name"],
+                    sql=sql_content,
+                    offline_data=workflow_data,
                 )
             else:
                 check_result = check_engine.execute_check(

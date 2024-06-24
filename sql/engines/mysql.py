@@ -626,11 +626,16 @@ class MysqlEngine(EngineBase):
     def execute_check(self, db_name=None, sql="", offline_data=None):
         """上线单执行前的检查, 返回Review set"""
         # 获取离线导出工单参数
-        offline_exp = offline_data["is_offline_export"] if offline_data is not None else "0"
+        offline_exp = (
+            offline_data["is_offline_export"] if offline_data is not None else "0"
+        )
         # 进行Inception检查，获取检测结果
         try:
             check_result = self.inc_engine.execute_check(
-                instance=self.instance, db_name=db_name, sql=sql, is_offline_export=offline_exp
+                instance=self.instance,
+                db_name=db_name,
+                sql=sql,
+                is_offline_export=offline_exp,
             )
         except Exception as e:
             logger.debug(

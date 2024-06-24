@@ -326,14 +326,18 @@ def sqlquery(request):
     for items in all_config:
         sys_config[items["item"]] = items["value"]
     # 前端需要对 max_export_rows 进行判断,先进行变量的判断是否存在以及是否为空,默认值10000
-    max_export_rows_str = sys_config.get('max_export_rows', '10000')
-    sys_config['max_export_rows'] = int(max_export_rows_str) if max_export_rows_str else 10000
+    max_export_rows_str = sys_config.get("max_export_rows", "10000")
+    sys_config["max_export_rows"] = (
+        int(max_export_rows_str) if max_export_rows_str else 10000
+    )
 
     favorites = QueryLog.objects.filter(username=user.username, favorite=True).values(
         "id", "alias"
     )
     can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
-    can_offline_download = 1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
+    can_offline_download = (
+        1 if user.has_perm("sql.offline_download") or user.is_superuser else 0
+    )
     context = {
         "favorites": favorites,
         "can_download": can_download,

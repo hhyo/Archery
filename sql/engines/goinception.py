@@ -68,7 +68,9 @@ class GoInceptionEngine(EngineBase):
         """字符串参数转义"""
         return pymysql.escape_string(value)
 
-    def execute_check(self, instance=None, db_name=None, sql="", is_offline_export=None):
+    def execute_check(
+        self, instance=None, db_name=None, sql="", is_offline_export=None
+    ):
         """inception check"""
         # 判断如果配置了隧道则连接隧道
         host, port, user, password = self.remote_instance_conn(instance)
