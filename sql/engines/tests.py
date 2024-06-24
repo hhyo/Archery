@@ -304,7 +304,7 @@ class TestRedis(TestCase):
         dict_response = {
             "key1": "value1",
             "key2": {"subkey": "subvalue"},
-            "key3": ["listitem1", "listitem2"]
+            "key3": ["listitem1", "listitem2"],
         }
         _execute_command.return_value = dict_response
         new_engine = RedisEngine(instance=self.ins)
