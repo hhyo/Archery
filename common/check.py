@@ -141,28 +141,28 @@ def file_storage_connect(request):
     result = {"status": 0, "msg": "ok", "data": []}
     storage_type = request.POST.get("storage_type")
     # 检查是否存在该变量
-    max_export_rows = request.POST.get("max_export_rows", '10000')
-    max_export_exec_time = request.POST.get("max_export_exec_time", '60')
-    files_expire_with_days = request.POST.get("files_expire_with_days", '0')
+    max_export_rows = request.POST.get("max_export_rows", "10000")
+    max_export_exec_time = request.POST.get("max_export_exec_time", "60")
+    files_expire_with_days = request.POST.get("files_expire_with_days", "0")
     # 若变量已经定义，检查是否为空
-    max_export_rows = max_export_rows if max_export_rows else '10000'
-    max_export_exec_time = max_export_exec_time if max_export_exec_time else '60'
-    files_expire_with_days = files_expire_with_days if files_expire_with_days else '0'
-    check_list = {"max_export_rows": max_export_rows,
-                  "max_export_exec_time": max_export_exec_time,
-                  "files_expire_with_days": files_expire_with_days}
+    max_export_rows = max_export_rows if max_export_rows else "10000"
+    max_export_exec_time = max_export_exec_time if max_export_exec_time else "60"
+    files_expire_with_days = files_expire_with_days if files_expire_with_days else "0"
+    check_list = {
+        "max_export_rows": max_export_rows,
+        "max_export_exec_time": max_export_exec_time,
+        "files_expire_with_days": files_expire_with_days,
+    }
     try:
-        # if not isinstance(files_expire_with_days, int):
         # 遍历字典，判断是否只有数字
         for key, value in check_list.items():
-            print(value)
             if not value.isdigit():
                 raise TypeError(f"Value: {key} \nmust be an integer.")
     except TypeError as e:
         result["status"] = 1
         result["msg"] = "参数类型错误,\n{}".format(str(e))
 
-    if storage_type == 'sftp':
+    if storage_type == "sftp":
         sftp_host = request.POST.get("sftp_host")
         sftp_port = int(request.POST.get("sftp_port"))
         sftp_user = request.POST.get("sftp_user")
@@ -177,15 +177,13 @@ def file_storage_connect(request):
                 remote_path = sftp_path
                 try:
                     sftp.listdir(remote_path)
-                    # files = sftp.listdir(remote_path)
-                    # print(f"SFTP 远程路径 '{remote_path}' 存在，包含文件/文件夹: {files}")
                 except FileNotFoundError:
                     raise Exception(f"SFTP 远程路径 '{remote_path}' 不存在")
 
         except Exception as e:
             result["status"] = 1
             result["msg"] = "无法连接,\n{}".format(str(e))
-    elif storage_type == 'oss':
+    elif storage_type == "oss":
         access_key_id = request.POST.get("access_key_id")
         access_key_secret = request.POST.get("access_key_secret")
         endpoint = request.POST.get("endpoint")
@@ -205,11 +203,13 @@ def file_storage_connect(request):
         except Exception as e:
             result["status"] = 1
             result["msg"] = "无法连接,\n{}".format(str(e))
-    elif storage_type == 'local':
-        local_path = r'{}'.format(request.POST.get("local_path"))
+    elif storage_type == "local":
+        local_path = r"{}".format(request.POST.get("local_path"))
         try:
             if not os.path.exists(local_path):
-                raise FileNotFoundError(f"Destination directory '{local_path}' not found.")
+                raise FileNotFoundError(
+                    f"Destination directory '{local_path}' not found."
+                )
         except Exception as e:
             result["status"] = 1
             result["msg"] = "本地路径不存在,\n{}".format(str(e))

@@ -26,9 +26,7 @@ from urllib.parse import quote
 
 from sql.models import SqlWorkflow, AuditEntry, Config
 from . import EngineBase
-from .models import ResultSet, ReviewSet, ReviewResult
-from common.config import SysConfig
-from sql.utils.sql_utils import get_syntax_type
+from .models import ReviewSet, ReviewResult
 
 
 logger = logging.getLogger("default")
@@ -46,9 +44,9 @@ class OffLineDownLoad(EngineBase):
             # 获取系统配置
             config = get_sys_config()
             # 先进行 max_export_exec_time 变量的判断是否存在以及是否为空,默认值60
-            timeout_str = config.get('max_export_exec_time', '60')
+            timeout_str = config.get("max_export_exec_time", "60")
             timeout = int(timeout_str) if timeout_str else 60
-            storage_type = config['sqlfile_storage']
+            storage_type = config["sqlfile_storage"]
             # 获取前端提交的 SQL 和其他工单信息
             full_sql = workflow.sqlworkflowcontent.sql_content
             full_sql = sqlparse.format(full_sql, strip_comments=True)
@@ -64,7 +62,7 @@ class OffLineDownLoad(EngineBase):
                 user=user,
                 password=password,
                 db=workflow.db_name,
-                charset='utf8mb4'
+                charset="utf8mb4",
             )
 
             start_time = time.time()
@@ -78,7 +76,7 @@ class OffLineDownLoad(EngineBase):
                         stage="Execute failed",
                         error=1,
                         errlevel=2,
-                        stagestatus='异常终止',
+                        stagestatus="异常终止",
                         errormessage=f"{e}",
                         sql=full_sql,
                     )
@@ -88,14 +86,18 @@ class OffLineDownLoad(EngineBase):
 
             try:
                 # 执行 SQL 查询
-                results = self.execute_with_timeout(conn, workflow.sqlworkflowcontent.sql_content, timeout)
+                results = self.execute_with_timeout(
+                    conn, workflow.sqlworkflowcontent.sql_content, timeout
+                )
                 if results:
-                    columns = results['columns']
-                    result = results['data']
+                    columns = results["columns"]
+                    result = results["data"]
 
                 # 保存查询结果为 CSV or JSON or XML or XLSX or SQL 文件
                 get_format_type = workflow.export_format
-                file_name = save_to_format_file(get_format_type, result, workflow, columns, temp_dir)
+                file_name = save_to_format_file(
+                    get_format_type, result, workflow, columns, temp_dir
+                )
 
                 # 将导出的文件上传至 OSS 或 FTP 或 本地保存
                 upload_file_to_storage(file_name, storage_type, temp_dir)
@@ -106,29 +108,27 @@ class OffLineDownLoad(EngineBase):
                     ReviewResult(
                         stage="Executed",
                         errlevel=0,
-                        stagestatus='执行正常',
+                        stagestatus="执行正常",
                         errormessage=f"保存文件: {file_name}",
                         sql=full_sql,
                         execute_time=elapsed_time,
-                        affected_rows=check_result
+                        affected_rows=check_result,
                     )
                 ]
 
                 change_workflow = SqlWorkflow.objects.get(id=workflow.id)
                 change_workflow.file_name = file_name
-                # change_workflow.syntax_type = '0'
                 change_workflow.save()
 
                 return execute_result
             except Exception as e:
                 # 返回工单执行失败的状态和错误信息
-                # execute_result.rows['errormessage'] = str(e)
                 execute_result.rows = [
                     ReviewResult(
                         stage="Execute failed",
                         error=1,
                         errlevel=2,
-                        stagestatus='异常终止',
+                        stagestatus="异常终止",
                         errormessage=f"{e}",
                         sql=full_sql,
                     )
@@ -139,7 +139,6 @@ class OffLineDownLoad(EngineBase):
                 # 清理本地文件和临时目录
                 clean_local_files(temp_dir)
                 # 关闭游标和数据库连接
-                # cursor.close()
                 conn.close()
 
     @staticmethod
@@ -148,10 +147,7 @@ class OffLineDownLoad(EngineBase):
             cursor = conn.cursor()
             cursor.execute(sql)
             columns = [column[0] for column in cursor.description]
-            result = {
-                'columns': columns,
-                'data': cursor.fetchall()
-            }
+            result = {"columns": columns, "data": cursor.fetchall()}
             cursor.close()
             return result
         except Exception as e:
@@ -172,7 +168,9 @@ class OffLineDownLoad(EngineBase):
 
         if thread.is_alive():
             thread.join()
-            raise TimeoutException(f"Query execution timed out after {timeout} seconds.")
+            raise TimeoutException(
+                f"Query execution timed out after {timeout} seconds."
+            )
         else:
             result = result_queue.get()
             if isinstance(result, Exception):
@@ -189,47 +187,48 @@ def get_sys_config():
     return sys_config
 
 
-def save_to_format_file(format_type=None, result=None, workflow=None, columns=None, temp_dir=None):
+def save_to_format_file(
+    format_type=None, result=None, workflow=None, columns=None, temp_dir=None
+):
     # 生成唯一的文件名（包含工单ID、日期和随机哈希值）
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     hash_value = hashlib.sha256(os.urandom(32)).hexdigest()[:8]  # 使用前8位作为哈希值
-    base_name = f'{workflow.db_name}_{timestamp}_{hash_value}'
-    file_name = f'{base_name}.{format_type}'
+    base_name = f"{workflow.db_name}_{timestamp}_{hash_value}"
+    file_name = f"{base_name}.{format_type}"
     file_path = os.path.join(temp_dir, file_name)
     # 将查询结果写入 CSV 文件
-    if format_type == 'csv':
+    if format_type == "csv":
         save_csv(file_path, result, columns)
-    elif format_type == 'json':
+    elif format_type == "json":
         save_json(file_path, result, columns)
-    elif format_type == 'xml':
+    elif format_type == "xml":
         save_xml(file_path, result, columns)
-    elif format_type == 'xlsx':
+    elif format_type == "xlsx":
         save_xlsx(file_path, result, columns)
-    elif format_type == 'sql':
+    elif format_type == "sql":
         save_sql(file_path, result, columns)
     else:
         raise ValueError(f"Unsupported format type: {format_type}")
 
-    zip_file_name = f'{base_name}.zip'
+    zip_file_name = f"{base_name}.zip"
     zip_file_path = os.path.join(temp_dir, zip_file_name)
-    with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.write(file_path, os.path.basename(file_path))
-    # return temp_dir, file_name
     return zip_file_name
 
 
 def upload_file_to_storage(file_name=None, storage_type=None, temp_dir=None):
-    action_exec = StorageControl(file_name=file_name,
-                                 storage_type=storage_type,
-                                 temp_dir=temp_dir)
+    action_exec = StorageControl(
+        file_name=file_name, storage_type=storage_type, temp_dir=temp_dir
+    )
     try:
-        if storage_type == 'oss':
+        if storage_type == "oss":
             # 使用阿里云 OSS 进行上传
             action_exec.upload_to_oss()
-        elif storage_type == 'sftp':
+        elif storage_type == "sftp":
             # 使用 SFTP 进行上传
             action_exec.upload_to_sftp()
-        elif storage_type == 'local':
+        elif storage_type == "local":
             # 本地存储
             action_exec.upload_to_local()
         else:
@@ -245,36 +244,31 @@ def clean_local_files(temp_dir):
 
 
 def datetime_serializer(obj):
-    """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime.date, datetime.datetime)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
 
 
 def save_csv(file_path, result, columns):
-    with open(file_path, 'w', newline='', encoding='utf-8') as csv_file:
+    with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
         csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
 
         if columns:
             csv_writer.writerow(columns)
 
         for row in result:
-            csv_row = ['null' if value is None else value for value in row]
+            csv_row = ["null" if value is None else value for value in row]
             csv_writer.writerow(csv_row)
 
 
 def save_json(file_path, result, columns):
-    with open(file_path, 'w', encoding='utf-8') as json_file:
-        # json.dump(result, json_file, indent=2)
+    with open(file_path, "w", encoding="utf-8") as json_file:
         json.dump(
-            [
-                dict(zip(columns, row))
-                for row in result
-            ],
+            [dict(zip(columns, row)) for row in result],
             json_file,
             indent=2,
             default=datetime_serializer,
-            ensure_ascii=False
+            ensure_ascii=False,
         )
 
 
@@ -301,56 +295,73 @@ def save_xml(file_path, result, columns):
                 col_elem.text = str(value)
 
     tree = ET.ElementTree(root)
-    tree.write(file_path, encoding='utf-8', xml_declaration=True)
+    tree.write(file_path, encoding="utf-8", xml_declaration=True)
 
 
 def save_xlsx(file_path, result, columns):
     try:
-        df = pd.DataFrame([[str(value) if value is not None and value != 'NULL' else ''
-                            for value in row] for row in result], columns=columns)
+        df = pd.DataFrame(
+            [
+                [
+                    str(value) if value is not None and value != "NULL" else ""
+                    for value in row
+                ]
+                for row in result
+            ],
+            columns=columns,
+        )
         df.to_excel(file_path, index=False, header=True)
     except ValueError as e:
         raise ValueError(f"Excel最大支持行数为1048576,已超出!")
 
 
 def save_sql(file_path, result, columns):
-    with open(file_path, 'w') as sql_file:
+    with open(file_path, "w") as sql_file:
         for row in result:
             table_name = "your_table_name"
             if columns:
-                sql_file.write(f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ")
+                sql_file.write(
+                    f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES "
+                )
 
-            values = ', '.join(["'{}'".format(str(value).replace('\'', '\'\''))
-                                if isinstance(value, str) or isinstance(value, datetime.date) or isinstance(value,
-                                    datetime.datetime) else 'NULL'
-                                if value is None or value == '' else str(value) for value in row])
+            values = ", ".join(
+                [
+                    (
+                        "'{}'".format(str(value).replace("'", "''"))
+                        if isinstance(value, str)
+                        or isinstance(value, datetime.date)
+                        or isinstance(value, datetime.datetime)
+                        else "NULL" if value is None or value == "" else str(value)
+                    )
+                    for value in row
+                ]
+            )
             sql_file.write(f"({values});\n")
 
 
 def offline_file_download(request):
-    file_name = request.GET.get('file_name', ' ')
-    workflow_id = request.GET.get('workflow_id', ' ')
-    action = '离线下载'
+    file_name = request.GET.get("file_name", " ")
+    workflow_id = request.GET.get("workflow_id", " ")
+    action = "离线下载"
     extra_info = f"工单id：{workflow_id},文件：{file_name}"
     config = get_sys_config()
-    storage_type = config['sqlfile_storage']
+    storage_type = config["sqlfile_storage"]
 
     try:
-        action_exec = StorageControl(storage_type=storage_type,
-                                     file_name=file_name)
-        if storage_type == 'sftp':
+        action_exec = StorageControl(storage_type=storage_type, file_name=file_name)
+        if storage_type == "sftp":
             response = action_exec.download_from_sftp()
             return response
-        elif storage_type == 'oss':
+        elif storage_type == "oss":
             response = action_exec.download_from_oss()
             return response
-        elif storage_type == 'local':
+        elif storage_type == "local":
             response = action_exec.download_from_local()
             return response
 
     except Exception as e:
-        action = '离线下载失败'
-        return HttpResponse(f'下载失败：{e}', status=500)
+        action = "离线下载失败"
+        return HttpResponse(f"下载失败：{e}", status=500)
     finally:
         AuditEntry.objects.create(
             user_id=request.user.id,
@@ -362,7 +373,9 @@ def offline_file_download(request):
 
 
 class StorageControl:
-    def __init__(self, storage_type=None, do_action=None, file_name=None, temp_dir=None):
+    def __init__(
+        self, storage_type=None, do_action=None, file_name=None, temp_dir=None
+    ):
         """根据存储服务进行文件的上传下载"""
         # 存储类型
         self.storage_type = storage_type
@@ -376,31 +389,35 @@ class StorageControl:
         # 获取系统配置
         self.config = get_sys_config()
         # 先进行系统管理内配置的 files_expire_with_days 参数的判断是否存在以及是否为空,默认值 0-不过期
-        self.expire_time_str = self.config.get('files_expire_with_days', '0')
-        self.expire_time_with_days = int(self.expire_time_str) if self.expire_time_str else 0
+        self.expire_time_str = self.config.get("files_expire_with_days", "0")
+        self.expire_time_with_days = (
+            int(self.expire_time_str) if self.expire_time_str else 0
+        )
         # 获取当前时间
         self.current_time = datetime.datetime.now()
         # 获取过期的时间
-        self.expire_time = self.current_time - datetime.timedelta(days=self.expire_time_with_days)
+        self.expire_time = self.current_time - datetime.timedelta(
+            days=self.expire_time_with_days
+        )
 
         # SFTP 存储相关配置信息
-        self.sftp_host = self.config['sftp_host']
-        self.sftp_user = self.config['sftp_user']
-        self.sftp_password = self.config['sftp_password']
-        self.sftp_port_str = self.config.get('sftp_port', '22')
+        self.sftp_host = self.config["sftp_host"]
+        self.sftp_user = self.config["sftp_user"]
+        self.sftp_password = self.config["sftp_password"]
+        self.sftp_port_str = self.config.get("sftp_port", "22")
         self.sftp_port = int(self.sftp_port_str) if self.sftp_port_str else 22
-        self.sftp_path = self.config['sftp_path']
+        self.sftp_path = self.config["sftp_path"]
 
         # OSS 存储相关配置信息
-        self.access_key_id = self.config['oss_access_key_id']
-        self.access_key_secret = self.config['oss_access_key_secret']
-        self.endpoint = self.config['oss_endpoint']
-        self.bucket_name = self.config['oss_bucket_name']
-        self.oss_path = self.config['oss_path']
+        self.access_key_id = self.config["oss_access_key_id"]
+        self.access_key_secret = self.config["oss_access_key_secret"]
+        self.endpoint = self.config["oss_endpoint"]
+        self.bucket_name = self.config["oss_bucket_name"]
+        self.oss_path = self.config["oss_path"]
 
         # 本地存储相关配置信息
         # self.local_path = r'{}'.format(self.config['local_path'])
-        self.local_path = r'{}'.format(self.config.get('local_path', '/tmp'))
+        self.local_path = r"{}".format(self.config.get("local_path", "/tmp"))
 
     def upload_to_sftp(self):
         # SFTP 配置
@@ -408,7 +425,9 @@ class StorageControl:
             with Transport((self.sftp_host, self.sftp_port)) as transport:
                 transport.connect(username=self.sftp_user, password=self.sftp_password)
                 with SFTPClient.from_transport(transport) as sftp:
-                    remote_file = os.path.join(self.sftp_path, os.path.basename(self.file_name))
+                    remote_file = os.path.join(
+                        self.sftp_path, os.path.basename(self.file_name)
+                    )
                     # 判断时间是否配置，为 0 则默认不删除，大于 0 则调用删除方法进行删除过期文件
                     if self.expire_time_with_days > 0:
                         self.del_file_before_upload_to_sftp(sftp)
@@ -430,8 +449,10 @@ class StorageControl:
                 sftp.getfo(file_path, file_content)
 
         # 构造 HttpResponse 返回 ZIP 文件内容
-        response = HttpResponse(file_content.getvalue(), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename={quote(self.file_name)}'
+        response = HttpResponse(file_content.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = (
+            f"attachment; filename={quote(self.file_name)}"
+        )
         return response
 
     def del_file_before_upload_to_sftp(self, sftp):
@@ -458,7 +479,7 @@ class StorageControl:
         if self.expire_time_with_days > 0:
             self.del_file_before_upload_to_oss(bucket)
         # 读取并上传离线导出的文件压缩包到OSS
-        with open(os.path.join(self.temp_dir, self.file_name), 'rb') as file:
+        with open(os.path.join(self.temp_dir, self.file_name), "rb") as file:
             bucket.put_object(remote_key, file)
 
     def download_from_oss(self):
@@ -472,8 +493,10 @@ class StorageControl:
         remote_path = self.oss_path
         remote_key = os.path.join(remote_path, self.file_name)
         object_stream = bucket.get_object(remote_key)
-        response = HttpResponse(object_stream.read(), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename={quote(self.file_name)}'
+        response = HttpResponse(object_stream.read(), content_type="application/zip")
+        response["Content-Disposition"] = (
+            f"attachment; filename={quote(self.file_name)}"
+        )
         return response
 
     def del_file_before_upload_to_oss(self, bucket):
@@ -493,7 +516,9 @@ class StorageControl:
             source_path = os.path.join(self.temp_dir, self.file_name)
             # 判断配置内的本地存储路径是否存在，若不存在则抛出报错
             if not os.path.exists(self.local_path):
-                raise FileNotFoundError(f"Destination directory '{self.local_path}' not found.")
+                raise FileNotFoundError(
+                    f"Destination directory '{self.local_path}' not found."
+                )
             # 判断时间是否配置，为 0 则默认不删除，大于 0 则调用删除方法进行删除过期文件
             if self.expire_time_with_days > 0:
                 self.del_file_before_upload_to_local()
@@ -505,32 +530,39 @@ class StorageControl:
     def download_from_local(self):
         file_path = os.path.join(self.local_path, self.file_name)
 
-        with open(file_path, 'rb') as file:
-            response = HttpResponse(file.read(), content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename={quote(self.file_name)}'
+        with open(file_path, "rb") as file:
+            response = HttpResponse(file.read(), content_type="application/zip")
+            response["Content-Disposition"] = (
+                f"attachment; filename={quote(self.file_name)}"
+            )
             return response
 
     def del_file_before_upload_to_local(self):
         for local_file_info in os.listdir(self.local_path):
             file_path = os.path.join(self.local_path, local_file_info)
-            if os.path.isfile(file_path) and os.path.getmtime(file_path) < self.expire_time.timestamp():
+            if (
+                os.path.isfile(file_path)
+                and os.path.getmtime(file_path) < self.expire_time.timestamp()
+            ):
                 os.remove(file_path)
 
 
 def execute_check_sql(conn, sql, config):
     # 先进行 max_export_rows 变量的判断是否存在以及是否为空,默认值10000
-    max_export_rows_str = config.get('max_export_rows', '10000')
+    max_export_rows_str = config.get("max_export_rows", "10000")
     max_export_rows = int(max_export_rows_str) if max_export_rows_str else 10000
 
     # 判断sql是否以 select 开头
-    if not sql.strip().lower().startswith('select'):
+    if not sql.strip().lower().startswith("select"):
         return Exception(f"违规语句：{sql}")
-    sql = 'explain ' + sql
+    sql = "explain " + sql
     cursor = conn.cursor()
     try:
         cursor.execute(sql)
         check_result = cursor.fetchall()
-        total_explain_scan_rows = sum(row[9] if row[9] is not None else 0 for row in check_result)
+        total_explain_scan_rows = sum(
+            row[9] if row[9] is not None else 0 for row in check_result
+        )
         if int(total_explain_scan_rows) > max_export_rows:
             return Exception(f"扫描行数超出阈值: {max_export_rows}")
         else:
