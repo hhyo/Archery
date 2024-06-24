@@ -73,6 +73,7 @@ def sql_workflow(db_instance):
         instance=db_instance,
         db_name="some_db",
         syntax_type=1,
+        is_offline_export="no",
     )
     wf_content = SqlWorkflowContent.objects.create(
         workflow=wf, sql_content="some_sql", execute_result=""
