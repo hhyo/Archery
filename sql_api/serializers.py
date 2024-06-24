@@ -439,7 +439,8 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
                     workflow=workflow, **validated_data
                 )
                 # 自动创建工作流
-                auditor = get_auditor(workflow=workflow, offline_data=workflow_data)
+                # auditor = get_auditor(workflow=workflow, offline_data=workflow_data)
+                auditor = get_auditor(workflow=workflow)
                 auditor.create_audit()
         except Exception as e:
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")

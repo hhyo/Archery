@@ -134,7 +134,7 @@ class AuditV2:
     # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
     resource_group: str = ""
     resource_group_id: int = 0
-    offline_data: Optional[dict] = field(default_factory=dict)
+    # offline_data: Optional[dict] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.workflow:
@@ -235,7 +235,8 @@ class AuditV2:
         ):
             # 影响行数超规模, 需要人工审核
             return False
-        if self.offline_data["is_offline_export"] == "yes":
+        # if self.offline_data["is_offline_export"] == "yes":
+        if self.workflow.is_offline_export == "yes":
             return False
         return True
 
@@ -755,7 +756,7 @@ def get_auditor(
     # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
     resource_group: str = "",
     resource_group_id: int = 0,
-    offline_data: dict = None,
+    # offline_data: dict = None,
 ) -> AuditV2:
     current_auditor = settings.CURRENT_AUDITOR
     module, o = current_auditor.split(":")
@@ -767,5 +768,5 @@ def get_auditor(
         audit=audit,
         resource_group=resource_group,
         resource_group_id=resource_group_id,
-        offline_data=offline_data,
+        # offline_data=offline_data,
     )
