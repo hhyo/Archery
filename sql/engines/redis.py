@@ -6,6 +6,7 @@
 @time: 2019/03/26
 """
 
+import json
 import re
 import shlex
 
@@ -119,6 +120,7 @@ class RedisEngine(EngineBase):
             "zcard",
             "zcount",
             "zrank",
+            "info",
         ]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
@@ -147,7 +149,19 @@ class RedisEngine(EngineBase):
                     result_set.affected_rows = len(rows)
             elif isinstance(rows, dict):
                 result_set.column_list = ["field", "value"]
-                result_set.rows = tuple([[k, v] for k, v in rows.items()])
+                # 对Redis的返回结果进行类型判断，如果是dict,list转为json字符串。
+                pairs_list = []
+                for k, v in rows.items():
+                    if isinstance(v, dict):
+                        processed_value = json.dumps(v)
+                    elif isinstance(v, list):
+                        processed_value = json.dumps(v)
+                    else:
+                        processed_value = v
+                    # 添加处理后的键值对到列表
+                    pairs_list.append([k, processed_value])
+                # 将列表转换为元组并赋值给 result_set.rows
+                result_set.rows = tuple(pairs_list)
                 result_set.affected_rows = len(result_set.rows)
             else:
                 result_set.rows = tuple([[rows]])
