@@ -1151,7 +1151,7 @@ class TestDataMasking(TestCase):
             column_list=["phone", "mobile"], rows=rows, full_sql=sql
         )
         r = data_masking(self.ins, "archery", sql, query_result)
-        # 第一列走的脱敏规则2，第二列走的脱敏规则100。
+        # 第一列走的脱敏规则1，第二列走的脱敏规则100。
         mask_result_rows = [
             ["1", "*"],
             ["12", "*2"],
