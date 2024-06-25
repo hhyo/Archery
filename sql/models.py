@@ -612,7 +612,11 @@ class DataMaskingColumns(models.Model):
     """
 
     column_id = models.AutoField("字段id", primary_key=True)
-    rule_type = models.IntegerField("规则类型", choices=rule_type_choices, help_text="通用规则01：根据字段长度自动分成3份，中间段脱敏。")
+    rule_type = models.IntegerField(
+        "规则类型",
+        choices=rule_type_choices,
+        help_text="通用规则01：根据字段长度自动分成3份，中间段脱敏。",
+    )
     active = models.BooleanField(
         "激活状态", choices=((False, "未激活"), (True, "激活"))
     )
