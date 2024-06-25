@@ -897,6 +897,7 @@ class TestDataMasking(TestCase):
             db_name="db_name",
             syntax_type=1,
         )
+        # 单元测试创建脱敏规则
         DataMaskingRules.objects.create(
             rule_type=1, rule_regex="(.{3})(.*)(.{4})", hide_group=2
         )
@@ -907,6 +908,15 @@ class TestDataMasking(TestCase):
             table_schema="archer_test",
             table_name="users",
             column_name="phone",
+        )
+        # rule_type=100的规则不需要加，会自动创建。只需要加脱敏字段
+        DataMaskingColumns.objects.create(
+            rule_type=100,
+            active=True,
+            instance=self.ins,
+            table_schema="*",
+            table_name="*",
+            column_name="mobile",
         )
 
     def tearDown(self):
@@ -1094,6 +1104,71 @@ class TestDataMasking(TestCase):
                 "188****8889",
             ],
         ]
+        self.assertEqual(r.rows, mask_result_rows)
+
+    @patch("sql.utils.data_masking.GoInceptionEngine")
+    def test_data_masking_hit_default_rules_column_and_star(self, _inception):
+        """命中默认脱敏规则(规则编码100)，查询的SQL存在*和字段的单元测试方法。
+        1. 脱敏规则：库名和表名为*，字段名为mobile。
+        2. 脱敏规则：库名:archer_test表名:users，字段名为phone。
+        """
+        _inception.return_value.query_data_masking.return_value = [
+            {
+                "index": 0,
+                "field": "phone",
+                "type": "varchar(80)",
+                "table": "users",
+                "schema": "archer_test",
+                "alias": "p",
+            },
+            {
+                "index": 1,
+                "field": "mobile",
+                "type": "varchar(80)",
+                "table": "users_not_config",
+                "schema": "archer_test_not_config",
+                "alias": "m",
+            },
+        ]
+        sql = """select phone,mobile,* from users;"""
+        rows = (
+            ("1", "1"),
+            ("12", "12"),
+            ("123", "123"),
+            ("1234", "1234"),
+            ("12345", "12345"),
+            ("123456", "123456"),
+            ("1234567", "1234567"),
+            ("12345678", "12345678"),
+            ("123456789", "123456789"),
+            ("123456789a", "123456789a"),
+            ("123456789ab", "123456789ab"),
+            ("123456789abc", "123456789abc"),
+            ("123456789abcd", "123456789abcd"),
+            ("123456789abcde", "123456789abcde"),
+        )
+        query_result = ReviewSet(
+            column_list=["phone", "mobile"], rows=rows, full_sql=sql
+        )
+        r = data_masking(self.ins, "archery", sql, query_result)
+        # 第一列走的脱敏规则2，第二列走的脱敏规则100。
+        mask_result_rows = [
+            ["1", "*"],
+            ["12", "*2"],
+            ["123", "1*3"],
+            ["1234", "1**4"],
+            ["12345", "1**45"],
+            ["123456", "12**56"],
+            ["1234567", "12***67"],
+            ["123*5678", "12***678"],
+            ["123**6789", "123***789"],
+            ["123***789a", "123****89a"],
+            ["123****89ab", "123****89ab"],
+            ["123*****9abc", "1234****9abc"],
+            ["123******abcd", "1234*****abcd"],
+            ["123*******bcde", "1234*****abcde"],
+        ]
+
         self.assertEqual(r.rows, mask_result_rows)
 
     @patch("sql.utils.data_masking.GoInceptionEngine")
