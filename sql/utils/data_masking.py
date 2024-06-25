@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import logging
+import math
 
 import sqlparse
 from django.forms import model_to_dict
@@ -44,6 +45,18 @@ def data_masking(instance, db_name, sql, sql_result):
             for column in hit_columns:
                 index, rule_type = column["index"], column["rule_type"]
                 masking_rule = masking_rules.get(rule_type)
+                # 如果是默认的通用规则01，数据库没有查询结果，则创建一个对象。
+                if not masking_rule and rule_type == 100:
+                    masking_rule_obj, created = DataMaskingRules.objects.get_or_create(
+                        rule_type=100,
+                        rule_regex="^([\\s\\S]{0,}?)([\\s\\S]{0,}?)([\\s\\S]{0,}?)$",
+                        hide_group=2,
+                        rule_desc="系统通用规则01，内部实现，不需要修改。",
+                    )
+                    if created:
+                        masking_rule = model_to_dict(masking_rule_obj)
+                        masking_rules[rule_type] = masking_rule  # 更新字典
+                        masking_rule = masking_rules.get(rule_type)
                 if not masking_rule:
                     continue
                 for idx, item in enumerate(rows):
@@ -106,6 +119,11 @@ def analyze_query_tree(select_list, instance):
         masking_column = masking_columns.get(
             f"{instance}-{table_schema}-{table}-{field}"
         )
+
+        # 未找到。看看通用的规则是否存在。
+        if not masking_column:
+            masking_column = masking_columns.get(f"{instance}-*-*-{field}")
+
         if masking_column:
             hit_columns.append(
                 {
@@ -124,15 +142,38 @@ def analyze_query_tree(select_list, instance):
 def regex(masking_rule, value):
     """利用正则表达式脱敏数据"""
     rule_regex = masking_rule["rule_regex"]
+
+    rule_type = masking_rule["rule_type"]
+    # 系统通用规则正则表达式。 这是动态的。
+    if rule_type == 100 and isinstance(value, str):
+        value_average = math.floor(len(value) / 3)
+        value_remainder = len(value) % 3
+        value_average_1 = str(value_average)
+        value_average_2 = str(value_average + (1 if value_remainder > 0 else 0))
+        value_average_3 = str(value_average + (1 if value_remainder > 1 else 0))
+        # value_len_str=str(value_len if value_len >= 1 else 1)
+        rule_regex = (
+            "^([\\s\\S]{"
+            + value_average_1
+            + ",}?)([\\s\\S]{"
+            + value_average_2
+            + ",}?)([\\s\\S]{"
+            + value_average_3
+            + ",}?)$"
+        )
+
     hide_group = masking_rule["hide_group"]
     # 正则匹配必须分组，隐藏的组会使用****代替
     try:
         p = re.compile(rule_regex, re.I)
         m = p.search(str(value))
         masking_str = ""
+        if m is None:
+            return value
         for i in range(m.lastindex):
             if i == hide_group - 1:
-                group = "****"
+                # 长度不对外隐藏，还原长度。
+                group = "*" * len(m.group(i + 1))
             else:
                 group = m.group(i + 1)
             masking_str = masking_str + group
