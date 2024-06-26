@@ -233,9 +233,12 @@ def schemasync(request):
 
     # 提交给SchemaSync获取对比结果
     schema_sync = SchemaSync()
+    tag = int(time.time())
+    timestamp = time.time()
+    formatted_time = time.strftime("%Y%m%d%H%M", time.localtime(timestamp))
     # 准备参数
     tag = int(time.time())
-    output_directory = os.path.join(settings.BASE_DIR, "downloads/schemasync/")
+    output_directory = os.path.join(settings.BASE_DIR, "downloads/schemasync/",formatted_time)
     os.makedirs(output_directory, exist_ok=True)
     args = {
         "sync-auto-inc": sync_auto_inc,
@@ -264,13 +267,13 @@ def schemasync(request):
     # 非全部数据库对比可以读取对比结果并在前端展示
     if db_name != "*":
         date = time.strftime("%Y%m%d", time.localtime())
-        patch_sql_file = "%s%s_%s.%s.patch.sql" % (
+        patch_sql_file = "%s/%s_%s.%s.patch.sql" % (
             output_directory,
             target_db_name,
             tag,
             date,
         )
-        revert_sql_file = "%s%s_%s.%s.revert.sql" % (
+        revert_sql_file = "%s/%s_%s.%s.revert.sql" % (
             output_directory,
             target_db_name,
             tag,
