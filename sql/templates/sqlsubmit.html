@@ -552,7 +552,9 @@
                     sessionStorage.setItem('CheckWarningCount', result.warning_count);
                     sessionStorage.setItem('CheckErrorCount', result.error_count);
                     $("#inception-result").show();
-                    $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
+                    if (result.error_count==0) {
+                        $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {
