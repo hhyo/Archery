@@ -390,9 +390,24 @@
             }
             return true
         }
-
+        String.prototype.removeStartsWith = function(prefix) {
+            let str = String(this);
+            if (str.startsWith(prefix)) {
+                return str.substring(prefix.length);
+            }
+            return str;
+        };
         $("#btn-autoreview").click(function () {
             //先做表单验证，成功了提交ajax给后端
+            const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
+            var editorValue=editor.getValue();
+            // 删除默认的提示字符串。
+            editorValueRemove=editorValue.removeStartsWith(sqlTips);
+            if(editorValue!==editorValueRemove)
+            {
+                editor.setValue(editorValueRemove);
+            }
+            $("#sql_content").val(editorValueRemove);
             $("#sql_content").val(editor.getValue());
             if (validateForm($("#form-submitsql")) && checkRunDate()) {
                 autoreview();
