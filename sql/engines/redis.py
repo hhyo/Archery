@@ -62,12 +62,12 @@ class RedisEngine(EngineBase):
         获取数据库列表
         :return:
         """
-        request_source=kwargs.get("request_source","")
-        if(request_source=="1"):
+        request_source = kwargs.get("request_source", "")
+        if request_source == "1":
             return self.get_all_databases_of_hasdata(**kwargs)
         else:
             return self.get_all_databases_of_all(**kwargs)
-        
+
     def get_all_databases_of_all(self, **kwargs):
         """
         获取数据库列表。全部的DB
@@ -110,17 +110,17 @@ class RedisEngine(EngineBase):
         try:
             info_keyspace = conn.info("Keyspace")
             # 确保库0的信息被添加
-            if 'db0' not in info_keyspace:
-                db_info_list.append({'value': '0', 'text': 0})
+            if "db0" not in info_keyspace:
+                db_info_list.append({"value": "0", "text": 0})
             for db, metrics in info_keyspace.items():
                 # 通常metrics字符串形式为 'keys=1,expires=0,avg_ttl=0'
-                keys_count = metrics.get('keys', 0)  # 获取键的数量
-                db_info = {'value': str(db.replace('db','')), 'text': keys_count}
+                keys_count = metrics.get("keys", 0)  # 获取键的数量
+                db_info = {"value": str(db.replace("db", "")), "text": keys_count}
                 db_info_list.append(db_info)
-            
+
         except Exception as e:
             logger.warning(f"Redis Keyspace 执行报错，异常信息：{e}")
-            result.message=f"{e}"
+            result.message = f"{e}"
         result.rows = db_info_list
         return result
 
