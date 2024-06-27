@@ -179,6 +179,7 @@ class InstanceResource(views.APIView):
 
         instance_id = request.data["instance_id"]
         resource_type = request.data["resource_type"]
+        request_source = request.data["request_source"]
         db_name = request.data["db_name"] if "db_name" in request.data.keys() else ""
         schema_name = (
             request.data["schema_name"] if "schema_name" in request.data.keys() else ""

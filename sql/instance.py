@@ -306,6 +306,7 @@ def instance_resource(request):
     """
     获取实例内的资源信息，database、schema、table、column
     :param request:
+    :request_source: 请求来源。1. SQL查询。 2.SQL提交
     :return:
     """
     instance_id = request.GET.get("instance_id")
@@ -313,6 +314,7 @@ def instance_resource(request):
     db_name = request.GET.get("db_name", "")
     schema_name = request.GET.get("schema_name", "")
     tb_name = request.GET.get("tb_name", "")
+    request_source = request.GET.get("request_source", "")
 
     resource_type = request.GET.get("resource_type")
     if instance_id:
@@ -331,7 +333,10 @@ def instance_resource(request):
         schema_name = query_engine.escape_string(schema_name)
         tb_name = query_engine.escape_string(tb_name)
         if resource_type == "database":
-            resource = query_engine.get_all_databases()
+            if instance.db_type == "redis":
+                resource = query_engine.get_all_databases(request_source=request_source)
+            else:
+                resource = query_engine.get_all_databases()
         elif resource_type == "schema" and db_name:
             resource = query_engine.get_all_schemas(db_name=db_name)
         elif resource_type == "table" and db_name:

@@ -105,7 +105,7 @@ class EngineBase:
     def kill_connection(self, thread_id):
         """终止数据库连接"""
 
-    def get_all_databases(self):
+    def get_all_databases(self, **kwargs):
         """获取数据库列表, 返回一个ResultSet，rows=list"""
         return ResultSet()
 

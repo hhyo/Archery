@@ -1115,7 +1115,8 @@
                 async: async,
                 data: {
                     instance_name: $("#instance_name").val(),
-                    resource_type: "database"
+                    resource_type: "database",
+                    request_source: "1" /*数据库查询类型 1.为SQL查询的请求。2.上线的查询请求*/
                 },
                 complete: function () {
                     $("#db_name").selectpicker('val', db_name);
@@ -1127,17 +1128,31 @@
                     if (data.status === 0) {
                         var result = data.data;
                         var dbs = [];
+                        var options = "";
                         for (var i = 0; i < result.length; i++) {
-                            var name = "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
-                            $("#db_name").append(name);
-                            dbs.push({
+                            // 下拉框显示名称可以自定义，不需要和value一样。
+                            if (typeof result[i] === 'object')
+                            {
+                                options += `<option value="${result[i].value}">db${result[i].value} (${result[i].text})</option>`;
+                                dbs.push({
+                                name: result[i].value,
+                                value: result[i].value,
+                                caption: result[i].value,
+                                meta: 'databases',
+                                score: '100'
+                            })
+                            }else{
+                                options+= "<option value=\"" + result[i] + "\">" + result[i] + "</option>";
+                                dbs.push({
                                 name: result[i],
                                 value: result[i],
                                 caption: result[i],
                                 meta: 'databases',
                                 score: '100'
                             })
+                            }
                         }
+                        $("#db_name").append(options);
                         $('#db_name').selectpicker('render');
                         $('#db_name').selectpicker('refresh');
                         //自动补全提示
