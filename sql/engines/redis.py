@@ -70,7 +70,7 @@ class RedisEngine(EngineBase):
         
     def get_all_databases_of_all(self, **kwargs):
         """
-        获取数据库列表
+        获取数据库列表。全部的DB
         :return:
         """
         result = ResultSet(full_sql="CONFIG GET databases")
@@ -101,7 +101,7 @@ class RedisEngine(EngineBase):
 
     def get_all_databases_of_hasdata(self, **kwargs):
         """
-        获取数据库列表
+        获取数据库列表。仅有数据的DB列表
         :return:
         """
         result = ResultSet(full_sql="")
