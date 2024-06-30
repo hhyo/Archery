@@ -634,7 +634,6 @@ class TestQueryPrivilegesCheck(TestCase):
             limit_num=100,
         )
         __db_priv.assert_called_with(self.user, pgsql_instance,self.db_name)
-        
 
     @patch("sql.query_privileges._db_priv", return_value=1000)
     def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
