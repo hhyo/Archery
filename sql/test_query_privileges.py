@@ -537,6 +537,8 @@ class TestQueryPrivilegesCheck(TestCase):
             },
         )
 
+
+
     @patch(
         "sql.query_privileges._table_ref",
         return_value=[{"schema": "archery", "name": "sql_users"}],
@@ -610,6 +612,30 @@ class TestQueryPrivilegesCheck(TestCase):
             },
         )
 
+    @patch("sql.query_privileges._db_priv",return_value=False)
+    def test_query_priv_check_with_pgsql_db_priv(self, __db_priv):
+        """
+        测试用户权限校验,pgsql实例、普通用户
+        """
+        pgsql_instance = Instance(
+            instance_name="pgsql",
+            type="master",
+            db_type="pgsql",
+            host="some_host",
+            port=5432,
+            user="some_user",
+            password="some_str",
+        )
+        r = sql.query_privileges.query_priv_check(
+            user=self.user,
+            instance=pgsql_instance,
+            db_name=self.db_name,
+            sql_content="select * from should_not_used.sql_users;",
+            limit_num=100,
+        )
+        __db_priv.assert_called_with(self.user, pgsql_instance,self.db_name)
+        
+
     @patch("sql.query_privileges._db_priv", return_value=1000)
     def test_query_priv_check_not_mysql_db_priv_exist(self, __db_priv):
         """
@@ -637,6 +663,7 @@ class TestQueryPrivilegesCheck(TestCase):
             {"data": {"limit_num": 100, "priv_check": True}, "msg": "ok", "status": 0},
         )
 
+    
     @patch("sql.query_privileges._db_priv", return_value=False)
     def test_query_priv_check_not_mysql_db_priv_not_exist(self, __db_priv):
         """
