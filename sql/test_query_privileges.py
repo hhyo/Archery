@@ -659,7 +659,6 @@ class TestQueryPrivilegesCheck(TestCase):
             r,
             {"data": {"limit_num": 100, "priv_check": True}, "msg": "ok", "status": 0},
         )
-
     
     @patch("sql.query_privileges._db_priv", return_value=False)
     def test_query_priv_check_not_mysql_db_priv_not_exist(self, __db_priv):
