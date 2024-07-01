@@ -248,7 +248,7 @@ class AuditV2:
         reject = False
         if self.max_errlevel == 1 and auto_review_wrong == 1:
             reject = True
-        elif self.max_errlevel == 2 and auto_review_wrong in (1,2):
+        elif self.max_errlevel == 2 and auto_review_wrong in (1, 2):
             reject = True
         if auto_review and not reject:
             return AuditSetting(auto_pass=True)
