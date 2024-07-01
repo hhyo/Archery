@@ -241,17 +241,15 @@ class AuditV2:
 
     def generate_audit_setting(self) -> AuditSetting:
         auto_review = self.is_auto_review()
-        auto_review_wrong = self.sys_config.get(
-            "auto_review_wrong", ""
-        ) 
+        auto_review_wrong = self.sys_config.get("auto_review_wrong", "") 
         if auto_review_wrong == "":
             auto_review_wrong = "2"
         auto_review_wrong = int(auto_review_wrong)
         reject = False
         if self.max_errlevel == 1 and auto_review_wrong == 1:
-           reject = True
+            reject = True
         elif self.max_errlevel == 2 and auto_review_wrong in (1,2):
-           reject = True
+            reject = True
         if auto_review and not reject:
             return AuditSetting(auto_pass=True)
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
