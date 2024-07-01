@@ -241,7 +241,7 @@ class AuditV2:
 
     def generate_audit_setting(self) -> AuditSetting:
         auto_review = self.is_auto_review()
-        auto_review_wrong = self.sys_config.get("auto_review_wrong", "") 
+        auto_review_wrong = self.sys_config.get("auto_review_wrong", "")
         if auto_review_wrong == "":
             auto_review_wrong = "2"
         auto_review_wrong = int(auto_review_wrong)
