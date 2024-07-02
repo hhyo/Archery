@@ -323,18 +323,17 @@ class AuditV2:
         else:
             self.audit.next_audit = audit_setting.audit_auth_groups[1]
 
-        if self.workflow.status !="workflow_autoreviewwrong":
+        if self.workflow.status != "workflow_autoreviewwrong":
             self.audit.current_status = WorkflowStatus.WAITING
             readable_review_flow, _ = self.review_info
             operation_info = "等待审批，审批流程：{}".format(readable_review_flow)
         else:
             self.audit.current_status = WorkflowStatus.REJECTED
-            readable_review_flow ="自动审核不通过"
+            readable_review_flow = "自动审核不通过"
             operation_info = "无需审批，审批备注：{}".format(readable_review_flow)
         self.audit.create_user = create_user
         self.audit.create_user_display = create_user_display
         self.audit.save()
-
 
         audit_log = WorkflowLog(
             audit_id=self.audit.audit_id,
@@ -390,9 +389,7 @@ class AuditV2:
             try:
                 audit_auth_group = Group.objects.get(id=self.audit.current_audit)
             except Group.DoesNotExist:
-                raise AuditException(
-                    "当前审批权限组不存在, 请联系管理员检查并清洗错误数据"
-                )
+                raise AuditException("当前审批权限组不存在, 请联系管理员检查并清洗错误数据")
             if not auth_group_users([audit_auth_group.name], self.resource_group_id):
                 raise AuditException("用户不在当前审批审批节点的用户组内, 无权限审核")
             return True
