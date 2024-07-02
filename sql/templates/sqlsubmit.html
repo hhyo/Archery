@@ -391,8 +391,10 @@
             return true
         }
         
-        String.prototype.removeStartsWith = function(prefix) {
-            let str = String(this);
+        function removeStartsWith(str,prefix) {
+            if (typeof str !== 'string' || str === null) {
+                return str;
+            }
             if (str.startsWith(prefix)) {
                 return str.substring(prefix.length);
             }
@@ -403,7 +405,7 @@
             const sqlTips = "-- 请在此输入SQL，以分号结尾，仅支持DML和DDL语句，查询语句请使用SQL查询功能。\n";
             var editorValue=editor.getValue();
             // 删除默认的提示字符串。
-            editorValueRemove=editorValue.removeStartsWith(sqlTips);
+            editorValueRemove=removeStartsWith(editorValue,sqlTips);
             if(editorValue!==editorValueRemove)
             {
                 editor.setValue(editorValueRemove);
