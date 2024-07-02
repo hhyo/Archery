@@ -245,12 +245,12 @@ class AuditV2:
         if auto_review_wrong == "":
             auto_review_wrong = "2"
         auto_review_wrong = int(auto_review_wrong)
-        reject = False
+        should_reject = False
         if self.max_errlevel == 1 and auto_review_wrong == 1:
-            reject = True
+            should_reject = True
         elif self.max_errlevel == 2 and auto_review_wrong in (1, 2):
-            reject = True
-        if auto_review and not reject:
+            should_reject = True
+        if auto_review and not should_reject:
             return AuditSetting(auto_pass=True)
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
