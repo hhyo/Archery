@@ -134,7 +134,6 @@ class AuditV2:
     # 归档表中没有下面两个参数, 所以对归档表来说一下两参数必传
     resource_group: str = ""
     resource_group_id: int = 0
-    max_errlevel: int = 0
 
     def __post_init__(self):
         if not self.workflow:
@@ -230,8 +229,6 @@ class AuditV2:
                 return False
             # 影响行数加测, 总语句影响行数超过指定数量则需要人工审核
             all_affected_rows += int(review_result.affected_rows)
-            if review_result.errlevel > self.max_errlevel:
-                self.max_errlevel = review_result.errlevel
         if all_affected_rows > int(
             self.sys_config.get("auto_review_max_update_rows", 50)
         ):
@@ -240,21 +237,13 @@ class AuditV2:
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
-        auto_review = self.is_auto_review()
-        auto_review_wrong = self.sys_config.get("auto_review_wrong", "")
-        if auto_review_wrong == "":
-            auto_review_wrong = "2"
-        auto_review_wrong = int(auto_review_wrong)
-        should_reject = False
-        if self.max_errlevel == 1 and auto_review_wrong == 1:
-            should_reject = True
-        elif self.max_errlevel == 2 and auto_review_wrong in (1, 2):
-            should_reject = True
-        if auto_review and not should_reject:
-            return AuditSetting(auto_pass=True)
+        if self.is_auto_review() :
+            if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
+                if self.workflow.status != "workflow_autoreviewwrong":
+                    return AuditSetting(auto_pass=True)
+
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
-
         else:
             # ArchiveConfig
             group_id = self.resource_group_id
