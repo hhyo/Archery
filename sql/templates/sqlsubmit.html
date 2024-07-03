@@ -570,10 +570,7 @@
                     sessionStorage.setItem('CheckWarningCount', result.warning_count);
                     sessionStorage.setItem('CheckErrorCount', result.error_count);
                     $("#inception-result").show();
-                    // 是前端拦截了还是允许进入工作流？
-                    //if (result.error_count==0) {
-                        $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
-                    //}
+                    $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {

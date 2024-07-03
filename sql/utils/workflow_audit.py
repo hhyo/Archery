@@ -238,8 +238,7 @@ class AuditV2:
 
     def generate_audit_setting(self) -> AuditSetting:
         if self.is_auto_review():
-            if self.workflow.status != "workflow_autoreviewwrong":
-                return AuditSetting(auto_pass=True)
+            return AuditSetting(auto_pass=True)
 
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
@@ -301,6 +300,19 @@ class AuditV2:
             create_user=create_user,
             create_user_display=create_user_display,
         )
+        if audit_setting.auto_pass and self.workflow.status == "workflow_autoreviewwrong":
+            self.audit.current_status =  WorkflowStatus.REJECTED
+            self.audit.save()
+            WorkflowLog.objects.create(
+                audit_id=self.audit.audit_id,
+                operation_type=WorkflowAction.SUBMIT,
+                operation_type_desc=WorkflowAction.SUBMIT.label,
+                operation_info="工单存在检测异常，系统自动驳回",
+                operator=self.audit.create_user,
+                operator_display=self.audit.create_user_display,
+            )
+            return "工单存在检测异常，系统自动驳回"
+
         # 自动通过的情况
         if audit_setting.auto_pass:
             self.audit.current_status = WorkflowStatus.PASSED
