@@ -300,7 +300,10 @@ class AuditV2:
             create_user=create_user,
             create_user_display=create_user_display,
         )
-        if audit_setting.auto_pass and self.workflow.status == "workflow_autoreviewwrong":
+        if (
+            audit_setting.auto_pass
+            and self.workflow.status == "workflow_autoreviewwrong"
+        :
             self.audit.current_status =  WorkflowStatus.REJECTED
             self.audit.save()
             WorkflowLog.objects.create(
