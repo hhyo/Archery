@@ -84,6 +84,7 @@ class TestNotify(TestCase):
             instance=self.ins,
             db_name="some_db",
             syntax_type=1,
+            is_offline_export="no",
         )
         SqlWorkflowContent.objects.create(
             workflow=self.wf, sql_content="some_sql", execute_result=""

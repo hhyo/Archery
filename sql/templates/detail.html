@@ -9,11 +9,13 @@
                href="{{ workflow_detail.demand_url }}">{{ workflow_detail.workflow_name }}</a>
         </h4>
         <!--只允许发起人提交其他实例-->
-        {% if user.username == workflow_detail.engineer %}
+        {% if user.username == workflow_detail.engineer and workflow_detail.is_offline_export != "yes" %}
             <a type='button' id="btnSubmitOtherCluster" class='btn btn-warning' href="/submitotherinstance/">上线其他实例</a>
         {% endif %}
         {% if is_can_review or is_can_execute or is_can_rollback or user.is_superuser %}
-            <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            {% if workflow_detail.is_offline_export != "yes" %}
+                <a type='button' id="btnViewSql" class='btn btn-default' onclick="loading(this)" href="/editsql/">查看提交信息</a>
+            {% endif %}
         {% endif %}
     </div>
     <input type="hidden" id="sqlMaxRowNumber" value="{{ rows|length }}">
@@ -223,6 +225,14 @@
             <input type="hidden" name="workflow_id" value="{{ workflow_detail.id }}">
             <input type="hidden" id="cancel_remark" name="cancel_remark" value="">
             <input type="button" id="btnCancel" class="btn btn-default" value="终止流程"/>
+        </form>
+    {% endif %}
+    {% if workflow_detail.status == 'workflow_finish' and workflow_detail.is_offline_export == 'yes' %}
+        <form id="form-download" class="form-horizontal">
+            <button type="button" id="btnDownload" data-loading-text="下载中..."
+                     class="btn btn-info">
+                下载文件
+            </button>
         </form>
     {% endif %}
     <!--查看回滚按钮-->
@@ -458,7 +468,8 @@
 
         // 执行确认
         $("#btnExecuteOnly").click(function () {
-            if ("{{ workflow_detail.is_backup }}" === 'False') {
+            if ("{{ workflow_detail.is_backup }}" === 'False' &&
+            "{{workflow_detail.is_offline_export}}" !== "yes") {
                 var isContinue = confirm("该工单未选择备份，将不会自动备份数据，请确认是否立即执行？");
             } else {
                 var isContinue = confirm("请确认是否立即执行？");
@@ -961,6 +972,47 @@
                 } else if (active_li_id === 'logs_tab') {
                     get_logs();
                 }
+            });
+        });
+    </script>
+    <!--下载导出文件-->
+    <script>
+        $(document).ready(function () {
+            // $('#btnDownload').prop('disabled', false);
+            $('#btnDownload').click(function () {
+                // 禁用按钮
+                $('#btnDownload').prop('disabled', true);
+                let workflow_id = "{{ workflow_detail.id }}"
+                let file_name = "{{ workflow_detail.file_name }}";
+                let filePath = `/downloadfile/?file_name=${file_name}&workflow_id=${workflow_id}`;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', filePath, true);
+                xhr.responseType = 'arraybuffer';
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var blob = new Blob([xhr.response], { type: 'application/zip' });
+                        // 创建下载链接
+                        var downloadLink = document.createElement('a');
+                        downloadLink.href = window.URL.createObjectURL(blob);
+                        downloadLink.download = file_name;  // 替换为实际下载文件的名称
+                        // 触发点击下载链接
+                        downloadLink.click();
+                    } else {
+                        alert('下载失败，文件可能已过期失效')
+                        console.error('下载失败', xhr.statusText);
+                    }
+                    // 重新启用按钮
+                    $('#btnDownload').prop('disabled', false);
+                };
+
+                xhr.onerror = function () {
+                    console.error('网络错误');
+                    // 重新启用按钮
+                    $('#btnDownload').prop('disabled', false);
+                };
+                xhr.send();
             });
         });
     </script>
