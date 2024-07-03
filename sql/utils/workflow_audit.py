@@ -237,7 +237,7 @@ class AuditV2:
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
-        if self.is_auto_review() :
+        if self.is_auto_review():
             if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
                 if self.workflow.status != "workflow_autoreviewwrong":
                     return AuditSetting(auto_pass=True)
