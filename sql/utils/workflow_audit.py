@@ -304,7 +304,7 @@ class AuditV2:
             audit_setting.auto_pass
             and self.workflow.status == "workflow_autoreviewwrong"
         ):
-            self.audit.current_status =  WorkflowStatus.REJECTED
+            self.audit.current_status = WorkflowStatus.REJECTED
             self.audit.save()
             WorkflowLog.objects.create(
                 audit_id=self.audit.audit_id,
