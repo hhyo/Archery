@@ -237,7 +237,7 @@ class AuditV2:
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
-        auto_review = self.is_auto_review();
+        auto_review = self.is_auto_review()
         wf_status = self.workflow.status
         if auto_review and wf_status != "workflow_autoreviewwrong":
             return AuditSetting(auto_pass=True)
