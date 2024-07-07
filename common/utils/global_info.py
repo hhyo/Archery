@@ -28,7 +28,16 @@ def global_info(request):
     custom_title_suffix = sys_config.get("custom_title_suffix", "")
     if not custom_title_suffix:
         custom_title_suffix = settings.CUSTOM_TITLE_SUFFIX
-
+    auto_review = sys_config.get("auto_review", "")
+    if not auto_review:
+        auto_review = False
+    auto_review_wrong = sys_config.get("auto_review_wrong", "")
+    if not auto_review_wrong:
+        auto_review_wrong = "2"
+    auto_review_wrong_disubmit = sys_config.get("auto_review_wrong_disubmit", "")
+    if not auto_review_wrong_disubmit:
+        auto_review_wrong_disubmit = False
+    print(auto_review_wrong_disubmit)
     return {
         "todo": todo,
         "archery_version": display_version,
@@ -37,4 +46,7 @@ def global_info(request):
         "custom_title_suffix": custom_title_suffix,
         "announcement_content": announcement_content,
         "twofa_type": twofa_type,
+        "auto_review": auto_review,
+        "auto_review_wrong": auto_review_wrong,
+        "auto_review_wrong_disubmit": auto_review_wrong_disubmit,
     }

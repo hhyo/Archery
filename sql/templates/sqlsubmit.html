@@ -570,7 +570,20 @@
                     sessionStorage.setItem('CheckWarningCount', result.warning_count);
                     sessionStorage.setItem('CheckErrorCount', result.error_count);
                     $("#inception-result").show();
-                    $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
+                    auto_review_wrong_disubmit = '{{ auto_review_wrong_disubmit }}';
+                    auto_review = '{{ auto_review }}' ;
+                    auto_review_wrong = {{ auto_review_wrong }} ;
+                    if ( auto_review == 'True' && auto_review_wrong_disubmit == 'True' ) {
+                        if ( ( result.error_count>0 && auto_review_wrong==2 )
+                            || ( result.warning_count>0 && auto_review_wrong==1 )
+                           ) {
+                           ;
+                        } else {
+                           $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
+                        }
+                    } else {
+                       $('#btn-submitsql').button('reset').removeClass('disabled').prop("disabled", false);
+                    }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     if (XMLHttpRequest.responseJSON) {
