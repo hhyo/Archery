@@ -57,6 +57,8 @@
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
                         {% endfor %}
                     </select>
+                    <input class="form-control" id="generateDesc" placeholder="AI 查询描述"></input>
+                    <input id="btn-generatesql" type="button" class="btn btn-info" value="生成SQL"/>
                 </div>
                 <div class="panel-body">
                     <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
@@ -624,6 +626,12 @@
             return result;
         }
 
+        //提交AI生成sql语句请求
+        $("#btn-generatesql").click(function () {
+                generatesql();
+            }
+        );
+
         //先做表单验证，验证成功再成功提交查询请求
         $("#btn-sqlquery").click(function () {
                 dosqlquery();
@@ -1016,6 +1024,37 @@
                 success: function (data) {
                     var target = $("#instance_name").val()+"/"+$("#db_name").val();
                     display_data(data, target);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
+        function generatesql() {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            const data = {
+                db_type: optgroup,
+                instance_name: $("#instance_name").val(),
+                db_name: $("#db_name").val(),
+                schema_name: $("#schema_name").val(),
+                tb_name: $("#table_name").val(),
+                query_desc: $("#generateDesc").val(),
+            }
+            //提交请求
+            $.ajax({
+                type: "post",
+                url: "/query/generate_sql/",
+                dataType: "json",
+                data: data,
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
+                },
+                success: function (data) {
+                    editor.setValue(data["data"]);
+                    editor.clearSelection();
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
                     alert(errorThrown);

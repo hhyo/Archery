@@ -82,6 +82,11 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # https://docs.djangoproject.com/en/4.0/ref/settings/#csrf-trusted-origins
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
+# 用于请求 OpenAI
+OPENAI_API_KEY = env("OPENAI_API_KEY")
+OPENAI_BASE_URL = env("OPENAI_BASE_URL")
+DEFAULT_CHAT_MODEL = env("DEFAULT_CHAT_MODEL")
+
 # 解决nginx部署跳转404
 USE_X_FORWARDED_HOST = True
 

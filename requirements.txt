@@ -42,3 +42,5 @@ mozilla-django-oidc==3.0.0
 django-auth-dingding==0.0.3
 django-cas-ng==4.3.0
 cassandra-driver
+httpx
+OpenAI
