@@ -326,13 +326,19 @@ def generate_sql(request):
     db_type = request.POST.get("db_type")
     query_desc = request.POST.get("query_desc")
     if not db_type or not query_desc:
-        return HttpResponse(json.dumps({"status": 1, "msg": "db_type or query_desc不存在", "data": []}), content_type="application/json")
+        return HttpResponse(
+            json.dumps({"status": 1, "msg": "db_type or query_desc不存在", "data": []}),
+            content_type="application/json",
+        )
 
     instance_name = request.POST.get("instance_name")
     try:
         instance = Instance.objects.get(instance_name=instance_name)
     except Instance.DoesNotExist:
-        return HttpResponse(json.dumps({"status": 1, "msg": "实例不存在", "data": []}), content_type="application/json")
+        return HttpResponse(
+            json.dumps({"status": 1, "msg": "实例不存在", "data": []}),
+            content_type="application/json",
+        )
     db_name = request.POST.get("db_name")
     schema_name = request.POST.get("schema_name")
     tb_name = request.POST.get("tb_name")
@@ -345,7 +351,9 @@ def generate_sql(request):
         )
         # 有些不存在表结构, 例如 redis
         if len(query_result.rows) != 0:
-            result["data"] = generate_sql_by_openai(db_type, query_result.rows[0][-1], query_desc)
+            result["data"] = generate_sql_by_openai(
+                db_type, query_result.rows[0][-1], query_desc
+            )
         else:
             result["data"] = generate_sql_by_openai(db_type, "", query_desc)
     except Exception as msg:
