@@ -334,7 +334,7 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析；若无OPENAI配置则不开启AI生成SQL语句的功能</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -397,6 +397,36 @@
                                            key="admin_query_limit"
                                            value="{{ config.admin_query_limit }}"
                                            placeholder="管理员/DBA查询结果集限制" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="openai_base_url"
+                                       class="col-sm-4 control-label">OPENAI_BASE_URL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="openai_base_url"
+                                           key="openai_base_url"
+                                           value="{{ config.openai_base_url }}"
+                                           placeholder="openai base url" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="openai_api_key"
+                                       class="col-sm-4 control-label">OPENAI_API_KEY</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="openai_api_key"
+                                           key="openai_api_key"
+                                           value="{{ config.openai_api_key }}"
+                                           placeholder="openai api key" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="default_chat_model"
+                                       class="col-sm-4 control-label">DEFAULT_CHAT_MODEL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="default_chat_model"
+                                           key="default_chat_model"
+                                           value="{{ config.default_chat_model }}"
+                                           placeholder="openai default chat model" />
                                 </div>
                             </div>
                             <h5 style="color: darkgrey"><b>SQL优化</b></h5>

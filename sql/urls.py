@@ -127,6 +127,7 @@ urlpatterns = [
     path("query/querylog_audit/", query.querylog_audit),
     path("query/favorite/", query.favorite),
     path("query/generate_sql/", query.generate_sql),
+    path("check/openai/", query.check_openai),
     path("query/explain/", sql.sql_optimize.explain),
     path("query/applylist/", sql.query_privileges.query_priv_apply_list),
     path("query/userprivileges/", sql.query_privileges.user_query_priv),

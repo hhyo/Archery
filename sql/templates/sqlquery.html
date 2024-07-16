@@ -57,8 +57,8 @@
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
                         {% endfor %}
                     </select>
-                    <input class="form-control" id="generateDesc" placeholder="AI 查询描述"></input>
-                    <input id="btn-generatesql" type="button" class="btn btn-info" value="生成SQL"/>
+                    <input id="generateDesc" class="form-control" style="display: none" placeholder="AI 查询描述" />
+                    <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
                 </div>
                 <div class="panel-body">
                     <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
@@ -497,6 +497,27 @@
             }
             sessionStorage.removeItem('re_query');
         }
+
+        // 获取sysconfig
+        function check_openai() {
+            $.ajax({
+                type: "get",
+                url: "/check/openai/",
+                dataType: "json",
+                data: false,
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data["data"]) {
+                        $("#generateDesc").show()
+                        $("#btn-generatesql").show()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
     </script>
     <!-- 执行结果  -->
     <script>
@@ -628,7 +649,27 @@
 
         //提交AI生成sql语句请求
         $("#btn-generatesql").click(function () {
-                generatesql();
+                var check = false
+                var optgroup = $('#instance_name :selected').parent().attr('label')
+                var instance_name = $("#instance_name").val()
+                var db_name = $("#db_name").val()
+                var tb_name = $("#table_name").val()
+                var query_desc = $("#generateDesc").val()
+
+                if (!instance_name) {
+                    alert("请选择实例！")
+                } else if (!db_name) {
+                    alert("请选择数据库！")
+                } else if (optgroup !== 'Redis' && !tb_name){
+                    alert("请选择表结构！")
+                } else if (!query_desc) {
+                    alert("请输入查询描述！")
+                } else {
+                    check = true
+                }
+                if (check) {
+                    generatesql()
+                }
             }
         );
 
@@ -1364,6 +1405,9 @@
             } else {
                 editor.setValue("");
             }
+            
+            // check openai 配置是否存在以支持AI生成查询语句功能
+            check_openai()
 
             //默认获取查询历史
             get_querylog();

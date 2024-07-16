@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
-from common.utils.openai import generate_sql_by_openai
+from common.utils.openai import OpenaiClient
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
@@ -349,14 +349,43 @@ def generate_sql(request):
         query_result = query_engine.describe_table(
             db_name, tb_name, schema_name=schema_name
         )
+        openai_client = OpenaiClient()
         # 有些不存在表结构, 例如 redis
         if len(query_result.rows) != 0:
-            result["data"] = generate_sql_by_openai(
+            result["data"] = openai_client.generate_sql_by_openai(
                 db_type, query_result.rows[0][-1], query_desc
             )
         else:
-            result["data"] = generate_sql_by_openai(db_type, "", query_desc)
+            result["data"] = openai_client.generate_sql_by_openai(
+                db_type, "", query_desc
+            )
     except Exception as msg:
         result["status"] = 1
         result["msg"] = str(msg)
     return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+def check_openai(request):
+    """
+    校验openai配置是否存在
+    :param request:
+    :return:
+    """
+    openai_config = ["openai_base_url", "openai_api_key", "default_chat_model"]
+    for key in openai_config:
+        if not (SysConfig().get(key)):
+            return HttpResponse(
+                json.dumps(
+                    {
+                        "status": 1,
+                        "msg": f"openai 配置{key}不存在, 不支持此功能",
+                        "data": False,
+                    }
+                ),
+                content_type="application/json",
+            )
+
+    return HttpResponse(
+        json.dumps({"status": 0, "msg": "ok", "data": True}),
+        content_type="application/json",
+    )
