@@ -1,6 +1,7 @@
 from openai import OpenAI
 import logging
 from common.config import SysConfig
+from django.template import Context, Template
 
 logger = logging.getLogger("default")
 
@@ -11,6 +12,7 @@ class OpenaiClient:
         self.base_url = all_config.get("openai_base_url", "")
         self.api_key = all_config.get("openai_api_key", "")
         self.default_chat_model = all_config.get("default_chat_model", "")
+        self.default_query_template = all_config.get("default_query_template", "")
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
 
     def request_chat_completion(self, messages, **kwargs):
@@ -20,11 +22,17 @@ class OpenaiClient:
         )
         return completion
 
-    def generate_sql_by_openai(self, prompt: str, table_schema: str, query_desc: str):
+    def generate_sql_by_openai(self, db_type: str, table_schema: str, user_input: str):
         """根据传入的基本信息生成查询语句"""
-        messages = [
-            dict(role="user", content=f"{prompt}: {table_schema}\n{query_desc}")
-        ]
+        if not self.default_query_template:
+            logger.warning(
+                "OPENAI 缺少 default_query_template 配置, 导致生成查询SQL无法正确渲染"
+            )
+        template = Template(self.default_query_template)
+        current_context = Context(
+            dict(db_type=db_type, table_schema=table_schema, user_input=user_input)
+        )
+        messages = [dict(role="user", content=template.render(current_context))]
         logger.info(messages)
         try:
             res = self.request_chat_completion(messages)

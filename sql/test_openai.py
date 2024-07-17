@@ -94,18 +94,18 @@ def test_generate_sql_by_openai(openai_client, mocker):
 @pytest.mark.parametrize(
     "data, expected_msg",
     [
-        ({}, "query_desc or query_prompt不存在"),
+        ({}, "query_desc or db_type不存在"),
         (
             {
-                "query_prompt": "",
+                "db_type": "",
                 "query_desc": "获取所有用户名为test的记录",
                 "instance_name": "some_ins",
             },
-            "query_desc or query_prompt不存在",
+            "query_desc or db_type不存在",
         ),
         (
             {
-                "query_prompt": "MySQL 是你很熟悉的数据库,我会给你一些基本信息和要求,你会生成一个查询语句给我使用,不要返回任何注释和额外信息,仅返回查询语句",
+                "db_type": "MySQL",
                 "query_desc": "获取所有用户名为test的记录",
                 "instance_name": "test_instance",
             },

@@ -324,12 +324,10 @@ def generate_sql(request):
     :return:
     """
     query_desc = request.POST.get("query_desc")
-    query_prompt = request.POST.get("query_prompt")
-    if not query_desc or not query_prompt:
+    db_type = request.POST.get("db_type")
+    if not query_desc or not db_type:
         return HttpResponse(
-            json.dumps(
-                {"status": 1, "msg": "query_desc or query_prompt不存在", "data": []}
-            ),
+            json.dumps({"status": 1, "msg": "query_desc or db_type不存在", "data": []}),
             content_type="application/json",
         )
 
@@ -355,11 +353,11 @@ def generate_sql(request):
         # 有些不存在表结构, 例如 redis
         if len(query_result.rows) != 0:
             result["data"] = openai_client.generate_sql_by_openai(
-                query_prompt, query_result.rows[0][-1], query_desc
+                db_type, query_result.rows[0][-1], query_desc
             )
         else:
             result["data"] = openai_client.generate_sql_by_openai(
-                query_prompt, "", query_desc
+                db_type, "", query_desc
             )
     except Exception as msg:
         result["status"] = 1

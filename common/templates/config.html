@@ -334,7 +334,7 @@
                             </div>
                         </div>
                         <h5 style="color: darkgrey"><b>SQL查询</b></h5>
-                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析；若无OPENAI配置则不开启AI生成SQL语句的功能</h6>
+                        <h6 style="color:red">注：开启脱敏功能必须要配置goInception信息，用于SQL语法解析</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -934,6 +934,7 @@
                         </div>
                         
                         <h4 style="color: darkgrey; display: inline;"><b>OPENAI 配置</b></h4>
+                        <h6 style="color:red">注：若无OPENAI配置，则不开启相关功能</h6>
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
@@ -964,6 +965,16 @@
                                            key="default_chat_model"
                                            value="{{ config.default_chat_model }}"
                                            placeholder="openai default chat model" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="default_query_template"
+                                       class="col-sm-4 control-label">DEFAULT_QUERY_TEMPLATE</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="default_query_template"
+                                           key="default_query_template"
+                                           value="{{ config.default_query_template }}"
+                                           placeholder="默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/table_schema/user_input" />
                                 </div>
                             </div>
                         </div>

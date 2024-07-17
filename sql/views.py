@@ -11,7 +11,6 @@ from django.urls import reverse
 
 from django.conf import settings
 from common.config import SysConfig
-from common.utils.openai import check_openai_config
 from sql.engines import get_engine, engine_map
 from common.utils.permission import superuser_required
 from common.utils.convert import Convert
@@ -318,11 +317,6 @@ def sqlquery(request):
         "id", "alias"
     )
     can_download = 1 if user.has_perm("sql.query_download") or user.is_superuser else 0
-    # 展示默认openai prompt
-    openai_prompt = ""
-    if check_openai_config():
-        openai_prompt = "是你很熟悉的数据库,我会给你一些基本信息和要求,你会生成一个查询语句给我使用,不要返回任何注释和额外信息,仅返回查询语句"
-
     return render(
         request,
         "sqlquery.html",
@@ -330,7 +324,6 @@ def sqlquery(request):
             "favorites": favorites,
             "can_download": can_download,
             "engines": engine_map,
-            "openai_prompt": openai_prompt,
         },
     )
 
