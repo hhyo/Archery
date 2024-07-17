@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
-from common.utils.openai import OpenaiClient
+from common.utils.openai import OpenaiClient, check_openai_config
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
@@ -323,11 +323,13 @@ def generate_sql(request):
     :param request:
     :return:
     """
-    db_type = request.POST.get("db_type")
     query_desc = request.POST.get("query_desc")
-    if not db_type or not query_desc:
+    query_prompt = request.POST.get("query_prompt")
+    if not query_desc or not query_prompt:
         return HttpResponse(
-            json.dumps({"status": 1, "msg": "db_type or query_desc不存在", "data": []}),
+            json.dumps(
+                {"status": 1, "msg": "query_desc or query_prompt不存在", "data": []}
+            ),
             content_type="application/json",
         )
 
@@ -353,11 +355,11 @@ def generate_sql(request):
         # 有些不存在表结构, 例如 redis
         if len(query_result.rows) != 0:
             result["data"] = openai_client.generate_sql_by_openai(
-                db_type, query_result.rows[0][-1], query_desc
+                query_prompt, query_result.rows[0][-1], query_desc
             )
         else:
             result["data"] = openai_client.generate_sql_by_openai(
-                db_type, "", query_desc
+                query_prompt, "", query_desc
             )
     except Exception as msg:
         result["status"] = 1
@@ -371,19 +373,18 @@ def check_openai(request):
     :param request:
     :return:
     """
-    openai_config = ["openai_base_url", "openai_api_key", "default_chat_model"]
-    for key in openai_config:
-        if not (SysConfig().get(key)):
-            return HttpResponse(
-                json.dumps(
-                    {
-                        "status": 1,
-                        "msg": f"openai 配置{key}不存在, 不支持此功能",
-                        "data": False,
-                    }
-                ),
-                content_type="application/json",
-            )
+    config_validate = check_openai_config()
+    if not config_validate:
+        return HttpResponse(
+            json.dumps(
+                {
+                    "status": 1,
+                    "msg": "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]",
+                    "data": False,
+                }
+            ),
+            content_type="application/json",
+        )
 
     return HttpResponse(
         json.dumps({"status": 0, "msg": "ok", "data": True}),

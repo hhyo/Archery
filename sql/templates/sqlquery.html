@@ -57,6 +57,7 @@
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
                         {% endfor %}
                     </select>
+                    <input id="generatePrompt"class="form-control" style="display: none" placeholder="AI 查询提示词" value="{{openai_prompt}}" />
                     <input id="generateDesc" class="form-control" style="display: none" placeholder="AI 查询描述" />
                     <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
                 </div>
@@ -509,6 +510,7 @@
                 },
                 success: function (data) {
                     if (data["data"]) {
+                        $("#generatePrompt").show()
                         $("#generateDesc").show()
                         $("#btn-generatesql").show()
                     }
@@ -655,6 +657,7 @@
                 var db_name = $("#db_name").val()
                 var tb_name = $("#table_name").val()
                 var query_desc = $("#generateDesc").val()
+                var prompt = $("#generatePrompt").val()
 
                 if (!instance_name) {
                     alert("请选择实例！")
@@ -662,6 +665,8 @@
                     alert("请选择数据库！")
                 } else if (optgroup !== 'Redis' && !tb_name){
                     alert("请选择表结构！")
+                } else if (!prompt) {
+                    alert("请输入查询提示词！")
                 } else if (!query_desc) {
                     alert("请输入查询描述！")
                 } else {
@@ -1073,14 +1078,13 @@
         }
 
         function generatesql() {
-            var optgroup = $('#instance_name :selected').parent().attr('label');
             const data = {
-                db_type: optgroup,
                 instance_name: $("#instance_name").val(),
                 db_name: $("#db_name").val(),
                 schema_name: $("#schema_name").val(),
                 tb_name: $("#table_name").val(),
                 query_desc: $("#generateDesc").val(),
+                query_prompt: $("#generatePrompt").val(),
             }
             //提交请求
             $.ajax({
@@ -1178,6 +1182,21 @@
                 get_instance(false)
             } else {
                 get_instance(true)
+            }
+            // 若存在AI提示词, 则根据实例自动更新数据库类型在开头, 否则自定义输入
+            var prompt = $('#generatePrompt').val()
+            if (prompt) {
+                console.log("aaa", prompt)
+                var optgroupLabel = $(this).find(':selected').parent().attr('label');
+                var parts = prompt.split(' ');
+                var combinePrompt = ""
+                if (parts.length > 1 && /^[A-Za-z]+$/.test(parts[0])){
+                    parts[0] = optgroupLabel
+                    combinePrompt = parts.join(" ");
+                } else {
+                    combinePrompt = optgroupLabel + " " + prompt
+                }
+                $('#generatePrompt').val(combinePrompt)
             }
         });
 
