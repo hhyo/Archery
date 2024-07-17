@@ -26,7 +26,7 @@ from sql.models import (
 from sql.notify import notify_for_audit, notify_for_execute
 from sql.query_privileges import _query_apply_audit_call_back
 from sql.utils.resource_group import user_groups
-from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period
+from sql.utils.sql_review import can_cancel, can_execute, on_correct_time_period,on_query_low_peak_time_ddl
 from sql.utils.tasks import del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .filters import WorkflowFilter, WorkflowAuditFilter
@@ -339,6 +339,13 @@ class ExecuteWorkflow(views.APIView):
                     {
                         "errors": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
                     }
+                )
+            sys_config = SysConfig()
+            if not request.user.is_superuser and on_query_low_peak_time_ddl(workflow_id) is False:
+                start = sys_config.get("query_low_peak_start", 0)
+                end = sys_config.get("query_low_peak_end", 24)
+                raise serializers.ValidationError(
+                    {"errMsg": "管理员设置了业务低峰期时间范围:每天%s:00至%s,你只能在业务低峰时间范围执行DDL工单操作!" % (start, end)}
                 )
 
             # 获取审核信息

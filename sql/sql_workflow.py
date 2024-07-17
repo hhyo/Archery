@@ -24,6 +24,7 @@ from sql.utils.sql_review import (
     can_timingtask,
     can_cancel,
     can_execute,
+    on_query_low_peak_time_ddl,
     on_correct_time_period,
     can_view,
     can_rollback,
@@ -304,6 +305,14 @@ def execute(request):
     if on_correct_time_period(workflow_id) is False:
         context = {
             "errMsg": "不在可执行时间范围内，如果需要修改执行时间请重新提交工单!"
+        }
+        return render(request, "error.html", context)
+    sys_config = SysConfig()
+    if not request.user.is_superuser and on_query_low_peak_time_ddl(workflow_id) is False:
+        start = sys_config.get("query_low_peak_start", 0)
+        end = sys_config.get("query_low_peak_end", 24)
+        context = {
+            "errMsg": "管理员设置了业务低峰期时间范围:每天%s:00至%s,你只能在业务低峰时间范围执行DDL工单操作!" % (start, end)
         }
         return render(request, "error.html", context)
     # 获取审核信息

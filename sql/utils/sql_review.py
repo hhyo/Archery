@@ -40,6 +40,26 @@ def can_execute(user, workflow_id):
         result = True
     return result
 
+def on_query_low_peak_time_ddl(workflow_id, run_date=None):
+    """
+    判断是否是ddl，ddl必须在业务低峰期执行，包括人工执行和定时执行
+    :param workflow_id:
+    :param run_date:
+    :return:
+    """
+    config = SysConfig()
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    start = int(config.get("query_low_peak_start", ""))
+    end = int(config.get("query_low_peak_end", ""))
+    result = True
+    ctime = run_date or datetime.datetime.now()
+    hour = ctime.hour
+    syntax_type = workflow_detail.syntax_type
+    if syntax_type == 1:
+        if (start and hour < start) or (end and hour > end):
+            result = False
+    return result
+
 
 def on_correct_time_period(workflow_id, run_date=None):
     """

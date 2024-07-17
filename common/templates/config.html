@@ -161,6 +161,26 @@
                         <h5 style="color: darkgrey"><b>SQL上线</b></h5>
                         <hr/>
                         <div class="form-horizontal">
+                                                        <div class="form-group">
+                                <label for="query_low_peak_start"
+                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_START</label>
+                                <div class="col-sm-5">
+                                    <input type="number" class="form-control" id="query_low_peak_start"
+                                           key="query_low_peak_start"
+                                           value="{{ config.query_low_peak_start }}"
+                                           placeholder="每天业务低峰开始时间，单位小时，默认为空" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="query_low_peak_end"
+                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_END</label>
+                                <div class="col-sm-5">
+                                    <input type="number" class="form-control" id="query_low_peak_end"
+                                           key="query_low_peak_end"
+                                           value="{{ config.query_low_peak_end }}"
+                                           placeholder="每天业务低峰结束时间，单位小时，默认为空" />
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="critical_ddl_regex"
                                        class="col-sm-4 control-label">CRITICAL_DDL_REGEX</label>
@@ -1318,6 +1338,13 @@
                     alert("当开启钉钉通知到个人时，企业id和secret等必须填写!");
                     return;
                 }
+            }
+            // 业务低峰期时间设置，开始时间和结束时间必须同时填写
+            var start = $("#query_low_peak_start").val();
+            var end = $("#query_low_peak_end").val();
+            if ((start === "" && end !== "") || (start !== "" && end === "")) {
+                alert('业务低峰开始时间和结束时间必须同时填写！');
+                return;
             }
             var sys_config = $("#div-system-config");
             var configs = [];
