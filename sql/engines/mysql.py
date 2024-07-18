@@ -648,7 +648,9 @@ class MysqlEngine(EngineBase):
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         ddl_dml_separation = self.config.get("ddl_dml_separation", False)
-        affected_rows_limit = int(self.config.get("affected_rows_limit", 100000000)) #影响最大行数默认100000000行
+        affected_rows_limit = int(
+            self.config.get("affected_rows_limit", 100000000)
+        )  # 影响最大行数限制默认100000000行
         p = re.compile(critical_ddl_regex)
         # 获取语句类型：DDL或者DML
         ddl_dml_flag = ""
@@ -685,7 +687,9 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = (
-                    "禁止提交匹配生产环境，禁止提交影响行数超过" + str(affected_rows_limit) + "行的dml语句!"
+                    "禁止提交匹配生产环境，禁止提交影响行数超过"
+                    + str(affected_rows_limit)
+                    + "行的dml语句!"
                 )
         return check_result
 
