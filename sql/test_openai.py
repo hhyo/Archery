@@ -13,11 +13,6 @@ def test_check_openai(admin_client, setup_sys_config):
     setup_sys_config.set("openai_api_key", "sk-xxxx")
     response = admin_client.get("/check/openai/")
     assert response.status_code == 200
-    assert response.json()["data"] == False
-
-    setup_sys_config.set("default_chat_model", "gpt-3.5-turbo")
-    response = admin_client.get("/check/openai/")
-    assert response.status_code == 200
     assert response.json()["data"] == True
 
 

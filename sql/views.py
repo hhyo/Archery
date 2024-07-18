@@ -514,6 +514,14 @@ def config(request):
     for items in all_config:
         sys_config[items["item"]] = items["value"]
 
+    # 设置OPENAI部分配置不存在时的默认值
+    if not sys_config.get("default_chat_model", ""):
+        sys_config["default_chat_model"] = "gpt-3.5-turbo"
+    if not sys_config.get("default_query_template", ""):
+        sys_config["default_query_template"] = (
+            "你是一个熟悉 {{db_type}} 的工程师, 我会给你一些基本信息和要求, 你会生成一个查询语句给我使用, 不要返回任何注释和序号, 仅返回查询语句：{{table_schema}} \n {{user_input}}"
+        )
+
     context = {
         "group_list": group_list,
         "auth_group_list": auth_group_list,
