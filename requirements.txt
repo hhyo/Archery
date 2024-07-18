@@ -1,6 +1,6 @@
 Django==4.1.13
 mysqlclient==2.*
-requests==2.31.0
+requests==2.32.0
 simplejson==3.17.2
 mybatis_mapper2sql==0.1.9
 django-auth-ldap==4.1.0
