@@ -59,7 +59,7 @@
                     </select>
                     <input id="generateDesc" class="form-control" style="display: none" placeholder="AI 查询描述" />
                     <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
-                    <button type="button" class="btn"  data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
+                    <button id="btn-openaiTooltip" type="button" class="btn" style="display: none" data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
                         <span class="fa fa-question-circle" />
                     </button>
                 </div>
@@ -514,6 +514,7 @@
                     if (data["data"]) {
                         $("#generateDesc").show()
                         $("#btn-generatesql").show()
+                        $("#btn-openaiTooltip").show()
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
