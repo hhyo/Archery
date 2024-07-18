@@ -932,6 +932,53 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <h4 style="color: darkgrey; display: inline;"><b>OPENAI 配置</b></h4>
+                        <h6 style="color:red">注1：若无OPENAI_API_KEY配置，则不开启相关功能</h6>
+                        <h6 style="color:red">注2：DEFAULT_CHAT_MODEL 默认配置为gpt-3.5-turbo，DEFAULT_QUERY_TEMPLATE 默认配置为系统定义的模板</h6>
+                        <hr/>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="openai_base_url"
+                                       class="col-sm-4 control-label">OPENAI_BASE_URL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="openai_base_url"
+                                           key="openai_base_url"
+                                           value="{{ config.openai_base_url }}"
+                                           placeholder="openai base url" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="openai_api_key"
+                                       class="col-sm-4 control-label">OPENAI_API_KEY</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="openai_api_key"
+                                           key="openai_api_key"
+                                           value="{{ config.openai_api_key }}"
+                                           placeholder="openai api key" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="default_chat_model"
+                                       class="col-sm-4 control-label">DEFAULT_CHAT_MODEL</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="default_chat_model"
+                                           key="default_chat_model"
+                                           value="{{ config.default_chat_model }}"
+                                           placeholder="openai default chat model" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="default_query_template"
+                                       class="col-sm-4 control-label">DEFAULT_QUERY_TEMPLATE</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control" id="default_query_template"
+                                           key="default_query_template"
+                                           value="{{ config.default_query_template }}"
+                                           placeholder="默认生成SQL语句的Django模板, 无模板会导致生成结果失败, 需提供db_type/table_schema/user_input" />
+                                </div>
+                            </div>
+                        </div>
 
                         <h4 style="color: darkgrey"><b>其他配置</b></h4>
                         <hr/>

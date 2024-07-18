@@ -57,6 +57,11 @@
                             <option value={{ sql.id }}>{{ sql.alias }}</option>
                         {% endfor %}
                     </select>
+                    <input id="generateDesc" class="form-control" style="display: none" placeholder="AI 查询描述" />
+                    <input id="btn-generatesql" type="button" class="btn btn-info" style="display: none" value="生成SQL"/>
+                    <button type="button" class="btn"  data-toggle="tooltip" title="仅此操作会与 AI 交互, 收集数据库类型、表结构以及输入框信息, 交给 AI 生成 SQL 并置于下面的语句框中" >
+                        <span class="fa fa-question-circle" />
+                    </button>
                 </div>
                 <div class="panel-body">
                     <form id="form-sqlquery" action="/sqlquery/" method="post" class="form-horizontal" role="form">
@@ -495,6 +500,27 @@
             }
             sessionStorage.removeItem('re_query');
         }
+
+        // 获取sysconfig
+        function check_openai() {
+            $.ajax({
+                type: "get",
+                url: "/check/openai/",
+                dataType: "json",
+                data: false,
+                complete: function () {
+                },
+                success: function (data) {
+                    if (data["data"]) {
+                        $("#generateDesc").show()
+                        $("#btn-generatesql").show()
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
     </script>
     <!-- 执行结果  -->
     <script>
@@ -623,6 +649,32 @@
             }
             return result;
         }
+
+        //提交AI生成sql语句请求
+        $("#btn-generatesql").click(function () {
+                var check = false
+                var optgroup = $('#instance_name :selected').parent().attr('label')
+                var instance_name = $("#instance_name").val()
+                var db_name = $("#db_name").val()
+                var tb_name = $("#table_name").val()
+                var query_desc = $("#generateDesc").val()
+
+                if (!instance_name) {
+                    alert("请选择实例！")
+                } else if (!db_name) {
+                    alert("请选择数据库！")
+                } else if (optgroup !== 'Redis' && !tb_name){
+                    alert("请选择表结构！")
+                } else if (!query_desc) {
+                    alert("请输入查询描述！")
+                } else {
+                    check = true
+                }
+                if (check) {
+                    generatesql()
+                }
+            }
+        );
 
         //先做表单验证，验证成功再成功提交查询请求
         $("#btn-sqlquery").click(function () {
@@ -1023,6 +1075,37 @@
             });
         }
 
+        function generatesql() {
+            var optgroup = $('#instance_name :selected').parent().attr('label');
+            const data = {
+                db_type: optgroup,
+                instance_name: $("#instance_name").val(),
+                db_name: $("#db_name").val(),
+                schema_name: $("#schema_name").val(),
+                tb_name: $("#table_name").val(),
+                query_desc: $("#generateDesc").val(),
+            }
+            //提交请求
+            $.ajax({
+                type: "post",
+                url: "/query/generate_sql/",
+                dataType: "json",
+                data: data,
+                complete: function () {
+                    $('input[type=button]').removeClass('disabled');
+                    $('input[type=button]').prop('disabled', false);
+                    optgroup_control();
+                },
+                success: function (data) {
+                    editor.setValue(data["data"]);
+                    editor.clearSelection();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert(errorThrown);
+                }
+            });
+        }
+
         function dosqlquery() {
             if (sqlquery_validate()) {
                 $('input[type=button]').addClass('disabled');
@@ -1325,6 +1408,9 @@
             } else {
                 editor.setValue("");
             }
+            
+            // check openai 配置是否存在以支持AI生成查询语句功能
+            check_openai()
 
             //默认获取查询历史
             get_querylog();
