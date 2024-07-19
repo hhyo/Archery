@@ -162,16 +162,6 @@
                         <hr/>
                         <div class="form-horizontal">
                             <div class="form-group">
-                                <label for="affected_rows_limit"
-                                       class="col-sm-4 control-label">AFFECTED_ROWS_LIMIT</label>
-                                <div class="col-sm-5">
-                                    <input type="number" class="form-control" id="affected_rows_limit"
-                                           key="affected_rows_limit"
-                                           value="{{ config.affected_rows_limit }}"
-                                           placeholder="dml影响行数限制，超过行的语句禁止提交,默认100000000" />
-                                </div>
-                            </div>
-                            <div class="form-group">
                                 <label for="critical_ddl_regex"
                                        class="col-sm-4 control-label">CRITICAL_DDL_REGEX</label>
                                 <div class="col-sm-5">
@@ -312,6 +302,16 @@
                                             是否禁止DDL和DML在SQL上线同时提交(MySQL)
                                         </label>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="affected_rows_limit"
+                                       class="col-sm-4 control-label">AFFECTED_ROWS_LIMIT</label>
+                                <div class="col-sm-5">
+                                    <input type="number" class="form-control" id="affected_rows_limit"
+                                           key="affected_rows_limit"
+                                           value="{{ config.affected_rows_limit }}"
+                                           placeholder="dml影响行数限制，超过行的语句禁止提交,默认100000000" />
                                 </div>
                             </div>
                             <div class="form-group">
