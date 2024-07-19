@@ -673,14 +673,6 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
-            elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
-                if ddl_dml_flag == "":
-                    ddl_dml_flag = syntax_type
-                elif ddl_dml_flag != syntax_type:
-                    check_result.error_count += 1
-                    row.stagestatus = "驳回不支持语句"
-                    row.errlevel = 2
-                    row.errormessage = "DDL语句和DML语句不能同时执行！"
             # dml影响行数超过限制,超过限制的dml必须拆分成小事务才可以提交,建议不打开REAL_ROW_COUNT
             elif syntax_type == "DML" and affected_rows > affected_rows_limit:
                 check_result.error_count += 1
@@ -691,6 +683,14 @@ class MysqlEngine(EngineBase):
                     + str(affected_rows_limit)
                     + "行的dml语句!"
                 )
+            elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
+                if ddl_dml_flag == "":
+                    ddl_dml_flag = syntax_type
+                elif ddl_dml_flag != syntax_type:
+                    check_result.error_count += 1
+                    row.stagestatus = "驳回不支持语句"
+                    row.errlevel = 2
+                    row.errormessage = "DDL语句和DML语句不能同时执行！"
         return check_result
 
     def execute_workflow(self, workflow):
