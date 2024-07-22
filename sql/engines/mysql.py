@@ -398,7 +398,11 @@ class MysqlEngine(EngineBase):
                     "host": db_user[2],
                     "privileges": user_priv,
                     "saved": False,
-                    "is_locked": db_user[3] if server_version >= (5, 7, 6) else None,
+                    "is_locked": (
+                        db_user[3]
+                        if server_version >= (5, 7, 6) or server_version >= (10, 4, 2)
+                        else None
+                    ),
                 }
                 rows.append(row)
             query_result.rows = rows
