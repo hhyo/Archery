@@ -376,8 +376,10 @@ class MysqlEngine(EngineBase):
             self.server_fork_type == MysqlForkType.MARIADB
             and self.server_version >= (10, 4, 2)
         ):
+            support_account_lock = True
             sql_get_user = sql_get_user_with_account_locked
         else:
+            support_account_lock = False
             sql_get_user = sql_get_user_without_account_locked
         query_result = self.query("mysql", sql_get_user)
         if query_result.error and sql_get_user == sql_get_user_with_account_locked:
@@ -392,23 +394,17 @@ class MysqlEngine(EngineBase):
                 user_priv = self.query(
                     "mysql", "show grants for {};".format(user_host), close_conn=False
                 ).rows
-                if (
-                    self.server_fork_type == MysqlForkType.MARIADB
-                    and server_version >= (10, 4, 2)
-                ) or (
-                    self.server_fork_type == MysqlForkType.MYSQL
-                    and server_version >= (5, 7, 6)
-                ):
-                    is_locked = db_user[3]
-                else:
-                    is_locked = None
                 row = {
                     "user_host": user_host,
                     "user": db_user[1],
                     "host": db_user[2],
                     "privileges": user_priv,
                     "saved": False,
-                    "is_locked": is_locked,
+                    "is_locked": (
+                        db_user[3]
+                        if support_account_lock and len(db_user) == 4
+                        else None
+                    ),
                 }
                 rows.append(row)
             query_result.rows = rows
