@@ -392,17 +392,23 @@ class MysqlEngine(EngineBase):
                 user_priv = self.query(
                     "mysql", "show grants for {};".format(user_host), close_conn=False
                 ).rows
+                if (
+                    self.server_fork_type == MysqlForkType.MARIADB
+                    and server_version >= (10, 4, 2)
+                ) or (
+                    self.server_fork_type == MysqlForkType.MYSQL
+                    and server_version >= (5, 7, 6)
+                ):
+                    is_locked = db_user[3]
+                else:
+                    is_locked = None
                 row = {
                     "user_host": user_host,
                     "user": db_user[1],
                     "host": db_user[2],
                     "privileges": user_priv,
                     "saved": False,
-                    "is_locked": (
-                        db_user[3]
-                        if server_version >= (5, 7, 6) or server_version >= (10, 4, 2)
-                        else None
-                    ),
+                    "is_locked": is_locked,
                 }
                 rows.append(row)
             query_result.rows = rows
