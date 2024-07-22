@@ -465,6 +465,50 @@ class TestMysql(TestCase):
         user_summary = new_engine.get_instance_users_summary()
         self.assertEqual(user_summary.error, "query error")
 
+        result_with_lock = ResultSet()
+        result_with_lock.rows = [("'root'@'localhost'", "root", "localhost", "N")]
+        _query.return_value = result_with_lock
+        _connect.return_value.get_server_info.return_value = "5.7.20-16log"
+        self.assertTupleEqual(new_engine.server_version, (5, 7, 20))
+        user_summary_with_lock = new_engine.get_instance_users_summary()
+        self.assertEqual(
+            user_summary_with_lock.rows,
+            [
+                {
+                    "host": "localhost",
+                    "is_locked": "N",
+                    "privileges": [("'root'@'localhost'", "root", "localhost", "N")],
+                    "saved": False,
+                    "user": "root",
+                    "user_host": "'root'@'localhost'",
+                }
+            ],
+        )
+
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "query")
+    def test_get_instance_users_summary_without_lock(self, _query, _connect):
+        result_without_lock = ResultSet()
+        result_without_lock.rows = [("'root'@'localhost'", "root", "localhost")]
+        _query.return_value = result_without_lock
+        mysql_engine = MysqlEngine(instance=self.ins1)
+        _connect.return_value.get_server_info.return_value = "5.7.5-16log"
+        self.assertTupleEqual(mysql_engine.server_version, (5, 7, 5))
+        user_summary_without_lock = mysql_engine.get_instance_users_summary()
+        self.assertEqual(
+            user_summary_without_lock.rows,
+            [
+                {
+                    "host": "localhost",
+                    "is_locked": None,
+                    "privileges": [("'root'@'localhost'", "root", "localhost")],
+                    "saved": False,
+                    "user": "root",
+                    "user_host": "'root'@'localhost'",
+                }
+            ],
+        )
+
     @patch("MySQLdb.connect")
     @patch.object(MysqlEngine, "execute")
     def test_create_instance_user(self, _execute, _connect):
