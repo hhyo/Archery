@@ -348,6 +348,10 @@ def instance_resource(request):
         result["status"] = 1
         result["msg"] = str(msg)
     else:
+        if instance.tunnel:
+            query_engine.close()
+            query_engine.ssh.server.close()
+            del query_engine.ssh
         if resource.error:
             result["status"] = 1
             result["msg"] = resource.error

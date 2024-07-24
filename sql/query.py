@@ -61,11 +61,19 @@ def query(request):
             # 引擎内部判断为 bad_query
             result["status"] = 1
             result["msg"] = query_check_info.get("msg")
+            if instance.tunnel:
+                query_engine.close()
+                query_engine.ssh.server.close()
+                del query_engine.ssh
             return HttpResponse(json.dumps(result), content_type="application/json")
         if query_check_info.get("has_star") and config.get("disable_star") is True:
             # 引擎内部判断为有 * 且禁止 * 选项打开
             result["status"] = 1
             result["msg"] = query_check_info.get("msg")
+            if instance.tunnel:
+                query_engine.close()
+                query_engine.ssh.server.close()
+                del query_engine.ssh
             return HttpResponse(json.dumps(result), content_type="application/json")
         sql_content = query_check_info["filtered_sql"]
 
@@ -79,6 +87,10 @@ def query(request):
         else:
             result["status"] = priv_check_info["status"]
             result["msg"] = priv_check_info["msg"]
+            if instance.tunnel:
+                query_engine.close()
+                query_engine.ssh.server.close()
+                del query_engine.ssh
             return HttpResponse(json.dumps(result), content_type="application/json")
         # explain的limit_num设置为0
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
@@ -189,9 +201,17 @@ def query(request):
         )
         result["status"] = 1
         result["msg"] = f"查询异常报错，错误信息：{e}"
+        if instance.tunnel:
+            query_engine.close()
+            query_engine.ssh.server.close()
+            del query_engine.ssh
         return HttpResponse(json.dumps(result), content_type="application/json")
     # 返回查询结果
     try:
+        if instance.tunnel:
+            query_engine.close()
+            query_engine.ssh.server.close()
+            del query_engine.ssh
         return HttpResponse(
             json.dumps(
                 result,
@@ -203,6 +223,10 @@ def query(request):
         )
     # 虽然能正常返回，但是依然会乱码
     except UnicodeDecodeError:
+        if instance.tunnel:
+            query_engine.close()
+            query_engine.ssh.server.close()
+            del query_engine.ssh
         return HttpResponse(
             json.dumps(result, default=str, bigint_as_string=True, encoding="latin1"),
             content_type="application/json",
