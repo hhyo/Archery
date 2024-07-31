@@ -795,13 +795,7 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
-        self.conn = pymongo.MongoClient(
-            self.host,
-            self.port,
-            authSource=auth_db,
-            connect=True,
-            connectTimeoutMS=10000,
-        )
+
         # 建立連接 URI
         if self.user and self.password:
             uri = f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{db_name}?authSource={auth_db}"
