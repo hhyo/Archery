@@ -74,6 +74,86 @@ class TestMysql(TestCase):
         connect.return_value.close.assert_called_once()
         self.assertIsInstance(query_result, ResultSet)
 
+    @patch("MySQLdb.connect")
+    def test_get_tables_metas_data(self, connect):
+        """增加单元测试方法。test_get_tables_metas_data"""
+        mock_conn = Mock()
+        mock_cursor = Mock()
+        connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        # 模拟查询结果
+        tables_result = [{"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"}]
+
+        columns_result = [
+            {
+                "COLUMN_NAME": "id",
+                "COLUMN_TYPE": "int",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "NO",
+                "EXTRA": "auto_increment",
+                "COLUMN_KEY": "PRI",
+                "COLUMN_COMMENT": "",
+            },
+            {
+                "COLUMN_NAME": "name",
+                "COLUMN_TYPE": "varchar(255)",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "YES",
+                "EXTRA": "",
+                "COLUMN_KEY": "",
+                "COLUMN_COMMENT": "",
+            },
+        ]
+        # 创建要测试的类的实例
+        new_engine = MysqlEngine(instance=self.ins1)
+        # Mock self.query 方法
+        new_engine.query = Mock()
+        new_engine.query.side_effect = [
+            Mock(rows=tables_result),  # 模拟 tbs 结果
+            Mock(rows=columns_result),  # 模拟 columns 结果
+        ]
+        # 调用要测试的方法
+        result = new_engine.get_tables_metas_data(db_name="test_db")
+
+        # 断言返回结果是否符合预期
+        expected_result = [
+            {
+                "ENGINE_KEYS": [
+                    {"key": "COLUMN_NAME", "value": "字段名"},
+                    {"key": "COLUMN_TYPE", "value": "数据类型"},
+                    {"key": "COLUMN_DEFAULT", "value": "默认值"},
+                    {"key": "IS_NULLABLE", "value": "允许非空"},
+                    {"key": "EXTRA", "value": "自动递增"},
+                    {"key": "COLUMN_KEY", "value": "是否主键"},
+                    {"key": "COLUMN_COMMENT", "value": "备注"},
+                ],
+                "TABLE_INFO": {"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"},
+                "COLUMNS": [
+                    {
+                        "COLUMN_NAME": "id",
+                        "COLUMN_TYPE": "int",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "NO",
+                        "EXTRA": "auto_increment",
+                        "COLUMN_KEY": "PRI",
+                        "COLUMN_COMMENT": "",
+                    },
+                    {
+                        "COLUMN_NAME": "name",
+                        "COLUMN_TYPE": "varchar(255)",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "YES",
+                        "EXTRA": "",
+                        "COLUMN_KEY": "",
+                        "COLUMN_COMMENT": "",
+                    },
+                ],
+            }
+        ]
+
+        self.assertEqual(result, expected_result)
+
     @patch.object(MysqlEngine, "query")
     def testAllDb(self, mock_query):
         db_result = ResultSet()
