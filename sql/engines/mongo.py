@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 import re, time
 import pymongo
-from pymongo import MongoClient
 import logging
 import traceback
 import subprocess
@@ -809,7 +808,7 @@ class MongoEngine(EngineBase):
         else:
             uri = f"mongodb://{self.host}:{self.port}/{db_name}"
 
-        self.conn = MongoClient(uri, connectTimeoutMS=10000)
+        self.conn = pymongo.MongoClient(uri, connectTimeoutMS=10000)
         return self.conn
 
     def close(self):
