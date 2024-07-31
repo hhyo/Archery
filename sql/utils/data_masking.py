@@ -51,7 +51,7 @@ def data_masking(instance, db_name, sql, sql_result):
                         rule_type=100,
                         rule_regex="^([\\s\\S]{0,}?)([\\s\\S]{0,}?)([\\s\\S]{0,}?)$",
                         hide_group=2,
-                        rule_desc="三段式通用脱敏规则，内部实现，不需要修改。",
+                        rule_desc="三段式通用脱敏规则：内部实现，正则暂不支持修改，隐藏组支持修改。",
                     )
                     if created:
                         masking_rule = model_to_dict(masking_rule_obj)
