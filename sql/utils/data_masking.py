@@ -45,13 +45,13 @@ def data_masking(instance, db_name, sql, sql_result):
             for column in hit_columns:
                 index, rule_type = column["index"], column["rule_type"]
                 masking_rule = masking_rules.get(rule_type)
-                # 如果是默认的通用规则01，数据库没有查询结果，则创建一个对象。
+                # 如果是默认的三段式通用脱敏规则，数据库没有查询结果，则创建一个对象。
                 if not masking_rule and rule_type == 100:
                     masking_rule_obj, created = DataMaskingRules.objects.get_or_create(
                         rule_type=100,
                         rule_regex="^([\\s\\S]{0,}?)([\\s\\S]{0,}?)([\\s\\S]{0,}?)$",
                         hide_group=2,
-                        rule_desc="系统通用规则01，内部实现，不需要修改。",
+                        rule_desc="三段式通用脱敏规则，内部实现，不需要修改。",
                     )
                     if created:
                         masking_rule = model_to_dict(masking_rule_obj)
