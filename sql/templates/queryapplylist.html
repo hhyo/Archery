@@ -383,6 +383,18 @@
                 success: function (data) {
                     if (data.status === 0) {
                         var result = data.data;
+                        var optgroup = $('#instance_name :selected').parent().attr('label');
+                        if (optgroup === "MySQL") {
+                            // 后端在返回MySQL的所有库列表时，删除了部分库。权限申请时加回来。
+                            // 检查并添加 `information_schema` 和 `performance_schema`
+                            if (!result.includes('information_schema')) {
+                                result.push('information_schema');
+                            }
+                            if (!result.includes('performance_schema')) {
+                                result.push('performance_schema');
+                            }
+                        }
+
                         $("#db_name").empty();
                         $("#db_name_multiple").empty();
                         for (var i = 0; i < result.length; i++) {
