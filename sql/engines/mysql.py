@@ -297,9 +297,7 @@ class MysqlEngine(EngineBase):
 
     def get_tables_metas_data(self, db_name, **kwargs):
         """获取数据库所有表格信息，用作数据字典导出接口"""
-        sql_tbs = (
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%(db_name)s ORDER BY TABLE_SCHEMA,TABLE_NAME;"
-        )
+        sql_tbs = f"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=%(db_name)s ORDER BY TABLE_SCHEMA,TABLE_NAME;"
         tbs = self.query(
             sql=sql_tbs,
             cursorclass=MySQLdb.cursors.DictCursor,
