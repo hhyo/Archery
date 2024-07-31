@@ -802,8 +802,13 @@ class MongoEngine(EngineBase):
             connect=True,
             connectTimeoutMS=10000,
         )
+        # 建立連接 URI
         if self.user and self.password:
-            self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
+            uri = f"mongodb://{self.user}:{self.password}@{self.host}:{self.port}/{db_name}?authSource={auth_db}"
+        else:
+            uri = f"mongodb://{self.host}:{self.port}/{db_name}"
+
+        self.conn = MongoClient(uri, connectTimeoutMS=10000)
         return self.conn
 
     def close(self):
