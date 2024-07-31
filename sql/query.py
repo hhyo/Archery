@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from common.config import SysConfig
 from common.utils.extend_json_encoder import ExtendJSONEncoder, ExtendJSONEncoderFTime
+from common.utils.openai import OpenaiClient, check_openai_config
 from common.utils.timer import FuncTimer
 from sql.query_privileges import query_priv_check
 from sql.utils.resource_group import user_instances
@@ -313,3 +314,77 @@ def kill_query_conn(instance_id, thread_id):
     instance = Instance.objects.get(pk=instance_id)
     query_engine = get_engine(instance)
     query_engine.kill_connection(thread_id)
+
+
+@permission_required("sql.menu_sqlquery", raise_exception=True)
+def generate_sql(request):
+    """
+    利用AI生成查询SQL, 传入数据基本结构和查询描述
+    :param request:
+    :return:
+    """
+    query_desc = request.POST.get("query_desc")
+    db_type = request.POST.get("db_type")
+    if not query_desc or not db_type:
+        return HttpResponse(
+            json.dumps({"status": 1, "msg": "query_desc or db_type不存在", "data": []}),
+            content_type="application/json",
+        )
+
+    instance_name = request.POST.get("instance_name")
+    try:
+        instance = Instance.objects.get(instance_name=instance_name)
+    except Instance.DoesNotExist:
+        return HttpResponse(
+            json.dumps({"status": 1, "msg": "实例不存在", "data": []}),
+            content_type="application/json",
+        )
+    db_name = request.POST.get("db_name")
+    schema_name = request.POST.get("schema_name")
+    tb_name = request.POST.get("tb_name")
+
+    result = {"status": 0, "msg": "ok", "data": ""}
+    try:
+        query_engine = get_engine(instance=instance)
+        query_result = query_engine.describe_table(
+            db_name, tb_name, schema_name=schema_name
+        )
+        openai_client = OpenaiClient()
+        # 有些不存在表结构, 例如 redis
+        if len(query_result.rows) != 0:
+            result["data"] = openai_client.generate_sql_by_openai(
+                db_type, query_result.rows[0][-1], query_desc
+            )
+        else:
+            result["data"] = openai_client.generate_sql_by_openai(
+                db_type, "", query_desc
+            )
+    except Exception as msg:
+        result["status"] = 1
+        result["msg"] = str(msg)
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+def check_openai(request):
+    """
+    校验openai配置是否存在
+    :param request:
+    :return:
+    """
+    config_validate = check_openai_config()
+    if not config_validate:
+        return HttpResponse(
+            json.dumps(
+                {
+                    "status": 1,
+                    "msg": "openai 缺少配置, 必需配置[openai_base_url, openai_api_key, default_chat_model]",
+                    "data": False,
+                }
+            ),
+            content_type="application/json",
+        )
+
+    return HttpResponse(
+        json.dumps({"status": 0, "msg": "ok", "data": True}),
+        content_type="application/json",
+    )
