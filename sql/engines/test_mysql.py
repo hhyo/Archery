@@ -81,15 +81,29 @@ class TestMysql(TestCase):
         mock_cursor = Mock()
         connect.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
-        
-         # 模拟查询结果
-        tables_result = [
-            {"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"}
-        ]
-        
+
+        # 模拟查询结果
+        tables_result = [{"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"}]
+
         columns_result = [
-            {"COLUMN_NAME": "id", "COLUMN_TYPE": "int", "COLUMN_DEFAULT": None, "IS_NULLABLE": "NO", "EXTRA": "auto_increment", "COLUMN_KEY": "PRI", "COLUMN_COMMENT": ""},
-            {"COLUMN_NAME": "name", "COLUMN_TYPE": "varchar(255)", "COLUMN_DEFAULT": None, "IS_NULLABLE": "YES", "EXTRA": "", "COLUMN_KEY": "", "COLUMN_COMMENT": ""}
+            {
+                "COLUMN_NAME": "id",
+                "COLUMN_TYPE": "int",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "NO",
+                "EXTRA": "auto_increment",
+                "COLUMN_KEY": "PRI",
+                "COLUMN_COMMENT": "",
+            },
+            {
+                "COLUMN_NAME": "name",
+                "COLUMN_TYPE": "varchar(255)",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "YES",
+                "EXTRA": "",
+                "COLUMN_KEY": "",
+                "COLUMN_COMMENT": "",
+            },
         ]
         # 创建要测试的类的实例
         new_engine = MysqlEngine(instance=self.ins1)
@@ -97,11 +111,11 @@ class TestMysql(TestCase):
         new_engine.query = Mock()
         new_engine.query.side_effect = [
             Mock(rows=tables_result),  # 模拟 tbs 结果
-            Mock(rows=columns_result)  # 模拟 columns 结果
+            Mock(rows=columns_result),  # 模拟 columns 结果
         ]
         # 调用要测试的方法
         result = new_engine.get_tables_metas_data(db_name="test_db")
-        
+
         # 断言返回结果是否符合预期
         expected_result = [
             {
@@ -116,12 +130,28 @@ class TestMysql(TestCase):
                 ],
                 "TABLE_INFO": {"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"},
                 "COLUMNS": [
-                    {"COLUMN_NAME": "id", "COLUMN_TYPE": "int", "COLUMN_DEFAULT": None, "IS_NULLABLE": "NO", "EXTRA": "auto_increment", "COLUMN_KEY": "PRI", "COLUMN_COMMENT": ""},
-                    {"COLUMN_NAME": "name", "COLUMN_TYPE": "varchar(255)", "COLUMN_DEFAULT": None, "IS_NULLABLE": "YES", "EXTRA": "", "COLUMN_KEY": "", "COLUMN_COMMENT": ""}
-                ]
+                    {
+                        "COLUMN_NAME": "id",
+                        "COLUMN_TYPE": "int",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "NO",
+                        "EXTRA": "auto_increment",
+                        "COLUMN_KEY": "PRI",
+                        "COLUMN_COMMENT": "",
+                    },
+                    {
+                        "COLUMN_NAME": "name",
+                        "COLUMN_TYPE": "varchar(255)",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "YES",
+                        "EXTRA": "",
+                        "COLUMN_KEY": "",
+                        "COLUMN_COMMENT": "",
+                    },
+                ],
             }
         ]
-        
+
         self.assertEqual(result, expected_result)
 
     @patch.object(MysqlEngine, "query")
