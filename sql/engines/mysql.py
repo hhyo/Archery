@@ -653,10 +653,14 @@ class MysqlEngine(EngineBase):
         # 禁用/高危语句检查
         critical_ddl_regex = self.config.get("critical_ddl_regex", "")
         ddl_dml_separation = self.config.get("ddl_dml_separation", False)
+        affected_rows_limit = int(
+            self.config.get("affected_rows_limit", 100000000)
+        )  # 影响最大行数限制默认100000000行
         p = re.compile(critical_ddl_regex)
         # 获取语句类型：DDL或者DML
         ddl_dml_flag = ""
         for row in check_result.rows:
+            affected_rows = row.affected_rows
             statement = row.sql
             # 去除注释
             statement = remove_comments(statement, db_type="mysql")
@@ -674,6 +678,16 @@ class MysqlEngine(EngineBase):
                 row.stagestatus = "驳回高危SQL"
                 row.errlevel = 2
                 row.errormessage = "禁止提交匹配" + critical_ddl_regex + "条件的语句！"
+            # dml影响行数超过限制,超过限制的dml必须拆分成小事务才可以提交,建议不打开REAL_ROW_COUNT
+            elif syntax_type == "DML" and affected_rows > affected_rows_limit:
+                check_result.error_count += 1
+                row.stagestatus = "驳回高危SQL"
+                row.errlevel = 2
+                row.errormessage = (
+                    "禁止提交匹配生产环境，禁止提交影响行数超过"
+                    + str(affected_rows_limit)
+                    + "行的dml语句!"
+                )
             elif ddl_dml_separation and syntax_type in ("DDL", "DML"):
                 if ddl_dml_flag == "":
                     ddl_dml_flag = syntax_type
