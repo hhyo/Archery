@@ -11,7 +11,7 @@ RUN apt-get update \
     && apt-get install -yq --no-install-recommends nginx mariadb-client \
     && source venv4archery/bin/activate \
     && pip install -r /opt/archery/requirements.txt \
-    && pip install "redis>=4.1.0" \
+    && pip install redis-py-cluster==2.1.3 \
     && cp -f /opt/archery/src/docker/nginx.conf /etc/nginx/ \
     && cp -f /opt/archery/src/docker/supervisord.conf /etc/ \
     && mv /opt/sqladvisor /opt/archery/src/plugins/ \

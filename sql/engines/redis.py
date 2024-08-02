@@ -17,6 +17,7 @@ import traceback
 from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
+from rediscluster import RedisCluster
 
 __author__ = "hhyo"
 
@@ -27,15 +28,10 @@ class RedisEngine(EngineBase):
     def get_connection(self, db_name=None):
         db_name = db_name or self.db_name
         if self.mode == "cluster":
-            return redis.cluster.RedisCluster(
-                host=self.host,
-                port=self.port,
-                username=self.user,
-                password=self.password or None,
-                encoding_errors="ignore",
+            return RedisCluster(
+                startup_nodes=[{"host": self.host, "port": self.port}],
                 decode_responses=True,
-                socket_connect_timeout=10,
-                ssl=self.is_ssl,
+                password=self.password,
             )
         else:
             return redis.Redis(
