@@ -802,7 +802,7 @@ class MongoEngine(EngineBase):
         else:
             uri = f"mongodb://{self.host}:{self.port}/{db_name}"
 
-        self.conn = pymongo.MongoClient(uri, connectTimeoutMS=10000)
+        self.conn = pymongo.MongoClient(uri, directConnection=True,connectTimeoutMS=10000)
         return self.conn
 
     def close(self):
