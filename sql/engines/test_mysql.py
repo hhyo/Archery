@@ -74,6 +74,86 @@ class TestMysql(TestCase):
         connect.return_value.close.assert_called_once()
         self.assertIsInstance(query_result, ResultSet)
 
+    @patch("MySQLdb.connect")
+    def test_get_tables_metas_data(self, connect):
+        """增加单元测试方法。test_get_tables_metas_data"""
+        mock_conn = Mock()
+        mock_cursor = Mock()
+        connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        # 模拟查询结果
+        tables_result = [{"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"}]
+
+        columns_result = [
+            {
+                "COLUMN_NAME": "id",
+                "COLUMN_TYPE": "int",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "NO",
+                "EXTRA": "auto_increment",
+                "COLUMN_KEY": "PRI",
+                "COLUMN_COMMENT": "",
+            },
+            {
+                "COLUMN_NAME": "name",
+                "COLUMN_TYPE": "varchar(255)",
+                "COLUMN_DEFAULT": None,
+                "IS_NULLABLE": "YES",
+                "EXTRA": "",
+                "COLUMN_KEY": "",
+                "COLUMN_COMMENT": "",
+            },
+        ]
+        # 创建要测试的类的实例
+        new_engine = MysqlEngine(instance=self.ins1)
+        # Mock self.query 方法
+        new_engine.query = Mock()
+        new_engine.query.side_effect = [
+            Mock(rows=tables_result),  # 模拟 tbs 结果
+            Mock(rows=columns_result),  # 模拟 columns 结果
+        ]
+        # 调用要测试的方法
+        result = new_engine.get_tables_metas_data(db_name="test_db")
+
+        # 断言返回结果是否符合预期
+        expected_result = [
+            {
+                "ENGINE_KEYS": [
+                    {"key": "COLUMN_NAME", "value": "字段名"},
+                    {"key": "COLUMN_TYPE", "value": "数据类型"},
+                    {"key": "COLUMN_DEFAULT", "value": "默认值"},
+                    {"key": "IS_NULLABLE", "value": "允许非空"},
+                    {"key": "EXTRA", "value": "自动递增"},
+                    {"key": "COLUMN_KEY", "value": "是否主键"},
+                    {"key": "COLUMN_COMMENT", "value": "备注"},
+                ],
+                "TABLE_INFO": {"TABLE_SCHEMA": "test_db", "TABLE_NAME": "test_table"},
+                "COLUMNS": [
+                    {
+                        "COLUMN_NAME": "id",
+                        "COLUMN_TYPE": "int",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "NO",
+                        "EXTRA": "auto_increment",
+                        "COLUMN_KEY": "PRI",
+                        "COLUMN_COMMENT": "",
+                    },
+                    {
+                        "COLUMN_NAME": "name",
+                        "COLUMN_TYPE": "varchar(255)",
+                        "COLUMN_DEFAULT": None,
+                        "IS_NULLABLE": "YES",
+                        "EXTRA": "",
+                        "COLUMN_KEY": "",
+                        "COLUMN_COMMENT": "",
+                    },
+                ],
+            }
+        ]
+
+        self.assertEqual(result, expected_result)
+
     @patch.object(MysqlEngine, "query")
     def testAllDb(self, mock_query):
         db_result = ResultSet()
@@ -464,6 +544,50 @@ class TestMysql(TestCase):
         new_engine = MysqlEngine(instance=self.ins1)
         user_summary = new_engine.get_instance_users_summary()
         self.assertEqual(user_summary.error, "query error")
+
+        result_with_lock = ResultSet()
+        result_with_lock.rows = [("'root'@'localhost'", "root", "localhost", "N")]
+        _query.return_value = result_with_lock
+        _connect.return_value.get_server_info.return_value = "5.7.20-16log"
+        self.assertTupleEqual(new_engine.server_version, (5, 7, 20))
+        user_summary_with_lock = new_engine.get_instance_users_summary()
+        self.assertEqual(
+            user_summary_with_lock.rows,
+            [
+                {
+                    "host": "localhost",
+                    "is_locked": "N",
+                    "privileges": [("'root'@'localhost'", "root", "localhost", "N")],
+                    "saved": False,
+                    "user": "root",
+                    "user_host": "'root'@'localhost'",
+                }
+            ],
+        )
+
+    @patch("MySQLdb.connect")
+    @patch.object(MysqlEngine, "query")
+    def test_get_instance_users_summary_without_lock(self, _query, _connect):
+        result_without_lock = ResultSet()
+        result_without_lock.rows = [("'root'@'localhost'", "root", "localhost")]
+        _query.return_value = result_without_lock
+        mysql_engine = MysqlEngine(instance=self.ins1)
+        _connect.return_value.get_server_info.return_value = "5.7.5-16log"
+        self.assertTupleEqual(mysql_engine.server_version, (5, 7, 5))
+        user_summary_without_lock = mysql_engine.get_instance_users_summary()
+        self.assertEqual(
+            user_summary_without_lock.rows,
+            [
+                {
+                    "host": "localhost",
+                    "is_locked": None,
+                    "privileges": [("'root'@'localhost'", "root", "localhost")],
+                    "saved": False,
+                    "user": "root",
+                    "user_host": "'root'@'localhost'",
+                }
+            ],
+        )
 
     @patch("MySQLdb.connect")
     @patch.object(MysqlEngine, "execute")
