@@ -205,7 +205,8 @@ class ElasticsearchEngine(EngineBase):
     ):
         """执行查询"""
         try:
-            query_string=sql
+            result_set = ResultSet(full_sql=sql)
+            query_string = sql
             # 解析查询字符串
             lines = query_string.splitlines()
             method_line = lines[0].strip()
@@ -219,35 +220,54 @@ class ElasticsearchEngine(EngineBase):
                 json_body = json.loads(query_body)
             except json.JSONDecodeError as json_err:
                 raise ValueError(f"{query_body} 无法转为Json格式。{json_err}，")
-            
+
             # 提取方法和路径
             method, path_with_params = method_line.split(maxsplit=1)
             # 确保路径以 '/' 开头
-            if not path_with_params.startswith('/'):
-                path_with_params = '/' + path_with_params
-            
+            if not path_with_params.startswith("/"):
+                path_with_params = "/" + path_with_params
+
             # 分离路径和查询参数
-            path, params_str = path_with_params.split('?', 1) if '?' in path_with_params else (path_with_params, "")
-            params = dict(param.split('=') for param in params_str.split('&') if '=' in param)
+            path, params_str = (
+                path_with_params.split("?", 1)
+                if "?" in path_with_params
+                else (path_with_params, "")
+            )
+            params = dict(
+                param.split("=") for param in params_str.split("&") if "=" in param
+            )
 
             # 提取索引名称
-            index = path.split('/')[1]
+            index = path.split("/")[1]
 
             # 从参数中提取 filter_path
-            filter_path = params.get('filter_path', None)
+            filter_path = params.get("filter_path", None)
 
             # 执行搜索查询
             response = self.conn.search(
                 index=index,
                 body=json_body,
                 size=limit_num if limit_num > 0 else 100,  # 使用 limit_num 或默认值 5
-                filter_path=filter_path
+                filter_path=filter_path,
             )
 
             # 提取查询结果
             hits = response.get("hits", {}).get("hits", [])
-            results = [{'_id': hit.get('_id'), **hit.get('_source', {})} for hit in hits]
-            return ResultSet(rows=results)
+            rows = [
+                {"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits
+            ]
+            # 如果有结果，获取字段名作为列名
+            if rows:
+                first_row = rows[0]
+                column_list = list(first_row.keys())
+            else:
+                column_list = []
+
+            # 构建结果集
+            result_set.rows = [tuple(row.values()) for row in rows]  # 只获取值
+            result_set.column_list = column_list
+            result_set.affected_rows = len(result_set.rows)
+            return result_set
         except Exception as e:
             raise Exception(f"执行查询时出错: {str(e)}")
 
@@ -262,5 +282,3 @@ class ElasticsearchEngine(EngineBase):
     def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
         """执行语句"""
         raise NotImplementedError("execute 方法未为 Elasticsearch 实现。")
-
-
