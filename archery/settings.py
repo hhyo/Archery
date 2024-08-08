@@ -53,6 +53,7 @@ env = environ.Env(
             "odps",
             "cassandra",
             "doris",
+            "elasticsearch"
         ],
     ),
     ENABLED_NOTIFIERS=(
@@ -101,6 +102,7 @@ AVAILABLE_ENGINES = {
     "phoenix": {"path": "sql.engines.phoenix:PhoenixEngine"},
     "odps": {"path": "sql.engines.odps:ODPSEngine"},
     "doris": {"path": "sql.engines.doris:DorisEngine"},
+    "elasticsearch": {"path": "sql.engines.elasticsearch:ElasticsearchEngine"},
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
