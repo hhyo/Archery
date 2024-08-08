@@ -253,9 +253,7 @@ class ElasticsearchEngine(EngineBase):
 
             # 提取查询结果
             hits = response.get("hits", {}).get("hits", [])
-            rows = [
-                {"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits
-            ]
+            rows = [{"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
             # 如果有结果，获取字段名作为列名
             if rows:
                 first_row = rows[0]
