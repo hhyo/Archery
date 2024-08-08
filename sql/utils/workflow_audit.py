@@ -237,11 +237,13 @@ class AuditV2:
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
-        if self.is_auto_review():
+        auto_review = self.is_auto_review()
+        wf_status = self.workflow.status
+        if auto_review and wf_status != "workflow_autoreviewwrong":
             return AuditSetting(auto_pass=True)
+
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
-
         else:
             # ArchiveConfig
             group_id = self.resource_group_id
@@ -300,6 +302,7 @@ class AuditV2:
             create_user=create_user,
             create_user_display=create_user_display,
         )
+
         # 自动通过的情况
         if audit_setting.auto_pass:
             self.audit.current_status = WorkflowStatus.PASSED
