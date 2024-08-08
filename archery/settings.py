@@ -53,7 +53,7 @@ env = environ.Env(
             "odps",
             "cassandra",
             "doris",
-            "elasticsearch"
+            "elasticsearch",
         ],
     ),
     ENABLED_NOTIFIERS=(
