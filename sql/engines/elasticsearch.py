@@ -127,7 +127,7 @@ class ElasticsearchEngine(EngineBase):
             }
             # 根据分隔符分隔的库名
             if db_name not in db_mapping:
-                index_prefix = db_name
+                index_prefix = db_name.rstrip(self.db_separator) + self.db_separator
                 tables = [
                     index for index in indices.keys() if index.startswith(index_prefix)
                 ]
@@ -150,6 +150,8 @@ class ElasticsearchEngine(EngineBase):
                         continue
                     elif index_name.startswith(db_name):
                         tables.add(index_name)
+                        continue
+                    elif self.db_separator in index_name:
                         continue
                     else:
                         if db_name == "other":
@@ -241,7 +243,7 @@ class ElasticsearchEngine(EngineBase):
 
             # 解析查询字符串
             query_params = self.parse_es_select_query_to_query_params(sql, limit_num)
-
+            self.get_connection()
             # 管理查询处理
             if query_params.path.startswith("/_cat/indices/"):
                 # v这个参数用显示标题，需要加上。
