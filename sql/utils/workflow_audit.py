@@ -300,6 +300,20 @@ class AuditV2:
             create_user=create_user,
             create_user_display=create_user_display,
         )
+        # sql检测存在错误
+        if self.workflow.status == "workflow_autoreviewwrong":
+            self.audit.current_status = WorkflowStatus.REJECTED
+            self.audit.save()
+            WorkflowLog.objects.create(
+                audit_id=self.audit.audit_id,
+                operation_type=WorkflowAction.SUBMIT,
+                operation_type_desc=WorkflowAction.SUBMIT.label,
+                operation_info="无需审批，sql检测存在错误，系统自动驳回",
+                operator=self.audit.create_user,
+                operator_display=self.audit.create_user_display,
+            )
+
+            return "工单已自动驳回"
         # 自动通过的情况
         if audit_setting.auto_pass:
             self.audit.current_status = WorkflowStatus.PASSED
