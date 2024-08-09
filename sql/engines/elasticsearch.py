@@ -219,7 +219,7 @@ class ElasticsearchEngine(EngineBase):
             result["bad_query"] = False
         else:
             result["msg"] = (
-                "语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp_iv/_search、select * from dmp__iv limit 10;"
+                "语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp__iv/_search、select * from dmp__iv limit 10;"
             )
             result["bad_query"] = True
         return result
@@ -389,9 +389,5 @@ class ElasticsearchEngine(EngineBase):
         return resultset
 
     def execute_check(self, db_name=None, sql=""):
-        """执行检查（未实现）"""
+        """执行检查"""
         return True
-
-    def execute(self, db_name=None, sql="", close_conn=True, parameters=None):
-        """执行语句"""
-        raise NotImplementedError("execute 方法未为 Elasticsearch 实现。")
