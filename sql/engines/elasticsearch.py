@@ -277,12 +277,12 @@ class ElasticsearchEngine(EngineBase):
                     # 获取文档 ID 和 _source 数据
                     doc_id = hit.get("_id")
                     source_data = hit.get("_source", {})
-                    
+
                     # 转换需要转换为 JSON 字符串的字段
                     for key, value in source_data.items():
                         if isinstance(value, (list, dict)):  # 如果字段是列表或字典
                             source_data[key] = json.dumps(value)  # 转换为 JSON 字符串
-                    
+
                     # 构建结果行
                     row = {"_id": doc_id, **source_data}
                     rows.append(row)
@@ -335,7 +335,7 @@ class ElasticsearchEngine(EngineBase):
         try:
             json_body = json.loads(query_body)
         except json.JSONDecodeError as json_err:
-            raise ValueError(f"{query_body} 无法转为Json格式。{json_err}，")
+            raise ValueError(f"query_body：{query_body} 无法转为Json格式。{json_err}，")
 
         # 提取方法和路径
         method, path_with_params = method_line.split(maxsplit=1)
