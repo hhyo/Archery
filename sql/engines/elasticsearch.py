@@ -208,10 +208,11 @@ class ElasticsearchEngine(EngineBase):
         """语句检查"""
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
         # 使用正则表达式去除开头的空白字符和换行符
-        tripped_sql = re.sub(r"^\s+", "", sql).lower()
+        tripped_sql = re.sub(r"^\s+", "", sql)
         result["filtered_sql"] = tripped_sql
+        lower_sql = tripped_sql.lower()
         # 检查是否以 'get' 或 'select' 开头
-        if tripped_sql.startswith("get ") or tripped_sql.startswith("select "):
+        if lower_sql.startswith("get ") or lower_sql.startswith("select "):
             result["msg"] = "语句检查通过。"
             result["bad_query"] = False
         else:
