@@ -44,3 +44,4 @@ django-cas-ng==4.3.0
 cassandra-driver
 httpx
 OpenAI
+elasticsearch==8.14.0

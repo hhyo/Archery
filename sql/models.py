@@ -134,6 +134,7 @@ DB_TYPE_CHOICES = (
     ("goinception", "goInception"),
     ("cassandra", "Cassandra"),
     ("doris", "Doris"),
+    ("elasticsearch", "Elasticsearch"),
 )
 
 
