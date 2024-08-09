@@ -271,9 +271,22 @@ class ElasticsearchEngine(EngineBase):
 
                 # 提取查询结果
                 hits = response.get("hits", {}).get("hits", [])
-                rows = [
-                    {"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits
-                ]
+                # 处理查询结果，将列表和字典转换为 JSON 字符串
+                rows = []
+                for hit in hits:
+                    # 获取文档 ID 和 _source 数据
+                    doc_id = hit.get("_id")
+                    source_data = hit.get("_source", {})
+                    
+                    # 转换需要转换为 JSON 字符串的字段
+                    for key, value in source_data.items():
+                        if isinstance(value, (list, dict)):  # 如果字段是列表或字典
+                            source_data[key] = json.dumps(value)  # 转换为 JSON 字符串
+                    
+                    # 构建结果行
+                    row = {"_id": doc_id, **source_data}
+                    rows.append(row)
+
                 # 如果有结果，获取字段名作为列名
                 if rows:
                     first_row = rows[0]
