@@ -30,7 +30,7 @@ from sql.utils.sql_review import (
 )
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
-from .models import SqlWorkflow
+from .models import SqlWorkflow, Instance, ResourceGroup
 
 logger = logging.getLogger("default")
 
@@ -229,14 +229,16 @@ def alter_run_date(request):
 
 
 @permission_required("sql.sql_review", raise_exception=True)
-def passed(request):
+def passed(request, workflow_id=None, audit_remark=None):
     """
     审核通过，不执行
     :param request:
     :return:
     """
-    workflow_id = int(request.POST.get("workflow_id", 0))
-    audit_remark = request.POST.get("audit_remark", "")
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        audit_remark = request.POST.get("audit_remark", "")
+
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
@@ -280,19 +282,22 @@ def passed(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def execute(request):
+def execute(request, workflow_id=None, mode=None):
     """
     执行SQL
     :param request:
     :return:
     """
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        mode = request.POST.get("mode")
+
     # 校验多个权限
     if not (
         request.user.has_perm("sql.sql_execute")
         or request.user.has_perm("sql.sql_execute_for_resource_group")
     ):
         raise PermissionDenied
-    workflow_id = int(request.POST.get("workflow_id", 0))
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
@@ -310,8 +315,6 @@ def execute(request):
     audit_id = Audit.detail_by_workflow_id(
         workflow_id=workflow_id, workflow_type=WorkflowType.SQL_REVIEW
     ).audit_id
-    # 根据执行模式进行对应修改
-    mode = request.POST.get("mode")
     # 交由系统执行
     if mode == "auto":
         # 修改工单状态为排队中
@@ -432,18 +435,20 @@ def timing_task(request):
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
 
-def cancel(request):
+def cancel(request, workflow_id=None, audit_remark=None):
     """
     终止流程
     :param request:
     :return:
     """
-    workflow_id = int(request.POST.get("workflow_id", 0))
+    if workflow_id is None:
+        workflow_id = int(request.POST.get("workflow_id", 0))
+        audit_remark = request.POST.get("cancel_remark")
+
     if workflow_id == 0:
         context = {"errMsg": "workflow_id参数为空."}
         return render(request, "error.html", context)
     sql_workflow = SqlWorkflow.objects.get(id=workflow_id)
-    audit_remark = request.POST.get("cancel_remark")
     if audit_remark is None:
         context = {"errMsg": "终止原因不能为空"}
         return render(request, "error.html", context)
@@ -525,3 +530,138 @@ def osc_control(request):
         json.dumps(result, cls=ExtendJSONEncoder, bigint_as_string=True),
         content_type="application/json",
     )
+
+
+@permission_required("sql.sql_reviewbatch", raise_exception=True)
+def passedbatch(request):
+    """
+    批量审核通过，不执行
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST["workflowid_array"]
+    workflow_id_list = json.loads(workflow_id_list)
+    sys_config = SysConfig()
+    audit_remark = sys_config.get("batch_passed_remark")
+
+    for workflow_id in workflow_id_list:
+        passed(request, workflow_id, audit_remark)
+
+    return HttpResponseRedirect("/sqlworkflow")
+
+
+@permission_required("sql.sql_executebatch", raise_exception=True)
+def executebatch(request):
+    """
+    执行SQL
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST["workflowid_array"]
+    workflow_id_list = json.loads(workflow_id_list)
+    mode = "auto"
+
+    for workflow_id in workflow_id_list:
+        execute(request, workflow_id, mode)
+    return HttpResponseRedirect("/sqlworkflow")
+
+
+@permission_required("sql.sql_reviewbatch", raise_exception=True)
+def cancelbatch(request):
+    """
+    终止流程
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST["workflowid_array"]
+    workflow_id_list = json.loads(workflow_id_list)
+    sys_config = SysConfig()
+    audit_remark = sys_config.get("batch_cancel_remark")
+
+    for workflow_id in workflow_id_list:
+        cancel(request, workflow_id, audit_remark)
+
+    return HttpResponseRedirect("/sqlworkflow")
+
+
+@permission_required("sql.sql_submitbatch", raise_exception=True)
+def checkbatch(request):
+    """SQL检测按钮, 此处没有产生工单"""
+    sql_content = request.POST.get("sql_content")
+    instance_names = request.POST.get("instance_name")
+    instance_names = json.loads(instance_names)
+    instances = []
+    for instance_name in instance_names:
+        instance = Instance.objects.get(instance_name=instance_name)
+        instances.append(instance)
+
+    result = {"status": 0, "msg": "ok", "data": {}}
+    # 服务器端参数验证
+    if sql_content is None or len(instance_names) == 0:
+        result["status"] = 1
+        result["msg"] = "页面提交参数可能为空"
+        return HttpResponse(json.dumps(result), content_type="application/json")
+    warning_count_totle = 0
+    error_count_totle = 0
+    # 交给engine进行检测
+    check_result_arr = []
+    for instance in instances:
+        try:
+            check_engine = get_engine(instance=instance)
+            check_result = check_engine.execute_check(
+                db_name=instance.db_name, sql=sql_content.strip()
+            )
+            for i in range(len(check_result.to_dict())):
+                check_result.to_dict()[i]["instance"] = instance.instance_name
+            warning_count_totle = warning_count_totle + check_result.warning_count
+            error_count_totle = error_count_totle + check_result.error_count
+            check_result_arr = check_result_arr + check_result.to_dict()
+        except Exception as e:
+            result["status"] = 1
+            result["msg"] = str(e)
+            return HttpResponse(json.dumps(result), content_type="application/json")
+
+    # 处理检测结果
+    result["data"]["rows"] = check_result_arr
+    result["data"]["CheckWarningCount"] = warning_count_totle
+    result["data"]["CheckErrorCount"] = error_count_totle
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@permission_required("sql.sql_submitbatch", raise_exception=True)
+def rollbackbatch(request):
+    """
+    回滚流程
+    :param request:
+    :return:
+    """
+    workflow_id_list = request.POST["workflowid_array"]
+    workflow_id_list = json.loads(workflow_id_list)
+    workflow_list = list()
+    for workflow_id in workflow_id_list:
+        workflow = SqlWorkflow.objects.get(id=int(workflow_id))
+        rollback_workflow_name = (
+            f"【回滚工单】原工单Id:{workflow_id} ,{workflow.workflow_name}"
+        )
+        query_engine = get_engine(instance=workflow.instance)
+        list_backup_sql = query_engine.get_rollback(workflow=workflow)
+        ## 获取完整的回滚SQL
+        sql_content = "\n".join(item[1] for item in list_backup_sql)
+        param = {
+            "workflow": {
+                "workflow_name": rollback_workflow_name,
+                "daemon_url": "",
+                "group_id": ResourceGroup.objects.get(
+                    group_name=workflow.group_name
+                ).group_id,
+                "instance": workflow.instance.id,
+                "db_name": workflow.db_name,
+                "is_backup": True,
+                "run_date_start": None,
+                "run_date_end": None,
+            },
+            "sql_content": sql_content,
+        }
+        workflow_list.append(param)
+    result = {"status": 0, "msg": "ok", "data": workflow_list}
+    return HttpResponse(json.dumps(result), content_type="application/json")

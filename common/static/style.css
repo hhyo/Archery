@@ -251,3 +251,14 @@ table.modindextable td {
     padding: 2px;
     border-collapse: collapse;
 }
+
+div.select-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5); /* 半透明白色 */
+    z-index: 10; /* 确保它位于select元素之上 */
+    cursor: not-allowed; /* 显示“禁止”光标 */
+}

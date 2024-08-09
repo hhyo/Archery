@@ -183,6 +183,43 @@
                                            placeholder="自动驳回的等级，1表示警告驳回，2和空表示错误才驳回，其他表示不驳回" />
                                 </div>
                             </div>
+			    <div class="form-group">
+                                <label for="enable_batch_workflow"
+                                       class="col-sm-4 control-label">ENABLE_BATCH_WORKFLOW</label>
+                                <div class="col-sm-8">
+                                    <div class="switch switch-small">
+                                        <label>
+                                            <input id="enable_batch_workflow"
+                                                   key="enable_batch_workflow"
+                                                   value="{{ config.enable_batch_workflow }}"
+                                                   type="checkbox" />
+                                            是否开启批量工单
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+			    <div class="form-group">
+                                <label for="batch_passed_remark"
+                                       class="col-sm-4 control-label">BATCH_PASSED_REMARK</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="batch_passed_remark"
+                                           key="batch_passed_remark"
+                                           value="{{ config.batch_passed_remark }}"
+                                           placeholder="批量审核通过原因" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="batch_cancel_remark"
+                                       class="col-sm-4 control-label">BATCH_CANCEL_REMARK</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="batch_cancel_remark"
+                                           key="batch_cancel_remark"
+                                           value="{{ config.batch_cancel_remark }}"
+                                           placeholder="批量审核终止原因" />
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="enable_backup_switch"
                                        class="col-sm-4 control-label">ENABLE_BACKUP_SWITCH</label>
