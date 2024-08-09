@@ -243,6 +243,9 @@ class ElasticsearchEngine(EngineBase):
 
             # 管理查询处理
             if query_params.path.startswith("/_cat/indices/"):
+                # v这个参数用显示标题，需要加上。
+                if "v" not in query_params.params:
+                    query_params.params["v"] = True
                 response = self.conn.cat.indices(
                     index=query_params.index, params=query_params.params
                 )
@@ -331,14 +334,14 @@ class ElasticsearchEngine(EngineBase):
             else (path_with_params, "")
         )
         params = {}
-        for pair in params_str.split("&"):
-            if "=" in pair:
-                key, value = pair.split("=", 1)
-            else:
-                key = pair
-                value = ""
-            params[key] = value
-
+        if params_str:
+            for pair in params_str.split("&"):
+                if "=" in pair:
+                    key, value = pair.split("=", 1)
+                else:
+                    key = pair
+                    value = ""
+                params[key] = value
         index_pattern = ""
         # 判断路径类型并提取索引模式
         if path.startswith("/_cat/indices/"):
@@ -348,11 +351,11 @@ class ElasticsearchEngine(EngineBase):
                 index_pattern = path_parts[3]
             if not index_pattern:
                 index_pattern = "*"
-        elif path.startswith("/_search"):
+        elif "/_search" in path:
             # 默认情况，处理常规索引路径
             # 提取索引名称
             path_parts = path.split("/")
-            if len(path_parts) > 3:
+            if len(path_parts) > 1:
                 index_pattern = path_parts[1]
 
         if not index_pattern:
