@@ -24,6 +24,7 @@ class QueryParamsEs:
         self,
         index: str,
         path: str,
+        params: str,
         method: str,
         size: int,
         filter_path: str = None,
@@ -31,6 +32,7 @@ class QueryParamsEs:
     ):
         self.index = index
         self.path = path
+        self.params = params
         self.method = method
         self.filter_path = filter_path
         self.size = size
@@ -239,10 +241,12 @@ class ElasticsearchEngine(EngineBase):
             # 解析查询字符串
             query_params = self.parse_es_select_query_to_query_params(sql, limit_num)
 
-            #管理查询处理
+            # 管理查询处理
             if query_params.path.startswith("/_cat/indices/"):
-                response = self.conn.cat.indices(index=query_params.index, params={"v": "true"})
-                response_data=self.parse_cat_indices_response(response.body)
+                response = self.conn.cat.indices(
+                    index=query_params.index, params=query_params.params
+                )
+                response_data = self.parse_cat_indices_response(response.body)
                 # 如果有数据，设置列名
                 if response_data:
                     result_set.column_list = list(response_data[0].keys())
@@ -261,7 +265,9 @@ class ElasticsearchEngine(EngineBase):
 
                 # 提取查询结果
                 hits = response.get("hits", {}).get("hits", [])
-                rows = [{"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
+                rows = [
+                    {"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits
+                ]
                 # 如果有结果，获取字段名作为列名
                 if rows:
                     first_row = rows[0]
@@ -277,7 +283,7 @@ class ElasticsearchEngine(EngineBase):
         except Exception as e:
             raise Exception(f"执行查询时出错: {str(e)}")
 
-    def parse_cat_indices_response(self,response_text):
+    def parse_cat_indices_response(self, response_text):
         """解析cat indices结果"""
         # 将响应文本按行分割
         lines = response_text.strip().splitlines()
@@ -291,7 +297,7 @@ class ElasticsearchEngine(EngineBase):
             index_info = dict(zip(headers, values))
             indices_info.append(index_info)
         return indices_info
-  
+
     def parse_es_select_query_to_query_params(
         self, search_query_str: str, limit_num: int
     ) -> QueryParamsEs:
@@ -324,23 +330,31 @@ class ElasticsearchEngine(EngineBase):
             if "?" in path_with_params
             else (path_with_params, "")
         )
-        params = dict(
-            param.split("=") for param in params_str.split("&") if "=" in param
-        )
-        index_pattern=""
+        params = {}
+        for pair in params_str.split("&"):
+            if "=" in pair:
+                key, value = pair.split("=", 1)
+            else:
+                key = pair
+                value = ""
+            params[key] = value
+
+        index_pattern = ""
         # 判断路径类型并提取索引模式
         if path.startswith("/_cat/indices/"):
             # _cat API 路径
             path_parts = path.split("/")
             if len(path_parts) > 3:
                 index_pattern = path_parts[3]
+            if not index_pattern:
+                index_pattern = "*"
         elif path.startswith("/_search"):
             # 默认情况，处理常规索引路径
-             # 提取索引名称
+            # 提取索引名称
             path_parts = path.split("/")
             if len(path_parts) > 3:
                 index_pattern = path_parts[1]
-        
+
         if not index_pattern:
             raise Exception("未找到索引名称。")
 
@@ -355,6 +369,7 @@ class ElasticsearchEngine(EngineBase):
         query_params = QueryParamsEs(
             index=index_pattern,
             path=path_with_params,
+            params=params,
             method=method,
             size=size,
             filter_path=filter_path,
