@@ -19,6 +19,25 @@ from elasticsearch.exceptions import TransportError
 logger = logging.getLogger("default")
 
 
+class QueryParamsEs:
+    def __init__(
+        self,
+        index: str,
+        path: str,
+        method: str,
+        size: int,
+        filter_path: str = None,
+        query_body: dict = None,
+    ):
+        self.index = index
+        self.path = path
+        self.method = method
+        self.filter_path = filter_path
+        self.size = size
+        # 确保 query_body 不为 None
+        self.query_body = query_body if query_body is not None else {}
+
+
 class ElasticsearchEngine(EngineBase):
     """Elasticsearch 引擎实现"""
 
@@ -186,8 +205,18 @@ class ElasticsearchEngine(EngineBase):
     def query_check(self, db_name=None, sql=""):
         """语句检查"""
         result = {"msg": "", "bad_query": False, "filtered_sql": sql, "has_star": False}
-        result["msg"] += "语句检查，未实现。"
-        result["bad_query"] = False
+        # 使用正则表达式去除开头的空白字符和换行符
+        tripped_sql = re.sub(r"^\s+", "", sql).lower()
+        result["filtered_sql"] = tripped_sql
+        # 检查是否以 'get' 或 'select' 开头
+        if tripped_sql.startswith("get ") or tripped_sql.startswith("select "):
+            result["msg"] = "语句检查通过。"
+            result["bad_query"] = False
+        else:
+            result["msg"] = (
+                "语句检查失败：语句必须以 'get' 或 'select' 开头。示例查询：GET /dmp_iv/_search、select * from dmp__iv limit 10;"
+            )
+            result["bad_query"] = True
         return result
 
     def filter_sql(self, sql="", limit_num=0):
@@ -206,68 +235,133 @@ class ElasticsearchEngine(EngineBase):
         """执行查询"""
         try:
             result_set = ResultSet(full_sql=sql)
-            query_string = sql
+
             # 解析查询字符串
-            lines = query_string.splitlines()
-            method_line = lines[0].strip()
-            query_body = "\n".join(lines[1:]).strip()
-            # 如果 query_body 为空，使用默认查询体
-            if not query_body:
-                query_body = json.dumps({"query": {"match_all": {}}})
+            query_params = self.parse_es_select_query_to_query_params(sql, limit_num)
 
-            # 确保 query_body 是有效的 JSON
-            try:
-                json_body = json.loads(query_body)
-            except json.JSONDecodeError as json_err:
-                raise ValueError(f"{query_body} 无法转为Json格式。{json_err}，")
-
-            # 提取方法和路径
-            method, path_with_params = method_line.split(maxsplit=1)
-            # 确保路径以 '/' 开头
-            if not path_with_params.startswith("/"):
-                path_with_params = "/" + path_with_params
-
-            # 分离路径和查询参数
-            path, params_str = (
-                path_with_params.split("?", 1)
-                if "?" in path_with_params
-                else (path_with_params, "")
-            )
-            params = dict(
-                param.split("=") for param in params_str.split("&") if "=" in param
-            )
-
-            # 提取索引名称
-            index = path.split("/")[1]
-
-            # 从参数中提取 filter_path
-            filter_path = params.get("filter_path", None)
-
-            # 执行搜索查询
-            response = self.conn.search(
-                index=index,
-                body=json_body,
-                size=limit_num if limit_num > 0 else 100,  # 使用 limit_num 或默认值 5
-                filter_path=filter_path,
-            )
-
-            # 提取查询结果
-            hits = response.get("hits", {}).get("hits", [])
-            rows = [{"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
-            # 如果有结果，获取字段名作为列名
-            if rows:
-                first_row = rows[0]
-                column_list = list(first_row.keys())
+            #管理查询处理
+            if query_params.path.startswith("/_cat/indices/"):
+                response = self.conn.cat.indices(index=query_params.index, params={"v": "true"})
+                response_data=self.parse_cat_indices_response(response.body)
+                # 如果有数据，设置列名
+                if response_data:
+                    result_set.column_list = list(response_data[0].keys())
+                    result_set.rows = [tuple(row.values()) for row in response_data]
+                else:
+                    result_set.column_list = []
+                    result_set.rows = []
+                    result_set.affected_rows = 0
             else:
-                column_list = []
+                # 执行搜索查询
+                response = self.conn.search(
+                    index=query_params.index,
+                    body=query_params.query_body,
+                    filter_path=query_params.filter_path,
+                )
 
-            # 构建结果集
-            result_set.rows = [tuple(row.values()) for row in rows]  # 只获取值
-            result_set.column_list = column_list
+                # 提取查询结果
+                hits = response.get("hits", {}).get("hits", [])
+                rows = [{"_id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
+                # 如果有结果，获取字段名作为列名
+                if rows:
+                    first_row = rows[0]
+                    column_list = list(first_row.keys())
+                else:
+                    column_list = []
+
+                # 构建结果集
+                result_set.rows = [tuple(row.values()) for row in rows]  # 只获取值
+                result_set.column_list = column_list
             result_set.affected_rows = len(result_set.rows)
             return result_set
         except Exception as e:
             raise Exception(f"执行查询时出错: {str(e)}")
+
+    def parse_cat_indices_response(self,response_text):
+        """解析cat indices结果"""
+        # 将响应文本按行分割
+        lines = response_text.strip().splitlines()
+        # 获取列标题
+        headers = lines[0].strip().split()
+        # 解析每一行数据
+        indices_info = []
+        for line in lines[1:]:
+            # 按空格分割，并与标题进行配对
+            values = line.strip().split(maxsplit=len(headers) - 1)
+            index_info = dict(zip(headers, values))
+            indices_info.append(index_info)
+        return indices_info
+  
+    def parse_es_select_query_to_query_params(
+        self, search_query_str: str, limit_num: int
+    ) -> QueryParamsEs:
+        """解析 search query 字符串为 QueryParamsEs 对象"""
+
+        # 解析查询字符串
+        lines = search_query_str.splitlines()
+        method_line = lines[0].strip()
+
+        query_body = "\n".join(lines[1:]).strip()
+        # 如果 query_body 为空，使用默认查询体
+        if not query_body:
+            query_body = json.dumps({"query": {"match_all": {}}})
+
+        # 确保 query_body 是有效的 JSON
+        try:
+            json_body = json.loads(query_body)
+        except json.JSONDecodeError as json_err:
+            raise ValueError(f"{query_body} 无法转为Json格式。{json_err}，")
+
+        # 提取方法和路径
+        method, path_with_params = method_line.split(maxsplit=1)
+        # 确保路径以 '/' 开头
+        if not path_with_params.startswith("/"):
+            path_with_params = "/" + path_with_params
+
+        # 分离路径和查询参数
+        path, params_str = (
+            path_with_params.split("?", 1)
+            if "?" in path_with_params
+            else (path_with_params, "")
+        )
+        params = dict(
+            param.split("=") for param in params_str.split("&") if "=" in param
+        )
+        index_pattern=""
+        # 判断路径类型并提取索引模式
+        if path.startswith("/_cat/indices/"):
+            # _cat API 路径
+            path_parts = path.split("/")
+            if len(path_parts) > 3:
+                index_pattern = path_parts[3]
+        elif path.startswith("/_search"):
+            # 默认情况，处理常规索引路径
+             # 提取索引名称
+            path_parts = path.split("/")
+            if len(path_parts) > 3:
+                index_pattern = path_parts[1]
+        
+        if not index_pattern:
+            raise Exception("未找到索引名称。")
+
+        # 从参数中提取 filter_path
+        filter_path = params.get("filter_path", None)
+        size = limit_num if limit_num > 0 else 100
+        # 检查 JSON 中是否已经有 size，如果没有就设置
+        if "size" not in json_body:
+            json_body["size"] = size
+
+        # 构建 QueryParams 对象
+        query_params = QueryParamsEs(
+            index=index_pattern,
+            path=path_with_params,
+            method=method,
+            size=size,
+            filter_path=filter_path,
+            query_body=json_body,
+        )
+
+        return query_params
 
     def query_masking(self, db_name=None, sql="", resultset=None):
         """查询结果脱敏"""
