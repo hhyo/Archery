@@ -264,7 +264,7 @@ class ElasticsearchEngine(EngineBase):
                 response = self.conn.search(
                     index=query_params.index,
                     body=query_params.query_body,
-                    params=query_params.params
+                    params=query_params.params,
                 )
 
                 # 提取查询结果
@@ -374,7 +374,6 @@ class ElasticsearchEngine(EngineBase):
 
         if not index_pattern:
             raise Exception("未找到索引名称。")
-
 
         size = limit_num if limit_num > 0 else 100
         # 检查 JSON 中是否已经有 size，如果没有就设置
