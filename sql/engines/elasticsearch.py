@@ -27,14 +27,12 @@ class QueryParamsEs:
         params: str,
         method: str,
         size: int,
-        filter_path: str = None,
         query_body: dict = None,
     ):
         self.index = index
         self.path = path
         self.params = params
         self.method = method
-        self.filter_path = filter_path
         self.size = size
         # 确保 query_body 不为 None
         self.query_body = query_body if query_body is not None else {}
@@ -248,7 +246,7 @@ class ElasticsearchEngine(EngineBase):
             if query_params.path.startswith("/_cat/indices/"):
                 # v这个参数用显示标题，需要加上。
                 if "v" not in query_params.params:
-                    query_params.params["v"] = True
+                    query_params.params["v"] = "true"
                 response = self.conn.cat.indices(
                     index=query_params.index, params=query_params.params
                 )
@@ -266,7 +264,7 @@ class ElasticsearchEngine(EngineBase):
                 response = self.conn.search(
                     index=query_params.index,
                     body=query_params.query_body,
-                    filter_path=query_params.filter_path,
+                    params=query_params.params
                 )
 
                 # 提取查询结果
@@ -377,8 +375,7 @@ class ElasticsearchEngine(EngineBase):
         if not index_pattern:
             raise Exception("未找到索引名称。")
 
-        # 从参数中提取 filter_path
-        filter_path = params.get("filter_path", None)
+
         size = limit_num if limit_num > 0 else 100
         # 检查 JSON 中是否已经有 size，如果没有就设置
         if "size" not in json_body:
@@ -391,7 +388,6 @@ class ElasticsearchEngine(EngineBase):
             params=params,
             method=method,
             size=size,
-            filter_path=filter_path,
             query_body=json_body,
         )
 
