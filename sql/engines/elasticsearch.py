@@ -13,7 +13,6 @@ class ElasticsearchEngine(ElasticsearchEngineBase):
     """Elasticsearch 引擎实现"""
 
     def __init__(self, instance=None):
-        # self.db_separator = "__"  # 设置分隔符
         super().__init__(instance=instance)
 
     name: str = "Elasticsearch"
