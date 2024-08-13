@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import os
 import re, time
 import pymongo
 import logging
@@ -61,13 +62,13 @@ class ElasticsearchEngine(EngineBase):
             http_auth = (
                 (self.user, self.password) if self.user and self.password else None
             )
-
+            self.db_name = (self.db_name or "") + "*"
             try:
                 # 创建 Elasticsearch 连接,高版本有basic_auth
                 self.conn = Elasticsearch(
                     hosts=hosts,
                     http_auth=http_auth,
-                    verify_certs=False,  # 关闭证书验证
+                    verify_certs=True,  # 需要证书验证
                 )
             except Exception as e:
                 raise Exception(f"Elasticsearch 连接建立失败: {str(e)}")
@@ -87,9 +88,10 @@ class ElasticsearchEngine(EngineBase):
         try:
             self.get_connection()
             # 获取所有的别名，没有别名就是本身。
-            indices = self.conn.indices.get_alias(index="*")
+            indices = self.conn.indices.get_alias(index=self.db_name)
             database_names = set()
-            database_names.add("system")  # 系统表名使用的库名
+            if self.db_name == "*":
+                database_names.add("system")  # 系统表名使用的库名
             for index_name in indices.keys():
                 if self.db_separator in index_name:
                     db_name = index_name.split(self.db_separator)[0]
@@ -109,7 +111,7 @@ class ElasticsearchEngine(EngineBase):
         """根据给定的数据库名获取所有相关的表名"""
         try:
             self.get_connection()
-            indices = self.conn.indices.get_alias(index="*")
+            indices = self.conn.indices.get_alias(index=self.db_name)
             tables = set()
 
             db_mapping = {
@@ -238,7 +240,7 @@ class ElasticsearchEngine(EngineBase):
             query_params = self.parse_es_select_query_to_query_params(sql, limit_num)
             self.get_connection()
             # 管理查询处理
-            if query_params.path.startswith("/_cat/indices/"):
+            if query_params.path.startswith("/_cat/indices"):
                 # v这个参数用显示标题，需要加上。
                 if "v" not in query_params.params:
                     query_params.params["v"] = "true"
@@ -353,7 +355,7 @@ class ElasticsearchEngine(EngineBase):
                 params[key] = value
         index_pattern = ""
         # 判断路径类型并提取索引模式
-        if path.startswith("/_cat/indices/"):
+        if path.startswith("/_cat/indices"):
             # _cat API 路径
             path_parts = path.split("/")
             if len(path_parts) > 3:
@@ -386,11 +388,3 @@ class ElasticsearchEngine(EngineBase):
         )
 
         return query_params
-
-    def query_masking(self, db_name=None, sql="", resultset=None):
-        """查询结果脱敏"""
-        return resultset
-
-    def execute_check(self, db_name=None, sql=""):
-        """执行检查"""
-        return True
