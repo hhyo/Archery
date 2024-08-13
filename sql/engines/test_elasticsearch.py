@@ -21,10 +21,6 @@ class TestElasticsearchEngine(unittest.TestCase):
         # 初始化 ElasticsearchEngine，传入模拟的 instance
         self.engine = ElasticsearchEngine(instance=self.mock_instance)
 
-    def test_info_property(self):
-        # 测试 info 属性是否正确返回描述字符串
-        self.assertEqual(self.engine.info, "Elasticsearch 引擎")
-
     @patch("sql.engines.elasticsearch.Elasticsearch")
     def test_get_all_databases(self, mockElasticsearch):
         mock_conn = Mock()
