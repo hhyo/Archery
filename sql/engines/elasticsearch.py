@@ -79,13 +79,8 @@ class ElasticsearchEngine(EngineBase):
         """测试实例链接是否正常"""
         return self.get_all_databases()
 
-    @property
-    def name(self):
-        return "elasticsearch"
-
-    @property
-    def info(self):
-        return "Elasticsearch 引擎"
+    name: str = "elasticsearch"
+    info: str = "Elasticsearch 引擎"
 
     def get_all_databases(self):
         """获取所有“数据库”名（从索引名提取）,默认提取 __ 前的部分作为数据库名"""
