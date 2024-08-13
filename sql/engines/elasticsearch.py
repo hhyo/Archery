@@ -7,7 +7,7 @@ from elasticsearch.exceptions import TransportError
 
 
 logger = logging.getLogger("default")
- 
+
 
 class ElasticsearchEngine(ElasticsearchEngineBase):
     """Elasticsearch 引擎实现"""
