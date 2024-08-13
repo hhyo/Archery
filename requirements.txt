@@ -45,3 +45,4 @@ cassandra-driver
 httpx
 OpenAI
 elasticsearch==8.14.0
+
