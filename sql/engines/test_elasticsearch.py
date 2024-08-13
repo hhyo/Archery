@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
 from sql.engines import ResultSet, ReviewSet
-from sql.engines.elasticsearch import ElasticsearchEngine, QueryParamsEs
+from sql.engines.elasticsearch import ElasticsearchEngine
 from sql.models import Instance
 
 
