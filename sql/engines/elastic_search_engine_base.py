@@ -219,11 +219,11 @@ class ElasticsearchEngineBase(EngineBase):
                 response = self.conn.cat.indices(
                     index=query_params.index, params=query_params.params
                 )
-                response_body=""
+                response_body = ""
                 if isinstance(response, str):
-                    response_body=response
+                    response_body = response
                 else:
-                    response_body=response.body
+                    response_body = response.body
                 response_data = self.parse_cat_indices_response(response_body)
                 # 如果有数据，设置列名
                 if response_data:
