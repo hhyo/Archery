@@ -16,7 +16,7 @@ class TestOpenSearchEngine(unittest.TestCase):
         self.mock_instance.password = "pass"
         self.mock_instance.is_ssl = True
 
-        # 初始化 OpenSearchEngine instance
+        # 初始化 OpenSearchEngine
         self.engine = OpenSearchEngine(instance=self.mock_instance)
 
     @patch("sql.engines.elasticsearch.OpenSearch")
