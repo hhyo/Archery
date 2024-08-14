@@ -5,7 +5,7 @@ from sql.engines import ResultSet, ReviewSet
 from sql.engines.elasticsearch import OpenSearchEngine
 from sql.models import Instance
 
- 
+
 class TestOpenSearchEngine(unittest.TestCase):
     def setUp(self):
         # 创建一个模拟的 instance 对象，包含必要的属性
@@ -25,7 +25,7 @@ class TestOpenSearchEngine(unittest.TestCase):
         mock_conn.indices.get_alias.return_value = {
             "test__index1": {},
             "test__index2": {},
-            ".kibana_1": {},
+            ".kibana_2": {},
             ".internal.index": {},
         }
         mockElasticsearch.return_value = mock_conn
@@ -39,7 +39,7 @@ class TestOpenSearchEngine(unittest.TestCase):
             "test",
         ]
         self.assertEqual(result.rows, expected_result)
- 
+
     @patch("sql.engines.elasticsearch.OpenSearch")
     def test_query_cat_indices(self, mock_elasticsearch):
         """test_query_cat_indices
@@ -100,4 +100,3 @@ class TestOpenSearchEngine(unittest.TestCase):
         ]
         self.assertEqual(result.column_list, expected_columns)
         self.assertEqual(result.rows, expected_rows)
- 
