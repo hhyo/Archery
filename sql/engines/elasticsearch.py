@@ -410,8 +410,6 @@ class ElasticsearchEngine(ElasticsearchEngineBase):
         return self.conn
 
 
-
-
 class OpenSearchEngine(ElasticsearchEngineBase):
     """OpenSearch 引擎实现"""
 
