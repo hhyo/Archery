@@ -105,7 +105,6 @@ AVAILABLE_ENGINES = {
     "doris": {"path": "sql.engines.doris:DorisEngine"},
     "elasticsearch": {"path": "sql.engines.elasticsearch:ElasticsearchEngine"},
     "opensearch": {"path": "sql.engines.elasticsearch:OpenSearchEngine"},
-    
 }
 
 ENABLED_NOTIFIERS = env("ENABLED_NOTIFIERS")
