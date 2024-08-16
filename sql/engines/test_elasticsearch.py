@@ -259,17 +259,17 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(result["filtered_sql"], "SELECT * FROM test_table")
 
     def test_query_check_valid_select_with_comments(self):
-        """测试有注释的 SELECT 语句"""
+        """测试有注释的 SELECT 语句 """
         valid_select_sql_with_comments = "SELECT * FROM test_table -- 注释"
         result = self.engine.query_check(sql=valid_select_sql_with_comments)
         self.assertFalse(result["bad_query"])
         self.assertEqual(result["filtered_sql"], "SELECT * FROM test_table")
 
     def test_filter_sql_with_delimiter(self):
-            new_engine = self.engine
-            sql_without_limit = "select user from usertable;"
-            check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
-            self.assertEqual(check_result, "select user from usertable limit 100;")
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable;"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, "select user from usertable limit 100;")
 
     def test_filter_sql_without_delimiter(self):
         new_engine = self.engine
