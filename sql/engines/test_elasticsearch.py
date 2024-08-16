@@ -250,3 +250,53 @@ class TestElasticsearchEngine(unittest.TestCase):
         invalid_sql = "PUT /test_index/_doc/1"
         result = self.engine.query_check(sql=invalid_sql)
         self.assertTrue(result["bad_query"])
+
+    def test_query_check_valid_select(self):
+        """测试有效的 SELECT 语句"""
+        valid_select_sql = "SELECT * FROM test_table"
+        result = self.engine.query_check(sql=valid_select_sql)
+        self.assertFalse(result["bad_query"])
+        self.assertEqual(result["filtered_sql"], "SELECT * FROM test_table")
+
+    def test_query_check_valid_select_with_comments(self):
+        """测试有注释的 SELECT 语句"""
+        valid_select_sql_with_comments = "SELECT * FROM test_table -- 注释"
+        result = self.engine.query_check(sql=valid_select_sql_with_comments)
+        self.assertFalse(result["bad_query"])
+        self.assertEqual(result["filtered_sql"], "SELECT * FROM test_table")
+
+    def test_filter_sql_with_delimiter(self):
+            new_engine = self.engine
+            sql_without_limit = "select user from usertable;"
+            check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+            self.assertEqual(check_result, "select user from usertable limit 100;")
+
+    def test_filter_sql_without_delimiter(self):
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, "select user from usertable limit 100;")
+
+    def test_filter_sql_with_limit(self):
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable limit 10"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, "select user from usertable limit 1;")
+
+    def test_filter_sql_with_limit_min(self):
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable limit 10"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=100)
+        self.assertEqual(check_result, "select user from usertable limit 10;")
+
+    def test_filter_sql_with_limit_offset(self):
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable limit 10 offset 100"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, "select user from usertable limit 1 offset 100;")
+
+    def test_filter_sql_with_limit_nn(self):
+        new_engine = self.engine
+        sql_without_limit = "select user from usertable limit 10, 100"
+        check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
+        self.assertEqual(check_result, "select user from usertable limit 10,1;")
