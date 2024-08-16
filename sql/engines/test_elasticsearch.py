@@ -259,7 +259,7 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(result["filtered_sql"], "SELECT * FROM test_table")
 
     def test_query_check_valid_select_with_comments(self):
-        """测试有注释的 SELECT 语句 """
+        """测试有注释的 SELECT 语句"""
         valid_select_sql_with_comments = "SELECT * FROM test_table -- 注释"
         result = self.engine.query_check(sql=valid_select_sql_with_comments)
         self.assertFalse(result["bad_query"])
