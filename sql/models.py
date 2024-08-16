@@ -135,6 +135,7 @@ DB_TYPE_CHOICES = (
     ("cassandra", "Cassandra"),
     ("doris", "Doris"),
     ("elasticsearch", "Elasticsearch"),
+    ("opensearch", "OpenSearch"),
 )
 
 
