@@ -39,3 +39,31 @@ class TestOpenSearchEngine(unittest.TestCase):
             "test",
         ]
         self.assertEqual(result.rows, expected_result)
+
+    @patch("sql.engines.elasticsearch.OpenSearch")
+    def test_query_sql(self, mockElasticsearch):
+        """SQL语句测试"""
+        mock_conn = Mock()
+        mock_response = {
+            "schema": [
+                {"name": "field1", "type": "text"},
+                {"name": "field2", "type": "integer"},
+                {"name": "field3", "type": "array"},
+            ],
+            "datarows": [
+                ["value1", 10, ["elem1", "elem2"]],
+                ["value2", 20, ["elem3", "elem4"]],
+            ],
+        }
+        mock_conn.transport.perform_request.return_value = mock_response
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "SELECT field1, field2, field3 FROM test_index"
+        result = self.engine.query(sql=sql, db_name="")
+        expected_rows = [
+            ["value1", 10, json.dumps(["elem1", "elem2"])],
+            ["value2", 20, json.dumps(["elem3", "elem4"])],
+        ]
+        expected_columns = ["field1", "field2", "field3"]
+        self.assertEqual(result.rows, expected_rows)
+        self.assertEqual(result.column_list, expected_columns)

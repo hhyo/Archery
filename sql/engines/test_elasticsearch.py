@@ -93,6 +93,34 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(result.column_list, ["_id", "field1", "field2"])
 
     @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_query_sql(self, mockElasticsearch):
+        """SQL语句测试"""
+        mock_conn = Mock()
+        mock_response = {
+            "columns": [
+                {"name": "field1", "type": "text"},
+                {"name": "field2", "type": "integer"},
+                {"name": "field3", "type": "array"},
+            ],
+            "rows": [
+                ["value1", 10, ["elem1", "elem2"]],
+                ["value2", 20, ["elem3", "elem4"]],
+            ],
+        }
+        mock_conn.sql.query.return_value = mock_response
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "SELECT field1, field2, field3 FROM test_index"
+        result = self.engine.query(sql=sql, db_name="")
+        expected_rows = [
+            ["value1", 10, json.dumps(["elem1", "elem2"])],
+            ["value2", 20, json.dumps(["elem3", "elem4"])],
+        ]
+        expected_columns = ["field1", "field2", "field3"]
+        self.assertEqual(result.rows, expected_rows)
+        self.assertEqual(result.column_list, expected_columns)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
     def test_query_cat_indices(self, mock_elasticsearch):
         """test_query_cat_indices"""
         mock_conn = Mock()
