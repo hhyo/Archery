@@ -413,9 +413,9 @@
     var user = '{{ user.display }}{{ user.date_joined|date:"Hdi" }}';
     var watermark_enabled = '{{ watermark_enabled }}';
     if(watermark_enabled == 'True'){
-        watermark.init({ watermark_txt: user + " " + now })
+        watermark.init({ watermark_txt: user + " " + now, watermark_alpha: 0.05})
         window.onscroll = function(){
-            watermark.load({ watermark_txt: user + " " + now })
+            watermark.load({ watermark_txt: user + " " + now, watermark_alpha: 0.05})
         }
     };
 </script>
