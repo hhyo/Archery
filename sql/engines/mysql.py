@@ -916,7 +916,7 @@ class MysqlEngine(EngineBase):
         TO_SECONDS(NOW()) - TO_SECONDS(trx.trx_started) trx_idle_time,
         p.time thread_time,
         IFNULL((SELECT
-        GROUP_CONCAT(t1.sql_text SEPARATOR ';
+        GROUP_CONCAT(t1.sql_text order by t1.TIMER_START desc SEPARATOR ';
         ')
         FROM performance_schema.events_statements_history t1
         INNER JOIN performance_schema.threads t2
