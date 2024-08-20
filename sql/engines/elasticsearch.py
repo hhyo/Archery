@@ -720,7 +720,7 @@ class ElasticsearchEngineBase(EngineBase):
     def execute_workflow(self, workflow):
         """执行上线单，返回Review set"""
         sql = workflow.sqlworkflowcontent.sql_content
-        docs = self.split_sql(sql)
+        docs = self.__split_sql(sql)
         execute_result = ReviewSet(full_sql=sql)
         line = 0
         try:
