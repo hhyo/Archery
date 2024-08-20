@@ -523,11 +523,9 @@ class ElasticsearchEngineBase(EngineBase):
         """
         check_result = ReviewSet(full_sql=sql)
         rowid = 1
-
         documents = self.__split_sql(sql)
         for doc in documents:
             is_pass = False
-            # Endpoint为空的情况
             doc_desc = doc.describe()
             if re.match(r"^get|^select", doc.sql, re.I):
                 result = ReviewResult(
@@ -585,7 +583,7 @@ class ElasticsearchEngineBase(EngineBase):
                             id=rowid,
                             errlevel=2,
                             stagestatus="驳回不支持语句",
-                            errormessage="PUT请求创建索引时请求体为空或需要包含mappings或settings。",
+                            errormessage="PUT请求创建索引时请求体可以为空或需要包含mappings或settings。",
                             sql=doc.sql,
                         )
                 elif doc.method == "POST":
@@ -739,7 +737,6 @@ class ElasticsearchEngineBase(EngineBase):
                             execute_time=0,
                         )
                     )
-
                 elif doc.method == "DELETE":
                     reviewResult = self.__delete_data(conn, doc)
                     reviewResult.id = line
@@ -904,7 +901,7 @@ class ElasticsearchEngineBase(EngineBase):
         """
         errlevel = 0
         if not doc.doc_id:
-            response_str = "删除操作需要id条件。"
+            response_str = "删除操作必须包含id条件。"
             successful_count = 0
         with FuncTimer() as t:
             try:
