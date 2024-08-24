@@ -598,10 +598,9 @@ def test_get_review_info_auto_pass(
     assert "无需审批" in response.content.decode("utf-8")
 
 
-@patch("sql.utils.workflow_audit.AuditV2.is_auto_reject")
-def test_auto_review_with_auto_reject(sql_workflow, mock_is_auto_reject):
+def test_auto_review_with_auto_reject(sql_workflow, mocker: MockFixture):
     """自动审和不通过时无法自动审批"""
-    mock_is_auto_reject.return_value = True
+    mocker.patch.object(AuditV2, "is_auto_reject").return_value = True
     audit = AuditV2(workflow=sql_workflow)
     assert audit.is_auto_review() is False
 
