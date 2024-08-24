@@ -601,6 +601,7 @@ def test_get_review_info_auto_pass(
 def test_auto_review_with_auto_reject(sql_workflow, mocker: MockFixture):
     """自动审和不通过时无法自动审批"""
     mocker.patch.object(AuditV2, "is_auto_reject").return_value = True
+    sql_workflow, _ = sql_workflow
     audit = AuditV2(workflow=sql_workflow)
     assert audit.is_auto_review() is False
 
