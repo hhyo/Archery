@@ -611,3 +611,41 @@ def test_get_review_info_auto_pass(
     response = admin_client.get(f"/queryapplydetail/{sql_query_apply.apply_id}/")
     assert response.status_code == 200
     assert "无需审批" in response.content.decode("utf-8")
+
+
+@patch("sql.utils.workflow_audit.AuditV2.is_auto_reject")
+def test_auto_review_with_auto_reject(sql_workflow, mock_is_auto_reject):
+    """自动审和不通过时无法自动审批"""
+    mock_is_auto_reject.return_value = True
+    audit = AuditV2(workflow=sql_workflow)
+    assert audit.is_auto_review() is False
+
+
+def test_auto_reject_non_sql_review(sql_query_apply):
+    """当前自动审核仅对 SQL 上线工单生效"""
+    audit = AuditV2(workflow=sql_query_apply)
+    assert audit.is_auto_reject() is False
+
+
+def test_auto_reject_not_applicable(sql_workflow, setup_sys_config):
+    """测试自动拒绝场景"""
+    sql_workflow, _ = sql_workflow
+    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
+    # warning_count > 0 and auto_review_wrong == "1",
+    audit.sys_config.set("auto_review_wrong", "1")
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps([{"errlevel": 1}])
+    audit.workflow.sqlworkflowcontent.save()
+    assert audit.is_auto_reject() is True
+    # error_count > 0 and auto_review_wrong in ("", "1", "2")
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps([{"errlevel": 2}])
+    audit.workflow.sqlworkflowcontent.save()
+    audit.sys_config.set("auto_review_wrong", "")
+    assert audit.is_auto_reject() is True
+    audit.sys_config.set("auto_review_wrong", "1")
+    assert audit.is_auto_reject() is True
+    audit.sys_config.set("auto_review_wrong", "2")
+    assert audit.is_auto_reject() is True
+    # warning_count=0 error_count=0
+    audit.workflow.sqlworkflowcontent.review_content = json.dumps([{"errlevel": 0}])
+    audit.workflow.sqlworkflowcontent.save()
+    assert audit.is_auto_reject() is False

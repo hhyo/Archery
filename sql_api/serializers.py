@@ -397,18 +397,8 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
         if not sys_config.get("enable_backup_switch") and check_engine.auto_backup:
             is_backup = True
 
-        # 按照系统配置确定是自动驳回还是放行
-        auto_review_wrong = sys_config.get(
-            "auto_review_wrong", ""
-        )  # 1表示出现警告就驳回，2和空表示出现错误才驳回
-        workflow_status = "workflow_manreviewing"
-        if check_result.warning_count > 0 and auto_review_wrong == "1":
-            workflow_status = "workflow_autoreviewwrong"
-        elif check_result.error_count > 0 and auto_review_wrong in ("", "1", "2"):
-            workflow_status = "workflow_autoreviewwrong"
-
         workflow_data.update(
-            status=workflow_status,
+            status="workflow_manreviewing",
             is_backup=is_backup,
             is_manual=0,
             syntax_type=check_result.syntax_type,

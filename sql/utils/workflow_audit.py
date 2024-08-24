@@ -103,6 +103,8 @@ class AuditSetting:
 
     @property
     def audit_auth_group_in_db(self):
+        if self.auto_reject or self.auto_pass:
+            return ""
         return ",".join(str(x) for x in self.audit_auth_groups)
 
 
@@ -197,10 +199,26 @@ class AuditV2:
         """系统自动驳回工单"""
         if self.workflow_type != WorkflowType.SQL_REVIEW:
             return False
-        if self.workflow.status == "workflow_autoreviewwrong":
+        # 按照系统配置确定是自动驳回还是放行
+        auto_review_wrong = self.sys_config.get(
+            "auto_review_wrong", ""
+        )  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+        review_content = self.workflow.sqlworkflowcontent.review_content or "[]"
+        warning_count, error_count = 0, 0
+        for r in json.loads(review_content):
+            err_level = ReviewResult(**r).errlevel
+            if err_level == 1:
+                warning_count += 1
+            if err_level == 2:
+                error_count += 1
+        if any(
+            [
+                warning_count > 0 and auto_review_wrong == "1",
+                error_count > 0 and auto_review_wrong in ("", "1", "2"),
+            ]
+        ):
             return True
-        else:
-            return False
+        return False
 
     def is_auto_review(self) -> bool:
         if self.is_auto_reject():
@@ -251,7 +269,6 @@ class AuditV2:
     def generate_audit_setting(self) -> AuditSetting:
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
-
         else:
             # ArchiveConfig
             group_id = self.resource_group_id
@@ -407,7 +424,9 @@ class AuditV2:
             try:
                 audit_auth_group = Group.objects.get(id=self.audit.current_audit)
             except Group.DoesNotExist:
-                raise AuditException("当前审批权限组不存在, 请联系管理员检查并清洗错误数据")
+                raise AuditException(
+                    "当前审批权限组不存在, 请联系管理员检查并清洗错误数据"
+                )
             if not auth_group_users([audit_auth_group.name], self.resource_group_id):
                 raise AuditException("用户不在当前审批审批节点的用户组内, 无权限审核")
             return True
