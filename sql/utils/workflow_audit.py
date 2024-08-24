@@ -99,9 +99,12 @@ class AuditSetting:
 
     audit_auth_groups: List = field(default_factory=list)
     auto_pass: bool = False
+    auto_reject: bool = False
 
     @property
     def audit_auth_group_in_db(self):
+        if self.auto_reject or self.auto_pass:
+            return ""
         return ",".join(str(x) for x in self.audit_auth_groups)
 
 
@@ -192,7 +195,34 @@ class AuditV2:
             self.resource_group = self.audit.group_name
             self.resource_group_id = self.audit.group_id
 
+    def is_auto_reject(self):
+        """系统自动驳回工单"""
+        if self.workflow_type != WorkflowType.SQL_REVIEW:
+            return False
+        # 按照系统配置确定是自动驳回还是放行
+        auto_review_wrong = self.sys_config.get(
+            "auto_review_wrong", ""
+        )  # 1表示出现警告就驳回，2和空表示出现错误才驳回
+        review_content = self.workflow.sqlworkflowcontent.review_content or "[]"
+        warning_count, error_count = 0, 0
+        for r in json.loads(review_content):
+            err_level = ReviewResult(**r).errlevel
+            if err_level == 1:
+                warning_count += 1
+            if err_level == 2:
+                error_count += 1
+        if any(
+            [
+                warning_count > 0 and auto_review_wrong == "1",
+                error_count > 0 and auto_review_wrong in ("", "1", "2"),
+            ]
+        ):
+            return True
+        return False
+
     def is_auto_review(self) -> bool:
+        if self.is_auto_reject():
+            return False
         if self.workflow_type != WorkflowType.SQL_REVIEW:
             # 当前自动审核仅对 sql 上线工单有用
             return False
@@ -237,11 +267,8 @@ class AuditV2:
         return True
 
     def generate_audit_setting(self) -> AuditSetting:
-        if self.is_auto_review():
-            return AuditSetting(auto_pass=True)
         if self.workflow_type in [WorkflowType.SQL_REVIEW, WorkflowType.QUERY]:
             group_id = self.workflow.group_id
-
         else:
             # ArchiveConfig
             group_id = self.resource_group_id
@@ -252,7 +279,9 @@ class AuditV2:
         except WorkflowAuditSetting.DoesNotExist:
             raise AuditException(f"审批类型 {self.workflow_type.label} 未配置审流")
         return AuditSetting(
-            audit_auth_groups=workflow_audit_setting.audit_auth_groups.split(",")
+            auto_pass=self.is_auto_review(),
+            auto_reject=self.is_auto_reject(),
+            audit_auth_groups=workflow_audit_setting.audit_auth_groups.split(","),
         )
 
     def create_audit(self) -> str:
@@ -300,8 +329,21 @@ class AuditV2:
             create_user=create_user,
             create_user_display=create_user_display,
         )
-        # 自动通过的情况
-        if audit_setting.auto_pass:
+        # 自动审批的情况
+        if audit_setting.auto_reject:
+            self.audit.current_status = WorkflowStatus.REJECTED
+            self.audit.save()
+            WorkflowLog.objects.create(
+                audit_id=self.audit.audit_id,
+                operation_type=WorkflowAction.SUBMIT,
+                operation_type_desc=WorkflowAction.SUBMIT.label,
+                operation_info="系统直接审核不通过",
+                operator=self.audit.create_user,
+                operator_display=self.audit.create_user_display,
+            )
+
+            return "直接审核不通过"
+        elif audit_setting.auto_pass:
             self.audit.current_status = WorkflowStatus.PASSED
             self.audit.save()
             WorkflowLog.objects.create(
