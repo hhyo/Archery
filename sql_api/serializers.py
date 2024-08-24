@@ -432,7 +432,9 @@ class WorkflowContentSerializer(serializers.ModelSerializer):
             logger.error(f"提交工单报错，错误信息：{traceback.format_exc()}")
             raise serializers.ValidationError({"errors": str(e)})
         # 有时候提交后自动审批通过, 在这里改写一下 workflow 状态
-        if auditor.audit.current_status == WorkflowStatus.PASSED:
+        if auditor.audit.current_status == WorkflowStatus.REJECTED:
+            auditor.workflow.status = "workflow_autoreviewwrong"
+        elif auditor.audit.current_status == WorkflowStatus.PASSED:
             auditor.workflow.status = "workflow_review_pass"
         auditor.workflow.save()
         return workflow_content
