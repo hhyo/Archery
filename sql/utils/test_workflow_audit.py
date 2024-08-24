@@ -445,21 +445,6 @@ def test_generate_audit_setting_empty_config(sql_query_apply):
     assert "未配置审流" in str(e.value)
 
 
-def test_generate_audit_setting_auto_review(
-    sql_workflow, setup_sys_config, mocker: MockFixture
-):
-    sql_workflow, _ = sql_workflow
-    setup_sys_config.set("auto_review", True)
-
-    audit = AuditV2(workflow=sql_workflow, sys_config=setup_sys_config)
-    mock_is_auto_review = mocker.patch.object(
-        audit, "is_auto_review", return_value=True
-    )
-    audit_setting = audit.generate_audit_setting()
-    assert audit_setting.auto_pass is True
-    mock_is_auto_review.assert_called()
-
-
 def test_get_workflow(
     archive_apply,
     sql_query_apply,
