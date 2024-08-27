@@ -300,3 +300,233 @@ class TestElasticsearchEngine(unittest.TestCase):
         sql_without_limit = "select user from usertable limit 10, 100"
         check_result = new_engine.filter_sql(sql=sql_without_limit, limit_num=1)
         self.assertEqual(check_result, "select user from usertable limit 10,1;")
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_query_with_invalid_get_request(self, mockElasticsearch):
+        """测试无效的 GET 请求查询"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        mock_conn.search.side_effect = Exception("Invalid SQL query")
+
+        sql = "GET /test_index/_invalid_search"
+        with self.assertRaises(Exception) as context:
+            self.engine.query(sql=sql)
+
+        self.assertIn("执行查询时出错", str(context.exception))
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_put_request(self, mockElasticsearch):
+        """测试 PUT 请求创建索引的情况"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'PUT /test_index {"settings": {"number_of_shards": 1}}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("审核通过", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_post_request(self, mockElasticsearch):
+        """测试 POST 请求添加文档的情况"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'POST /test_index/_doc/1 {"name": "test"}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("审核通过", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_delete_request(self, mockElasticsearch):
+        """测试 DELETE 请求删除文档的情况"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "DELETE /test_index/_doc/1"
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].errlevel, 0)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_put_request_no_index(self, mockElasticsearch):
+        """测试无索引名的 PUT 请求"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'PUT / {"settings": {"number_of_shards": 1}}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_delete_request_no_id(self, mockElasticsearch):
+        """测试无 ID 的 DELETE 请求"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "DELETE /test_index/_doc"
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_post_request_no_endpoint(self, mockElasticsearch):
+        """测试无 API 端点的 POST 请求"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'POST /test_index {"name": "test"}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_get_request(self, mockElasticsearch):
+        """测试无效的 GET 请求"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = "GET /test_index/_search"
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_patch_request(self, mockElasticsearch):
+        """测试无效的 PATCH 请求"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = 'PATCH /test_index/_doc/1 {"name": "test"}'
+        result = self.engine.execute_check(sql=sql)
+
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.rows[0].errlevel, 2)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_check_with_comments(self, mockElasticsearch):
+        """测试带有注释的 SQL 命令"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        sql = """
+        # 这是一个注释
+        PUT /test_index {\"settings\": {\"number_of_shards\": 1}}
+        # POST /test_index/_doc/1 {\"name\": \"test\"}
+        DELETE /test_index/_doc/1
+        """
+        result = self.engine.execute_check(sql=sql)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.rows[0].errlevel, 0)  # PUT 应该通过
+        self.assertEqual(result.rows[1].errlevel, 0)  # DELETE 应该通过
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_put_request(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 PUT 请求执行"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'PUT /test_index {"settings": {"number_of_shards": 1}}'
+        )
+        workflow.db_name = "test_db"
+
+        mock_conn.indices.create.return_value = {
+            "acknowledged": True,
+            "shards_acknowledged": True,
+            "index": "test_index",
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_post_request(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 POST 请求执行"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'POST /test_index/_doc/1 {"name": "test"}'
+        )
+        workflow.db_name = "test_db"
+
+        mock_conn.index.return_value = {
+            "_index": "test_index",
+            "_id": "1",
+            "result": "created",
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_delete_request(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 DELETE 请求执行"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = "DELETE /test_index/_doc/1"
+        workflow.db_name = "test_db"
+
+        mock_conn.delete.return_value = {
+            "_index": "test_index",
+            "_id": "1",
+            "result": "deleted",
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_with_comments(self, mockElasticsearch):
+        """测试 execute_workflow 方法的带注释 SQL"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = """
+        # This is a comment
+        PUT /test_index {\"settings\": {\"number_of_shards\": 1}}
+        DELETE /test_index/_doc/1
+        """
+        workflow.db_name = "test_db"
+
+        mock_conn.indices.create.return_value = {
+            "acknowledged": True,
+            "shards_acknowledged": True,
+            "index": "test_index",
+        }
+        mock_conn.delete.return_value = {
+            "_index": "test_index",
+            "_id": "1",
+            "result": "deleted",
+        }
+
+        result = self.engine.execute_workflow(workflow)
+
+        self.assertEqual(len(result.rows), 2)
+        self.assertEqual(result.rows[0].errlevel, 0)  # PUT 应该通过
+        self.assertEqual(result.rows[1].errlevel, 0)  # DELETE 应该通过
