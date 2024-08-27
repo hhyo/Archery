@@ -530,3 +530,119 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(len(result.rows), 2)
         self.assertEqual(result.rows[0].errlevel, 0)  # PUT 应该通过
         self.assertEqual(result.rows[1].errlevel, 0)  # DELETE 应该通过
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_update_request(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 _update 请求执行"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        # 设置 mock 返回值
+        mock_conn.update.return_value = {
+            "_index": "test_index",
+            "_id": "1",
+            "result": "updated",
+        }
+
+        # 创建一个模拟的 workflow 对象，包含 _update SQL 命令
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'POST /test_index/_update/1 {"doc": {"name": "new_name"}}'
+        )
+        workflow.db_name = "test_db"
+
+        # 执行 execute_workflow 方法
+        result = self.engine.execute_workflow(workflow)
+
+        # 验证返回结果
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertIn("POST", result.rows[0].sql)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_update_by_query_request(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 _update_by_query 请求执行"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        # 设置 mock 返回值
+        mock_conn.update_by_query.return_value = {
+            "took": 100,
+            "timed_out": False,
+            "total": 1,
+            "updated": 1,
+            "deleted": 0,
+            "batches": 1,
+            "version_conflicts": 0,
+            "noops": 0,
+            "retries": {"bulk": 0, "search": 0},
+            "throttled_millis": 0,
+            "requests_per_second": -1.0,
+            "throttled_until_millis": 0,
+            "failures": [],
+        }
+
+        # 创建一个模拟的 workflow 对象，包含 _update_by_query SQL 命令
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = 'POST /test_index/_update_by_query {"script": {"source": "ctx._source[\'name\'] = \'new_name\'"}, "query": {"term": {"name": "old_name"}}}'
+        workflow.db_name = "test_db"
+
+        # 执行 execute_workflow 方法
+        result = self.engine.execute_workflow(workflow)
+
+        # 验证返回结果
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 0)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertIn("POST", result.rows[0].sql)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_create_index_exception(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 __create_index 方法异常。 此异常只是告警。"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        # 设置 Elasticsearch 创建索引时抛出异常
+        mock_conn.indices.create.side_effect = Exception(
+            "already_exists Index creation failed"
+        )
+
+        # 创建一个模拟的 workflow 对象，包含创建索引的 SQL 命令
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = (
+            'PUT /test_index {"settings": {"number_of_shards": 1}}'
+        )
+        workflow.db_name = "test_db"
+
+        # 执行 execute_workflow 方法
+        result = self.engine.execute_workflow(workflow)
+
+        # 验证返回结果
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 1)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertIn("index already exists", result.rows[0].errormessage)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_execute_workflow_delete_data_exception(self, mockElasticsearch):
+        """测试 execute_workflow 方法的 __delete_data 方法异常，此异常只是告警。"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        # 设置 Elasticsearch 删除数据时抛出 NotFoundError 异常
+        mock_conn.delete.side_effect = Exception("NotFoundError")
+
+        # 创建一个模拟的 workflow 对象，包含删除文档的 SQL 命令
+        workflow = Mock()
+        workflow.sqlworkflowcontent.sql_content = "DELETE /test_index/_doc/1"
+        workflow.db_name = "test_db"
+
+        # 执行 execute_workflow 方法
+        result = self.engine.execute_workflow(workflow)
+
+        # 验证返回结果
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].errlevel, 1)
+        self.assertIn("Execute Successfully", result.rows[0].stagestatus)
+        self.assertIn("Document not found", result.rows[0].errormessage)
