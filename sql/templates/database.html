@@ -164,8 +164,8 @@
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
-                                for (let i = 0; i < value.length; i++) {
-                                    grantee = grantee + value[i] + '</br>'
+                                for (let i of row.grantees || []) {
+                                    grantee += i + '</br>'
                                 }
                                 return grantee
                             }
@@ -191,8 +191,8 @@
                             field: 'grantees',
                             formatter: function (value, row, index) {
                                 let grantee = '';
-                                for (let i = 0; i < value.length; i++) {
-                                    grantee = grantee + value[i] + '</br>'
+                                for (let i of row.grantees || []) {
+                                    grantee += i + '</br>'
                                 }
                                 return grantee
                             }
