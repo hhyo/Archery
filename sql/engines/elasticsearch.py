@@ -1,10 +1,21 @@
 # -*- coding: UTF-8 -*-
+""" 
+@author: feiazifeiazi
+@license: Apache Licence
+@file: xx.py
+@time: 2024-08-01
+"""
+__author__ = "feiazifeiazi"
+
 import logging
+import os
 import re
 import traceback
 from opensearchpy import OpenSearch
 import simplejson as json
 import sqlparse
+
+from common.utils.timer import FuncTimer
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from common.config import SysConfig
@@ -35,6 +46,30 @@ class QueryParamsSearch:
         self.size = size
         self.sql = sql if sql is not None else ""
         self.query_body = query_body if query_body is not None else {}
+
+
+class ElasticsearchDocument:
+    """ES doc对象"""
+
+    def __init__(
+        self,
+        sql: str = None,
+        method: str = None,
+        index_name: str = None,
+        api_endpoint: str = "",
+        doc_id: str = None,
+        doc_data_body: str = None,
+    ):
+        self.sql = sql
+        self.method = method.upper() if method is not None else None
+        self.index_name = index_name
+        self.api_endpoint = api_endpoint.lower() if api_endpoint is not None else ""
+        self.doc_id = doc_id
+        self.doc_data_body = doc_data_body
+
+    def describe(self) -> str:
+        """返回格式化的描述信息"""
+        return f"[index_name：{self.index_name}, method：{self.method}, api_endpoint：{self.api_endpoint}, doc_id：{self.doc_id}]"
 
 
 class ElasticsearchEngineBase(EngineBase):
@@ -398,7 +433,7 @@ class ElasticsearchEngineBase(EngineBase):
         sql = search_query_str.rstrip(";").strip()
         if re.match(r"^get", sql, re.I):
             # 解析查询字符串
-            lines = search_query_str.splitlines()
+            lines = sql.splitlines()
             method_line = lines[0].strip()
 
             query_body = "\n".join(lines[1:]).strip()
@@ -411,7 +446,7 @@ class ElasticsearchEngineBase(EngineBase):
                 json_body = json.loads(query_body)
             except json.JSONDecodeError as json_err:
                 raise ValueError(
-                    f"query_body：{query_body} 无法转为Json格式。{json_err}，"
+                    f"无法转为Json格式。{json_err}。query_body：{query_body}。"
                 )
 
             # 提取方法和路径
@@ -458,7 +493,6 @@ class ElasticsearchEngineBase(EngineBase):
             # 检查 JSON 中是否已经有 size，如果没有就设置
             if "size" not in json_body:
                 json_body["size"] = size
-
             # 构建 QueryParams 对象
             query_params = QueryParamsSearch(
                 index=index_pattern,
@@ -471,6 +505,513 @@ class ElasticsearchEngineBase(EngineBase):
         elif re.match(r"^select", sql, re.I):
             query_params = QueryParamsSearch(sql=sql)
         return query_params
+
+    def execute_check(self, db_name=None, sql=""):
+        """上线单执行前的检查
+        #PUT只有索引名，没有api-endpoint时, 解释为创建索引，需要包含mappings或settings。
+        #PUT有索引名，有_doc，没有Id，错误写法，必须要写Id。
+
+        #post 有索引名, 没有_doc，错误写法。报错。
+        #post 有索引，有_doc,  有或没有id 均可。
+        #post 有索引，api-endpoint=_search时，这是查询，报错。
+
+        #delete 有索引，没有_doc，解释为删除表。 archery禁止此操作,需要报错。
+        #delete 有索引，有_doc，没有id，删除必须包含id，需要报错。
+
+        # api-endpoint为_update时，只能post，不能put，错误写法，报错。
+        # api-endpoint为_update_by_query时，只能post，不能put，错误写法，报错。
+        """
+        check_result = ReviewSet(full_sql=sql)
+        rowid = 1
+        documents = self.__split_sql(sql)
+        for doc in documents:
+            is_pass = False
+            doc_desc = doc.describe()
+            if re.match(r"^get|^select", doc.sql, re.I):
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus="驳回不支持语句",
+                    errormessage="仅支持PUT,POST,DELETE等API方法，GET,SELECT查询语句请使用SQL查询功能！",
+                    sql=doc.sql,
+                )
+            elif re.match(r"^#", doc.sql, re.I):
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=0,
+                    stagestatus="Audit completed",
+                    errormessage="此为注释信息。",
+                    sql=doc.sql,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+            elif not doc.index_name:
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus="驳回不支持语句",
+                    errormessage=f"请求必须包含索引名称或无法解析。解析结果：{doc_desc}",
+                    sql=doc.sql,
+                )
+            elif doc.method == "DELETE":
+                if not doc.doc_id:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage="删除操作必须包含id条件。",
+                        sql=doc.sql,
+                    )
+                else:
+                    if is_pass == False:
+                        is_pass = True
+            elif not doc.api_endpoint:
+                if doc.method == "PUT":
+                    if not doc.doc_data_body or (
+                        "mappings" in doc.doc_data_body
+                        or "settings" in doc.doc_data_body
+                    ):
+                        result = ReviewResult(
+                            id=rowid,
+                            errlevel=0,
+                            stagestatus="Audit completed",
+                            errormessage=f"审核通过。解析结果：创建表：[index_name：{doc.index_name}]",
+                            sql=doc.sql,
+                        )
+                    else:
+                        result = ReviewResult(
+                            id=rowid,
+                            errlevel=2,
+                            stagestatus="驳回不支持语句",
+                            errormessage="PUT请求创建索引时请求体可以为空或需要包含mappings或settings。",
+                            sql=doc.sql,
+                        )
+                elif doc.method == "POST":
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"POST请求必须指定API端点，例如_doc。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                    )
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint == "_doc":
+                if doc.method == "PUT":
+                    if not doc.doc_id:
+                        result = ReviewResult(
+                            id=rowid,
+                            errlevel=2,
+                            stagestatus="驳回不支持语句",
+                            errormessage="PUT请求必须包含文档Id。",
+                            sql=doc.sql,
+                        )
+                    else:
+                        if is_pass == False:
+                            is_pass = True
+                elif doc.method == "POST":
+                    if is_pass == False:
+                        is_pass = True
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint == "_search":
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus="驳回不支持语句",
+                    errormessage="_search属于查询方法。",
+                    sql=doc.sql,
+                )
+            elif doc.api_endpoint == "_update":
+                if doc.method == "POST":
+                    if not doc.doc_id:
+                        result = ReviewResult(
+                            id=rowid,
+                            errlevel=2,
+                            stagestatus="驳回不支持语句",
+                            errormessage=f"POST请求{doc.api_endpoint}时必须包含文档Id。",
+                            sql=doc.sql,
+                        )
+                    else:
+                        if is_pass == False:
+                            is_pass = True
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作，{doc.api_endpoint}需要使用POST方法。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint == "_update_by_query":
+                if doc.method == "POST":
+                    if is_pass == False:
+                        is_pass = True
+                else:
+                    result = ReviewResult(
+                        id=rowid,
+                        errlevel=2,
+                        stagestatus="驳回不支持语句",
+                        errormessage=f"不支持此操作，{doc.api_endpoint}需要使用POST方法。解析结果：{doc_desc}",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+            elif doc.api_endpoint not in ["", "_doc", "_update_by_query", "_update"]:
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus="驳回不支持语句",
+                    errormessage="API操作端点(API Endpoint)仅支持: 空, _doc、_update、_update_by_query。",
+                    sql=doc.sql,
+                )
+            else:
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=2,
+                    stagestatus="驳回不支持语句",
+                    errormessage=f"不支持此操作。解析结果：{doc_desc}",
+                    sql=doc.sql,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+            # 通用的，通过审核
+            if is_pass:
+                result = ReviewResult(
+                    id=rowid,
+                    errlevel=0,
+                    stagestatus="Audit completed",
+                    errormessage=f"审核通过。解析结果：{doc_desc}",
+                    sql=doc.sql,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+
+            check_result.rows.append(result)
+            rowid += 1
+        # 统计警告和错误数量
+        for r in check_result.rows:
+            if r.errlevel == 1:
+                check_result.warning_count += 1
+            if r.errlevel == 2:
+                check_result.error_count += 1
+        return check_result
+
+    def execute_workflow(self, workflow):
+        """执行上线单，返回Review set"""
+        sql = workflow.sqlworkflowcontent.sql_content
+        docs = self.__split_sql(sql)
+        execute_result = ReviewSet(full_sql=sql)
+        line = 0
+        try:
+            conn = self.get_connection(db_name=workflow.db_name)
+            for doc in docs:
+                line += 1
+                if re.match(r"^#", doc.sql, re.I):
+                    execute_result.rows.append(
+                        ReviewResult(
+                            id=line,
+                            errlevel=0,
+                            stagestatus="Execute Successfully",
+                            errormessage="注释信息不需要执行。",
+                            sql=doc.sql,
+                            affected_rows=0,
+                            execute_time=0,
+                        )
+                    )
+                elif doc.method == "DELETE":
+                    reviewResult = self.__delete_data(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "":
+                    # 创建索引
+                    reviewResult = self.__create_index(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "_update":
+                    reviewResult = self.__update(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "_update_by_query":
+                    reviewResult = self.__update_by_query(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                elif doc.api_endpoint == "_doc":
+                    reviewResult = self.__add_or_update(conn, doc)
+                    reviewResult.id = line
+                    execute_result.rows.append(reviewResult)
+                else:
+                    raise Exception(f"不支持的API类型：{doc.api_endpoint}")
+        except Exception as e:
+            logger.warning(
+                f"ES命令执行报错，语句：{doc.sql}， 错误信息：{traceback.format_exc()}"
+            )
+            # 追加当前报错语句信息到执行结果中
+            execute_result.error = str(e)
+            execute_result.rows.append(
+                ReviewResult(
+                    id=line,
+                    errlevel=2,
+                    stagestatus="Execute Failed",
+                    errormessage=f"异常信息：{e}",
+                    sql=doc.sql,
+                    affected_rows=0,
+                    execute_time=0,
+                )
+            )
+        if execute_result.error:
+            # 如果失败, 将剩下的部分加入结果集
+            for doc in docs[line:]:
+                line += 1
+                execute_result.rows.append(
+                    ReviewResult(
+                        id=line,
+                        errlevel=0,
+                        stagestatus="Audit completed",
+                        errormessage=f"前序语句失败, 未执行",
+                        sql=doc.sql,
+                        affected_rows=0,
+                        execute_time=0,
+                    )
+                )
+        return execute_result
+
+    def __update(self, conn, doc):
+        """ES的  update方法"""
+        errlevel = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.update(
+                    index=doc.index_name,
+                    id=doc.doc_id,
+                    body=doc.doc_data_body,
+                )
+                successful_count = response.get("_shards", {}).get("successful", None)
+                response_str = str(response)
+            except Exception as e:
+                error_message = str(e)
+                if "NotFoundError" in error_message:
+                    response_str = "document missing: " + error_message
+                    successful_count = 0
+                    errlevel = 1
+                else:
+                    raise
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __add_or_update(self, conn, doc):
+        """ES的 add_or_update方法"""
+        with FuncTimer() as t:
+            if doc.api_endpoint == "_doc":
+                response = conn.index(
+                    index=doc.index_name,
+                    id=doc.doc_id,
+                    body=doc.doc_data_body,
+                )
+            else:
+                raise Exception(f"不支持的API类型：{doc.api_endpoint}")
+
+            successful_count = response.get("_shards", {}).get("successful", None)
+            response_str = str(response)
+        return ReviewResult(
+            errlevel=0,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __update_by_query(self, conn, doc):
+        """ES的 update_by_query方法"""
+        errlevel = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.update_by_query(
+                    index=doc.index_name, body=doc.doc_data_body
+                )
+                successful_count = response.get("total", 0)
+                response_str = str(response)
+            except Exception as e:
+                raise e
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __create_index(self, conn, doc):
+        """ES的 创建索引方法"""
+        errlevel = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.indices.create(
+                    index=doc.index_name, body=doc.doc_data_body
+                )
+                successful_count = 0
+                response_str = str(response)
+            except Exception as e:
+                error_message = str(e)
+                if "already_exists" in error_message:
+                    response_str = "index already exists: " + error_message
+                    successful_count = 0
+                    errlevel = 1
+                else:
+                    raise
+
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __delete_data(self, conn, doc):
+        """
+        数据删除
+        """
+        errlevel = 0
+        if not doc.doc_id:
+            response_str = "删除操作必须包含id条件。"
+            successful_count = 0
+        with FuncTimer() as t:
+            try:
+                response = conn.delete(index=doc.index_name, id=doc.doc_id)
+                successful_count = response.get("_shards", {}).get("successful", None)
+                response_str = str(response)
+            except Exception as e:
+                error_message = str(e)
+                if "NotFoundError" in error_message:
+                    response_str = "Document not found: " + error_message
+                    successful_count = 0
+                    errlevel = 1
+                else:
+                    raise
+        return ReviewResult(
+            errlevel=errlevel,
+            stagestatus="Execute Successfully",
+            errormessage=response_str,
+            sql=doc.sql,
+            affected_rows=successful_count,
+            execute_time=t.cost,
+        )
+
+    def __get_document_from_sql(self, sql):
+        """
+        解析输入的SQL，提取索引、文档 ID 和文档数据，返回 ElasticsearchDocument 实例。
+        """
+        result = ElasticsearchDocument(sql=sql)
+        if re.match(r"^POST |^PUT |^DELETE ", sql, re.I):
+
+            # 提取方法和路径
+            method, path_with_params = sql.split(maxsplit=1)
+            if path_with_params.startswith("{"):
+                # 如果是{ 开头，说明没有路径部分。
+                return result
+            # 确保路径以 '/' 开头
+            if not path_with_params.startswith("/"):
+                path_with_params = "/" + path_with_params
+
+            parts = path_with_params.split(maxsplit=1)
+            path = parts[0]  # 获取路径部分
+            doc_data_body = parts[1].strip() if len(parts) > 1 else None
+
+            path_parts = path.split("/")
+            # 提取各个部分
+            index_name = path_parts[1] if len(path_parts) > 1 else None
+            api_endpoint = path_parts[2] if len(path_parts) > 2 else None
+            doc_id = path_parts[3] if len(path_parts) > 3 else None
+            doc_data_json = None
+            if doc_data_body:
+                try:
+                    doc_data_json = json.loads(doc_data_body)
+                except json.JSONDecodeError as json_err:
+                    raise ValueError(
+                        f"无法转为Json格式。{json_err}。doc_data_body：{doc_data_body}。"
+                    )
+            result = ElasticsearchDocument(
+                sql=sql,
+                method=method,
+                index_name=index_name,
+                api_endpoint=api_endpoint,
+                doc_id=doc_id,
+                doc_data_body=doc_data_json,
+            )
+        return result
+
+    def __split_sql(self, sql):
+        """
+        解析输入的多行命令字符串，将其分割为独立的命令列表，解析为documents对象返回
+        """
+        lines = sql.strip().splitlines()
+        commands = []
+        current_command = []
+        brace_level = 0
+
+        for line in lines:
+            stripped_line = line.strip()
+
+            if not stripped_line:
+                continue
+            if stripped_line.startswith("#"):
+                continue
+
+            brace_level += stripped_line.count("{")
+            brace_level -= stripped_line.count("}")
+
+            # 将当前行加入当前命令
+            current_command.append(stripped_line)
+
+            if brace_level == 0 and current_command:
+                commands.append(os.linesep.join(current_command))
+                current_command = []
+
+        merged_commands = []
+        for command in commands:
+            # 如果当前命令以 { 开头，合并到前一个命令
+            if command.startswith("{") and merged_commands:
+                # 合并当前命令到上一个命令
+                merged_commands[-1] += os.linesep + command
+            else:
+                # 如果不是以 { 开头，则直接添加到结果中
+                merged_commands.append(command)
+
+        # 创建 ElasticsearchDocument 实例列表
+        documents = []
+        for command in merged_commands:
+            doc = self.__get_document_from_sql(command)
+            if doc:
+                documents.append(doc)
+        return documents
 
 
 class ElasticsearchEngine(ElasticsearchEngineBase):
