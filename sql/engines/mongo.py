@@ -1242,7 +1242,7 @@ class MongoEngine(EngineBase):
                             "client"
                         ]
 
-                    # 获取 effectiveUsers 列表
+                    # 获取此会话的用户名
                     effective_users_key = "effectiveUsers_user"
                     effective_users = operation.get("effectiveUsers", [])
                     if isinstance(effective_users, list) and effective_users:
