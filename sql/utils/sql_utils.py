@@ -380,3 +380,60 @@ def get_exec_sqlitem_list(reviewResult, db_name):
             )
         )
     return list
+
+
+def filter_db_list(db_list, allow_db_name_list, key="value"):
+    """
+    根据配置的数据库列表过滤数据库名称列表。
+
+    :param db_list: 待过滤的数据库名称列表，可能是字符串列表或字典列表。
+    示例数据：
+    1. db_list=[{"value": 0, "text": 0, "value": 1, "text": 1}]
+    2. db_list=["a_db","b_db"]
+    :param allow_db_name_list: 配置的数据库显示列表。支持通配符 * 和范围 ~。
+    :param key: 当 db_list 包含字典时，指定用于匹配的键。默认值为 'value'。
+    :return: 过滤后的数据库名称列表或字典列表。
+    """
+    if not allow_db_name_list:
+        return db_list  # 如果没有指定 allow_db_name_list，则返回原始 db_list
+
+    # 将通配符模式字符串转换为列表
+    allowed_patterns = allow_db_name_list.split(",")
+
+    allowed_regexes = []
+    for pattern in allowed_patterns:
+        pattern = pattern.strip()
+        if not pattern:
+            continue
+        if "~" in pattern:
+            # 如果模式包含范围 "~"，解析范围并生成数字列表
+            try:
+                start, end = map(int, pattern.split("~"))
+                # 将生成的数字添加到允许列表的正则表达式列表
+                allowed_regexes.extend(
+                    [re.compile(f"^{db}$") for db in range(start, end + 1)]
+                )
+            except ValueError:
+                # 如果范围内的值不是有效的整数
+                allowed_regexes.append(re.compile(f"^{pattern}$".replace("*", ".*")))
+        else:
+            # 转义特殊字符,并将通配符模式转换为正则表达式
+            escaped_pattern = re.escape(pattern).replace(r"\*", ".*")
+            allowed_regexes.append(re.compile(f"^{escaped_pattern}$"))
+
+    filtered_list = []
+
+    # 根据类型处理 db_list
+    if all(isinstance(db, dict) for db in db_list):
+        # 如果 db_list 是一个字典的列表
+        for db in db_list:
+            db_value = db.get(key, "")
+            if any(regex.match(db_value) for regex in allowed_regexes):
+                filtered_list.append(db)
+    else:
+        # 如果 db_list 是一个字符串的列表
+        for db in db_list:
+            if any(regex.match(db) for regex in allowed_regexes):
+                filtered_list.append(db)
+
+    return filtered_list

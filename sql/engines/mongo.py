@@ -15,6 +15,8 @@ from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
 
+from sql.utils.sql_utils import filter_db_list
+
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 from common.config import SysConfig
@@ -848,9 +850,12 @@ class MongoEngine(EngineBase):
         result = ResultSet()
         conn = self.get_connection()
         try:
-            result.rows = conn.list_database_names()
+            db_list = conn.list_database_names()
         except OperationFailure:
-            result.rows = [self.db_name]
+            db_list = [self.db_name]
+        result.rows = filter_db_list(db_list, self.allow_db_name_list)
+        return result
+
         return result
 
     def get_all_tables(self, db_name, **kwargs):
