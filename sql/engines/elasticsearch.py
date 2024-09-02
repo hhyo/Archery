@@ -143,8 +143,8 @@ class ElasticsearchEngineBase(EngineBase):
                     # 将系统的API作为表名
                     tables.add("/_cat/indices/" + self.db_name)
                     tables.add("/_cat/nodes")
-                    tables.add("/_security/user")
                     tables.add("/_security/role")
+                    tables.add("/_security/user")
 
                 for index_name in indices.keys():
                     if index_name.startswith("."):

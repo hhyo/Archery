@@ -56,6 +56,32 @@ class TestElasticsearchEngine(unittest.TestCase):
         self.assertEqual(result.rows, ["test__index1", "test__index2"])
 
     @patch("sql.engines.elasticsearch.Elasticsearch")
+    def test_get_all_tables_system(self, mockElasticsearch):
+        """测试获取所有表名，特定数据库 'system'"""
+        mock_conn = Mock()
+        mockElasticsearch.return_value = mock_conn
+
+        # 假设系统相关的索引（以.开头的）和特定的_cat API端点
+        mock_conn.indices.get_alias.return_value = {
+            ".kibana_1": {},
+            ".security": {},
+            "test__index": {},
+        }
+
+        result = self.engine.get_all_tables(db_name="system")
+
+        # 预期结果应包括系统相关的表名和 /_cat API 端点
+        expected_tables = [
+            "/_cat/indices/*",
+            "/_cat/indices/test",
+            "/_cat/nodes",
+            "/_security/role",
+            "/_security/user",
+        ]
+
+        self.assertEqual(result.rows, expected_tables)
+
+    @patch("sql.engines.elasticsearch.Elasticsearch")
     def test_query(self, mockElasticsearch):
         mock_conn = Mock()
         mock_conn.search.return_value = {
