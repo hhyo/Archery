@@ -856,8 +856,6 @@ class MongoEngine(EngineBase):
         result.rows = filter_db_list(db_list, self.allow_db_name_list)
         return result
 
-        return result
-
     def get_all_tables(self, db_name, **kwargs):
         result = ResultSet()
         conn = self.get_connection()

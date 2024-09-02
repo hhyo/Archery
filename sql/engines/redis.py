@@ -15,6 +15,7 @@ import logging
 import traceback
 
 from common.utils.timer import FuncTimer
+from sql.utils.sql_utils import filter_db_list
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
 
@@ -85,6 +86,7 @@ class RedisEngine(EngineBase):
             rows = max(dbs + [15]) + 1
 
         db_list = [str(x) for x in range(int(rows))]
+        db_list = filter_db_list(db_list, self.allow_db_name_list)
         result.rows = db_list
         return result
 
