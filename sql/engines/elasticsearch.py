@@ -1114,7 +1114,7 @@ class OpenSearchEngine(ElasticsearchEngineBase):
                 self.conn = OpenSearch(
                     hosts=hosts,
                     http_auth=http_auth,
-                    verify_certs=False,  # 开启证书验证
+                    verify_certs=True,  # 开启证书验证
                 )
             except Exception as e:
                 raise Exception(f"OpenSearch 连接建立失败: {str(e)}")
