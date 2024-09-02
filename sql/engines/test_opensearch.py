@@ -34,8 +34,6 @@ class TestOpenSearchEngine(unittest.TestCase):
         expected_result = [
             "other",
             "system",
-            "system_internal",
-            "system_kibana",
             "test",
         ]
         self.assertEqual(result.rows, expected_result)

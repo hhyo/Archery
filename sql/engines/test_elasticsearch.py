@@ -36,8 +36,6 @@ class TestElasticsearchEngine(unittest.TestCase):
         expected_result = [
             "other",
             "system",
-            "system_internal",
-            "system_kibana",
             "test",
         ]
         self.assertEqual(result.rows, expected_result)
@@ -56,10 +54,6 @@ class TestElasticsearchEngine(unittest.TestCase):
         # Test specific database
         result = self.engine.get_all_tables(db_name="test")
         self.assertEqual(result.rows, ["test__index1", "test__index2"])
-
-        # Test system_kibana
-        result = self.engine.get_all_tables(db_name="system_kibana")
-        self.assertEqual(result.rows, [".kibana_1"])
 
     @patch("sql.engines.elasticsearch.Elasticsearch")
     def test_query(self, mockElasticsearch):
