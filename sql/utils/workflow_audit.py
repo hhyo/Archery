@@ -149,7 +149,7 @@ class AuditV2:
             self.resource_group_id = self.workflow.group_id
         elif isinstance(self.workflow, ArchiveConfig):
             try:
-                group_in_db = ResourceGroup.objects.get(group_name=self.resource_group)
+                group_in_db = ResourceGroup.objects.get(group_id=self.workflow.resource_group_id)
                 self.resource_group_id = group_in_db.group_id
             except ResourceGroup.DoesNotExist:
                 raise AuditException(f"参数错误, 未发现资源组 {self.resource_group}")
