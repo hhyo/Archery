@@ -1242,6 +1242,18 @@ class MongoEngine(EngineBase):
                             "client"
                         ]
 
+                    # 获取 effectiveUsers 列表
+                    effective_users_key = "effectiveUsers_user"
+                    effective_users = operation.get("effectiveUsers", [])
+                    if isinstance(effective_users, list) and effective_users:
+                        first_user = effective_users[0]
+                        if isinstance(first_user, dict):
+                            operation[effective_users_key] = first_user.get("user", [])
+                        else:
+                            operation[effective_users_key] = None
+                    else:
+                        operation[effective_users_key] = None
+
                     # client_s 只是处理的mongos，并不是实际客户端
                     # client 在sharding获取不到？
                     if command_type in ["Full"]:
