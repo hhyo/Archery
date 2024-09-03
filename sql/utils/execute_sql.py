@@ -14,6 +14,7 @@ from sql.engines import get_engine
 from django_celery_results.models import TaskResult
 from sql.models import Users
 from celery import shared_task
+import json
 
 logger = logging.getLogger("default")
 
