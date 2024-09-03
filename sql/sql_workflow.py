@@ -2,7 +2,7 @@
 import datetime
 import logging
 import traceback
-
+import time
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
@@ -321,7 +321,7 @@ def execute(request):
             update_fields=["status"]
         )
         # 删除定时执行任务
-        schedule_name = f"sqlreview-timing-{workflow_id}"
+        schedule_name=SqlWorkflow(id=workflow_id).timing_task_id
         del_schedule(schedule_name)
         # 加入执行队列
         execute_sql_excute.apply_async(
@@ -398,8 +398,10 @@ def timing_task(request):
         return render(request, "error.html", context)
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
-    schedule_name = f"sqlreview-timing-{workflow_id}"
-
+    timing_task_id=workflow_detail.timing_task_id
+    del_schedule(timing_task_id)
+    task_time = time.time()
+    schedule_name = f"sqlreview-timing-{workflow_id}-{task_time}"
     if on_correct_time_period(workflow_id, run_date) is False:
         context = {
             "errMsg": "不在可执行时间范围内，如果需要修改执    行时间请重新提交工单!"
@@ -411,6 +413,7 @@ def timing_task(request):
         with transaction.atomic():
             # 将流程状态修改为定时执行
             workflow_detail.status = "workflow_timingtask"
+            workflow_detail.timing_task_id=schedule_name
             workflow_detail.save()
             # 调用添加定时任务
             add_sql_schedule(schedule_name, run_date, workflow_id)
@@ -474,7 +477,7 @@ def cancel(request):
         sql_workflow.save()
     # 删除定时执行task
     if sql_workflow.status == "workflow_timingtask":
-        del_schedule(f"sqlreview-timing-{workflow_id}")
+        del_schedule(sql_workflow.timing_task_id)
     # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
     sys_config = SysConfig()
     is_notified = (
