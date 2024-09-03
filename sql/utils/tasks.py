@@ -56,5 +56,3 @@ def task_info(name):
         return periodic_task
     except PeriodicTask.DoesNotExist:
         return None
-
-
