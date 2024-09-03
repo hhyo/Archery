@@ -48,7 +48,6 @@ def del_schedule(name):
         print(f"终止任务时发生错误：{str(e)}")
 
 
-
 def task_info(name):
     """获取定时任务详情"""
     try:
