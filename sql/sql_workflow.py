@@ -31,6 +31,7 @@ from sql.utils.sql_review import (
 from sql.utils.tasks import add_sql_schedule, del_schedule
 from sql.utils.workflow_audit import Audit, get_auditor, AuditException
 from .models import SqlWorkflow
+from sql.utils.execute_sql import execute  as execute_sql_excute,execute_callback
 
 logger = logging.getLogger("default")
 
@@ -269,12 +270,14 @@ def passed(request):
         else True
     )
     if is_notified:
-        async_task(
-            notify_for_audit,
-            workflow_audit=auditor.audit,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"sqlreview-pass-{workflow_id}",
+        # 异步调用 Celery 任务
+        notify_for_audit.apply_async(
+            args=[
+                auditor.audit.audit_id,
+                workflow_audit_detail.audit_detail_id,
+            ],
+            time_limit=60,  # 设置此次任务的超时时间为60秒
+            task_id=f"sqlreview-pass-{workflow_id}"  # 可选，自定义任务ID
         )
 
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
@@ -322,13 +325,13 @@ def execute(request):
         schedule_name = f"sqlreview-timing-{workflow_id}"
         del_schedule(schedule_name)
         # 加入执行队列
-        async_task(
-            "sql.utils.execute_sql.execute",
-            workflow_id,
-            request.user,
-            hook="sql.utils.execute_sql.execute_callback",
-            timeout=-1,
-            task_name=f"sqlreview-execute-{workflow_id}",
+        execute_sql_excute.apply_async(
+            args=[
+                workflow_id,
+                request.user.username,
+            ],
+            task_id=f"sqlreview-excute-{workflow_id}",  # 可选，自定义任务ID
+            link=execute_callback.s(f"sqlreview-excute-{workflow_id}", workflow_id)
         )
         # 增加工单日志
         Audit.add_log(
@@ -481,12 +484,14 @@ def cancel(request):
         else True
     )
     if is_notified:
-        async_task(
-            notify_for_audit,
-            workflow_audit=auditor.audit,
-            workflow_audit_detail=workflow_audit_detail,
-            timeout=60,
-            task_name=f"sqlreview-cancel-{workflow_id}",
+        # 异步调用 Celery 任务
+        notify_for_audit.apply_async(
+            args=[
+                auditor.audit.audit_id,
+                workflow_audit_detail.audit_detail_id,
+            ],
+            time_limit=60,  # 设置此次任务的超时时间为60秒
+            task_id=f"sqlreview-cancel-{workflow_id}"  # 可选，自定义任务ID
         )
     return HttpResponseRedirect(reverse("sql:detail", args=(workflow_id,)))
 
