@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import Group
 from django.db import transaction
 from django.utils.decorators import method_decorator
-from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema
 from rest_framework import views, generics, status, serializers, permissions
 from rest_framework.response import Response

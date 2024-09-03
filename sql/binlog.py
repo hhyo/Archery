@@ -10,7 +10,7 @@ import simplejson as json
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, JsonResponse
-from django_q.tasks import async_task
+
 
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from sql.engines import get_engine
@@ -208,13 +208,15 @@ def my2sql(request):
     if save_sql:
         args.pop("password")
         args.pop("output-toScreen")
-        async_task(
-            my2sql_file,
-            args=args,
-            user=request.user,
-            hook=notify_for_my2sql,
-            timeout=-1,
-            task_name=f"my2sql-{time.time()}",
+        save_file_time = time.time()
+        my2sql_file.apply_async(
+            args=[
+                args,
+                instance_name,
+                request.user.username,
+            ],
+            task_id=f"my2sql-{save_file_time}",  # 可选，自定义任务ID
+            link=notify_for_my2sql.s(task_id=f"my2sql-{save_file_time}")
         )
 
     # 返回查询结果

@@ -11,7 +11,6 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django_q.tasks import async_task
 
 from common.config import SysConfig
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction

@@ -20,7 +20,6 @@ from django.db.models.functions import Concat
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django_q.tasks import async_task
 
 from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
@@ -215,11 +214,12 @@ def archive_apply(request):
         if audit_handler.audit.current_status == WorkflowStatus.PASSED:
             audit_handler.workflow.state = True
         audit_handler.workflow.save()
-        async_task(
-            notify_for_audit,
-            workflow_audit=audit_handler.audit,
-            timeout=60,
-            task_name=f"archive-apply-{audit_handler.workflow.id}",
+        notify_for_audit.apply_async(
+            args=[
+                audit_handler.audit.audit_id,
+            ],
+            time_limit=60,  # 设置此次任务的超时时间为60秒
+            task_id=f"archive-apply-{audit_handler.workflow.id}"  # 可选，自定义任务ID
         )
     return JsonResponse(
         {
@@ -275,12 +275,13 @@ def archive_audit(request):
         if auditor.audit.current_status == WorkflowStatus.PASSED:
             auditor.workflow.state = True
         auditor.workflow.save()
-    async_task(
-        notify_for_audit,
-        workflow_audit=auditor.audit,
-        workflow_audit_detail=workflow_audit_detail,
-        timeout=60,
-        task_name=f"archive-audit-{archive_id}",
+    notify_for_audit.apply_async(
+        args=[
+            auditor.audit.audit_id,
+            workflow_audit_detail.audit_detail_id,
+        ],
+        time_limit=60,  # 设置此次任务的超时时间为60秒
+        task_id=f"archive-audit-{archive_id}"  # 可选，自定义任务ID
     )
 
     return HttpResponseRedirect(reverse("sql:archive_detail", args=(archive_id,)))
