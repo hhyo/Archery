@@ -31,6 +31,7 @@ from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
 from sql.utils.workflow_audit import get_auditor, AuditException, Audit
+from celery import shared_task
 
 logger = logging.getLogger("default")
 __author__ = "hhyo"
@@ -309,15 +310,14 @@ def add_archive_task(archive_ids=None):
     # 添加task任务
     for archive_info in archive_cnf_list:
         archive_id = archive_info.id
-        async_task(
-            "sql.archiver.archive",
-            archive_id,
-            group=f'archive-{time.strftime("%Y-%m-%d %H:%M:%S ")}',
-            timeout=-1,
-            task_name=f"archive-{archive_id}",
+        archive.apply_async(archive_id)  # 使用 Celery 的 .delay() 方法调度任务
+        archive.apply_async(
+            args=[archive_id],
+            task_id=f"archive-{archive_id}",  # Celery 允许你指定自定义的任务ID
+            # 在 Celery 中没有直接的 group 参数，如果需要分组任务的执行，需要使用 Canvas 功能（如 groups, chains 等）
         )
 
-
+@shared_task
 def archive(archive_id):
     """
     执行数据库归档
@@ -528,10 +528,5 @@ def archive_switch(request):
 def archive_once(request):
     """单次立即调用归档任务"""
     archive_id = request.GET.get("archive_id")
-    async_task(
-        "sql.archiver.archive",
-        archive_id,
-        timeout=-1,
-        task_name=f"archive-{archive_id}",
-    )
+    archive.apply_async(archive_id)  # 使用 Celery 的apply_async方法调度任务
     return JsonResponse({"status": 0, "msg": "ok", "data": {}})
