@@ -1,4 +1,7 @@
 Django==4.1.13
+celery==5.4.0
+django-celery-beat
+django-celery-results
 mysqlclient==2.*
 requests==2.31.0
 simplejson==3.17.2
