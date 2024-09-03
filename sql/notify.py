@@ -3,6 +3,7 @@ import datetime
 import importlib
 import logging
 import re
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from itertools import chain
@@ -34,7 +35,7 @@ from sql_api.serializers import (
     ArchiveConfigSerializer,
     InstanceSerializer,
 )
-
+from celery import shared_task
 logger = logging.getLogger("default")
 
 
@@ -513,9 +514,9 @@ def notify_for_execute(workflow: SqlWorkflow, sys_config: SysConfig = None):
         sys_config = SysConfig()
     auto_notify(workflow=workflow, sys_config=sys_config, event_type=EventType.EXECUTE)
 
-
+@shared_task
 def notify_for_audit(
-    workflow_audit: WorkflowAudit, workflow_audit_detail: WorkflowAuditDetail = None
+    workflow_audit_id, workflow_audit_detail_id=None
 ):
     """
     工作流消息通知适配器, 供 async_task 调用, 方便后续的 mock
@@ -524,6 +525,9 @@ def notify_for_audit(
     :param workflow_audit_detail:
     :return:
     """
+    workflow_audit = WorkflowAudit.objects.get(audit_id=workflow_audit_id)
+    workflow_audit_detail = WorkflowAuditDetail.objects.get(
+        audit_detail_id=workflow_audit_detail_id) if workflow_audit_detail_id else None
     sys_config = SysConfig()
     auto_notify(
         workflow=None,
@@ -533,20 +537,22 @@ def notify_for_audit(
         event_type=EventType.AUDIT,
     )
 
-
-def notify_for_my2sql(task):
+@shared_task
+def notify_for_my2sql(result,task_id):
     """
     my2sql执行结束的通知
     :param task:
     :return:
     """
-    if task.success:
+    task_result = TaskResult.objects.filter(task_id=task_id).first()
+    if task_result.status == 'SUCCESS':
+        data_list = json.loads(task_result.result)
         result = My2SqlResult(
-            success=True, submitter=task.kwargs["user"], file_path=task.result[1]
+            success=True, submitter=data_list[0], file_path=data_list[1]
         )
     else:
         result = My2SqlResult(
-            success=False, submitter=task.kwargs["user"], error=task.result
+            success=False, submitter=task_result.result[0], error=result
         )
     # 发送
     sys_config = SysConfig()
