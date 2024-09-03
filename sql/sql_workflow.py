@@ -399,7 +399,8 @@ def timing_task(request):
 
     run_date = datetime.datetime.strptime(run_date, "%Y-%m-%d %H:%M")
     timing_task_id=workflow_detail.timing_task_id
-    del_schedule(timing_task_id)
+    if timing_task_id !='':
+        del_schedule(timing_task_id)
     task_time = time.time()
     schedule_name = f"sqlreview-timing-{workflow_id}-{task_time}"
     if on_correct_time_period(workflow_id, run_date) is False:
