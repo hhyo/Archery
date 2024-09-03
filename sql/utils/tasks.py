@@ -8,6 +8,7 @@ import logging
 logger = logging.getLogger("default")
 
 def add_sql_schedule(name, run_date, workflow_id):
+    del_schedule(name)
     # 使用 Celery 的 apply_async 方法来调度任务
     # 因这里存在循环调用问题，所以不能直接import execute
     sig = signature('sql.utils.execute_sql.execute', args=(workflow_id,))

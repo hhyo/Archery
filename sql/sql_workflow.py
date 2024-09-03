@@ -2,7 +2,6 @@
 import datetime
 import logging
 import traceback
-import time
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
@@ -401,7 +400,7 @@ def timing_task(request):
     timing_task_id=workflow_detail.timing_task_id
     if timing_task_id !='':
         del_schedule(timing_task_id)
-    task_time = time.time()
+    task_time = datetime.datetime.strptime(run_date, "%Y-%m-%d")
     schedule_name = f"sqlreview-timing-{workflow_id}-{task_time}"
     if on_correct_time_period(workflow_id, run_date) is False:
         context = {
@@ -477,7 +476,7 @@ def cancel(request):
         sql_workflow.status = "workflow_abort"
         sql_workflow.save()
     # 删除定时执行task
-    if sql_workflow.status == "workflow_timingtask":
+    if sql_workflow.timing_task_id  != '':
         del_schedule(sql_workflow.timing_task_id)
     # 发送取消、驳回通知，开启了Cancel阶段通知参数才发送消息通知
     sys_config = SysConfig()
