@@ -17,12 +17,14 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+# 定义 Redis 基本连接字符串
+REDIS_BASE_URL = 'redis://127.0.0.1:6379/'
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["*"]),
     SECRET_KEY=(str, "hfusaf2m4ot#7)fkw#di2bu6(cv0@opwmafx5n#6=3d%x^hpl6"),
     DATABASE_URL=(str, "mysql://root:@127.0.0.1:3306/archery"),
-    CACHE_URL=(str, "redis://127.0.0.1:6379/0"),
+    CACHE_URL=(str, REDIS_BASE_URL + '0'),  # 使用 Redis 数据库 0 作为缓存
     # 系统外部认证目前支持LDAP、OIDC、DINGDING三种，认证方式只能启用其中一种，如果启用多个，实际生效的只有一个，优先级LDAP > DINGDING > OIDC
     ENABLE_LDAP=(bool, False),
     ENABLE_OIDC=(bool, False),
@@ -121,13 +123,15 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_q",
+    'django_celery_results',
+    'django_celery_beat',
     "sql",
     "sql_api",
     "common",
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+
 )
 
 MIDDLEWARE = (
@@ -234,21 +238,6 @@ DATABASES = {
     }
 }
 
-# Django-Q
-Q_CLUSTER = {
-    "name": "archery",
-    "workers": env("Q_CLUISTER_WORKERS", default=4),
-    "recycle": 500,
-    "timeout": env("Q_CLUISTER_TIMEOUT", default=60),
-    "compress": True,
-    "cpu_affinity": 1,
-    "save_limit": 0,
-    "queue_limit": 50,
-    "label": "Django Q",
-    "django_redis": "default",
-    "sync": env("Q_CLUISTER_SYNC"),  # 本地调试可以修改为True，使用同步模式
-}
-
 # 缓存配置
 CACHES = {
     "default": env.cache(),
@@ -256,6 +245,29 @@ CACHES = {
 
 # https://docs.djangoproject.com/en/3.2/ref/settings/#std-setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+
+# Celery Configuration
+CELERY_RESULT_BACKEND = REDIS_BASE_URL + '1'  # 使用 Redis 数据库 1 存储任务结果
+# CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = REDIS_BASE_URL + '2'  # 使用 Redis 数据库 2 作为消息代理
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERYD_CONCURRENCY = 4
+CELERY_TIMEZONE = 'UTC'
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERYD_MAX_TASKS_PER_CHILD = 10
+CELERYD_FORCE_EXECV = True
+
+# 设置默认不存结果
+# CELERY_IGNORE_RESULT = True
+CELERY_CREATE_MISSING_QUEUES = True
+CELERY_DISABLE_RATE_LIMITS = True
+CELERYD_TASK_SOFT_TIME_LIMIT = 600
+
+CELERY_TASK_RESULT_EXPIRES = 600
+CELERY_ENABLE_UTC = False
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # API Framework
 REST_FRAMEWORK = {
@@ -443,14 +455,6 @@ LOGGING = {
             "backupCount": 5,
             "formatter": "verbose",
         },
-        "django-q": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "logs/qcluster.log",
-            "maxBytes": 1024 * 1024 * 100,  # 5 MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
@@ -461,11 +465,6 @@ LOGGING = {
         "default": {  # default日志
             "handlers": ["console", "default"],
             "level": "WARNING",
-        },
-        "django-q": {  # django_q模块相关日志
-            "handlers": ["console", "django-q"],
-            "level": "WARNING",
-            "propagate": False,
         },
         "django_auth_ldap": {  # django_auth_ldap模块相关日志
             "handlers": ["console", "default"],
