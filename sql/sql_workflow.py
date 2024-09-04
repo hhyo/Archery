@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import datetime
 import logging
+import time
 import traceback
 import simplejson as json
 from django.contrib.auth.decorators import permission_required
@@ -400,7 +401,7 @@ def timing_task(request):
     timing_task_id=workflow_detail.timing_task_id
     if timing_task_id !='':
         del_schedule(timing_task_id)
-    task_time = datetime.datetime.strptime(run_date, "%Y-%m-%d")
+    task_time = int(time.time())
     schedule_name = f"sqlreview-timing-{workflow_id}-{task_time}"
     if on_correct_time_period(workflow_id, run_date) is False:
         context = {
