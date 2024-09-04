@@ -4,6 +4,7 @@
 # @Author  : sky
 # @File    : celery.py
 # @Description : celery
+from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 #加载配置

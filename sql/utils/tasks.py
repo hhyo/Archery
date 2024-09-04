@@ -25,7 +25,6 @@ def add_sql_schedule(name, run_date, workflow_id):
 
 def add_kill_conn_schedule(name, run_date, instance_id, thread_id):
     """添加/修改终止数据库连接的定时任务"""
-    del_schedule(name)
     sig = signature('sql.query.kill_query_conn', args=[instance_id,thread_id])
     sig.apply_async(eta=run_date, task_id=name)
 
