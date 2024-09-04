@@ -4,15 +4,23 @@ from celery import signature
 from celery.result import AsyncResult
 from celery.exceptions import SoftTimeLimitExceeded
 import logging
+import pytz
 
 logger = logging.getLogger("default")
 
 def add_sql_schedule(name, run_date, workflow_id):
     # 使用 Celery 的 apply_async 方法来调度任务
     # 因这里存在循环调用问题，所以不能直接import execute
-    sig = signature('sql.utils.execute_sql.execute', args=(workflow_id,))
-    sig.apply_async(eta=run_date, task_id=name)
+    tz = pytz.timezone('Asia/Shanghai')
+    if run_date.tzinfo is None or run_date.tzinfo.utcoffset(run_date) is None:
+        run_date = tz.localize(run_date)  # 确保 run_date 带有时区信息
+    execute_sql_sig = signature('sql.utils.execute_sql.execute', args=(workflow_id,))
+    # 创建回调任务的签名
+    callback_sig = signature('sql.utils.execute_sql.execute_callback', args=(name,workflow_id))
+    # 调度主任务，并链接回调任务
+    execute_sql_sig.apply_async(eta=run_date, task_id=name, link=callback_sig)
     logger.warning(f"添加 SQL 定时执行任务：{name} 执行时间：{run_date}")
+
 
 
 def add_kill_conn_schedule(name, run_date, instance_id, thread_id):
