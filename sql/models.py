@@ -205,7 +205,7 @@ class Instance(models.Model):
         verbose_name="密码", max_length=300, default="", blank=True
     )
     is_ssl = models.BooleanField("是否启用SSL", default=False)
-    is_ignore_certificate_error = models.BooleanField("是否忽略证书错误", default=False)
+    verify_ssl= models.BooleanField("是否验证服务端SSL证书", default=True)
     db_name = models.CharField("数据库", max_length=64, default="", blank=True)
     show_db_name_regex = models.CharField(
         "显示的数据库列表正则",
