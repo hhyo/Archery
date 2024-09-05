@@ -335,7 +335,7 @@ class TestRedis(TestCase):
         new_engine.denied_db_name_regex = "^(4|13|22)$"
         dbs = new_engine.get_all_databases()
         # 预期结果：过滤后的数据库列表应只包括允许的数据库名
-        expected_result = ["0", "6", "11", "12", "13"]
+        expected_result = ["0", "6", "11", "12"]
         self.assertListEqual(dbs.rows, expected_result)
 
     @patch("redis.Redis.info")
