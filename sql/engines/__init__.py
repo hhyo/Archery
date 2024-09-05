@@ -15,7 +15,7 @@ class EngineBase:
     name = "Base"
     info = "base engine"
 
-    def __init__(self, instance=None):
+    def __init__(self, instance: Instance=None):
         self.conn = None
         self.thread_id = None
         if instance:
