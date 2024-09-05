@@ -28,7 +28,8 @@ class EngineBase:
             self.mode = instance.mode
             self.is_ssl = instance.is_ssl
             self.is_ignore_certificate_error = instance.is_ignore_certificate_error
-            self.allow_db_name_list = instance.allow_db_name_list
+            self.show_db_name_regex = instance.show_db_name_regex
+            self.denied_db_name_regex = instance.denied_db_name_regex
 
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
             if self.instance.tunnel:

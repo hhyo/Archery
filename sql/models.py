@@ -207,13 +207,21 @@ class Instance(models.Model):
     is_ssl = models.BooleanField("是否启用SSL", default=False)
     is_ignore_certificate_error = models.BooleanField("是否忽略证书错误", default=False)
     db_name = models.CharField("数据库", max_length=64, default="", blank=True)
-    allow_db_name_list = models.CharField(
-        "允许显示的数据库列表",
+    show_db_name_regex = models.CharField(
+        "显示的数据库列表正则",
         max_length=1024,
         default="",
         blank=True,
-        help_text="多个以逗号隔开，支持*和~。MySQL示例：test_db,dmp_db,za_ag。Redis示例: 0,4,20~26",
+        help_text="正则表达式。示例：^(test_db|dmp_db|za.*)$。Redis示例: ^(0|4|6|11|12|13)$",
     )
+    denied_db_name_regex = models.CharField(
+        "隐藏的数据库列表正则",
+        max_length=1024,
+        default="",
+        blank=True,
+        help_text="正则表达式。隐藏大于显示，此规则优先。",
+    )
+
     charset = models.CharField("字符集", max_length=20, default="", blank=True)
     service_name = models.CharField(
         "Oracle service name", max_length=50, null=True, blank=True

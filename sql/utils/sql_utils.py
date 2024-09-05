@@ -382,7 +382,7 @@ def get_exec_sqlitem_list(reviewResult, db_name):
     return list
 
 
-def filter_db_list(db_list, allow_db_name_list, key="value"):
+def filter_show_db_list(db_list, show_db_name_regex, key="value"):
     """
     根据配置的数据库列表过滤数据库名称列表。
 
@@ -390,36 +390,17 @@ def filter_db_list(db_list, allow_db_name_list, key="value"):
     示例数据：
     1. db_list=[{"value": 0, "text": 0, "value": 1, "text": 1}]
     2. db_list=["a_db","b_db"]
-    :param allow_db_name_list: 配置的数据库显示列表。支持通配符 * 和范围 ~。
+    :param show_db_name_regex: 配置的数据库显示正则。
     :param key: 当 db_list 包含字典时，指定用于匹配的键。默认值为 'value'。
     :return: 过滤后的数据库名称列表或字典列表。
     """
-    if not allow_db_name_list:
-        return db_list  # 如果没有指定 allow_db_name_list，则返回原始 db_list
+    if not show_db_name_regex:
+        return db_list  # 如果没有指定 show_db_name_regex，返回原始 db_list
 
-    # 将通配符模式字符串转换为列表
-    allowed_patterns = allow_db_name_list.split(",")
-
-    allowed_regexes = []
-    for pattern in allowed_patterns:
-        pattern = pattern.strip()
-        if not pattern:
-            continue
-        if "~" in pattern:
-            # 如果模式包含范围 "~"，解析范围并生成数字列表
-            try:
-                start, end = map(int, pattern.split("~"))
-                # 将生成的数字添加到允许列表的正则表达式列表
-                allowed_regexes.extend(
-                    [re.compile(f"^{db}$") for db in range(start, end + 1)]
-                )
-            except ValueError:
-                # 如果范围内的值不是有效的整数
-                allowed_regexes.append(re.compile(f"^{pattern}$".replace("*", ".*")))
-        else:
-            # 转义特殊字符,并将通配符模式转换为正则表达式
-            escaped_pattern = re.escape(pattern).replace(r"\*", ".*")
-            allowed_regexes.append(re.compile(f"^{escaped_pattern}$"))
+    try:
+        allowed_regex = re.compile(show_db_name_regex)  # 编译正则表达式
+    except re.error:
+        raise ValueError(f"正则表达式解析异常: {show_db_name_regex}")
 
     filtered_list = []
 
@@ -427,13 +408,52 @@ def filter_db_list(db_list, allow_db_name_list, key="value"):
     if all(isinstance(db, dict) for db in db_list):
         # 如果 db_list 是一个字典的列表
         for db in db_list:
-            db_value = db.get(key, "")
-            if any(regex.match(db_value) for regex in allowed_regexes):
+            db_value = str(db.get(key, ""))  # 确保 db_value 是字符串类型
+            if allowed_regex.match(db_value):
                 filtered_list.append(db)
     else:
         # 如果 db_list 是一个字符串的列表
         for db in db_list:
-            if any(regex.match(db) for regex in allowed_regexes):
+            if allowed_regex.match(db):
+                filtered_list.append(db)
+
+    return filtered_list
+
+
+def filter_denied_db_list(db_list, denied_db_name_regex, key="value"):
+    """
+    根据配置的数据库列表过滤数据库名称列表。
+
+    :param db_list: 待过滤的数据库名称列表，可能是字符串列表或字典列表。
+    示例数据：
+    1. db_list=[{"value": 0, "text": 0, "value": 1, "text": 1}]
+    2. db_list=["a_db","b_db"]
+    :param denied_db_name_regex: 配置的数据库隐藏正则。
+    :param key: 当 db_list 包含字典时，指定用于匹配的键。默认值为 'value'。
+    :return: 过滤后的数据库名称列表或字典列表。
+    """
+    if not denied_db_name_regex:
+        return db_list
+    try:
+        denied_regex = re.compile(denied_db_name_regex)
+    except re.error:
+        raise ValueError(f"正则表达式解析异常: {denied_db_name_regex}")
+
+    filtered_list = []
+
+    # 根据类型处理 db_list
+    if all(isinstance(db, dict) for db in db_list):
+        # 如果 db_list 是一个字典的列表
+        for db in db_list:
+            db_value = str(db.get(key, ""))  # 确保 db_value 是字符串类型
+            if not denied_regex.match(
+                db_value
+            ):  # 只有不匹配隐藏正则表达式的才添加到列表中
+                filtered_list.append(db)
+    else:
+        # 如果 db_list 是一个字符串的列表
+        for db in db_list:
+            if not denied_regex.match(db):  # 只有不匹配隐藏正则表达式的才添加到列表中
                 filtered_list.append(db)
 
     return filtered_list

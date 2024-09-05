@@ -12,7 +12,7 @@ from MySQLdb.constants import FIELD_TYPE
 from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
-from sql.utils.sql_utils import get_syntax_type, remove_comments
+from sql.utils.sql_utils import filter_denied_db_list, filter_show_db_list, get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
@@ -194,6 +194,8 @@ class MysqlEngine(EngineBase):
         db_list = [
             row[0] for row in result.rows if row[0] not in self.forbidden_databases
         ]
+        db_list = filter_show_db_list(db_list, self.show_db_name_regex)
+        db_list = filter_denied_db_list(db_list, self.denied_db_name_regex)
         result.rows = db_list
         return result
 

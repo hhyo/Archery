@@ -15,7 +15,7 @@ from dateutil.parser import parse
 from bson.objectid import ObjectId
 from bson.int64 import Int64
 
-from sql.utils.sql_utils import filter_db_list
+from sql.utils.sql_utils import filter_denied_db_list, filter_show_db_list
 
 from . import EngineBase
 from .models import ResultSet, ReviewSet, ReviewResult
@@ -853,7 +853,9 @@ class MongoEngine(EngineBase):
             db_list = conn.list_database_names()
         except OperationFailure:
             db_list = [self.db_name]
-        result.rows = filter_db_list(db_list, self.allow_db_name_list)
+        db_list = filter_show_db_list(db_list, self.show_db_name_regex)
+        db_list = filter_denied_db_list(db_list, self.denied_db_name_regex)
+        result.rows = db_list
         return result
 
     def get_all_tables(self, db_name, **kwargs):
