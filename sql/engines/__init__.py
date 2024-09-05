@@ -27,7 +27,7 @@ class EngineBase:
             self.db_name = instance.db_name
             self.mode = instance.mode
             self.is_ssl = instance.is_ssl
-            self.is_ignore_certificate_error = instance.is_ignore_certificate_error
+            self.verify_ssl = instance.verify_ssl
             self.show_db_name_regex = instance.show_db_name_regex
             self.denied_db_name_regex = instance.denied_db_name_regex
 
