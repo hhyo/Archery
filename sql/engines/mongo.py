@@ -853,8 +853,8 @@ class MongoEngine(EngineBase):
             db_list = conn.list_database_names()
         except OperationFailure:
             db_list = [self.db_name]
-        db_list = filter_show_db_list(db_list, self.show_db_name_regex)
-        db_list = filter_denied_db_list(db_list, self.denied_db_name_regex)
+        db_list = filter_show_db_list(db_list, self.instance.show_db_name_regex)
+        db_list = filter_denied_db_list(db_list, self.instance.denied_db_name_regex)
         result.rows = db_list
         return result
 

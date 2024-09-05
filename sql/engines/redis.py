@@ -86,8 +86,8 @@ class RedisEngine(EngineBase):
             rows = max(dbs + [15]) + 1
 
         db_list = [str(x) for x in range(int(rows))]
-        db_list = filter_show_db_list(db_list, self.show_db_name_regex)
-        db_list = filter_denied_db_list(db_list, self.denied_db_name_regex)
+        db_list = filter_show_db_list(db_list, self.instance.show_db_name_regex)
+        db_list = filter_denied_db_list(db_list, self.instance.denied_db_name_regex)
         result.rows = db_list
         return result
 
