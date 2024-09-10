@@ -643,9 +643,6 @@ class OracleEngine(EngineBase):
             result["msg"] = keyword_warning
         return result
 
-    def filter_sql(self, sql="", limit_num=0):
-        return sql
-
     def query(
         self,
         db_name=None,

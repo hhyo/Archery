@@ -84,7 +84,8 @@ def query(request):
         limit_num = 0 if re.match(r"^explain", sql_content.lower()) else limit_num
 
         # 对查询sql增加limit限制或者改写语句
-        sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
+        if instance.db_type != "oracle":
+            sql_content = query_engine.filter_sql(sql=sql_content, limit_num=limit_num)
 
         # 先获取查询连接，用于后面查询复用连接以及终止会话
         query_engine.get_connection(db_name=db_name)

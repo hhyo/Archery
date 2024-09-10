@@ -1238,18 +1238,6 @@ class TestOracle(TestCase):
             },
         )
 
-    def test_filter_sql_with_delimiter(self):
-        return
-
-    def test_filter_sql_with_delimiter_and_where(self):
-        return
-
-    def test_filter_sql_without_delimiter(self):
-        return
-
-    def test_filter_sql_with_limit(self):
-        return
-
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = OracleEngine(instance=self.ins)
