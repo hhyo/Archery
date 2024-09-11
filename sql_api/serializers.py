@@ -268,6 +268,7 @@ class InstanceResourceSerializer(serializers.Serializer):
     db_name = serializers.CharField(required=False, label="数据库名")
     schema_name = serializers.CharField(required=False, label="schema名")
     tb_name = serializers.CharField(required=False, label="表名")
+    request_source = serializers.CharField(required=False, label="请求来源")
 
     def validate(self, attrs):
         instance_id = attrs.get("instance_id")

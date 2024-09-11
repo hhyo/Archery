@@ -328,6 +328,27 @@ class TestRedis(TestCase):
         self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
 
     @patch("redis.Redis.info")
+    def test_get_all_databases_of_hasdata(self, mock_info):
+        """
+        测试内容：当请求来源是SQL查询时，只返回有数据的DB列表。
+        """
+        # 模拟info方法返回特定的Keyspace信息
+        mock_info.return_value = {
+            "db1": {"keys": 10, "expires": 10, "avg_ttl": 30},
+            "db18": {"keys": 12, "expires": 10, "avg_ttl": 30},
+        }
+        new_engine = RedisEngine(instance=self.ins)
+        request_source = "1"
+        result = new_engine.get_all_databases(request_source=request_source)
+        # 验证返回的数据库列表是否符合预期.
+        expected_dbs = [
+            {"value": "0", "text": 0},
+            {"value": "1", "text": 10},
+            {"value": "18", "text": 12},
+        ]
+        self.assertListEqual(result.rows, expected_dbs)
+
+    @patch("redis.Redis.info")
     @patch("redis.Redis.config_get")
     def test_get_all_databases_exception_handling(self, mock_config_get, mock_info):
         # 模拟config_get方法抛出异常
