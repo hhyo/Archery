@@ -286,7 +286,7 @@ class MongoEngine(EngineBase):
     def exec_cmd(self, sql, db_name=None, slave_ok=""):
         """审核时执行的语句"""
 
-        if self.user and self.password and self.port and self.host:
+        if  self.port and self.host:
             msg = ""
             auth_db = self.instance.db_name or "admin"
             sql_len = len(sql)
@@ -303,7 +303,8 @@ class MongoEngine(EngineBase):
                     )
                     fp.write(sql.encode("utf-8"))
                     fp.seek(0)  # 把文件指针指向开始，这样写的sql内容才能落到磁盘文件上
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF".format(
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF".format(
                         mongo=mongo,
                         uname=self.user,
                         password=self.password,
@@ -315,11 +316,23 @@ class MongoEngine(EngineBase):
                         slave_ok=slave_ok,
                         tempfile_=fp.name,
                     )
+                    else:
+                        cmd = "{mongo} --quiet  {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF".format(
+                        mongo=mongo,
+                        host=self.host,
+                        port=self.port,
+                        db_name=db_name,
+                        sql=sql,
+                        auth_db=auth_db,
+                        slave_ok=slave_ok,
+                        tempfile_=fp.name,
+                    )        
                     is_load = True  # 标记使用了load方法，用来在finally里面判断是否需要强制删除临时文件
                 elif (
                     not sql.startswith("var host=") and sql_len < 4000
                 ):  # 在master节点执行的情况， 如果sql长度小于4000,就直接用mongo shell执行，减少磁盘交换，节省性能
-                    cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
                         mongo=mongo,
                         uname=self.user,
                         password=self.password,
@@ -330,11 +343,31 @@ class MongoEngine(EngineBase):
                         auth_db=auth_db,
                         slave_ok=slave_ok,
                     )
+                    else:
+                        cmd = "{mongo} --quiet  {host}:{port}/{auth_db} <<\\EOF\ndb=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF".format(
+                        mongo=mongo,
+                        host=self.host,
+                        port=self.port,
+                        db_name=db_name,
+                        sql=sql,
+                        auth_db=auth_db,
+                        slave_ok=slave_ok,
+                    )
                 else:
-                    cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                    if self.user and self.password:
+                        cmd = "{mongo} --quiet -u {user} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
                         mongo=mongo,
                         user=self.user,
                         password=self.password,
+                        host=self.host,
+                        port=self.port,
+                        db_name=db_name,
+                        sql=sql,
+                        auth_db=auth_db,
+                    )
+                    else:
+                        cmd = "{mongo} --quiet {host}:{port}/{auth_db} <<\\EOF\nrs.slaveOk();{sql}\nEOF".format(
+                        mongo=mongo,
                         host=self.host,
                         port=self.port,
                         db_name=db_name,
@@ -795,25 +828,15 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
-
+        self.conn = pymongo.MongoClient(
+            self.host,
+            self.port,
+            authSource=auth_db,
+            connect=True,
+            connectTimeoutMS=10000,
+        )
         if self.user and self.password:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                username=self.user,
-                password=self.password,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-            )
-        else:
-            self.conn = pymongo.MongoClient(
-                self.host,
-                self.port,
-                authSource=auth_db,
-                connect=True,
-                connectTimeoutMS=10000,
-            )
+            self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
         return self.conn
 
     def close(self):
