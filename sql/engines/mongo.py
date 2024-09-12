@@ -337,67 +337,37 @@ class MongoEngine(EngineBase):
                 if is_load:
                     fp.close()
         return msg
-    # 用来进行判断是否有用户名与密码情况，进而返回要执行的mongo命令
+    # 用来进行判断是否有用户名与密码以及是否需要临时文件的情况，进而返回要执行的mongo命令
     def _build_cmd(self, db_name, auth_db, slave_ok="", tempfile_=None, sql=None, is_load=False):
-        """构建命令行"""
+        # 提取公共参数
+        common_params = {
+            "mongo": mongo,
+            "host": self.host,
+            "port": self.port,
+            "db_name": db_name,
+            "auth_db": auth_db,
+            "slave_ok": slave_ok,
+        }
         if is_load:
-            if self.user and self.password:
-                return (
-                    "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\n"
-                    "db=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF"
-                ).format(
-                    mongo=mongo,
-                    uname=self.user,
-                    password=self.password,
-                    host=self.host,
-                    port=self.port,
-                    db_name=db_name,
-                    auth_db=auth_db,
-                    slave_ok=slave_ok,
-                    tempfile_=tempfile_,
-                )
-            else:
-                return (
-                    "{mongo} --quiet {host}:{port}/{auth_db} <<\\EOF\n"
-                    "db=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF"
-                ).format(
-                    mongo=mongo,
-                    host=self.host,
-                    port=self.port,
-                    db_name=db_name,
-                    auth_db=auth_db,
-                    slave_ok=slave_ok,
-                    tempfile_=tempfile_,
-                )
+            cmd_template = (
+                "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
+                "db=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF"
+            )
+            # 长度超限使用loadjs的方式运行，使用临时文件
+            common_params["tempfile_"] = tempfile_
         else:
-            if self.user and self.password:
-                return (
-                    "{mongo} --quiet -u {uname} -p '{password}' {host}:{port}/{auth_db} <<\\EOF\n"
-                    "db=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF"
-                ).format(
-                    mongo=mongo,
-                    uname=self.user,
-                    password=self.password,
-                    host=self.host,
-                    port=self.port,
-                    db_name=db_name,
-                    auth_db=auth_db,
-                    slave_ok=slave_ok,
-                    sql=sql,
-                )
-            else:
-                return (
-                    "{mongo} --quiet {host}:{port}/{auth_db} <<\\EOF\n"
-                    "db=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF"
-                ).format(
-                    mongo=mongo,
-                    host=self.host,
-                    port=self.port,
-                    db_name=db_name,
-                    auth_db=auth_db,
-                    slave_ok=slave_ok,
-                    sql=sql,
-                )
+            cmd_template = (
+                "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
+                "db=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF"
+            )
+            # 长度不超限直接mongo shell，无需临时文件
+            common_params["sql"] = sql
+        # 如果有账号密码，则添加选项
+        if self.user and self.password:
+            common_params["auth_options"] = "-u {uname} -p '{password}'".format(uname=self.user, password=self.password)
+        else:
+            common_params["auth_options"] = ""
+        return cmd_template.format(**common_params)
         
     def get_master(self):
         """获得主节点的port和host"""
@@ -823,15 +793,25 @@ class MongoEngine(EngineBase):
     def get_connection(self, db_name=None):
         self.db_name = db_name or self.instance.db_name or "admin"
         auth_db = self.instance.db_name or "admin"
-        self.conn = pymongo.MongoClient(
-            self.host,
-            self.port,
-            authSource=auth_db,
-            connect=True,
-            connectTimeoutMS=10000,
-        )
         if self.user and self.password:
-            self.conn[self.db_name].authenticate(self.user, self.password, auth_db)
+             self.conn = pymongo.MongoClient(
+                self.host,
+                self.port,
+                username=self.user,
+                password=self.password,
+                authSource=auth_db,
+                connect=True,
+                connectTimeoutMS=10000,
+            )
+        else:
+            self.conn = pymongo.MongoClient(
+                self.host,
+                self.port,
+                authSource=auth_db,
+                connect=True,
+                connectTimeoutMS=10000,
+            )
+
         return self.conn
 
     def close(self):
