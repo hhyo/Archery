@@ -307,7 +307,9 @@ class MongoEngine(EngineBase):
                         db_name, auth_db, slave_ok, fp.name, is_load=True
                     )
                     is_load = True  # 标记使用了load方法，用来在finally里面判断是否需要强制删除临时文件
-                elif not sql.startswith("var host=") and sql_len < 4000:  # 在master节点执行的情况， 如果sql长度小于4000,就直接用mongo shell执行，减少磁盘交换，节省性能
+                elif (
+                    not sql.startswith("var host=") and sql_len < 4000
+                ):  # 在master节点执行的情况， 如果sql长度小于4000,就直接用mongo shell执行，减少磁盘交换，节省性能
                     cmd = self._build_cmd(db_name, auth_db, slave_ok, sql=sql)
                 else:
                     cmd = self._build_cmd(
@@ -366,16 +368,14 @@ class MongoEngine(EngineBase):
         else:
             cmd_template = (
                 "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                "db=db.getSiblingDB(\"{db_name}\");{slave_ok}printjson({sql})\nEOF"
+                'db=db.getSiblingDB("{db_name}");{slave_ok}printjson({sql})\nEOF'
             )
             # 长度不超限直接mongo shell，无需临时文件
             common_params["sql"] = sql
         # 如果有账号密码，则添加选项
         if self.user and self.password:
-            common_params["auth_options"] = (
-                "-u {uname} -p '{password}'".format(
-                    uname=self.user, password=self.password
-                )
+            common_params["auth_options"] = "-u {uname} -p '{password}'".format(
+                uname=self.user, password=self.password
             )
         else:
             common_params["auth_options"] = ""
