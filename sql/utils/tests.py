@@ -39,6 +39,7 @@ from sql.utils.sql_utils import *
 from sql.utils.execute_sql import execute, execute_callback
 from sql.utils.tasks import add_sql_schedule, del_schedule, task_info
 from sql.utils.data_masking import data_masking, brute_mask, simple_column_mask
+from sql.utils.ssh_tunnel import SSHConnection
 
 User = Users
 __author__ = "hhyo"
@@ -1512,3 +1513,8 @@ class TestResourceGroup(TestCase):
             auth_group_names=[self.agp.name], group_id=self.rgp1.group_id
         )
         self.assertIn(self.user, users)
+
+# ssh tunnel tests
+def test_get_local_ip():
+  tunnel = SSHConnection("mysql", 3306, "tunnel", 22, "root", "password", "", "")
+  assert tunnel.get_local_ip() != "127.0.0.1"
