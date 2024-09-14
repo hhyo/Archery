@@ -63,10 +63,14 @@ class SSHConnection(object):
         self.server.close()
 
     def get_local_ip(self):
-        """
-        动态获取本地IP地址
-        """
-        return socket.gethostbyname(socket.gethostname())
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # 连接一个公网地址（不需要实际发送数据）
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
 
     def get_ssh(self):
         """
