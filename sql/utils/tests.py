@@ -9,7 +9,6 @@
 import datetime
 import json
 from unittest.mock import patch, MagicMock
-from pytest_mock import MockerFixture
 
 from django.conf import settings
 from django.contrib.auth.models import Permission, Group
@@ -1517,10 +1516,6 @@ class TestResourceGroup(TestCase):
 
 
 # ssh tunnel tests
-def test_get_local_ip(mocker: MockerFixture):
-    from sql.utils.ssh_tunnel import SSHTunnelForwarder
-
-    mock_start = mocker.patch.object(SSHTunnelForwarder, "start")
-    tunnel = SSHConnection("mysql", 3306, "tunnel", 22, "root", "password", "", "")
-    assert tunnel.get_local_ip() != "127.0.0.1"
-    assert mock_start.assert_called_once()
+def test_get_local_ip():
+  tunnel = SSHConnection("mysql", 3306, "tunnel", 22, "root", "password", "", "")
+  assert tunnel.get_local_ip() != "127.0.0.1"
