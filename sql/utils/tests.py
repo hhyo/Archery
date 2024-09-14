@@ -1516,5 +1516,5 @@ class TestResourceGroup(TestCase):
 
 # ssh tunnel tests
 def test_get_local_ip():
-  tunnel = SSHConnection("mysql", 3306, "tunnel", 22, "root", "password", "", "")
-  assert tunnel.get_local_ip() != "127.0.0.1"
+    tunnel = SSHConnection("mysql", 3306, "tunnel", 22, "root", "password", "", "")
+    assert tunnel.get_local_ip() != "127.0.0.1"
