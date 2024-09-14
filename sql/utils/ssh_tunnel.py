@@ -8,6 +8,7 @@
 from sshtunnel import SSHTunnelForwarder
 from paramiko import RSAKey
 import io
+import socket
 
 
 class SSHConnection(object):
@@ -55,13 +56,20 @@ class SSHConnection(object):
             )
         self.server.start()
 
+        # 动态获取本地IP
+        self.local_ip = self.get_local_ip()
+
     def __del__(self):
         self.server.close()
 
+    def get_local_ip(self):
+        """
+        动态获取本地IP地址
+        """
+        return socket.gethostbyname(socket.gethostname())
+
     def get_ssh(self):
         """
-        获取ssh映射的端口
-        :param request:
-        :return:
+        获取ssh映射的本地IP和端口
         """
-        return "127.0.0.1", self.server.local_bind_port
+        return self.local_ip, self.server.local_bind_port
