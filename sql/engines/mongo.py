@@ -351,7 +351,7 @@ class MongoEngine(EngineBase):
     ):
         # 提取公共参数
         common_params = {
-            "mongo": mongo,
+            "mongo": "mongo",
             "host": self.host,
             "port": self.port,
             "db_name": db_name,
@@ -361,14 +361,14 @@ class MongoEngine(EngineBase):
         if is_load:
             cmd_template = (
                 "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                "db=db.getSiblingDB(\"{db_name}\");{slave_ok}load('{tempfile_}')\nEOF"
+                "db=db.getSiblingDB('{db_name}');{slave_ok}load('{tempfile_}')\nEOF"
             )
             # 长度超限使用loadjs的方式运行，使用临时文件
             common_params["tempfile_"] = tempfile_
         else:
             cmd_template = (
                 "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                'db=db.getSiblingDB("{db_name}");{slave_ok}printjson({sql})\nEOF'
+                "db=db.getSiblingDB('{db_name}');{slave_ok}printjson({sql})\nEOF"
             )
             # 长度不超限直接mongo shell，无需临时文件
             common_params["sql"] = sql
