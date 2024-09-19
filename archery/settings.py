@@ -268,8 +268,8 @@ Celery 默认已支持 Redis、RabbitMQ、MongoDB、Django ORM、SQLAlchemy 等�
 Redis：没有相应的机制保证消息的消费，当消费者消费失败的时候，消息体丢失，需要手动处理
 RabbitMQ：具有消息消费确认，即使消费者消费失败，也会自动使消息体返回原队列，同时可全程持久化，保证消息体被正确消费
 '''
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/1' #必须要存储任务结果,代码中有一些需要判断任务状态
-#CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND = 'django-db' #必须要存储任务结果,代码中有一些需要判断任务状态
+#CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/1'
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERYD_CONCURRENCY = 4

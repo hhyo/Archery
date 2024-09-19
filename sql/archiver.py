@@ -528,5 +528,5 @@ def archive_switch(request):
 def archive_once(request):
     """单次立即调用归档任务"""
     archive_id = request.GET.get("archive_id")
-    archive.apply_async(args=[archive_id])  # 使用 Celery 的apply_async方法调度任务
+    archive.apply_async(args=[archive_id],task_id=f"archive-{archive_id}")  # 使用 Celery 的apply_async方法调度任务
     return JsonResponse({"status": 0, "msg": "ok", "data": {}})
