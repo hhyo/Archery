@@ -1046,13 +1046,13 @@ class ElasticsearchEngine(ElasticsearchEngineBase):
         if self.conn:
             return self.conn
         if self.instance:
-            scheme = "https" if self.is_ssl else "http"
+            scheme = "https" if self.instance.is_ssl else "http"
             hosts = [
                 {
                     "host": self.host,
                     "port": self.port,
                     "scheme": scheme,
-                    "use_ssl": self.is_ssl,
+                    "use_ssl": self.instance.is_ssl,
                 }
             ]
             http_auth = (
@@ -1064,7 +1064,7 @@ class ElasticsearchEngine(ElasticsearchEngineBase):
                 self.conn = Elasticsearch(
                     hosts=hosts,
                     http_auth=http_auth,
-                    verify_certs=True,  # 需要证书验证
+                    verify_certs=self.instance.verify_ssl,  # 需要证书验证
                 )
             except Exception as e:
                 raise Exception(f"Elasticsearch 连接建立失败: {str(e)}")
@@ -1095,13 +1095,13 @@ class OpenSearchEngine(ElasticsearchEngineBase):
         if self.conn:
             return self.conn
         if self.instance:
-            scheme = "https" if self.is_ssl else "http"
+            scheme = "https" if self.instance.is_ssl else "http"
             hosts = [
                 {
                     "host": self.host,
                     "port": self.port,
                     "scheme": scheme,
-                    "use_ssl": self.is_ssl,
+                    "use_ssl": self.instance.is_ssl,
                 }
             ]
             http_auth = (
@@ -1114,7 +1114,7 @@ class OpenSearchEngine(ElasticsearchEngineBase):
                 self.conn = OpenSearch(
                     hosts=hosts,
                     http_auth=http_auth,
-                    verify_certs=True,  # 开启证书验证
+                    verify_certs=self.instance.verify_ssl,  # 开启证书验证
                 )
             except Exception as e:
                 raise Exception(f"OpenSearch 连接建立失败: {str(e)}")
