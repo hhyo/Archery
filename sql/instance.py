@@ -14,6 +14,7 @@ from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.convert import Convert
 from sql.engines import get_engine
 from sql.plugins.schemasync import SchemaSync
+from sql.utils.sql_utils import filter_db_list
 from .models import Instance, ParamTemplate, ParamHistory
 
 
@@ -332,6 +333,12 @@ def instance_resource(request):
         tb_name = query_engine.escape_string(tb_name)
         if resource_type == "database":
             resource = query_engine.get_all_databases()
+            resource = filter_db_list(
+                resource, query_engine.instance.show_db_name_regex, True
+            )
+            resource = filter_db_list(
+                resource, query_engine.instance.denied_db_name_regex, False
+            )
         elif resource_type == "schema" and db_name:
             resource = query_engine.get_all_schemas(db_name=db_name)
         elif resource_type == "table" and db_name:

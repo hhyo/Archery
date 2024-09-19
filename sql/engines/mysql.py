@@ -198,8 +198,6 @@ class MysqlEngine(EngineBase):
         db_list = [
             row[0] for row in result.rows if row[0] not in self.forbidden_databases
         ]
-        db_list = filter_db_list(db_list, self.instance.show_db_name_regex, True)
-        db_list = filter_db_list(db_list, self.instance.denied_db_name_regex, False)
         result.rows = db_list
         return result
 
