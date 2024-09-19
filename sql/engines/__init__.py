@@ -1,6 +1,7 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
 
 import importlib
+import re
 from sql.engines.models import ResultSet, ReviewSet
 from sql.models import Instance
 from sql.utils.ssh_tunnel import SSHConnection

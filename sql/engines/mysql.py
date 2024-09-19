@@ -13,7 +13,6 @@ from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
 from sql.utils.sql_utils import (
-    filter_db_list,
     get_syntax_type,
     remove_comments,
 )
