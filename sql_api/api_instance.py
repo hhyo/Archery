@@ -196,11 +196,11 @@ class InstanceResource(views.APIView):
             tb_name = query_engine.escape_string(tb_name)
             if resource_type == "database":
                 resource = query_engine.get_all_databases()
-                resource = filter_db_list(
-                    resource, query_engine.instance.show_db_name_regex, True
+                resource.rows = filter_db_list(
+                    resource.rows, query_engine.instance.show_db_name_regex, True
                 )
-                resource = filter_db_list(
-                    resource, query_engine.instance.denied_db_name_regex, False
+                resource.rows = filter_db_list(
+                    resource.rows, query_engine.instance.denied_db_name_regex, False
                 )
             elif resource_type == "schema" and db_name:
                 resource = query_engine.get_all_schemas(db_name=db_name)
