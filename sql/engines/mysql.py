@@ -12,10 +12,7 @@ from MySQLdb.constants import FIELD_TYPE
 from schemaobject.connection import build_database_url
 
 from sql.engines.goinception import GoInceptionEngine
-from sql.utils.sql_utils import (
-    get_syntax_type,
-    remove_comments,
-)
+from sql.utils.sql_utils import get_syntax_type, remove_comments
 from . import EngineBase
 from .models import ResultSet, ReviewResult, ReviewSet
 from sql.utils.data_masking import data_masking
