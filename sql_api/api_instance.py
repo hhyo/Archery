@@ -1,6 +1,8 @@
 from rest_framework import views, generics, status, serializers
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+
+from sql.utils.sql_utils import filter_db_list
 from .serializers import (
     InstanceSerializer,
     InstanceDetailSerializer,
@@ -193,6 +195,12 @@ class InstanceResource(views.APIView):
             tb_name = query_engine.escape_string(tb_name)
             if resource_type == "database":
                 resource = query_engine.get_all_databases()
+                resource = filter_db_list(
+                    resource, query_engine.instance.show_db_name_regex, True
+                )
+                resource = filter_db_list(
+                    resource, query_engine.instance.denied_db_name_regex, False
+                )
             elif resource_type == "schema" and db_name:
                 resource = query_engine.get_all_schemas(db_name=db_name)
             elif resource_type == "table" and db_name:
