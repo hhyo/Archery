@@ -287,7 +287,7 @@ def archive_audit(request):
 
     return HttpResponseRedirect(reverse("sql:archive_detail", args=(archive_id,)))
 
-
+@shared_task
 def add_archive_task(archive_ids=None):
     """
     添加数据归档异步任务，仅处理有效归档任务
