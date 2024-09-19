@@ -195,10 +195,14 @@ class InstanceResource(views.APIView):
             if resource_type == "database":
                 resource = query_engine.get_all_databases()
                 resource.rows = filter_db_list(
-                    resource.rows, query_engine.instance.show_db_name_regex, True
+                    db_list=resource.rows,
+                    db_name_regex=query_engine.instance.show_db_name_regex,
+                    is_match_regex=True,
                 )
                 resource.rows = filter_db_list(
-                    resource.rows, query_engine.instance.denied_db_name_regex, False
+                    db_list=resource.rows,
+                    db_name_regex=query_engine.instance.denied_db_name_regex,
+                    is_match_regex=False,
                 )
             elif resource_type == "schema" and db_name:
                 resource = query_engine.get_all_schemas(db_name=db_name)
