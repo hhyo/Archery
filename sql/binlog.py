@@ -18,6 +18,7 @@ from sql.engines import get_engine
 from sql.plugins.my2sql import My2SQL
 from sql.notify import notify_for_my2sql
 from .models import Instance
+from celery import shared_task
 
 logger = logging.getLogger("default")
 
@@ -205,16 +206,17 @@ def my2sql(request):
 
     # 异步保存到文件
     if save_sql:
-        args.update({"instance": instance})
         args.pop("password")
         args.pop("output-toScreen")
-        async_task(
-            my2sql_file,
-            args=args,
-            user=request.user,
-            hook=notify_for_my2sql,
-            timeout=-1,
-            task_name=f"my2sql-{time.time()}",
+        save_file_time = time.time()
+        my2sql_file.apply_async(
+            args=[
+                args,
+                instance_name,
+                request.user.username,
+            ],
+            task_id=f"my2sql-{save_file_time}",  # 可选，自定义任务ID
+            link=notify_for_my2sql.s(task_id=f"my2sql-{save_file_time}")
         )
 
     # 返回查询结果
@@ -223,8 +225,8 @@ def my2sql(request):
         content_type="application/json",
     )
 
-
-def my2sql_file(args, user):
+@shared_task
+def my2sql_file(args,instance_name, user):
     """
     用于异步保存binlog解析的文件
     :param args: 参数
@@ -232,7 +234,7 @@ def my2sql_file(args, user):
     :return:
     """
     my2sql = My2SQL()
-    instance = args.pop("instance")
+    instance = Instance.objects.get(instance_name=instance_name)
     args.update(
         {
             "host": instance.host,

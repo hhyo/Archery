@@ -301,11 +301,12 @@ def query_priv_apply(request):
         audit_handler.workflow.apply_id, audit_handler.audit.current_status
     )
     # 消息通知
-    async_task(
-        notify_for_audit,
-        workflow_audit=audit_handler.audit,
-        timeout=60,
-        task_name=f"query-priv-apply-{audit_handler.workflow.apply_id}",
+    notify_for_audit.apply_async(
+        args=[
+            audit_handler.audit.audit_id,
+        ],
+        time_limit=60,  # 设置此次任务的超时时间为 300 秒
+        task_id=f"query-priv-apply-{audit_handler.workflow.apply_id}"  # 可选，自定义任务ID
     )
     return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -452,12 +453,13 @@ def query_priv_audit(request):
         )
 
     # 消息通知
-    async_task(
-        notify_for_audit,
-        workflow_audit=auditor.audit,
-        workflow_audit_detail=workflow_audit_detail,
-        timeout=60,
-        task_name=f"query-priv-audit-{apply_id}",
+    notify_for_audit.apply_async(
+        args=[
+            auditor.audit.audit_id,
+            workflow_audit_detail.audit_detail_id,
+        ],
+        time_limit=60,  # 设置此次任务的超时时间为 300 秒
+        task_id=f"query-priv-audit-{apply_id}"  # 可选，自定义任务ID
     )
 
     return HttpResponseRedirect(reverse("sql:queryapplydetail", args=(apply_id,)))

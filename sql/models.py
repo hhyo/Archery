@@ -307,6 +307,7 @@ class SqlWorkflow(models.Model, WorkflowAuditMixin):
     engineer = models.CharField("发起人", max_length=30)
     engineer_display = models.CharField("发起人中文名", max_length=50, default="")
     status = models.CharField(max_length=50, choices=SQL_WORKFLOW_CHOICES)
+    timing_task_id = models.CharField("定时task_id", max_length=100, default="")
     audit_auth_groups = models.CharField("审批权限组列表", max_length=255)
     run_date_start = models.DateTimeField("可执行起始时间", null=True, blank=True)
     run_date_end = models.DateTimeField("可执行结束时间", null=True, blank=True)
