@@ -31,9 +31,8 @@ def process(request):
 
     query_engine = get_engine(instance=instance)
     query_result = None
-    if instance.db_type == "mysql":
+    if instance.db_type in ["mysql", "redis"]:
         query_result = query_engine.processlist(command_type)
-
     elif instance.db_type == "mongo":
         query_result = query_engine.current_op(command_type)
     elif instance.db_type == "oracle":
