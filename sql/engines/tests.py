@@ -327,17 +327,6 @@ class TestRedis(TestCase):
         dbs = new_engine.get_all_databases()
         self.assertListEqual(dbs.rows, ["0", "1", "2", "3"])
 
-    @patch("redis.Redis.config_get", return_value={"databases": 20})
-    def test_get_all_databases_with_show_db_name_regex(self, _config_get):
-        """获取数据库列表。"""
-        new_engine = RedisEngine(instance=self.ins)
-        self.ins.show_db_name_regex = "^(0|4|6|11|12|13)$"
-        self.ins.denied_db_name_regex = "^(4|13|22)$"
-        dbs = new_engine.get_all_databases()
-        # 预期结果：过滤后的数据库列表应只包括允许的数据库名
-        expected_result = ["0", "6", "11", "12"]
-        self.assertListEqual(dbs.rows, expected_result)
-
     @patch("redis.Redis.info")
     @patch("redis.Redis.config_get")
     def test_get_all_databases_exception_handling(self, mock_config_get, mock_info):
