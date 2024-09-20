@@ -22,7 +22,7 @@ logger = logging.getLogger("default")
 def process(request):
     instance_name = request.POST.get("instance_name")
     command_type = request.POST.get("command_type")
-    request_post_kwargs = {
+    request_kwargs = {
         key: value for key, value in request.POST.items() if key != "command_type"
     }
 
@@ -36,7 +36,7 @@ def process(request):
     query_result = None
     # processlist方法已提升为父类方法，简化此处的逻辑。进程添加新数据库支持时，改前端即可。
     query_result = query_engine.processlist(
-        command_type=command_type, **request_post_kwargs
+        command_type=command_type, **request_kwargs
     )
     if query_result:
         if not query_result.error:
