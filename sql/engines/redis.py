@@ -131,7 +131,7 @@ class RedisEngine(EngineBase):
             result["msg"] = "禁止执行该命令！"
         return result
 
-    def processlist(self, command_type):
+    def processlist(self, command_type, **kwargs):
         """获取连接信息"""
         sql = "client list"
         result_set = ResultSet(full_sql=sql)

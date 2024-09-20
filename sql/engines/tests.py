@@ -1497,11 +1497,11 @@ end;"""
         self.assertIsInstance(execute_result, ResultSet)
 
     @patch("sql.engines.oracle.OracleEngine.query")
-    def test_session_list(self, _query):
+    def test_processlist(self, _query):
         new_engine = OracleEngine(instance=self.ins)
         _query.return_value = ResultSet()
         for command_type in ["All", "Active", "Others"]:
-            r = new_engine.session_list(command_type)
+            r = new_engine.processlist(command_type)
             self.assertIsInstance(r, ResultSet)
 
     @patch("sql.engines.oracle.OracleEngine.query")
@@ -1803,7 +1803,7 @@ class MongoTest(TestCase):
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
 
     @patch("sql.engines.mongo.MongoEngine.get_connection")
-    def test_current_op(self, mock_get_connection):
+    def test_processlist(self, mock_get_connection):
         class Aggregate:
             def __enter__(self):
                 yield {"client": "single_client"}
@@ -1817,7 +1817,7 @@ class MongoTest(TestCase):
         mock_get_connection.return_value = mock_conn
         command_types = ["Full", "All", "Inner", "Active"]
         for command_type in command_types:
-            result_set = self.engine.current_op(command_type)
+            result_set = self.engine.processlist(command_type)
             self.assertIsInstance(result_set, ResultSet)
 
     @patch("sql.engines.mongo.MongoEngine.get_connection")
