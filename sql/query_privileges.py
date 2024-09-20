@@ -208,7 +208,7 @@ def query_priv_apply(request):
 
     # 用于存储计算后的新日期
     new_valid_date = None
-    current_date = datetime.now()  # 用新的变量来表示原始日期
+    current_date = datetime.now()
     if valid_date == "day":
         new_valid_date = current_date + datetime.timedelta(days=1)
     elif valid_date == "week":
