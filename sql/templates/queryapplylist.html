@@ -515,21 +515,6 @@
 
             // 参数校验
             if (applyvalidate()) {
-                //时间格式化
-                var date = new Date();
-                if (valid_date === 'day') {
-                    valid_date = addDate(date, 1);
-
-                } else if (valid_date === 'week') {
-                    valid_date = addDate(date, 7);
-                } else if (valid_date === 'month') {
-                    valid_date = addDate(date, 30);
-                } else if (valid_date === 'year') {
-                    valid_date = addDate(date, 365);
-                } else {
-                    valid_date = addDate(date, 1);
-                }
-
                 //禁用按钮
                 $('button[type=button]').addClass('disabled');
                 $('button[type=button]').prop('disabled', true);
