@@ -206,6 +206,22 @@ def query_priv_apply(request):
     valid_date = request.POST.get("valid_date")
     limit_num = request.POST.get("limit_num")
 
+    # 用于存储计算后的新日期
+    new_valid_date = None
+    current_date = datetime.now()  # 用新的变量来表示原始日期
+    if valid_date == "day":
+        new_valid_date = current_date + datetime.timedelta(days=1)
+    elif valid_date == "week":
+        new_valid_date = current_date + datetime.timedelta(days=7)
+    elif valid_date == "month":
+        new_valid_date = current_date + datetime.timedelta(days=30)
+    elif valid_date == "year":
+        new_valid_date = current_date + datetime.timedelta(year=1 * 1)
+    elif valid_date == "year2":
+        new_valid_date = current_date + datetime.timedelta(year=1 * 2)
+    else:
+        new_valid_date = current_date + datetime.timedelta(days=1)
+
     # 获取用户信息
     user = request.user
 
@@ -277,7 +293,7 @@ def query_priv_apply(request):
         user_display=user.display,
         instance=ins,
         priv_type=int(priv_type),
-        valid_date=valid_date,
+        valid_date=new_valid_date,
         status=WorkflowStatus.WAITING,
         limit_num=limit_num,
     )
