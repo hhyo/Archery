@@ -208,7 +208,7 @@ def query_priv_apply(request):
 
     # 用于存储计算后的新日期
     new_valid_date = None
-    current_date = datetime.now()
+    current_date = datetime.datetime.now()
     if valid_date == "day":
         new_valid_date = current_date + datetime.timedelta(days=1)
     elif valid_date == "week":
@@ -216,9 +216,9 @@ def query_priv_apply(request):
     elif valid_date == "month":
         new_valid_date = current_date + datetime.timedelta(days=30)
     elif valid_date == "year":
-        new_valid_date = current_date + datetime.timedelta(year=1 * 1)
+        new_valid_date = current_date + datetime.timedelta(days=365 * 1)
     elif valid_date == "year2":
-        new_valid_date = current_date + datetime.timedelta(year=1 * 2)
+        new_valid_date = current_date + datetime.timedelta(days=365 * 2)
     else:
         new_valid_date = current_date + datetime.timedelta(days=1)
 
