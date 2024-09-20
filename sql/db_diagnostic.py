@@ -35,9 +35,7 @@ def process(request):
     query_engine = get_engine(instance=instance)
     query_result = None
     # processlist方法已提升为父类方法，简化此处的逻辑。进程添加新数据库支持时，改前端即可。
-    query_result = query_engine.processlist(
-        command_type=command_type, **request_kwargs
-    )
+    query_result = query_engine.processlist(command_type=command_type, **request_kwargs)
     if query_result:
         if not query_result.error:
             processlist = query_result.to_dict()
