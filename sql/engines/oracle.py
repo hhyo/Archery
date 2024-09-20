@@ -1451,7 +1451,7 @@ class OracleEngine(EngineBase):
             self.close()
         return result
 
-    def session_list(self, command_type):
+    def processlist(self, command_type, **kwargs):
         """获取会话信息"""
         base_sql = """select 
                        s.sid,
