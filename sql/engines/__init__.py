@@ -103,6 +103,10 @@ class EngineBase:
         """返回引擎服务器版本，返回对象为tuple (x,y,z)"""
         return tuple()
 
+    def processlist(self, command_type, **kwargs) -> ResultSet:
+        """获取连接信息"""
+        return ResultSet()
+
     def kill_connection(self, thread_id):
         """终止数据库连接"""
 

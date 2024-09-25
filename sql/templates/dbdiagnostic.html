@@ -27,6 +27,7 @@
                         <optgroup id="optgroup-mysql" label="MySQL"></optgroup>
                         <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
+                        <optgroup id="optgroup-redis" label="Redis"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -342,6 +343,111 @@
                         }
                     });
                     return html.join('');
+                }
+            ]
+            ,[
+                'redis',
+                ["All"],
+                [{
+                        title: '',  // 用于多选框
+                        field: 'checkbox',
+                        checkbox: true
+                    }, {
+                        title: 'Id',
+                        field: 'id',
+                        sortable: true
+                    }, {
+                        title: '远程地址',
+                        field: 'addr',
+                        sortable: true
+                    }, {
+                        title: '本地地址',
+                        field: 'laddr',
+                        sortable: true
+                    },  {
+                        title: '客户端名称',
+                        field: 'name',
+                        sortable: true
+                    }, {
+                        title: '用户',
+                        field: 'user',
+                        sortable: true
+                    },
+                    {
+                        title: '数据库',
+                        field: 'db',
+                        sortable: true
+                    }, {
+                        title: '连接耗时(秒)',
+                        field: 'age',
+                        sortable: true
+                    }, {
+                        title: '空闲时间(秒)',
+                        field: 'idle',
+                        sortable: true
+                    }, {
+                        title: '命令',
+                        field: 'cmd',
+                        sortable: true
+                    }, {
+                        title: '总内存',
+                        field: 'tot-mem',
+                        sortable: true
+                    },{
+                        title: '输出内存',
+                        field: 'omem',
+                        sortable: true
+                    }, {
+                        title: '标志',
+                        field: 'flags',
+                        sortable: true
+                    },{
+                        title: '文件描述符',
+                        field: 'fd',
+                        sortable: true
+                    },{
+                        title: '订阅数',
+                        field: 'sub',
+                        sortable: true
+                    }, {
+                        title: '模式订阅数',
+                        field: 'psub',
+                        sortable: true
+                    }, {
+                        title: 'MULTI 队列长度',
+                        field: 'multi',
+                        sortable: true
+                    }, {
+                        title: '查询缓冲区',
+                        field: 'qbuf',
+                        sortable: true
+                    }, {
+                        title: '查询缓冲区空闲',
+                        field: 'qbuf-free',
+                        sortable: true
+                    }, {
+                        title: '参数内存',
+                        field: 'argv-mem',
+                        sortable: true
+                    }, {
+                        title: '输出缓冲区长度',
+                        field: 'obl',
+                        sortable: true
+                    }, {
+                        title: '输出链长度',
+                        field: 'oll',
+                        sortable: true
+                    },  {
+                        title: '事件文件',
+                        field: 'events',
+                        sortable: true
+                    }, {
+                        title: '重定向',
+                        field: 'redir',
+                        sortable: true
+                    }],
+                function (index, row) {
+                    var html = [];
                 }
             ]
         ]
@@ -949,12 +1055,14 @@
         $(document).ready(function () {
                 //获取用户实例列表
                 $(function () {
+                    // 会话管理-支持的数据库类型
+                    supportedDbType=['mysql','mongo', 'oracle','redis']
                     $.ajax({
                         type: "get",
                         url: "/group/user_all_instances/",
                         dataType: "json",
                         data: {
-                            db_type: ['mysql','mongo', 'oracle']
+                            db_type: supportedDbType
                         },
                         complete: function () {
                             //如果已选择instance_name，进入页面自动填充，并且重置激活id
@@ -969,20 +1077,13 @@
                             if (data.status === 0) {
                                 let result = data['data'];
                                 allInstances = result;
-                                // $("#instance_name").empty();
-                                $("#optgroup-mysql").empty();
-                                $("#optgroup-mongo").empty();
-                                $("#optgroup-oracle").empty();
+                                supportedDbType.forEach(function(db) {
+                                    $("#optgroup-" + db).empty();
+                                });
                                 for (let i = 0; i < result.length; i++) {
                                     let instance = "<option value=\"" + result[i]['instance_name'] + "\">" + result[i]['instance_name'] + "</option>";
-                                    // $("#instance_name").append(instance);
-                                    if (result[i]['db_type'] === 'mysql') {
-                                        $("#optgroup-mysql").append(instance);
-                                    } else if (result[i]['db_type'] === 'mongo') {
-                                        $("#optgroup-mongo").append(instance);
-                                    } else if (result[i]['db_type'] === 'oracle') {
-                                        $("#optgroup-oracle").append(instance);
-                                    }
+                                    var dbType = result[i]['db_type'];
+                                    $("#optgroup-" + dbType).append(instance);
                                 }
                                 $('#instance_name').selectpicker('render');
                                 $('#instance_name').selectpicker('refresh');

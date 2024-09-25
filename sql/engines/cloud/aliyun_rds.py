@@ -15,7 +15,7 @@ class AliyunRDS(MysqlEngine):
         self.instance_name = instance.instance_name
 
     # 将sql/aliyun_rds.py的函数迁移值此
-    def processlist(self, command_type):
+    def processlist(self, command_type, **kwargs):
         if command_type is None or command_type == "":
             command_type = "Query"
 
