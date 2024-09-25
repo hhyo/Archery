@@ -206,6 +206,22 @@ def query_priv_apply(request):
     valid_date = request.POST.get("valid_date")
     limit_num = request.POST.get("limit_num")
 
+    # 用于存储计算后的新日期
+    new_valid_date = None
+    current_date = datetime.datetime.now()
+    if valid_date == "day":
+        new_valid_date = current_date + datetime.timedelta(days=1)
+    elif valid_date == "week":
+        new_valid_date = current_date + datetime.timedelta(days=7)
+    elif valid_date == "month":
+        new_valid_date = current_date + datetime.timedelta(days=30)
+    elif valid_date == "year":
+        new_valid_date = current_date + datetime.timedelta(days=365 * 1)
+    elif valid_date == "year2":
+        new_valid_date = current_date + datetime.timedelta(days=365 * 2)
+    else:
+        new_valid_date = current_date + datetime.timedelta(days=1)
+
     # 获取用户信息
     user = request.user
 
@@ -239,33 +255,33 @@ def query_priv_apply(request):
 
     # 库权限
     ins = Instance.objects.get(instance_name=instance_name)
-    if int(priv_type) == 1:
-        # 检查申请账号是否已拥库查询权限
-        for db_name in db_list:
-            if _db_priv(user, ins, db_name):
-                result["status"] = 1
-                result["msg"] = (
-                    f"你已拥有{instance_name}实例{db_name}库权限，不能重复申请"
-                )
-                return HttpResponse(json.dumps(result), content_type="application/json")
+    # if int(priv_type) == 1:
+    #     # 检查申请账号是否已拥库查询权限
+    #     for db_name in db_list:
+    #         if _db_priv(user, ins, db_name):
+    #             result["status"] = 1
+    #             result["msg"] = (
+    #                 f"你已拥有{instance_name}实例{db_name}库权限，不能重复申请"
+    #             )
+    #             return HttpResponse(json.dumps(result), content_type="application/json")
 
-    # 表权限
-    elif int(priv_type) == 2:
-        # 先检查是否拥有库权限
-        if _db_priv(user, ins, db_name):
-            result["status"] = 1
-            result["msg"] = (
-                f"你已拥有{instance_name}实例{db_name}库的全部权限，不能重复申请"
-            )
-            return HttpResponse(json.dumps(result), content_type="application/json")
-        # 检查申请账号是否已拥有该表的查询权限
-        for tb_name in table_list:
-            if _tb_priv(user, ins, db_name, tb_name):
-                result["status"] = 1
-                result["msg"] = (
-                    f"你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请"
-                )
-                return HttpResponse(json.dumps(result), content_type="application/json")
+    # # 表权限
+    # elif int(priv_type) == 2:
+    #     # 先检查是否拥有库权限
+    #     if _db_priv(user, ins, db_name):
+    #         result["status"] = 1
+    #         result["msg"] = (
+    #             f"你已拥有{instance_name}实例{db_name}库的全部权限，不能重复申请"
+    #         )
+    #         return HttpResponse(json.dumps(result), content_type="application/json")
+    #     # 检查申请账号是否已拥有该表的查询权限
+    #     for tb_name in table_list:
+    #         if _tb_priv(user, ins, db_name, tb_name):
+    #             result["status"] = 1
+    #             result["msg"] = (
+    #                 f"你已拥有{instance_name}实例{db_name}.{tb_name}表的查询权限，不能重复申请"
+    #             )
+    #             return HttpResponse(json.dumps(result), content_type="application/json")
 
     apply_info = QueryPrivilegesApply(
         title=title,
@@ -277,7 +293,7 @@ def query_priv_apply(request):
         user_display=user.display,
         instance=ins,
         priv_type=int(priv_type),
-        valid_date=valid_date,
+        valid_date=new_valid_date,
         status=WorkflowStatus.WAITING,
         limit_num=limit_num,
     )
