@@ -22,6 +22,9 @@ logger = logging.getLogger("default")
 def process(request):
     instance_name = request.POST.get("instance_name")
     command_type = request.POST.get("command_type")
+    request_kwargs = {
+        key: value for key, value in request.POST.items() if key != "command_type"
+    }
 
     try:
         instance = user_instances(request.user).get(instance_name=instance_name)
@@ -31,21 +34,8 @@ def process(request):
 
     query_engine = get_engine(instance=instance)
     query_result = None
-    if instance.db_type == "mysql":
-        query_result = query_engine.processlist(command_type)
-
-    elif instance.db_type == "mongo":
-        query_result = query_engine.current_op(command_type)
-    elif instance.db_type == "oracle":
-        query_result = query_engine.session_list(command_type)
-    else:
-        result = {
-            "status": 1,
-            "msg": "暂时不支持{}类型数据库的进程列表查询".format(instance.db_type),
-            "data": [],
-        }
-        return HttpResponse(json.dumps(result), content_type="application/json")
-
+    # processlist方法已提升为父类方法，简化此处的逻辑。进程添加新数据库支持时，改前端即可。
+    query_result = query_engine.processlist(command_type=command_type, **request_kwargs)
     if query_result:
         if not query_result.error:
             processlist = query_result.to_dict()

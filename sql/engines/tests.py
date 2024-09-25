@@ -487,6 +487,43 @@ class TestRedis(TestCase):
         self.assertIsInstance(execute_result, ReviewSet)
         self.assertEqual(execute_result.rows[0].__dict__.keys(), row.__dict__.keys())
 
+    @patch("sql.engines.redis.RedisEngine.get_connection")
+    def test_processlist(self, mock_get_connection):
+        """测试 processlist 方法，模拟获取连接并返回客户端列表"""
+
+        # 模拟 Redis 连接的客户端列表
+        mock_conn = Mock()
+
+        return_value_mock = [
+            {"id": "1", "idle": 10, "name": "client_1"},
+            {"id": "2", "idle": 5, "name": "client_2"},
+            {"id": "3", "idle": 20, "name": "client_3"},
+        ]
+        mock_conn.client_list.return_value = return_value_mock
+
+        # 设置 get_connection 返回模拟连接
+        mock_get_connection.return_value = mock_conn
+
+        # 创建 RedisEngine 实例
+        new_engine = RedisEngine(instance=self.ins)
+
+        # 调用 processlist 方法并测试其返回值
+        command_types = ["All"]  # 假设支持的命令类型
+        for command_type in command_types:
+            result_set = new_engine.processlist(command_type=command_type)
+
+            # 验证返回值是 ResultSet 实例
+            self.assertIsInstance(result_set, ResultSet)
+
+            # 验证返回的客户端列表被正确排序
+            sorted_clients = sorted(
+                return_value_mock, key=lambda client: client.get("idle"), reverse=False
+            )
+            self.assertEqual(result_set.rows, sorted_clients)
+
+        # 验证 get_connection 是否被调用
+        mock_get_connection.assert_called()
+
 
 class TestPgSQL(TestCase):
     @classmethod
@@ -1497,11 +1534,11 @@ end;"""
         self.assertIsInstance(execute_result, ResultSet)
 
     @patch("sql.engines.oracle.OracleEngine.query")
-    def test_session_list(self, _query):
+    def test_processlist(self, _query):
         new_engine = OracleEngine(instance=self.ins)
         _query.return_value = ResultSet()
         for command_type in ["All", "Active", "Others"]:
-            r = new_engine.session_list(command_type)
+            r = new_engine.processlist(command_type)
             self.assertIsInstance(r, ResultSet)
 
     @patch("sql.engines.oracle.OracleEngine.query")
@@ -1803,7 +1840,7 @@ class MongoTest(TestCase):
         self.assertEqual(cols, ["_id", "title", "tags", "likes", "text", "author"])
 
     @patch("sql.engines.mongo.MongoEngine.get_connection")
-    def test_current_op(self, mock_get_connection):
+    def test_processlist(self, mock_get_connection):
         class Aggregate:
             def __enter__(self):
                 yield {"client": "single_client"}
@@ -1817,7 +1854,7 @@ class MongoTest(TestCase):
         mock_get_connection.return_value = mock_conn
         command_types = ["Full", "All", "Inner", "Active"]
         for command_type in command_types:
-            result_set = self.engine.current_op(command_type)
+            result_set = self.engine.processlist(command_type)
             self.assertIsInstance(result_set, ResultSet)
 
     @patch("sql.engines.mongo.MongoEngine.get_connection")
