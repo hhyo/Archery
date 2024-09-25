@@ -380,3 +380,37 @@ def get_exec_sqlitem_list(reviewResult, db_name):
             )
         )
     return list
+
+
+def filter_db_list(db_list, db_name_regex: str, is_match_regex: bool, key="value"):
+    """
+    根据配置的数据库列表过滤数据库名称列表。
+
+    :param db_list: 待过滤的数据库名称列表，可能是字符串列表或字典列表。
+    示例数据：
+    1. db_list=[{"value": 0, "text": 0, "value": 1, "text": 1}]
+    2. db_list=["a_db","b_db"]
+    :param db_name_regex: 配置的数据库正则。
+    :param is_match_regex 是匹配还是不匹配的正则
+    :param key: 当 db_list 包含字典时，指定用于匹配的键。默认值为 'value'。
+    :return: 过滤后的数据库名称列表或字典列表。
+    """
+    if not db_name_regex:
+        return db_list  # 如果没有指定 db_name_regex，返回原始 db_list
+
+    try:
+        db_regex = re.compile(db_name_regex)  # 编译正则表达式
+    except re.error:
+        raise ValueError(f"正则表达式解析异常: {db_name_regex}")
+
+    filtered_list = []
+
+    # 根据类型处理 db_list
+    for db in db_list:
+        # 确定要检查的值（字符串或字典中的特定键）
+        db_value = str(db[key]) if isinstance(db, dict) else db
+        is_match = bool(db_regex.match(db_value))
+        # 根据 is_match_regex 参数过滤
+        if (is_match_regex and is_match) or (not is_match_regex and not is_match):
+            filtered_list.append(db)
+    return filtered_list

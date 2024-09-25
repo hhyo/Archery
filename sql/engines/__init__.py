@@ -1,7 +1,9 @@
 """engine base库, 包含一个``EngineBase`` class和一个get_engine函数"""
 
 import importlib
+import re
 from sql.engines.models import ResultSet, ReviewSet
+from sql.models import Instance
 from sql.utils.ssh_tunnel import SSHConnection
 from django.conf import settings
 
@@ -14,11 +16,11 @@ class EngineBase:
     name = "Base"
     info = "base engine"
 
-    def __init__(self, instance=None):
+    def __init__(self, instance: Instance = None):
         self.conn = None
         self.thread_id = None
         if instance:
-            self.instance = instance
+            self.instance = instance  # type: Instance
             self.instance_name = instance.instance_name
             self.host = instance.host
             self.port = int(instance.port)
@@ -26,7 +28,6 @@ class EngineBase:
             self.password = instance.password
             self.db_name = instance.db_name
             self.mode = instance.mode
-            self.is_ssl = instance.is_ssl
 
             # 判断如果配置了隧道则连接隧道，只测试了MySQL
             if self.instance.tunnel:

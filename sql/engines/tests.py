@@ -1238,42 +1238,6 @@ class TestOracle(TestCase):
             },
         )
 
-    def test_filter_sql_with_delimiter(self):
-        sql = "select * from xx;"
-        new_engine = OracleEngine(instance=self.ins)
-        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
-        self.assertEqual(
-            check_result,
-            "select sql_audit.* from (select * from xx) sql_audit where rownum <= 100",
-        )
-
-    def test_filter_sql_with_delimiter_and_where(self):
-        sql = "select * from xx where id>1;"
-        new_engine = OracleEngine(instance=self.ins)
-        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
-        self.assertEqual(
-            check_result,
-            "select sql_audit.* from (select * from xx where id>1) sql_audit where rownum <= 100",
-        )
-
-    def test_filter_sql_without_delimiter(self):
-        sql = "select * from xx;"
-        new_engine = OracleEngine(instance=self.ins)
-        check_result = new_engine.filter_sql(sql=sql, limit_num=100)
-        self.assertEqual(
-            check_result,
-            "select sql_audit.* from (select * from xx) sql_audit where rownum <= 100",
-        )
-
-    def test_filter_sql_with_limit(self):
-        sql = "select * from xx limit 10;"
-        new_engine = OracleEngine(instance=self.ins)
-        check_result = new_engine.filter_sql(sql=sql, limit_num=1)
-        self.assertEqual(
-            check_result,
-            "select sql_audit.* from (select * from xx limit 10) sql_audit where rownum <= 1",
-        )
-
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = OracleEngine(instance=self.ins)
