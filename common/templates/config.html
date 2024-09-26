@@ -305,6 +305,29 @@
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label for="query_low_peak_query"
+                                       class="col-sm-4 control-label">QUERY_LOW_PEAK_QUERY</label>
+                                <div class="col-sm-5">
+                                    <select id="query_low_peak_query" key="query_low_peak_query"
+                                            class="selectpicker show-tick form-control bs-select-hidden"
+                                            data-live-search="true"
+                                            data-none-selected-text="必须在低峰期执行操作操作？默认DML,DDL"
+                                            multiple required>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="query_low_peak" class="col-sm-4 control-label">QUERY_LOW_PEAK</label>
+                                <div class="col-sm-5">
+                                    <input type="text" class="form-control"
+                                           id="query_low_peak" key="query_low_peak"
+                                           value="{{ config.query_low_peak }}"
+                                           placeholder="每天业务低峰开始时间，单位小时，默认为空"
+                                           pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9](,([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9])*$"
+                                           title="请输入正确的时间范围，如：12:00-14:00,16:00-21:00,23:00-24:00" />
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label for="ban_self_audit"
                                        class="col-sm-4 control-label">BAN_SELF_AUDIT</label>
                                 <div class="col-sm-8">
@@ -1143,18 +1166,7 @@
                                            key="announcement_content"
                                            value="{{ config.announcement_content }}"
                                            placeholder="公告内容">
-                                            
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="custom_title_suffix"
-                                       class="col-sm-4 control-label">CUSTOM_TITLE_SUFFIX</label>
-                                <div class="col-sm-5">
-                                    <input type="text" class="form-control"
-                                           id="custom_title_suffix"
-                                           key="custom_title_suffix"
-                                           value="{{ config.custom_title_suffix }}"
-                                           placeholder="在网站标题及登录页面追加此内容, 可用于多archery实例的区分">
+
                                 </div>
                             </div>
                         </div>
@@ -1206,29 +1218,30 @@
     <script>
 
         $(document).ready(function (){
-            // notify_phase_control参数处理
-            let cfg_value = "{{ config.notify_phase_control }}";
-            let phases = ['Apply', 'Pass', 'Execute', 'Cancel'];
-            // notify_phase_control未设置时默认全部开启
-            if (cfg_value === "") {
-                for (let i in phases) {
-                    let phase = "<option value=\"" + phases[i]+ "\" selected>" + phases[i] + "</option>"
-                    $("#notify_phase_control").append(phase)
-                }
-            } else {
-                for (let i=0;i<phases.length;i++) {
-                    let phase = "";
-                    let cfg_arr = cfg_value.split(',');
-                    if (cfg_arr.indexOf(phases[i]) >= 0) {
-                        phase = "<option value=\"" + phases[i]+ "\" selected>" + phases[i] + "</option>"
-                    } else {
-                        phase = "<option value=\"" + phases[i]+ "\">" + phases[i] + "</option>"
-                    }
-                    $("#notify_phase_control").append(phase)
-                }
+            function setupSelectPicker(selector, configValue, defaultPhases) {
+                let $select = $(selector);
+                let cfgArr = configValue ? configValue.split(',') : defaultPhases;
+                $select.empty();
+
+                defaultPhases.forEach(phase => {
+                    let isSelected = cfgArr.includes(phase) ? ' selected' : '';
+                    let option = `<option value="${phase}"${isSelected}>${phase}</option>`;
+                    $select.append(option);
+                });
+
+                $select.selectpicker('render');
+                $select.selectpicker('refresh');
             }
-            $("#notify_phase_control").selectpicker('render');
-            $("#notify_phase_control").selectpicker('refresh');
+
+            // notify_phase_control参数处理
+            let notifyConfig = "{{ config.notify_phase_control }}";
+            let notifyPhases = ['Apply', 'Pass', 'Execute', 'Cancel'];
+            setupSelectPicker("#notify_phase_control", notifyConfig, notifyPhases);
+
+            // query_low_peak_query参数处理
+            let queryConfig = "{{ config.query_low_peak_query }}";
+            let queryPhases = ['DML', 'DDL'];
+            setupSelectPicker("#query_low_peak_query", queryConfig, queryPhases);
 
             // api_user_whitelist参数处理
             let api_config = "{{ config.api_user_whitelist }}";
@@ -1351,7 +1364,6 @@
                 }
             }
         });
-
         // 修改系统设置
         $("#saveconfig").click(function () {
             // 当开启钉钉通知到个人时，企业id和secret等必须填写
@@ -1366,6 +1378,23 @@
                     return;
                 }
             }
+            // 校验时间段格式和有效性的函数
+            var query_low_peak = $("#query_low_peak").val();
+            var periods = query_low_peak.split(',');
+            var timePattern = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
+                for (var i = 0; i < periods.length; i++) {
+                    if (!timePattern.test(periods[i])) {
+                        alert('业务低峰时段时间格式错误，正确格式为 HH:MM-HH:MM，例如 "12:00-14:00"');
+                        return ;
+                    }
+                    var times = periods[i].split('-');
+                    var startTime = times[0];
+                    var endTime = times[1];
+                    if (startTime >= endTime) {
+                        alert('业务低峰时段时间范围错误，结束时间必须大于开始时间');
+                        return ;
+                    }
+                }
             var sys_config = $("#div-system-config");
             var configs = [];
             sys_config.find('[key]').each(
