@@ -534,8 +534,8 @@ class MongoEngine(EngineBase):
         # 执行语句
         for check_sql in sp_sql:
             alert = ""  # 警告信息
+            check_sql = check_sql.strip()
             if not check_sql == "" and check_sql != "\n":
-                check_sql = check_sql.strip()
                 # check_sql = f'''{check_sql}'''
                 # check_sql = check_sql.replace('\n', '') #处理成一行
                 # 支持的命令列表
