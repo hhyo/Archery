@@ -598,6 +598,8 @@ class AuditV2:
                 )
                 continue
             group_in_db = Group.objects.get(id=g)
+            current_audit_users = auth_group_users([group_in_db.name], self.resource_group_id)
+            group_in_db.user_set.set(current_audit_users)
             if self.audit.current_status != WorkflowStatus.WAITING:
                 # 总体状态不是待审核, 不设置详细的属性
                 review_nodes.append(
