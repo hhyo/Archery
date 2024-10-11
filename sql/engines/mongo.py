@@ -534,8 +534,8 @@ class MongoEngine(EngineBase):
         # 执行语句
         for check_sql in sp_sql:
             alert = ""  # 警告信息
+            check_sql = check_sql.strip()
             if not check_sql == "" and check_sql != "\n":
-                check_sql = check_sql.strip()
                 # check_sql = f'''{check_sql}'''
                 # check_sql = check_sql.replace('\n', '') #处理成一行
                 # 支持的命令列表
@@ -1252,6 +1252,18 @@ class MongoEngine(EngineBase):
                         operation["client"] = operation["clientMetadata"]["mongos"][
                             "client"
                         ]
+
+                    # 获取此会话的用户名
+                    effective_users_key = "effectiveUsers_user"
+                    effective_users = operation.get("effectiveUsers", [])
+                    if isinstance(effective_users, list) and effective_users:
+                        first_user = effective_users[0]
+                        if isinstance(first_user, dict):
+                            operation[effective_users_key] = first_user.get("user", [])
+                        else:
+                            operation[effective_users_key] = None
+                    else:
+                        operation[effective_users_key] = None
 
                     # client_s 只是处理的mongos，并不是实际客户端
                     # client 在sharding获取不到？

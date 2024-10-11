@@ -1841,16 +1841,25 @@ class MongoTest(TestCase):
 
     @patch("sql.engines.mongo.MongoEngine.get_connection")
     def test_processlist(self, mock_get_connection):
-        class Aggregate:
+        # 模拟 MongoDB aggregate 的游标行为
+        class AggregateCursor:
             def __enter__(self):
-                yield {"client": "single_client"}
-                yield {"clientMetadata": {"mongos": {"client": "sharding_client"}}}
+                yield {
+                    "client": "single_client",
+                    "effectiveUsers": [{"user": "user_1"}],
+                    "clientMetadata": {"mongos": {"client": "sharding_client"}},
+                }
+                yield {
+                    "clientMetadata": {"mongos": {}},
+                    "effectiveUsers": [{"user": "user_2"}],
+                }
+                yield {"effectiveUsers": []}
 
-            def __exit__(self, *arg, **kwargs):
+            def __exit__(self, exc_type, exc_value, traceback):
                 pass
 
         mock_conn = Mock()
-        mock_conn.admin.aggregate.return_value = Aggregate()
+        mock_conn.admin.aggregate.return_value = AggregateCursor()
         mock_get_connection.return_value = mock_conn
         command_types = ["Full", "All", "Inner", "Active"]
         for command_type in command_types:
