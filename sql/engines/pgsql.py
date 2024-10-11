@@ -216,7 +216,7 @@ class PgSQLEngine(EngineBase):
                 for idx, col_value in enumerate(row):
                     column_type_code = column_type_codes[idx]
                     # 只在列类型为 json 或 jsonb 时转换
-                    if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:  
+                    if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
                         if isinstance(col_value, (dict, list)):
                             new_row.append(json.dumps(col_value))  # 转为 JSON 字符串
                         else:
@@ -224,7 +224,7 @@ class PgSQLEngine(EngineBase):
                     else:
                         new_row.append(col_value)
                 converted_rows.append(tuple(new_row))
- 
+
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = converted_rows
             result_set.affected_rows = effect_row
