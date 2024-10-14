@@ -198,7 +198,7 @@ class PgSQLEngine(EngineBase):
                     f"SET search_path TO %(schema_name)s;", {"schema_name": schema_name}
                 )
             cursor.execute(sql, parameters)
-            effect_row = cursor.rowcount
+            # effect_row = cursor.rowcount
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
@@ -227,7 +227,7 @@ class PgSQLEngine(EngineBase):
 
             result_set.column_list = [i[0] for i in fields] if fields else []
             result_set.rows = converted_rows
-            result_set.affected_rows = effect_row
+            result_set.affected_rows = len(converted_rows)
         except Exception as e:
             logger.warning(
                 f"PgSQL命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
