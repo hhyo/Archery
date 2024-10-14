@@ -204,7 +204,6 @@ class PgSQLEngine(EngineBase):
             else:
                 rows = cursor.fetchall()
             fields = cursor.description
-
             column_type_codes = [i[1] for i in fields] if fields else []
             # 定义 JSON 和 JSONB 的 type_code,# 114 是 json，3802 是 jsonb
             JSON_TYPE_CODE = 114
@@ -214,7 +213,7 @@ class PgSQLEngine(EngineBase):
             for row in rows:
                 new_row = []
                 for idx, col_value in enumerate(row):
-                    column_type_code = column_type_codes[idx]
+                    column_type_code = column_type_codes[idx] if idx < len(column_type_codes) else None
                     # 只在列类型为 json 或 jsonb 时转换
                     if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
                         if isinstance(col_value, (dict, list)):
