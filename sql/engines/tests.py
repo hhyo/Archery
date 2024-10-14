@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta, datetime
-from unittest.mock import patch, Mock, ANY
+from unittest.mock import MagicMock, patch, Mock, ANY
 
 import sqlparse
 from django.contrib.auth import get_user_model
@@ -576,16 +576,46 @@ class TestPgSQL(TestCase):
     @patch("psycopg2.connect.cursor")
     @patch("psycopg2.connect")
     def test_query_not_limit(self, _conn, _cursor, _execute):
-        _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
+        # 模拟数据库连接和游标
+        mock_cursor = MagicMock()
+        _conn.return_value.cursor.return_value = mock_cursor
+
+        # 模拟 SQL 查询的返回结果，包含 JSONB 类型、字符串和数字数据
+        mock_cursor.fetchall.return_value = [
+            ({"key": "value"}, "test_string", 123)  # 返回一行数据，三列
+        ]
+        mock_cursor.description = [
+            ("json_column", 3802),  # JSONB 类型
+            ("string_column", 25),  # 25 表示 TEXT 类型的 OID
+            ("number_column", 23),  # 23 表示 INTEGER 类型的 OID
+        ]
+
+        # _conn.return_value.cursor.return_value.fetchall.return_value = [(1,)]
         new_engine = PgSQLEngine(instance=self.ins)
         query_result = new_engine.query(
             db_name="some_dbname",
-            sql="select 1",
+            sql="SELECT json_column, string_column, number_column FROM some_table",
             limit_num=0,
             schema_name="some_schema",
         )
+
+        # 断言查询结果的类型和数据
         self.assertIsInstance(query_result, ResultSet)
-        self.assertListEqual(query_result.rows, [(1,)])
+        # 验证返回的 JSONB 列已转换为 JSON 字符串
+        expected_row = ('{"key": "value"}', "test_string", 123)
+        self.assertListEqual(query_result.rows, [expected_row])
+
+        expected_column = ["json_column", "string_column", "number_column"]
+        # 验证列名是否正确
+        self.assertEqual(query_result.column_list, expected_column)
+
+        # 验证受影响的行数
+        self.assertEqual(query_result.affected_rows, 1)
+
+        # 验证类型代码是否正确（3802 表示 JSONB，25 表示 TEXT，23 表示 INTEGER）
+        expected_column_type_codes = [3802, 25, 23]
+        actual_column_type_codes = [desc[1] for desc in mock_cursor.description]
+        self.assertListEqual(actual_column_type_codes, expected_column_type_codes)
 
     @patch(
         "sql.engines.pgsql.PgSQLEngine.query",
