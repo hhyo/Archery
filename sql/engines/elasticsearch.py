@@ -387,6 +387,8 @@ class ElasticsearchEngineBase(EngineBase):
                 hits = response.get("hits", {}).get("hits", [])
                 # 处理查询结果，将列表和字典转换为 JSON 字符串
                 rows = []
+                all_search_keys = {}  # 用于收集所有字段的集合
+                all_search_keys["_id"] = None
                 for hit in hits:
                     # 获取文档 ID 和 _source 数据
                     doc_id = hit.get("_id")
@@ -394,6 +396,7 @@ class ElasticsearchEngineBase(EngineBase):
 
                     # 转换需要转换为 JSON 字符串的字段
                     for key, value in source_data.items():
+                        all_search_keys[key] = None  # 收集所有字段名
                         if isinstance(value, (list, dict)):  # 如果字段是列表或字典
                             source_data[key] = json.dumps(value)  # 转换为 JSON 字符串
 
@@ -401,15 +404,13 @@ class ElasticsearchEngineBase(EngineBase):
                     row = {"_id": doc_id, **source_data}
                     rows.append(row)
 
-                # 如果有结果，获取字段名作为列名
-                if rows:
-                    first_row = rows[0]
-                    column_list = list(first_row.keys())
-                else:
-                    column_list = []
-
+                column_list = list(all_search_keys.keys())
                 # 构建结果集
-                result_set.rows = [tuple(row.values()) for row in rows]  # 只获取值
+                result_set.rows = []
+                for row in rows:
+                    # 按照 column_list 的顺序填充每一行
+                    result_row = tuple(row.get(key, None) for key in column_list)
+                    result_set.rows.append(result_row)
                 result_set.column_list = column_list
             result_set.affected_rows = len(result_set.rows)
             return result_set
