@@ -213,7 +213,10 @@ class PgSQLEngine(EngineBase):
             for row in rows:
                 new_row = []
                 for idx, col_value in enumerate(row):
-                    column_type_code = column_type_codes[idx] if idx < len(column_type_codes) else None
+                    # 理论上, 下标不会越界的
+                    column_type_code = (
+                        column_type_codes[idx] if idx < len(column_type_codes) else None
+                    )
                     # 只在列类型为 json 或 jsonb 时转换
                     if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
                         if isinstance(col_value, (dict, list)):
