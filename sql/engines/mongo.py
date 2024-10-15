@@ -368,7 +368,7 @@ class MongoEngine(EngineBase):
         else:
             cmd_template = (
                 "{mongo} --quiet {auth_options} {host}:{port}/{auth_db} <<\\EOF\n"
-                "db=db.getSiblingDB('{db_name}');{slave_ok}printjson({sql})\nEOF"
+                "db=db.getSiblingDB('{db_name}');{slave_ok}{sql}\nEOF"
             )
             # 长度不超限直接mongo shell，无需临时文件
             common_params["sql"] = sql
@@ -397,7 +397,7 @@ class MongoEngine(EngineBase):
 
         sql = """var host=""; rs.status().members.forEach(function(item) {i=1; if (item.stateStr =="SECONDARY") \
         {host=item.name } }); print(host);"""
-        slave_msg = self.exec_cmd(sql)
+        slave_msg = self.exec_cmd(sql, db_name=self.db_name)
         # 如果是阿里云的云mongodb，会获取不到备节点真实的ip和端口，那就干脆不获取，直接用主节点来执行sql
         # 如果是自建mongodb，获取到备节点的ip是192.168.1.33:27019这样的值；但如果是阿里云mongodb，获取到的备节点ip是SECONDARY、hiddenNode这样的值
         # 所以，为了使代码更加通用，通过有无冒号来判断自建Mongod还是阿里云mongdb；没有冒号就判定为阿里云mongodb，直接返回false；
