@@ -28,6 +28,7 @@
                         <optgroup id="optgroup-mongo" label="MongoDB"></optgroup>
                         <optgroup id="optgroup-oracle" label="Oracle"></optgroup>
                         <optgroup id="optgroup-redis" label="Redis"></optgroup>
+                        <optgroup id="optgroup-pgsql" label="PgSQL"></optgroup>
                 </select>
             </div>
             <div id="command-div" class="form-group">
@@ -94,6 +95,7 @@
     {% load static %}
     <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>
     <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>
+    <script src="{% static 'dbdiagnostic/js/db_info.js' %}"></script>
     <script>
 
         var processListColumns  = [];
@@ -452,6 +454,24 @@
             ]
         ]
 
+
+        if (typeof pgsqlDiagnosticInfo !== "undefined" && Array.isArray(pgsqlDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(pgsqlDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof mysqlDiagnosticInfo !== "undefined" && Array.isArray(mysqlDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(mysqlDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof mongoDiagnosticInfo !== "undefined" && Array.isArray(mongoDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(mongoDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof redisDiagnosticInfo !== "undefined" && Array.isArray(redisDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(redisDiagnosticInfo?.fieldsProcesslist);
+        }
+        if (typeof oracleDiagnosticInfo !== "undefined" && Array.isArray(oracleDiagnosticInfo.fieldsProcesslist)) {
+            processListTableInfos.push(oracleDiagnosticInfo?.fieldsProcesslist);
+        }
+        
+         
 
         // 问题诊断--进程列表
         function get_process_list() {
@@ -1056,7 +1076,7 @@
                 //获取用户实例列表
                 $(function () {
                     // 会话管理-支持的数据库类型
-                    supportedDbType=['mysql','mongo', 'oracle','redis']
+                    supportedDbType=['mysql','mongo', 'oracle','redis','pgsql']
                     $.ajax({
                         type: "get",
                         url: "/group/user_all_instances/",

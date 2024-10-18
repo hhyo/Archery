@@ -384,3 +384,45 @@ class PgSQLEngine(EngineBase):
         if self.conn:
             self.conn.close()
             self.conn = None
+
+    def processlist(self, command_type, **kwargs):
+        """获取连接信息"""
+        sql = """
+            select psa.pid
+                                ,concat('{',array_to_string(pg_blocking_pids(psa.pid),','),'}') block_pids
+                                ,psa.leader_pid
+                                ,psa.datname,psa.usename
+                                ,psa.application_name
+                                ,psa.state
+                                ,psa.client_addr::text client_addr
+                                ,round(GREATEST(EXTRACT(EPOCH FROM (now() - psa.query_start)),0)::numeric,4) elapsed_time_seconds
+                ,GREATEST(now() - psa.query_start, INTERVAL '0 second') AS elapsed_time
+                        ,(case when psa.leader_pid is null then psa.query end) query
+                                ,psa.wait_event_type,psa.wait_event
+                                ,psa.query_start
+                                ,psa.backend_start
+                                ,psa.client_hostname,psa.client_port
+                                ,psa.xact_start transaction_start_time
+                ,psa.state_change,psa.backend_xid,psa.backend_xmin,psa.backend_type
+                                from  pg_stat_activity psa
+                                where 1=1
+                                AND psa.pid <> pg_backend_pid()
+                                $state_not_idle$
+                                order by (case 
+                                    when psa.state='active' then 10 
+                                    when psa.state like 'idle in transaction%' then 5
+                                    when psa.state='idle' then 99 else 100 end)
+                                    ,elapsed_time_seconds desc
+                                ,(case when psa.leader_pid is not null then 1 else 0 end);
+            """
+        # escape
+        command_type = self.escape_string(command_type)
+        if not command_type:
+            command_type = "Not Idle"
+
+        if command_type == "Not Idle":
+            sql = sql.replace("$state_not_idle$", "and psa.state<>'idle'")
+
+        # 所有的模板进行替换
+        sql = sql.replace("$state_not_idle$", "")
+        return self.query("postgres", sql)
