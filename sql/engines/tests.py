@@ -1,6 +1,6 @@
 import json
 from datetime import timedelta, datetime
-from unittest.mock import patch, Mock, ANY
+from unittest.mock import MagicMock, patch, Mock, ANY
 
 import sqlparse
 from django.contrib.auth import get_user_model
@@ -825,6 +825,40 @@ class TestPgSQL(TestCase):
             self.assertEqual(
                 execute_result.rows[0].__dict__.keys(), row.__dict__.keys()
             )
+
+    @patch("psycopg2.connect")
+    def test_processlist_not_idle(self, mock_connect):
+        # 模拟数据库连接和游标
+        mock_cursor = MagicMock()
+        mock_connect.return_value.cursor.return_value = mock_cursor
+
+        # 假设 query 方法返回的结果
+        mock_cursor.fetchall.return_value = [
+            (123, "test_db", "user", "app_name", "active")
+        ]
+
+        # 创建 PgSQLEngine 实例
+        new_engine = PgSQLEngine(instance=self.ins)
+
+        # 调用 processlist 方法
+        result = new_engine.processlist(command_type="Not Idle")
+        self.assertEqual(result.rows, mock_cursor.fetchall.return_value)
+
+    @patch("psycopg2.connect")
+    def test_processlist_idle(self, mock_connect):
+        # 模拟数据库连接和游标
+        mock_cursor = MagicMock()
+        mock_connect.return_value.cursor.return_value = mock_cursor
+
+        # 假设 query 方法返回的结果
+        mock_cursor.fetchall.return_value = [
+            (123, "test_db", "user", "app_name", "idle")
+        ]
+        # 创建 PgSQLEngine 实例
+        new_engine = PgSQLEngine(instance=self.ins)
+        # 调用 processlist 方法
+        result = new_engine.processlist(command_type="Idle")
+        self.assertEqual(result.rows, mock_cursor.fetchall.return_value)
 
 
 class TestModel(TestCase):

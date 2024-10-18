@@ -364,7 +364,7 @@ class PgSQLEngine(EngineBase):
 
     def processlist(self, command_type, **kwargs):
         """获取连接信息"""
-        sql ="""
+        sql = """
             select psa.pid
                                 ,concat('{',array_to_string(pg_blocking_pids(psa.pid),','),'}') block_pids
                                 ,psa.leader_pid
@@ -396,11 +396,10 @@ class PgSQLEngine(EngineBase):
         command_type = self.escape_string(command_type)
         if not command_type:
             command_type = "Not Idle"
-        
+
         if command_type == "Not Idle":
-            sql=sql.replace("$state_not_idle$","and psa.state<>'idle'")
+            sql = sql.replace("$state_not_idle$", "and psa.state<>'idle'")
 
-        #所有的模板进行替换
-        sql=sql.replace("$state_not_idle$","")
+        # 所有的模板进行替换
+        sql = sql.replace("$state_not_idle$", "")
         return self.query("postgres", sql)
-
