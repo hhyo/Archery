@@ -1,5 +1,5 @@
-const pgsql_diagnostic = {
-    pgFieldsProcesslist: [
+const pgsqlDiagnosticInfo = {
+    fieldsProcesslist: [
         'pgsql',
         ["All", "Not Idle"],
         [
