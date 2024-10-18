@@ -5,6 +5,7 @@
 @file: pgsql.py
 @time: 2019/03/29
 """
+import json
 import re
 import psycopg2
 import logging
@@ -197,16 +198,38 @@ class PgSQLEngine(EngineBase):
                     f"SET search_path TO %(schema_name)s;", {"schema_name": schema_name}
                 )
             cursor.execute(sql, parameters)
-            effect_row = cursor.rowcount
+            # effect_row = cursor.rowcount
             if int(limit_num) > 0:
                 rows = cursor.fetchmany(size=int(limit_num))
             else:
                 rows = cursor.fetchall()
             fields = cursor.description
+            column_type_codes = [i[1] for i in fields] if fields else []
+            # 定义 JSON 和 JSONB 的 type_code,# 114 是 json，3802 是 jsonb
+            JSON_TYPE_CODE = 114
+            JSONB_TYPE_CODE = 3802
+            # 对 rows 进行循环处理，判断是否是 jsonb 或 json 类型
+            converted_rows = []
+            for row in rows:
+                new_row = []
+                for idx, col_value in enumerate(row):
+                    # 理论上, 下标不会越界的
+                    column_type_code = (
+                        column_type_codes[idx] if idx < len(column_type_codes) else None
+                    )
+                    # 只在列类型为 json 或 jsonb 时转换
+                    if column_type_code in [JSON_TYPE_CODE, JSONB_TYPE_CODE]:
+                        if isinstance(col_value, (dict, list)):
+                            new_row.append(json.dumps(col_value))  # 转为 JSON 字符串
+                        else:
+                            new_row.append(col_value)
+                    else:
+                        new_row.append(col_value)
+                converted_rows.append(tuple(new_row))
 
             result_set.column_list = [i[0] for i in fields] if fields else []
-            result_set.rows = rows
-            result_set.affected_rows = effect_row
+            result_set.rows = converted_rows
+            result_set.affected_rows = len(converted_rows)
         except Exception as e:
             logger.warning(
                 f"PgSQL命令执行报错，语句：{sql}， 错误信息：{traceback.format_exc()}"
