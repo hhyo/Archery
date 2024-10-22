@@ -601,10 +601,14 @@ class AuditV2:
             # 获取指定权限组名称
             group_in_db = Group.objects.get(id=g)
             # 获取资源组内关联指定权限组的用户
-            current_audit_users = auth_group_users([group_in_db.name], self.resource_group_id)
-            current_audit_user_ids = current_audit_users.values_list('id', flat=True)
+            current_audit_users = auth_group_users(
+                [group_in_db.name], self.resource_group_id
+            )
+            current_audit_user_ids = current_audit_users.values_list("id", flat=True)
             # 过滤Group对象的user_set，只保留当前审核用户
-            group_filtered_user_set = group_in_db.user_set.filter(id__in=current_audit_user_ids)
+            group_filtered_user_set = group_in_db.user_set.filter(
+                id__in=current_audit_user_ids
+            )
             if self.audit.current_status != WorkflowStatus.WAITING:
                 # 总体状态不是待审核, 不设置详细的属性
                 review_nodes.append(
