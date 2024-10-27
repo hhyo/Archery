@@ -48,7 +48,7 @@ def test_build_cmd_without_load(mongo_engine):
     # Expected command template
     expected_cmd = (
         "mongo --quiet -u test_user -p 'test_password' localhost:27017/admin <<\\EOF\n"
-        "db=db.getSiblingDB('test_db');rs.slaveOk();printjson(db.test_collection.find())\nEOF"
+        "db=db.getSiblingDB('test_db');rs.slaveOk();db.test_collection.find()\nEOF"
     )
 
     # Assertions
@@ -72,7 +72,7 @@ def test_build_cmd_without_auth(mongo_engine):
     # Expected command template
     expected_cmd = (
         "mongo --quiet  localhost:27017/admin <<\\EOF\n"
-        "db=db.getSiblingDB('test_db');rs.slaveOk();printjson(db.test_collection.find())\nEOF"
+        "db=db.getSiblingDB('test_db');rs.slaveOk();db.test_collection.find()\nEOF"
     )
 
     # Assertions
