@@ -3,7 +3,7 @@ import datetime
 import importlib
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 from itertools import chain
 from typing import Union, List
@@ -126,10 +126,12 @@ class GenericWebhookNotifier(Notifier):
             self.request_data["workflow_content"] = QueryPrivilegesApplySerializer(
                 self.workflow
             ).data
+        elif isinstance(self.workflow, ArchiveResult) or isinstance(self.workflow, My2SqlResult):
+            self.request_data["workflow_content"] =asdict(self.workflow)
         else:
             raise ValueError(f"workflow type `{type(self.workflow)}` not supported yet")
-
-        self.request_data["audit"] = WorkflowAuditListSerializer(self.audit).data
+        if self.audit:
+            self.request_data["audit"] = WorkflowAuditListSerializer(self.audit).data
 
     def send(self):
         url = self.sys_config.get(self.sys_config_key)
