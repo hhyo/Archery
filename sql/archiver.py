@@ -26,7 +26,7 @@ from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
-from sql.notify import notify_for_audit,notify_for_archive
+from sql.notify import notify_for_audit, notify_for_archive
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
@@ -475,7 +475,7 @@ def archive(archive_id):
     try:
         if not success:
             raise Exception(f"{error_info}\n{statistics}")
-        return src_db_name,src_table_name
+        return src_db_name, src_table_name
     except Exception as e:
         return src_db_name, src_table_name, error_info
 
