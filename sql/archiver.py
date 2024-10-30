@@ -26,7 +26,7 @@ from common.utils.const import WorkflowStatus, WorkflowType, WorkflowAction
 from common.utils.extend_json_encoder import ExtendJSONEncoder
 from common.utils.timer import FuncTimer
 from sql.engines import get_engine
-from sql.notify import notify_for_audit
+from sql.notify import notify_for_audit,notify_for_archive
 from sql.plugins.pt_archiver import PtArchiver
 from sql.utils.resource_group import user_instances, user_groups
 from sql.models import ArchiveConfig, ArchiveLog, Instance, ResourceGroup
@@ -312,6 +312,7 @@ def add_archive_task(archive_ids=None):
         async_task(
             "sql.archiver.archive",
             archive_id,
+            hook=notify_for_archive,
             group=f'archive-{time.strftime("%Y-%m-%d %H:%M:%S ")}',
             timeout=-1,
             task_name=f"archive-{archive_id}",
@@ -471,8 +472,12 @@ def archive(archive_id):
         start_time=t.start,
         end_time=t.end,
     )
-    if not success:
-        raise Exception(f"{error_info}\n{statistics}")
+    try:
+        if not success:
+            raise Exception(f"{error_info}\n{statistics}")
+        return src_db_name,src_table_name
+    except Exception as e:
+        return src_db_name, src_table_name, error_info
 
 
 @permission_required("sql.menu_archive", raise_exception=True)
@@ -531,6 +536,7 @@ def archive_once(request):
     async_task(
         "sql.archiver.archive",
         archive_id,
+        hook=notify_for_archive,
         timeout=-1,
         task_name=f"archive-{archive_id}",
     )
