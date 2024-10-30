@@ -191,9 +191,7 @@ class LegacyRender(Notifier):
             auth_ends_at = datetime.datetime.strftime(
                 workflow_detail.valid_date, "%Y-%m-%d %H:%M:%S"
             )
-            workflow_content += (
-                f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
-            )
+            workflow_content += f"""授权截止时间：{auth_ends_at}\n结果集：{workflow_detail.limit_num}\n"""
         elif workflow_type == WorkflowType.SQL_REVIEW:
             workflow_type_display = WorkflowType.SQL_REVIEW.label
             workflow_detail = SqlWorkflow.objects.get(pk=workflow_id)
@@ -274,7 +272,9 @@ class LegacyRender(Notifier):
                 re.sub("[\r\n\f]{2,}", "\n", self.audit_detail.remark),
             )
         elif status == WorkflowStatus.ABORTED:  # 审核取消，通知所有审核人
-            msg_title = "[{}]提交人主动终止工单#{}".format(workflow_type_display, audit_id)
+            msg_title = "[{}]提交人主动终止工单#{}".format(
+                workflow_type_display, audit_id
+            )
             # 接收人，发送给该资源组内对应权限组所有的用户
             auth_group_names = [
                 Group.objects.get(id=auth_group_id).name
