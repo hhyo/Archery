@@ -248,7 +248,7 @@ def my2sql_file(args, user):
     args["output-dir"] = path
     cmd_args = my2sql.generate_args2cmd(args)
     # 使用output-dir参数执行命令保存sql
-    error_info = ''
+    error_info = ""
     try:
         # 假设 my2sql.execute_cmd 返回一个包含 user 和 path 的元组
         my2sql.execute_cmd(cmd_args)
