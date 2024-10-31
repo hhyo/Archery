@@ -248,5 +248,9 @@ def my2sql_file(args, user):
     args["output-dir"] = path
     cmd_args = my2sql.generate_args2cmd(args)
     # 使用output-dir参数执行命令保存sql
-    my2sql.execute_cmd(cmd_args)
-    return user, path
+    try:
+        my2sql.execute_cmd(cmd_args)
+        return user, path
+    except Exception as e:
+        # 捕获所有异常并返回错误信息
+        return user, str(e)

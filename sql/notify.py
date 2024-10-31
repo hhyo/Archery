@@ -600,15 +600,12 @@ def notify_for_archive(task):
     :param task:
     :return:
     """
-    if task.success:
-        result = My2SqlResult(
-            success=True,
-            src_db_name=task.result[0],
-            src_table_name=task.result[1],
-            error=task.result[2],
-        )
-    else:
-        result = My2SqlResult(success=False, error=task.result)
+    result = ArchiveResult(
+        success=task.success,
+        src_db_name=task.result[0],
+        src_table_name=task.result[1],
+        error=task.result[2],
+    )
     # 发送
     sys_config = SysConfig()
     auto_notify(workflow=result, sys_config=sys_config, event_type=EventType.ARCHIVE)
