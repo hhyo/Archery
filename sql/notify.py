@@ -356,12 +356,12 @@ class LegacyRender(Notifier):
 
     def render_m2sql(self):
         submitter_in_db = Users.objects.get(username=self.workflow.submitter)
-        if self.workflow.success:
+        if self.workflow.error:
+            title = "[Archery 通知]My2SQL执行失败"
+            content = f"解析SQL文件报错，{self.workflow.error}"
+        else:
             title = "[Archery 通知]My2SQL执行结束"
             content = f"解析的SQL文件在{self.workflow.file_path}目录下，请前往查看"
-        else:
-            title = "[Archery 通知]My2SQL执行失败"
-            content = self.workflow.error
         self.messages = [
             LegacyMessage(
                 msg_to=[submitter_in_db],
@@ -372,18 +372,17 @@ class LegacyRender(Notifier):
 
     def render_archive(self):
         if self.workflow.error:
-            title = f"[Archery 通知]archive归档任务%s.%s归档失败,报错信息为:%s" % (
-                self.workflow.src_db_name,
-                self.workflow.src_table_name,
-                self.workflow.error,
+            title = (
+                f"[Archery 通知]archive归档任务{self.workflow.src_db_name}."
+                f"{self.workflow.src_table_name}归档失败,报错信息为:{self.workflow.error}"
             )
-            content = f"请登录archery查看任务归档详细日志信息"
+            content = "请登录archery查看任务归档详细日志信息"
         else:
-            title = f"[Archery 通知archive归档任务%s.%s归档成功" % (
-                self.workflow.src_db_name,
-                self.workflow.src_table_name,
+            title = (
+                f"[Archery 通知]archive归档任务{self.workflow.src_db_name}."
+                f"{self.workflow.src_table_name}归档成功"
             )
-            content = f"请登录archery查看任务归档详细日志信息"
+            content = "请登录archery查看任务归档详细日志信息"
         self.messages = [
             LegacyMessage(
                 msg_title=title,
