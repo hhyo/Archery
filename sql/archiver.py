@@ -475,10 +475,9 @@ def archive(archive_id):
         )
         if not success:
             raise Exception(f"{error_info}\n{statistics}")
-        return src_db_name, src_table_name,error_info
+        return src_db_name, src_table_name, error_info
     except Exception as e:
         return src_db_name, src_table_name, str(e)
-
 
 
 @permission_required("sql.menu_archive", raise_exception=True)
