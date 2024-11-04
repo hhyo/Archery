@@ -41,6 +41,36 @@ def can_execute(user, workflow_id):
     return result
 
 
+def on_query_low_peak_time_ddl(workflow_id, run_date=None):
+    """
+    判断是否是ddl，ddl必须在业务低峰期执行，包括人工执行和定时执行
+    :param workflow_id:
+    :param run_date:
+    :return:
+    """
+    config = SysConfig()
+    workflow_detail = SqlWorkflow.objects.get(id=workflow_id)
+    result = True
+    ctime = run_date or datetime.datetime.now()
+    run_time = f"{ctime.hour:02}:{ctime.minute:02}"
+    syntax_type = workflow_detail.syntax_type
+    periods = config.get("query_low_peak", "")
+    peak_action = config.get("query_low_peak_query", "")
+
+    def is_without_peak_periods(run_time, periods):
+        for period in periods.split(","):
+            start, end = period.split("-")
+            if start <= run_time <= end:
+                return True  # 如果 run_time 在当前时间段内，直接返回 True
+        return False  # 只有当 run_time 不在任何时间段内时，才返回 False
+
+    if "DML" in peak_action and syntax_type == 2:
+        return is_without_peak_periods(run_time, periods)
+    if "DDL" in peak_action and syntax_type == 1:
+        return is_without_peak_periods(run_time, periods)
+    return result
+
+
 def on_correct_time_period(workflow_id, run_date=None):
     """
     判断是否在可执行时间段内，包括人工执行和定时执行
