@@ -3,7 +3,7 @@ import datetime
 import importlib
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 from itertools import chain
 from typing import Union, List
@@ -42,6 +42,7 @@ class EventType(Enum):
     EXECUTE = "execute"
     AUDIT = "audit"
     M2SQL = "m2sql"
+    ARCHIVE = "archive"
 
 
 @dataclass
@@ -53,10 +54,19 @@ class My2SqlResult:
 
 
 @dataclass
+class ArchiveResult:
+    archive_id: str
+    success: bool
+    src_db_name: str
+    src_table_name: str
+    error: str = ""
+
+
+@dataclass
 class Notifier:
-    workflow: Union[SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult] = (
-        None
-    )
+    workflow: Union[
+        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult, ArchiveResult
+    ] = None
     sys_config: SysConfig = None
     # init false, class property, 不是 instance property
     name: str = field(init=False, default="base")
@@ -70,7 +80,11 @@ class Notifier:
             raise ValueError("需要提供 WorkflowAudit 或 workflow")
         if not self.workflow:
             self.workflow = self.audit.get_workflow()
-        if not self.audit and not isinstance(self.workflow, My2SqlResult):
+        if (
+            not self.audit
+            and not isinstance(self.workflow, My2SqlResult)
+            and not isinstance(self.workflow, ArchiveResult)
+        ):
             self.audit = self.workflow.get_audit()
         # 防止 get_auditor 显式的传了个 None
         if not self.sys_config:
@@ -118,10 +132,14 @@ class GenericWebhookNotifier(Notifier):
             self.request_data["workflow_content"] = QueryPrivilegesApplySerializer(
                 self.workflow
             ).data
+        elif isinstance(self.workflow, ArchiveResult) or isinstance(
+            self.workflow, My2SqlResult
+        ):
+            self.request_data["workflow_content"] = asdict(self.workflow)
         else:
             raise ValueError(f"workflow type `{type(self.workflow)}` not supported yet")
-
-        self.request_data["audit"] = WorkflowAuditListSerializer(self.audit).data
+        if self.audit:
+            self.request_data["audit"] = WorkflowAuditListSerializer(self.audit).data
 
     def send(self):
         url = self.sys_config.get(self.sys_config_key)
@@ -338,15 +356,35 @@ class LegacyRender(Notifier):
 
     def render_m2sql(self):
         submitter_in_db = Users.objects.get(username=self.workflow.submitter)
-        if self.workflow.success:
+        if self.workflow.error:
+            title = "[Archery 通知]My2SQL执行失败"
+            content = f"解析SQL文件报错，{self.workflow.error}"
+        else:
             title = "[Archery 通知]My2SQL执行结束"
             content = f"解析的SQL文件在{self.workflow.file_path}目录下，请前往查看"
-        else:
-            title = "[Archery 通知]My2SQL执行失败"
-            content = self.workflow.error
         self.messages = [
             LegacyMessage(
                 msg_to=[submitter_in_db],
+                msg_title=title,
+                msg_content=content,
+            )
+        ]
+
+    def render_archive(self):
+        if self.workflow.error:
+            title = (
+                f"[Archery 通知]archive归档任务{self.workflow.src_db_name}."
+                f"{self.workflow.src_table_name}归档失败,报错信息为:{self.workflow.error}"
+            )
+            content = "请登录archery查看任务归档详细日志信息"
+        else:
+            title = (
+                f"[Archery 通知]archive归档任务{self.workflow.src_db_name}."
+                f"{self.workflow.src_table_name}归档成功"
+            )
+            content = "请登录archery查看任务归档详细日志信息"
+        self.messages = [
+            LegacyMessage(
                 msg_title=title,
                 msg_content=content,
             )
@@ -360,6 +398,8 @@ class LegacyRender(Notifier):
             self.render_audit()
         if self.event_type == EventType.M2SQL:
             self.render_m2sql()
+        if self.event_type == EventType.ARCHIVE:
+            self.render_archive()
 
 
 class DingdingWebhookNotifier(LegacyRender):
@@ -477,7 +517,7 @@ class MailNotifier(LegacyRender):
 def auto_notify(
     sys_config: SysConfig,
     workflow: Union[
-        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult
+        SqlWorkflow, ArchiveConfig, QueryPrivilegesApply, My2SqlResult, ArchiveResult
     ] = None,
     audit: WorkflowAudit = None,
     audit_detail: WorkflowAuditDetail = None,
@@ -551,3 +591,20 @@ def notify_for_my2sql(task):
     # 发送
     sys_config = SysConfig()
     auto_notify(workflow=result, sys_config=sys_config, event_type=EventType.M2SQL)
+
+
+def notify_for_archive(task):
+    """
+    archive执行结束的通知
+    :param task:
+    :return:
+    """
+    result = ArchiveResult(
+        success=task.success,
+        src_db_name=task.result[0],
+        src_table_name=task.result[1],
+        error=task.result[2],
+    )
+    # 发送
+    sys_config = SysConfig()
+    auto_notify(workflow=result, sys_config=sys_config, event_type=EventType.ARCHIVE)
