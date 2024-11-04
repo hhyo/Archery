@@ -19,6 +19,7 @@ from sql.utils.resource_group import user_instances
 from sql.utils.tasks import add_kill_conn_schedule, del_schedule
 from .models import QueryLog, Instance
 from sql.engines import get_engine
+from celery import shared_task
 
 logger = logging.getLogger("default")
 
@@ -308,7 +309,7 @@ def favorite(request):
         json.dumps({"status": 0, "msg": "ok"}), content_type="application/json"
     )
 
-
+@shared_task
 def kill_query_conn(instance_id, thread_id):
     """终止查询会话，用于schedule调用"""
     instance = Instance.objects.get(pk=instance_id)
