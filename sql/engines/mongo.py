@@ -1011,6 +1011,7 @@ class MongoEngine(EngineBase):
         """提交查询前的检查"""
 
         sql = sql.strip()
+        sql = re.sub(r"^\s*//.*$", "", sql, flags=re.MULTILINE)
         if sql.startswith("explain"):
             sql = sql[7:] + ".explain()"
             sql = re.sub("[;\s]*.explain\(\)$", ".explain()", sql).strip()
