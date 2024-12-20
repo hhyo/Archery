@@ -141,6 +141,8 @@ def analyze_query_tree(select_list, instance):
 
 def regex(masking_rule, value):
     """利用正则表达式脱敏数据"""
+    if not value:
+        return value
     rule_regex = masking_rule["rule_regex"]
 
     rule_type = masking_rule["rule_type"]
