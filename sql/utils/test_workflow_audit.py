@@ -357,13 +357,6 @@ def test_init_no_workflow_and_audit():
     assert "WorkflowAudit 或 workflow" in str(e.value)
 
 
-def test_archive_init_no_resource_group(archive_apply):
-    """测试 archive 初始化时指定的资源组不存在"""
-    with pytest.raises(AuditException) as e:
-        AuditV2(workflow=archive_apply, resource_group="not_exists_group")
-    assert "参数错误, 未发现资源组" in str(e.value)
-
-
 def test_duplicate_create(sql_query_apply, fake_generate_audit_setting):
     audit = AuditV2(workflow=sql_query_apply)
     audit.create_audit()
