@@ -24,11 +24,23 @@ def data_masking(instance, db_name, sql, sql_result):
         for token in p.tokens:
             if token.ttype is Keyword and token.value.upper() in ["UNION", "UNION ALL"]:
                 keywords_count["UNION"] = keywords_count.get("UNION", 0) + 1
-        # 通过goInception获取select list
-        inception_engine = GoInceptionEngine()
-        select_list = inception_engine.query_data_masking(
-            instance=instance, db_name=db_name, sql=sql
-        )
+        if instance.db_type == "mongo":
+            select_list = [
+                {
+                    "index": index,
+                    "field": field,
+                    "type": "varchar",
+                    "table": "*",
+                    "schema": db_name,
+                    "alias": field,
+                }
+                for index, field in enumerate(sql_result.column_list)
+            ]
+        else:
+            inception_engine = GoInceptionEngine()
+            select_list = inception_engine.query_data_masking(
+                instance=instance, db_name=db_name, sql=sql
+            )
         # 如果UNION存在，那么调用去重函数
         select_list = (
             del_repeat(select_list, keywords_count) if keywords_count else select_list
