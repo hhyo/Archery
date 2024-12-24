@@ -37,6 +37,7 @@ def data_masking(instance, db_name, sql, sql_result):
                 for index, field in enumerate(sql_result.column_list)
             ]
         else:
+            # 通过goInception获取select list
             inception_engine = GoInceptionEngine()
             select_list = inception_engine.query_data_masking(
                 instance=instance, db_name=db_name, sql=sql
