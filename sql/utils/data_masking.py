@@ -141,6 +141,7 @@ def analyze_query_tree(select_list, instance):
 
 def regex(masking_rule, value):
     """利用正则表达式脱敏数据"""
+    # 如果为null或none或空字符串，则不脱敏直接返回。
     if not value:
         return value
     rule_regex = masking_rule["rule_regex"]
