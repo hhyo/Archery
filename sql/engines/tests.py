@@ -2042,6 +2042,14 @@ class MongoTest(TestCase):
             ],
         )
 
+    def test_query_masking(self):
+        query_result = ResultSet()
+        new_engine = MongoEngine(instance=self.ins)
+        masking_result = new_engine.query_masking(
+            db_name="archery", sql="db.test_collection.find()", resultset=query_result
+        )
+        self.assertIsInstance(masking_result, ResultSet)
+
 
 class TestClickHouse(TestCase):
     def setUp(self):
