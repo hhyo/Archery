@@ -17,7 +17,7 @@ from sql.engines.oracle import OracleEngine
 from sql.engines.mongo import MongoEngine
 from sql.engines.clickhouse import ClickHouseEngine
 from sql.engines.odps import ODPSEngine
-from sql.models import Instance, SqlWorkflow, SqlWorkflowContent
+from sql.models import DataMaskingColumns, Instance, SqlWorkflow, SqlWorkflowContent
 
 User = get_user_model()
 
@@ -1665,9 +1665,19 @@ class MongoTest(TestCase):
         )
         self.engine = MongoEngine(instance=self.ins)
         self.sys_config = SysConfig()
+        # rule_type=100的规则不需要加，会自动创建。只需要加脱敏字段
+        DataMaskingColumns.objects.create(
+            rule_type=100,
+            active=True,
+            instance=self.ins,
+            table_schema="*",
+            table_name="*",
+            column_name="mobile",
+        )
 
     def tearDown(self) -> None:
         self.ins.delete()
+        DataMaskingColumns.objects.all().delete()
 
     @patch("sql.engines.mongo.pymongo")
     def test_get_connection(self, mock_pymongo):
@@ -2045,10 +2055,24 @@ class MongoTest(TestCase):
     def test_query_masking(self):
         query_result = ResultSet()
         new_engine = MongoEngine(instance=self.ins)
+        query_result.column_list = ["id", "mobile"]
+        query_result.rows = (
+            ("a11", "18888888888"),
+            ("a12", ""),
+            ("a13", None),
+            ("a14", "18888888889"),
+           
+        )
         masking_result = new_engine.query_masking(
             db_name="archery", sql="db.test_collection.find()", resultset=query_result
         )
-        self.assertIsInstance(masking_result, ResultSet)
+        mask_result_rows = [
+            ["a11", "188****8888"],
+            ["a12", ""],
+            ["a13", None],
+            ["a14", "188****8888"],
+        ]
+        self.assertEqual(masking_result.rows, mask_result_rows)
 
 
 class TestClickHouse(TestCase):
