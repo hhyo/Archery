@@ -608,6 +608,7 @@ class TestDataMasking(TestCase):
 
     @patch("sql.utils.data_masking.GoInceptionEngine")
     def test_data_masking_hit_rules_not_exists_star(self, _inception):
+        """数据库返回时添加了null结果。"""
         _inception.return_value.query_data_masking.return_value = [
             {
                 "index": 0,
@@ -619,13 +620,16 @@ class TestDataMasking(TestCase):
             }
         ]
         sql = """select phone from users;"""
-        rows = (("18888888888",), ("18888888889",), ("18888888810",))
+        rows = (("18888888888",), (None,), ("18888888889",), ("18888888810",))
         query_result = ReviewSet(column_list=["phone"], rows=rows, full_sql=sql)
         r = data_masking(self.ins, "archery", sql, query_result)
         print("test_data_masking_hit_rules_not_exists_star:", r.rows)
         mask_result_rows = [
             [
                 "188****8888",
+            ],
+            [
+                None,
             ],
             [
                 "188****8889",
