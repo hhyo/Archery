@@ -88,6 +88,24 @@ class RedisEngine(EngineBase):
         result.rows = db_list
         return result
 
+    def get_all_tables(self, db_name, **kwargs):
+        """获取表列表。Redis的key可以理为表。方法只扫描部分表。起到预览作用。"""
+        result = ResultSet(full_sql="")
+        max_results = 100
+        table_info_list = []
+        try:
+            conn = self.get_connection(db_name)
+            scan_rows = conn.scan_iter(match=None, count=20)
+            for idx, key in enumerate(scan_rows):
+                if idx >= max_results:
+                    break
+                table_info_list.append(key)
+        except Exception as e:
+            logger.error(f"get_all_tables执行报错，异常信息：{e}")
+            result.message = f"{e}"
+        result.rows = table_info_list
+        return result
+
     def query_check(self, db_name=None, sql="", limit_num=0):
         """提交查询前的检查"""
         result = {"msg": "", "bad_query": True, "filtered_sql": sql, "has_star": False}
